@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#007bff">
-    <title>ثبت تمرینات ورزشی - آفلاین</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <title>ورزش</title>
     
     <style>
         * {
@@ -635,7 +637,7 @@
 
 <div class="container">
     <header>
-        <h1><span class="icon">🏋️</span> ثبت تمرینات آفلاین</h1>
+        <h1><span class="icon">🏋️</span> ورزش</h1>
         <div class="backup-btns">
             <button onclick="toggleTheme()"><span class="icon">🌙</span> تم</button>
             <button onclick="exportData()"><span class="icon">📤</span> خروجی</button>
@@ -1740,8 +1742,59 @@
         document.getElementById('sec-manage').scrollIntoView({ behavior: 'smooth' });
     }
 
+    // ثبت سرویس ورکر
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker Registered'))
+                .catch(err => console.log('Service Worker Failed', err));
+        });
+    }
+
+    // درخواست اجازه اعلان
+    function requestNotificationPermission() {
+        if ('Notification' in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    console.log('Notification permission granted.');
+                }
+            });
+        }
+    }
+
+    // بررسی و نمایش اعلان ۴۸ ساعته
+    function checkAndShowNotification() {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        if (history.length === 0) return;
+
+        const lastWorkout = history[0];
+        const lastTime = lastWorkout.id;
+        const now = Date.now();
+        const diff = now - lastTime;
+        const fortyEightHours = 48 * 60 * 60 * 1000;
+
+        // اگر ۴۸ ساعت گذشته باشد و قبلاً برای این تمرین خاص اعلان نداده باشیم
+        const lastNotifiedId = localStorage.getItem('last_notified_workout_id');
+
+        if (diff >= fortyEightHours && lastNotifiedId !== lastWorkout.id.toString()) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification('وقت ورزش شد! 💪', {
+                        body: '۴۸ ساعت از تمرین قبلیت گذشته پهلوان. امروز نوبت تمرین سبکه یا سنگین؟',
+                        icon: 'icon-192.png',
+                        vibrate: [200, 100, 200],
+                        badge: 'icon-192.png'
+                    });
+                    localStorage.setItem('last_notified_workout_id', lastWorkout.id.toString());
+                });
+            }
+        }
+    }
+
     window.onload = () => {
         initTheme();
+        requestNotificationPermission();
+        setTimeout(checkAndShowNotification, 3000); // ۳ ثانیه بعد از لود چک کنه
         notesEditor = createSimpleEditor('notes-editor', 'دلایل طول کشیدن و نکات تمرین...');
         nutritionEditor = createSimpleEditor('nutrition-editor', 'جزئیات تغذیه قبل و بعد تمرین...');
         historyEditor = createSimpleEditor('history-editor', 'یادداشت خود را اینجا بنویسید...');
