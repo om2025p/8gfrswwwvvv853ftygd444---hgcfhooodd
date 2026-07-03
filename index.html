@@ -2,83 +2,69 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پیشخوان برنامه‌ها | امپراطوری شخصی</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e3a8a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <title>عمارت دیجیتال</title>
     <style>
         :root {
-            --primary-color: #ffffff;
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
             --text-color: #ffffff;
-            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --accent-blue: #1e3a8a;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 50%, #667eea 100%);
-            background-attachment: fixed;
+            background: radial-gradient(circle at center, #1e3a8a 0%, #0f172a 100%);
             margin: 0;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             min-height: 100vh;
             color: var(--text-color);
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
-        /* افکت آبی-بنفش جذاب */
+        /* لایه شیشه‌ای مات روی کل صفحه */
         body::before {
             content: "";
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 30%, rgba(79, 172, 254, 0.4), transparent),
-                        radial-gradient(circle at 80% 70%, rgba(102, 126, 234, 0.4), transparent);
+            right: 0;
+            bottom: 0;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             z-index: -1;
         }
 
         .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            flex-grow: 1;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 50px;
-            backdrop-filter: blur(10px);
-            background: var(--glass-bg);
-            padding: 30px;
-            border-radius: 30px;
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow);
-        }
-
-        h1 {
-            font-size: 2.2rem;
-            margin: 0 0 10px 0;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .subtitle {
-            font-size: 1rem;
-            opacity: 0.9;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .app-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+            gap: 15px;
+            width: 100%;
         }
 
         .app-card {
             background: var(--glass-bg);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-radius: 24px;
-            padding: 20px 10px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 15px 5px;
             text-align: center;
             text-decoration: none;
             color: inherit;
@@ -89,144 +75,106 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            opacity: 0; /* برای شروع انیمیشن */
         }
 
         .app-card:hover {
-            transform: translateY(-10px) scale(1.05);
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
         .app-card:active {
-            transform: scale(0.95);
+            transform: scale(0.9);
         }
 
         .app-icon {
-            font-size: 2.5rem;
-            margin-bottom: 12px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-            transition: transform 0.3s ease;
-        }
-
-        .app-card:hover .app-icon {
-            transform: rotate(10deg);
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
         }
 
         .app-title {
-            font-size: 1rem;
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-size: 0.85rem;
+            font-weight: 500;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-        }
-
-        .app-desc {
-            font-size: 0.75rem;
-            opacity: 0.8;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            line-height: 1.4;
-        }
-
-        footer {
-            text-align: center;
-            padding: 20px;
-            font-size: 0.8rem;
-            opacity: 0.7;
-            backdrop-filter: blur(5px);
         }
 
         .coming-soon {
-            opacity: 0.6;
+            opacity: 0.4;
             cursor: not-allowed;
         }
 
-        @media (max-width: 600px) {
-            .app-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 10px;
-                padding: 0 5px;
-            }
-            .app-card {
-                padding: 15px 5px;
-                border-radius: 18px;
-            }
-            .app-icon {
-                font-size: 2rem;
-            }
-            .app-title {
-                font-size: 0.85rem;
-            }
-            .app-desc {
-                display: none; /* در موبایل ۳ ستونه جای توضیحات نیست */
-            }
-            h1 { font-size: 1.6rem; }
-        }
+        /* انیمیشن‌های پرواز از گوشه‌ها */
+        @keyframes flyInTL { from { transform: translate(-100vw, -100vh); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
+        @keyframes flyInT { from { transform: translateY(-100vh); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes flyInTR { from { transform: translate(100vw, -100vh); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
+        @keyframes flyInBL { from { transform: translate(-100vw, 100vh); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
+        @keyframes flyInB { from { transform: translateY(100vh); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes flyInBR { from { transform: translate(100vw, 100vh); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
 
-        /* انیمیشن برای حس شیشه‌ای */
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
+        .fly-tl { animation: flyInTL 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        .fly-t  { animation: flyInT 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        .fly-tr { animation: flyInTR 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        .fly-bl { animation: flyInBL 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        .fly-b  { animation: flyInB 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        .fly-br { animation: flyInBR 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+
+        @media (max-width: 400px) {
+            .app-grid { gap: 10px; }
+            .app-icon { font-size: 1.8rem; }
+            .app-title { font-size: 0.75rem; }
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <header>
-            <h1>🏢 عمارت دیجیتال</h1>
-            <p class="subtitle">امروز کدوم دکمه رو بزنیم رئیس؟ 🚀</p>
-        </header>
-
         <div class="app-grid">
             <!-- برنامه ورزش -->
-            <a href="gym/index.html" class="app-card">
+            <a href="gym/index.html" class="app-card fly-tl">
                 <div class="app-icon">🏋️</div>
                 <div class="app-title">ورزش</div>
-                <div class="app-desc">باشگاه شخصی در جیب شما</div>
             </a>
 
             <!-- جای خالی برای برنامه‌های بعدی -->
-            <div class="app-card coming-soon">
+            <div class="app-card coming-soon fly-t">
                 <div class="app-icon">🛠️</div>
                 <div class="app-title">بزودی...</div>
-                <div class="app-desc">در حال پختن...</div>
             </div>
 
-            <div class="app-card coming-soon">
+            <div class="app-card coming-soon fly-tr">
                 <div class="app-icon">🧪</div>
                 <div class="app-title">بزودی...</div>
-                <div class="app-desc">آزمایشگاه...</div>
             </div>
 
-            <div class="app-card coming-soon">
+            <div class="app-card coming-soon fly-bl">
                 <div class="app-icon">🌙</div>
                 <div class="app-title">بزودی...</div>
-                <div class="app-desc">خواب آرام...</div>
             </div>
 
-            <div class="app-card coming-soon">
+            <div class="app-card coming-soon fly-b">
                 <div class="app-icon">🍎</div>
                 <div class="app-title">بزودی...</div>
-                <div class="app-desc">تغذیه...</div>
             </div>
 
-            <div class="app-card coming-soon">
+            <div class="app-card coming-soon fly-br">
                 <div class="app-icon">📈</div>
                 <div class="app-title">بزودی...</div>
-                <div class="app-desc">آمار...</div>
             </div>
         </div>
     </div>
 
-    <footer>
-        ساخته شده با ❤️ برای شما
-    </footer>
+    <script>
+        // ثبت سرویس ورکر برای پورتال مادر
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Portal SW Registered'))
+                    .catch(err => console.log('Portal SW Failed', err));
+            });
+        }
+    </script>
 
 </body>
 </html>
