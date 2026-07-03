@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#007bff">
-    <title>ثبت تمرینات ورزشی - آفلاین</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <title>ورزش</title>
     
     <style>
         * {
@@ -635,7 +637,7 @@
 
 <div class="container">
     <header>
-        <h1><span class="icon">🏋️</span> ثبت تمرینات آفلاین</h1>
+        <h1><span class="icon">🏋️</span> ورزش</h1>
         <div class="backup-btns">
             <button onclick="toggleTheme()"><span class="icon">🌙</span> تم</button>
             <button onclick="exportData()"><span class="icon">📤</span> خروجی</button>
@@ -679,6 +681,20 @@
 
             <details id="sec-manage" class="card">
                 <summary>🛠️ مدیریت حرکات</summary>
+                <div style="margin-top: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px;">
+                    <label style="font-size: 0.9rem; margin-bottom: 10px; display: block; color: var(--primary-color);">➕ افزودن حرکت جدید:</label>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <input type="text" id="newExName" placeholder="نام حرکت (مثلاً: پرس سینه)">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="number" id="newExTarget" placeholder="تعداد هدف" style="flex: 1;">
+                            <input type="text" id="newExUnit" placeholder="واحد (تکرار/ثانیه)" style="flex: 1;">
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" id="newExSide" style="width: auto;"> حرکت دوطرفه (راست و چپ جدا)
+                        </label>
+                        <button onclick="addNewExercise()" class="btn-submit" style="margin-top: 5px; padding: 10px;">افزودن به لیست</button>
+                    </div>
+                </div>
                 <div id="exerciseManagerList" style="margin-top: 15px;"></div>
             </details>
 
@@ -756,24 +772,37 @@
     </div>
 
     <div id="tab-stats" class="tab-content">
-        <h2 style="font-size: 1.1rem; margin-bottom: 15px;">📊 روند پیشرفت و آمار</h2>
-        
+        <h2 style="font-size: 1.1rem; margin-bottom: 15px;">داده‌نمای پیشرفت 📊</h2>
+
+        <div id="statsSummary"></div>
+
+        <div class="stats-card">
+            <h3>📈 پیشرفت کلی جلسات</h3>
+            <div id="mainProgressionChart" class="chart-container"></div>
+            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 10px; font-size: 0.8rem;">
+                <span style="color: #007bff;">🔵 سبک</span>
+                <span style="color: #dc3545;">🔴 سنگین</span>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h3>📍 مقایسه پارامترها</h3>
+            <div style="margin-bottom: 15px;">
+                <select id="compareParam" onchange="renderStats()" style="padding: 5px; font-size: 0.8rem;">
+                    <option value="stomach">۱. وضعیت شکم</option>
+                    <option value="quality">۲. کیفیت تمرین</option>
+                    <option value="fatigue">۳. میزان خستگی</option>
+                    <option value="temp">۴. دمای محیط</option>
+                    <option value="mental">۵. وضعیت ذهنی</option>
+                </select>
+            </div>
+            <div id="comparisonChart" class="chart-container"></div>
+        </div>
+
         <details id="sec-trash" class="card">
             <summary>🗑️ سطل زباله</summary>
             <div id="trashList" style="margin-top: 15px;"></div>
         </details>
-
-        <div class="stats-card">
-            <h3>📈 کیفیت تمرینات اخیر</h3>
-            <div class="chart-container" id="qualityChart"></div>
-        </div>
-
-        <div class="stats-card">
-            <h3>😴 میزان خستگی</h3>
-            <div class="chart-container" id="fatigueChart"></div>
-        </div>
-
-        <div id="statsSummary"></div>
     </div>
 </div>
 
@@ -809,7 +838,8 @@
         TRASH: 'workout_new_trash_v2',
         LAST_INCREMENTED: 'workout_new_last_inc_v2',
         NEXT_TYPE: 'workout_new_next_type_v2',
-        THEME: 'workout_new_theme_v2'
+        THEME: 'workout_new_theme_v2',
+        DRAFT: 'workout_new_draft_v2'
     };
 
     // =======================================================
@@ -916,18 +946,85 @@
         localStorage.setItem(STORAGE_KEYS.BASE_DATA, JSON.stringify(workoutData));
     }
 
-    function initWorkout() {
+    function saveDraft() {
+        const type = document.getElementById('workoutType').value;
+        const draft = {
+            type: type,
+            sessionState: sessionState,
+            ratings: ratings,
+            nutrition: {
+                eggs: document.getElementById('nut-eggs').value,
+                soy: document.getElementById('nut-soy').value,
+                potatoes: document.getElementById('nut-potatoes').value,
+                notes: nutritionEditor ? nutritionEditor.getContent() : ''
+            },
+            notes: notesEditor ? notesEditor.getContent() : ''
+        };
+        localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(draft));
+    }
+
+    function loadDraft() {
+        const draftStr = localStorage.getItem(STORAGE_KEYS.DRAFT);
+        if (!draftStr) return false;
+        const draft = JSON.parse(draftStr);
+
+        document.getElementById('workoutType').value = draft.type;
+        initWorkout(true);
+
+        sessionState = draft.sessionState;
+        ratings = draft.ratings;
+
+        document.getElementById('nut-eggs').value = draft.nutrition.eggs;
+        document.getElementById('nut-soy').value = draft.nutrition.soy;
+        document.getElementById('nut-potatoes').value = draft.nutrition.potatoes;
+
+        if (nutritionEditor) nutritionEditor.setContent(draft.nutrition.notes);
+        if (notesEditor) notesEditor.setContent(draft.notes);
+
+        const warmupBtn = document.getElementById('warmup-btn');
+        if (sessionState.warmup.done) warmupBtn.classList.add('active');
+
+        const type = draft.type;
+        workoutData[type].forEach(ex => {
+            if (ex.side) {
+                const rKey = `${ex.id}-r`;
+                const lKey = `${ex.id}-l`;
+                const rInput = document.getElementById(`ex-${ex.id}-r-val`);
+                const lInput = document.getElementById(`ex-${ex.id}-l-val`);
+                const rBtn = document.getElementById(`ex-${ex.id}-r-btn`);
+                const lBtn = document.getElementById(`ex-${ex.id}-l-btn`);
+
+                rInput.value = sessionState[rKey].value;
+                lInput.value = sessionState[lKey].value;
+                if (sessionState[rKey].done) rBtn.classList.add('active');
+                if (sessionState[lKey].done) lBtn.classList.add('active');
+            } else {
+                const key = ex.id;
+                const input = document.getElementById(`ex-${ex.id}-val`);
+                const btn = document.getElementById(`ex-${ex.id}-btn`);
+
+                input.value = sessionState[key].value;
+                if (sessionState[key].done) btn.classList.add('active');
+            }
+        });
+
+        initRatings();
+        return true;
+    }
+
+    function initWorkout(isLoadingDraft = false) {
         const type = document.getElementById('workoutType').value;
         const exercises = workoutData[type];
         const listDiv = document.getElementById('exerciseList');
         listDiv.innerHTML = '';
-        sessionState = { warmup: { done: false, name: "نرمش قبل از تمرین انجام شد ؟", time: null, rawTime: null } };
-
-        document.getElementById('nut-eggs').value = 0;
-        document.getElementById('nut-soy').value = 0;
-        document.getElementById('nut-potatoes').value = 0;
-        if (nutritionEditor) nutritionEditor.setContent('');
-        if (notesEditor) notesEditor.setContent('');
+        if (!isLoadingDraft) {
+            sessionState = { warmup: { done: false, name: "نرمش قبل از تمرین انجام شد ؟", time: null, rawTime: null } };
+            document.getElementById('nut-eggs').value = 0;
+            document.getElementById('nut-soy').value = 0;
+            document.getElementById('nut-potatoes').value = 0;
+            if (nutritionEditor) nutritionEditor.setContent('');
+            if (notesEditor) notesEditor.setContent('');
+        }
 
         // نرمش قبل از تمرین
         const warmupCard = document.createElement('div');
@@ -951,14 +1048,14 @@
                     <div class="side-row">
                         <span>👉 راست:</span>
                         <div class="input-with-check">
-                            <input type="number" id="ex-${ex.id}-r-val" value="${ex.target}">
+                            <input type="number" id="ex-${ex.id}-r-val" value="${ex.target}" oninput="updateSessionValue(${ex.id}, 'r', this.value)">
                             <button class="check-btn" id="ex-${ex.id}-r-btn" onclick="toggleCheck(${ex.id}, 'r')">✓</button>
                         </div>
                     </div>
                     <div class="side-row">
                         <span>👈 چپ:</span>
                         <div class="input-with-check">
-                            <input type="number" id="ex-${ex.id}-l-val" value="${ex.target}">
+                            <input type="number" id="ex-${ex.id}-l-val" value="${ex.target}" oninput="updateSessionValue(${ex.id}, 'l', this.value)">
                             <button class="check-btn" id="ex-${ex.id}-l-btn" onclick="toggleCheck(${ex.id}, 'l')">✓</button>
                         </div>
                     </div>
@@ -968,7 +1065,7 @@
                     <div class="exercise-header">
                         <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${ex.unit})</div>
                         <div class="input-with-check">
-                            <input type="number" id="ex-${ex.id}-val" value="${ex.target}">
+                            <input type="number" id="ex-${ex.id}-val" value="${ex.target}" oninput="updateSessionValue(${ex.id}, null, this.value)">
                             <button class="check-btn" id="ex-${ex.id}-btn" onclick="toggleCheck(${ex.id})">✓</button>
                         </div>
                     </div>
@@ -976,13 +1073,24 @@
             }
             listDiv.appendChild(card);
 
-            if (ex.side) {
-                sessionState[`${ex.id}-r`] = { done: false, value: ex.target, time: null, rawTime: null };
-                sessionState[`${ex.id}-l`] = { done: false, value: ex.target, time: null, rawTime: null };
-            } else {
-                sessionState[ex.id] = { done: false, value: ex.target, time: null, rawTime: null };
+            if (!isLoadingDraft) {
+                if (ex.side) {
+                    sessionState[`${ex.id}-r`] = { done: false, value: ex.target, time: null, rawTime: null };
+                    sessionState[`${ex.id}-l`] = { done: false, value: ex.target, time: null, rawTime: null };
+                } else {
+                    sessionState[ex.id] = { done: false, value: ex.target, time: null, rawTime: null };
+                }
             }
         });
+
+    }
+
+    function updateSessionValue(id, side, val) {
+        const key = side ? `${id}-${side}` : id;
+        if (sessionState[key]) {
+            sessionState[key].value = val;
+        }
+        saveDraft();
     }
 
     function escapeHtml(str) {
@@ -993,6 +1101,7 @@
             if (m === '>') return '&gt;';
             return m;
         });
+
     }
 
     function toggleWarmup() {
@@ -1007,6 +1116,7 @@
             sessionState.warmup.time = null;
             btn.classList.remove('active');
         }
+        saveDraft();
     }
 
     function toggleCheck(id, side = null) {
@@ -1028,6 +1138,7 @@
             sessionState[key].time = null;
             btn.classList.remove('active');
         }
+        saveDraft();
     }
 
     function initRatings() {
@@ -1044,10 +1155,12 @@
                     ratings[cat] = i;
                     Array.from(container.children).forEach(b => b.classList.remove('selected'));
                     btn.classList.add('selected');
+                    saveDraft();
                 };
                 container.appendChild(btn);
             }
         });
+
     }
 
     function toPersianDigits(str) {
@@ -1109,15 +1222,38 @@
     function applyProgression(lastWorkout) {
         const lastIncrementedId = localStorage.getItem(STORAGE_KEYS.LAST_INCREMENTED);
         if (lastIncrementedId !== lastWorkout.id.toString()) {
-            if (lastWorkout.typeCode === 'heavy') {
-                workoutData.heavy.forEach(ex => ex.target += 1);
-                workoutData.light.forEach(ex => ex.target += 1);
-                saveWorkoutData();
-            }
+            // افزایش کلی یک واحد به همه
+            workoutData.heavy.forEach(ex => ex.target += 1);
+            workoutData.light.forEach(ex => ex.target += 1);
+
+            // بررسی تک تک حرکات انجام شده
+            lastWorkout.exercises.forEach(recordedEx => {
+                // پیدا کردن حرکت در دیتای پایه
+                const baseExHeavy = workoutData.heavy.find(e => e.name === recordedEx.name);
+                const baseExLight = workoutData.light.find(e => e.name === recordedEx.name);
+
+                if (baseExHeavy) {
+                    if (recordedEx.r !== undefined) {
+                        // حرکات دوطرفه - میانگین یا کدام؟ فعلا راست
+                        const val = parseInt(recordedEx.r) || baseExHeavy.target - 1;
+                        baseExHeavy.target = val + 1;
+                        if (baseExLight) baseExLight.target = Math.floor((val + 1) / 2) || 1;
+                    } else if (recordedEx.value !== undefined && recordedEx.value !== '✅') {
+                        const val = parseInt(recordedEx.value);
+                        if (!isNaN(val)) {
+                            baseExHeavy.target = val + 1;
+                            if (baseExLight) baseExLight.target = Math.floor((val + 1) / 2) || 1;
+                        }
+                    }
+                }
+            });
+
+            saveWorkoutData();
             localStorage.setItem(STORAGE_KEYS.LAST_INCREMENTED, lastWorkout.id.toString());
             const nextType = localStorage.getItem(STORAGE_KEYS.NEXT_TYPE);
             if (nextType) document.getElementById('workoutType').value = nextType;
-            alert(lastWorkout.typeCode === 'heavy' ? '✅ زمان استراحت تمام شد! یک واحد به اهداف اضافه شد و نوبت تمرین سبک است!' : '✅ زمان استراحت تمام شد! نوبت تمرین سنگین است!');
+
+            alert('مربی: وقت تمرین شد! همه حرکات یک واحد سنگین‌تر شدن، اونایی هم که ترکوندی بیشتر اضافه شدن! بترکون 💪');
             initWorkout();
             renderExerciseManager();
         }
@@ -1226,6 +1362,9 @@
         history.unshift(record);
         localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
         localStorage.setItem(STORAGE_KEYS.NEXT_TYPE, type === 'heavy' ? 'light' : 'heavy');
+
+        localStorage.removeItem(STORAGE_KEYS.DRAFT);
+
         renderHistory();
         alert('✅ تمرین با موفقیت ثبت شد.');
         if (notesEditor) notesEditor.setContent('');
@@ -1279,6 +1418,7 @@
             `;
             container.appendChild(card);
         });
+
     }
 
     function openNoteModal(id) {
@@ -1441,23 +1581,127 @@
     }
 
     function renderStats() {
-        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]').slice().reverse();
+        const container = document.getElementById('statsSummary');
+
         if (history.length === 0) {
-            document.getElementById('statsSummary').innerHTML = '<p style="text-align:center;">📊 داده‌ای برای نمایش وجود ندارد.</p>';
-            document.getElementById('qualityChart').innerHTML = '<p style="text-align:center; padding-top:80px;">📊 داده کافی نیست</p>';
-            document.getElementById('fatigueChart').innerHTML = '<p style="text-align:center; padding-top:80px;">📊 داده کافی نیست</p>';
+            container.innerHTML = '<p style="text-align:center;">داده‌ای برای نمایش وجود ندارد.</p>';
             return;
         }
+
         const total = history.length;
-        const heavy = history.filter(r => r.typeCode === 'heavy').length;
-        const light = history.filter(r => r.typeCode === 'light').length;
-        document.getElementById('statsSummary').innerHTML = `<div class="stats-card" style="display:flex; justify-content:space-around; text-align:center;">
-            <div><div style="font-size:1.5rem; font-weight:bold; color:var(--primary-color);">${toPersianDigits(total)}</div><div>📊 کل تمرینات</div></div>
-            <div><div style="font-size:1.5rem; font-weight:bold; color:var(--danger-color);">${toPersianDigits(heavy)}</div><div>🔴 سنگین</div></div>
-            <div><div style="font-size:1.5rem; font-weight:bold; color:var(--success-color);">${toPersianDigits(light)}</div><div>🟢 سبک</div></div>
+        const heavyCount = history.filter(r => r.typeCode === 'heavy').length;
+        const lightCount = history.filter(r => r.typeCode === 'light').length;
+
+        container.innerHTML = `<div class="stats-card" style="display:flex; justify-content:space-around; text-align:center;">
+            <div><div style="font-size:1.2rem; font-weight:bold; color:var(--primary-color);">${toPersianDigits(total)}</div><div style="font-size:0.7rem;">جلسات</div></div>
+            <div><div style="font-size:1.2rem; font-weight:bold; color:var(--danger-color);">${toPersianDigits(heavyCount)}</div><div style="font-size:0.7rem;">سنگین</div></div>
+            <div><div style="font-size:1.2rem; font-weight:bold; color:var(--success-color);">${toPersianDigits(lightCount)}</div><div style="font-size:0.7rem;">سبک</div></div>
         </div>`;
-        document.getElementById('qualityChart').innerHTML = '<p style="text-align:center; padding-top:80px;">📈 نمودار کیفیت</p>';
-        document.getElementById('fatigueChart').innerHTML = '<p style="text-align:center; padding-top:80px;">📉 نمودار خستگی</p>';
+
+        renderProgressionChart(history);
+        renderComparisonChart(history);
+    }
+
+    function renderProgressionChart(history) {
+        const container = document.getElementById('mainProgressionChart');
+        if (!container) return;
+        const width = container.clientWidth || 300;
+        const height = 200;
+        const padding = 30;
+
+        let heavyPoints = [];
+        let lightPoints = [];
+        let heavySessions = 0;
+        let lightSessions = 0;
+
+        history.forEach((rec, index) => {
+            if (rec.typeCode === 'heavy') heavySessions++;
+            else lightSessions++;
+
+            heavyPoints.push({x: index, y: heavySessions});
+            lightPoints.push({x: index, y: lightSessions});
+        });
+
+        const maxSessions = Math.max(heavySessions, lightSessions, 1);
+        const xScale = (width - 2 * padding) / (history.length - 1 || 1);
+        const yScale = (height - 2 * padding) / maxSessions;
+
+        const makePath = (points, color) => {
+            if (points.length === 0) return '';
+            let d = `M ${padding} ${height - padding}`;
+            points.forEach((p, i) => {
+                const x = padding + p.x * xScale;
+                const y = height - padding - p.y * yScale;
+                d += ` L ${x} ${y}`;
+            });
+            return `<path d="${d}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />`;
+        };
+
+        container.innerHTML = `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}">
+            <line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="var(--border-color)" />
+            <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height-padding}" stroke="var(--border-color)" />
+            ${makePath(lightPoints, '#007bff')}
+            ${makePath(heavyPoints, '#dc3545')}
+        </svg>`;
+    }
+
+    function renderComparisonChart(history) {
+        const container = document.getElementById('comparisonChart');
+        if (!container) return;
+        const param = document.getElementById('compareParam').value;
+        const width = container.clientWidth || 300;
+        const height = 200;
+        const padding = 30;
+
+        const data = history.map((rec, index) => ({x: index, y: rec.ratings[param] || 0}));
+        const xScale = (width - 2 * padding) / (history.length - 1 || 1);
+        const yScale = (height - 2 * padding) / 10;
+
+        let pathD = '';
+        data.forEach((p, i) => {
+            const x = padding + p.x * xScale;
+            const y = height - padding - p.y * yScale;
+            pathD += (i === 0 ? 'M' : 'L') + ` ${x} ${y}`;
+        });
+
+        container.innerHTML = `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}">
+            <line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="var(--border-color)" />
+            <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height-padding}" stroke="var(--border-color)" />
+            <path d="${pathD}" fill="none" stroke="var(--primary-color)" stroke-width="2" />
+            ${data.map(p => `<circle cx="${padding + p.x * xScale}" cy="${height - padding - p.y * yScale}" r="3" fill="var(--primary-color)" />`).join('')}
+        </svg>`;
+    }
+
+    function addNewExercise() {
+        const name = document.getElementById('newExName').value.trim();
+        const target = parseInt(document.getElementById('newExTarget').value) || 0;
+        const unit = document.getElementById('newExUnit').value.trim() || 'تکرار';
+        const side = document.getElementById('newExSide').checked;
+
+        if (!name) {
+            alert('❌ لطفاً نام حرکت را وارد کنید.');
+            return;
+        }
+
+        const newId = Date.now();
+        const newExHeavy = { id: newId, name, target, unit, side };
+        const newExLight = { id: newId, name, target: Math.ceil(target / 2) || 1, unit, side };
+
+        workoutData.heavy.push(newExHeavy);
+        workoutData.light.push(newExLight);
+
+        saveWorkoutData();
+        initWorkout();
+        renderExerciseManager();
+
+        // پاک کردن فیلدها
+        document.getElementById('newExName').value = '';
+        document.getElementById('newExTarget').value = '';
+        document.getElementById('newExUnit').value = '';
+        document.getElementById('newExSide').checked = false;
+
+        alert(`✅ حرکت "${name}" با موفقیت اضافه شد.`);
     }
 
     function renderExerciseManager() {
@@ -1471,6 +1715,7 @@
                 <button class="manage-btn" onclick="moveExercise(${index}, 1)">↓</button></div>`;
             container.appendChild(div);
         });
+
     }
 
     function updateExerciseName(index, newName) {
@@ -1497,13 +1742,75 @@
         document.getElementById('sec-manage').scrollIntoView({ behavior: 'smooth' });
     }
 
+    // ثبت سرویس ورکر
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker Registered'))
+                .catch(err => console.log('Service Worker Failed', err));
+        });
+    }
+
+    // درخواست اجازه اعلان
+    function requestNotificationPermission() {
+        if ('Notification' in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    console.log('Notification permission granted.');
+                }
+            });
+        }
+    }
+
+    // بررسی و نمایش اعلان ۴۸ ساعته
+    function checkAndShowNotification() {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        if (history.length === 0) return;
+
+        const lastWorkout = history[0];
+        const lastTime = lastWorkout.id;
+        const now = Date.now();
+        const diff = now - lastTime;
+        const fortyEightHours = 48 * 60 * 60 * 1000;
+
+        // اگر ۴۸ ساعت گذشته باشد و قبلاً برای این تمرین خاص اعلان نداده باشیم
+        const lastNotifiedId = localStorage.getItem('last_notified_workout_id');
+
+        if (diff >= fortyEightHours && lastNotifiedId !== lastWorkout.id.toString()) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification('وقت ورزش شد! 💪', {
+                        body: '۴۸ ساعت از تمرین قبلیت گذشته پهلوان. امروز نوبت تمرین سبکه یا سنگین؟',
+                        icon: 'icon-192.png',
+                        vibrate: [200, 100, 200],
+                        badge: 'icon-192.png'
+                    });
+                    localStorage.setItem('last_notified_workout_id', lastWorkout.id.toString());
+                });
+            }
+        }
+    }
+
     window.onload = () => {
         initTheme();
+        requestNotificationPermission();
+        setTimeout(checkAndShowNotification, 3000); // ۳ ثانیه بعد از لود چک کنه
         notesEditor = createSimpleEditor('notes-editor', 'دلایل طول کشیدن و نکات تمرین...');
         nutritionEditor = createSimpleEditor('nutrition-editor', 'جزئیات تغذیه قبل و بعد تمرین...');
         historyEditor = createSimpleEditor('history-editor', 'یادداشت خود را اینجا بنویسید...');
-        initWorkout();
-        initRatings();
+
+        document.querySelectorAll('.editor-content').forEach(editor => {
+            editor.addEventListener('input', saveDraft);
+        });
+        document.querySelectorAll('#nut-eggs, #nut-soy, #nut-potatoes').forEach(input => {
+            input.addEventListener('input', saveDraft);
+        });
+
+        if (!loadDraft()) {
+            initWorkout();
+            initRatings();
+        }
+
         renderHistory();
         checkRestStatus();
         renderExerciseManager();
