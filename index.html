@@ -1791,8 +1791,20 @@
         }
     }
 
+    function checkAndNotifyOldData() {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        if (history.length === 0) {
+            const hasShownNotice = localStorage.getItem('data_migration_notice_shown');
+            if (!hasShownNotice) {
+                alert('💡 قهرمان! چون اسم فایل عوض شده یا داری از روی گیت‌هاب باز می‌کنی، ممکنه تاریخچه قبلی رو اینجا نبینی. \n\nاگه تاریخچه برات مهمه، از نسخه قبلی "خروجی" بگیر و اینجا "ورودی" بزن. 💪');
+                localStorage.setItem('data_migration_notice_shown', 'true');
+            }
+        }
+    }
+
     window.onload = () => {
         initTheme();
+        checkAndNotifyOldData();
         requestNotificationPermission();
         setTimeout(checkAndShowNotification, 3000); // ۳ ثانیه بعد از لود چک کنه
         notesEditor = createSimpleEditor('notes-editor', 'دلایل طول کشیدن و نکات تمرین...');

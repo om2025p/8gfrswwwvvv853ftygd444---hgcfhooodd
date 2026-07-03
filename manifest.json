@@ -1,9 +1,13 @@
 {
+  "id": "com.varzesh.app",
   "name": "ورزش",
   "short_name": "ورزش",
-  "start_url": "index.html",
+  "description": "اپلیکیشن مدیریت و ثبت تمرینات ورزشی آفلاین",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "background_color": "#f4f7f6",
   "theme_color": "#007bff",
   "icons": [
     {
