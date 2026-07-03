@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#007bff">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <title>ورزش</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --row-bg: #f9f9f9;
+            --border-color: #dddddd;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --secondary-color: #b0b0b0;
+            --shadow: 0 4px 6px rgba(0,0,0,0.5);
+            --row-bg: #2a2a2a;
+            --border-color: #444444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .icon {
+            display: inline-block;
+            margin-left: 5px;
+            font-size: 1.1em;
+        }
+
+        .backup-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .backup-btns button {
+            background: none;
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--secondary-color);
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .backup-btns button:hover {
+            background: var(--row-bg);
+            transform: scale(1.02);
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            left: 0;
+            background-color: var(--card-bg);
+            min-width: 260px;
+            box-shadow: var(--shadow);
+            z-index: 1100;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .dropdown-content button {
+            color: var(--text-color);
+            padding: 12px 16px;
+            display: block;
+            width: 100%;
+            border: none;
+            background: none;
+            text-align: right;
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .dropdown-content button:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-content button:hover {
+            background-color: var(--row-bg);
+        }
+
+        .dropdown.show .dropdown-content {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        select, textarea, input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        select:focus, textarea:focus, input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .exercise-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 0;
+        }
+
+        .exercise-item:last-child {
+            border-bottom: none;
+        }
+
+        .exercise-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .exercise-name {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .side-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--row-bg);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+
+        .input-with-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-with-check input {
+            width: 80px;
+            text-align: center;
+        }
+
+        .check-btn {
+            background: var(--row-bg);
+            border: 1px solid var(--border-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            color: var(--secondary-color);
+            font-size: 1.2rem;
+        }
+
+        .check-btn.active {
+            background: var(--success-color);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .rating-group {
+            margin-bottom: 20px;
+        }
+
+        .rating-label {
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            display: block;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        .rating-buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+
+        .rating-btn {
+            height: 35px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-color);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .rating-btn.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            font-family: inherit;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .history-card {
+            border-right: 5px solid var(--primary-color);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .history-date {
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+            margin-top: 2px;
+        }
+
+        .history-type {
+            font-weight: bold;
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+        }
+
+        .type-heavy { background: #fee2e2; color: #b91c1c; }
+        .type-light { background: #dcfce7; color: #15803d; }
+
+        [data-theme="dark"] .type-heavy { background: #450a0a; color: #fecaca; }
+        [data-theme="dark"] .type-light { background: #064e3b; color: #d1fae5; }
+
+        details {
+            margin-top: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--row-bg);
+            overflow: hidden;
+        }
+
+        details[open] {
+            background: var(--card-bg);
+        }
+
+        summary {
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 12px 15px;
+            outline: none;
+            font-weight: 600;
+            list-style: none;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary::after {
+            content: '▼';
+            font-size: 0.8rem;
+            float: left;
+        }
+
+        details[open] summary::after {
+            content: '▲';
+        }
+
+        .history-exercises {
+            list-style: none;
+            padding: 0 15px 15px 15px;
+            margin: 0;
+            font-size: 0.85rem;
+        }
+
+        .ex-row {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ex-row:last-child {
+            border-bottom: none;
+        }
+
+        .history-meta {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .meta-item {
+            background: var(--row-bg);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: var(--secondary-color);
+            border: 1px solid var(--border-color);
+            flex: 1;
+            text-align: center;
+        }
+
+        .history-notes {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            background: #fff9c4;
+            color: #333;
+            padding: 10px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        [data-theme="dark"] .history-notes {
+            background: #4a4a2a;
+            color: #eee;
+        }
+
+        .nutrition-badge {
+            background: #e3f2fd;
+            color: #0d47a1;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+
+        [data-theme="dark"] .nutrition-badge {
+            background: #0d47a1;
+            color: #e3f2fd;
+        }
+
+        .simple-editor {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .editor-toolbar {
+            background: var(--row-bg);
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .editor-toolbar button {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-color);
+            font-family: inherit;
+        }
+
+        .editor-toolbar button:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .editor-content {
+            min-height: 120px;
+            padding: 12px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            outline: none;
+            line-height: 1.6;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .rest-timer {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .rest-timer.active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .timer-countdown {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: block;
+            margin-top: 5px;
+            font-family: monospace;
+        }
+
+        .blocked {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(1);
+        }
+
+        .manage-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--row-bg);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .manage-item input {
+            flex: 1;
+            padding: 8px;
+        }
+
+        .manage-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .manage-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--secondary-color);
+            font-size: 0.75rem;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .nav-item .icon {
+            font-size: 1.4rem;
+            margin-bottom: 4px;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+            padding-bottom: 70px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 200px;
+            margin-top: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+        }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 400px) {
+            .rating-btn {
+                min-width: 30px;
+                height: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1><span class="icon">🏋️</span> ورزش</h1>
+        <div class="backup-btns">
+            <button onclick="toggleTheme()"><span class="icon">🌙</span> تم</button>
+            <button onclick="exportData()"><span class="icon">📤</span> خروجی</button>
+            <div class="dropdown" id="mainMenu">
+                <button onclick="toggleMenu()"><span class="icon">☰</span> منو</button>
+                <div class="dropdown-content">
+                    <button onclick="document.getElementById('importFile').click(); toggleMenu()"><span class="icon">📥</span> ورودی JSON</button>
+                    <button onclick="document.getElementById('importOldFile').click(); toggleMenu()"><span class="icon">📜</span> تاریخچه قدیمی</button>
+                    <button onclick="deleteOldHistory(); toggleMenu()"><span class="icon">🗑️</span> حذف تاریخچه قدیمی</button>
+                    <button onclick="emptyTrash(); toggleMenu()"><span class="icon">🔥</span> خالی کردن سطل زباله</button>
+                    <button onclick="openManageExercises(); toggleMenu()"><span class="icon">⚙️</span> مدیریت حرکات</button>
+                </div>
+            </div>
+            <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+            <input type="file" id="importOldFile" style="display:none" accept=".txt" onchange="importOldHistory(event)">
+        </div>
+    </header>
+
+    <div id="restTimer" class="rest-timer">
+        <span class="icon">⏳</span> زمان استراحت تا تمرین بعدی:
+        <span id="countdown" class="timer-countdown">۰۰:۰۰:۰۰</span>
+    </div>
+
+    <div id="tab-workout" class="tab-content active">
+        <div id="mainForm">
+            <details id="sec-type" class="card" open>
+                <summary>⚙️ تنظیمات تمرین</summary>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="workoutType">نوع تمرین امروز:</label>
+                    <select id="workoutType" onchange="initWorkout()">
+                        <option value="heavy">🔴 روز سنگین (100%)</option>
+                        <option value="light">🟢 روز سبک (50%)</option>
+                    </select>
+                </div>
+            </details>
+
+            <details id="sec-exercises" class="card" open>
+                <summary>📋 لیست حرکات</summary>
+                <div id="exerciseList" style="margin-top: 15px;"></div>
+            </details>
+
+            <details id="sec-manage" class="card">
+                <summary>🛠️ مدیریت حرکات</summary>
+                <div style="margin-top: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px;">
+                    <label style="font-size: 0.9rem; margin-bottom: 10px; display: block; color: var(--primary-color);">➕ افزودن حرکت جدید:</label>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <input type="text" id="newExName" placeholder="نام حرکت (مثلاً: پرس سینه)">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="number" id="newExTarget" placeholder="تعداد هدف" style="flex: 1;">
+                            <input type="text" id="newExUnit" placeholder="واحد (تکرار/ثانیه)" style="flex: 1;">
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" id="newExSide" style="width: auto;"> حرکت دوطرفه (راست و چپ جدا)
+                        </label>
+                        <button onclick="addNewExercise()" class="btn-submit" style="margin-top: 5px; padding: 10px;">افزودن به لیست</button>
+                    </div>
+                </div>
+                <div id="exerciseManagerList" style="margin-top: 15px;"></div>
+            </details>
+
+            <details id="sec-eval" class="card" open>
+                <summary>⭐ ارزیابی و ثبت نهایی</summary>
+                <div style="margin-top: 15px;">
+                    <label style="color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; margin-bottom: 15px; display: block;">
+                        <span class="icon">🍽️</span> تغذیه و سوخت‌رسانی:
+                    </label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 80px;">
+                            <label style="font-size: 0.8rem;">🥚 تخم‌مرغ (عدد):</label>
+                            <input type="number" id="nut-eggs" value="0" min="0">
+                        </div>
+                        <div style="flex: 1; min-width: 80px;">
+                            <label style="font-size: 0.8rem;">🥄 سویا (قاشق):</label>
+                            <input type="number" id="nut-soy" value="0" min="0">
+                        </div>
+                        <div style="flex: 1; min-width: 80px;">
+                            <label style="font-size: 0.8rem;">🥔 سیب‌زمینی (عدد):</label>
+                            <input type="number" id="nut-potatoes" value="0" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📝 یادداشت تغذیه:</label>
+                        <div id="nutrition-editor" class="simple-editor"></div>
+                    </div>
+
+                    <label style="color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; margin-bottom: 15px; display: block;">
+                        <span class="icon">⭐</span> ارزیابی وضعیت:
+                    </label>
+
+                    <div class="rating-group">
+                        <span class="rating-label">۱. وضعیت شکم (۱ خالی، ۱۰ سنگین):</span>
+                        <div class="rating-buttons" id="rating-stomach"></div>
+                    </div>
+
+                    <div class="rating-group">
+                        <span class="rating-label">۲. کیفیت تمرین (۱ افتضاح، ۱۰ عالی):</span>
+                        <div class="rating-buttons" id="rating-quality"></div>
+                    </div>
+
+                    <div class="rating-group">
+                        <span class="rating-label">۳. میزان خستگی (۱ سرحال، ۱۰ خستگی):</span>
+                        <div class="rating-buttons" id="rating-fatigue"></div>
+                    </div>
+
+                    <div class="rating-group">
+                        <span class="rating-label">۴. دمای محیط (۱ سرد، ۱۰ گرم):</span>
+                        <div class="rating-buttons" id="rating-temp"></div>
+                    </div>
+
+                    <div class="rating-group">
+                        <span class="rating-label">۵. وضعیت ذهنی (۱ آشفته، ۱۰ متمرکز):</span>
+                        <div class="rating-buttons" id="rating-mental"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>📝 یادداشت‌های تمرین:</label>
+                        <div id="notes-editor" class="simple-editor"></div>
+                    </div>
+
+                    <button id="submitBtn" class="btn-submit" onclick="finalizeWorkout()">
+                        ✅ ثبت نهایی تمرین
+                    </button>
+                </div>
+            </details>
+        </div>
+
+        <details id="sec-history" class="card" open>
+            <summary>📜 تاریخچه تمرینات</summary>
+            <div id="history" style="margin-top: 15px;"></div>
+        </details>
+    </div>
+
+    <div id="tab-stats" class="tab-content">
+        <h2 style="font-size: 1.1rem; margin-bottom: 15px;">داده‌نمای پیشرفت 📊</h2>
+
+        <div id="statsSummary"></div>
+
+        <div class="stats-card">
+            <h3>📈 پیشرفت کلی جلسات</h3>
+            <div id="mainProgressionChart" class="chart-container"></div>
+            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 10px; font-size: 0.8rem;">
+                <span style="color: #007bff;">🔵 سبک</span>
+                <span style="color: #dc3545;">🔴 سنگین</span>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h3>📍 مقایسه پارامترها</h3>
+            <div style="margin-bottom: 15px;">
+                <select id="compareParam" onchange="renderStats()" style="padding: 5px; font-size: 0.8rem;">
+                    <option value="stomach">۱. وضعیت شکم</option>
+                    <option value="quality">۲. کیفیت تمرین</option>
+                    <option value="fatigue">۳. میزان خستگی</option>
+                    <option value="temp">۴. دمای محیط</option>
+                    <option value="mental">۵. وضعیت ذهنی</option>
+                </select>
+            </div>
+            <div id="comparisonChart" class="chart-container"></div>
+        </div>
+
+        <details id="sec-trash" class="card">
+            <summary>🗑️ سطل زباله</summary>
+            <div id="trashList" style="margin-top: 15px;"></div>
+        </details>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('workout')" id="nav-workout">
+        <span class="icon">🏋️</span>
+        <span>تمرین</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('stats')" id="nav-stats">
+        <span class="icon">📊</span>
+        <span>آمار</span>
+    </div>
+</div>
+
+<div id="noteModal" class="modal">
+    <div class="modal-content card">
+        <h3>✏️ ویرایش یادداشت</h3>
+        <div id="history-editor" class="simple-editor" style="margin-bottom: 15px;"></div>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="saveHistoryNote()" class="btn-submit" style="margin-top:0; flex:1;">💾 ذخیره</button>
+            <button onclick="closeNoteModal()" class="btn-submit" style="margin-top:0; background:var(--secondary-color); flex:1;">❌ انصراف</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // =======================================================
+    // کلیدهای ذخیره‌سازی جدید - بدون تداخل با نسخه قبلی
+    // =======================================================
+    const STORAGE_KEYS = {
+        BASE_DATA: 'workout_new_base_v2',
+        HISTORY: 'workout_new_history_v2',
+        TRASH: 'workout_new_trash_v2',
+        LAST_INCREMENTED: 'workout_new_last_inc_v2',
+        NEXT_TYPE: 'workout_new_next_type_v2',
+        THEME: 'workout_new_theme_v2',
+        DRAFT: 'workout_new_draft_v2'
+    };
+
+    // =======================================================
+    // برنامه تمرینی جدید - فقط ۱۰ حرکت با ۹۵٪ کاهش
+    // =======================================================
+    const defaultWorkoutData = {
+        heavy: [
+            { id: 1, name: "پرش پروانه", target: 2, unit: "ثانیه" },
+            { id: 2, name: "اسکات با دمبل ۱۰ کیلویی رو به سینه", target: 2, unit: "تکرار" },
+            { id: 3, name: "پل باسن با دمبل ۱۰ کیلویی", target: 3, unit: "تکرار" },
+            { id: 4, name: "لانجز معکوس (با یا بدون دمبل)", target: 1, unit: "تکرار", side: true },
+            { id: 5, name: "کیک‌بک باسن (دمبل پشت زانو)", target: 1, unit: "تکرار", side: true },
+            { id: 6, name: "ددلیفت رومانیایی با دمبل ۱۰ کیلویی", target: 2, unit: "تکرار" },
+            { id: 7, name: "شنا سوئدی روی زانو", target: 1, unit: "تکرار" },
+            { id: 8, name: "زیربغل دمبل خم یک‌دست", target: 1, unit: "تکرار", side: true },
+            { id: 9, name: "دمبل چکشی جلو بازو ۱۰ کیلویی", target: 1, unit: "تکرار", side: true },
+            { id: 10, name: "پلانک ثابت حرفه‌ای (۳ ست)", target: 2, unit: "ثانیه" }
+        ],
+        light: [
+            { id: 1, name: "پرش پروانه", target: 1, unit: "ثانیه" },
+            { id: 2, name: "اسکات با دمبل ۱۰ کیلویی رو به سینه", target: 1, unit: "تکرار" },
+            { id: 3, name: "پل باسن با دمبل ۱۰ کیلویی", target: 2, unit: "تکرار" },
+            { id: 4, name: "لانجز معکوس (با یا بدون دمبل)", target: 1, unit: "تکرار", side: true },
+            { id: 5, name: "کیک‌بک باسن (دمبل پشت زانو)", target: 1, unit: "تکرار", side: true },
+            { id: 6, name: "ددلیفت رومانیایی با دمبل ۱۰ کیلویی", target: 1, unit: "تکرار" },
+            { id: 7, name: "شنا سوئدی روی زانو", target: 1, unit: "تکرار" },
+            { id: 8, name: "زیربغل دمبل خم یک‌دست", target: 1, unit: "تکرار", side: true },
+            { id: 9, name: "دمبل چکشی جلو بازو ۱۰ کیلویی", target: 1, unit: "تکرار", side: true },
+            { id: 10, name: "پلانک ثابت حرفه‌ای (۳ ست)", target: 1, unit: "ثانیه" }
+        ]
+    };
+
+    let workoutData = JSON.parse(localStorage.getItem(STORAGE_KEYS.BASE_DATA)) || defaultWorkoutData;
+    let sessionState = {};
+    let ratings = { stomach: 5, quality: 5, fatigue: 1, temp: 5, mental: 10 };
+    let restInterval;
+    let currentEditingId = null;
+    let notesEditor, nutritionEditor, historyEditor;
+
+    function createSimpleEditor(containerId, placeholder) {
+        const container = document.getElementById(containerId);
+        if (!container) return null;
+
+        container.innerHTML = `
+            <div class="editor-toolbar">
+                <button data-cmd="bold"><b>B</b></button>
+                <button data-cmd="italic"><i>I</i></button>
+                <button data-cmd="underline"><u>U</u></button>
+                <button data-cmd="justifyRight">↹</button>
+                <button data-cmd="insertOrderedList">1.</button>
+                <button data-cmd="insertUnorderedList">•</button>
+            </div>
+            <div class="editor-content" contenteditable="true"></div>
+        `;
+
+        const content = container.querySelector('.editor-content');
+        content.innerText = placeholder;
+        content.style.color = 'var(--secondary-color)';
+
+        content.addEventListener('focus', function() {
+            if (this.innerText === placeholder) {
+                this.innerText = '';
+                this.style.color = '';
+            }
+        });
+
+        content.addEventListener('blur', function() {
+            if (this.innerText.trim() === '') {
+                this.innerText = placeholder;
+                this.style.color = 'var(--secondary-color)';
+            } else {
+                this.style.color = '';
+            }
+        });
+
+        container.querySelectorAll('.editor-toolbar button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const cmd = btn.dataset.cmd;
+                document.execCommand(cmd, false, null);
+                content.focus();
+            });
+        });
+
+        return {
+            getContent: () => {
+                const html = content.innerHTML;
+                if (html === placeholder || html.trim() === '') return '';
+                return html;
+            },
+            setContent: (html) => {
+                content.innerHTML = html || '';
+                if (!html || html.trim() === '') {
+                    content.innerText = placeholder;
+                    content.style.color = 'var(--secondary-color)';
+                } else {
+                    content.style.color = '';
+                }
+            }
+        };
+    }
+
+    function saveWorkoutData() {
+        localStorage.setItem(STORAGE_KEYS.BASE_DATA, JSON.stringify(workoutData));
+    }
+
+    function saveDraft() {
+        const type = document.getElementById('workoutType').value;
+        const draft = {
+            type: type,
+            sessionState: sessionState,
+            ratings: ratings,
+            nutrition: {
+                eggs: document.getElementById('nut-eggs').value,
+                soy: document.getElementById('nut-soy').value,
+                potatoes: document.getElementById('nut-potatoes').value,
+                notes: nutritionEditor ? nutritionEditor.getContent() : ''
+            },
+            notes: notesEditor ? notesEditor.getContent() : ''
+        };
+        localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(draft));
+    }
+
+    function loadDraft() {
+        const draftStr = localStorage.getItem(STORAGE_KEYS.DRAFT);
+        if (!draftStr) return false;
+        const draft = JSON.parse(draftStr);
+
+        document.getElementById('workoutType').value = draft.type;
+        initWorkout(true);
+
+        sessionState = draft.sessionState;
+        ratings = draft.ratings;
+
+        document.getElementById('nut-eggs').value = draft.nutrition.eggs;
+        document.getElementById('nut-soy').value = draft.nutrition.soy;
+        document.getElementById('nut-potatoes').value = draft.nutrition.potatoes;
+
+        if (nutritionEditor) nutritionEditor.setContent(draft.nutrition.notes);
+        if (notesEditor) notesEditor.setContent(draft.notes);
+
+        const warmupBtn = document.getElementById('warmup-btn');
+        if (sessionState.warmup.done) warmupBtn.classList.add('active');
+
+        const type = draft.type;
+        workoutData[type].forEach(ex => {
+            if (ex.side) {
+                const rKey = `${ex.id}-r`;
+                const lKey = `${ex.id}-l`;
+                const rInput = document.getElementById(`ex-${ex.id}-r-val`);
+                const lInput = document.getElementById(`ex-${ex.id}-l-val`);
+                const rBtn = document.getElementById(`ex-${ex.id}-r-btn`);
+                const lBtn = document.getElementById(`ex-${ex.id}-l-btn`);
+
+                rInput.value = sessionState[rKey].value;
+                lInput.value = sessionState[lKey].value;
+                if (sessionState[rKey].done) rBtn.classList.add('active');
+                if (sessionState[lKey].done) lBtn.classList.add('active');
+            } else {
+                const key = ex.id;
+                const input = document.getElementById(`ex-${ex.id}-val`);
+                const btn = document.getElementById(`ex-${ex.id}-btn`);
+
+                input.value = sessionState[key].value;
+                if (sessionState[key].done) btn.classList.add('active');
+            }
+        });
+
+        initRatings();
+        return true;
+    }
+
+    function initWorkout(isLoadingDraft = false) {
+        const type = document.getElementById('workoutType').value;
+        const exercises = workoutData[type];
+        const listDiv = document.getElementById('exerciseList');
+        listDiv.innerHTML = '';
+        if (!isLoadingDraft) {
+            sessionState = { warmup: { done: false, name: "نرمش قبل از تمرین انجام شد ؟", time: null, rawTime: null } };
+            document.getElementById('nut-eggs').value = 0;
+            document.getElementById('nut-soy').value = 0;
+            document.getElementById('nut-potatoes').value = 0;
+            if (nutritionEditor) nutritionEditor.setContent('');
+            if (notesEditor) notesEditor.setContent('');
+        }
+
+        // نرمش قبل از تمرین
+        const warmupCard = document.createElement('div');
+        warmupCard.className = 'card exercise-item';
+        warmupCard.style.borderRight = "5px solid var(--primary-color)";
+        warmupCard.innerHTML = `
+            <div class="exercise-header">
+                <div class="exercise-name"><span class="icon">🧘</span> نرمش قبل از تمرین انجام شد ؟</div>
+                <button class="check-btn" id="warmup-btn" onclick="toggleWarmup()">✓</button>
+            </div>
+        `;
+        listDiv.appendChild(warmupCard);
+
+        exercises.forEach(ex => {
+            const card = document.createElement('div');
+            card.className = 'card exercise-item';
+
+            if (ex.side) {
+                card.innerHTML = `
+                    <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${ex.unit})</div>
+                    <div class="side-row">
+                        <span>👉 راست:</span>
+                        <div class="input-with-check">
+                            <input type="number" id="ex-${ex.id}-r-val" value="${ex.target}" oninput="updateSessionValue(${ex.id}, 'r', this.value)">
+                            <button class="check-btn" id="ex-${ex.id}-r-btn" onclick="toggleCheck(${ex.id}, 'r')">✓</button>
+                        </div>
+                    </div>
+                    <div class="side-row">
+                        <span>👈 چپ:</span>
+                        <div class="input-with-check">
+                            <input type="number" id="ex-${ex.id}-l-val" value="${ex.target}" oninput="updateSessionValue(${ex.id}, 'l', this.value)">
+                            <button class="check-btn" id="ex-${ex.id}-l-btn" onclick="toggleCheck(${ex.id}, 'l')">✓</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                card.innerHTML = `
+                    <div class="exercise-header">
+                        <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${ex.unit})</div>
+                        <div class="input-with-check">
+                            <input type="number" id="ex-${ex.id}-val" value="${ex.target}" oninput="updateSessionValue(${ex.id}, null, this.value)">
+                            <button class="check-btn" id="ex-${ex.id}-btn" onclick="toggleCheck(${ex.id})">✓</button>
+                        </div>
+                    </div>
+                `;
+            }
+            listDiv.appendChild(card);
+
+            if (!isLoadingDraft) {
+                if (ex.side) {
+                    sessionState[`${ex.id}-r`] = { done: false, value: ex.target, time: null, rawTime: null };
+                    sessionState[`${ex.id}-l`] = { done: false, value: ex.target, time: null, rawTime: null };
+                } else {
+                    sessionState[ex.id] = { done: false, value: ex.target, time: null, rawTime: null };
+                }
+            }
+        });
+
+    }
+
+    function updateSessionValue(id, side, val) {
+        const key = side ? `${id}-${side}` : id;
+        if (sessionState[key]) {
+            sessionState[key].value = val;
+        }
+        saveDraft();
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+
+    }
+
+    function toggleWarmup() {
+        sessionState.warmup.done = !sessionState.warmup.done;
+        const btn = document.getElementById('warmup-btn');
+        if (sessionState.warmup.done) {
+            sessionState.warmup.rawTime = Date.now();
+            sessionState.warmup.time = toPersianDigits(new Date().toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'}));
+            btn.classList.add('active');
+        } else {
+            sessionState.warmup.rawTime = null;
+            sessionState.warmup.time = null;
+            btn.classList.remove('active');
+        }
+        saveDraft();
+    }
+
+    function toggleCheck(id, side = null) {
+        const key = side ? `${id}-${side}` : id;
+        const btnId = side ? `ex-${id}-${side}-btn` : `ex-${id}-btn`;
+        const inputId = side ? `ex-${id}-${side}-val` : `ex-${id}-val`;
+
+        const btn = document.getElementById(btnId);
+        const val = document.getElementById(inputId).value;
+
+        sessionState[key].done = !sessionState[key].done;
+        if (sessionState[key].done) {
+            sessionState[key].rawTime = Date.now();
+            sessionState[key].time = toPersianDigits(new Date().toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'}));
+            sessionState[key].value = val;
+            btn.classList.add('active');
+        } else {
+            sessionState[key].rawTime = null;
+            sessionState[key].time = null;
+            btn.classList.remove('active');
+        }
+        saveDraft();
+    }
+
+    function initRatings() {
+        const categories = ['stomach', 'quality', 'fatigue', 'temp', 'mental'];
+        categories.forEach(cat => {
+            const container = document.getElementById(`rating-${cat}`);
+            container.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'rating-btn';
+                if (ratings[cat] === i) btn.classList.add('selected');
+                btn.innerText = toPersianDigits(i);
+                btn.onclick = () => {
+                    ratings[cat] = i;
+                    Array.from(container.children).forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    saveDraft();
+                };
+                container.appendChild(btn);
+            }
+        });
+
+    }
+
+    function toPersianDigits(str) {
+        if (str === null || str === undefined) return '';
+        if (typeof str !== 'string') str = str.toString();
+        return str.replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+    }
+
+    function toggleMenu() {
+        document.getElementById('mainMenu').classList.toggle('show');
+    }
+
+    window.addEventListener('click', function(event) {
+        if (!event.target.closest('.dropdown')) {
+            document.getElementById('mainMenu').classList.remove('show');
+        }
+    });
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem(STORAGE_KEYS.THEME, newTheme);
+    }
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+
+    function getPersianDate() {
+        return new Intl.DateTimeFormat('fa-IR', { dateStyle: 'full' }).format(new Date());
+    }
+
+    function getPersianTime() {
+        return toPersianDigits(new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    }
+
+    function checkRestStatus() {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        if (history.length === 0) return true;
+
+        const lastWorkout = history[0];
+        const lastTime = lastWorkout.id;
+        const now = Date.now();
+        const diff = now - lastTime;
+        const restPeriod = 48 * 60 * 60 * 1000;
+
+        if (diff < restPeriod) {
+            showTimer(restPeriod - diff);
+            return false;
+        } else {
+            hideTimer();
+            applyProgression(lastWorkout);
+            return true;
+        }
+    }
+
+    function applyProgression(lastWorkout) {
+        const lastIncrementedId = localStorage.getItem(STORAGE_KEYS.LAST_INCREMENTED);
+        if (lastIncrementedId !== lastWorkout.id.toString()) {
+            // افزایش کلی یک واحد به همه
+            workoutData.heavy.forEach(ex => ex.target += 1);
+            workoutData.light.forEach(ex => ex.target += 1);
+
+            // بررسی تک تک حرکات انجام شده
+            lastWorkout.exercises.forEach(recordedEx => {
+                // پیدا کردن حرکت در دیتای پایه
+                const baseExHeavy = workoutData.heavy.find(e => e.name === recordedEx.name);
+                const baseExLight = workoutData.light.find(e => e.name === recordedEx.name);
+
+                if (baseExHeavy) {
+                    if (recordedEx.r !== undefined) {
+                        // حرکات دوطرفه - میانگین یا کدام؟ فعلا راست
+                        const val = parseInt(recordedEx.r) || baseExHeavy.target - 1;
+                        baseExHeavy.target = val + 1;
+                        if (baseExLight) baseExLight.target = Math.floor((val + 1) / 2) || 1;
+                    } else if (recordedEx.value !== undefined && recordedEx.value !== '✅') {
+                        const val = parseInt(recordedEx.value);
+                        if (!isNaN(val)) {
+                            baseExHeavy.target = val + 1;
+                            if (baseExLight) baseExLight.target = Math.floor((val + 1) / 2) || 1;
+                        }
+                    }
+                }
+            });
+
+            saveWorkoutData();
+            localStorage.setItem(STORAGE_KEYS.LAST_INCREMENTED, lastWorkout.id.toString());
+            const nextType = localStorage.getItem(STORAGE_KEYS.NEXT_TYPE);
+            if (nextType) document.getElementById('workoutType').value = nextType;
+
+            alert('مربی: وقت تمرین شد! همه حرکات یک واحد سنگین‌تر شدن، اونایی هم که ترکوندی بیشتر اضافه شدن! بترکون 💪');
+            initWorkout();
+            renderExerciseManager();
+        }
+    }
+
+    function showTimer(remainingMs) {
+        const timerDiv = document.getElementById('restTimer');
+        const mainForm = document.getElementById('mainForm');
+        timerDiv.classList.add('active');
+        mainForm.classList.add('blocked');
+        clearInterval(restInterval);
+        updateTimerDisplay(remainingMs);
+        restInterval = setInterval(() => {
+            remainingMs -= 1000;
+            if (remainingMs <= 0) {
+                clearInterval(restInterval);
+                hideTimer();
+                checkRestStatus();
+            } else {
+                updateTimerDisplay(remainingMs);
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay(ms) {
+        const hours = Math.floor(ms / (1000 * 60 * 60));
+        const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+        document.getElementById('countdown').innerText = toPersianDigits(`${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`);
+    }
+
+    function hideTimer() {
+        document.getElementById('restTimer').classList.remove('active');
+        document.getElementById('mainForm').classList.remove('blocked');
+        clearInterval(restInterval);
+    }
+
+    function finalizeWorkout() {
+        const type = document.getElementById('workoutType').value;
+        const notes = notesEditor ? notesEditor.getContent() : '';
+        const nutritionNotes = nutritionEditor ? nutritionEditor.getContent() : '';
+        const exercises = workoutData[type];
+
+        const nutrition = {
+            eggs: parseInt(document.getElementById('nut-eggs').value) || 0,
+            soy: parseInt(document.getElementById('nut-soy').value) || 0,
+            potatoes: parseInt(document.getElementById('nut-potatoes').value) || 0,
+            notes: nutritionNotes
+        };
+
+        const record = {
+            id: Date.now(),
+            date: getPersianDate(),
+            time: getPersianTime(),
+            type: type === 'heavy' ? 'سنگین' : 'سبک',
+            typeCode: type,
+            exercises: [],
+            ratings: { ...ratings },
+            notes: notes,
+            nutrition: nutrition,
+            warmup: sessionState.warmup.done
+        };
+
+        if (sessionState.warmup.done) {
+            record.exercises.push({
+                name: sessionState.warmup.name,
+                value: '✅',
+                time: sessionState.warmup.time,
+                unit: '',
+                rawTime: sessionState.warmup.rawTime
+            });
+        }
+
+        exercises.forEach(ex => {
+            if (ex.side) {
+                const rDone = sessionState[`${ex.id}-r`].done;
+                const lDone = sessionState[`${ex.id}-l`].done;
+                if (rDone || lDone) {
+                    record.exercises.push({
+                        name: ex.name,
+                        r: rDone ? sessionState[`${ex.id}-r`].value : '-',
+                        rTime: sessionState[`${ex.id}-r`].time,
+                        l: lDone ? sessionState[`${ex.id}-l`].value : '-',
+                        lTime: sessionState[`${ex.id}-l`].time,
+                        unit: ex.unit
+                    });
+                }
+            } else {
+                if (sessionState[ex.id].done) {
+                    record.exercises.push({
+                        name: ex.name,
+                        value: sessionState[ex.id].value,
+                        time: sessionState[ex.id].time,
+                        unit: ex.unit
+                    });
+                }
+            }
+        });
+
+        if (record.exercises.length === 0) {
+            alert('⚠️ لطفاً حداقل یک حرکت را تیک بزنید!');
+            return;
+        }
+
+        let history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        history.unshift(record);
+        localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+        localStorage.setItem(STORAGE_KEYS.NEXT_TYPE, type === 'heavy' ? 'light' : 'heavy');
+
+        localStorage.removeItem(STORAGE_KEYS.DRAFT);
+
+        renderHistory();
+        alert('✅ تمرین با موفقیت ثبت شد.');
+        if (notesEditor) notesEditor.setContent('');
+        if (nutritionEditor) nutritionEditor.setContent('');
+        initWorkout();
+        checkRestStatus();
+    }
+
+    function renderHistory() {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        const container = document.getElementById('history');
+        container.innerHTML = '<h2 style="font-size: 1.1rem; margin-bottom: 15px;">📜 تاریخچه تمرینات</h2>';
+
+        history.forEach(rec => {
+            const card = document.createElement('div');
+            card.className = 'card history-card';
+
+            let exListHtml = rec.exercises.map(ex => {
+                if (ex.r !== undefined) {
+                    return `<div class="ex-row"><b>${escapeHtml(ex.name)}</b><br/>${ex.r !== '-' ? `👉 راست: ${ex.r} ${ex.unit} (${ex.rTime || ''})` : ''}${ex.l !== '-' ? `<br/>👈 چپ: ${ex.l} ${ex.unit} (${ex.lTime || ''})` : ''}</div>`;
+                }
+                return `<div class="ex-row"><b>${escapeHtml(ex.name)}</b>: ${ex.value} ${ex.unit} (${ex.time || ''})</div>`;
+            }).join('');
+
+            card.innerHTML = `
+                <div class="history-header">
+                    <div>
+                        <span class="history-type ${rec.typeCode === 'heavy' ? 'type-heavy' : 'type-light'}">${rec.type}</span>
+                        <div class="history-date">📅 ${rec.date}<br/>⏰ ${rec.time}</div>
+                    </div>
+                    <button class="btn-delete" onclick="deleteRecord(${rec.id})">🗑️</button>
+                </div>
+                ${rec.nutrition && (rec.nutrition.eggs > 0 || rec.nutrition.soy > 0 || rec.nutrition.potatoes > 0 || rec.nutrition.notes) ? `
+                <div class="nutrition-badge">
+                    🍽️ <b>سوخت‌رسانی:</b>
+                    <div>${rec.nutrition.eggs > 0 ? `🥚 ${toPersianDigits(rec.nutrition.eggs)} تا | ` : ''}${rec.nutrition.soy > 0 ? `🥄 ${toPersianDigits(rec.nutrition.soy)} قاشق | ` : ''}${rec.nutrition.potatoes > 0 ? `🥔 ${toPersianDigits(rec.nutrition.potatoes)} تا` : ''}</div>
+                    ${rec.nutrition.notes ? `<div>📝 ${rec.nutrition.notes}</div>` : ''}
+                </div>` : ''}
+                <details><summary>📋 جزئیات حرکات (${toPersianDigits(rec.exercises.length)})</summary><div class="history-exercises">${exListHtml}</div></details>
+                <div class="history-meta">
+                    <div class="meta-item">🤰 شکم: ${toPersianDigits(rec.ratings.stomach)}</div>
+                    <div class="meta-item">⭐ کیفیت: ${toPersianDigits(rec.ratings.quality)}</div>
+                    <div class="meta-item">😴 خستگی: ${toPersianDigits(rec.ratings.fatigue)}</div>
+                    <div class="meta-item">🌡️ دما: ${toPersianDigits(rec.ratings.temp)}</div>
+                    <div class="meta-item">🧠 ذهن: ${toPersianDigits(rec.ratings.mental)}</div>
+                </div>
+                <div class="history-notes">
+                    📝 <span id="note-content-${rec.id}">${rec.notes || '<span style="color:var(--secondary-color)">بدون یادداشت...</span>'}</span>
+                    <button onclick="openNoteModal(${rec.id})" style="position:absolute; left:10px; top:10px; background:none; border:none; color:var(--primary-color); cursor:pointer;">✏️</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+    }
+
+    function openNoteModal(id) {
+        currentEditingId = id;
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        const record = history.find(r => r.id === id);
+        if (record && historyEditor) {
+            historyEditor.setContent(record.notes || '');
+            document.getElementById('noteModal').classList.add('active');
+        }
+    }
+
+    function closeNoteModal() {
+        document.getElementById('noteModal').classList.remove('active');
+        currentEditingId = null;
+    }
+
+    function saveHistoryNote() {
+        if (!currentEditingId || !historyEditor) return;
+        let history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        const index = history.findIndex(r => r.id === currentEditingId);
+        if (index !== -1) {
+            history[index].notes = historyEditor.getContent();
+            localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+            renderHistory();
+            closeNoteModal();
+        }
+    }
+
+    function deleteRecord(id) {
+        if (confirm('🗑️ آیا می‌خواهید این تمرین را به سطل زباله منتقل کنید؟')) {
+            let history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+            let trash = JSON.parse(localStorage.getItem(STORAGE_KEYS.TRASH) || '[]');
+            const record = history.find(r => r.id === id);
+            if (record) {
+                trash.unshift(record);
+                history = history.filter(r => r.id !== id);
+                localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+                localStorage.setItem(STORAGE_KEYS.TRASH, JSON.stringify(trash));
+                renderHistory();
+                renderStats();
+            }
+        }
+    }
+
+    function restoreRecord(id) {
+        let history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        let trash = JSON.parse(localStorage.getItem(STORAGE_KEYS.TRASH) || '[]');
+        const record = trash.find(r => r.id === id);
+        if (record) {
+            history.push(record);
+            history.sort((a, b) => b.id - a.id);
+            trash = trash.filter(r => r.id !== id);
+            localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+            localStorage.setItem(STORAGE_KEYS.TRASH, JSON.stringify(trash));
+            renderHistory();
+            renderTrash();
+            renderStats();
+        }
+    }
+
+    function permanentDelete(id) {
+        if (confirm('⚠️ آیا از حذف دائمی این رکورد مطمئن هستید؟')) {
+            let trash = JSON.parse(localStorage.getItem(STORAGE_KEYS.TRASH) || '[]');
+            trash = trash.filter(r => r.id !== id);
+            localStorage.setItem(STORAGE_KEYS.TRASH, JSON.stringify(trash));
+            renderTrash();
+        }
+    }
+
+    function emptyTrash() {
+        if (confirm('🔥 آیا از خالی کردن کامل سطل زباله مطمئن هستید؟')) {
+            localStorage.setItem(STORAGE_KEYS.TRASH, '[]');
+            renderTrash();
+        }
+    }
+
+    function renderTrash() {
+        const trash = JSON.parse(localStorage.getItem(STORAGE_KEYS.TRASH) || '[]');
+        const container = document.getElementById('trashList');
+        if (trash.length === 0) {
+            container.innerHTML = '<p style="text-align:center;">🗑️ سطل زباله خالی است.</p>';
+            return;
+        }
+        let html = `<button onclick="emptyTrash()" class="btn-submit" style="background:var(--danger-color); margin-bottom:15px; padding:10px;">🔥 خالی کردن سطل زباله</button>`;
+        trash.forEach(rec => {
+            html += `<div class="card" style="padding:10px; border-right: 5px solid var(--secondary-color); margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div><span style="font-weight:bold;">${rec.type}</span><br/><span style="font-size:0.7rem;">${rec.date}</span></div>
+                    <div><button onclick="restoreRecord(${rec.id})" style="color:var(--success-color); background:none; border:none; cursor:pointer;">↩️</button>
+                    <button onclick="permanentDelete(${rec.id})" style="color:var(--danger-color); background:none; border:none; cursor:pointer;">❌</button></div>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function exportData() {
+        const data = localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]';
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Workout_Backup_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (Array.isArray(data)) {
+                    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(data));
+                    renderHistory();
+                    alert('✅ اطلاعات با موفقیت بازیابی شد.');
+                } else alert('❌ فایل نامعتبر است.');
+            } catch (err) { alert('❌ خطا در خواندن فایل!'); }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    function deleteOldHistory() {
+        if (confirm('🗑️ آیا از حذف تمام رکوردهای قدیمی مطمئن هستید؟')) {
+            let history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+            let trash = JSON.parse(localStorage.getItem(STORAGE_KEYS.TRASH) || '[]');
+            const oldCount = history.filter(r => r.type === 'قدیمی').length + trash.filter(r => r.type === 'قدیمی').length;
+            history = history.filter(r => r.type !== 'قدیمی');
+            trash = trash.filter(r => r.type !== 'قدیمی');
+            localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+            localStorage.setItem(STORAGE_KEYS.TRASH, JSON.stringify(trash));
+            renderHistory();
+            renderStats();
+            renderTrash();
+            alert(`✅ ${toPersianDigits(oldCount)} رکورد قدیمی حذف شد.`);
+        }
+    }
+
+    function importOldHistory(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            alert('🔧 قابلیت واردات از فایل قدیمی در حال توسعه است...');
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(`tab-${tab}`).classList.add('active');
+        document.getElementById(`nav-${tab}`).classList.add('active');
+        if (tab === 'stats') { renderStats(); renderTrash(); }
+    }
+
+    function renderStats() {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]').slice().reverse();
+        const container = document.getElementById('statsSummary');
+
+        if (history.length === 0) {
+            container.innerHTML = '<p style="text-align:center;">داده‌ای برای نمایش وجود ندارد.</p>';
+            return;
+        }
+
+        const total = history.length;
+        const heavyCount = history.filter(r => r.typeCode === 'heavy').length;
+        const lightCount = history.filter(r => r.typeCode === 'light').length;
+
+        container.innerHTML = `<div class="stats-card" style="display:flex; justify-content:space-around; text-align:center;">
+            <div><div style="font-size:1.2rem; font-weight:bold; color:var(--primary-color);">${toPersianDigits(total)}</div><div style="font-size:0.7rem;">جلسات</div></div>
+            <div><div style="font-size:1.2rem; font-weight:bold; color:var(--danger-color);">${toPersianDigits(heavyCount)}</div><div style="font-size:0.7rem;">سنگین</div></div>
+            <div><div style="font-size:1.2rem; font-weight:bold; color:var(--success-color);">${toPersianDigits(lightCount)}</div><div style="font-size:0.7rem;">سبک</div></div>
+        </div>`;
+
+        renderProgressionChart(history);
+        renderComparisonChart(history);
+    }
+
+    function renderProgressionChart(history) {
+        const container = document.getElementById('mainProgressionChart');
+        if (!container) return;
+        const width = container.clientWidth || 300;
+        const height = 200;
+        const padding = 30;
+
+        let heavyPoints = [];
+        let lightPoints = [];
+        let heavySessions = 0;
+        let lightSessions = 0;
+
+        history.forEach((rec, index) => {
+            if (rec.typeCode === 'heavy') heavySessions++;
+            else lightSessions++;
+
+            heavyPoints.push({x: index, y: heavySessions});
+            lightPoints.push({x: index, y: lightSessions});
+        });
+
+        const maxSessions = Math.max(heavySessions, lightSessions, 1);
+        const xScale = (width - 2 * padding) / (history.length - 1 || 1);
+        const yScale = (height - 2 * padding) / maxSessions;
+
+        const makePath = (points, color) => {
+            if (points.length === 0) return '';
+            let d = `M ${padding} ${height - padding}`;
+            points.forEach((p, i) => {
+                const x = padding + p.x * xScale;
+                const y = height - padding - p.y * yScale;
+                d += ` L ${x} ${y}`;
+            });
+            return `<path d="${d}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />`;
+        };
+
+        container.innerHTML = `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}">
+            <line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="var(--border-color)" />
+            <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height-padding}" stroke="var(--border-color)" />
+            ${makePath(lightPoints, '#007bff')}
+            ${makePath(heavyPoints, '#dc3545')}
+        </svg>`;
+    }
+
+    function renderComparisonChart(history) {
+        const container = document.getElementById('comparisonChart');
+        if (!container) return;
+        const param = document.getElementById('compareParam').value;
+        const width = container.clientWidth || 300;
+        const height = 200;
+        const padding = 30;
+
+        const data = history.map((rec, index) => ({x: index, y: rec.ratings[param] || 0}));
+        const xScale = (width - 2 * padding) / (history.length - 1 || 1);
+        const yScale = (height - 2 * padding) / 10;
+
+        let pathD = '';
+        data.forEach((p, i) => {
+            const x = padding + p.x * xScale;
+            const y = height - padding - p.y * yScale;
+            pathD += (i === 0 ? 'M' : 'L') + ` ${x} ${y}`;
+        });
+
+        container.innerHTML = `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}">
+            <line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="var(--border-color)" />
+            <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height-padding}" stroke="var(--border-color)" />
+            <path d="${pathD}" fill="none" stroke="var(--primary-color)" stroke-width="2" />
+            ${data.map(p => `<circle cx="${padding + p.x * xScale}" cy="${height - padding - p.y * yScale}" r="3" fill="var(--primary-color)" />`).join('')}
+        </svg>`;
+    }
+
+    function addNewExercise() {
+        const name = document.getElementById('newExName').value.trim();
+        const target = parseInt(document.getElementById('newExTarget').value) || 0;
+        const unit = document.getElementById('newExUnit').value.trim() || 'تکرار';
+        const side = document.getElementById('newExSide').checked;
+
+        if (!name) {
+            alert('❌ لطفاً نام حرکت را وارد کنید.');
+            return;
+        }
+
+        const newId = Date.now();
+        const newExHeavy = { id: newId, name, target, unit, side };
+        const newExLight = { id: newId, name, target: Math.ceil(target / 2) || 1, unit, side };
+
+        workoutData.heavy.push(newExHeavy);
+        workoutData.light.push(newExLight);
+
+        saveWorkoutData();
+        initWorkout();
+        renderExerciseManager();
+
+        // پاک کردن فیلدها
+        document.getElementById('newExName').value = '';
+        document.getElementById('newExTarget').value = '';
+        document.getElementById('newExUnit').value = '';
+        document.getElementById('newExSide').checked = false;
+
+        alert(`✅ حرکت "${name}" با موفقیت اضافه شد.`);
+    }
+
+    function renderExerciseManager() {
+        const container = document.getElementById('exerciseManagerList');
+        container.innerHTML = '';
+        workoutData.heavy.forEach((ex, index) => {
+            const div = document.createElement('div');
+            div.className = 'manage-item';
+            div.innerHTML = `<input type="text" value="${escapeHtml(ex.name)}" onchange="updateExerciseName(${index}, this.value)">
+                <div><button class="manage-btn" onclick="moveExercise(${index}, -1)">↑</button>
+                <button class="manage-btn" onclick="moveExercise(${index}, 1)">↓</button></div>`;
+            container.appendChild(div);
+        });
+
+    }
+
+    function updateExerciseName(index, newName) {
+        if (!newName.trim()) return;
+        workoutData.heavy[index].name = newName.trim();
+        workoutData.light[index].name = newName.trim();
+        saveWorkoutData();
+        initWorkout();
+    }
+
+    function moveExercise(index, direction) {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= workoutData.heavy.length) return;
+        [workoutData.heavy[index], workoutData.heavy[newIndex]] = [workoutData.heavy[newIndex], workoutData.heavy[index]];
+        [workoutData.light[index], workoutData.light[newIndex]] = [workoutData.light[newIndex], workoutData.light[index]];
+        saveWorkoutData();
+        initWorkout();
+        renderExerciseManager();
+    }
+
+    function openManageExercises() {
+        switchTab('workout');
+        document.getElementById('sec-manage').open = true;
+        document.getElementById('sec-manage').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ثبت سرویس ورکر
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/gym/sw.js', { scope: '/gym/' })
+                .then(reg => console.log('Service Worker Registered'))
+                .catch(err => console.log('Service Worker Failed', err));
+        });
+    }
+
+    // درخواست اجازه اعلان
+    function requestNotificationPermission() {
+        if ('Notification' in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    console.log('Notification permission granted.');
+                }
+            });
+        }
+    }
+
+    // بررسی و نمایش اعلان ۴۸ ساعته
+    function checkAndShowNotification() {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        if (history.length === 0) return;
+
+        const lastWorkout = history[0];
+        const lastTime = lastWorkout.id;
+        const now = Date.now();
+        const diff = now - lastTime;
+        const fortyEightHours = 48 * 60 * 60 * 1000;
+
+        // اگر ۴۸ ساعت گذشته باشد و قبلاً برای این تمرین خاص اعلان نداده باشیم
+        const lastNotifiedId = localStorage.getItem('last_notified_workout_id');
+
+        if (diff >= fortyEightHours && lastNotifiedId !== lastWorkout.id.toString()) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification('وقت ورزش شد! 💪', {
+                        body: '۴۸ ساعت از تمرین قبلیت گذشته پهلوان. امروز نوبت تمرین سبکه یا سنگین؟',
+                        icon: 'icon-192.png',
+                        vibrate: [200, 100, 200],
+                        badge: 'icon-192.png'
+                    });
+                    localStorage.setItem('last_notified_workout_id', lastWorkout.id.toString());
+                });
+            }
+        }
+    }
+
+    function checkAndNotifyOldData() {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        if (history.length === 0) {
+            const hasShownNotice = localStorage.getItem('data_migration_notice_shown');
+            if (!hasShownNotice) {
+                alert('💡 قهرمان! چون اسم فایل عوض شده یا داری از روی گیت‌هاب باز می‌کنی، ممکنه تاریخچه قبلی رو اینجا نبینی. \n\nاگه تاریخچه برات مهمه، از نسخه قبلی "خروجی" بگیر و اینجا "ورودی" بزن. 💪');
+                localStorage.setItem('data_migration_notice_shown', 'true');
+            }
+        }
+    }
+
+    window.onload = () => {
+        initTheme();
+        checkAndNotifyOldData();
+        requestNotificationPermission();
+        setTimeout(checkAndShowNotification, 3000); // ۳ ثانیه بعد از لود چک کنه
+        notesEditor = createSimpleEditor('notes-editor', 'دلایل طول کشیدن و نکات تمرین...');
+        nutritionEditor = createSimpleEditor('nutrition-editor', 'جزئیات تغذیه قبل و بعد تمرین...');
+        historyEditor = createSimpleEditor('history-editor', 'یادداشت خود را اینجا بنویسید...');
+
+        document.querySelectorAll('.editor-content').forEach(editor => {
+            editor.addEventListener('input', saveDraft);
+        });
+        document.querySelectorAll('#nut-eggs, #nut-soy, #nut-potatoes').forEach(input => {
+            input.addEventListener('input', saveDraft);
+        });
+
+        if (!loadDraft()) {
+            initWorkout();
+            initRatings();
+        }
+
+        renderHistory();
+        checkRestStatus();
+        renderExerciseManager();
+        document.getElementById('noteModal').addEventListener('click', (e) => { if (e.target === document.getElementById('noteModal')) closeNoteModal(); });
+    };
+</script>
+</body>
+</html>
