@@ -1,6 +1,6 @@
 const CACHE_NAME = 'workout-app-v1';
 const ASSETS = [
-  'ورزش.html',
+  'index.html',
   'manifest.json',
   'icon-192.png',
   'icon-512.png',
@@ -43,6 +43,6 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
-    clients.openWindow('ورزش.html')
+    clients.openWindow('index.html')
   );
 });

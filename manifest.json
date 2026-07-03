@@ -1,7 +1,7 @@
 {
   "name": "ورزش",
   "short_name": "ورزش",
-  "start_url": "ورزش.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#007bff",
