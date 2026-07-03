@@ -679,6 +679,20 @@
 
             <details id="sec-manage" class="card">
                 <summary>🛠️ مدیریت حرکات</summary>
+                <div style="margin-top: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px;">
+                    <label style="font-size: 0.9rem; margin-bottom: 10px; display: block; color: var(--primary-color);">➕ افزودن حرکت جدید:</label>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <input type="text" id="newExName" placeholder="نام حرکت (مثلاً: پرس سینه)">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="number" id="newExTarget" placeholder="تعداد هدف" style="flex: 1;">
+                            <input type="text" id="newExUnit" placeholder="واحد (تکرار/ثانیه)" style="flex: 1;">
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" id="newExSide" style="width: auto;"> حرکت دوطرفه (راست و چپ جدا)
+                        </label>
+                        <button onclick="addNewExercise()" class="btn-submit" style="margin-top: 5px; padding: 10px;">افزودن به لیست</button>
+                    </div>
+                </div>
                 <div id="exerciseManagerList" style="margin-top: 15px;"></div>
             </details>
 
@@ -773,17 +787,18 @@
             <h3>📍 مقایسه پارامترها</h3>
             <div style="margin-bottom: 15px;">
                 <select id="compareParam" onchange="renderStats()" style="padding: 5px; font-size: 0.8rem;">
-                    <option value="quality">⭐ کیفیت تمرین</option>
-                    <option value="fatigue">دو میزان خستگی</option>
-                    <option value="stomach">نج وضعیت شکم</option>
-                    <option value="mental">نج وضعیت ذهنی</option>
+                    <option value="stomach">۱. وضعیت شکم</option>
+                    <option value="quality">۲. کیفیت تمرین</option>
+                    <option value="fatigue">۳. میزان خستگی</option>
+                    <option value="temp">۴. دمای محیط</option>
+                    <option value="mental">۵. وضعیت ذهنی</option>
                 </select>
             </div>
             <div id="comparisonChart" class="chart-container"></div>
         </div>
 
         <details id="sec-trash" class="card">
-            <summary>\x97\x91️ سطل زباله</summary>
+            <summary>🗑️ سطل زباله</summary>
             <div id="trashList" style="margin-top: 15px;"></div>
         </details>
     </div>
@@ -1236,7 +1251,7 @@
             const nextType = localStorage.getItem(STORAGE_KEYS.NEXT_TYPE);
             if (nextType) document.getElementById('workoutType').value = nextType;
 
-            alert('مربی: وقت تمرین شد! همه حرکات یک واحد سنگین تر شدن، اونایی هم که ترکوندی بیشتر اضافه شدن! بترکون 💪');
+            alert('مربی: وقت تمرین شد! همه حرکات یک واحد سنگین‌تر شدن، اونایی هم که ترکوندی بیشتر اضافه شدن! بترکون 💪');
             initWorkout();
             renderExerciseManager();
         }
@@ -1654,6 +1669,37 @@
             <path d="${pathD}" fill="none" stroke="var(--primary-color)" stroke-width="2" />
             ${data.map(p => `<circle cx="${padding + p.x * xScale}" cy="${height - padding - p.y * yScale}" r="3" fill="var(--primary-color)" />`).join('')}
         </svg>`;
+    }
+
+    function addNewExercise() {
+        const name = document.getElementById('newExName').value.trim();
+        const target = parseInt(document.getElementById('newExTarget').value) || 0;
+        const unit = document.getElementById('newExUnit').value.trim() || 'تکرار';
+        const side = document.getElementById('newExSide').checked;
+
+        if (!name) {
+            alert('❌ لطفاً نام حرکت را وارد کنید.');
+            return;
+        }
+
+        const newId = Date.now();
+        const newExHeavy = { id: newId, name, target, unit, side };
+        const newExLight = { id: newId, name, target: Math.ceil(target / 2) || 1, unit, side };
+
+        workoutData.heavy.push(newExHeavy);
+        workoutData.light.push(newExLight);
+
+        saveWorkoutData();
+        initWorkout();
+        renderExerciseManager();
+
+        // پاک کردن فیلدها
+        document.getElementById('newExName').value = '';
+        document.getElementById('newExTarget').value = '';
+        document.getElementById('newExUnit').value = '';
+        document.getElementById('newExSide').checked = false;
+
+        alert(`✅ حرکت "${name}" با موفقیت اضافه شد.`);
     }
 
     function renderExerciseManager() {
