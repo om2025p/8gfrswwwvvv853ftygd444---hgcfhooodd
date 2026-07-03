@@ -6,36 +6,40 @@
     <title>پیشخوان برنامه‌ها | امپراطوری شخصی</title>
     <style>
         :root {
-            --primary-color: #007bff;
-            --bg-color: #f4f7f6;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --secondary-text: #6c757d;
-            --shadow: 0 10px 20px rgba(0,0,0,0.05);
-            --border-radius: 20px;
-        }
-
-        [data-theme="dark"] {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #e0e0e0;
-            --secondary-text: #b0b0b0;
-            --shadow: 0 10px 20px rgba(0,0,0,0.3);
+            --primary-color: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 50%, #667eea 100%);
+            background-attachment: fixed;
             margin: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            transition: all 0.3s ease;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        /* افکت آبی-بنفش جذاب */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 30%, rgba(79, 172, 254, 0.4), transparent),
+                        radial-gradient(circle at 80% 70%, rgba(102, 126, 234, 0.4), transparent);
+            z-index: -1;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 40px 20px;
             flex-grow: 1;
@@ -44,162 +48,185 @@
         header {
             text-align: center;
             margin-bottom: 50px;
+            backdrop-filter: blur(10px);
+            background: var(--glass-bg);
+            padding: 30px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow);
         }
 
         h1 {
-            font-size: 2.5rem;
-            color: var(--primary-color);
-            margin-bottom: 10px;
+            font-size: 2.2rem;
+            margin: 0 0 10px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         .subtitle {
-            color: var(--secondary-text);
-            font-size: 1.1rem;
+            font-size: 1rem;
+            opacity: 0.9;
         }
 
         .app-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
         }
 
         .app-card {
-            background: var(--card-bg);
-            border-radius: var(--border-radius);
-            padding: 30px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 24px;
+            padding: 20px 10px;
             text-align: center;
             text-decoration: none;
             color: inherit;
             box-shadow: var(--shadow);
+            border: 1px solid var(--glass-border);
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid transparent;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
         }
 
         .app-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary-color);
-            box-shadow: 0 15px 30px rgba(0,123,255,0.15);
+            transform: translateY(-10px) scale(1.05);
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .app-card:active {
+            transform: scale(0.95);
         }
 
         .app-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            background: var(--bg-color);
-            width: 100px;
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.3s ease;
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+            transition: transform 0.3s ease;
         }
 
         .app-card:hover .app-icon {
-            background: var(--primary-color);
             transform: rotate(10deg);
         }
 
         .app-title {
-            font-size: 1.5rem;
+            font-size: 1rem;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
         }
 
         .app-desc {
-            color: var(--secondary-text);
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: var(--card-bg);
-            border: none;
-            padding: 10px;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: var(--shadow);
-            font-size: 1.5rem;
-            z-index: 100;
+            font-size: 0.75rem;
+            opacity: 0.8;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.4;
         }
 
         footer {
             text-align: center;
             padding: 20px;
-            color: var(--secondary-text);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            backdrop-filter: blur(5px);
         }
 
-        /* طنز کوچولو */
         .coming-soon {
-            opacity: 0.7;
+            opacity: 0.6;
             cursor: not-allowed;
-        }
-        .coming-soon:hover {
-            transform: none;
-            border-color: transparent;
         }
 
         @media (max-width: 600px) {
-            h1 { font-size: 1.8rem; }
-            .app-grid { grid-template-columns: 1fr; }
+            .app-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+                padding: 0 5px;
+            }
+            .app-card {
+                padding: 15px 5px;
+                border-radius: 18px;
+            }
+            .app-icon {
+                font-size: 2rem;
+            }
+            .app-title {
+                font-size: 0.85rem;
+            }
+            .app-desc {
+                display: none; /* در موبایل ۳ ستونه جای توضیحات نیست */
+            }
+            h1 { font-size: 1.6rem; }
+        }
+
+        /* انیمیشن برای حس شیشه‌ای */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
         }
     </style>
 </head>
 <body>
 
-    <button class="theme-toggle" onclick="toggleTheme()" title="تغییر تم">🌓</button>
-
     <div class="container">
         <header>
-            <h1>🏢 عمارت دیجیتال شما</h1>
-            <p class="subtitle">به مرکز فرماندهی خوش اومدی رئیس! امروز کدوم دکمه رو بزنیم؟ 🚀</p>
+            <h1>🏢 عمارت دیجیتال</h1>
+            <p class="subtitle">امروز کدوم دکمه رو بزنیم رئیس؟ 🚀</p>
         </header>
 
         <div class="app-grid">
             <!-- برنامه ورزش -->
-            <a href="/gym" class="app-card">
+            <a href="gym/index.html" class="app-card">
                 <div class="app-icon">🏋️</div>
-                <div class="app-title">برنامه ورزش</div>
-                <div class="app-desc">
-                    جایی که عرق می‌ریزی تا به آینه ثابت کنی کی رئیسه! <br>
-                    (قول میدم دمبل‌ها گاز نگیرن 😂)
-                </div>
+                <div class="app-title">ورزش</div>
+                <div class="app-desc">باشگاه شخصی در جیب شما</div>
             </a>
 
             <!-- جای خالی برای برنامه‌های بعدی -->
             <div class="app-card coming-soon">
                 <div class="app-icon">🛠️</div>
                 <div class="app-title">بزودی...</div>
-                <div class="app-desc">
-                    مربی در حال پختن یه چیز خفنه! <br>
-                    یه برنامه جدید که بزودی اینجا لنگر می‌ندازه.
-                </div>
+                <div class="app-desc">در حال پختن...</div>
+            </div>
+
+            <div class="app-card coming-soon">
+                <div class="app-icon">🧪</div>
+                <div class="app-title">بزودی...</div>
+                <div class="app-desc">آزمایشگاه...</div>
+            </div>
+
+            <div class="app-card coming-soon">
+                <div class="app-icon">🌙</div>
+                <div class="app-title">بزودی...</div>
+                <div class="app-desc">خواب آرام...</div>
+            </div>
+
+            <div class="app-card coming-soon">
+                <div class="app-icon">🍎</div>
+                <div class="app-title">بزودی...</div>
+                <div class="app-desc">تغذیه...</div>
+            </div>
+
+            <div class="app-card coming-soon">
+                <div class="app-icon">📈</div>
+                <div class="app-title">بزودی...</div>
+                <div class="app-desc">آمار...</div>
             </div>
         </div>
     </div>
 
     <footer>
-        ساخته شده با ❤️ و کمی چاشنی شوخ‌طبعی برای شما
+        ساخته شده با ❤️ برای شما
     </footer>
 
-    <script>
-        function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('main_portal_theme', newTheme);
-        }
-
-        // سینک کردن تم با سیستم یا تنظیمات قبلی
-        const savedTheme = localStorage.getItem('main_portal_theme');
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme || systemTheme);
-    </script>
 </body>
 </html>
