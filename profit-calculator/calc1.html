@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>ماشین حساب سود مرکب | نسخه نهایی جامع</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg: #f4f7f6;
+            --surface: #ffffff;
+            --primary: #00c853;
+            --primary-dark: #008f3a;
+            --text: #212121;
+            --text-secondary: #666666;
+            --border: #dddddd;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --primary: #00c853;
+            --primary-dark: #00ff00;
+            --text: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #333333;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, Tahoma, sans-serif;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .main-app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header-inputs {
+            padding: 15px;
+            background: var(--surface);
+            box-shadow: var(--card-shadow);
+            z-index: 10;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 17px;
+            text-align: right;
+            direction: ltr;
+            outline: none;
+            user-select: text;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        button {
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        .btn-calc {
+            background: var(--primary);
+            color: #000;
+            flex: 2;
+        }
+
+        .btn-toggle {
+            background: #555;
+            color: #fff;
+            flex: 1;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: 0.3s;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            background: rgba(0, 200, 83, 0.1);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .pane {
+            display: none;
+        }
+
+        .pane.active {
+            display: block;
+        }
+
+        .res-card {
+            background: var(--surface);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+            position: relative;
+        }
+
+        .menu-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.15);
+            color: var(--text-secondary);
+            border: none;
+            border-radius: 30px;
+            padding: 8px 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 20;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
+        }
+
+        .menu-btn:active {
+            transform: scale(0.95);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            background: var(--surface);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            min-width: 160px;
+            overflow: hidden;
+        }
+
+        .dropdown-menu.show {
+            display: flex;
+        }
+
+        .menu-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 200, 83, 0.1);
+        }
+
+        .menu-item:active {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .res-item {
+            margin-bottom: 12px;
+        }
+
+        .res-label {
+            color: var(--text-secondary);
+            font-size: 13px;
+            display: block;
+        }
+
+        .res-val {
+            font-size: 20px;
+            font-weight: bold;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+        }
+
+        .extra-stats {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .stat-box {
+            flex: 1;
+            background: var(--bg);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: block;
+        }
+
+        .stat-val {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .value-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .value-number {
+            font-weight: bold;
+            font-family: monospace;
+            white-space: nowrap;
+        }
+
+        .unit-text {
+            font-size: 0.7em;
+            color: var(--primary);
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .profit-highlight .value-number {
+            color: var(--primary);
+        }
+
+        .table-wrapper {
+            background: var(--surface);
+            border-radius: 12px;
+            overflow-x: auto;
+            padding: 0;
+            box-shadow: var(--card-shadow);
+        }
+
+        .table-wrapper table {
+            width: auto;
+            min-width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            direction: ltr;
+        }
+
+        .table-wrapper th,
+        .table-wrapper td {
+            border: 1px solid var(--border);
+            padding: 8px 10px;
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .table-wrapper th {
+            background: var(--bg);
+            color: var(--text-secondary);
+            font-weight: bold;
+        }
+
+        .period-cell {
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            background-color: rgba(0, 200, 83, 0.05);
+        }
+        .period-cell:hover {
+            background-color: rgba(0, 200, 83, 0.2);
+            transform: scale(1.02);
+        }
+
+        .hist-card {
+            background: var(--surface);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-right: 4px solid var(--primary);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--card-shadow);
+        }
+
+        .hist-info {
+            font-family: monospace;
+            font-size: 12px;
+            text-align: right;
+        }
+
+        .btn-del {
+            background: #ff5252;
+            color: #fff;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            margin-left: 8px;
+        }
+
+        .btn-export-hist {
+            background: var(--primary);
+            color: #000;
+            padding: 6px 12px;
+            border-radius: 20px;
+            margin-right: 8px;
+        }
+
+        .export-current-btn {
+            display: block;
+            width: 100%;
+            background: var(--primary);
+            color: #000;
+            margin-top: 15px;
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: 50px;
+        }
+
+        .amount-word-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(145deg, #0a0f1e, #0b1120);
+            color: #ffffff;
+            border: 2px solid #1e88e5;
+            border-radius: 24px;
+            padding: 20px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            direction: rtl;
+            text-align: center;
+            z-index: 999999;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 4px rgba(30,136,229,0.3);
+            backdrop-filter: blur(12px);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            max-width: 90vw;
+            white-space: normal;
+            line-height: 2;
+            letter-spacing: 1px;
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            z-index: 1000000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .simple-profit-tooltip {
+            position: fixed;
+            background: #00c853;
+            color: #000000;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            direction: ltr;
+            font-family: monospace;
+            transition: opacity 0.15s;
+            opacity: 0;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        @media (max-width: 640px) {
+            .table-wrapper th,
+            .table-wrapper td {
+                white-space: normal;
+                padding: 6px 6px;
+            }
+            .value-number,
+            .unit-text {
+                white-space: nowrap;
+            }
+            .amount-word-box {
+                font-size: 14px;
+                padding: 16px 22px;
+                width: 85vw;
+                line-height: 1.8;
+            }
+            .toast-msg {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-app">
+        <div class="header-inputs">
+            <input type="text" id="inpInv" placeholder="سرمایه اولیه (عدد)" inputmode="decimal">
+            <input type="text" id="inpRate" placeholder="نرخ سود هر دوره (درصد)" inputmode="decimal">
+            <input type="text" id="inpCycle" placeholder="تعداد دوره" inputmode="numeric">
+            <div class="btn-row">
+                <button class="btn-calc" id="calcBtn">محاسبه سود و جدول</button>
+                <button class="btn-toggle" id="unitBtn">واحد: دلار ($)</button>
+            </div>
+        </div>
+        <div class="tabs">
+            <div class="tab active" data-tab="0">خلاصه</div>
+            <div class="tab" data-tab="1">جدول سود دوره‌ها</div>
+            <div class="tab" data-tab="2">تاریخچه محاسبات</div>
+        </div>
+        <div class="content">
+            <div id="pane0" class="pane active">
+                <div id="displayArea">
+                    <p class="empty-msg">اعداد را وارد کنید و دکمه محاسبه را بزنید.</p>
+                </div>
+            </div>
+            <div id="pane1" class="pane">
+                <div class="table-wrapper">
+                    <table id="dataTable">
+                        <thead><tr><th>دوره</th><th>سرمایه اولیه</th><th>سود دوره</th><th>سرمایه نهایی</th></tr></thead>
+                        <tbody id="tableBody"><tr><td colspan="4">هنوز محاسبه‌ای نشده<\/td></tr></tbody>
+                    </table>
+                </div>
+                <button id="exportCurrentBtn" class="export-current-btn">خروجی HTML تعاملی (همین محاسبه)</button>
+            </div>
+            <div id="pane2" class="pane">
+                <div id="historyList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            let isToman = false;
+            let historyData = [];
+            let lastCalculationData = null;
+
+            const inpInv = document.getElementById('inpInv');
+            const inpRate = document.getElementById('inpRate');
+            const inpCycle = document.getElementById('inpCycle');
+            const unitBtn = document.getElementById('unitBtn');
+            const displayArea = document.getElementById('displayArea');
+            const tableBody = document.getElementById('tableBody');
+            const historyList = document.getElementById('historyList');
+            const calcBtn = document.getElementById('calcBtn');
+            const exportCurrentBtn = document.getElementById('exportCurrentBtn');
+
+            let amountBox = null;
+            let simpleTooltip = null;
+
+            // ========== تبدیل عدد به حروف ==========
+            function numberToWordsTomans(num) {
+                if (isNaN(num) || num === null) return "مقدار نامعتبر";
+                const whole = Math.floor(Math.abs(num));
+                if (whole === 0) return "صفر تومان";
+
+                const units = ["", "هزار", "میلیون", "میلیارد", "هزار میلیارد", "میلیون میلیارد", "میلیارد میلیارد"];
+                const triplets = [];
+                let n = whole;
+                while (n > 0) {
+                    triplets.push(n % 1000);
+                    n = Math.floor(n / 1000);
+                }
+
+                const ones = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه", "ده", "یازده", "دوازده", "سیزده", "چهارده", "پانزده", "شانزده", "هفده", "هجده", "نوزده"];
+                const tens = ["", "ده", "بیست", "سی", "چهل", "پنجاه", "شصت", "هفتاد", "هشتاد", "نود"];
+
+                function convertTriplet(t) {
+                    if (t === 0) return "";
+                    let result = "";
+                    const h = Math.floor(t / 100);
+                    const r = t % 100;
+                    if (h > 0) {
+                        result += ones[h] + " صد";
+                        if (r > 0) result += " و ";
+                    }
+                    if (r >= 20) {
+                        result += tens[Math.floor(r / 10)];
+                        if (r % 10 > 0) result += " و " + ones[r % 10];
+                    } else if (r > 0) {
+                        result += ones[r];
+                    }
+                    return result;
+                }
+
+                let parts = [];
+                for (let i = 0; i < triplets.length; i++) {
+                    const t = convertTriplet(triplets[i]);
+                    if (t) {
+                        parts.push(t + " " + units[i]);
+                    }
+                }
+                return parts.reverse().join(" و ") + " تومان";
+            }
+
+            function numberToWordsDollars(num) {
+                if (isNaN(num) || num === null) return "invalid amount";
+                const absNum = Math.abs(num);
+                const dollars = Math.floor(absNum);
+                const cents = Math.round((absNum - dollars) * 100);
+
+                const ones = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+                const tens = ["", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+                const units = ["", "thousand", "million", "billion", "trillion"];
+
+                function convertNumber(n) {
+                    if (n === 0) return "";
+                    if (n < 20) return ones[n];
+                    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? "-" + ones[n % 10] : "");
+                    if (n < 1000) return ones[Math.floor(n / 100)] + " hundred" + (n % 100 ? " " + convertNumber(n % 100) : "");
+
+                    let result = "";
+                    let remaining = n;
+                    let unitIndex = 0;
+                    while (remaining > 0) {
+                        let chunk = remaining % 1000;
+                        if (chunk > 0) {
+                            let chunkStr = convertNumber(chunk);
+                            if (unitIndex > 0) chunkStr += " " + units[unitIndex];
+                            result = chunkStr + (result ? " " + result : "");
+                        }
+                        remaining = Math.floor(remaining / 1000);
+                        unitIndex++;
+                    }
+                    return result;
+                }
+
+                let result = dollars === 0 ? "zero" : convertNumber(dollars);
+                result += dollars === 1 ? " dollar" : " dollars";
+                if (cents > 0) {
+                    result += " and " + convertNumber(cents) + (cents === 1 ? " cent" : " cents");
+                }
+                return result;
+            }
+
+            function formatAmountToWords(amount) {
+                if (isNaN(amount) || !isFinite(amount)) return "نامعتبر";
+                if (isToman) return numberToWordsTomans(Math.round(amount));
+                return numberToWordsDollars(amount);
+            }
+
+            function initAmountBox() {
+                if (amountBox) return;
+                amountBox = document.createElement('div');
+                amountBox.className = 'amount-word-box';
+                document.body.appendChild(amountBox);
+            }
+
+            function showAmountWords(amount) {
+                initAmountBox();
+                const words = formatAmountToWords(amount);
+                amountBox.innerHTML = `💰 ${words}`;
+                amountBox.style.opacity = '1';
+                setTimeout(() => {
+                    amountBox.style.opacity = '0';
+                }, 4000);
+            }
+
+            function showToast(msg, isSuccess = true) {
+                let toast = document.querySelector('.toast-msg');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.className = 'toast-msg';
+                    document.body.appendChild(toast);
+                }
+                toast.textContent = msg;
+                toast.style.backgroundColor = isSuccess ? '#00c853' : '#ff5252';
+                toast.style.color = isSuccess ? '#000' : '#fff';
+                toast.style.opacity = '1';
+                setTimeout(() => toast.style.opacity = '0', 2000);
+            }
+
+            function copyToClipboard(text) {
+                navigator.clipboard.writeText(text).then(() => showToast('📋 گزارش کپی شد! 🎉', true))
+                    .catch(() => showToast('❌ خطا در کپی', false));
+            }
+
+            function generateStructuredReport() {
+                if (!lastCalculationData) return null;
+                const d = lastCalculationData;
+                const unit = isToman ? "تومان" : "$";
+                const date = new Date().toLocaleString('fa-IR');
+                return `📊 گزارش سود مرکب
+─────────────────
+💰 سرمایه اولیه: ${d.initFormatted} ${unit}
+📈 سود کل (مرکب): ${d.profitFormatted} ${unit}
+🏆 ارزش نهایی: ${d.finalFormatted} ${unit}
+📉 سود ساده (کل): ${d.simplePercent}%
+✨ نرخ مؤثر مرکب: ${d.effectivePercent}%
+─────────────────
+🕐 تاریخ: ${date}
+🔢 نرخ هر دوره: ${d.ratePercent}% | تعداد دوره: ${d.cycles}
+📌 واحد: ${isToman ? "تومان ایران" : "دلار آمریکا"}`;
+            }
+
+            function fixNumbers(s) {
+                if (!s) return s;
+                const map = {'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9','٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
+                return s.replace(/[۰-۹٠-٩]/g, ch => map[ch] || ch);
+            }
+
+            function saveInputs() {
+                localStorage.setItem('compound_inputs', JSON.stringify({
+                    inv: inpInv.value, rate: inpRate.value, cycle: inpCycle.value, isToman: isToman
+                }));
+            }
+
+            function loadInputs() {
+                const d = localStorage.getItem('compound_inputs');
+                if (d) {
+                    const o = JSON.parse(d);
+                    inpInv.value = o.inv || "";
+                    inpRate.value = o.rate || "";
+                    inpCycle.value = o.cycle || "";
+                    isToman = !!o.isToman;
+                    unitBtn.innerText = isToman ? "واحد: تومان" : "واحد: دلار ($)";
+                    if (inpInv.value && inpRate.value && inpCycle.value) calculate(true);
+                }
+            }
+
+            function formatNumberForDisplay(n) {
+                if (!isFinite(n)) return "نامعتبر";
+                if (isToman) return Math.round(n).toLocaleString('en-US');
+                return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            function fmt(n) {
+                if (!isFinite(n)) return `<div class="value-unit"><div class="value-number">???</div><div class="unit-text">خطا</div></div>`;
+                const unit = isToman ? "تومان" : "$";
+                const numStr = formatNumberForDisplay(n);
+                return `<div class="value-unit"><div class="value-number">${numStr}</div><div class="unit-text">${unit}</div></div>`;
+            }
+
+            function initSimpleTooltip() {
+                if (simpleTooltip) return;
+                simpleTooltip = document.createElement('div');
+                simpleTooltip.className = 'simple-profit-tooltip';
+                document.body.appendChild(simpleTooltip);
+            }
+
+            function attachPeriodTooltips() {
+                initSimpleTooltip();
+                const periodCells = document.querySelectorAll('#dataTable tbody td:first-child');
+                let rawRate = fixNumbers(inpRate.value).replace(/,/g, '');
+                let ratePercent = parseFloat(rawRate);
+                if (isNaN(ratePercent)) return;
+
+                let touchTimer = null;
+
+                function showSimpleTooltip(cell, percentValue) {
+                    if (!simpleTooltip) return;
+                    const rect = cell.getBoundingClientRect();
+                    simpleTooltip.innerHTML = `📈 سود ساده تا این دوره: ${percentValue}%`;
+                    let left = rect.left + rect.width / 2 - simpleTooltip.offsetWidth / 2;
+                    let top = rect.top - 40;
+                    if (top < 10) top = rect.bottom + 8;
+                    simpleTooltip.style.left = `${Math.max(5, left)}px`;
+                    simpleTooltip.style.top = `${top}px`;
+                    simpleTooltip.style.opacity = '1';
+                }
+
+                function hideSimpleTooltip() {
+                    if (simpleTooltip) simpleTooltip.style.opacity = '0';
+                }
+
+                periodCells.forEach(cell => {
+                    const periodNum = parseInt(cell.innerText);
+                    if (isNaN(periodNum)) return;
+                    const simplePercentVal = (ratePercent * periodNum).toFixed(2);
+                    cell.classList.add('period-cell');
+
+                    cell.addEventListener('mouseenter', () => showSimpleTooltip(cell, simplePercentVal));
+                    cell.addEventListener('mouseleave', hideSimpleTooltip);
+
+                    cell.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        touchTimer = setTimeout(() => showSimpleTooltip(cell, simplePercentVal), 100);
+                    }, { passive: false });
+                    cell.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        if (touchTimer) clearTimeout(touchTimer);
+                        hideSimpleTooltip();
+                    });
+                });
+            }
+
+            function createMenu(resCard) {
+                const oldMenuBtn = resCard.querySelector('.menu-btn');
+                const oldDropdown = resCard.querySelector('.dropdown-menu');
+                if (oldMenuBtn) oldMenuBtn.remove();
+                if (oldDropdown) oldDropdown.remove();
+
+                const menuBtn = document.createElement('button');
+                menuBtn.className = 'menu-btn';
+                menuBtn.innerHTML = '☰';
+                menuBtn.setAttribute('aria-label', 'منو');
+
+                const dropdown = document.createElement('div');
+                dropdown.className = 'dropdown-menu';
+
+                const copyItem = document.createElement('div');
+                copyItem.className = 'menu-item';
+                copyItem.innerHTML = '📋 کپی گزارش';
+                copyItem.onclick = () => {
+                    const report = generateStructuredReport();
+                    if (report) copyToClipboard(report);
+                    else showToast('هنوز محاسبه‌ای انجام نشده!', false);
+                    dropdown.classList.remove('show');
+                };
+
+                const wordsItem = document.createElement('div');
+                wordsItem.className = 'menu-item';
+                wordsItem.innerHTML = '💰 مبلغ به حروف';
+                wordsItem.onclick = () => {
+                    if (lastCalculationData) {
+                        showAmountWords(lastCalculationData.finalAmount);
+                    } else {
+                        showToast('ابتدا محاسبه را انجام دهید!', false);
+                    }
+                    dropdown.classList.remove('show');
+                };
+
+                dropdown.appendChild(copyItem);
+                dropdown.appendChild(wordsItem);
+                resCard.appendChild(menuBtn);
+                resCard.appendChild(dropdown);
+
+                menuBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const isShow = dropdown.classList.contains('show');
+                    document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
+                    if (!isShow) dropdown.classList.add('show');
+                };
+
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!resCard.contains(e.target)) {
+                        dropdown.classList.remove('show');
+                    }
+                });
+            }
+
+            function calculate(updateOnly = false) {
+                let rawInv = fixNumbers(inpInv.value).replace(/,/g, '');
+                let rawRate = fixNumbers(inpRate.value).replace(/,/g, '');
+                let rawCycle = fixNumbers(inpCycle.value).replace(/,/g, '');
+
+                const init = parseFloat(rawInv);
+                const rateP = parseFloat(rawRate);
+                const cycles = parseInt(rawCycle);
+
+                if (isNaN(init) || isNaN(rateP) || isNaN(cycles) || cycles <= 0) {
+                    if (!updateOnly) alert("لطفاً مقادیر معتبر وارد کنید.");
+                    if (!updateOnly) {
+                        displayArea.innerHTML = `<p class="empty-msg">مقادیر ورودی نامعتبر است.</p>`;
+                        tableBody.innerHTML = `<tr><td colspan="4">لطفاً اعداد معتبر وارد کنید<\/td></tr>`;
+                    }
+                    return;
+                }
+
+                const rate = rateP / 100;
+                const finalAmount = init * Math.pow(1 + rate, cycles);
+                const totalProfit = finalAmount - init;
+                const simplePercentVal = (rateP * cycles).toLocaleString('en-US');
+                const effectivePercentVal = (((finalAmount - init) / init) * 100).toLocaleString('en-US', { maximumFractionDigits: 2 });
+
+                lastCalculationData = {
+                    init: init, ratePercent: rateP, cycles: cycles,
+                    finalAmount: finalAmount, totalProfit: totalProfit,
+                    simplePercent: simplePercentVal, effectivePercent: effectivePercentVal,
+                    initFormatted: formatNumberForDisplay(init),
+                    profitFormatted: formatNumberForDisplay(totalProfit),
+                    finalFormatted: formatNumberForDisplay(finalAmount)
+                };
+
+                displayArea.innerHTML = `
+                    <div class="res-card" id="resCard">
+                        <div class="res-item"><span class="res-label">سرمایه اولیه</span><div class="res-val">${fmt(init)}</div></div>
+                        <div class="res-item"><span class="res-label">سود کل (مرکب)</span><div class="res-val profit-highlight">${fmt(totalProfit)}</div></div>
+                        <div class="res-item"><span class="res-label">ارزش نهایی</span><div class="res-val">${fmt(finalAmount)}</div></div>
+                        <div class="extra-stats">
+                            <div class="stat-box"><span class="stat-label">سود ساده (کل)</span><div class="stat-val">%${simplePercentVal}</div></div>
+                            <div class="stat-box"><span class="stat-label">نرخ مؤثر مرکب</span><div class="stat-val">%${effectivePercentVal}</div></div>
+                        </div>
+                    </div>
+                `;
+
+                const resCard = document.getElementById('resCard');
+                if (resCard) createMenu(resCard);
+
+                let rows = "";
+                let cur = init;
+                const limit = Math.min(cycles, 2000);
+                for (let i = 1; i <= limit; i++) {
+                    const profit = cur * rate;
+                    const prev = cur;
+                    cur += profit;
+                    rows += `<tr><td class="period-cell" data-period="${i}">${i}<\/td><td>${fmt(prev)}<\/td><td>${fmt(profit)}<\/td><td>${fmt(cur)}<\/td><\/tr>`;
+                }
+                if (cycles > limit) rows += `<tr><td colspan="4" style="color:orange;">تعداد دوره بیشتر از ${limit} است. فقط ${limit} دوره اول نمایش داده شده.<\/td><\/tr>`;
+                tableBody.innerHTML = rows;
+
+                attachPeriodTooltips();
+
+                if (!updateOnly) {
+                    const newItem = {
+                        id: Date.now(), initial: init, ratePercent: rateP, cycles: cycles,
+                        isToman: isToman, finalAmount: finalAmount, totalProfit: totalProfit,
+                        time: new Date().toLocaleString('fa-IR')
+                    };
+                    historyData.unshift(newItem);
+                    if (historyData.length > 20) historyData.pop();
+                    localStorage.setItem('calc_history_v3', JSON.stringify(historyData));
+                    renderHistory();
+                }
+            }
+
+            function renderHistory() {
+                if (!historyData.length) {
+                    historyList.innerHTML = "<p class='empty-msg'>هنوز محاسبه‌ای ذخیره نشده است.</p>";
+                    return;
+                }
+                historyList.innerHTML = historyData.map(h => {
+                    const us = h.isToman ? "تومان" : "$";
+                    const initStr = typeof h.initial === 'number' ? (h.isToman ? Math.round(h.initial).toLocaleString('en-US') : h.initial.toLocaleString('en-US', { minFractionDigits: 2 })) : "?";
+                    const profitStr = typeof h.totalProfit === 'number' ? (h.isToman ? Math.round(h.totalProfit).toLocaleString('en-US') : h.totalProfit.toLocaleString('en-US', { minFractionDigits: 2 })) : "?";
+                    const finalStr = typeof h.finalAmount === 'number' ? (h.isToman ? Math.round(h.finalAmount).toLocaleString('en-US') : h.finalAmount.toLocaleString('en-US', { minFractionDigits: 2 })) : "?";
+                    return `
+                        <div class="hist-card">
+                            <div>
+                                <button class="btn-del" onclick="window.deleteHistory(${h.id})">حذف</button>
+                                <button class="btn-export-hist" onclick="window.exportInteractiveHTML(${h.id})">خروجی HTML تعاملی</button>
+                            </div>
+                            <div class="hist-info">
+                                ${h.time}<br>
+                                سرمایه: ${initStr} ${us}<br>
+                                سود: <span style="color:var(--primary)">${profitStr} ${us}</span><br>
+                                نهایی: ${finalStr} ${us}<br>
+                                نرخ: ${h.ratePercent}% | دوره: ${h.cycles}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            window.deleteHistory = function (id) {
+                historyData = historyData.filter(x => x.id !== id);
+                localStorage.setItem('calc_history_v3', JSON.stringify(historyData));
+                renderHistory();
+            };
+
+            // ========== فایل خروجی HTML تعاملی کامل ==========
+            function generateInteractiveHTML(initialValue, ratePercent, cycles, isInputInToman, uniqueId) {
+                let initialUSD = isInputInToman ? (initialValue / 50000) : initialValue;
+                let periods = [];
+                let cur = initialUSD;
+                for (let i = 1; i <= cycles; i++) {
+                    const profit = cur * (ratePercent / 100);
+                    periods.push({ period: i, startCapitalUSD: cur, profitUSD: profit, endCapitalUSD: cur + profit });
+                    cur += profit;
+                }
+                const periodsJSON = JSON.stringify(periods);
+
+                return `<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>گزارش سود مرکب - ${ratePercent}% - ${cycles} دوره</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg: #f4f7f6;
+            --surface: #ffffff;
+            --primary: #00c853;
+            --text: #212121;
+            --text-secondary: #666666;
+            --border: #dddddd;
+        }
+
+        [data-theme="dark"] {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --primary: #00c853;
+            --text: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #333333;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, Tahoma, sans-serif;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-right: 5px solid var(--primary);
+            transition: background 0.3s;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .editable-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: rgba(0, 200, 83, 0.15);
+            padding: 8px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .editable-title:focus {
+            outline: none;
+            background: rgba(0, 200, 83, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .theme-btn, .currency-control {
+            background: rgba(0, 0, 0, 0.1);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .theme-btn:active, .currency-control button:active {
+            transform: scale(0.95);
+        }
+
+        .currency-control {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .currency-control input {
+            width: 100px;
+            padding: 6px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            direction: ltr;
+        }
+
+        .currency-control button {
+            background: var(--primary);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #000;
+        }
+
+        #currencyToggleBtn {
+            background: #facc15;
+            color: #000;
+        }
+
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat {
+            background: rgba(0, 200, 83, 0.1);
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+        }
+
+        .stat strong {
+            color: var(--primary);
+        }
+
+        .progress-bar {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+            height: 8px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: var(--primary);
+            width: 0%;
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            direction: ltr;
+            font-size: 14px;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        th {
+            background: var(--bg);
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .checked-row {
+            background-color: #81c784 !important;
+        }
+
+        .checkbox-col input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .timestamp-cell, .elapsed-cell {
+            font-size: 0.7rem;
+            font-family: monospace;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: var(--primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        .reset-btn {
+            background: #ff5252;
+            color: white;
+        }
+
+        .note {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-secondary);
+        }
+
+        .value-unit {
+            display: inline-block;
+        }
+
+        .value-number {
+            font-weight: bold;
+        }
+
+        .unit-text {
+            font-size: 0.7em;
+            color: var(--primary);
+        }
+
+        @media (max-width: 640px) {
+            th, td { padding: 6px 8px; font-size: 12px; white-space: normal; }
+            .stat { font-size: 0.7rem; }
+            .editable-title { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="header-top">
+            <div class="editable-title" id="titleEditor" contenteditable="true">📊 گزارش سود مرکب - ${ratePercent}% - ${cycles} دوره</div>
+            <div class="controls">
+                <button class="theme-btn" id="themeToggleBtn">🌙 تغییر تم</button>
+                <div class="currency-control">
+                    <span>💵 نرخ دلار:</span>
+                    <input type="number" id="exchangeRateInput" value="50000" step="1000">
+                    <button id="applyRateBtn">اعمال</button>
+                    <button id="currencyToggleBtn">🔄 دلار</button>
+                </div>
+            </div>
+        </div>
+        <div class="stats" id="statsArea"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="card">
+        <div class="table-container">
+            <table id="compoundTable">
+                <thead>
+                    <tr>
+                        <th>دوره</th>
+                        <th>سرمایه اولیه</th>
+                        <th>سود دوره</th>
+                        <th>سرمایه نهایی</th>
+                        <th>علامت دریافت</th>
+                        <th>زمان دریافت</th>
+                        <th>⏱ زمان سپری شده</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div class="btn-group">
+            <button id="resetBtn" class="reset-btn">🔄 بازنشانی همه علامت‌ها</button>
+            <button id="exportReportBtn">📋 کپی گزارش</button>
+        </div>
+        <div class="note">✅ روی هر دوره که سود را دریافت کردید، تیک بزنید. زمان و فاصله هر علامت خودکار ثبت می‌شود.</div>
+    </div>
+</div>
+<script>
+    (function(){
+        const periodsData = ${periodsJSON};
+        const ratePercent = ${ratePercent};
+        const cycles = ${cycles};
+        const STORAGE_KEY = "interactive_${uniqueId}";
+        const isTomanModeInitial = ${isInputInToman};
+
+        let checksData = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        let exchangeRate = 50000;
+        let currencyIndex = isTomanModeInitial ? 1 : 0;
+        const currencyNames = ["$", "تومان", "ریال"];
+
+        // ========== توابع کمکی ==========
+        function formatDuration(ms) {
+            if (!ms) return "—";
+            let totalSeconds = Math.floor(ms / 1000);
+            let days = Math.floor(totalSeconds / 86400);
+            let hours = Math.floor((totalSeconds % 86400) / 3600);
+            let minutes = Math.floor((totalSeconds % 3600) / 60);
+            let seconds = totalSeconds % 60;
+
+            let parts = [];
+            if (days > 0) parts.push(days + " روز");
+            if (hours > 0) parts.push(hours + " ساعت");
+            if (minutes > 0) parts.push(minutes + " دقیقه");
+            if (seconds > 0 || parts.length === 0) parts.push(seconds + " ثانیه");
+
+            return parts.join(" و ");
+        }
+
+        function convertValue(vUSD) {
+            if (currencyIndex === 0) return vUSD;
+            if (currencyIndex === 1) return vUSD * exchangeRate;
+            return vUSD * exchangeRate * 10;
+        }
+
+        function formatValue(vUSD) {
+            let conv = convertValue(vUSD);
+            let numStr;
+            if (currencyIndex === 0) {
+                numStr = conv.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            } else {
+                numStr = Math.round(conv).toLocaleString("en-US");
+            }
+            return "<div class='value-unit'><span class='value-number'>"+numStr+"</span> <span class='unit-text'>"+currencyNames[currencyIndex]+"</span></div>";
+        }
+
+        function formatValueSimple(vUSD) {
+            let conv = convertValue(vUSD);
+            if (currencyIndex === 0) {
+                return conv.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " " + currencyNames[currencyIndex];
+            } else {
+                return Math.round(conv).toLocaleString("en-US") + " " + currencyNames[currencyIndex];
+            }
+        }
+
+        function updateStatsUI() {
+            let finalUSD = periodsData[periodsData.length-1].endCapitalUSD;
+            let profitUSD = finalUSD - periodsData[0].startCapitalUSD;
+            let initFormatted = formatValueSimple(periodsData[0].startCapitalUSD);
+            let profitFormatted = formatValueSimple(profitUSD);
+            let finalFormatted = formatValueSimple(finalUSD);
+            let effectivePercent = ((finalUSD / periodsData[0].startCapitalUSD - 1) * 100).toFixed(2);
+            let simplePercent = (ratePercent * cycles).toFixed(2);
+            document.getElementById("statsArea").innerHTML = \`
+                <div class="stat">💰 سرمایه اولیه: <strong>\${initFormatted}</strong></div>
+                <div class="stat">📈 سود کل: <strong>\${profitFormatted}</strong></div>
+                <div class="stat">🏆 ارزش نهایی: <strong>\${finalFormatted}</strong></div>
+                <div class="stat">📉 سود ساده کل: <strong>\${simplePercent}%</strong></div>
+                <div class="stat">✨ نرخ مؤثر: <strong>\${effectivePercent}%</strong></div>
+                <div class="stat">🔢 نرخ هر دوره: <strong>\${ratePercent}%</strong></div>
+                <div class="stat">📌 تعداد دوره: <strong>\${cycles}</strong></div>
+            \`;
+        }
+
+        function getPersianDateTime() {
+            return new Intl.DateTimeFormat("fa-IR", {
+                year: "numeric", month: "numeric", day: "numeric",
+                hour: "2-digit", minute: "2-digit", second: "2-digit"
+            }).format(new Date());
+        }
+
+        function updateRowVisual(p, chk, dt, elapsed) {
+            let row = document.getElementById("row-" + p);
+            if (!row) return;
+            let cb = row.querySelector(".period-checkbox");
+            let ts = row.querySelector(".timestamp-cell");
+            let el = row.querySelector(".elapsed-cell");
+            cb.checked = chk;
+            if (chk && dt) {
+                ts.innerText = dt;
+                row.classList.add("checked-row");
+            } else {
+                ts.innerText = "—";
+                row.classList.remove("checked-row");
+            }
+            if (el) el.innerText = elapsed || "—";
+        }
+
+        function updateAllElapsed() {
+            let sorted = Object.keys(checksData).filter(p => checksData[p].checked).map(p => parseInt(p)).sort((a,b) => a-b);
+            let prev = null;
+            for (let p of sorted) {
+                let raw = checksData[p].rawTimestamp;
+                if (!raw) continue;
+                let elapsed = prev ? (raw - prev) : null;
+                let txt = elapsed !== null ? formatDuration(elapsed) : "—";
+                let row = document.getElementById("row-" + p);
+                if (row && checksData[p].checked) {
+                    row.querySelector(".elapsed-cell").innerText = txt;
+                }
+                prev = raw;
+            }
+            for (let i = 1; i <= cycles; i++) {
+                if (!checksData[i] || !checksData[i].checked) {
+                    let row = document.getElementById("row-" + i);
+                    if (row) row.querySelector(".elapsed-cell").innerText = "—";
+                }
+            }
+        }
+
+        function addOrRemoveCheck(p, isChecked) {
+            if (isChecked) {
+                let now = new Date();
+                checksData[p] = {
+                    checked: true,
+                    rawTimestamp: now.getTime(),
+                    persianDateTime: getPersianDateTime()
+                };
+                updateRowVisual(p, true, checksData[p].persianDateTime, null);
+            } else {
+                delete checksData[p];
+                updateRowVisual(p, false, null, null);
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(checksData));
+            updateAllElapsed();
+            let completed = Object.keys(checksData).filter(k => checksData[k].checked === true).length;
+            document.getElementById("progressFill").style.width = (completed / cycles * 100) + "%";
+        }
+
+        function resetAllChecks() {
+            checksData = {};
+            for (let p = 1; p <= cycles; p++) updateRowVisual(p, false, null, null);
+            localStorage.setItem(STORAGE_KEY, "{}");
+            updateAllElapsed();
+            document.getElementById("progressFill").style.width = "0%";
+        }
+
+        function copyReport() {
+            let finalUSD = periodsData[periodsData.length-1].endCapitalUSD;
+            let profitUSD = finalUSD - periodsData[0].startCapitalUSD;
+            let date = new Date().toLocaleString('fa-IR');
+            let effectivePercent = ((finalUSD / periodsData[0].startCapitalUSD - 1) * 100).toFixed(2);
+            let simplePercent = (ratePercent * cycles).toFixed(2);
+            let report = \`📊 گزارش سود مرکب
+─────────────────
+💰 سرمایه اولیه: \${formatValueSimple(periodsData[0].startCapitalUSD)}
+📈 سود کل (مرکب): \${formatValueSimple(profitUSD)}
+🏆 ارزش نهایی: \${formatValueSimple(finalUSD)}
+📉 سود ساده (کل): \${simplePercent}%
+✨ نرخ مؤثر مرکب: \${effectivePercent}%
+─────────────────
+🕐 تاریخ: \${date}
+🔢 نرخ هر دوره: \${ratePercent}% | تعداد دوره: \${cycles}
+📌 واحد: \${currencyNames[currencyIndex]}\`;
+            navigator.clipboard.writeText(report).then(() => alert("✅ گزارش کپی شد!")).catch(() => alert("❌ خطا در کپی"));
+        }
+
+        function rebuildTable() {
+            let tbody = document.getElementById("tableBody");
+            if (!tbody) return;
+            let html = "";
+            for (let p of periodsData) {
+                html += "<tr id='row-" + p.period + "'>" +
+                    "<td class='period-cell'>" + p.period + "<\/td>" +
+                    "<td class='start-cap-cell'>" + formatValue(p.startCapitalUSD) + "<\/td>" +
+                    "<td class='profit-cell'>" + formatValue(p.profitUSD) + "<\/td>" +
+                    "<td class='end-cap-cell'>" + formatValue(p.endCapitalUSD) + "<\/td>" +
+                    "<td class='checkbox-col'><input type='checkbox' class='period-checkbox' data-period='" + p.period + "'><\/td>" +
+                    "<td class='timestamp-cell'>—<\/td>" +
+                    "<td class='elapsed-cell'>—<\/td>" +
+                    "<\/tr>";
+            }
+            tbody.innerHTML = html;
+
+            document.querySelectorAll(".period-checkbox").forEach(cb => {
+                cb.removeEventListener("change", function(e) {});
+                cb.addEventListener("change", function(e) {
+                    addOrRemoveCheck(parseInt(e.target.dataset.period), e.target.checked);
+                });
+            });
+
+            for (let p = 1; p <= cycles; p++) {
+                let d = checksData[p];
+                if (d && d.checked) {
+                    updateRowVisual(p, true, d.persianDateTime, null);
+                } else {
+                    updateRowVisual(p, false, null, null);
+                }
+            }
+            updateAllElapsed();
+            let completed = Object.keys(checksData).filter(k => checksData[k].checked === true).length;
+            document.getElementById("progressFill").style.width = (completed / cycles * 100) + "%";
+        }
+
+        function refreshAll() {
+            rebuildTable();
+            updateStatsUI();
+        }
+
+        // ========== رویدادها ==========
+        document.getElementById("themeToggleBtn").addEventListener("click", () => {
+            const currentTheme = document.documentElement.getAttribute("data-theme");
+            if (currentTheme === "dark") {
+                document.documentElement.removeAttribute("data-theme");
+                document.getElementById("themeToggleBtn").innerHTML = "🌙 تغییر تم";
+            } else {
+                document.documentElement.setAttribute("data-theme", "dark");
+                document.getElementById("themeToggleBtn").innerHTML = "☀️ تغییر تم";
+            }
+        });
+
+        document.getElementById("applyRateBtn").addEventListener("click", () => {
+            let newRate = parseFloat(document.getElementById("exchangeRateInput").value);
+            if (!isNaN(newRate) && newRate > 0) {
+                exchangeRate = newRate;
+                refreshAll();
+            } else {
+                alert("لطفاً نرخ معتبر وارد کنید");
+            }
+        });
+
+        document.getElementById("currencyToggleBtn").addEventListener("click", () => {
+            currencyIndex = (currencyIndex + 1) % 3;
+            let btnText = currencyNames[currencyIndex];
+            if (currencyIndex === 0) btnText += " (دلار)";
+            else if (currencyIndex === 1) btnText += " (تومان)";
+            else btnText += " (ریال)";
+            document.getElementById("currencyToggleBtn").innerHTML = "🔄 " + btnText;
+            refreshAll();
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", resetAllChecks);
+        document.getElementById("exportReportBtn").addEventListener("click", copyReport);
+
+        // تغییر عنوان
+        const titleEditor = document.getElementById("titleEditor");
+        titleEditor.addEventListener("blur", function() {
+            if (!this.innerText.trim()) this.innerText = "📊 گزارش سود مرکب";
+        });
+
+        rebuildTable();
+        updateStatsUI();
+    })();
+<\/script>
+</body>
+</html>`;
+            }
+
+            window.exportCurrentAsInteractive = function () {
+                let init = parseFloat(fixNumbers(inpInv.value).replace(/,/g, ''));
+                let rate = parseFloat(fixNumbers(inpRate.value).replace(/,/g, ''));
+                let cycles = parseInt(fixNumbers(inpCycle.value).replace(/,/g, ''));
+                if (isNaN(init) || isNaN(rate) || isNaN(cycles) || cycles <= 0) {
+                    alert("ابتدا محاسبه را انجام دهید");
+                    return;
+                }
+                const id = Date.now();
+                const html = generateInteractiveHTML(init, rate, cycles, isToman, id);
+                const blob = new Blob([html], { type: 'text/html' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'سود_مرکب_' + id + '.html';
+                a.click();
+                URL.revokeObjectURL(a.href);
+            };
+
+            window.exportInteractiveHTML = function (id) {
+                const item = historyData.find(x => x.id === id);
+                if (!item) return;
+                const html = generateInteractiveHTML(item.initial, item.ratePercent, item.cycles, item.isToman, item.id);
+                const blob = new Blob([html], { type: 'text/html' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'سود_مرکب_' + item.id + '.html';
+                a.click();
+                URL.revokeObjectURL(a.href);
+            };
+
+            function switchTab(idx) {
+                document.querySelectorAll('.pane').forEach((pane, i) => pane.classList.toggle('active', i === idx));
+                document.querySelectorAll('.tab').forEach((tab, i) => tab.classList.toggle('active', i === idx));
+            }
+
+            function toggleUnit() {
+                isToman = !isToman;
+                unitBtn.innerText = isToman ? "واحد: تومان" : "واحد: دلار ($)";
+                saveInputs();
+                if (inpInv.value && inpRate.value && inpCycle.value) calculate(true);
+            }
+
+            calcBtn.onclick = () => calculate(false);
+            exportCurrentBtn.onclick = () => window.exportCurrentAsInteractive();
+            unitBtn.onclick = () => toggleUnit();
+
+            [inpInv, inpRate, inpCycle].forEach(inp => {
+                inp.addEventListener('input', function (e) {
+                    let val = fixNumbers(e.target.value).replace(/,/g, '');
+                    if (val !== "") {
+                        if (inp.id === 'inpCycle') val = val.replace(/\D/g, '');
+                        else val = val.replace(/[^0-9.]/g, '');
+                        let parts = val.split('.');
+                        if (parts[0] !== undefined) {
+                            parts[0] = parts[0].replace(/^0+/, '') || '0';
+                            parts[0] = parseInt(parts[0] || 0).toLocaleString('en-US');
+                        }
+                        e.target.value = parts.join('.');
+                    } else e.target.value = '';
+                    saveInputs();
+                });
+            });
+
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => switchTab(parseInt(tab.getAttribute('data-tab'))));
+            });
+
+            let savedHist = localStorage.getItem('calc_history_v3');
+            if (savedHist) {
+                try {
+                    const arr = JSON.parse(savedHist);
+                    historyData = arr.filter(h => h && typeof h.initial === 'number');
+                } catch(e) { historyData = []; }
+            }
+
+            loadInputs();
+            renderHistory();
+            initAmountBox();
+            initSimpleTooltip();
+        })();
+    </script>
+</body>
+</html>

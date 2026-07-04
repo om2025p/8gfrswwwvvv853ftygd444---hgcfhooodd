@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📈 ماشین حساب سود مرکب</title>
+    <script>
+        // Decimal.js محلی برای کار آفلاین
+        class EnhancedDecimal {
+            constructor(value) {
+                if (value instanceof EnhancedDecimal) {
+                    this.value = parseFloat(value.value);
+                } else if (typeof value === 'object' && value !== null && 'value' in value) {
+                    this.value = parseFloat(value.value);
+                } else {
+                    this.value = parseFloat(value) || 0;
+                }
+            }
+
+            plus(other) {
+                return new EnhancedDecimal(this.value + new EnhancedDecimal(other).value);
+            }
+
+            minus(other) {
+                return new EnhancedDecimal(this.value - new EnhancedDecimal(other).value);
+            }
+
+            times(other) {
+                return new EnhancedDecimal(this.value * new EnhancedDecimal(other).value);
+            }
+
+            div(other) {
+                const divisor = new EnhancedDecimal(other).value;
+                return new EnhancedDecimal(divisor !== 0 ? this.value / divisor : 0);
+            }
+
+            pow(exponent) {
+                return new EnhancedDecimal(Math.pow(this.value, new EnhancedDecimal(exponent).value));
+            }
+
+            isNegative() {
+                return this.value < 0;
+            }
+
+            greaterThan(other) {
+                return this.value > new EnhancedDecimal(other).value;
+            }
+
+            toNumber() {
+                return this.value;
+            }
+
+            toFixed(decimals) {
+                return this.value.toFixed(decimals);
+            }
+
+            static pow(base, exponent) {
+                return new EnhancedDecimal(Math.pow(new EnhancedDecimal(base).value, new EnhancedDecimal(exponent).value));
+            }
+
+            ceil() {
+                return new EnhancedDecimal(Math.ceil(this.value));
+            }
+        }
+
+        // برای سازگاری با کد قبلی
+        window.Decimal = EnhancedDecimal;
+    </script>
+    <style>
+        /* تمام استایل‌های قبلی */
+        body {
+            font-family: 'Roboto Mono', monospace;
+            text-align: center;
+            direction: rtl;
+            background-color: #f7f7f7;
+            color: #333;
+            transition: all 0.3s ease;
+            margin: 0;
+            padding-bottom: 60px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        #calculator-app {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 90%;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+
+        .container.active {
+            display: block;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            text-align: center;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        h3, h4 {
+            color: #333;
+            margin: 10px 0;
+        }
+
+        /* Dark mode */
+        body.dark {
+            background-color: #121212;
+            color: #fff;
+        }
+
+        .container.dark {
+            background-color: #1e1e1e;
+        }
+
+        .container.dark h3,
+        .container.dark h4 {
+            color: #fff;
+        }
+
+        button.dark {
+            background: #bb86fc;
+        }
+
+        button.dark:hover {
+            background: #a56ef3;
+        }
+
+        .dark input, .dark select {
+            background-color: #333;
+            color: white;
+            border-color: #555;
+        }
+
+        /* Tabs Bar */
+        #tabs-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background-color: #333;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+
+        body.dark #tabs-bar {
+            background-color: #282828;
+        }
+
+        #add-tab-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 20px;
+            width: auto;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+
+        #add-tab-button:hover {
+            background-color: #0056b3;
+        }
+
+        #tabs-container {
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            flex-grow: 1;
+            margin: 0 10px;
+        }
+
+        #tabs-container::-webkit-scrollbar {
+            height: 5px;
+        }
+
+        #tabs-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        #tabs-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        #tabs-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .tab-button {
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+            font-size: 14px;
+            flex-shrink: 0;
+            width: 115px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .tab-button.active-tab {
+            background-color: #007bff;
+        }
+
+        .tab-button:hover:not(.active-tab) {
+            background-color: #777;
+        }
+
+        .tab-button span:first-child {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1;
+            text-align: right;
+            direction: rtl;
+        }
+
+        .tab-button .close-tab {
+            margin-right: -4px;
+            margin-left: 4px;
+            flex-shrink: 0;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .tab-button .close-tab:hover {
+            color: #ffcccc;
+        }
+
+        /* قابلیت‌های مخفی */
+        .hidden-features {
+            margin-top: 20px;
+            padding: 10px;
+            border-top: 1px dashed #ccc;
+            text-align: center;
+        }
+
+        .hidden-features button {
+            width: auto;
+            margin: 2px;
+            padding: 5px 10px;
+            font-size: 12px;
+            opacity: 0.7;
+            background-color: #6c757d;
+        }
+
+        .hidden-features button:hover {
+            opacity: 1;
+            background-color: #5a6268;
+        }
+
+        .dark .hidden-features {
+            border-top: 1px dashed #555;
+        }
+
+        .dark .hidden-features button {
+            background-color: #444;
+        }
+
+        .dark .hidden-features button:hover {
+            background-color: #555;
+        }
+
+        /* تاریخچه */
+        .history-modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .history-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .dark .history-content {
+            background-color: #1e1e1e;
+            color: white;
+        }
+
+        .close-history {
+            color: #aaa;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-history:hover {
+            color: #000;
+        }
+
+        .dark .close-history:hover {
+            color: #fff;
+        }
+
+        .history-record {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            margin: 5px 0;
+        }
+
+        .dark .history-record {
+            border-bottom: 1px solid #555;
+        }
+
+        /* ریسپانسیو */
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px auto;
+                padding: 15px;
+            }
+            input, select, button {
+                font-size: 14px;
+                padding: 8px;
+            }
+            h2 {
+                font-size: 20px;
+            }
+            h3, h4 {
+                font-size: 16px;
+            }
+            #tabs-bar {
+                height: 45px;
+                padding: 0 5px;
+            }
+            #add-tab-button {
+                font-size: 18px;
+                padding: 4px 8px;
+            }
+            .tab-button {
+                font-size: 12px;
+                padding: 4px 8px;
+                margin: 0 3px;
+                width: 100px;
+            }
+            .hidden-features button {
+                font-size: 10px;
+                padding: 3px 6px;
+                margin: 1px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- History Modal -->
+    <div id="historyModal" class="history-modal">
+        <div class="history-content">
+            <span class="close-history">&times;</span>
+            <h3>📜 تاریخچه محاسبات</h3>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <!-- Template for calculator instance -->
+    <template id="calculator-template">
+        <div class="container calculator-instance">
+            <h2>📈 ماشین حساب سود مرکب</h2>
+
+            <label>💰 مبلغ اولیه (تومان):</label>
+            <input type="text" class="initialAmount" placeholder="مثال: 1,000,000">
+
+            <label>📅 تعداد سال‌ها:</label>
+            <input type="number" class="years" placeholder="مثال: 5">
+
+            <label>📊 نرخ سود سالانه (%):</label>
+            <input type="number" class="rate" placeholder="مثال: 30">
+
+            <label>🔄 فرکانس ترکیب (تعداد بار در سال):</label>
+            <select class="compoundFrequency">
+                <option value="365">روزانه (365 بار)</option>
+                <option value="52">هفتگی (52 بار)</option>
+                <option value="12">ماهانه (12 بار)</option>
+                <option value="6">دو ماهه (6 بار)</option>
+                <option value="4">سه ماهه (4 بار)</option>
+                <option value="3">چهار ماهه (3 بار)</option>
+                <option value="2">شش ماهه (2 بار)</option>
+                <option value="1">سالانه (1 بار)</option>
+                <option value="custom">دلخواه (عدد خود را وارد کنید)</option>
+            </select>
+            <input type="number" class="customFrequency" placeholder="تعداد دفعات ترکیب در سال (مثلاً 24)" style="display: none;">
+
+            <label>💵 واریز ماهیانه (تومان):</label>
+            <input type="text" class="monthlyDeposit" placeholder="مثال: 100,000">
+
+            <label>➕ افزایش سالانه واریز ماهیانه (تومان):</label>
+            <input type="text" class="annualIncreaseMonthlyDeposit" placeholder="مثال: 10,000">
+
+            <label>💵 واریز هر دو ماه یک‌بار (تومان):</label>
+            <input type="text" class="biMonthlyDeposit" placeholder="مثال: 200,000">
+
+            <button class="calculateButton">محاسبه سود 📊</button>
+            <button class="resetButton">🔄 ریست</button>
+
+            <h3 class="result">📌 مبلغ نهایی: -- تومان</h3>
+            <h4 class="profit">💵 سود کسب‌شده: -- تومان</h4>
+            <h4 class="netProfit">💸 سود خالص: -- تومان</h4>
+            <h4 class="totalDeposits">💵 کل واریزی در مدت سرمایه‌گذاری: -- تومان</h4>
+            <h4 class="effectiveRate">📈 سود مرکب واقعی: --%</h4>
+            <h4 class="monthlyIncome">💰 درآمد ماهیانه (با نرخ مؤثر): -- تومان</h4>
+
+            <button class="historyButton">📜 مشاهده تاریخچه</button>
+
+            <!-- قابلیت‌های مخفی -->
+            <div class="hidden-features" style="display: none;">
+                <button class="backupButton" style="display: none;">💾 بک‌آپ</button>
+                <button class="restoreButton" style="display: none;">📂 بازیابی</button>
+                <button class="exportButton" style="display: none;">📤 خروجی JSON</button>
+                <button class="importButton" style="display: none;">📥 ورودی JSON</button>
+                <button class="advancedOptionsButton" style="display: none;">⚙️ تنظیمات پیشرفته</button>
+            </div>
+        </div>
+    </template>
+
+    <div id="calculator-app">
+        <!-- Calculator instances will be dynamically added here -->
+    </div>
+
+    <div id="tabs-bar">
+        <button id="add-tab-button">+</button>
+        <div id="tabs-container">
+            <!-- Tab buttons will be dynamically added here -->
+        </div>
+    </div>
+
+    <script>
+        // متغیرهای جهانی
+        let tabCounter = 0;
+        let activeTabId = null;
+        const calculatorInstances = new Map();
+
+        // تابع کمکی برای دریافت عناصر
+        function getCalculatorElements(instanceElement) {
+            return {
+                initialAmount: instanceElement.querySelector('.initialAmount'),
+                years: instanceElement.querySelector('.years'),
+                rate: instanceElement.querySelector('.rate'),
+                compoundFrequency: instanceElement.querySelector('.compoundFrequency'),
+                customFrequency: instanceElement.querySelector('.customFrequency'),
+                monthlyDeposit: instanceElement.querySelector('.monthlyDeposit'),
+                annualIncreaseMonthlyDeposit: instanceElement.querySelector('.annualIncreaseMonthlyDeposit'),
+                biMonthlyDeposit: instanceElement.querySelector('.biMonthlyDeposit'),
+                calculateButton: instanceElement.querySelector('.calculateButton'),
+                resetButton: instanceElement.querySelector('.resetButton'),
+                historyButton: instanceElement.querySelector('.historyButton'),
+                backupButton: instanceElement.querySelector('.backupButton'),
+                restoreButton: instanceElement.querySelector('.restoreButton'),
+                exportButton: instanceElement.querySelector('.exportButton'),
+                importButton: instanceElement.querySelector('.importButton'),
+                advancedOptionsButton: instanceElement.querySelector('.advancedOptionsButton'),
+                result: instanceElement.querySelector('.result'),
+                profit: instanceElement.querySelector('.profit'),
+                netProfit: instanceElement.querySelector('.netProfit'),
+                totalDeposits: instanceElement.querySelector('.totalDeposits'),
+                effectiveRate: instanceElement.querySelector('.effectiveRate'),
+                monthlyIncome: instanceElement.querySelector('.monthlyIncome'),
+            };
+        }
+
+        // نمایش تاریخچه
+        function showHistory() {
+            const modal = document.getElementById('historyModal');
+            const historyList = document.getElementById('historyList');
+
+            let history = JSON.parse(localStorage.getItem("history")) || [];
+
+            if (history.length === 0) {
+                historyList.innerHTML = "<p>هیچ تاریخچه‌ای موجود نیست.</p>";
+            } else {
+                historyList.innerHTML = history.map((record, index) => `
+                    <div class="history-record">
+                        <strong>${record.date}</strong><br>
+                        مبلغ اولیه: ${parseInt(record.initial).toLocaleString('fa-IR')} تومان<br>
+                        مدت: ${record.years} سال<br>
+                        نرخ سود: ${record.rate}%<br>
+                        مبلغ نهایی: ${parseInt(record.final).toLocaleString('fa-IR')} تومان<br>
+                        سود مرکب واقعی: ${record.effRate}%
+                    </div>
+                `).join('');
+            }
+
+            modal.style.display = "block";
+        }
+
+        // بستن مودال تاریخچه
+        function closeHistoryModal() {
+            document.getElementById('historyModal').style.display = "none";
+        }
+
+        // اعمال تم
+        function applyTheme() {
+            const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.body.classList.toggle('dark', isDarkMode);
+
+            calculatorInstances.forEach((instanceData, tabId) => {
+                const container = instanceData.element;
+                const buttons = container.querySelectorAll('button');
+
+                container.classList.toggle('dark', isDarkMode);
+                buttons.forEach(button => button.classList.toggle('dark', isDarkMode));
+            });
+
+            const tabsBar = document.getElementById('tabs-bar');
+            if (tabsBar) {
+                tabsBar.classList.toggle('dark', isDarkMode);
+            }
+        }
+
+        // مدیریت نمایش فیلد فرکانس دلخواه
+        function setupFrequencyField(instanceElement) {
+            const elements = getCalculatorElements(instanceElement);
+            if (!elements.customFrequency) return;
+
+            const handleFrequencyChange = () => {
+                if (elements.compoundFrequency.value === 'custom') {
+                    elements.customFrequency.style.display = 'block';
+                } else {
+                    elements.customFrequency.style.display = 'none';
+                }
+            };
+
+            elements.compoundFrequency.addEventListener('change', handleFrequencyChange);
+            handleFrequencyChange();
+        }
+
+        // دریافت مقدار فرکانس ترکیب (تعداد بار در سال)
+        function getCompoundFrequencyValue(elements) {
+            if (elements.compoundFrequency.value === 'custom') {
+                let customVal = parseInt(elements.customFrequency.value);
+                if (isNaN(customVal) || customVal <= 0) {
+                    customVal = 12; // پیش‌فرض ماهانه
+                }
+                return customVal;
+            }
+            return parseInt(elements.compoundFrequency.value);
+        }
+
+        // ذخیره ورودی‌ها
+        function saveInputs(instanceElement, tabId) {
+            const elements = getCalculatorElements(instanceElement);
+            const data = {
+                initialAmount: elements.initialAmount.value,
+                years: elements.years.value,
+                rate: elements.rate.value,
+                compoundFrequency: elements.compoundFrequency.value,
+                customFrequency: elements.customFrequency ? elements.customFrequency.value : '',
+                monthlyDeposit: elements.monthlyDeposit.value,
+                annualIncreaseMonthlyDeposit: elements.annualIncreaseMonthlyDeposit.value,
+                biMonthlyDeposit: elements.biMonthlyDeposit.value,
+            };
+            localStorage.setItem(`calculatorTab_${tabId}`, JSON.stringify(data));
+        }
+
+        // بارگذاری ورودی‌ها
+        function loadInputs(instanceElement, tabId) {
+            const elements = getCalculatorElements(instanceElement);
+            const data = JSON.parse(localStorage.getItem(`calculatorTab_${tabId}`)) || {};
+
+            elements.initialAmount.value = data.initialAmount || "";
+            elements.years.value = data.years || "";
+            elements.rate.value = data.rate || "";
+            elements.compoundFrequency.value = data.compoundFrequency || "365";
+            if (elements.customFrequency) {
+                elements.customFrequency.value = data.customFrequency || "";
+                setupFrequencyField(instanceElement);
+            }
+            elements.monthlyDeposit.value = data.monthlyDeposit || "";
+            elements.annualIncreaseMonthlyDeposit.value = data.annualIncreaseMonthlyDeposit || "";
+            elements.biMonthlyDeposit.value = data.biMonthlyDeposit || "";
+
+            formatNumber(elements.initialAmount);
+            formatNumber(elements.monthlyDeposit);
+            formatNumber(elements.annualIncreaseMonthlyDeposit);
+            formatNumber(elements.biMonthlyDeposit);
+        }
+
+        // قالب‌بندی عدد
+        function formatNumber(input) {
+            let value = input.value.replace(/,/g, "").replace(/\D/g, "");
+            input.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            const instanceElement = input.closest('.calculator-instance');
+            const tabId = instanceElement ? instanceElement.dataset.tabId : null;
+            if (tabId) saveInputs(instanceElement, tabId);
+        }
+
+        // محاسبه سود مرکب
+        function calculateCompoundInterest(instanceElement, tabId) {
+            const elements = getCalculatorElements(instanceElement);
+
+            // دریافت مقادیر اولیه
+            let P_initial_principal = new Decimal(elements.initialAmount.value.replace(/,/g, "") || 0);
+            let t_years = new Decimal(elements.years.value || 0);
+            let r_annual_rate_percent = new Decimal(elements.rate.value || 0);
+            let r_annual_rate_decimal = r_annual_rate_percent.div(100);
+            let n_compound_freq_per_year = new Decimal(getCompoundFrequencyValue(elements));
+
+            let Dm_initial_monthly_deposit = new Decimal(elements.monthlyDeposit.value.replace(/,/g, "") || 0);
+            let Dm_annual_increase = new Decimal(elements.annualIncreaseMonthlyDeposit.value.replace(/,/g, "") || 0);
+            let Db_bimonthly_deposit = new Decimal(elements.biMonthlyDeposit.value.replace(/,/g, "") || 0);
+
+            // نرخ سالانه موثر
+            let effective_annual_rate = Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), n_compound_freq_per_year).minus(1).times(100);
+            let effective_annual_rate_decimal = effective_annual_rate.div(100);
+
+            // 1. مقدار آتی سرمایه اولیه
+            let A_final_amount = P_initial_principal.times(
+                Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), n_compound_freq_per_year.times(t_years))
+            );
+
+            let profit_earned_over_initial_P = A_final_amount.minus(P_initial_principal);
+
+            // --- واریزهای ماهیانه ---
+            let total_months_of_investment = t_years.times(12);
+            let sum_of_actual_monthly_deposits_made = new Decimal(0);
+
+            for (let k = 1; k <= total_months_of_investment.toNumber(); k++) {
+                let current_year_of_deposit = new Decimal(k).div(12).ceil();
+
+                let actual_monthly_deposit_this_period = Dm_initial_monthly_deposit;
+                if (current_year_of_deposit.greaterThan(1) && Dm_annual_increase.greaterThan(0)) {
+                     actual_monthly_deposit_this_period = actual_monthly_deposit_this_period.plus(
+                        Dm_annual_increase.times(current_year_of_deposit.minus(1))
+                    );
+                }
+
+                sum_of_actual_monthly_deposits_made = sum_of_actual_monthly_deposits_made.plus(actual_monthly_deposit_this_period);
+
+                let time_of_deposit_in_years_tk = new Decimal(k).div(12);
+                let compounding_periods_for_this_deposit = n_compound_freq_per_year.times(t_years).minus(n_compound_freq_per_year.times(time_of_deposit_in_years_tk));
+
+                if (compounding_periods_for_this_deposit.isNegative()) {
+                    compounding_periods_for_this_deposit = new Decimal(0);
+                }
+
+                let fv_of_this_monthly_deposit = actual_monthly_deposit_this_period.times(
+                    Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), compounding_periods_for_this_deposit)
+                );
+
+                A_final_amount = A_final_amount.plus(fv_of_this_monthly_deposit);
+                profit_earned_over_initial_P = profit_earned_over_initial_P.plus(fv_of_this_monthly_deposit);
+            }
+
+            // --- واریزهای دو ماه یکبار ---
+            let total_bimonthly_periods_in_investment = t_years.times(6);
+            let sum_of_actual_bimonthly_deposits_made = new Decimal(0);
+
+            for (let k = 1; k <= total_bimonthly_periods_in_investment.toNumber(); k++) {
+                sum_of_actual_bimonthly_deposits_made = sum_of_actual_bimonthly_deposits_made.plus(Db_bimonthly_deposit);
+
+                let time_of_deposit_in_years_tk = new Decimal(k).times(2).div(12);
+                let compounding_periods_for_this_deposit = n_compound_freq_per_year.times(t_years).minus(n_compound_freq_per_year.times(time_of_deposit_in_years_tk));
+
+                if (compounding_periods_for_this_deposit.isNegative()) {
+                    compounding_periods_for_this_deposit = new Decimal(0);
+                }
+
+                let fv_of_this_bimonthly_deposit = Db_bimonthly_deposit.times(
+                    Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), compounding_periods_for_this_deposit)
+                );
+
+                A_final_amount = A_final_amount.plus(fv_of_this_bimonthly_deposit);
+                profit_earned_over_initial_P = profit_earned_over_initial_P.plus(fv_of_this_bimonthly_deposit);
+            }
+
+            // --- محاسبات نهایی برای نمایش ---
+            let total_periodic_deposits_made = sum_of_actual_monthly_deposits_made.plus(sum_of_actual_bimonthly_deposits_made);
+            let net_total_profit = A_final_amount.minus(P_initial_principal).minus(total_periodic_deposits_made);
+
+            // محاسبه درآمد ماهیانه
+            let monthly_income = new Decimal(0);
+            if (t_years.greaterThan(0)) {
+                monthly_income = A_final_amount.times(effective_annual_rate_decimal.div(12));
+            }
+
+            elements.result.innerText = `📌 مبلغ نهایی: ${A_final_amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            elements.profit.innerText = `💵 سود کسب‌شده: ${profit_earned_over_initial_P.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            elements.netProfit.innerText = `💸 سود خالص: ${net_total_profit.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            elements.totalDeposits.innerText = `💵 کل واریزی در مدت سرمایه‌گذاری: ${total_periodic_deposits_made.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            elements.effectiveRate.innerText = `📈 سود مرکب واقعی: ${effective_annual_rate.toFixed(2)}%`;
+            elements.monthlyIncome.innerText = `💰 درآمد ماهیانه (با نرخ مؤثر): ${monthly_income.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+
+            saveToHistory(
+                P_initial_principal.toFixed(0),
+                t_years.toFixed(0),
+                r_annual_rate_percent.toFixed(1),
+                A_final_amount.toFixed(0),
+                effective_annual_rate.toFixed(2)
+            );
+            saveInputs(instanceElement, tabId);
+        }
+
+        // ذخیره تاریخچه
+        function saveToHistory(P, t, r_percent, A, effRate) {
+            let تاریخ = new Date().toLocaleDateString("fa-IR");
+            let record = { date: تاریخ, initial: P, years: t, rate: r_percent, final: A, effRate: effRate };
+
+            let history = JSON.parse(localStorage.getItem("history")) || [];
+            history.unshift(record);
+            if (history.length > 5) history.pop();
+            localStorage.setItem("history", JSON.stringify(history));
+        }
+
+        // ریست فرم
+        function resetForm(instanceElement, tabId) {
+            const elements = getCalculatorElements(instanceElement);
+
+            elements.initialAmount.value = "";
+            elements.years.value = "";
+            elements.rate.value = "";
+            elements.compoundFrequency.value = "365";
+            if (elements.customFrequency) {
+                elements.customFrequency.value = "";
+                setupFrequencyField(instanceElement);
+            }
+            elements.monthlyDeposit.value = "";
+            elements.annualIncreaseMonthlyDeposit.value = "";
+            elements.biMonthlyDeposit.value = "";
+
+            elements.result.innerText = "📌 مبلغ نهایی: -- تومان";
+            elements.profit.innerText = "💵 سود کسب‌شده: -- تومان";
+            elements.netProfit.innerText = "💸 سود خالص: -- تومان";
+            elements.totalDeposits.innerText = "💵 کل واریزی در مدت سرمایه‌گذاری: -- تومان";
+            elements.effectiveRate.innerText = "📈 سود مرکب واقعی: --%";
+            elements.monthlyIncome.innerText = "💰 درآمد ماهیانه (با نرخ مؤثر): -- تومان";
+
+            localStorage.removeItem(`calculatorTab_${tabId}`);
+            const tabButton = document.querySelector(`.tab-button[data-tab-id="${tabId}"] span:first-child`);
+            if (tabButton) tabButton.textContent = `تب ${tabId}`;
+        }
+
+        // قابلیت‌های مخفی
+        function showHiddenFeatures(instanceElement) {
+            const elements = getCalculatorElements(instanceElement);
+
+            elements.backupButton.addEventListener('click', () => {
+                const allData = {};
+                calculatorInstances.forEach((instanceData, tabId) => {
+                    const instanceElements = getCalculatorElements(instanceData.element);
+                    allData[tabId] = {
+                        initialAmount: instanceElements.initialAmount.value,
+                        years: instanceElements.years.value,
+                        rate: instanceElements.rate.value,
+                        compoundFrequency: instanceElements.compoundFrequency.value,
+                        customFrequency: instanceElements.customFrequency ? instanceElements.customFrequency.value : '',
+                        monthlyDeposit: instanceElements.monthlyDeposit.value,
+                        annualIncreaseMonthlyDeposit: instanceElements.annualIncreaseMonthlyDeposit.value,
+                        biMonthlyDeposit: instanceElements.biMonthlyDeposit.value,
+                    };
+                });
+
+                const backupData = {
+                    version: "1.0",
+                    timestamp: new Date().toISOString(),
+                    tabs: Object.keys(calculatorInstances).length,
+                    data: allData,
+                    history: JSON.parse(localStorage.getItem("history") || "[]"),
+                    activeTabId: activeTabId,
+                    savedTabs: JSON.parse(localStorage.getItem("savedTabs") || "[]")
+                };
+
+                const dataStr = JSON.stringify(backupData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+                const exportFileDefaultName = `محاسبه-سود-مرکب-بک‌آپ-${new Date().toLocaleDateString('fa-IR')}.json`;
+
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+
+                alert("✅ بک‌آپ با موفقیت ایجاد شد!");
+            });
+
+            elements.restoreButton.addEventListener('click', () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+
+                    reader.onload = function(event) {
+                        try {
+                            const backupData = JSON.parse(event.target.result);
+
+                            if (confirm(`آیا مطمئن هستید؟\nاین کار تمام داده‌های فعلی را بازنویسی می‌کند.\n\nتعداد تب‌ها در بک‌آپ: ${backupData.tabs}`)) {
+                                calculatorInstances.forEach((instanceData, tabId) => {
+                                    closeTab(tabId);
+                                });
+
+                                if (backupData.history) {
+                                    localStorage.setItem("history", JSON.stringify(backupData.history));
+                                }
+
+                                Object.keys(backupData.data).forEach(tabId => {
+                                    const newTabId = createCalculatorInstance(tabId);
+                                    const instanceData = calculatorInstances.get(newTabId);
+
+                                    if (instanceData && backupData.data[tabId]) {
+                                        const instanceElements = getCalculatorElements(instanceData.element);
+                                        const tabData = backupData.data[tabId];
+
+                                        instanceElements.initialAmount.value = tabData.initialAmount || "";
+                                        instanceElements.years.value = tabData.years || "";
+                                        instanceElements.rate.value = tabData.rate || "";
+                                        instanceElements.compoundFrequency.value = tabData.compoundFrequency || "365";
+                                        if (instanceElements.customFrequency) {
+                                            instanceElements.customFrequency.value = tabData.customFrequency || "";
+                                            setupFrequencyField(instanceData.element);
+                                        }
+                                        instanceElements.monthlyDeposit.value = tabData.monthlyDeposit || "";
+                                        instanceElements.annualIncreaseMonthlyDeposit.value = tabData.annualIncreaseMonthlyDeposit || "";
+                                        instanceElements.biMonthlyDeposit.value = tabData.biMonthlyDeposit || "";
+
+                                        formatNumber(instanceElements.initialAmount);
+                                        formatNumber(instanceElements.monthlyDeposit);
+                                        formatNumber(instanceElements.annualIncreaseMonthlyDeposit);
+                                        formatNumber(instanceElements.biMonthlyDeposit);
+
+                                        saveInputs(instanceData.element, newTabId);
+                                        updateTabName(newTabId, instanceData.element);
+                                    }
+                                });
+
+                                if (backupData.activeTabId && calculatorInstances.has(backupData.activeTabId)) {
+                                    setTimeout(() => {
+                                        switchTab(backupData.activeTabId);
+                                    }, 100);
+                                }
+
+                                alert("✅ بازیابی با موفقیت انجام شد!");
+                            }
+                        } catch (error) {
+                            alert("❌ خطا در خواندن فایل بک‌آپ!");
+                            console.error(error);
+                        }
+                    };
+
+                    reader.readAsText(file);
+                };
+
+                input.click();
+            });
+
+            elements.exportButton.addEventListener('click', () => {
+                const currentData = {};
+                calculatorInstances.forEach((instanceData, tabId) => {
+                    const instanceElements = getCalculatorElements(instanceData.element);
+                    currentData[tabId] = {
+                        initialAmount: instanceElements.initialAmount.value,
+                        years: instanceElements.years.value,
+                        rate: instanceElements.rate.value,
+                        compoundFrequency: instanceElements.compoundFrequency.value,
+                        customFrequency: instanceElements.customFrequency ? instanceElements.customFrequency.value : '',
+                        monthlyDeposit: instanceElements.monthlyDeposit.value,
+                        annualIncreaseMonthlyDeposit: instanceElements.annualIncreaseMonthlyDeposit.value,
+                        biMonthlyDeposit: instanceElements.biMonthlyDeposit.value,
+                    };
+                });
+
+                const dataStr = JSON.stringify(currentData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+                const exportFileDefaultName = `محاسبه-سود-مرکب-${new Date().toLocaleDateString('fa-IR')}.json`;
+
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+            });
+
+            elements.importButton.addEventListener('click', () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+
+                    reader.onload = function(event) {
+                        try {
+                            const importedData = JSON.parse(event.target.result);
+                            const tabId = prompt("شناسه تب را وارد کنید:", "newTab");
+
+                            if (tabId) {
+                                const newTabId = createCalculatorInstance(tabId);
+                                const instanceData = calculatorInstances.get(newTabId);
+
+                                if (instanceData && importedData) {
+                                    const instanceElements = getCalculatorElements(instanceData.element);
+
+                                    if (importedData[tabId]) {
+                                        const tabData = importedData[tabId];
+                                        instanceElements.initialAmount.value = tabData.initialAmount || "";
+                                        instanceElements.years.value = tabData.years || "";
+                                        instanceElements.rate.value = tabData.rate || "";
+                                        instanceElements.compoundFrequency.value = tabData.compoundFrequency || "365";
+                                        if (instanceElements.customFrequency) {
+                                            instanceElements.customFrequency.value = tabData.customFrequency || "";
+                                            setupFrequencyField(instanceData.element);
+                                        }
+                                        instanceElements.monthlyDeposit.value = tabData.monthlyDeposit || "";
+                                        instanceElements.annualIncreaseMonthlyDeposit.value = tabData.annualIncreaseMonthlyDeposit || "";
+                                        instanceElements.biMonthlyDeposit.value = tabData.biMonthlyDeposit || "";
+                                    } else if (importedData.initialAmount !== undefined) {
+                                        instanceElements.initialAmount.value = importedData.initialAmount || "";
+                                        instanceElements.years.value = importedData.years || "";
+                                        instanceElements.rate.value = importedData.rate || "";
+                                        instanceElements.compoundFrequency.value = importedData.compoundFrequency || "365";
+                                        if (instanceElements.customFrequency) {
+                                            instanceElements.customFrequency.value = importedData.customFrequency || "";
+                                            setupFrequencyField(instanceData.element);
+                                        }
+                                        instanceElements.monthlyDeposit.value = importedData.monthlyDeposit || "";
+                                        instanceElements.annualIncreaseMonthlyDeposit.value = importedData.annualIncreaseMonthlyDeposit || "";
+                                        instanceElements.biMonthlyDeposit.value = importedData.biMonthlyDeposit || "";
+                                    }
+
+                                    formatNumber(instanceElements.initialAmount);
+                                    formatNumber(instanceElements.monthlyDeposit);
+                                    formatNumber(instanceElements.annualIncreaseMonthlyDeposit);
+                                    formatNumber(instanceElements.biMonthlyDeposit);
+
+                                    saveInputs(instanceData.element, newTabId);
+                                    updateTabName(newTabId, instanceData.element);
+                                    calculateCompoundInterest(instanceData.element, newTabId);
+
+                                    alert("✅ وارد کردن داده‌ها با موفقیت انجام شد!");
+                                }
+                            }
+                        } catch (error) {
+                            alert("❌ خطا در خواندن فایل JSON!");
+                            console.error(error);
+                        }
+                    };
+
+                    reader.readAsText(file);
+                };
+
+                input.click();
+            });
+
+            elements.advancedOptionsButton.addEventListener('click', () => {
+                const decimalPlaces = prompt("تعداد اعشار برای نمایش:", "0");
+                if (decimalPlaces !== null && !isNaN(decimalPlaces)) {
+                    localStorage.setItem("decimalPlaces", decimalPlaces);
+                    alert(`✅ تعداد اعشار به ${decimalPlaces} تغییر یافت.`);
+                }
+            });
+
+            let clickCount = 0;
+            let clickTimer;
+
+            elements.historyButton.addEventListener('click', function(e) {
+                clickCount++;
+
+                if (clickCount === 1) {
+                    clickTimer = setTimeout(() => {
+                        clickCount = 0;
+                    }, 500);
+                } else if (clickCount === 2) {
+                    clearTimeout(clickTimer);
+                    clickCount = 0;
+
+                    const hiddenFeatures = instanceElement.querySelector('.hidden-features');
+                    if (hiddenFeatures.style.display === 'none' || hiddenFeatures.style.display === '') {
+                        hiddenFeatures.style.display = 'block';
+                        elements.backupButton.style.display = 'inline-block';
+                        elements.restoreButton.style.display = 'inline-block';
+                        elements.exportButton.style.display = 'inline-block';
+                        elements.importButton.style.display = 'inline-block';
+                        elements.advancedOptionsButton.style.display = 'inline-block';
+                    } else {
+                        hiddenFeatures.style.display = 'none';
+                    }
+                }
+            }, false);
+        }
+
+        // ایجاد نمونه ماشین حساب
+        function createCalculatorInstance(initialTabId = null) {
+            tabCounter++;
+            const tabId = initialTabId || tabCounter;
+            const template = document.getElementById('calculator-template');
+            const calculatorApp = document.getElementById('calculator-app');
+            const tabsContainer = document.getElementById('tabs-container');
+
+            const newInstance = template.content.cloneNode(true).firstElementChild;
+            newInstance.dataset.tabId = tabId;
+            calculatorApp.appendChild(newInstance);
+
+            calculatorInstances.set(tabId.toString(), { element: newInstance });
+
+            loadInputs(newInstance, tabId);
+            setupFrequencyField(newInstance);
+
+            const elements = getCalculatorElements(newInstance);
+
+            elements.initialAmount.addEventListener('input', () => { formatNumber(elements.initialAmount); saveInputs(newInstance, tabId); });
+            elements.years.addEventListener('input', () => saveInputs(newInstance, tabId));
+            elements.rate.addEventListener('input', () => saveInputs(newInstance, tabId));
+            elements.compoundFrequency.addEventListener('change', () => {
+                saveInputs(newInstance, tabId);
+                updateTabName(tabId, newInstance);
+                if (elements.customFrequency) {
+                    setupFrequencyField(newInstance);
+                }
+            });
+            if (elements.customFrequency) {
+                elements.customFrequency.addEventListener('input', () => saveInputs(newInstance, tabId));
+            }
+            elements.monthlyDeposit.addEventListener('input', () => { formatNumber(elements.monthlyDeposit); saveInputs(newInstance, tabId); });
+            elements.annualIncreaseMonthlyDeposit.addEventListener('input', () => { formatNumber(elements.annualIncreaseMonthlyDeposit); saveInputs(newInstance, tabId); });
+            elements.biMonthlyDeposit.addEventListener('input', () => { formatNumber(elements.biMonthlyDeposit); saveInputs(newInstance, tabId); });
+
+            elements.calculateButton.addEventListener('click', () => { calculateCompoundInterest(newInstance, tabId); updateTabName(tabId, newInstance); });
+            elements.resetButton.addEventListener('click', () => resetForm(newInstance, tabId));
+            elements.historyButton.addEventListener('click', showHistory);
+
+            showHiddenFeatures(newInstance);
+
+            const tabButton = document.createElement('button');
+            tabButton.classList.add('tab-button');
+            tabButton.dataset.tabId = tabId;
+            tabButton.innerHTML = `<span>تب ${tabId}</span> <span class="close-tab">x</span>`;
+
+            tabButton.addEventListener('click', (event) => {
+                if (!event.target.classList.contains('close-tab')) {
+                    switchTab(tabId.toString());
+                }
+            });
+            tabButton.querySelector('.close-tab').addEventListener('click', (event) => {
+                event.stopPropagation();
+                closeTab(tabId.toString());
+            });
+            tabsContainer.appendChild(tabButton);
+
+            applyTheme();
+            updateTabName(tabId, newInstance);
+            return tabId.toString();
+        }
+
+        function switchTab(tabId) {
+            if (activeTabId === tabId) return;
+
+            if (activeTabId) {
+                const currentActiveInstance = calculatorInstances.get(activeTabId)?.element;
+                if (currentActiveInstance) currentActiveInstance.classList.remove('active');
+                const currentActiveTabButton = document.querySelector(`.tab-button[data-tab-id="${activeTabId}"]`);
+                if (currentActiveTabButton) currentActiveTabButton.classList.remove('active-tab');
+            }
+
+            const newActiveInstance = calculatorInstances.get(tabId)?.element;
+            if (newActiveInstance) {
+                newActiveInstance.classList.add('active');
+            }
+            const newActiveTabButton = document.querySelector(`.tab-button[data-tab-id="${tabId}"]`);
+            if (newActiveTabButton) newActiveTabButton.classList.add('active-tab');
+
+            activeTabId = tabId;
+            localStorage.setItem('activeTabId', tabId);
+
+            newActiveTabButton.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+        }
+
+        function closeTab(tabId) {
+            if (calculatorInstances.size === 1) {
+                alert("نمی‌توانید تنها تب موجود را حذف کنید.");
+                return;
+            }
+
+            const instanceData = calculatorInstances.get(tabId);
+            if (instanceData) {
+                instanceData.element.remove();
+                localStorage.removeItem(`calculatorTab_${tabId}`);
+                calculatorInstances.delete(tabId);
+            }
+
+            const tabButton = document.querySelector(`.tab-button[data-tab-id="${tabId}"]`);
+            if (tabButton) tabButton.remove();
+
+            if (activeTabId === tabId) {
+                const remainingTabIds = Array.from(calculatorInstances.keys());
+                if (remainingTabIds.length > 0) {
+                    switchTab(remainingTabIds[0]);
+                } else {
+                    activeTabId = null;
+                    localStorage.removeItem('activeTabId');
+                }
+            }
+            localStorage.setItem('tabCounter', tabCounter);
+            saveTabsState();
+        }
+
+        function updateTabName(tabId, instanceElement) {
+            const elements = getCalculatorElements(instanceElement);
+            const tabButtonSpan = document.querySelector(`.tab-button[data-tab-id="${tabId}"] span:first-child`);
+
+            if (tabButtonSpan) {
+                let nameParts = [];
+                const initialAmountValue = elements.initialAmount.value.replace(/,/g, "");
+                const yearsValue = elements.years.value;
+                const rateValue = elements.rate.value;
+
+                if (initialAmountValue && parseFloat(initialAmountValue) > 0) {
+                    nameParts.push(`مبلغ: ${parseFloat(initialAmountValue).toLocaleString('fa-IR').split(',')[0]}`);
+                }
+                if (yearsValue && parseFloat(yearsValue) > 0) {
+                    nameParts.push(`سال: ${yearsValue}`);
+                }
+                if (rateValue && parseFloat(rateValue) > 0) {
+                    nameParts.push(`سود: ${rateValue}%`);
+                }
+
+                if (nameParts.length > 0) {
+                    tabButtonSpan.textContent = nameParts.join(' | ');
+                } else {
+                    tabButtonSpan.textContent = `تب ${tabId}`;
+                }
+            }
+        }
+
+        function saveTabsState() {
+            localStorage.setItem('savedTabs', JSON.stringify(Array.from(calculatorInstances.keys())));
+            localStorage.setItem('activeTabId', activeTabId);
+            localStorage.setItem('tabCounter', tabCounter);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTheme();
+
+            document.querySelector('.close-history').addEventListener('click', closeHistoryModal);
+            window.addEventListener('click', (event) => {
+                if (event.target == document.getElementById('historyModal')) {
+                    closeHistoryModal();
+                }
+            });
+
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+            }
+
+            const addTabButton = document.getElementById('add-tab-button');
+            addTabButton.addEventListener('click', () => {
+                const newTabId = createCalculatorInstance();
+                switchTab(newTabId);
+                saveTabsState();
+            });
+
+            let savedTabs = JSON.parse(localStorage.getItem('savedTabs')) || [];
+            let savedActiveTabId = localStorage.getItem('activeTabId');
+            tabCounter = parseInt(localStorage.getItem('tabCounter') || '0');
+
+            if (savedTabs.length > 0) {
+                savedTabs.forEach(id => {
+                    if (parseInt(id) > tabCounter) tabCounter = parseInt(id);
+                    const createdTabId = createCalculatorInstance(id);
+                    updateTabName(createdTabId, calculatorInstances.get(createdTabId).element);
+                });
+                if (savedActiveTabId && calculatorInstances.has(savedActiveTabId)) {
+                    switchTab(savedActiveTabId);
+                } else {
+                    switchTab(savedTabs[0]);
+                }
+            } else {
+                const newTabId = createCalculatorInstance("1");
+                switchTab(newTabId);
+                saveTabsState();
+            }
+        });
+    </script>
+</body>
+</html>
