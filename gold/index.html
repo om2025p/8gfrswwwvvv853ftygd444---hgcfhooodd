@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2196F3">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <title>ثبت درصد ۱</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: Tahoma, 'Segoe UI', Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+        }
+        .app-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+        .tabs {
+            display: flex;
+            background: #2196F3;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 100;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border-bottom: 3px solid transparent;
+            opacity: 0.8;
+        }
+        .tab.active {
+            opacity: 1;
+            background: rgba(255,255,255,0.1);
+            border-bottom: 3px solid #ffd700;
+        }
+        .tab-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        .tab-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            border: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-wrapper">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab(0)">📊 ثبت درصد</div>
+            <div class="tab" onclick="switchTab(1)">🏆 محاسبه تغییرات</div>
+        </div>
+        <div class="tab-container">
+            <div id="content0" class="tab-content active">
+                <iframe src="percent.html"></iframe>
+            </div>
+            <div id="content1" class="tab-content">
+                <iframe src="calculator.html"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(index) {
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                t.classList.toggle('active', i === index);
+            });
+            document.querySelectorAll('.tab-content').forEach((c, i) => {
+                c.classList.toggle('active', i === index);
+            });
+
+            // تغییر رنگ تم بر اساس تب انتخاب شده
+            const themeColor = document.querySelector('meta[name="theme-color"]');
+            if (index === 1) {
+                themeColor.setAttribute('content', '#1a1a1a');
+                document.querySelector('.tabs').style.background = '#1a1a1a';
+            } else {
+                themeColor.setAttribute('content', '#2196F3');
+                document.querySelector('.tabs').style.background = '#2196F3';
+            }
+        }
+
+        // ثبت سرویس ورکر برای حالت آفلاین
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js', { scope: '/gold/' })
+                    .then(reg => console.log('Gold SW Registered'))
+                    .catch(err => console.log('Gold SW Failed', err));
+            });
+        }
+    </script>
+</body>
+</html>
