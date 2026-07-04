@@ -966,28 +966,34 @@
     function loadDraft() {
         const draftStr = localStorage.getItem(STORAGE_KEYS.DRAFT);
         if (!draftStr) return false;
-        const draft = JSON.parse(draftStr);
+        try {
+            const draft = JSON.parse(draftStr);
+            if (!draft || !draft.sessionState) return false;
 
-        document.getElementById('workoutType').value = draft.type;
-        sessionState = draft.sessionState;
-        ratings = draft.ratings;
+            document.getElementById('workoutType').value = draft.type || 'heavy';
+            sessionState = draft.sessionState;
+            ratings = draft.ratings || { stomach: 5, quality: 5, fatigue: 1, temp: 5, mental: 10 };
 
-        initWorkout(true);
+            initWorkout(true);
 
-        document.getElementById('nut-eggs').value = draft.nutrition.eggs;
-        document.getElementById('nut-soy').value = draft.nutrition.soy;
-        document.getElementById('nut-potatoes').value = draft.nutrition.potatoes;
+            document.getElementById('nut-eggs').value = (draft.nutrition && draft.nutrition.eggs) || 0;
+            document.getElementById('nut-soy').value = (draft.nutrition && draft.nutrition.soy) || 0;
+            document.getElementById('nut-potatoes').value = (draft.nutrition && draft.nutrition.potatoes) || 0;
 
-        if (nutritionEditor) nutritionEditor.setContent(draft.nutrition.notes);
-        if (notesEditor) notesEditor.setContent(draft.notes);
+            if (nutritionEditor) nutritionEditor.setContent((draft.nutrition && draft.nutrition.notes) || '');
+            if (notesEditor) notesEditor.setContent(draft.notes || '');
 
-        initRatings();
-        return true;
+            initRatings();
+            return true;
+        } catch (e) {
+            console.error("Error loading draft:", e);
+            return false;
+        }
     }
 
     function initWorkout(isLoadingDraft = false) {
         const type = document.getElementById('workoutType').value;
-        const exercises = workoutData[type];
+        const exercises = workoutData[type] || [];
         const listDiv = document.getElementById('exerciseList');
         listDiv.innerHTML = '';
 
@@ -998,7 +1004,8 @@
             document.getElementById('nut-potatoes').value = 0;
             if (nutritionEditor) nutritionEditor.setContent('');
             if (notesEditor) notesEditor.setContent('');
-        } else if (!sessionState.warmup) {
+        } else if (!sessionState || !sessionState.warmup) {
+            sessionState = sessionState || {};
             sessionState.warmup = { done: false, name: "نرمش قبل از تمرین انجام شد ؟", time: null, rawTime: null };
         }
 
@@ -1025,7 +1032,7 @@
                 if (!sessionState[lKey]) sessionState[lKey] = { done: false, value: ex.target, time: null, rawTime: null };
 
                 card.innerHTML = `
-                    <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${ex.unit})</div>
+                    <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${escapeHtml(ex.unit)})</div>
                     <div class="side-row">
                         <span>👉 راست:</span>
                         <div class="input-with-check">
@@ -1047,7 +1054,7 @@
 
                 card.innerHTML = `
                     <div class="exercise-header">
-                        <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${ex.unit})</div>
+                        <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${escapeHtml(ex.unit)})</div>
                         <div class="input-with-check">
                             <input type="number" id="ex-${ex.id}-val" value="${sessionState[key].value}" oninput="updateSessionValue(${ex.id}, null, this.value)">
                             <button class="check-btn ${sessionState[key].done ? 'active' : ''}" id="ex-${ex.id}-btn" onclick="toggleCheck(${ex.id})">✓</button>
@@ -1726,7 +1733,7 @@
     // ثبت سرویس ورکر
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/gym/sw.js', { scope: '/gym/' })
+            navigator.serviceWorker.register('sw.js', { scope: '/gym/' })
                 .then(reg => console.log('Service Worker Registered'))
                 .catch(err => console.log('Service Worker Failed', err));
         });
