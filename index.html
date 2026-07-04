@@ -11,8 +11,9 @@
     <title>عمارت دیجیتال</title>
     <style>
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --opaque-white: rgba(255, 255, 255, 0.85);
             --text-color: #ffffff;
             --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
             --accent-blue: #1e3a8a;
@@ -28,6 +29,8 @@
             min-height: 100vh;
             color: var(--text-color);
             overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         /* لایه شیشه‌ای مات روی کل صفحه */
@@ -38,8 +41,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             z-index: -1;
         }
 
@@ -57,35 +60,36 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 15px;
             width: 100%;
+            position: relative;
         }
 
         .app-card {
             background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 24px;
             padding: 15px 5px;
             text-align: center;
             text-decoration: none;
             color: inherit;
             box-shadow: var(--shadow);
             border: 1px solid var(--glass-border);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s, border-color 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            opacity: 0; /* برای شروع انیمیشن */
+            position: relative;
+            touch-action: none;
         }
 
         .app-card:hover {
-            transform: scale(1.1);
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
         }
 
         .app-card:active {
-            transform: scale(0.9);
+            transform: scale(0.95);
         }
 
         .app-icon {
@@ -95,19 +99,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            pointer-events: none;
         }
 
         .app-icon img {
-            width: 50px;
-            height: 50px;
+            width: 55px;
+            height: 55px;
             object-fit: contain;
-            border-radius: 12px;
+            border-radius: 14px;
+            background: var(--opaque-white);
+            padding: 2px;
         }
 
         .app-title {
             font-size: 0.85rem;
             font-weight: 500;
             white-space: nowrap;
+            pointer-events: none;
         }
 
         .coming-soon {
@@ -115,72 +123,217 @@
             cursor: not-allowed;
         }
 
-        /* انیمیشن‌های پرواز از گوشه‌ها */
-        @keyframes flyInTL { from { transform: translate(-100vw, -100vh); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
-        @keyframes flyInT { from { transform: translateY(-100vh); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes flyInTR { from { transform: translate(100vw, -100vh); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
-        @keyframes flyInBL { from { transform: translate(-100vw, 100vh); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
-        @keyframes flyInB { from { transform: translateY(100vh); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes flyInBR { from { transform: translate(100vw, 100vh); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
+        /* حالت لرزش */
+        @keyframes jiggle {
+            0% { transform: rotate(-1.5deg); }
+            50% { transform: rotate(1.5deg); }
+            100% { transform: rotate(-1.5deg); }
+        }
 
-        .fly-tl { animation: flyInTL 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-        .fly-t  { animation: flyInT 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-        .fly-tr { animation: flyInTR 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-        .fly-bl { animation: flyInBL 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-        .fly-b  { animation: flyInB 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-        .fly-br { animation: flyInBR 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        .editing .app-card {
+            animation: jiggle 0.25s infinite ease-in-out;
+        }
+
+        .editing .app-card:active, .editing .app-card.dragging {
+            animation: none;
+            transform: scale(1.1);
+            z-index: 1000;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            background: rgba(255,255,255,0.25);
+            opacity: 0.9;
+        }
+
+        /* انیمیشن‌های ورود */
+        @keyframes flyIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .fly-in {
+            animation: flyIn 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
 
         @media (max-width: 400px) {
-            .app-grid { gap: 10px; }
-            .app-icon { font-size: 1.8rem; }
+            .app-grid { gap: 12px; }
+            .app-icon img { width: 50px; height: 50px; }
             .app-title { font-size: 0.75rem; }
+        }
+
+        /* استایل کشیدن */
+        .dragging {
+            z-index: 1000;
         }
     </style>
 </head>
-<body>
+<body class="light">
 
     <div class="container">
-        <div class="app-grid">
-            <!-- برنامه ورزش -->
-            <a href="gym/index.html" class="app-card fly-tl">
-                <div class="app-icon">
-                    <img src="gym/icon-192.png" alt="ورزش">
-                </div>
-                <div class="app-title">ورزش</div>
-            </a>
-
-            <!-- ثبت درصد طلا -->
-            <a href="gold/index.html" class="app-card fly-t">
-                <div class="app-icon">
-                    <img src="gold/icon-192.png" alt="ثبت درصد ۱">
-                </div>
-                <div class="app-title">ثبت درصد ۱</div>
-            </a>
-
-            <div class="app-card coming-soon fly-tr">
-                <div class="app-icon">🧪</div>
-                <div class="app-title">بزودی...</div>
-            </div>
-
-            <div class="app-card coming-soon fly-bl">
-                <div class="app-icon">🌙</div>
-                <div class="app-title">بزودی...</div>
-            </div>
-
-            <div class="app-card coming-soon fly-b">
-                <div class="app-icon">🍎</div>
-                <div class="app-title">بزودی...</div>
-            </div>
-
-            <div class="app-card coming-soon fly-br">
-                <div class="app-icon">📈</div>
-                <div class="app-title">بزودی...</div>
-            </div>
+        <div class="app-grid" id="appGrid">
+            <!-- آیتم‌ها توسط جاوا اسکریپت رندر می‌شوند -->
         </div>
     </div>
 
     <script>
-        // ثبت سرویس ورکر برای پورتال مادر
+        const DEFAULT_APPS = [
+            { id: 'gym', title: 'ورزش', icon: 'gym/icon-192.png', url: 'gym/index.html' },
+            { id: 'gold', title: 'ثبت درصد ۱', icon: 'gold/icon-192.png', url: 'gold/index.html' }
+        ];
+
+        let savedApps = JSON.parse(localStorage.getItem('portal_app_order'));
+        // فیلتر کردن برای حذف آیتم‌های قدیمی "به زودی" اگر در استوریج مانده باشند
+        let apps = savedApps ? savedApps.filter(a => !a.comingSoon) : DEFAULT_APPS;
+        let isEditing = false;
+        let dragItem = null;
+        let pressTimer = null;
+
+        const grid = document.getElementById('appGrid');
+
+        function renderApps() {
+            grid.innerHTML = '';
+            apps.forEach((app, index) => {
+                const card = document.createElement('a');
+                card.href = app.url;
+                card.className = `app-card fly-in ${app.comingSoon ? 'coming-soon' : ''}`;
+                card.dataset.id = app.id;
+                card.style.animationDelay = `${index * 0.05}s`;
+
+                // غیرفعال کردن انیمیشن بعد از پایان برای جلوگیری از ریست شدن در درگ
+                card.addEventListener('animationend', () => {
+                    card.style.opacity = '1';
+                    card.classList.remove('fly-in');
+                }, { once: true });
+
+                card.onclick = (e) => {
+                    if (isEditing || app.comingSoon) e.preventDefault();
+                };
+
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'app-icon';
+                if (app.icon.endsWith('.png')) {
+                    const img = document.createElement('img');
+                    img.src = app.icon;
+                    img.alt = app.title;
+                    iconDiv.appendChild(img);
+                } else {
+                    iconDiv.innerText = app.icon;
+                }
+
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'app-title';
+                titleDiv.innerText = app.title;
+
+                card.appendChild(iconDiv);
+                card.appendChild(titleDiv);
+
+                card.onpointerdown = handlePointerDown;
+                card.onpointerup = handlePointerUp;
+                card.onpointercancel = handlePointerUp;
+                card.onpointermove = handlePointerMove;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function handlePointerDown(e) {
+            if (isEditing) {
+                startDragging(e);
+            } else {
+                pressTimer = setTimeout(() => {
+                    enterEditMode();
+                }, 1000);
+            }
+        }
+
+        function handlePointerUp(e) {
+            clearTimeout(pressTimer);
+            if (isEditing && dragItem) {
+                stopDragging(e);
+            }
+        }
+
+        function handlePointerMove(e) {
+            if (!isEditing) {
+                clearTimeout(pressTimer);
+            } else if (dragItem) {
+                moveDragging(e);
+            }
+        }
+
+        function enterEditMode() {
+            isEditing = true;
+            document.body.classList.add('editing');
+            if (navigator.vibrate) navigator.vibrate(100);
+
+            const exitHandler = (e) => {
+                if (!e.target.closest('.app-card')) {
+                    exitEditMode();
+                    window.removeEventListener('pointerdown', exitHandler);
+                }
+            };
+            window.addEventListener('pointerdown', exitHandler);
+        }
+
+        function exitEditMode() {
+            isEditing = false;
+            document.body.classList.remove('editing');
+            saveOrder();
+        }
+
+        function saveOrder() {
+            const currentOrder = Array.from(grid.children).map(card => {
+                const appId = card.dataset.id;
+                return apps.find(a => a.id === appId);
+            }).filter(Boolean);
+
+            if (currentOrder.length > 0) {
+                localStorage.setItem('portal_app_order', JSON.stringify(currentOrder));
+                apps = currentOrder;
+            }
+        }
+
+        function startDragging(e) {
+            dragItem = e.currentTarget;
+            dragItem.classList.add('dragging');
+            dragItem.setPointerCapture(e.pointerId);
+        }
+
+        function moveDragging(e) {
+            if (!dragItem) return;
+            const afterElement = getDragAfterElement(grid, e.clientX, e.clientY);
+            if (afterElement == null) {
+                grid.appendChild(dragItem);
+            } else {
+                grid.insertBefore(dragItem, afterElement);
+            }
+        }
+
+        function stopDragging(e) {
+            if (!dragItem) return;
+            dragItem.classList.remove('dragging');
+            dragItem.releasePointerCapture(e.pointerId);
+            dragItem = null;
+            saveOrder();
+        }
+
+        function getDragAfterElement(container, x, y) {
+            const draggableElements = [...container.querySelectorAll('.app-card:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const centerX = box.left + box.width / 2;
+                const centerY = box.top + box.height / 2;
+                const distance = Math.hypot(x - centerX, y - centerY);
+
+                if (distance < closest.distance) {
+                    return { distance: distance, element: child };
+                } else {
+                    return closest;
+                }
+            }, { distance: 1000 }).element; // Limit distance to prevent jumping
+        }
+
+        renderApps();
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
