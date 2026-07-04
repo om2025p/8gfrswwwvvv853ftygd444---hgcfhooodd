@@ -994,17 +994,23 @@
                 const rBtn = document.getElementById(`ex-${ex.id}-r-btn`);
                 const lBtn = document.getElementById(`ex-${ex.id}-l-btn`);
 
-                rInput.value = sessionState[rKey].value;
-                lInput.value = sessionState[lKey].value;
-                if (sessionState[rKey].done) rBtn.classList.add('active');
-                if (sessionState[lKey].done) lBtn.classList.add('active');
+                if (sessionState[rKey]) {
+                    rInput.value = sessionState[rKey].value;
+                    if (sessionState[rKey].done) rBtn.classList.add('active');
+                }
+                if (sessionState[lKey]) {
+                    lInput.value = sessionState[lKey].value;
+                    if (sessionState[lKey].done) lBtn.classList.add('active');
+                }
             } else {
                 const key = ex.id;
                 const input = document.getElementById(`ex-${ex.id}-val`);
                 const btn = document.getElementById(`ex-${ex.id}-btn`);
 
-                input.value = sessionState[key].value;
-                if (sessionState[key].done) btn.classList.add('active');
+                if (sessionState[key]) {
+                    input.value = sessionState[key].value;
+                    if (sessionState[key].done) btn.classList.add('active');
+                }
             }
         });
 
@@ -1209,12 +1215,16 @@
         const diff = now - lastTime;
         const restPeriod = 48 * 60 * 60 * 1000;
 
+        const hasDraft = localStorage.getItem(STORAGE_KEYS.DRAFT);
+
         if (diff < restPeriod) {
             showTimer(restPeriod - diff);
             return false;
         } else {
             hideTimer();
-            applyProgression(lastWorkout);
+            if (!hasDraft) {
+                applyProgression(lastWorkout);
+            }
             return true;
         }
     }
