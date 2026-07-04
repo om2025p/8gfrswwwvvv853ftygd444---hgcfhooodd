@@ -7,7 +7,13 @@ const ASSETS = [
   'icon-192-maskable.png',
   'icon-512-maskable.png',
   'apple-touch-icon.png',
-  'favicon.ico'
+  'favicon.ico',
+  'profit-calculator/index.html',
+  'profit-calculator/calc1.html',
+  'profit-calculator/calc2.html',
+  'profit-calculator/manifest.json',
+  'profit-calculator/icon-192.png',
+  'profit-calculator/icon-512.png'
 ];
 
 // نصب سرویس ورکر و کش کردن فایل‌های اصلی عمارت
