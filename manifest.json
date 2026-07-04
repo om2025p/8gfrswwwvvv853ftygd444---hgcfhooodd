@@ -4,7 +4,7 @@
   "short_name": "عمارت",
   "description": "پورتال مرکزی مدیریت اپلیکیشن‌های شخصی",
   "start_url": "index.html",
-  "scope": "/",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#1e3a8a",

@@ -947,20 +947,24 @@
     }
 
     function saveDraft() {
-        const type = document.getElementById('workoutType').value;
-        const draft = {
-            type: type,
-            sessionState: sessionState,
-            ratings: ratings,
-            nutrition: {
-                eggs: document.getElementById('nut-eggs').value,
-                soy: document.getElementById('nut-soy').value,
-                potatoes: document.getElementById('nut-potatoes').value,
-                notes: nutritionEditor ? nutritionEditor.getContent() : ''
-            },
-            notes: notesEditor ? notesEditor.getContent() : ''
-        };
-        localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(draft));
+        try {
+            const type = document.getElementById('workoutType').value;
+            const draft = {
+                type: type,
+                sessionState: sessionState || {},
+                ratings: ratings || {},
+                nutrition: {
+                    eggs: document.getElementById('nut-eggs').value,
+                    soy: document.getElementById('nut-soy').value,
+                    potatoes: document.getElementById('nut-potatoes').value,
+                    notes: nutritionEditor ? nutritionEditor.getContent() : ''
+                },
+                notes: notesEditor ? notesEditor.getContent() : ''
+            };
+            localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(draft));
+        } catch (e) {
+            console.warn("Draft saving skipped:", e);
+        }
     }
 
     function loadDraft() {
