@@ -11,17 +11,15 @@
     <title>عمارت دیجیتال</title>
     <style>
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --opaque-white: rgba(255, 255, 255, 0.85);
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.25);
+            --opaque-white: rgba(255, 255, 255, 0.9);
             --text-color: #ffffff;
-            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            --accent-blue: #1e3a8a;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: radial-gradient(circle at center, #1e3a8a 0%, #0f172a 100%);
             margin: 0;
             display: flex;
             align-items: center;
@@ -31,6 +29,63 @@
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
+            transition: background 1s ease;
+        }
+
+        /* تم روز - آسمانی */
+        body.day-theme {
+            background: linear-gradient(180deg, #87CEEB 0%, #B0E2FF 100%);
+            color: #1e3a8a;
+        }
+        body.day-theme .app-card {
+            background: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: #1e3a8a;
+        }
+        body.day-theme .app-title { font-weight: 600; }
+
+        /* تم شب - ستاره‌ای */
+        body.night-theme {
+            background: radial-gradient(circle at center, #1e3a8a 0%, #020617 100%);
+            color: #ffffff;
+        }
+
+        /* المان‌های تزئینی */
+        .sky-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .moon {
+            position: absolute;
+            top: 50px;
+            right: 50px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            display: none;
+        }
+        body.night-theme .moon { display: block; }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle var(--duration) infinite ease-in-out;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
         }
 
         /* لایه شیشه‌ای مات روی کل صفحه */
@@ -41,8 +96,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             z-index: -1;
         }
 
@@ -165,7 +220,11 @@
         }
     </style>
 </head>
-<body class="light">
+<body class="day-theme">
+
+    <div class="sky-elements" id="skyElements">
+        <div class="moon"></div>
+    </div>
 
     <div class="container">
         <div class="app-grid" id="appGrid">
@@ -174,6 +233,46 @@
     </div>
 
     <script>
+        function updateTheme() {
+            const hour = new Date().getHours();
+            const isNight = hour < 6 || hour >= 18;
+            const body = document.body;
+            const sky = document.getElementById('skyElements');
+
+            if (isNight) {
+                body.classList.remove('day-theme');
+                body.classList.add('night-theme');
+                generateStars(sky);
+            } else {
+                body.classList.remove('night-theme');
+                body.classList.add('day-theme');
+                clearStars();
+            }
+        }
+
+        function generateStars(container) {
+            if (document.querySelectorAll('.star').length > 0) return;
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 3 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.setProperty('--duration', `${Math.random() * 3 + 2}s`);
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                container.appendChild(star);
+            }
+        }
+
+        function clearStars() {
+            document.querySelectorAll('.star').forEach(s => s.remove());
+        }
+
+        updateTheme();
+        setInterval(updateTheme, 60000); // چک کردن هر دقیقه
+
         const DEFAULT_APPS = [
             { id: 'gym', title: 'ورزش', icon: 'gym/icon-192.png', url: 'gym/index.html' },
             { id: 'gold', title: 'ثبت درصد ۱', icon: 'gold/icon-192.png', url: 'gold/index.html' }
