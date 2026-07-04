@@ -136,6 +136,7 @@
             justify-content: center;
             position: relative;
             touch-action: none;
+            -webkit-touch-callout: none; /* Disable callout, e.g., on iOS */
         }
 
         .app-card:hover {
@@ -328,6 +329,7 @@
                 card.onpointerup = handlePointerUp;
                 card.onpointercancel = handlePointerUp;
                 card.onpointermove = handlePointerMove;
+                card.oncontextmenu = (e) => e.preventDefault(); // Prevent context menu on long press
 
                 grid.appendChild(card);
             });
