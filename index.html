@@ -125,7 +125,7 @@
             display: grid;
             grid-template-columns: repeat(var(--cols, 3), 1fr);
             grid-template-rows: repeat(var(--rows, 4), 1fr);
-            gap: 20px;
+            gap: 0;
             padding: 40px 20px;
             box-sizing: border-box;
             position: relative;
@@ -137,16 +137,27 @@
             display: grid;
             grid-template-columns: repeat(var(--cols, 3), 1fr);
             grid-template-rows: repeat(var(--rows, 4), 1fr);
-            gap: 20px;
+            gap: 0;
             padding: 40px 20px;
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.3s;
+            z-index: 0;
         }
-        .editing .grid-overlay { opacity: 0.2; }
+        .editing .grid-overlay { opacity: 0.5; }
         .grid-cell {
-            border: 1px dashed rgba(255,255,255,0.5);
-            border-radius: 20px;
+            border: 1px dashed rgba(255,255,255,0.4);
+            box-sizing: border-box;
+        }
+
+        .drop-preview {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 24px;
+            pointer-events: none;
+            display: none;
+            z-index: 5;
         }
 
         .app-card {
@@ -165,6 +176,7 @@
             justify-content: center;
             position: relative;
             aspect-ratio: 1/1;
+            margin: 10px;
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s, border-color 0.3s, opacity 0.3s;
             user-select: none;
             touch-action: none;
@@ -181,10 +193,11 @@
 
         .app-card.dragging {
             z-index: 2000;
-            opacity: 0.8;
-            transform: scale(1.1);
+            opacity: 0.9;
+            transform: scale(1.02);
             position: fixed;
             pointer-events: none;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
 
         .app-card.folder {
@@ -576,11 +589,12 @@
             document.documentElement.style.setProperty('--rows', rows);
 
             const maxPage = state.layout.reduce((max, item) => Math.max(max, item.page), 0);
-            const pageCount = maxPage + 1;
+            const pageCount = Math.max(1, maxPage + (state.isEditing ? 2 : 1));
 
             for (let p = 0; p < pageCount; p++) {
                 const page = document.createElement('div');
                 page.className = 'page';
+                page.dataset.page = p;
 
                 const overlay = document.createElement('div');
                 overlay.className = 'grid-overlay';
@@ -592,6 +606,10 @@
                     }
                 }
                 page.appendChild(overlay);
+
+                const preview = document.createElement('div');
+                preview.className = 'drop-preview';
+                page.appendChild(preview);
 
                 const pageLayout = state.layout.filter(item => item.page === p);
                 pageLayout.forEach((item, idx) => {
@@ -693,23 +711,15 @@
         const mainContainer = document.getElementById('mainContainer');
 
         mainContainer.addEventListener('pointerdown', e => {
-            if (state.isEditing || e.target.closest('.app-card')) return;
+            if (e.target.closest('.app-card')) return;
             startX = e.clientX;
             startY = e.clientY;
             isSwiping = true;
 
-            pressTimer = setTimeout(() => {
-                openSettings();
-            }, 800);
-        });
-
-        mainContainer.addEventListener('pointermove', e => {
-            if (isSwiping) {
-                const diffX = e.clientX - startX;
-                const diffY = e.clientY - startY;
-                if (Math.abs(diffX) > 10 || Math.abs(diffY) > 10) {
-                    clearTimeout(pressTimer);
-                }
+            if (!state.isEditing) {
+                pressTimer = setTimeout(() => {
+                    openSettings();
+                }, 800);
             }
         });
 
@@ -717,6 +727,9 @@
             if (!isSwiping) return;
             const diffX = e.clientX - startX;
             const diffY = e.clientY - startY;
+            if (Math.abs(diffX) > 10 || Math.abs(diffY) > 10) {
+                clearTimeout(pressTimer);
+            }
             if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
                 e.preventDefault();
             }
@@ -726,13 +739,11 @@
             if (!isSwiping) return;
             const diffX = e.clientX - startX;
             if (Math.abs(diffX) > 50) {
-                if (diffX > 0 && state.currentPage > 0) goToPage(state.currentPage - 1);
-                else if (diffX < 0) {
+                if (diffX > 0) {
                     const wrapper = document.getElementById('pagesWrapper');
                     if (state.currentPage < wrapper.children.length - 1) goToPage(state.currentPage + 1);
-                    else if (state.isEditing) {
-                         // Logic for adding new page in edit mode could go here
-                    }
+                } else if (diffX < 0 && state.currentPage > 0) {
+                    goToPage(state.currentPage - 1);
                 }
             }
             isSwiping = false;
@@ -757,6 +768,7 @@
                 }
 
                 if (state.isEditing) {
+                    if (activeFolderId) closeFolder();
                     startDragging(e, el);
                 } else {
                     pressTimer = setTimeout(() => {
@@ -768,7 +780,7 @@
                             if (!isSwiping && !dragItem) {
                                 window.location.href = el.dataset.url;
                             }
-                        }, 350);
+                        }, 250);
                     }
                 }
             });
@@ -800,19 +812,51 @@
                 return;
             }
 
-            dragItem.style.left = `${e.clientX - dragOffsetX}px`;
-            dragItem.style.top = `${e.clientY - dragOffsetY}px`;
+            const x = e.clientX;
+            const y = e.clientY;
+            dragItem.style.left = `${x - dragOffsetX}px`;
+            dragItem.style.top = `${y - dragOffsetY}px`;
+
+            // Android-style Magnet/Preview
+            updateDropPreview(x, y);
 
             // Check for edge of screen to switch page
-            if (e.clientX < 50 && state.currentPage > 0) {
+            if (x < 30 && state.currentPage > 0) {
                  throttle(() => goToPage(state.currentPage - 1), 1000);
-            } else if (e.clientX > window.innerWidth - 50) {
+            } else if (x > window.innerWidth - 30) {
                  throttle(() => {
                     const wrapper = document.getElementById('pagesWrapper');
                     if (state.currentPage < wrapper.children.length - 1) {
                         goToPage(state.currentPage + 1);
                     }
                  }, 1000);
+            }
+        }
+
+        function updateDropPreview(x, y) {
+            const pageEl = document.querySelectorAll('.page')[state.currentPage];
+            if (!pageEl) return;
+            const preview = pageEl.querySelector('.drop-preview');
+            const pageRect = pageEl.getBoundingClientRect();
+            const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cols'));
+            const rows = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rows'));
+
+            const relativeX = x - pageRect.left;
+            const relativeY = y - pageRect.top;
+
+            const col = Math.floor(relativeX / (pageRect.width / cols));
+            const row = Math.floor(relativeY / (pageRect.height / rows));
+
+            if (col >= 0 && col < cols && row >= 0 && row < rows) {
+                const cellW = pageRect.width / cols;
+                const cellH = pageRect.height / rows;
+                preview.style.display = 'block';
+                preview.style.width = `${cellW - 20}px`;
+                preview.style.height = `${cellH - 20}px`;
+                preview.style.left = `${col * cellW + 10}px`;
+                preview.style.top = `${row * cellH + 10}px`;
+            } else {
+                preview.style.display = 'none';
             }
         }
 
@@ -832,6 +876,10 @@
 
             const x = e.clientX;
             const y = e.clientY;
+
+            // Hide preview
+            document.querySelectorAll('.drop-preview').forEach(p => p.style.display = 'none');
+
             dragItem.classList.remove('dragging');
             dragItem.style.left = '';
             dragItem.style.top = '';
@@ -864,6 +912,7 @@
         let activeFolderId = null;
         function openFolder(folderId) {
             if (state.isEditing) return;
+            if (dragItem) return;
             activeFolderId = folderId;
             const folder = state.folders[folderId];
             document.getElementById('modalOverlay').style.display = 'flex';
@@ -879,12 +928,6 @@
                 const app = state.apps.find(a => a.id === appId);
                 if (app) {
                     const item = createItemElement({ type: 'app', data: app });
-                    item.onpointerdown = (e) => {
-                        if (state.isEditing) {
-                            closeFolder();
-                            startDragging(e, item);
-                        }
-                    };
                     grid.appendChild(item);
                 }
             });
@@ -924,69 +967,122 @@
 
         function finalizeMove(item, x, y) {
             const targets = document.elementsFromPoint(x, y);
-            const targetCard = targets.find(t => t.classList.contains('app-card') && t !== item);
+            // Ignore UI elements that are not part of the grid
+            const targetCard = targets.find(t => t.classList.contains('app-card') && t !== item && !t.classList.contains('dragging'));
             const itemId = item.dataset.id;
 
+            const pageEl = document.querySelectorAll('.page')[state.currentPage];
+            const pageRect = pageEl.getBoundingClientRect();
+            const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cols'));
+            const rows = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rows'));
+
+            const relativeX = x - pageRect.left;
+            const relativeY = y - pageRect.top;
+
+            const col = Math.floor(relativeX / (pageRect.width / cols));
+            const row = Math.floor(relativeY / (pageRect.height / rows));
+
+            // Collision with another card (Folder creation or push)
             if (targetCard) {
                 const targetId = targetCard.dataset.id;
-                if (targetCard.dataset.type === 'folder') {
-                    addToFolder(itemId, targetId);
-                    state.layout = state.layout.filter(l => l.id !== itemId);
-                } else {
-                    const newFolderId = createFolder(itemId, targetId);
-                    if (newFolderId) {
-                        const targetIdx = state.layout.findIndex(l => l.id === targetId);
-                        if (targetIdx !== -1) {
-                            const { page, row, col } = state.layout[targetIdx];
-                            state.layout[targetIdx] = { id: newFolderId, type: 'folder', page, row, col };
-                        }
+                const rect = targetCard.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const dist = Math.hypot(x - centerX, y - centerY);
+
+                // If very close to center -> Folder creation
+                if (dist < rect.width / 3) {
+                    if (targetCard.dataset.type === 'folder') {
+                        addToFolder(itemId, targetId);
                         state.layout = state.layout.filter(l => l.id !== itemId);
+                    } else {
+                        const newFolderId = createFolder(itemId, targetId);
+                        if (newFolderId) {
+                            const targetIdx = state.layout.findIndex(l => l.id === targetId);
+                            if (targetIdx !== -1) {
+                                const { page, row, col } = state.layout[targetIdx];
+                                state.layout[targetIdx] = { id: newFolderId, type: 'folder', page, row, col };
+                            }
+                            state.layout = state.layout.filter(l => l.id !== itemId);
+                        }
                     }
+                } else {
+                    // Just swap or push (Android style)
+                    swapItems(itemId, col, row);
                 }
             } else {
-                const pageEl = document.querySelectorAll('.page')[state.currentPage];
-                const pageRect = pageEl.getBoundingClientRect();
-                const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cols'));
-                const rows = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rows'));
-
-                const relativeX = x - pageRect.left;
-                const relativeY = y - pageRect.top;
-
-                const col = Math.floor(relativeX / (pageRect.width / cols));
-                const row = Math.floor(relativeY / (pageRect.height / rows));
-
                 if (col >= 0 && col < cols && row >= 0 && row < rows) {
-                    const existingItemIdx = state.layout.findIndex(l => l.page === state.currentPage && l.row === row && l.col === col);
-                    const currentItemIdx = state.layout.findIndex(l => l.id === itemId);
-
-                    if (existingItemIdx !== -1 && state.layout[existingItemIdx].id !== itemId) {
-                        const tempId = state.layout[existingItemIdx].id;
-                        const tempType = state.layout[existingItemIdx].type;
-
-                        const cur = state.layout[currentItemIdx];
-                        state.layout[existingItemIdx].id = cur.id;
-                        state.layout[existingItemIdx].type = cur.type;
-
-                        cur.id = tempId;
-                        cur.type = tempType;
-                    } else if (currentItemIdx !== -1) {
-                        state.layout[currentItemIdx].page = state.currentPage;
-                        state.layout[currentItemIdx].row = row;
-                        state.layout[currentItemIdx].col = col;
-                    } else {
-                        const itemType = item.dataset.type;
-                        state.layout.push({ id: itemId, type: itemType, page: state.currentPage, row, col });
-
-                        // If it was in a folder, remove it
-                        if (activeFolderId) {
-                            state.folders[activeFolderId].appIds = state.folders[activeFolderId].appIds.filter(id => id !== itemId);
-                            // If folder is empty, maybe delete it?
-                        }
-                    }
+                    swapItems(itemId, col, row);
                 }
             }
             saveState();
             renderPages();
+        }
+
+        function swapItems(itemId, newCol, newRow) {
+            const existingIdx = state.layout.findIndex(l => l.page === state.currentPage && l.row === newRow && l.col === newCol);
+            const currentIdx = state.layout.findIndex(l => l.id === itemId);
+
+            if (existingIdx !== -1 && state.layout[existingIdx].id !== itemId) {
+                const existing = state.layout[existingIdx];
+                if (currentIdx !== -1) {
+                    const current = state.layout[currentIdx];
+                    // Swap coordinates
+                    const tempPage = existing.page;
+                    const tempRow = existing.row;
+                    const tempCol = existing.col;
+
+                    existing.page = current.page;
+                    existing.row = current.row;
+                    existing.col = current.col;
+
+                    current.page = tempPage;
+                    current.row = tempRow;
+                    current.col = tempCol;
+                } else {
+                    // Moving from folder to occupied spot?
+                    // Let's find an empty spot for the existing one first
+                    const empty = findFirstEmptySpot();
+                    existing.page = empty.page;
+                    existing.row = empty.row;
+                    existing.col = empty.col;
+                    const itemType = itemId.startsWith('folder_') ? 'folder' : 'app';
+                    state.layout.push({ id: itemId, type: itemType, page: state.currentPage, row: newRow, col: newCol });
+                    removeFromFolder(itemId);
+                }
+            } else if (currentIdx !== -1) {
+                state.layout[currentIdx].page = state.currentPage;
+                state.layout[currentIdx].row = newRow;
+                state.layout[currentIdx].col = newCol;
+            } else {
+                const itemType = itemId.startsWith('folder_') ? 'folder' : 'app';
+                state.layout.push({ id: itemId, type: itemType, page: state.currentPage, row: newRow, col: newCol });
+                removeFromFolder(itemId);
+            }
+        }
+
+        function removeFromFolder(appId) {
+            Object.keys(state.folders).forEach(fid => {
+                state.folders[fid].appIds = state.folders[fid].appIds.filter(id => id !== appId);
+                if (state.folders[fid].appIds.length < 1) {
+                    delete state.folders[fid];
+                    state.layout = state.layout.filter(l => l.id !== fid);
+                }
+            });
+        }
+
+        function findFirstEmptySpot() {
+            const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cols'));
+            const rows = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rows'));
+            for (let p = 0; ; p++) {
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (!state.layout.some(l => l.page === p && l.row === r && l.col === c)) {
+                            return { page: p, row: r, col: c };
+                        }
+                    }
+                }
+            }
         }
 
         function openSettings() {
@@ -1018,7 +1114,7 @@
         function goToPage(pageIndex) {
             state.currentPage = pageIndex;
             const wrapper = document.getElementById('pagesWrapper');
-            wrapper.style.transform = `translateX(-${pageIndex * 100}%)`;
+            wrapper.style.transform = `translateX(${pageIndex * 100}%)`;
             document.querySelectorAll('.dot').forEach((dot, idx) => {
                 dot.classList.toggle('active', idx === pageIndex);
             });
