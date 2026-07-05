@@ -114,7 +114,7 @@
         // ثبت سرویس ورکر برای حالت آفلاین
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js', { scope: '/gold/' })
+                navigator.serviceWorker.register('sw.js', { scope: './' })
                     .then(reg => console.log('Gold SW Registered'))
                     .catch(err => console.log('Gold SW Failed', err));
             });

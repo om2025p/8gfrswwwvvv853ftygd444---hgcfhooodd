@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#007bff">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <title>ورزش</title>
+    <title>Activity</title>
 
     <style>
         * {
@@ -637,7 +637,7 @@
 
 <div class="container">
     <header>
-        <h1><span class="icon">🏋️</span> ورزش</h1>
+        <h1><span class="icon">📈</span> Activity</h1>
         <div class="backup-btns">
             <button onclick="toggleTheme()"><span class="icon">🌙</span> تم</button>
             <button onclick="exportData()"><span class="icon">📤</span> خروجی</button>
@@ -947,82 +947,60 @@
     }
 
     function saveDraft() {
-        const type = document.getElementById('workoutType').value;
-        const draft = {
-            type: type,
-            sessionState: sessionState,
-            ratings: ratings,
-            nutrition: {
-                eggs: document.getElementById('nut-eggs').value,
-                soy: document.getElementById('nut-soy').value,
-                potatoes: document.getElementById('nut-potatoes').value,
-                notes: nutritionEditor ? nutritionEditor.getContent() : ''
-            },
-            notes: notesEditor ? notesEditor.getContent() : ''
-        };
-        localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(draft));
+        try {
+            const type = document.getElementById('workoutType').value;
+            const draft = {
+                type: type,
+                sessionState: sessionState || {},
+                ratings: ratings || {},
+                nutrition: {
+                    eggs: document.getElementById('nut-eggs').value,
+                    soy: document.getElementById('nut-soy').value,
+                    potatoes: document.getElementById('nut-potatoes').value,
+                    notes: nutritionEditor ? nutritionEditor.getContent() : ''
+                },
+                notes: notesEditor ? notesEditor.getContent() : ''
+            };
+            localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(draft));
+        } catch (e) {
+            console.warn("Draft saving skipped:", e);
+        }
     }
 
     function loadDraft() {
         const draftStr = localStorage.getItem(STORAGE_KEYS.DRAFT);
         if (!draftStr) return false;
-        const draft = JSON.parse(draftStr);
+        try {
+            const draft = JSON.parse(draftStr);
+            if (!draft || !draft.sessionState) return false;
 
-        document.getElementById('workoutType').value = draft.type;
-        initWorkout(true);
+            document.getElementById('workoutType').value = draft.type || 'heavy';
+            sessionState = draft.sessionState;
+            ratings = draft.ratings || { stomach: 5, quality: 5, fatigue: 1, temp: 5, mental: 10 };
 
-        sessionState = draft.sessionState;
-        ratings = draft.ratings;
+            initWorkout(true);
 
-        document.getElementById('nut-eggs').value = draft.nutrition.eggs;
-        document.getElementById('nut-soy').value = draft.nutrition.soy;
-        document.getElementById('nut-potatoes').value = draft.nutrition.potatoes;
+            document.getElementById('nut-eggs').value = (draft.nutrition && draft.nutrition.eggs) || 0;
+            document.getElementById('nut-soy').value = (draft.nutrition && draft.nutrition.soy) || 0;
+            document.getElementById('nut-potatoes').value = (draft.nutrition && draft.nutrition.potatoes) || 0;
 
-        if (nutritionEditor) nutritionEditor.setContent(draft.nutrition.notes);
-        if (notesEditor) notesEditor.setContent(draft.notes);
+            if (nutritionEditor) nutritionEditor.setContent((draft.nutrition && draft.nutrition.notes) || '');
+            if (notesEditor) notesEditor.setContent(draft.notes || '');
 
-        const warmupBtn = document.getElementById('warmup-btn');
-        if (sessionState.warmup.done) warmupBtn.classList.add('active');
-
-        const type = draft.type;
-        workoutData[type].forEach(ex => {
-            if (ex.side) {
-                const rKey = `${ex.id}-r`;
-                const lKey = `${ex.id}-l`;
-                const rInput = document.getElementById(`ex-${ex.id}-r-val`);
-                const lInput = document.getElementById(`ex-${ex.id}-l-val`);
-                const rBtn = document.getElementById(`ex-${ex.id}-r-btn`);
-                const lBtn = document.getElementById(`ex-${ex.id}-l-btn`);
-
-                if (sessionState[rKey]) {
-                    rInput.value = sessionState[rKey].value;
-                    if (sessionState[rKey].done) rBtn.classList.add('active');
-                }
-                if (sessionState[lKey]) {
-                    lInput.value = sessionState[lKey].value;
-                    if (sessionState[lKey].done) lBtn.classList.add('active');
-                }
-            } else {
-                const key = ex.id;
-                const input = document.getElementById(`ex-${ex.id}-val`);
-                const btn = document.getElementById(`ex-${ex.id}-btn`);
-
-                if (sessionState[key]) {
-                    input.value = sessionState[key].value;
-                    if (sessionState[key].done) btn.classList.add('active');
-                }
-            }
-        });
-
-        initRatings();
-        return true;
+            initRatings();
+            return true;
+        } catch (e) {
+            console.error("Error loading draft:", e);
+            return false;
+        }
     }
 
     function initWorkout(isLoadingDraft = false) {
         const type = document.getElementById('workoutType').value;
-        const exercises = workoutData[type];
+        const exercises = workoutData[type] || [];
         const listDiv = document.getElementById('exerciseList');
         listDiv.innerHTML = '';
+
         if (!isLoadingDraft) {
             sessionState = { warmup: { done: false, name: "نرمش قبل از تمرین انجام شد ؟", time: null, rawTime: null } };
             document.getElementById('nut-eggs').value = 0;
@@ -1030,6 +1008,9 @@
             document.getElementById('nut-potatoes').value = 0;
             if (nutritionEditor) nutritionEditor.setContent('');
             if (notesEditor) notesEditor.setContent('');
+        } else if (!sessionState || !sessionState.warmup) {
+            sessionState = sessionState || {};
+            sessionState.warmup = { done: false, name: "نرمش قبل از تمرین انجام شد ؟", time: null, rawTime: null };
         }
 
         // نرمش قبل از تمرین
@@ -1039,7 +1020,7 @@
         warmupCard.innerHTML = `
             <div class="exercise-header">
                 <div class="exercise-name"><span class="icon">🧘</span> نرمش قبل از تمرین انجام شد ؟</div>
-                <button class="check-btn" id="warmup-btn" onclick="toggleWarmup()">✓</button>
+                <button class="check-btn ${sessionState.warmup.done ? 'active' : ''}" id="warmup-btn" onclick="toggleWarmup()">✓</button>
             </div>
         `;
         listDiv.appendChild(warmupCard);
@@ -1049,46 +1030,44 @@
             card.className = 'card exercise-item';
 
             if (ex.side) {
+                const rKey = `${ex.id}-r`;
+                const lKey = `${ex.id}-l`;
+                if (!sessionState[rKey]) sessionState[rKey] = { done: false, value: ex.target, time: null, rawTime: null };
+                if (!sessionState[lKey]) sessionState[lKey] = { done: false, value: ex.target, time: null, rawTime: null };
+
                 card.innerHTML = `
-                    <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${ex.unit})</div>
+                    <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${escapeHtml(ex.unit)})</div>
                     <div class="side-row">
                         <span>👉 راست:</span>
                         <div class="input-with-check">
-                            <input type="number" id="ex-${ex.id}-r-val" value="${ex.target}" oninput="updateSessionValue(${ex.id}, 'r', this.value)">
-                            <button class="check-btn" id="ex-${ex.id}-r-btn" onclick="toggleCheck(${ex.id}, 'r')">✓</button>
+                            <input type="number" id="ex-${ex.id}-r-val" value="${sessionState[rKey].value}" oninput="updateSessionValue(${ex.id}, 'r', this.value)">
+                            <button class="check-btn ${sessionState[rKey].done ? 'active' : ''}" id="ex-${ex.id}-r-btn" onclick="toggleCheck(${ex.id}, 'r')">✓</button>
                         </div>
                     </div>
                     <div class="side-row">
                         <span>👈 چپ:</span>
                         <div class="input-with-check">
-                            <input type="number" id="ex-${ex.id}-l-val" value="${ex.target}" oninput="updateSessionValue(${ex.id}, 'l', this.value)">
-                            <button class="check-btn" id="ex-${ex.id}-l-btn" onclick="toggleCheck(${ex.id}, 'l')">✓</button>
+                            <input type="number" id="ex-${ex.id}-l-val" value="${sessionState[lKey].value}" oninput="updateSessionValue(${ex.id}, 'l', this.value)">
+                            <button class="check-btn ${sessionState[lKey].done ? 'active' : ''}" id="ex-${ex.id}-l-btn" onclick="toggleCheck(${ex.id}, 'l')">✓</button>
                         </div>
                     </div>
                 `;
             } else {
+                const key = ex.id;
+                if (!sessionState[key]) sessionState[key] = { done: false, value: ex.target, time: null, rawTime: null };
+
                 card.innerHTML = `
                     <div class="exercise-header">
-                        <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${ex.unit})</div>
+                        <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${escapeHtml(ex.unit)})</div>
                         <div class="input-with-check">
-                            <input type="number" id="ex-${ex.id}-val" value="${ex.target}" oninput="updateSessionValue(${ex.id}, null, this.value)">
-                            <button class="check-btn" id="ex-${ex.id}-btn" onclick="toggleCheck(${ex.id})">✓</button>
+                            <input type="number" id="ex-${ex.id}-val" value="${sessionState[key].value}" oninput="updateSessionValue(${ex.id}, null, this.value)">
+                            <button class="check-btn ${sessionState[key].done ? 'active' : ''}" id="ex-${ex.id}-btn" onclick="toggleCheck(${ex.id})">✓</button>
                         </div>
                     </div>
                 `;
             }
             listDiv.appendChild(card);
-
-            if (!isLoadingDraft) {
-                if (ex.side) {
-                    sessionState[`${ex.id}-r`] = { done: false, value: ex.target, time: null, rawTime: null };
-                    sessionState[`${ex.id}-l`] = { done: false, value: ex.target, time: null, rawTime: null };
-                } else {
-                    sessionState[ex.id] = { done: false, value: ex.target, time: null, rawTime: null };
-                }
-            }
         });
-
     }
 
     function updateSessionValue(id, side, val) {
@@ -1694,6 +1673,9 @@
             return;
         }
 
+        // ذخیره وضعیت فعلی قبل از تغییر لیست
+        saveDraft();
+
         const newId = Date.now();
         const newExHeavy = { id: newId, name, target, unit, side };
         const newExLight = { id: newId, name, target: Math.ceil(target / 2) || 1, unit, side };
@@ -1702,7 +1684,7 @@
         workoutData.light.push(newExLight);
 
         saveWorkoutData();
-        initWorkout();
+        loadDraft(); // استفاده از loadDraft به جای initWorkout برای حفظ تیک‌ها
         renderExerciseManager();
 
         // پاک کردن فیلدها
@@ -1755,7 +1737,7 @@
     // ثبت سرویس ورکر
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/gym/sw.js', { scope: '/gym/' })
+            navigator.serviceWorker.register('sw.js', { scope: './' })
                 .then(reg => console.log('Service Worker Registered'))
                 .catch(err => console.log('Service Worker Failed', err));
         });
@@ -1789,8 +1771,8 @@
         if (diff >= fortyEightHours && lastNotifiedId !== lastWorkout.id.toString()) {
             if ('Notification' in window && Notification.permission === 'granted') {
                 navigator.serviceWorker.ready.then(registration => {
-                    registration.showNotification('وقت ورزش شد! 💪', {
-                        body: '۴۸ ساعت از تمرین قبلیت گذشته پهلوان. امروز نوبت تمرین سبکه یا سنگین؟',
+                    registration.showNotification('وقت فعالیت شد! 💪', {
+                        body: '۴۸ ساعت از فعالیت قبلیت گذشته پهلوان. امروز نوبت کدوم مرحله است؟',
                         icon: 'icon-192.png',
                         vibrate: [200, 100, 200],
                         badge: 'icon-192.png'
