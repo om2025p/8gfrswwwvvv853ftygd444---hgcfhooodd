@@ -9,6 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <title>عمارت دیجیتال</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
             --glass-bg: rgba(255, 255, 255, 0.15);
@@ -123,10 +124,12 @@
             display: grid;
             grid-template-columns: repeat(var(--cols, 3), 1fr);
             grid-template-rows: repeat(var(--rows, 4), 1fr);
-            gap: 0;
+            gap: 20px;
             padding: 40px 20px;
             box-sizing: border-box;
             position: relative;
+            align-content: start;
+            justify-items: center;
         }
 
         .grid-overlay {
@@ -135,12 +138,12 @@
             display: grid;
             grid-template-columns: repeat(var(--cols, 3), 1fr);
             grid-template-rows: repeat(var(--rows, 4), 1fr);
-            gap: 0;
+            gap: 20px;
             padding: 40px 20px;
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.3s;
-            z-index: 0;
+            z-index: -1;
         }
         .editing .grid-overlay { opacity: 0.5; }
         .grid-cell {
@@ -172,16 +175,14 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            position: absolute;
-            width: calc(100% / var(--cols) - 20px);
-            height: calc(100% / var(--rows) - 20px);
-            margin: 10px;
+            position: relative;
+            width: var(--icon-size);
+            height: var(--icon-size);
+            padding: 20px;
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                        left 0.4s cubic-bezier(0.19, 1, 0.22, 1),
-                        top 0.4s cubic-bezier(0.19, 1, 0.22, 1),
                         background 0.3s, border-color 0.3s, opacity 0.3s;
             user-select: none;
-            touch-action: none;
+            cursor: pointer;
         }
 
         @keyframes flyInCorner {
@@ -313,21 +314,22 @@
             padding: 10px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             transition: transform 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
         }
 
         .dock-item {
-            position: absolute !important;
             margin: 0 !important;
-            width: 70px !important;
-            height: 70px !important;
+            width: 65px !important;
+            height: 65px !important;
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
-            transition: left 0.4s cubic-bezier(0.19, 1, 0.22, 1),
-                        top 0.4s cubic-bezier(0.19, 1, 0.22, 1),
-                        transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
         }
 
         .dot {
@@ -713,163 +715,144 @@
             return { cols, rows, itemsPerPage: cols * rows };
         }
 
+        let sortableInstances = [];
+
         function renderPages(withAnimation = false) {
             const wrapper = document.getElementById('pagesWrapper');
             const indicators = document.getElementById('pageIndicators');
+            const dock = document.getElementById('dock');
 
-            const existingElements = new Map();
-            document.querySelectorAll('.app-card').forEach(el => {
-                // Ignore dragging clones and elements that are snapping back
-                if (!el.classList.contains('dragging') && !el.classList.contains('snap-back')) {
-                    existingElements.set(el.dataset.id, el);
-                }
-            });
-
-            // Ensure placeholder is handled
-            const draggingId = dragItem ? dragItem.dataset.id : null;
+            sortableInstances.forEach(s => s.destroy());
+            sortableInstances = [];
 
             const { cols, rows, itemsPerPage } = getGridSize();
-
             document.documentElement.style.setProperty('--cols', cols);
             document.documentElement.style.setProperty('--rows', rows);
 
             const pageCount = Math.max(1, Math.ceil(state.orderedLayout.length / itemsPerPage) + (state.isEditing ? 1 : 0));
 
-            // Sync page containers
-            while (wrapper.children.length < pageCount) {
+            wrapper.innerHTML = '';
+            indicators.innerHTML = '';
+
+            // Clean up old overlay if it exists (though innerHTML = '' handles it)
+
+            for (let p = 0; p < pageCount; p++) {
                 const page = document.createElement('div');
                 page.className = 'page';
+                page.dataset.page = p;
+
+                // Restore Grid Overlay visually
                 const overlay = document.createElement('div');
                 overlay.className = 'grid-overlay';
-                for (let r = 0; r < 20; r++) { // Pre-fill overlay grid
-                    for (let c = 0; c < 10; c++) {
-                        const cell = document.createElement('div');
-                        cell.className = 'grid-cell';
-                        overlay.appendChild(cell);
-                    }
+                overlay.style.opacity = state.isEditing ? '0.5' : '0';
+                for (let i = 0; i < itemsPerPage; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    overlay.appendChild(cell);
                 }
                 page.appendChild(overlay);
-                wrapper.appendChild(page);
-            }
-            while (wrapper.children.length > pageCount) {
-                wrapper.lastElementChild.remove();
-            }
 
-            // Sync indicators
-            indicators.innerHTML = '';
-            for (let p = 0; p < pageCount; p++) {
+                const pageItems = state.orderedLayout.slice(p * itemsPerPage, (p + 1) * itemsPerPage);
+                pageItems.forEach((item, idx) => {
+                    const dataItem = item.type === 'app' ?
+                        { type: 'app', data: state.apps.find(a => a.id === item.id) } :
+                        { type: 'folder', id: item.id, data: state.folders[item.id] };
+
+                    if (dataItem.data) {
+                        const el = createItemElement(dataItem);
+                        page.appendChild(el);
+                    }
+                });
+
+                wrapper.appendChild(page);
+
                 const dot = document.createElement('div');
                 dot.className = `dot ${p === state.currentPage ? 'active' : ''}`;
                 dot.onclick = () => goToPage(p);
                 indicators.appendChild(dot);
+
+                if (state.isEditing) {
+                    sortableInstances.push(new Sortable(page, {
+                        group: 'shared',
+                        animation: 150,
+                        ghostClass: 'placeholder',
+                        draggable: '.app-card',
+                        forceFallback: true,
+                        fallbackTolerance: 3,
+                        onEnd: handleSortEnd,
+                        onMove: (evt) => {
+                            // Logic to prevent moving onto folders to simulate group potential
+                            if (evt.related.classList.contains('folder')) {
+                                return false; // Prevent swap for now, can enhance to folder logic
+                            }
+                        }
+                    }));
+                }
             }
 
-            for (let p = 0; p < pageCount; p++) {
-                const page = wrapper.children[p];
-                page.dataset.page = p;
+            dock.innerHTML = '';
+            state.dockItems.forEach(item => {
+                const dataItem = item.type === 'app' ?
+                    { type: 'app', data: state.apps.find(a => a.id === item.id) } :
+                    { type: 'folder', id: item.id, data: state.folders[item.id] };
 
-                const pageItems = state.orderedLayout.slice(p * itemsPerPage, (p + 1) * itemsPerPage);
+                if (dataItem.data) {
+                    const el = createItemElement(dataItem);
+                    el.classList.add('dock-item');
+                    dock.appendChild(el);
+                }
+            });
 
-                pageItems.forEach((item, idx) => {
-                    let isPlaceholder = (draggingId === item.id);
-
-                    let dataItem;
-                    if (item.type === 'app') {
-                        dataItem = { type: 'app', data: state.apps.find(a => a.id === item.id) };
-                    } else {
-                        dataItem = { type: 'folder', id: item.id, data: state.folders[item.id] };
-                    }
-
-                    if (dataItem && dataItem.data) {
-                        let el = existingElements.get(item.id);
-                        if (!el) {
-                            el = createItemElement(dataItem);
-                        } else if (item.type === 'folder') {
-                            updateFolderMiniIcons(el, dataItem.data);
-                        }
-
-                        if (isPlaceholder) {
-                            el.classList.add('placeholder');
-                        } else {
-                            el.classList.remove('placeholder');
-                        }
-
-                        const row = Math.floor(idx / cols);
-                        const col = idx % cols;
-                        const visualCol = (cols - 1) - col;
-
-                        el.classList.remove('dock-item');
-                        el.style.left = `calc(${visualCol * (100 / cols)}% + 10px)`;
-                        el.style.top = `calc(${row * (100 / rows)}% + 10px)`;
-                        el.dataset.index = p * itemsPerPage + idx;
-
-                        if (withAnimation) {
-                            el.classList.add('fly-in');
-                            el.style.setProperty('--tw-tx', `${(Math.random() - 0.5) * 1000}px`);
-                            el.style.setProperty('--tw-ty', `${(Math.random() - 0.5) * 1000}px`);
-                            el.style.animationDelay = (idx * 0.05) + 's';
-                        }
-                        if (el.parentNode !== page) page.appendChild(el);
-                    }
-                });
+            if (state.isEditing) {
+                sortableInstances.push(new Sortable(dock, {
+                    group: 'shared',
+                    animation: 150,
+                    ghostClass: 'placeholder',
+                    draggable: '.app-card',
+                    forceFallback: true,
+                    fallbackTolerance: 3,
+                    onEnd: handleSortEnd
+                }));
             }
 
             wrapper.style.transform = `translateX(${state.currentPage * 100}%)`;
-            renderDock(existingElements);
         }
 
-        function renderDock(reusableElements = new Map()) {
+        function handleSortEnd() {
+            const wrapper = document.getElementById('pagesWrapper');
             const dock = document.getElementById('dock');
-            if (!dock) return;
 
-            const dockRect = dock.getBoundingClientRect();
-            const itemCount = state.dockItems.length;
-            const itemWidth = 75; // Including margin
-            const totalWidth = itemCount * itemWidth;
-            const startOffset = (dockRect.width - totalWidth) / 2;
-            const draggingId = dragItem ? dragItem.dataset.id : null;
+            const newLayout = [];
+            const { itemsPerPage } = getGridSize();
 
-            state.dockItems.forEach((item, idx) => {
-                const isPlaceholder = (draggingId === item.id);
-
-                let dataItem;
-                if (item.type === 'app') {
-                    dataItem = { type: 'app', data: state.apps.find(a => a.id === item.id) };
-                } else {
-                    dataItem = { type: 'folder', id: item.id, data: state.folders[item.id] };
-                }
-
-                if (dataItem && dataItem.data) {
-                    let el = reusableElements.get(item.id);
-                    if (!el) {
-                        el = createItemElement(dataItem);
+            Array.from(wrapper.children).forEach(page => {
+                Array.from(page.children).forEach(el => {
+                    if (el.dataset.id && !el.classList.contains('sortable-fallback')) {
+                        newLayout.push({ id: el.dataset.id, type: el.dataset.type });
                     }
+                });
+            });
 
-                    if (isPlaceholder) {
-                        el.classList.add('placeholder');
-                    } else {
-                        el.classList.remove('placeholder');
-                    }
+            // Limit each page to itemsPerPage by shifting overflow to next page
+            // SortableJS might put more items in a container than we want visually
+            state.orderedLayout = newLayout;
 
-                    el.classList.add('dock-item');
-                    el.dataset.dockIndex = idx;
-                    el.style.top = '10px';
-                    // RTL: items fill from right to left in the centered group
-                    const visualIdx = (itemCount - 1) - idx;
-                    el.style.left = `${startOffset + visualIdx * itemWidth}px`;
-
-                    if (el.parentNode !== dock) {
-                        dock.appendChild(el);
-                    }
+            const newDock = [];
+            Array.from(dock.children).forEach(el => {
+                if (el.dataset.id && !el.classList.contains('sortable-fallback')) {
+                    newDock.push({ id: el.dataset.id, type: el.dataset.type });
                 }
             });
 
-            // Remove elements that are no longer in dock (and not being dragged)
-            Array.from(dock.children).forEach(child => {
-                if (!state.dockItems.some(i => i.id === child.dataset.id)) {
-                    child.remove();
-                }
-            });
+            // Limit dock to 4 items
+            if (newDock.length > 4) {
+                const overflow = newDock.splice(4);
+                state.orderedLayout = [...overflow, ...state.orderedLayout];
+            }
+            state.dockItems = newDock;
+
+            saveState();
+            renderPages();
         }
 
         function updateFolderMiniIcons(el, folder) {
@@ -1021,24 +1004,20 @@
                     return;
                 }
 
-                if (state.isEditing) {
-                    if (activeFolderId) closeFolder(null, true);
-                    startDragging(e, el);
-                } else {
+                if (!state.isEditing) {
                     clearTimeout(longPressTimer);
                     longPressTimer = setTimeout(() => {
                         if (!isSwiping) {
                             toggleEditMode();
                             if (navigator.vibrate) navigator.vibrate(50);
-                            startDragging(e, el);
                         }
                     }, 600); // Android-style long press
                 }
             });
 
             el.addEventListener('click', (e) => {
-                if (!state.isEditing && !isSwiping && !dragItem) {
-                    clearTimeout(pressTimer); // Cancel settings on simple click
+                if (!state.isEditing && !isSwiping) {
+                    clearTimeout(pressTimer);
                     clearTimeout(tapTimer);
                     tapTimer = setTimeout(() => {
                         if (el.dataset.type === 'app' && el.dataset.url) {
@@ -1058,199 +1037,10 @@
                         clearTimeout(longPressTimer);
                     }
                 }
-                handlePointerMove(e);
             });
             el.addEventListener('pointerup', (e) => {
                 clearTimeout(longPressTimer);
-                handlePointerUp(e);
             });
-            el.addEventListener('pointercancel', (e) => {
-                clearTimeout(longPressTimer);
-                handlePointerUp(e);
-            });
-        }
-
-        function startDragging(e, el) {
-            if (dragItem) return;
-
-            // Prevent default behavior to avoid scrolling on mobile during drag
-            if (e.cancelable) e.preventDefault();
-
-            // Create a clone for dragging so the original can stay as placeholder
-            const rect = el.getBoundingClientRect();
-            dragItem = el.cloneNode(true);
-            dragItem.dataset.id = el.dataset.id; // Clone doesn't copy dataset sometimes correctly in all browsers
-
-            // Add listeners to the clone so it can handle move and up events
-            setupItemEvents(dragItem);
-
-            dragOffsetX = e.clientX - rect.left;
-            dragOffsetY = e.clientY - rect.top;
-
-            document.body.appendChild(dragItem);
-            dragItem.classList.add('dragging');
-            dragItem.style.width = rect.width + 'px';
-            dragItem.style.height = rect.height + 'px';
-            dragItem.style.left = `${e.clientX - dragOffsetX}px`;
-            dragItem.style.top = `${e.clientY - dragOffsetY}px`;
-
-            try {
-                dragItem.setPointerCapture(e.pointerId);
-            } catch(err) {}
-
-            renderPages();
-        }
-
-        let folderTimer = null;
-        let lastTargetId = null;
-
-        function handlePointerMove(e) {
-            if (!dragItem) {
-                clearTimeout(pressTimer);
-                return;
-            }
-
-            const x = e.clientX;
-            const y = e.clientY;
-            dragItem.style.left = `${x - dragOffsetX}px`;
-            dragItem.style.top = `${y - dragOffsetY}px`;
-
-            const { itemsPerPage } = getGridSize();
-
-            // Real-time pushing logic
-            const targets = document.elementsFromPoint(x, y);
-            const targetCard = targets.find(t => t.classList.contains('app-card') && t !== dragItem && !t.classList.contains('dragging'));
-
-            if (targetCard) {
-                const targetId = targetCard.dataset.id;
-                const rect = targetCard.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                const dist = Math.hypot(x - centerX, y - centerY);
-
-                // For better mobile usability, use a slightly larger threshold for folders
-                // and prioritize dock snapping if near the bottom.
-                const threshold = targetCard.classList.contains('dock-item') ? rect.width / 2 : rect.width / 2.5;
-
-                if (dist < threshold) {
-                    // Potential folder creation
-                    if (targetId !== lastTargetId) {
-                        clearTimeout(folderTimer);
-                        // Clean up old target
-                        if (lastTargetId) {
-                             const oldTarget = document.querySelector(`[data-id="${lastTargetId}"]`);
-                             if (oldTarget) oldTarget.classList.remove('folder-target');
-                        }
-                        lastTargetId = targetId;
-                        folderTimer = setTimeout(() => {
-                            targetCard.classList.add('folder-target');
-                            if (navigator.vibrate) navigator.vibrate(50);
-                        }, 600);
-                    }
-                } else {
-                    clearTimeout(folderTimer);
-                    if (lastTargetId) {
-                        const lastEl = document.querySelector(`[data-id="${lastTargetId}"]`);
-                        if (lastEl) lastEl.classList.remove('folder-target');
-                        lastTargetId = null;
-                    }
-
-                    // Push logic
-                    if (targetCard.classList.contains('dock-item')) {
-                        moveWithinDock(dragItem.dataset.id, parseInt(targetCard.dataset.dockIndex));
-                    } else {
-                        moveWithinLayout(dragItem.dataset.id, parseInt(targetCard.dataset.index));
-                    }
-                }
-            } else {
-                clearTimeout(folderTimer);
-                lastTargetId = null;
-
-                // If not over a card, but on a different page, move placeholder to current page
-                const itemId = dragItem.dataset.id;
-                const currentIndex = state.orderedLayout.findIndex(i => i.id === itemId);
-                if (currentIndex !== -1) {
-                    const currentPageStart = state.currentPage * itemsPerPage;
-                    const currentPageEnd = (state.currentPage + 1) * itemsPerPage;
-                    if (currentIndex < currentPageStart || currentIndex >= currentPageEnd) {
-                        // Move to the closest position on current page
-                        const targetIdx = currentIndex < currentPageStart ? currentPageStart : Math.min(state.orderedLayout.length - 1, currentPageEnd - 1);
-                        moveWithinLayout(itemId, targetIdx);
-                    }
-                }
-            }
-
-            if (x < 50 && state.currentPage > 0) {
-                 throttle(() => {
-                    if (dragItem) {
-                        goToPage(state.currentPage - 1);
-                        if (navigator.vibrate) navigator.vibrate(50);
-                    }
-                 }, 1000);
-            } else if (x > window.innerWidth - 50) {
-                 throttle(() => {
-                    const wrapper = document.getElementById('pagesWrapper');
-                    if (dragItem && state.currentPage < wrapper.children.length - 1) {
-                        goToPage(state.currentPage + 1);
-                        if (navigator.vibrate) navigator.vibrate(50);
-                    }
-                 }, 1000);
-            }
-        }
-
-        function moveWithinLayout(itemId, targetIndex) {
-            const itemType = itemId.startsWith('folder_') ? 'folder' : 'app';
-            const currentIndex = state.orderedLayout.findIndex(i => i.id === itemId);
-
-            if (currentIndex !== -1) {
-                if (currentIndex === targetIndex) return;
-                state.orderedLayout.splice(currentIndex, 1);
-                const safeTarget = Math.min(targetIndex, state.orderedLayout.length);
-                state.orderedLayout.splice(safeTarget, 0, { id: itemId, type: itemType });
-            } else {
-                // Moving from Dock or Folder to Layout
-                const dockIdx = state.dockItems.findIndex(i => i.id === itemId);
-                if (dockIdx !== -1) {
-                    state.dockItems.splice(dockIdx, 1);
-                } else {
-                    removeFromFolder(itemId);
-                }
-                const safeTarget = Math.min(targetIndex, state.orderedLayout.length);
-                state.orderedLayout.splice(safeTarget, 0, { id: itemId, type: itemType });
-            }
-            renderPages();
-        }
-
-        function moveWithinDock(itemId, targetIndex) {
-            const itemType = itemId.startsWith('folder_') ? 'folder' : 'app';
-            const currentIndex = state.dockItems.findIndex(i => i.id === itemId);
-
-            if (currentIndex !== -1) {
-                if (currentIndex === targetIndex) return;
-                state.dockItems.splice(currentIndex, 1);
-                state.dockItems.splice(targetIndex, 0, { id: itemId, type: itemType });
-            } else {
-                // Moving from Layout or Folder to Dock
-                if (state.dockItems.length >= 4) {
-                    const removed = state.dockItems.splice(targetIndex, 1, { id: itemId, type: itemType })[0];
-                    const layoutIdx = state.orderedLayout.findIndex(i => i.id === itemId);
-                    if (layoutIdx !== -1) {
-                        state.orderedLayout.splice(layoutIdx, 1, removed);
-                    } else {
-                        removeFromFolder(itemId);
-                        state.orderedLayout.push(removed);
-                    }
-                } else {
-                    const layoutIdx = state.orderedLayout.findIndex(i => i.id === itemId);
-                    if (layoutIdx !== -1) {
-                        state.orderedLayout.splice(layoutIdx, 1);
-                    } else {
-                        removeFromFolder(itemId);
-                    }
-                    state.dockItems.splice(targetIndex, 0, { id: itemId, type: itemType });
-                }
-            }
-            renderPages();
         }
 
         function updateDropPreview(x, y) {
@@ -1292,30 +1082,6 @@
             }, time);
         }
 
-        function handlePointerUp(e) {
-            clearTimeout(pressTimer);
-            if (!dragItem) return;
-
-            const x = e.clientX;
-            const y = e.clientY;
-
-            // Stop tracking movement
-            try {
-                dragItem.releasePointerCapture(e.pointerId);
-            } catch(err) {}
-
-            // Find target element before clearing styles
-            const targets = document.elementsFromPoint(x, y);
-            const targetCard = targets.find(t => t.classList.contains('app-card') && t !== dragItem && !t.classList.contains('dragging'));
-
-            // Cleanup visual hints
-            if (lastTargetId) {
-                const lastEl = document.querySelector(`[data-id="${lastTargetId}"]`);
-                if (lastEl) lastEl.classList.remove('folder-target');
-            }
-
-            finalizeMove(dragItem, x, y, targetCard);
-        }
 
         function createFolder(appId1, appId2) {
             if (appId1.startsWith('folder_') || appId2.startsWith('folder_')) return null;
@@ -1393,78 +1159,6 @@
             }
         };
 
-        function finalizeMove(item, x, y, targetCard) {
-            const itemId = item.dataset.id;
-            clearTimeout(folderTimer);
-
-            let folderCreated = false;
-
-            if (targetCard) {
-                const targetId = targetCard.dataset.id;
-                const rect = targetCard.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                const dist = Math.hypot(x - centerX, y - centerY);
-
-                if (dist < rect.width / 3) {
-                    if (targetCard.dataset.type === 'folder') {
-                        removeFromFolder(itemId);
-                        addToFolder(itemId, targetId);
-                        removeFromLayout(itemId);
-                        folderCreated = true;
-                        if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
-                    } else if (targetId !== itemId) {
-                        removeFromFolder(itemId);
-                        const newFolderId = createFolder(itemId, targetId);
-                        if (newFolderId) {
-                            const isDock = targetCard.classList.contains('dock-item');
-                            if (isDock) {
-                                const targetIdx = state.dockItems.findIndex(i => i.id === targetId);
-                                state.dockItems[targetIdx] = { id: newFolderId, type: 'folder' };
-                            } else {
-                                const targetIdx = state.orderedLayout.findIndex(i => i.id === targetId);
-                                state.orderedLayout[targetIdx] = { id: newFolderId, type: 'folder' };
-                            }
-                            removeFromLayout(itemId);
-                            folderCreated = true;
-                            if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
-                        }
-                    }
-                }
-            }
-
-            lastTargetId = null;
-            saveState();
-
-            // Snap back animation logic
-            const currentItem = item;
-            currentItem.classList.remove('dragging');
-            currentItem.classList.add('snap-back');
-
-            // Clear global dragItem so renderPages() can create the new placeholder
-            dragItem = null;
-            renderPages();
-
-            // Find the actual placeholder element in the DOM (not the clone we just dropped)
-            const targetEl = Array.from(document.querySelectorAll(`.app-card[data-id="${itemId}"]`))
-                                  .find(el => !el.classList.contains('snap-back'));
-
-            if (targetEl && !folderCreated) {
-                targetEl.style.opacity = '0';
-                const rect = targetEl.getBoundingClientRect();
-
-                currentItem.style.left = `${rect.left}px`;
-                currentItem.style.top = `${rect.top}px`;
-                currentItem.style.transform = 'scale(1)';
-
-                setTimeout(() => {
-                    currentItem.remove();
-                    targetEl.style.opacity = '1';
-                }, 400);
-            } else {
-                currentItem.remove();
-            }
-        }
 
         function removeFromLayout(itemId) {
             state.orderedLayout = state.orderedLayout.filter(i => i.id !== itemId);
@@ -1512,6 +1206,12 @@
             clearTimeout(tapTimer);
             state.isEditing = !state.isEditing;
             document.body.classList.toggle('editing', state.isEditing);
+
+            // Toggle grid overlay visibility immediately for smoother transition
+            document.querySelectorAll('.grid-overlay').forEach(ov => {
+                ov.style.opacity = state.isEditing ? '0.5' : '0';
+            });
+
             if (navigator.vibrate) navigator.vibrate(100);
             renderPages();
         }
