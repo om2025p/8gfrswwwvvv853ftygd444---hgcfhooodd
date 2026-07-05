@@ -1286,15 +1286,15 @@
 
             if (mode === 'accelerate') {
                 const progress = (totalSeconds - remaining) / totalSeconds;
-                const freq = 440 + (progress * 440);
-                const vol = 0.1 + (progress * 0.4);
+                const freq = 880 + (progress * 880); // Higher frequency range (880Hz to 1760Hz)
+                const vol = 0.3 + (progress * 0.5); // Louder (0.3 to 0.8)
                 playBeep(freq, vol, 0.1);
 
                 // Calculate next beep delay: starts at 1000ms, ends at 150ms
                 const delay = Math.max(150, 1000 - (progress * 850));
                 beepTimeout = setTimeout(runBeeps, delay);
             } else if (mode === 'continuous') {
-                playBeep(600, 0.3, 0.8);
+                playBeep(1200, 0.6, 0.8); // Piercing high beep
                 beepTimeout = setTimeout(runBeeps, 1000);
             }
         };
@@ -1307,7 +1307,7 @@
 
             if (remaining <= 0) {
                 stopExerciseTimer();
-                playBeep(1000, 0.8, 1.5);
+                playBeep(2000, 0.9, 2.0); // Very loud and long final beep
                 setTimeout(() => alert('🏁 زمان تمام شد!'), 100);
             }
         }, 1000);
@@ -1573,14 +1573,14 @@
 
         let duration = 0;
         if (activityFound && startTime !== Infinity) {
-            duration = Math.round((endTime - startTime) / (1000 * 60)); // به دقیقه
+            duration = Math.round((endTime - startTime) / 1000); // به ثانیه
         }
 
         const record = {
             id: Date.now(),
             date: getPersianDate(),
             time: getPersianTime(),
-            duration: duration,
+            durationSeconds: duration,
             type: type === 'heavy' ? 'سنگین' : 'سبک',
             typeCode: type,
             exercises: [],
@@ -1646,28 +1646,69 @@
         checkRestStatus();
     }
 
+    function formatDuration(seconds) {
+        if (!seconds && seconds !== 0) return '-';
+        if (seconds < 60) return `${toPersianDigits(seconds)} ثانیه طول کشید`;
+
+        const hours = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+
+        let result = "";
+        if (hours > 0) {
+            result += `${toPersianDigits(hours)} ساعت${mins > 0 ? " و " : ""}`;
+        }
+        if (mins > 0) {
+            result += `${toPersianDigits(mins)} دقیقه`;
+        }
+
+        return result + " طول کشید";
+    }
+
     function renderHistory() {
         const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
         const container = document.getElementById('history');
         container.innerHTML = '<h2 style="font-size: 1.1rem; margin-bottom: 15px;">📜 تاریخچه تمرینات</h2>';
 
-        // محاسبه میانگین کل
-        const validDurations = history.filter(r => r.duration !== undefined).map(r => r.duration);
-        const avgDuration = validDurations.length > 0 ? validDurations.reduce((a, b) => a + b, 0) / validDurations.length : 0;
+        // سازگاری با داده‌های قدیمی (تبدیل دقیقه به ثانیه در صورت نیاز)
+        history.forEach(r => {
+            if (r.durationSeconds === undefined && r.duration !== undefined) {
+                r.durationSeconds = r.duration * 60;
+            }
+        });
 
         history.forEach((rec, index) => {
             const card = document.createElement('div');
             card.className = 'card history-card';
 
-            let diffHtml = '';
-            if (rec.duration !== undefined && avgDuration > 0) {
-                const diffFromAvg = rec.duration - avgDuration;
-                if (diffFromAvg < -5) {
-                    diffHtml = `<span style="color:var(--success-color); font-size:0.75rem;" title="میانگین: ${Math.round(avgDuration)}">🚀 جت شدی! ${toPersianDigits(Math.abs(Math.round(diffFromAvg)))} دقیقه از میانگینت فرزتری!</span>`;
-                } else if (diffFromAvg > 5) {
-                    diffHtml = `<span style="color:var(--danger-color); font-size:0.75rem;" title="میانگین: ${Math.round(avgDuration)}">🐢 پهلوان، شل کردی؟ ${toPersianDigits(Math.round(diffFromAvg))} دقیقه از میانگینت عقب‌تری!</span>`;
+            let humorHtml = '';
+            const duration = rec.durationSeconds;
+            const prevRec = history[index + 1]; // تمرین قبلی (چون لیست نزولی بر اساس زمان است)
+
+            if (duration !== undefined && prevRec && prevRec.durationSeconds !== undefined) {
+                const diff = duration - prevRec.durationSeconds;
+                const diffMins = Math.floor(Math.abs(diff) / 60);
+                const diffSecs = Math.abs(diff) % 60;
+
+                let timeStr = "";
+                if (diffMins > 0) timeStr += `${toPersianDigits(diffMins)} دقیقه `;
+                if (diffSecs > 0) timeStr += `و ${toPersianDigits(diffSecs)} ثانیه `;
+
+                if (diff < -10) { // حداقل ۱۰ ثانیه سریع‌تر
+                    const fasterMessages = [
+                        `ای کلک! بنزین سوپر زدی؟ ${timeStr}زودتر از دفعه قبل تموم کردی! فلش (Flash) ازت امضا می‌خواد! 🚀🔥`,
+                        `ماشالله پهلوان! ${timeStr}رکورد خودت رو زدی. موتور توربو بستی؟ 💪✨`,
+                        `داری به سرعت نور نزدیک میشی! ${timeStr}صرفه‌جویی در زمان. ایول! 😎`
+                    ];
+                    humorHtml = `<span style="color:var(--success-color); font-size:0.75rem; display:block; margin-top:4px;">... ${fasterMessages[index % fasterMessages.length]}</span>`;
+                } else if (diff > 10) { // حداقل ۱۰ ثانیه کندتر
+                    const slowerMessages = [
+                        `پهلوان! داشتی وزنه می‌زدی یا با دمبل‌ها سلفی می‌گرفتی؟ ${timeStr}نسبت به دفعه پیش لفتش دادی! 🐢😂`,
+                        `حلزون محله‌تون پیام داده گفته: داداش خسته نباشی، من زودتر رسیدم! ${timeStr}دیرتر تموم شد. 🐌`,
+                        `امروز تو مود «آهسته و پیوسته» بودی؟ ${timeStr}بیشتر طول کشید. دفعه بعد جبران کن! 😴`
+                    ];
+                    humorHtml = `<span style="color:var(--danger-color); font-size:0.75rem; display:block; margin-top:4px;">... ${slowerMessages[index % slowerMessages.length]}</span>`;
                 } else {
-                    diffHtml = `<span style="color:var(--primary-color); font-size:0.75rem;" title="میانگین: ${Math.round(avgDuration)}">⚖️ رو روال میانگینی؛ ایول!</span>`;
+                    humorHtml = `<span style="color:var(--primary-color); font-size:0.75rem; display:block; margin-top:4px;">... مثل ساعت سوئیسی دقیقی! مو نمی‌زنی با دفعه قبل. یکم تنوع بده پهلوان! ⚖️😉</span>`;
                 }
             }
 
@@ -1699,7 +1740,7 @@
                     <div class="meta-item">😴 خستگی: ${toPersianDigits(rec.ratings.fatigue)}</div>
                     <div class="meta-item">🌡️ دما: ${toPersianDigits(rec.ratings.temp)}</div>
                     <div class="meta-item">🧠 ذهن: ${toPersianDigits(rec.ratings.mental)}</div>
-                    <div class="meta-item">⏱️ زمان: ${toPersianDigits(rec.duration || 0)} د ${diffHtml}</div>
+                    <div class="meta-item" style="flex-basis: 100%; text-align: right; padding: 10px;">⏱️ زمان: ${formatDuration(rec.durationSeconds)} ${humorHtml}</div>
                 </div>
                 <div class="history-notes">
                     📝 <span id="note-content-${rec.id}">${rec.notes || '<span style="color:var(--secondary-color)">بدون یادداشت...</span>'}</span>
@@ -1883,10 +1924,15 @@
         const heavyCount = history.filter(r => r.typeCode === 'heavy').length;
         const lightCount = history.filter(r => r.typeCode === 'light').length;
 
-        const totalDuration = history.reduce((sum, rec) => sum + (rec.duration || 0), 0);
-        const hours = Math.floor(totalDuration / 60);
-        const minutes = totalDuration % 60;
-        const totalTimeStr = hours > 0 ? `${toPersianDigits(hours)}س و ${toPersianDigits(minutes)}د` : `${toPersianDigits(minutes)}د`;
+        const totalSecs = history.reduce((sum, rec) => sum + (rec.durationSeconds || (rec.duration ? rec.duration * 60 : 0)), 0);
+        const hours = Math.floor(totalSecs / 3600);
+        const minutes = Math.floor((totalSecs % 3600) / 60);
+        const seconds = totalSecs % 60;
+
+        let totalTimeStr = "";
+        if (hours > 0) totalTimeStr += `${toPersianDigits(hours)}س و `;
+        if (minutes > 0 || hours > 0) totalTimeStr += `${toPersianDigits(minutes)}د`;
+        else totalTimeStr = `${toPersianDigits(seconds)} ثانیه`;
 
         container.innerHTML = `<div class="stats-card" style="display:flex; justify-content:space-around; text-align:center; flex-wrap: wrap; gap: 10px;">
             <div style="flex:1; min-width:60px;"><div style="font-size:1.2rem; font-weight:bold; color:var(--primary-color);">${toPersianDigits(total)}</div><div style="font-size:0.7rem;">جلسات</div></div>
@@ -1956,15 +2002,31 @@
         const padding = 30;
 
         const allParams = [
-            { key: 'stomach', color: '#ff5722', max: 10 },
-            { key: 'quality', color: '#4caf50', max: 10 },
-            { key: 'fatigue', color: '#2196f3', max: 10 },
-            { key: 'temp', color: '#ffc107', max: 10 },
-            { key: 'mental', color: '#9c27b0', max: 10 },
-            { key: 'duration', color: '#607d8b', max: 120 }
+            { key: 'stomach', color: '#ff5722', defaultMax: 10 },
+            { key: 'quality', color: '#4caf50', defaultMax: 10 },
+            { key: 'fatigue', color: '#2196f3', defaultMax: 10 },
+            { key: 'temp', color: '#ffc107', defaultMax: 10 },
+            { key: 'mental', color: '#9c27b0', defaultMax: 10 },
+            { key: 'duration', color: '#607d8b', defaultMax: 60 }
         ];
 
         const params = selectedKeys ? allParams.filter(p => selectedKeys.includes(p.key)) : allParams;
+
+        // Calculate dynamic max for each parameter
+        params.forEach(p => {
+            let currentMax = p.defaultMax;
+            history.forEach(rec => {
+                let val = 0;
+                if (p.key === 'duration') {
+                    const secs = rec.durationSeconds || (rec.duration ? rec.duration * 60 : 0);
+                    val = secs / 60;
+                } else {
+                    val = (rec.ratings && rec.ratings[p.key]) || 0;
+                }
+                if (val > currentMax) currentMax = val;
+            });
+            p.max = currentMax * 1.1; // 10% buffer
+        });
 
         const xScale = (width - 2 * padding) / (history.length - 1 || 1);
 
@@ -1975,7 +2037,13 @@
         params.forEach(p => {
             let pathD = '';
             history.forEach((rec, index) => {
-                const val = p.key === 'duration' ? (rec.duration || 0) : (rec.ratings[p.key] || 0);
+                let val = 0;
+                if (p.key === 'duration') {
+                    const secs = rec.durationSeconds || (rec.duration ? rec.duration * 60 : 0);
+                    val = secs / 60;
+                } else {
+                    val = (rec.ratings && rec.ratings[p.key]) || 0;
+                }
                 const x = padding + index * xScale;
                 const yScale = (height - 2 * padding) / p.max;
                 const y = height - padding - Math.min(val, p.max) * yScale;
@@ -1983,11 +2051,16 @@
             });
             svgContent += `<path d="${pathD}" fill="none" stroke="${p.color}" stroke-width="2" stroke-opacity="0.7" />`;
 
-            // Circles for the last 5 sessions to keep it clean
-            const startIdx = Math.max(0, history.length - 5);
+            const startIdx = Math.max(0, history.length - 10);
             for(let i = startIdx; i < history.length; i++) {
                 const rec = history[i];
-                const val = p.key === 'duration' ? (rec.duration || 0) : (rec.ratings[p.key] || 0);
+                let val = 0;
+                if (p.key === 'duration') {
+                    const secs = rec.durationSeconds || (rec.duration ? rec.duration * 60 : 0);
+                    val = secs / 60;
+                } else {
+                    val = (rec.ratings && rec.ratings[p.key]) || 0;
+                }
                 const x = padding + i * xScale;
                 const yScale = (height - 2 * padding) / p.max;
                 const y = height - padding - Math.min(val, p.max) * yScale;

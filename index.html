@@ -16,6 +16,7 @@
             --opaque-white: rgba(255, 255, 255, 0.9);
             --text-color: #ffffff;
             --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            --icon-size: 60px;
         }
 
         body {
@@ -30,6 +31,7 @@
             user-select: none;
             -webkit-user-select: none;
             transition: background 1s ease;
+            touch-action: none;
         }
 
         /* تم روز - آسمانی */
@@ -50,7 +52,6 @@
             color: #ffffff;
         }
 
-        /* المان‌های تزئینی */
         .sky-elements {
             position: fixed;
             top: 0;
@@ -88,7 +89,6 @@
             50% { opacity: 0.7; transform: scale(1.2); }
         }
 
-        /* لایه شیشه‌ای مات روی کل صفحه */
         body::before {
             content: "";
             position: fixed;
@@ -102,19 +102,32 @@
         }
 
         .container {
-            width: 100%;
-            max-width: 500px;
-            padding: 20px;
+            width: 100vw;
+            height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
         }
 
-        .app-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+        .pages-wrapper {
+            display: flex;
             width: 100%;
+            height: 80%;
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .page {
+            min-width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(var(--cols, 3), 1fr);
+            grid-template-rows: repeat(var(--rows, 4), 1fr);
+            gap: 20px;
+            padding: 40px 20px;
+            box-sizing: border-box;
             position: relative;
         }
 
@@ -123,44 +136,72 @@
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border-radius: 24px;
-            padding: 15px 5px;
             text-align: center;
             text-decoration: none;
             color: inherit;
             box-shadow: var(--shadow);
             border: 1px solid var(--glass-border);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s, border-color 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
+            aspect-ratio: 1/1;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s, border-color 0.3s, opacity 0.3s;
+            user-select: none;
             touch-action: none;
-            -webkit-touch-callout: none; /* Disable callout, e.g., on iOS */
         }
 
-        .app-card:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.4);
+        @keyframes flyInCorner {
+            0% { transform: scale(0) translate(var(--tw-tx, 0), var(--tw-ty, 0)); opacity: 0; }
+            100% { transform: scale(1) translate(0, 0); opacity: 1; }
         }
 
-        .app-card:active {
-            transform: scale(0.95);
+        .fly-in {
+            animation: flyInCorner 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
         }
 
-        .app-icon {
-            font-size: 2.2rem;
-            margin-bottom: 8px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .app-card.dragging {
+            z-index: 2000;
+            opacity: 0.8;
+            transform: scale(1.1);
+            position: fixed;
             pointer-events: none;
         }
 
+        .app-card.folder {
+            background: rgba(255, 255, 255, 0.2);
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 4px;
+            padding: 8px;
+        }
+
+        .folder-mini-icon {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            background: var(--opaque-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.5rem;
+        }
+        .folder-mini-icon img { width: 80%; height: 80%; object-fit: contain; }
+
+        .app-icon {
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: var(--icon-size);
+            height: var(--icon-size);
+        }
+
         .app-icon img {
-            width: 55px;
-            height: 55px;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
             border-radius: 14px;
             background: var(--opaque-white);
@@ -168,57 +209,167 @@
         }
 
         .app-title {
-            font-size: 0.85rem;
-            font-weight: 500;
+            font-size: 0.75rem;
+            margin-top: 5px;
             white-space: nowrap;
-            pointer-events: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 90%;
         }
 
-        .coming-soon {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        /* حالت لرزش */
+        /* Edit Mode Jiggle */
         @keyframes jiggle {
-            0% { transform: rotate(-1.5deg); }
-            50% { transform: rotate(1.5deg); }
-            100% { transform: rotate(-1.5deg); }
+            0% { transform: rotate(-1deg); }
+            50% { transform: rotate(1deg); }
+            100% { transform: rotate(-1deg); }
+        }
+        .editing .app-card:not(.dragging) {
+            animation: jiggle 0.3s infinite;
         }
 
-        .editing .app-card {
-            animation: jiggle 0.25s infinite ease-in-out;
+        .page-indicators {
+            position: absolute;
+            bottom: 40px;
+            display: flex;
+            gap: 8px;
         }
 
-        .editing .app-card:active, .editing .app-card.dragging {
-            animation: none;
-            transform: scale(1.1);
-            z-index: 1000;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
-            background: rgba(255,255,255,0.25);
-            opacity: 0.9;
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transition: all 0.3s;
         }
 
-        /* انیمیشن‌های ورود */
-        @keyframes flyIn {
-            from { transform: scale(0.5); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        .dot.active {
+            background: #fff;
+            transform: scale(1.2);
         }
 
-        .fly-in {
-            animation: flyIn 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            bottom: -300px;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-top: 1px solid rgba(255,255,255,0.2);
+            border-radius: 30px 30px 0 0;
+            padding: 25px;
+            box-sizing: border-box;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 3000;
+            color: #fff;
         }
 
-        @media (max-width: 400px) {
-            .app-grid { gap: 12px; }
-            .app-icon img { width: 50px; height: 50px; }
-            .app-title { font-size: 0.75rem; }
+        .settings-panel.open { bottom: 0; }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
         }
 
-        /* استایل کشیدن */
-        .dragging {
-            z-index: 1000;
+        .slider {
+            flex-grow: 1;
+            margin: 0 15px;
+            accent-color: #3b82f6;
         }
+
+        /* Folder Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            z-index: 4000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .folder-modal {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 40px;
+            width: 85%;
+            max-width: 350px;
+            padding: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        }
+
+        .folder-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .folder-name-input {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid rgba(255,255,255,0.5);
+            color: #fff;
+            font-size: 1.5rem;
+            text-align: center;
+            width: 80%;
+            outline: none;
+        }
+
+        .color-presets {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .color-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .color-dot.active { border-color: #fff; }
+
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            min-height: 100px;
+        }
+
+        /* Switch UI */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider-round {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider-round:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 4px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider-round { background-color: #2196F3; }
+        input:checked + .slider-round:before { transform: translateX(26px); }
+
     </style>
 </head>
 <body class="day-theme">
@@ -227,13 +378,90 @@
         <div class="moon"></div>
     </div>
 
-    <div class="container">
-        <div class="app-grid" id="appGrid">
-            <!-- آیتم‌ها توسط جاوا اسکریپت رندر می‌شوند -->
+    <div class="container" id="mainContainer">
+        <div class="pages-wrapper" id="pagesWrapper">
+            <!-- Pages will be rendered here -->
+        </div>
+        <div class="page-indicators" id="pageIndicators"></div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel">
+        <h3 style="margin-top: 0; text-align: center;">تنظیمات میز کار</h3>
+        <div class="settings-row">
+            <span>اندازه آیکون‌ها</span>
+            <input type="range" min="40" max="80" value="60" class="slider" id="iconScaleSlider">
+        </div>
+        <div class="settings-row">
+            <span>حالت آزادانه</span>
+            <label class="switch">
+                <input type="checkbox" id="freeModeToggle" checked>
+                <span class="slider-round"></span>
+            </label>
+        </div>
+        <button onclick="closeSettings()" style="width: 100%; padding: 10px; border-radius: 15px; border: none; background: #3b82f6; color: white; font-weight: bold;">تایید</button>
+    </div>
+
+    <!-- Folder Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeFolder(event)">
+        <div class="folder-modal" onclick="event.stopPropagation()">
+            <div class="folder-header">
+                <input type="text" class="folder-name-input" id="folderNameInput" placeholder="نام پوشه...">
+                <div class="color-presets">
+                    <div class="color-dot" style="background: rgba(255,255,255,0.2);" data-color="rgba(255,255,255,0.2)"></div>
+                    <div class="color-dot" style="background: rgba(255, 0, 0, 0.3);" data-color="rgba(255, 0, 0, 0.3)"></div>
+                    <div class="color-dot" style="background: rgba(0, 255, 0, 0.3);" data-color="rgba(0, 255, 0, 0.3)"></div>
+                    <div class="color-dot" style="background: rgba(0, 0, 255, 0.3);" data-color="rgba(0, 0, 255, 0.3)"></div>
+                    <input type="color" id="folderColorPicker" style="width: 24px; height: 24px; border: none; padding: 0; background: none;">
+                </div>
+            </div>
+            <div class="folder-grid" id="folderGrid">
+                <!-- Folder items -->
+            </div>
         </div>
     </div>
 
     <script>
+        const DEFAULT_APPS = [
+            { id: 'gym', title: 'Activity', icon: 'gym/icon-192.png', url: 'gym/index.html' },
+            { id: 'gold', title: 'ثبت درصد ۱', icon: 'gold/icon-192.png', url: 'gold/index.html' },
+            { id: 'profit', title: 'محاسبه گر سود', icon: 'profit-calculator/icon-192.png', url: 'profit-calculator/index.html' }
+        ];
+
+        let state = {
+            apps: [],
+            currentPage: 0,
+            isEditing: false,
+            freeMode: true,
+            iconSize: 60,
+            folders: {} // { folderId: { title: '', color: '', appIds: [] } }
+        };
+
+        const STORAGE_KEY = 'portal_v3_state';
+
+        function loadState() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    state = { ...state, ...JSON.parse(saved) };
+                } catch(e) {
+                    console.error("Failed to load state", e);
+                    state.apps = [...DEFAULT_APPS];
+                }
+            } else {
+                state.apps = [...DEFAULT_APPS];
+            }
+            // Ensure icons match current settings
+            document.documentElement.style.setProperty('--icon-size', `${state.iconSize}px`);
+            document.getElementById('iconScaleSlider').value = state.iconSize;
+            document.getElementById('freeModeToggle').checked = state.freeMode;
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        // Theme logic
         function updateTheme() {
             const hour = new Date().getHours();
             const isNight = hour < 6 || hour >= 18;
@@ -272,52 +500,81 @@
         }
 
         updateTheme();
-        setInterval(updateTheme, 60000); // چک کردن هر دقیقه
+        setInterval(updateTheme, 60000);
 
-        const DEFAULT_APPS = [
-            { id: 'gym', title: 'Activity', icon: 'gym/icon-192.png', url: 'gym/index.html' },
-            { id: 'gold', title: 'ثبت درصد ۱', icon: 'gold/icon-192.png', url: 'gold/index.html' },
-            { id: 'profit', title: 'محاسبه گر سود', icon: 'profit-calculator/icon-192.png', url: 'profit-calculator/index.html' }
-        ];
+        function renderPages(withAnimation = false) {
+            const wrapper = document.getElementById('pagesWrapper');
+            const indicators = document.getElementById('pageIndicators');
+            wrapper.innerHTML = '';
+            indicators.innerHTML = '';
 
-        let savedApps = JSON.parse(localStorage.getItem('portal_app_order'));
-        // فیلتر کردن برای حذف آیتم‌های قدیمی "به زودی" اگر در استوریج مانده باشند
-        let apps = savedApps ? savedApps.filter(a => !a.comingSoon) : DEFAULT_APPS;
-        let isEditing = false;
-        let dragItem = null;
-        let pressTimer = null;
+            // Calculate grid based on icon size
+            const containerWidth = window.innerWidth;
+            const containerHeight = window.innerHeight * 0.8;
+            const cols = Math.floor(containerWidth / (state.iconSize + 40));
+            const rows = Math.floor(containerHeight / (state.iconSize + 60));
 
-        const grid = document.getElementById('appGrid');
+            document.documentElement.style.setProperty('--cols', cols);
+            document.documentElement.style.setProperty('--rows', rows);
 
-        function renderApps() {
-            grid.innerHTML = '';
-            apps.forEach((app, index) => {
-                const card = document.createElement('a');
-                card.href = app.url;
-                card.className = `app-card fly-in ${app.comingSoon ? 'coming-soon' : ''}`;
+            const appsPerPage = cols * rows;
+            const totalApps = state.apps.length + Object.keys(state.folders).length;
+            const pageCount = Math.max(1, Math.ceil(totalApps / appsPerPage));
+
+            // Flatten apps and folders into a list for rendering
+            let items = [];
+            state.apps.forEach(app => {
+                // Only include apps NOT in folders
+                const inFolder = Object.values(state.folders).some(f => f.appIds.includes(app.id));
+                if (!inFolder) items.push({ type: 'app', data: app });
+            });
+            Object.entries(state.folders).forEach(([id, folder]) => {
+                items.push({ type: 'folder', id, data: folder });
+            });
+
+            for (let i = 0; i < pageCount; i++) {
+                const page = document.createElement('div');
+                page.className = 'page';
+
+                const pageItems = items.slice(i * appsPerPage, (i + 1) * appsPerPage);
+                pageItems.forEach((item, idx) => {
+                    const el = createItemElement(item);
+                    if (withAnimation) {
+                        el.classList.add('fly-in');
+                        const rx = (Math.random() - 0.5) * 1000;
+                        const ry = (Math.random() - 0.5) * 1000;
+                        el.style.setProperty('--tw-tx', rx + 'px');
+                        el.style.setProperty('--tw-ty', ry + 'px');
+                        el.style.animationDelay = (idx * 0.05) + 's';
+                    }
+                    page.appendChild(el);
+                });
+
+                wrapper.appendChild(page);
+
+                const dot = document.createElement('div');
+                dot.className = `dot ${i === state.currentPage ? 'active' : ''}`;
+                dot.onclick = () => goToPage(i);
+                indicators.appendChild(dot);
+            }
+
+            wrapper.style.transform = `translateX(${state.currentPage * 100}%)`;
+        }
+
+        function createItemElement(item) {
+            if (item.type === 'app') {
+                const app = item.data;
+                const card = document.createElement('div');
+                card.className = 'app-card';
                 card.dataset.id = app.id;
-                card.style.animationDelay = `${index * 0.05}s`;
-
-                // غیرفعال کردن انیمیشن بعد از پایان برای جلوگیری از ریست شدن در درگ
-                card.addEventListener('animationend', () => {
-                    card.style.opacity = '1';
-                    card.classList.remove('fly-in');
-                }, { once: true });
-
-                card.onclick = (e) => {
-                    if (isEditing || app.comingSoon) e.preventDefault();
-                };
+                card.dataset.type = 'app';
+                card.dataset.url = app.url;
 
                 const iconDiv = document.createElement('div');
                 iconDiv.className = 'app-icon';
-                if (app.icon.endsWith('.png')) {
-                    const img = document.createElement('img');
-                    img.src = app.icon;
-                    img.alt = app.title;
-                    iconDiv.appendChild(img);
-                } else {
-                    iconDiv.innerText = app.icon;
-                }
+                const img = document.createElement('img');
+                img.src = app.icon;
+                iconDiv.appendChild(img);
 
                 const titleDiv = document.createElement('div');
                 titleDiv.className = 'app-title';
@@ -326,132 +583,348 @@
                 card.appendChild(iconDiv);
                 card.appendChild(titleDiv);
 
-                card.onpointerdown = handlePointerDown;
-                card.onpointerup = handlePointerUp;
-                card.onpointercancel = handlePointerUp;
-                card.onpointermove = handlePointerMove;
-                card.oncontextmenu = (e) => e.preventDefault(); // Prevent context menu on long press
+                setupItemEvents(card);
+                return card;
+            } else {
+                const folder = item.data;
+                const card = document.createElement('div');
+                card.className = 'app-card folder';
+                card.dataset.id = item.id;
+                card.dataset.type = 'folder';
+                card.style.background = folder.color || 'rgba(255,255,255,0.2)';
 
-                grid.appendChild(card);
+                folder.appIds.slice(0, 4).forEach(appId => {
+                    const app = state.apps.find(a => a.id === appId);
+                    if (app) {
+                        const mini = document.createElement('div');
+                        mini.className = 'folder-mini-icon';
+                        const img = document.createElement('img');
+                        img.src = app.icon;
+                        mini.appendChild(img);
+                        card.appendChild(mini);
+                    }
+                });
+
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'app-title';
+                titleDiv.style.position = 'absolute';
+                titleDiv.style.bottom = '-20px';
+                titleDiv.innerText = folder.title || 'پوشه';
+                card.appendChild(titleDiv);
+
+                card.onclick = () => openFolder(item.id);
+                setupItemEvents(card);
+                return card;
+            }
+        }
+
+        let lastTap = 0;
+        let tapTimer = null;
+        let startX, startY, isSwiping = false;
+        const mainContainer = document.getElementById('mainContainer');
+
+        mainContainer.addEventListener('pointerdown', e => {
+            if (state.isEditing || e.target.closest('.app-card')) return;
+            startX = e.clientX;
+            startY = e.clientY;
+            isSwiping = true;
+
+            pressTimer = setTimeout(() => {
+                openSettings();
+            }, 800);
+        });
+
+        mainContainer.addEventListener('pointermove', e => {
+            if (isSwiping) {
+                const diffX = e.clientX - startX;
+                const diffY = e.clientY - startY;
+                if (Math.abs(diffX) > 10 || Math.abs(diffY) > 10) {
+                    clearTimeout(pressTimer);
+                }
+            }
+        });
+
+        mainContainer.addEventListener('pointermove', e => {
+            if (!isSwiping) return;
+            const diffX = e.clientX - startX;
+            const diffY = e.clientY - startY;
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+                e.preventDefault();
+            }
+        });
+
+        mainContainer.addEventListener('pointerup', e => {
+            if (!isSwiping) return;
+            const diffX = e.clientX - startX;
+            if (Math.abs(diffX) > 50) {
+                if (diffX > 0 && state.currentPage > 0) goToPage(state.currentPage - 1);
+                else if (diffX < 0) {
+                    const wrapper = document.getElementById('pagesWrapper');
+                    if (state.currentPage < wrapper.children.length - 1) goToPage(state.currentPage + 1);
+                    else if (state.isEditing) {
+                         // Logic for adding new page in edit mode could go here
+                    }
+                }
+            }
+            isSwiping = false;
+        });
+
+        let dragItem = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        let pressTimer = null;
+
+        function setupItemEvents(el) {
+            el.addEventListener('pointerdown', (e) => {
+                const now = Date.now();
+                const isDoubleTap = (now - lastTap < 300);
+                lastTap = now;
+
+                if (isDoubleTap) {
+                    clearTimeout(tapTimer);
+                    tapTimer = null;
+                    toggleEditMode();
+                    return;
+                }
+
+                if (state.isEditing) {
+                    startDragging(e, el);
+                } else {
+                    pressTimer = setTimeout(() => {
+                        openSettings();
+                    }, 800);
+
+                    tapTimer = setTimeout(() => {
+                        if (!isSwiping && !dragItem) {
+                            window.location.href = el.dataset.url;
+                        }
+                    }, 350);
+                }
             });
+
+            el.addEventListener('pointermove', handlePointerMove);
+            el.addEventListener('pointerup', handlePointerUp);
+            el.addEventListener('pointercancel', handlePointerUp);
         }
 
         function handlePointerDown(e) {
-            if (isEditing) {
-                startDragging(e);
-            } else {
-                const target = e.currentTarget;
-                const pointerId = e.pointerId;
-                pressTimer = setTimeout(() => {
-                    enterEditMode();
-                    // شروع جابجایی بلافاصله پس از ورود به حالت ویرایش
-                    startDraggingManual(target, pointerId);
-                }, 500);
+            // Placeholder if needed, logic moved to setupItemEvents
+        }
+
+        function startDragging(e, el) {
+            dragItem = el;
+            const rect = el.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left;
+            dragOffsetY = e.clientY - rect.top;
+
+            dragItem.classList.add('dragging');
+            dragItem.style.left = `${e.clientX - dragOffsetX}px`;
+            dragItem.style.top = `${e.clientY - dragOffsetY}px`;
+            dragItem.setPointerCapture(e.pointerId);
+        }
+
+        function handlePointerMove(e) {
+            if (!dragItem) {
+                clearTimeout(pressTimer);
+                return;
             }
+
+            dragItem.style.left = `${e.clientX - dragOffsetX}px`;
+            dragItem.style.top = `${e.clientY - dragOffsetY}px`;
+
+            // Check for edge of screen to switch page
+            if (e.clientX < 50 && state.currentPage > 0) {
+                 throttle(() => goToPage(state.currentPage - 1), 1000);
+            } else if (e.clientX > window.innerWidth - 50) {
+                 throttle(() => {
+                    const wrapper = document.getElementById('pagesWrapper');
+                    if (state.currentPage < wrapper.children.length - 1) {
+                        goToPage(state.currentPage + 1);
+                    }
+                 }, 1000);
+            }
+        }
+
+        let throttleTimer = null;
+        function throttle(callback, time) {
+            if (throttleTimer) return;
+            throttleTimer = true;
+            setTimeout(() => {
+                callback();
+                throttleTimer = false;
+            }, time);
         }
 
         function handlePointerUp(e) {
             clearTimeout(pressTimer);
-            if (isEditing && dragItem) {
-                stopDragging(e);
-            }
-        }
-
-        function handlePointerMove(e) {
-            if (!isEditing) {
-                clearTimeout(pressTimer);
-            } else if (dragItem) {
-                moveDragging(e);
-            }
-        }
-
-        function enterEditMode() {
-            isEditing = true;
-            document.body.classList.add('editing');
-            if (navigator.vibrate) navigator.vibrate(100);
-
-            const exitHandler = (e) => {
-                if (!e.target.closest('.app-card')) {
-                    exitEditMode();
-                    window.removeEventListener('pointerdown', exitHandler);
-                }
-            };
-            window.addEventListener('pointerdown', exitHandler);
-        }
-
-        function exitEditMode() {
-            isEditing = false;
-            document.body.classList.remove('editing');
-            saveOrder();
-        }
-
-        function saveOrder() {
-            const currentOrder = Array.from(grid.children).map(card => {
-                const appId = card.dataset.id;
-                return apps.find(a => a.id === appId);
-            }).filter(Boolean);
-
-            if (currentOrder.length > 0) {
-                localStorage.setItem('portal_app_order', JSON.stringify(currentOrder));
-                apps = currentOrder;
-            }
-        }
-
-        function startDragging(e) {
-            startDraggingManual(e.currentTarget, e.pointerId);
-        }
-
-        function startDraggingManual(element, pointerId) {
-            dragItem = element;
-            dragItem.classList.add('dragging');
-            dragItem.setPointerCapture(pointerId);
-        }
-
-        function moveDragging(e) {
             if (!dragItem) return;
-            const afterElement = getDragAfterElement(grid, e.clientX, e.clientY);
-            if (afterElement == null) {
-                grid.appendChild(dragItem);
-            } else {
-                grid.insertBefore(dragItem, afterElement);
-            }
-        }
 
-        function stopDragging(e) {
-            if (!dragItem) return;
+            const x = e.clientX;
+            const y = e.clientY;
             dragItem.classList.remove('dragging');
+            dragItem.style.left = '';
+            dragItem.style.top = '';
             dragItem.releasePointerCapture(e.pointerId);
+
+            finalizeMove(dragItem, x, y);
             dragItem = null;
-            saveOrder();
         }
 
-        function getDragAfterElement(container, x, y) {
-            const draggableElements = [...container.querySelectorAll('.app-card:not(.dragging)')];
+        function createFolder(appId1, appId2) {
+            const folderId = 'folder_' + Date.now();
+            state.folders[folderId] = {
+                title: 'پوشه جدید',
+                color: 'rgba(255,255,255,0.2)',
+                appIds: [appId1, appId2]
+            };
+            saveState();
+        }
 
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const centerX = box.left + box.width / 2;
-                const centerY = box.top + box.height / 2;
-                const distance = Math.hypot(x - centerX, y - centerY);
+        function addToFolder(appId, folderId) {
+            if (!state.folders[folderId].appIds.includes(appId)) {
+                state.folders[folderId].appIds.push(appId);
+                saveState();
+            }
+        }
 
-                if (distance < closest.distance) {
-                    return { distance: distance, element: child };
-                } else {
-                    return closest;
+        let activeFolderId = null;
+        function openFolder(folderId) {
+            if (state.isEditing) return;
+            activeFolderId = folderId;
+            const folder = state.folders[folderId];
+            document.getElementById('modalOverlay').style.display = 'flex';
+            document.getElementById('folderNameInput').value = folder.title;
+            renderFolderGrid(folderId);
+        }
+
+        function renderFolderGrid(folderId) {
+            const grid = document.getElementById('folderGrid');
+            grid.innerHTML = '';
+            const folder = state.folders[folderId];
+            folder.appIds.forEach(appId => {
+                const app = state.apps.find(a => a.id === appId);
+                if (app) {
+                    const item = createItemElement({ type: 'app', data: app });
+                    grid.appendChild(item);
                 }
-            }, { distance: 1000 }).element; // Limit distance to prevent jumping
-        }
-
-        renderApps();
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Portal SW Registered'))
-                    .catch(err => console.log('Portal SW Failed', err));
             });
         }
-    </script>
 
+        function closeFolder(e) {
+            if (e && e.target !== document.getElementById('modalOverlay')) return;
+            document.getElementById('modalOverlay').style.display = 'none';
+            activeFolderId = null;
+            renderPages();
+        }
+
+        document.getElementById('folderNameInput').oninput = (e) => {
+            if (activeFolderId) {
+                state.folders[activeFolderId].title = e.target.value;
+                saveState();
+            }
+        };
+
+        document.querySelectorAll('.color-dot').forEach(dot => {
+            dot.onclick = () => {
+                if (activeFolderId) {
+                    state.folders[activeFolderId].color = dot.dataset.color;
+                    saveState();
+                    renderPages();
+                }
+            };
+        });
+
+        document.getElementById('folderColorPicker').oninput = (e) => {
+            if (activeFolderId) {
+                state.folders[activeFolderId].color = e.target.value;
+                saveState();
+                renderPages();
+            }
+        };
+
+        function finalizeMove(item, x, y) {
+            const targets = document.elementsFromPoint(x, y);
+            const targetCard = targets.find(t => t.classList.contains('app-card') && t !== item);
+            const itemId = item.dataset.id;
+
+            if (targetCard) {
+                const targetId = targetCard.dataset.id;
+                if (targetCard.dataset.type === 'folder') {
+                    addToFolder(itemId, targetId);
+                } else {
+                    createFolder(itemId, targetId);
+                }
+            } else {
+                const page = document.querySelectorAll('.page')[state.currentPage];
+                const cards = [...page.querySelectorAll('.app-card:not(.dragging)')];
+                let insertIdx = cards.length;
+
+                for (let i = 0; i < cards.length; i++) {
+                    const rect = cards[i].getBoundingClientRect();
+                    if (x < rect.left + rect.width / 2 && y < rect.bottom) {
+                        insertIdx = i;
+                        break;
+                    }
+                }
+
+                // Calculate global index in state.apps
+                // Note: this logic assumes all apps are at top level.
+                // A better logic would account for items already in folders.
+                const topLevelApps = state.apps.filter(app => !Object.values(state.folders).some(f => f.appIds.includes(app.id)));
+                const currentIdx = topLevelApps.findIndex(a => a.id === itemId);
+
+                if (currentIdx !== -1) {
+                    const app = topLevelApps.splice(currentIdx, 1)[0];
+                    const targetGlobalIdx = (state.currentPage * (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cols')) * parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rows')))) + insertIdx;
+
+                    // Re-insert into state.apps at appropriate place
+                    // This is still simplified but better than 'push'
+                    state.apps.splice(state.apps.indexOf(app), 1);
+                    state.apps.splice(targetGlobalIdx, 0, app);
+                }
+            }
+            saveState();
+            renderPages();
+        }
+
+        function openSettings() {
+            document.getElementById('settingsPanel').classList.add('open');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsPanel').classList.remove('open');
+            saveState();
+            renderPages();
+        }
+
+        document.getElementById('iconScaleSlider').oninput = (e) => {
+            state.iconSize = parseInt(e.target.value);
+            document.documentElement.style.setProperty('--icon-size', `${state.iconSize}px`);
+        };
+
+        document.getElementById('freeModeToggle').onchange = (e) => {
+            state.freeMode = e.target.checked;
+        };
+
+        function toggleEditMode() {
+            state.isEditing = !state.isEditing;
+            document.body.classList.toggle('editing', state.isEditing);
+            if (navigator.vibrate) navigator.vibrate(100);
+            renderPages(); // Refresh to apply jiggle
+        }
+
+        function goToPage(pageIndex) {
+            state.currentPage = pageIndex;
+            const wrapper = document.getElementById('pagesWrapper');
+            wrapper.style.transform = `translateX(-${pageIndex * 100}%)`;
+            document.querySelectorAll('.dot').forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === pageIndex);
+            });
+            saveState();
+        }
+
+        loadState();
+        renderPages(true);
+    </script>
 </body>
 </html>
