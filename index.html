@@ -19,7 +19,7 @@
             --icon-size: 60px;
         }
 
-        body {
+        html, body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             display: flex;
@@ -194,13 +194,22 @@
         }
 
         .app-card.dragging {
-            z-index: 2000;
-            opacity: 0.9;
-            transform: scale(1.1);
-            position: fixed;
+            z-index: 5000;
+            opacity: 0.85;
+            transform: scale(1.15) !important;
+            position: fixed !important;
             pointer-events: none;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease, opacity 0.2s ease !important;
+            border-color: rgba(255,255,255,0.5) !important;
+        }
+
+        .app-card.placeholder {
+            opacity: 0.3;
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed rgba(255,255,255,0.3);
+            animation: none !important;
+            box-shadow: none !important;
         }
 
         .folder-target {
@@ -696,22 +705,30 @@
             renderPages();
         }
 
+        function getGridSize() {
+            const containerWidth = window.innerWidth;
+            const containerHeight = window.innerHeight * 0.7;
+            const cols = Math.floor(containerWidth / (state.iconSize + 40)) || 3;
+            const rows = Math.floor(containerHeight / (state.iconSize + 60)) || 3;
+            return { cols, rows, itemsPerPage: cols * rows };
+        }
+
         function renderPages(withAnimation = false) {
             const wrapper = document.getElementById('pagesWrapper');
             const indicators = document.getElementById('pageIndicators');
 
             const existingElements = new Map();
             document.querySelectorAll('.app-card').forEach(el => {
-                if (!el.classList.contains('dragging')) {
+                // Ignore dragging clones and elements that are snapping back
+                if (!el.classList.contains('dragging') && !el.classList.contains('snap-back')) {
                     existingElements.set(el.dataset.id, el);
                 }
             });
 
-            const containerWidth = window.innerWidth;
-            const containerHeight = window.innerHeight * 0.7;
-            const cols = Math.floor(containerWidth / (state.iconSize + 40)) || 3;
-            const rows = Math.floor(containerHeight / (state.iconSize + 60)) || 3;
-            const itemsPerPage = cols * rows;
+            // Ensure placeholder is handled
+            const draggingId = dragItem ? dragItem.dataset.id : null;
+
+            const { cols, rows, itemsPerPage } = getGridSize();
 
             document.documentElement.style.setProperty('--cols', cols);
             document.documentElement.style.setProperty('--rows', rows);
@@ -754,7 +771,7 @@
                 const pageItems = state.orderedLayout.slice(p * itemsPerPage, (p + 1) * itemsPerPage);
 
                 pageItems.forEach((item, idx) => {
-                    if (dragItem && dragItem.dataset.id === item.id) return;
+                    let isPlaceholder = (draggingId === item.id);
 
                     let dataItem;
                     if (item.type === 'app') {
@@ -769,6 +786,12 @@
                             el = createItemElement(dataItem);
                         } else if (item.type === 'folder') {
                             updateFolderMiniIcons(el, dataItem.data);
+                        }
+
+                        if (isPlaceholder) {
+                            el.classList.add('placeholder');
+                        } else {
+                            el.classList.remove('placeholder');
                         }
 
                         const row = Math.floor(idx / cols);
@@ -804,9 +827,10 @@
             const itemWidth = 75; // Including margin
             const totalWidth = itemCount * itemWidth;
             const startOffset = (dockRect.width - totalWidth) / 2;
+            const draggingId = dragItem ? dragItem.dataset.id : null;
 
             state.dockItems.forEach((item, idx) => {
-                const isDraggingThis = dragItem && dragItem.dataset.id === item.id;
+                const isPlaceholder = (draggingId === item.id);
 
                 let dataItem;
                 if (item.type === 'app') {
@@ -821,7 +845,11 @@
                         el = createItemElement(dataItem);
                     }
 
-                    if (isDraggingThis) return;
+                    if (isPlaceholder) {
+                        el.classList.add('placeholder');
+                    } else {
+                        el.classList.remove('placeholder');
+                    }
 
                     el.classList.add('dock-item');
                     el.dataset.dockIndex = idx;
@@ -1044,15 +1072,23 @@
 
         function startDragging(e, el) {
             if (dragItem) return;
-            dragItem = el;
+
+            // Prevent default behavior to avoid scrolling on mobile during drag
+            if (e.cancelable) e.preventDefault();
+
+            // Create a clone for dragging so the original can stay as placeholder
             const rect = el.getBoundingClientRect();
+            dragItem = el.cloneNode(true);
+            dragItem.dataset.id = el.dataset.id; // Clone doesn't copy dataset sometimes correctly in all browsers
+
+            // Add listeners to the clone so it can handle move and up events
+            setupItemEvents(dragItem);
+
             dragOffsetX = e.clientX - rect.left;
             dragOffsetY = e.clientY - rect.top;
 
-            // Move to body to persist through renderPages
             document.body.appendChild(dragItem);
             dragItem.classList.add('dragging');
-            dragItem.style.position = 'fixed';
             dragItem.style.width = rect.width + 'px';
             dragItem.style.height = rect.height + 'px';
             dragItem.style.left = `${e.clientX - dragOffsetX}px`;
@@ -1060,9 +1096,8 @@
 
             try {
                 dragItem.setPointerCapture(e.pointerId);
-            } catch(e) {}
+            } catch(err) {}
 
-            // Re-render to show the hole
             renderPages();
         }
 
@@ -1080,6 +1115,8 @@
             dragItem.style.left = `${x - dragOffsetX}px`;
             dragItem.style.top = `${y - dragOffsetY}px`;
 
+            const { itemsPerPage } = getGridSize();
+
             // Real-time pushing logic
             const targets = document.elementsFromPoint(x, y);
             const targetCard = targets.find(t => t.classList.contains('app-card') && t !== dragItem && !t.classList.contains('dragging'));
@@ -1091,7 +1128,11 @@
                 const centerY = rect.top + rect.height / 2;
                 const dist = Math.hypot(x - centerX, y - centerY);
 
-                if (dist < rect.width / 3) {
+                // For better mobile usability, use a slightly larger threshold for folders
+                // and prioritize dock snapping if near the bottom.
+                const threshold = targetCard.classList.contains('dock-item') ? rect.width / 2 : rect.width / 2.5;
+
+                if (dist < threshold) {
                     // Potential folder creation
                     if (targetId !== lastTargetId) {
                         clearTimeout(folderTimer);
@@ -1124,6 +1165,19 @@
             } else {
                 clearTimeout(folderTimer);
                 lastTargetId = null;
+
+                // If not over a card, but on a different page, move placeholder to current page
+                const itemId = dragItem.dataset.id;
+                const currentIndex = state.orderedLayout.findIndex(i => i.id === itemId);
+                if (currentIndex !== -1) {
+                    const currentPageStart = state.currentPage * itemsPerPage;
+                    const currentPageEnd = (state.currentPage + 1) * itemsPerPage;
+                    if (currentIndex < currentPageStart || currentIndex >= currentPageEnd) {
+                        // Move to the closest position on current page
+                        const targetIdx = currentIndex < currentPageStart ? currentPageStart : Math.min(state.orderedLayout.length - 1, currentPageEnd - 1);
+                        moveWithinLayout(itemId, targetIdx);
+                    }
+                }
             }
 
             if (x < 50 && state.currentPage > 0) {
@@ -1151,21 +1205,23 @@
             if (currentIndex !== -1) {
                 if (currentIndex === targetIndex) return;
                 state.orderedLayout.splice(currentIndex, 1);
-                state.orderedLayout.splice(targetIndex, 0, { id: itemId, type: itemType });
+                const safeTarget = Math.min(targetIndex, state.orderedLayout.length);
+                state.orderedLayout.splice(safeTarget, 0, { id: itemId, type: itemType });
             } else {
-                // Moving from Dock to Layout
+                // Moving from Dock or Folder to Layout
                 const dockIdx = state.dockItems.findIndex(i => i.id === itemId);
                 if (dockIdx !== -1) {
                     state.dockItems.splice(dockIdx, 1);
-                    state.orderedLayout.splice(targetIndex, 0, { id: itemId, type: itemType });
+                } else {
+                    removeFromFolder(itemId);
                 }
+                const safeTarget = Math.min(targetIndex, state.orderedLayout.length);
+                state.orderedLayout.splice(safeTarget, 0, { id: itemId, type: itemType });
             }
             renderPages();
         }
 
         function moveWithinDock(itemId, targetIndex) {
-            if (state.dockItems.length >= 4 && !state.dockItems.some(i => i.id === itemId)) return;
-
             const itemType = itemId.startsWith('folder_') ? 'folder' : 'app';
             const currentIndex = state.dockItems.findIndex(i => i.id === itemId);
 
@@ -1174,10 +1230,23 @@
                 state.dockItems.splice(currentIndex, 1);
                 state.dockItems.splice(targetIndex, 0, { id: itemId, type: itemType });
             } else {
-                // Moving from Layout to Dock
-                const layoutIdx = state.orderedLayout.findIndex(i => i.id === itemId);
-                if (layoutIdx !== -1) {
-                    state.orderedLayout.splice(layoutIdx, 1);
+                // Moving from Layout or Folder to Dock
+                if (state.dockItems.length >= 4) {
+                    const removed = state.dockItems.splice(targetIndex, 1, { id: itemId, type: itemType })[0];
+                    const layoutIdx = state.orderedLayout.findIndex(i => i.id === itemId);
+                    if (layoutIdx !== -1) {
+                        state.orderedLayout.splice(layoutIdx, 1, removed);
+                    } else {
+                        removeFromFolder(itemId);
+                        state.orderedLayout.push(removed);
+                    }
+                } else {
+                    const layoutIdx = state.orderedLayout.findIndex(i => i.id === itemId);
+                    if (layoutIdx !== -1) {
+                        state.orderedLayout.splice(layoutIdx, 1);
+                    } else {
+                        removeFromFolder(itemId);
+                    }
                     state.dockItems.splice(targetIndex, 0, { id: itemId, type: itemType });
                 }
             }
@@ -1231,7 +1300,9 @@
             const y = e.clientY;
 
             // Stop tracking movement
-            dragItem.releasePointerCapture(e.pointerId);
+            try {
+                dragItem.releasePointerCapture(e.pointerId);
+            } catch(err) {}
 
             // Find target element before clearing styles
             const targets = document.elementsFromPoint(x, y);
@@ -1374,7 +1445,10 @@
             dragItem = null;
             renderPages();
 
-            const targetEl = document.querySelector(`.app-card[data-id="${itemId}"]`);
+            // Find the actual placeholder element in the DOM (not the clone we just dropped)
+            const targetEl = Array.from(document.querySelectorAll(`.app-card[data-id="${itemId}"]`))
+                                  .find(el => !el.classList.contains('snap-back'));
+
             if (targetEl && !folderCreated) {
                 targetEl.style.opacity = '0';
                 const rect = targetEl.getBoundingClientRect();
