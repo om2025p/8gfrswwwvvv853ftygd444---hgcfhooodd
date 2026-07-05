@@ -131,6 +131,24 @@
             position: relative;
         }
 
+        .grid-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: grid;
+            grid-template-columns: repeat(var(--cols, 3), 1fr);
+            grid-template-rows: repeat(var(--rows, 4), 1fr);
+            gap: 20px;
+            padding: 40px 20px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .editing .grid-overlay { opacity: 0.2; }
+        .grid-cell {
+            border: 1px dashed rgba(255,255,255,0.5);
+            border-radius: 20px;
+        }
+
         .app-card {
             background: var(--glass-bg);
             backdrop-filter: blur(15px);
@@ -430,6 +448,7 @@
 
         let state = {
             apps: [],
+            layout: [], // Array of { id, type, page, row, col }
             currentPage: 0,
             isEditing: false,
             freeMode: true,
@@ -451,6 +470,12 @@
             } else {
                 state.apps = [...DEFAULT_APPS];
             }
+
+            // Migration for layout
+            if (!state.layout || state.layout.length === 0) {
+                initializeLayout();
+            }
+
             // Ensure icons match current settings
             document.documentElement.style.setProperty('--icon-size', `${state.iconSize}px`);
             document.getElementById('iconScaleSlider').value = state.iconSize;
@@ -502,13 +527,46 @@
         updateTheme();
         setInterval(updateTheme, 60000);
 
+        function initializeLayout() {
+            state.layout = [];
+            const cols = 3; // Default
+            let count = 0;
+
+            // Top level apps
+            state.apps.forEach(app => {
+                const inFolder = Object.values(state.folders).some(f => f.appIds.includes(app.id));
+                if (!inFolder) {
+                    state.layout.push({
+                        id: app.id,
+                        type: 'app',
+                        page: 0,
+                        row: Math.floor(count / cols),
+                        col: count % cols
+                    });
+                    count++;
+                }
+            });
+
+            // Folders
+            Object.keys(state.folders).forEach(fid => {
+                state.layout.push({
+                    id: fid,
+                    type: 'folder',
+                    page: 0,
+                    row: Math.floor(count / cols),
+                    col: count % cols
+                });
+                count++;
+            });
+            saveState();
+        }
+
         function renderPages(withAnimation = false) {
             const wrapper = document.getElementById('pagesWrapper');
             const indicators = document.getElementById('pageIndicators');
             wrapper.innerHTML = '';
             indicators.innerHTML = '';
 
-            // Calculate grid based on icon size
             const containerWidth = window.innerWidth;
             const containerHeight = window.innerHeight * 0.8;
             const cols = Math.floor(containerWidth / (state.iconSize + 40));
@@ -517,44 +575,55 @@
             document.documentElement.style.setProperty('--cols', cols);
             document.documentElement.style.setProperty('--rows', rows);
 
-            const appsPerPage = cols * rows;
-            const totalApps = state.apps.length + Object.keys(state.folders).length;
-            const pageCount = Math.max(1, Math.ceil(totalApps / appsPerPage));
+            const maxPage = state.layout.reduce((max, item) => Math.max(max, item.page), 0);
+            const pageCount = maxPage + 1;
 
-            // Flatten apps and folders into a list for rendering
-            let items = [];
-            state.apps.forEach(app => {
-                // Only include apps NOT in folders
-                const inFolder = Object.values(state.folders).some(f => f.appIds.includes(app.id));
-                if (!inFolder) items.push({ type: 'app', data: app });
-            });
-            Object.entries(state.folders).forEach(([id, folder]) => {
-                items.push({ type: 'folder', id, data: folder });
-            });
-
-            for (let i = 0; i < pageCount; i++) {
+            for (let p = 0; p < pageCount; p++) {
                 const page = document.createElement('div');
                 page.className = 'page';
 
-                const pageItems = items.slice(i * appsPerPage, (i + 1) * appsPerPage);
-                pageItems.forEach((item, idx) => {
-                    const el = createItemElement(item);
-                    if (withAnimation) {
-                        el.classList.add('fly-in');
-                        const rx = (Math.random() - 0.5) * 1000;
-                        const ry = (Math.random() - 0.5) * 1000;
-                        el.style.setProperty('--tw-tx', rx + 'px');
-                        el.style.setProperty('--tw-ty', ry + 'px');
-                        el.style.animationDelay = (idx * 0.05) + 's';
+                const overlay = document.createElement('div');
+                overlay.className = 'grid-overlay';
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        overlay.appendChild(cell);
                     }
-                    page.appendChild(el);
+                }
+                page.appendChild(overlay);
+
+                const pageLayout = state.layout.filter(item => item.page === p);
+                pageLayout.forEach((item, idx) => {
+                    let dataItem;
+                    if (item.type === 'app') {
+                        dataItem = { type: 'app', data: state.apps.find(a => a.id === item.id) };
+                    } else {
+                        dataItem = { type: 'folder', id: item.id, data: state.folders[item.id] };
+                    }
+
+                    if (dataItem && dataItem.data) {
+                        const el = createItemElement(dataItem);
+                        el.style.gridRowStart = item.row + 1;
+                        el.style.gridColumnStart = item.col + 1;
+
+                        if (withAnimation) {
+                            el.classList.add('fly-in');
+                            const rx = (Math.random() - 0.5) * 1000;
+                            const ry = (Math.random() - 0.5) * 1000;
+                            el.style.setProperty('--tw-tx', rx + 'px');
+                            el.style.setProperty('--tw-ty', ry + 'px');
+                            el.style.animationDelay = (idx * 0.05) + 's';
+                        }
+                        page.appendChild(el);
+                    }
                 });
 
                 wrapper.appendChild(page);
 
                 const dot = document.createElement('div');
-                dot.className = `dot ${i === state.currentPage ? 'active' : ''}`;
-                dot.onclick = () => goToPage(i);
+                dot.className = `dot ${p === state.currentPage ? 'active' : ''}`;
+                dot.onclick = () => goToPage(p);
                 indicators.appendChild(dot);
             }
 
@@ -694,11 +763,13 @@
                         openSettings();
                     }, 800);
 
-                    tapTimer = setTimeout(() => {
-                        if (!isSwiping && !dragItem) {
-                            window.location.href = el.dataset.url;
-                        }
-                    }, 350);
+                    if (el.dataset.url) {
+                        tapTimer = setTimeout(() => {
+                            if (!isSwiping && !dragItem) {
+                                window.location.href = el.dataset.url;
+                            }
+                        }, 350);
+                    }
                 }
             });
 
@@ -771,6 +842,8 @@
         }
 
         function createFolder(appId1, appId2) {
+            if (appId1.startsWith('folder_') || appId2.startsWith('folder_')) return null;
+
             const folderId = 'folder_' + Date.now();
             state.folders[folderId] = {
                 title: 'پوشه جدید',
@@ -778,6 +851,7 @@
                 appIds: [appId1, appId2]
             };
             saveState();
+            return folderId;
         }
 
         function addToFolder(appId, folderId) {
@@ -805,6 +879,12 @@
                 const app = state.apps.find(a => a.id === appId);
                 if (app) {
                     const item = createItemElement({ type: 'app', data: app });
+                    item.onpointerdown = (e) => {
+                        if (state.isEditing) {
+                            closeFolder();
+                            startDragging(e, item);
+                        }
+                    };
                     grid.appendChild(item);
                 }
             });
@@ -851,36 +931,58 @@
                 const targetId = targetCard.dataset.id;
                 if (targetCard.dataset.type === 'folder') {
                     addToFolder(itemId, targetId);
+                    state.layout = state.layout.filter(l => l.id !== itemId);
                 } else {
-                    createFolder(itemId, targetId);
-                }
-            } else {
-                const page = document.querySelectorAll('.page')[state.currentPage];
-                const cards = [...page.querySelectorAll('.app-card:not(.dragging)')];
-                let insertIdx = cards.length;
-
-                for (let i = 0; i < cards.length; i++) {
-                    const rect = cards[i].getBoundingClientRect();
-                    if (x < rect.left + rect.width / 2 && y < rect.bottom) {
-                        insertIdx = i;
-                        break;
+                    const newFolderId = createFolder(itemId, targetId);
+                    if (newFolderId) {
+                        const targetIdx = state.layout.findIndex(l => l.id === targetId);
+                        if (targetIdx !== -1) {
+                            const { page, row, col } = state.layout[targetIdx];
+                            state.layout[targetIdx] = { id: newFolderId, type: 'folder', page, row, col };
+                        }
+                        state.layout = state.layout.filter(l => l.id !== itemId);
                     }
                 }
+            } else {
+                const pageEl = document.querySelectorAll('.page')[state.currentPage];
+                const pageRect = pageEl.getBoundingClientRect();
+                const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cols'));
+                const rows = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rows'));
 
-                // Calculate global index in state.apps
-                // Note: this logic assumes all apps are at top level.
-                // A better logic would account for items already in folders.
-                const topLevelApps = state.apps.filter(app => !Object.values(state.folders).some(f => f.appIds.includes(app.id)));
-                const currentIdx = topLevelApps.findIndex(a => a.id === itemId);
+                const relativeX = x - pageRect.left;
+                const relativeY = y - pageRect.top;
 
-                if (currentIdx !== -1) {
-                    const app = topLevelApps.splice(currentIdx, 1)[0];
-                    const targetGlobalIdx = (state.currentPage * (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cols')) * parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rows')))) + insertIdx;
+                const col = Math.floor(relativeX / (pageRect.width / cols));
+                const row = Math.floor(relativeY / (pageRect.height / rows));
 
-                    // Re-insert into state.apps at appropriate place
-                    // This is still simplified but better than 'push'
-                    state.apps.splice(state.apps.indexOf(app), 1);
-                    state.apps.splice(targetGlobalIdx, 0, app);
+                if (col >= 0 && col < cols && row >= 0 && row < rows) {
+                    const existingItemIdx = state.layout.findIndex(l => l.page === state.currentPage && l.row === row && l.col === col);
+                    const currentItemIdx = state.layout.findIndex(l => l.id === itemId);
+
+                    if (existingItemIdx !== -1 && state.layout[existingItemIdx].id !== itemId) {
+                        const tempId = state.layout[existingItemIdx].id;
+                        const tempType = state.layout[existingItemIdx].type;
+
+                        const cur = state.layout[currentItemIdx];
+                        state.layout[existingItemIdx].id = cur.id;
+                        state.layout[existingItemIdx].type = cur.type;
+
+                        cur.id = tempId;
+                        cur.type = tempType;
+                    } else if (currentItemIdx !== -1) {
+                        state.layout[currentItemIdx].page = state.currentPage;
+                        state.layout[currentItemIdx].row = row;
+                        state.layout[currentItemIdx].col = col;
+                    } else {
+                        const itemType = item.dataset.type;
+                        state.layout.push({ id: itemId, type: itemType, page: state.currentPage, row, col });
+
+                        // If it was in a folder, remove it
+                        if (activeFolderId) {
+                            state.folders[activeFolderId].appIds = state.folders[activeFolderId].appIds.filter(id => id !== itemId);
+                            // If folder is empty, maybe delete it?
+                        }
+                    }
                 }
             }
             saveState();
