@@ -2215,14 +2215,7 @@
         document.getElementById('sec-manage').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // ثبت سرویس ورکر
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js', { scope: './' })
-                .then(reg => console.log('Service Worker Registered'))
-                .catch(err => console.log('Service Worker Failed', err));
-        });
-    }
+    // سرویس ورکر اکنون به صورت مرکزی از منوی اصلی مدیریت می‌شود
 
     // درخواست اجازه اعلان
     function requestNotificationPermission() {
