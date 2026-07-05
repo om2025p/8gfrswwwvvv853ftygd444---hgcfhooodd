@@ -247,6 +247,67 @@
             transform: scale(1.1);
         }
 
+        .timer-btn {
+            background: var(--primary-color);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .timer-btn:active { transform: scale(0.9); }
+
+        .exercise-timer-panel {
+            background: var(--row-bg);
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 10px;
+            display: none;
+            border: 1px solid var(--primary-color);
+        }
+
+        .exercise-timer-panel.active { display: block; }
+
+        .timer-display {
+            font-family: monospace;
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: center;
+            display: block;
+            margin: 10px 0;
+            color: var(--primary-color);
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .sound-modes {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+        }
+
+        .sound-mode-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
         .rating-group {
             margin-bottom: 20px;
         }
@@ -535,7 +596,14 @@
             padding: 8px 12px;
             border-radius: 6px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
+        .manage-btn.btn-archive { color: #f59e0b; }
+        .manage-btn.btn-delete { color: var(--danger-color); font-size: 1rem; }
+        .manage-btn.btn-restore { color: var(--success-color); }
 
         .bottom-nav {
             position: fixed;
@@ -696,6 +764,11 @@
                     </div>
                 </div>
                 <div id="exerciseManagerList" style="margin-top: 15px;"></div>
+
+                <div style="margin-top: 25px; border-top: 2px dashed var(--border-color); padding-top: 15px;">
+                    <label style="font-size: 0.9rem; margin-bottom: 10px; display: block; color: var(--secondary-color);">📦 انبار حرکات (بایگانی):</label>
+                    <div id="archivedExerciseList"></div>
+                </div>
             </details>
 
             <details id="sec-eval" class="card" open>
@@ -786,17 +859,16 @@
         </div>
 
         <div class="stats-card">
-            <h3>📍 مقایسه پارامترها</h3>
-            <div style="margin-bottom: 15px;">
-                <select id="compareParam" onchange="renderStats()" style="padding: 5px; font-size: 0.8rem;">
-                    <option value="stomach">۱. وضعیت شکم</option>
-                    <option value="quality">۲. کیفیت تمرین</option>
-                    <option value="fatigue">۳. میزان خستگی</option>
-                    <option value="temp">۴. دمای محیط</option>
-                    <option value="mental">۵. وضعیت ذهنی</option>
-                </select>
+            <h3>📍 تحلیل جامع پارامترها</h3>
+            <div style="margin-bottom: 15px; font-size: 0.75rem; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                <span style="color: #ff5722;">● شکم</span>
+                <span style="color: #4caf50;">● کیفیت</span>
+                <span style="color: #2196f3;">● خستگی</span>
+                <span style="color: #ffc107;">● دما</span>
+                <span style="color: #9c27b0;">● ذهن</span>
+                <span style="color: #607d8b;">● مدت (دقیقه)</span>
             </div>
-            <div id="comparisonChart" class="chart-container"></div>
+            <div id="comparisonChart" class="chart-container" style="height: 250px;"></div>
         </div>
 
         <details id="sec-trash" class="card">
@@ -869,10 +941,12 @@
             { id: 8, name: "زیربغل دمبل خم یک‌دست", target: 1, unit: "تکرار", side: true },
             { id: 9, name: "دمبل چکشی جلو بازو ۱۰ کیلویی", target: 1, unit: "تکرار", side: true },
             { id: 10, name: "پلانک ثابت حرفه‌ای (۳ ست)", target: 1, unit: "ثانیه" }
-        ]
+        ],
+        archived: []
     };
 
     let workoutData = JSON.parse(localStorage.getItem(STORAGE_KEYS.BASE_DATA)) || defaultWorkoutData;
+    if (!workoutData.archived) workoutData.archived = [];
     let sessionState = {};
     let ratings = { stomach: 5, quality: 5, fatigue: 1, temp: 5, mental: 10 };
     let restInterval;
@@ -995,6 +1069,19 @@
         }
     }
 
+    let audioContext;
+    let timerRunning = false;
+    let timerInterval;
+    let currentTimerId = null;
+    let customAudioFile = null;
+    let audioSource = null;
+
+    function initAudio() {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
     function initWorkout(isLoadingDraft = false) {
         const type = document.getElementById('workoutType').value;
         const exercises = workoutData[type] || [];
@@ -1029,6 +1116,8 @@
             const card = document.createElement('div');
             card.className = 'card exercise-item';
 
+            const isSeconds = ex.unit === 'ثانیه';
+
             if (ex.side) {
                 const rKey = `${ex.id}-r`;
                 const lKey = `${ex.id}-l`;
@@ -1040,17 +1129,21 @@
                     <div class="side-row">
                         <span>👉 راست:</span>
                         <div class="input-with-check">
+                            ${isSeconds ? `<button class="timer-btn" onclick="toggleTimerPanel('${ex.id}-r', ${ex.target})">⏱️</button>` : ''}
                             <input type="number" id="ex-${ex.id}-r-val" value="${sessionState[rKey].value}" oninput="updateSessionValue(${ex.id}, 'r', this.value)">
                             <button class="check-btn ${sessionState[rKey].done ? 'active' : ''}" id="ex-${ex.id}-r-btn" onclick="toggleCheck(${ex.id}, 'r')">✓</button>
                         </div>
                     </div>
+                    <div id="timer-panel-${ex.id}-r" class="exercise-timer-panel"></div>
                     <div class="side-row">
                         <span>👈 چپ:</span>
                         <div class="input-with-check">
+                            ${isSeconds ? `<button class="timer-btn" onclick="toggleTimerPanel('${ex.id}-l', ${ex.target})">⏱️</button>` : ''}
                             <input type="number" id="ex-${ex.id}-l-val" value="${sessionState[lKey].value}" oninput="updateSessionValue(${ex.id}, 'l', this.value)">
                             <button class="check-btn ${sessionState[lKey].done ? 'active' : ''}" id="ex-${ex.id}-l-btn" onclick="toggleCheck(${ex.id}, 'l')">✓</button>
                         </div>
                     </div>
+                    <div id="timer-panel-${ex.id}-l" class="exercise-timer-panel"></div>
                 `;
             } else {
                 const key = ex.id;
@@ -1060,14 +1153,140 @@
                     <div class="exercise-header">
                         <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${escapeHtml(ex.unit)})</div>
                         <div class="input-with-check">
+                            ${isSeconds ? `<button class="timer-btn" onclick="toggleTimerPanel('${ex.id}', ${ex.target})">⏱️</button>` : ''}
                             <input type="number" id="ex-${ex.id}-val" value="${sessionState[key].value}" oninput="updateSessionValue(${ex.id}, null, this.value)">
                             <button class="check-btn ${sessionState[key].done ? 'active' : ''}" id="ex-${ex.id}-btn" onclick="toggleCheck(${ex.id})">✓</button>
                         </div>
                     </div>
+                    <div id="timer-panel-${ex.id}" class="exercise-timer-panel"></div>
                 `;
             }
             listDiv.appendChild(card);
         });
+    }
+
+    function toggleTimerPanel(key, target) {
+        const panel = document.getElementById(`timer-panel-${key}`);
+        const isActive = panel.classList.contains('active');
+
+        // Close all other panels
+        document.querySelectorAll('.exercise-timer-panel').forEach(p => p.classList.remove('active'));
+
+        if (!isActive) {
+            panel.classList.add('active');
+            panel.innerHTML = `
+                <div class="timer-display" id="display-${key}">${toPersianDigits(target)}</div>
+                <div class="timer-controls">
+                    <button class="backup-btns" onclick="startExerciseTimer('${key}', ${target})" id="start-${key}"><span class="icon">▶️</span> شروع</button>
+                    <button class="backup-btns" onclick="stopExerciseTimer()" style="display:none" id="stop-${key}"><span class="icon">⏹️</span> توقف</button>
+                    <button class="backup-btns" onclick="resetExerciseTimer('${key}', ${target})"><span class="icon">🔄</span> بازنشانی</button>
+                </div>
+                <div class="sound-modes">
+                    <label class="sound-mode-option"><input type="radio" name="sound-${key}" value="accelerate" checked> ⚡ بوق شتاب‌دهنده (هیجانی)</label>
+                    <label class="sound-mode-option"><input type="radio" name="sound-${key}" value="continuous"> 🔊 بوق ممتد</label>
+                    <label class="sound-mode-option"><input type="radio" name="sound-${key}" value="music" onchange="document.getElementById('music-input-${key}').style.display = this.checked ? 'block' : 'none'"> 🎵 آهنگ دلخواه</label>
+                    <input type="file" id="music-input-${key}" style="display:none; font-size:0.7rem; margin-top:5px;" accept="audio/*" onchange="handleMusicUpload(event)">
+                </div>
+            `;
+        }
+    }
+
+    function handleMusicUpload(event) {
+        customAudioFile = event.target.files[0];
+    }
+
+    function playBeep(freq, vol, duration) {
+        if (!audioContext) initAudio();
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(vol, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start();
+        osc.stop(audioContext.currentTime + duration);
+    }
+
+    let beepTimeout;
+    function startExerciseTimer(key, totalSeconds) {
+        initAudio();
+        if (timerRunning) stopExerciseTimer();
+
+        timerRunning = true;
+        currentTimerId = key;
+        let remaining = totalSeconds;
+        const mode = document.querySelector(`input[name="sound-${key}"]:checked`).value;
+
+        document.getElementById(`start-${key}`).style.display = 'none';
+        document.getElementById(`stop-${key}`).style.display = 'inline-block';
+
+        if (mode === 'music' && customAudioFile) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                audioContext.decodeAudioData(e.target.result, function(buffer) {
+                    if (!timerRunning) return;
+                    audioSource = audioContext.createBufferSource();
+                    audioSource.buffer = buffer;
+                    audioSource.connect(audioContext.destination);
+                    audioSource.start(0);
+                });
+            };
+            reader.readAsArrayBuffer(customAudioFile);
+        }
+
+        const runBeeps = () => {
+            if (!timerRunning) return;
+
+            if (mode === 'accelerate') {
+                const progress = (totalSeconds - remaining) / totalSeconds;
+                const freq = 440 + (progress * 440);
+                const vol = 0.1 + (progress * 0.4);
+                playBeep(freq, vol, 0.1);
+
+                // Calculate next beep delay: starts at 1000ms, ends at 150ms
+                const delay = Math.max(150, 1000 - (progress * 850));
+                beepTimeout = setTimeout(runBeeps, delay);
+            } else if (mode === 'continuous') {
+                playBeep(600, 0.3, 0.8);
+                beepTimeout = setTimeout(runBeeps, 1000);
+            }
+        };
+
+        if (mode !== 'music') runBeeps();
+
+        timerInterval = setInterval(() => {
+            remaining--;
+            document.getElementById(`display-${key}`).innerText = toPersianDigits(Math.max(0, remaining));
+
+            if (remaining <= 0) {
+                stopExerciseTimer();
+                playBeep(1000, 0.8, 1.5);
+                setTimeout(() => alert('🏁 زمان تمام شد!'), 100);
+            }
+        }, 1000);
+    }
+
+    function stopExerciseTimer() {
+        timerRunning = false;
+        clearInterval(timerInterval);
+        clearTimeout(beepTimeout);
+        if (audioSource) {
+            try { audioSource.stop(); } catch(e) {}
+            audioSource = null;
+        }
+        if (currentTimerId) {
+            const startBtn = document.getElementById(`start-${currentTimerId}`);
+            const stopBtn = document.getElementById(`stop-${currentTimerId}`);
+            if (startBtn) startBtn.style.display = 'inline-block';
+            if (stopBtn) stopBtn.style.display = 'none';
+        }
+    }
+
+    function resetExerciseTimer(key, totalSeconds) {
+        stopExerciseTimer();
+        document.getElementById(`display-${key}`).innerText = toPersianDigits(totalSeconds);
     }
 
     function updateSessionValue(id, side, val) {
@@ -1293,10 +1512,26 @@
             notes: nutritionNotes
         };
 
+        // محاسبه مدت زمان تمرین
+        let startTime = Infinity;
+        let endTime = -Infinity;
+        Object.values(sessionState).forEach(s => {
+            if (s.done && s.rawTime) {
+                if (s.rawTime < startTime) startTime = s.rawTime;
+                if (s.rawTime > endTime) endTime = s.rawTime;
+            }
+        });
+
+        let duration = 0;
+        if (startTime !== Infinity && endTime !== -Infinity) {
+            duration = Math.round((endTime - startTime) / (1000 * 60)); // به دقیقه
+        }
+
         const record = {
             id: Date.now(),
             date: getPersianDate(),
             time: getPersianTime(),
+            duration: duration,
             type: type === 'heavy' ? 'سنگین' : 'سبک',
             typeCode: type,
             exercises: [],
@@ -1582,10 +1817,14 @@
         const heavyCount = history.filter(r => r.typeCode === 'heavy').length;
         const lightCount = history.filter(r => r.typeCode === 'light').length;
 
-        container.innerHTML = `<div class="stats-card" style="display:flex; justify-content:space-around; text-align:center;">
-            <div><div style="font-size:1.2rem; font-weight:bold; color:var(--primary-color);">${toPersianDigits(total)}</div><div style="font-size:0.7rem;">جلسات</div></div>
-            <div><div style="font-size:1.2rem; font-weight:bold; color:var(--danger-color);">${toPersianDigits(heavyCount)}</div><div style="font-size:0.7rem;">سنگین</div></div>
-            <div><div style="font-size:1.2rem; font-weight:bold; color:var(--success-color);">${toPersianDigits(lightCount)}</div><div style="font-size:0.7rem;">سبک</div></div>
+        const totalDuration = history.reduce((sum, rec) => sum + (rec.duration || 0), 0);
+        const avgDuration = Math.round(totalDuration / total);
+
+        container.innerHTML = `<div class="stats-card" style="display:flex; justify-content:space-around; text-align:center; flex-wrap: wrap; gap: 10px;">
+            <div style="flex:1; min-width:60px;"><div style="font-size:1.2rem; font-weight:bold; color:var(--primary-color);">${toPersianDigits(total)}</div><div style="font-size:0.7rem;">جلسات</div></div>
+            <div style="flex:1; min-width:60px;"><div style="font-size:1.2rem; font-weight:bold; color:var(--danger-color);">${toPersianDigits(heavyCount)}</div><div style="font-size:0.7rem;">سنگین</div></div>
+            <div style="flex:1; min-width:60px;"><div style="font-size:1.2rem; font-weight:bold; color:var(--success-color);">${toPersianDigits(lightCount)}</div><div style="font-size:0.7rem;">سبک</div></div>
+            <div style="flex:1; min-width:60px;"><div style="font-size:1.2rem; font-weight:bold; color:#607d8b;">${toPersianDigits(avgDuration)}</div><div style="font-size:0.7rem;">م. زمان (دقیقه)</div></div>
         </div>`;
 
         renderProgressionChart(history);
@@ -1638,28 +1877,50 @@
     function renderComparisonChart(history) {
         const container = document.getElementById('comparisonChart');
         if (!container) return;
-        const param = document.getElementById('compareParam').value;
         const width = container.clientWidth || 300;
-        const height = 200;
+        const height = 250;
         const padding = 30;
 
-        const data = history.map((rec, index) => ({x: index, y: rec.ratings[param] || 0}));
-        const xScale = (width - 2 * padding) / (history.length - 1 || 1);
-        const yScale = (height - 2 * padding) / 10;
+        const params = [
+            { key: 'stomach', color: '#ff5722', max: 10 },
+            { key: 'quality', color: '#4caf50', max: 10 },
+            { key: 'fatigue', color: '#2196f3', max: 10 },
+            { key: 'temp', color: '#ffc107', max: 10 },
+            { key: 'mental', color: '#9c27b0', max: 10 },
+            { key: 'duration', color: '#607d8b', max: 120 } // Max duration 2 hours for scale
+        ];
 
-        let pathD = '';
-        data.forEach((p, i) => {
-            const x = padding + p.x * xScale;
-            const y = height - padding - p.y * yScale;
-            pathD += (i === 0 ? 'M' : 'L') + ` ${x} ${y}`;
+        const xScale = (width - 2 * padding) / (history.length - 1 || 1);
+
+        let svgContent = `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}">
+            <line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="var(--border-color)" />
+            <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height-padding}" stroke="var(--border-color)" />`;
+
+        params.forEach(p => {
+            let pathD = '';
+            history.forEach((rec, index) => {
+                const val = p.key === 'duration' ? (rec.duration || 0) : (rec.ratings[p.key] || 0);
+                const x = padding + index * xScale;
+                const yScale = (height - 2 * padding) / p.max;
+                const y = height - padding - Math.min(val, p.max) * yScale;
+                pathD += (index === 0 ? 'M' : 'L') + ` ${x} ${y}`;
+            });
+            svgContent += `<path d="${pathD}" fill="none" stroke="${p.color}" stroke-width="2" stroke-opacity="0.7" />`;
+
+            // Circles for the last 5 sessions to keep it clean
+            const startIdx = Math.max(0, history.length - 5);
+            for(let i = startIdx; i < history.length; i++) {
+                const rec = history[i];
+                const val = p.key === 'duration' ? (rec.duration || 0) : (rec.ratings[p.key] || 0);
+                const x = padding + i * xScale;
+                const yScale = (height - 2 * padding) / p.max;
+                const y = height - padding - Math.min(val, p.max) * yScale;
+                svgContent += `<circle cx="${x}" cy="${y}" r="3" fill="${p.color}" />`;
+            }
         });
 
-        container.innerHTML = `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}">
-            <line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="var(--border-color)" />
-            <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height-padding}" stroke="var(--border-color)" />
-            <path d="${pathD}" fill="none" stroke="var(--primary-color)" stroke-width="2" />
-            ${data.map(p => `<circle cx="${padding + p.x * xScale}" cy="${height - padding - p.y * yScale}" r="3" fill="var(--primary-color)" />`).join('')}
-        </svg>`;
+        svgContent += `</svg>`;
+        container.innerHTML = svgContent;
     }
 
     function addNewExercise() {
@@ -1702,12 +1963,71 @@
         workoutData.heavy.forEach((ex, index) => {
             const div = document.createElement('div');
             div.className = 'manage-item';
-            div.innerHTML = `<input type="text" value="${escapeHtml(ex.name)}" onchange="updateExerciseName(${index}, this.value)">
-                <div><button class="manage-btn" onclick="moveExercise(${index}, -1)">↑</button>
-                <button class="manage-btn" onclick="moveExercise(${index}, 1)">↓</button></div>`;
+            div.innerHTML = `
+                <input type="text" value="${escapeHtml(ex.name)}" onchange="updateExerciseName(${index}, this.value)">
+                <div class="manage-controls">
+                    <button class="manage-btn" onclick="moveExercise(${index}, -1)" title="بالا">↑</button>
+                    <button class="manage-btn" onclick="moveExercise(${index}, 1)" title="پایین">↓</button>
+                    <button class="manage-btn btn-archive" onclick="archiveExercise(${index})" title="بایگانی">📦</button>
+                    <button class="manage-btn btn-delete" onclick="deleteExercisePermanently(${index}, false)" title="حذف">🗑️</button>
+                </div>`;
             container.appendChild(div);
         });
 
+        const archivedContainer = document.getElementById('archivedExerciseList');
+        archivedContainer.innerHTML = '';
+        if (workoutData.archived.length === 0) {
+            archivedContainer.innerHTML = '<p style="font-size:0.8rem; color:var(--secondary-color); text-align:center;">انبار خالی است.</p>';
+        } else {
+            workoutData.archived.forEach((ex, index) => {
+                const div = document.createElement('div');
+                div.className = 'manage-item';
+                div.style.opacity = '0.7';
+                div.innerHTML = `
+                    <span style="flex:1; font-size:0.9rem;">${escapeHtml(ex.heavy.name)}</span>
+                    <div class="manage-controls">
+                        <button class="manage-btn btn-restore" onclick="restoreExercise(${index})" title="بازگردانی">↩️</button>
+                        <button class="manage-btn btn-delete" onclick="deleteExercisePermanently(${index}, true)" title="حذف دائمی">🗑️</button>
+                    </div>`;
+                archivedContainer.appendChild(div);
+            });
+        }
+    }
+
+    function archiveExercise(index) {
+        const heavyEx = workoutData.heavy[index];
+        const lightEx = workoutData.light[index];
+        workoutData.archived.push({ heavy: heavyEx, light: lightEx });
+        workoutData.heavy.splice(index, 1);
+        workoutData.light.splice(index, 1);
+        saveWorkoutData();
+        initWorkout();
+        renderExerciseManager();
+    }
+
+    function restoreExercise(index) {
+        const item = workoutData.archived[index];
+        workoutData.heavy.push(item.heavy);
+        workoutData.light.push(item.light);
+        workoutData.archived.splice(index, 1);
+        saveWorkoutData();
+        initWorkout();
+        renderExerciseManager();
+    }
+
+    function deleteExercisePermanently(index, fromArchive) {
+        const name = fromArchive ? workoutData.archived[index].heavy.name : workoutData.heavy[index].name;
+        if (confirm(`⚠️ آیا از حذف دائمی حرکت "${name}" مطمئن هستید؟ این عمل غیرقابل بازگشت است.`)) {
+            if (fromArchive) {
+                workoutData.archived.splice(index, 1);
+            } else {
+                workoutData.heavy.splice(index, 1);
+                workoutData.light.splice(index, 1);
+            }
+            saveWorkoutData();
+            initWorkout();
+            renderExerciseManager();
+        }
     }
 
     function updateExerciseName(index, newName) {
