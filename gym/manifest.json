@@ -1,8 +1,8 @@
 {
   "id": "com.varzesh.app",
-  "name": "ورزش",
-  "short_name": "ورزش",
-  "description": "اپلیکیشن مدیریت و ثبت تمرینات ورزشی آفلاین",
+  "name": "Activity Tracker",
+  "short_name": "Tracker",
+  "description": "Personal activity and progress management tool",
   "start_url": "index.html",
   "scope": "./",
   "display": "standalone",
