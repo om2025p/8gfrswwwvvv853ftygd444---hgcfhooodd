@@ -34,7 +34,6 @@
             touch-action: none;
         }
 
-        /* تم روز - آسمانی */
         body.day-theme {
             background: linear-gradient(180deg, #87CEEB 0%, #B0E2FF 100%);
             color: #1e3a8a;
@@ -46,7 +45,6 @@
         }
         body.day-theme .app-title { font-weight: 600; }
 
-        /* تم شب - ستاره‌ای */
         body.night-theme {
             background: radial-gradient(circle at center, #1e3a8a 0%, #020617 100%);
             color: #ffffff;
@@ -248,7 +246,6 @@
             width: 90%;
         }
 
-        /* Edit Mode Jiggle */
         @keyframes jiggle {
             0% { transform: rotate(-1deg); }
             50% { transform: rotate(1deg); }
@@ -278,13 +275,12 @@
             transform: scale(1.2);
         }
 
-        /* Settings Panel */
         .settings-panel {
             position: fixed;
-            bottom: -300px;
+            bottom: -100%;
             left: 0;
             width: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
             border-top: 1px solid rgba(255,255,255,0.2);
@@ -292,11 +288,11 @@
             padding: 25px;
             box-sizing: border-box;
             transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 3000;
+            z-index: 5000;
             color: #fff;
         }
 
-        .settings-panel.open { bottom: 0; }
+        .settings-panel.open { bottom: 0 !important; }
 
         .settings-row {
             display: flex;
@@ -311,7 +307,6 @@
             accent-color: #3b82f6;
         }
 
-        /* Folder Modal */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -373,7 +368,6 @@
             min-height: 100px;
         }
 
-        /* Switch UI */
         .switch {
             position: relative;
             display: inline-block;
@@ -416,7 +410,6 @@
         <div class="page-indicators" id="pageIndicators"></div>
     </div>
 
-    <!-- Settings Panel -->
     <div id="settingsPanel" class="settings-panel">
         <h3 style="margin-top: 0; text-align: center;">تنظیمات میز کار</h3>
         <div class="settings-row">
@@ -433,7 +426,6 @@
         <button onclick="closeSettings()" style="width: 100%; padding: 10px; border-radius: 15px; border: none; background: #3b82f6; color: white; font-weight: bold;">تایید</button>
     </div>
 
-    <!-- Folder Modal -->
     <div class="modal-overlay" id="modalOverlay" onclick="closeFolder(event)">
         <div class="folder-modal" onclick="event.stopPropagation()">
             <div class="folder-header">
@@ -461,12 +453,12 @@
 
         let state = {
             apps: [],
-            layout: [], // Array of { id, type, page, row, col }
+            layout: [],
             currentPage: 0,
             isEditing: false,
             freeMode: true,
             iconSize: 60,
-            folders: {} // { folderId: { title: '', color: '', appIds: [] } }
+            folders: {}
         };
 
         const STORAGE_KEY = 'portal_v3_state';
@@ -484,12 +476,10 @@
                 state.apps = [...DEFAULT_APPS];
             }
 
-            // Migration for layout
             if (!state.layout || state.layout.length === 0) {
                 initializeLayout();
             }
 
-            // Ensure icons match current settings
             document.documentElement.style.setProperty('--icon-size', `${state.iconSize}px`);
             document.getElementById('iconScaleSlider').value = state.iconSize;
             document.getElementById('freeModeToggle').checked = state.freeMode;
@@ -499,7 +489,6 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         }
 
-        // Theme logic
         function updateTheme() {
             const hour = new Date().getHours();
             const isNight = hour < 6 || hour >= 18;
@@ -542,10 +531,9 @@
 
         function initializeLayout() {
             state.layout = [];
-            const cols = 3; // Default
+            const cols = 3;
             let count = 0;
 
-            // Top level apps
             state.apps.forEach(app => {
                 const inFolder = Object.values(state.folders).some(f => f.appIds.includes(app.id));
                 if (!inFolder) {
@@ -560,7 +548,6 @@
                 }
             });
 
-            // Folders
             Object.keys(state.folders).forEach(fid => {
                 state.layout.push({
                     id: fid,
@@ -699,24 +686,29 @@
                 titleDiv.innerText = folder.title || 'پوشه';
                 card.appendChild(titleDiv);
 
-                card.onclick = () => openFolder(item.id);
                 setupItemEvents(card);
                 return card;
             }
         }
 
+        let startX = null, startY = null, isSwiping = false;
         let lastTap = 0;
         let tapTimer = null;
-        let startX, startY, isSwiping = false;
+        let dragItem = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        let pressTimer = null;
         const mainContainer = document.getElementById('mainContainer');
 
         mainContainer.addEventListener('pointerdown', e => {
-            if (e.target.closest('.app-card')) return;
             startX = e.clientX;
             startY = e.clientY;
-            isSwiping = true;
+            isSwiping = false;
+
+            if (e.target.closest('.app-card')) return;
 
             if (!state.isEditing) {
+                clearTimeout(pressTimer);
                 pressTimer = setTimeout(() => {
                     openSettings();
                 }, 800);
@@ -724,20 +716,29 @@
         });
 
         mainContainer.addEventListener('pointermove', e => {
-            if (!isSwiping) return;
+            if (startX === null) return;
             const diffX = e.clientX - startX;
             const diffY = e.clientY - startY;
-            if (Math.abs(diffX) > 10 || Math.abs(diffY) > 10) {
+
+            if (Math.abs(diffX) > 15 || Math.abs(diffY) > 15) {
+                isSwiping = true;
                 clearTimeout(pressTimer);
             }
-            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+
+            if (!isSwiping) return;
+            if (Math.abs(diffX) > Math.abs(diffY)) {
                 e.preventDefault();
             }
         });
 
         mainContainer.addEventListener('pointerup', e => {
-            if (!isSwiping) return;
-            const diffX = e.clientX - startX;
+            clearTimeout(pressTimer);
+            const sx = startX;
+            startX = null;
+            startY = null;
+            if (!isSwiping || sx === null) return;
+
+            const diffX = e.clientX - sx;
             if (Math.abs(diffX) > 50) {
                 if (diffX > 0) {
                     const wrapper = document.getElementById('pagesWrapper');
@@ -749,11 +750,6 @@
             isSwiping = false;
         });
 
-        let dragItem = null;
-        let dragOffsetX = 0;
-        let dragOffsetY = 0;
-        let pressTimer = null;
-
         function setupItemEvents(el) {
             el.addEventListener('pointerdown', (e) => {
                 const now = Date.now();
@@ -763,35 +759,39 @@
                 if (isDoubleTap) {
                     clearTimeout(tapTimer);
                     tapTimer = null;
+                    clearTimeout(pressTimer); // Cancel settings on double-tap
                     toggleEditMode();
                     return;
                 }
 
                 if (state.isEditing) {
-                    if (activeFolderId) closeFolder();
+                    if (activeFolderId) closeFolder(null, true);
                     startDragging(e, el);
                 } else {
+                    clearTimeout(pressTimer);
                     pressTimer = setTimeout(() => {
                         openSettings();
                     }, 800);
+                }
+            });
 
-                    if (el.dataset.url) {
-                        tapTimer = setTimeout(() => {
-                            if (!isSwiping && !dragItem) {
-                                window.location.href = el.dataset.url;
-                            }
-                        }, 250);
-                    }
+            el.addEventListener('click', (e) => {
+                if (!state.isEditing && !isSwiping && !dragItem) {
+                    clearTimeout(pressTimer); // Cancel settings on simple click
+                    clearTimeout(tapTimer);
+                    tapTimer = setTimeout(() => {
+                        if (el.dataset.type === 'app' && el.dataset.url) {
+                            window.location.href = el.dataset.url;
+                        } else if (el.dataset.type === 'folder') {
+                            openFolder(el.dataset.id);
+                        }
+                    }, 250);
                 }
             });
 
             el.addEventListener('pointermove', handlePointerMove);
             el.addEventListener('pointerup', handlePointerUp);
             el.addEventListener('pointercancel', handlePointerUp);
-        }
-
-        function handlePointerDown(e) {
-            // Placeholder if needed, logic moved to setupItemEvents
         }
 
         function startDragging(e, el) {
@@ -817,10 +817,8 @@
             dragItem.style.left = `${x - dragOffsetX}px`;
             dragItem.style.top = `${y - dragOffsetY}px`;
 
-            // Android-style Magnet/Preview
             updateDropPreview(x, y);
 
-            // Check for edge of screen to switch page
             if (x < 30 && state.currentPage > 0) {
                  throttle(() => goToPage(state.currentPage - 1), 1000);
             } else if (x > window.innerWidth - 30) {
@@ -844,7 +842,8 @@
             const relativeX = x - pageRect.left;
             const relativeY = y - pageRect.top;
 
-            const col = Math.floor(relativeX / (pageRect.width / cols));
+            let col = Math.floor(relativeX / (pageRect.width / cols));
+            col = (cols - 1) - col;
             const row = Math.floor(relativeY / (pageRect.height / rows));
 
             if (col >= 0 && col < cols && row >= 0 && row < rows) {
@@ -853,7 +852,8 @@
                 preview.style.display = 'block';
                 preview.style.width = `${cellW - 20}px`;
                 preview.style.height = `${cellH - 20}px`;
-                preview.style.left = `${col * cellW + 10}px`;
+                const visualCol = (cols - 1) - col;
+                preview.style.left = `${visualCol * cellW + 10}px`;
                 preview.style.top = `${row * cellH + 10}px`;
             } else {
                 preview.style.display = 'none';
@@ -877,7 +877,6 @@
             const x = e.clientX;
             const y = e.clientY;
 
-            // Hide preview
             document.querySelectorAll('.drop-preview').forEach(p => p.style.display = 'none');
 
             dragItem.classList.remove('dragging');
@@ -933,11 +932,11 @@
             });
         }
 
-        function closeFolder(e) {
+        function closeFolder(e, noRender = false) {
             if (e && e.target !== document.getElementById('modalOverlay')) return;
             document.getElementById('modalOverlay').style.display = 'none';
             activeFolderId = null;
-            renderPages();
+            if (!noRender) renderPages();
         }
 
         document.getElementById('folderNameInput').oninput = (e) => {
@@ -967,7 +966,6 @@
 
         function finalizeMove(item, x, y) {
             const targets = document.elementsFromPoint(x, y);
-            // Ignore UI elements that are not part of the grid
             const targetCard = targets.find(t => t.classList.contains('app-card') && t !== item && !t.classList.contains('dragging'));
             const itemId = item.dataset.id;
 
@@ -979,10 +977,10 @@
             const relativeX = x - pageRect.left;
             const relativeY = y - pageRect.top;
 
-            const col = Math.floor(relativeX / (pageRect.width / cols));
+            let col = Math.floor(relativeX / (pageRect.width / cols));
+            col = (cols - 1) - col;
             const row = Math.floor(relativeY / (pageRect.height / rows));
 
-            // Collision with another card (Folder creation or push)
             if (targetCard) {
                 const targetId = targetCard.dataset.id;
                 const rect = targetCard.getBoundingClientRect();
@@ -990,12 +988,13 @@
                 const centerY = rect.top + rect.height / 2;
                 const dist = Math.hypot(x - centerX, y - centerY);
 
-                // If very close to center -> Folder creation
                 if (dist < rect.width / 3) {
                     if (targetCard.dataset.type === 'folder') {
+                        removeFromFolder(itemId);
                         addToFolder(itemId, targetId);
                         state.layout = state.layout.filter(l => l.id !== itemId);
                     } else {
+                        removeFromFolder(itemId);
                         const newFolderId = createFolder(itemId, targetId);
                         if (newFolderId) {
                             const targetIdx = state.layout.findIndex(l => l.id === targetId);
@@ -1007,7 +1006,6 @@
                         }
                     }
                 } else {
-                    // Just swap or push (Android style)
                     swapItems(itemId, col, row);
                 }
             } else {
@@ -1023,11 +1021,12 @@
             const existingIdx = state.layout.findIndex(l => l.page === state.currentPage && l.row === newRow && l.col === newCol);
             const currentIdx = state.layout.findIndex(l => l.id === itemId);
 
+            removeFromFolder(itemId);
+
             if (existingIdx !== -1 && state.layout[existingIdx].id !== itemId) {
                 const existing = state.layout[existingIdx];
                 if (currentIdx !== -1) {
                     const current = state.layout[currentIdx];
-                    // Swap coordinates
                     const tempPage = existing.page;
                     const tempRow = existing.row;
                     const tempCol = existing.col;
@@ -1040,15 +1039,12 @@
                     current.row = tempRow;
                     current.col = tempCol;
                 } else {
-                    // Moving from folder to occupied spot?
-                    // Let's find an empty spot for the existing one first
                     const empty = findFirstEmptySpot();
                     existing.page = empty.page;
                     existing.row = empty.row;
                     existing.col = empty.col;
                     const itemType = itemId.startsWith('folder_') ? 'folder' : 'app';
                     state.layout.push({ id: itemId, type: itemType, page: state.currentPage, row: newRow, col: newCol });
-                    removeFromFolder(itemId);
                 }
             } else if (currentIdx !== -1) {
                 state.layout[currentIdx].page = state.currentPage;
@@ -1057,18 +1053,24 @@
             } else {
                 const itemType = itemId.startsWith('folder_') ? 'folder' : 'app';
                 state.layout.push({ id: itemId, type: itemType, page: state.currentPage, row: newRow, col: newCol });
-                removeFromFolder(itemId);
             }
         }
 
         function removeFromFolder(appId) {
+            let changed = false;
             Object.keys(state.folders).forEach(fid => {
-                state.folders[fid].appIds = state.folders[fid].appIds.filter(id => id !== appId);
-                if (state.folders[fid].appIds.length < 1) {
+                const folder = state.folders[fid];
+                const originalLength = folder.appIds.length;
+                folder.appIds = folder.appIds.filter(id => id !== appId);
+                if (folder.appIds.length !== originalLength) changed = true;
+
+                if (folder.appIds.length < 1) {
                     delete state.folders[fid];
                     state.layout = state.layout.filter(l => l.id !== fid);
                 }
             });
+            if (changed) saveState();
+            return changed;
         }
 
         function findFirstEmptySpot() {
@@ -1105,10 +1107,12 @@
         };
 
         function toggleEditMode() {
+            // Cancel any pending navigation when entering edit mode
+            clearTimeout(tapTimer);
             state.isEditing = !state.isEditing;
             document.body.classList.toggle('editing', state.isEditing);
             if (navigator.vibrate) navigator.vibrate(100);
-            renderPages(); // Refresh to apply jiggle
+            renderPages();
         }
 
         function goToPage(pageIndex) {
