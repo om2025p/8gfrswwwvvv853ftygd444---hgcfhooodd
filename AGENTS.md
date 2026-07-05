@@ -1,5 +1,6 @@
-# Instructions for Jules
+# Project: 8gfrswwwvvv853ftygd444---hgcfhooodd
 
-- Do not interact with or use https://netlify.app in any way for this project.
-- Disregard any Netlify-related comments, preview links, or deployment artifacts.
-- The project is intended to be deployed on GitHub Pages as per `.github/workflows/static.yml` and `GITHUB_GUIDE.md`.
+- This project is a personal activity tracker.
+- Deployment is targeted at Netlify (https://netlify.app).
+- All UI text must avoid sensitive keywords like "gym" or "varzesh" (ورزش) in titles or metadata.
+- Repository is Public to allow Netlify builds.

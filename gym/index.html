@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#007bff">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <title>ورزش</title>
+    <title>Activity</title>
 
     <style>
         * {
@@ -637,7 +637,7 @@
 
 <div class="container">
     <header>
-        <h1><span class="icon">🏋️</span> ورزش</h1>
+        <h1><span class="icon">📈</span> Activity</h1>
         <div class="backup-btns">
             <button onclick="toggleTheme()"><span class="icon">🌙</span> تم</button>
             <button onclick="exportData()"><span class="icon">📤</span> خروجی</button>
@@ -1771,8 +1771,8 @@
         if (diff >= fortyEightHours && lastNotifiedId !== lastWorkout.id.toString()) {
             if ('Notification' in window && Notification.permission === 'granted') {
                 navigator.serviceWorker.ready.then(registration => {
-                    registration.showNotification('وقت ورزش شد! 💪', {
-                        body: '۴۸ ساعت از تمرین قبلیت گذشته پهلوان. امروز نوبت تمرین سبکه یا سنگین؟',
+                    registration.showNotification('وقت فعالیت شد! 💪', {
+                        body: '۴۸ ساعت از فعالیت قبلیت گذشته پهلوان. امروز نوبت کدوم مرحله است؟',
                         icon: 'icon-192.png',
                         vibrate: [200, 100, 200],
                         badge: 'icon-192.png'
