@@ -172,10 +172,14 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            position: relative;
-            aspect-ratio: 1/1;
+            position: absolute;
+            width: calc(100% / var(--cols) - 20px);
+            height: calc(100% / var(--rows) - 20px);
             margin: 10px;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s, border-color 0.3s, opacity 0.3s;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                        left 0.4s cubic-bezier(0.19, 1, 0.22, 1),
+                        top 0.4s cubic-bezier(0.19, 1, 0.22, 1),
+                        background 0.3s, border-color 0.3s, opacity 0.3s;
             user-select: none;
             touch-action: none;
         }
@@ -192,10 +196,23 @@
         .app-card.dragging {
             z-index: 2000;
             opacity: 0.9;
-            transform: scale(1.02);
+            transform: scale(1.1);
             position: fixed;
             pointer-events: none;
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .folder-target {
+            transform: scale(1.2) !important;
+            box-shadow: 0 0 25px 5px rgba(255,255,255,0.6) !important;
+            z-index: 100;
+            transition: all 0.3s ease !important;
+        }
+
+        .snap-back {
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1) !important;
+            z-index: 1999;
         }
 
         .app-card.folder {
@@ -257,9 +274,51 @@
 
         .page-indicators {
             position: absolute;
-            bottom: 40px;
+            bottom: 120px;
             display: flex;
             gap: 8px;
+            z-index: 100;
+        }
+
+        .dock-container {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+
+        .dock {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 35px;
+            height: 90px;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+            padding: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .dock-item {
+            position: absolute !important;
+            margin: 0 !important;
+            width: 70px !important;
+            height: 70px !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            transition: left 0.4s cubic-bezier(0.19, 1, 0.22, 1),
+                        top 0.4s cubic-bezier(0.19, 1, 0.22, 1),
+                        transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
         }
 
         .dot {
@@ -395,9 +454,83 @@
         input:checked + .slider-round { background-color: #2196F3; }
         input:checked + .slider-round:before { transform: translateX(26px); }
 
+        /* دکمه هنگام‌سازی شیشه‌ای */
+        .sync-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .sync-btn:active {
+            transform: scale(0.9) rotate(30deg);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .sync-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: #fff;
+            transition: transform 0.6s ease;
+        }
+
+        .sync-btn.loading svg {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* استایل برای پیام‌های شوخ‌طبعانه */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            z-index: 10000;
+            display: none;
+            animation: fadeInOut 3s forwards;
+            white-space: nowrap;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; bottom: 80px; }
+            15% { opacity: 1; bottom: 100px; }
+            85% { opacity: 1; bottom: 100px; }
+            100% { opacity: 0; bottom: 120px; }
+        }
+
     </style>
 </head>
 <body class="day-theme">
+
+    <div class="sync-btn" id="syncButton" onclick="handleSync()">
+        <svg viewBox="0 0 24 24">
+            <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" />
+        </svg>
+    </div>
+
+    <div id="toast" class="toast"></div>
 
     <div class="sky-elements" id="skyElements">
         <div class="moon"></div>
@@ -408,6 +541,9 @@
             <!-- Pages will be rendered here -->
         </div>
         <div class="page-indicators" id="pageIndicators"></div>
+        <div class="dock-container">
+            <div class="dock" id="dock"></div>
+        </div>
     </div>
 
     <div id="settingsPanel" class="settings-panel">
@@ -453,7 +589,8 @@
 
         let state = {
             apps: [],
-            layout: [],
+            orderedLayout: [],
+            dockItems: [],
             currentPage: 0,
             isEditing: false,
             freeMode: true,
@@ -467,7 +604,15 @@
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
                 try {
-                    state = { ...state, ...JSON.parse(saved) };
+                    const parsed = JSON.parse(saved);
+                    // Migration from old layout to orderedLayout
+                    if (parsed.layout && (!parsed.orderedLayout || parsed.orderedLayout.length === 0)) {
+                        parsed.orderedLayout = parsed.layout
+                            .sort((a, b) => (a.page * 100 + a.row * 10 + a.col) - (b.page * 100 + b.row * 10 + b.col))
+                            .map(l => ({ id: l.id, type: l.type }));
+                        delete parsed.layout;
+                    }
+                    state = { ...state, ...parsed };
                 } catch(e) {
                     console.error("Failed to load state", e);
                     state.apps = [...DEFAULT_APPS];
@@ -476,7 +621,7 @@
                 state.apps = [...DEFAULT_APPS];
             }
 
-            if (!state.layout || state.layout.length === 0) {
+            if (!state.orderedLayout || state.orderedLayout.length === 0) {
                 initializeLayout();
             }
 
@@ -530,76 +675,87 @@
         setInterval(updateTheme, 60000);
 
         function initializeLayout() {
-            state.layout = [];
-            const cols = 3;
-            let count = 0;
+            state.orderedLayout = [];
+            state.dockItems = [];
 
             state.apps.forEach(app => {
                 const inFolder = Object.values(state.folders).some(f => f.appIds.includes(app.id));
                 if (!inFolder) {
-                    state.layout.push({
-                        id: app.id,
-                        type: 'app',
-                        page: 0,
-                        row: Math.floor(count / cols),
-                        col: count % cols
-                    });
-                    count++;
+                    state.orderedLayout.push({ id: app.id, type: 'app' });
                 }
             });
 
             Object.keys(state.folders).forEach(fid => {
-                state.layout.push({
-                    id: fid,
-                    type: 'folder',
-                    page: 0,
-                    row: Math.floor(count / cols),
-                    col: count % cols
-                });
-                count++;
+                state.orderedLayout.push({ id: fid, type: 'folder' });
             });
             saveState();
+        }
+
+        function goToPage(p) {
+            state.currentPage = p;
+            renderPages();
         }
 
         function renderPages(withAnimation = false) {
             const wrapper = document.getElementById('pagesWrapper');
             const indicators = document.getElementById('pageIndicators');
-            wrapper.innerHTML = '';
-            indicators.innerHTML = '';
+
+            const existingElements = new Map();
+            document.querySelectorAll('.app-card').forEach(el => {
+                if (!el.classList.contains('dragging')) {
+                    existingElements.set(el.dataset.id, el);
+                }
+            });
 
             const containerWidth = window.innerWidth;
-            const containerHeight = window.innerHeight * 0.8;
-            const cols = Math.floor(containerWidth / (state.iconSize + 40));
-            const rows = Math.floor(containerHeight / (state.iconSize + 60));
+            const containerHeight = window.innerHeight * 0.7;
+            const cols = Math.floor(containerWidth / (state.iconSize + 40)) || 3;
+            const rows = Math.floor(containerHeight / (state.iconSize + 60)) || 3;
+            const itemsPerPage = cols * rows;
 
             document.documentElement.style.setProperty('--cols', cols);
             document.documentElement.style.setProperty('--rows', rows);
 
-            const maxPage = state.layout.reduce((max, item) => Math.max(max, item.page), 0);
-            const pageCount = Math.max(1, maxPage + (state.isEditing ? 2 : 1));
+            const pageCount = Math.max(1, Math.ceil(state.orderedLayout.length / itemsPerPage) + (state.isEditing ? 1 : 0));
 
-            for (let p = 0; p < pageCount; p++) {
+            // Sync page containers
+            while (wrapper.children.length < pageCount) {
                 const page = document.createElement('div');
                 page.className = 'page';
-                page.dataset.page = p;
-
                 const overlay = document.createElement('div');
                 overlay.className = 'grid-overlay';
-                for (let r = 0; r < rows; r++) {
-                    for (let c = 0; c < cols; c++) {
+                for (let r = 0; r < 20; r++) { // Pre-fill overlay grid
+                    for (let c = 0; c < 10; c++) {
                         const cell = document.createElement('div');
                         cell.className = 'grid-cell';
                         overlay.appendChild(cell);
                     }
                 }
                 page.appendChild(overlay);
+                wrapper.appendChild(page);
+            }
+            while (wrapper.children.length > pageCount) {
+                wrapper.lastElementChild.remove();
+            }
 
-                const preview = document.createElement('div');
-                preview.className = 'drop-preview';
-                page.appendChild(preview);
+            // Sync indicators
+            indicators.innerHTML = '';
+            for (let p = 0; p < pageCount; p++) {
+                const dot = document.createElement('div');
+                dot.className = `dot ${p === state.currentPage ? 'active' : ''}`;
+                dot.onclick = () => goToPage(p);
+                indicators.appendChild(dot);
+            }
 
-                const pageLayout = state.layout.filter(item => item.page === p);
-                pageLayout.forEach((item, idx) => {
+            for (let p = 0; p < pageCount; p++) {
+                const page = wrapper.children[p];
+                page.dataset.page = p;
+
+                const pageItems = state.orderedLayout.slice(p * itemsPerPage, (p + 1) * itemsPerPage);
+
+                pageItems.forEach((item, idx) => {
+                    if (dragItem && dragItem.dataset.id === item.id) return;
+
                     let dataItem;
                     if (item.type === 'app') {
                         dataItem = { type: 'app', data: state.apps.find(a => a.id === item.id) };
@@ -608,32 +764,103 @@
                     }
 
                     if (dataItem && dataItem.data) {
-                        const el = createItemElement(dataItem);
-                        el.style.gridRowStart = item.row + 1;
-                        el.style.gridColumnStart = item.col + 1;
+                        let el = existingElements.get(item.id);
+                        if (!el) {
+                            el = createItemElement(dataItem);
+                        } else if (item.type === 'folder') {
+                            updateFolderMiniIcons(el, dataItem.data);
+                        }
+
+                        const row = Math.floor(idx / cols);
+                        const col = idx % cols;
+                        const visualCol = (cols - 1) - col;
+
+                        el.classList.remove('dock-item');
+                        el.style.left = `calc(${visualCol * (100 / cols)}% + 10px)`;
+                        el.style.top = `calc(${row * (100 / rows)}% + 10px)`;
+                        el.dataset.index = p * itemsPerPage + idx;
 
                         if (withAnimation) {
                             el.classList.add('fly-in');
-                            const rx = (Math.random() - 0.5) * 1000;
-                            const ry = (Math.random() - 0.5) * 1000;
-                            el.style.setProperty('--tw-tx', rx + 'px');
-                            el.style.setProperty('--tw-ty', ry + 'px');
+                            el.style.setProperty('--tw-tx', `${(Math.random() - 0.5) * 1000}px`);
+                            el.style.setProperty('--tw-ty', `${(Math.random() - 0.5) * 1000}px`);
                             el.style.animationDelay = (idx * 0.05) + 's';
                         }
-                        page.appendChild(el);
+                        if (el.parentNode !== page) page.appendChild(el);
                     }
                 });
-
-                wrapper.appendChild(page);
-
-                const dot = document.createElement('div');
-                dot.className = `dot ${p === state.currentPage ? 'active' : ''}`;
-                dot.onclick = () => goToPage(p);
-                indicators.appendChild(dot);
             }
 
             wrapper.style.transform = `translateX(${state.currentPage * 100}%)`;
+            renderDock(existingElements);
         }
+
+        function renderDock(reusableElements = new Map()) {
+            const dock = document.getElementById('dock');
+            if (!dock) return;
+
+            const dockRect = dock.getBoundingClientRect();
+            const itemCount = state.dockItems.length;
+            const itemWidth = 75; // Including margin
+            const totalWidth = itemCount * itemWidth;
+            const startOffset = (dockRect.width - totalWidth) / 2;
+
+            state.dockItems.forEach((item, idx) => {
+                const isDraggingThis = dragItem && dragItem.dataset.id === item.id;
+
+                let dataItem;
+                if (item.type === 'app') {
+                    dataItem = { type: 'app', data: state.apps.find(a => a.id === item.id) };
+                } else {
+                    dataItem = { type: 'folder', id: item.id, data: state.folders[item.id] };
+                }
+
+                if (dataItem && dataItem.data) {
+                    let el = reusableElements.get(item.id);
+                    if (!el) {
+                        el = createItemElement(dataItem);
+                    }
+
+                    if (isDraggingThis) return;
+
+                    el.classList.add('dock-item');
+                    el.dataset.dockIndex = idx;
+                    el.style.top = '10px';
+                    // RTL: items fill from right to left in the centered group
+                    const visualIdx = (itemCount - 1) - idx;
+                    el.style.left = `${startOffset + visualIdx * itemWidth}px`;
+
+                    if (el.parentNode !== dock) {
+                        dock.appendChild(el);
+                    }
+                }
+            });
+
+            // Remove elements that are no longer in dock (and not being dragged)
+            Array.from(dock.children).forEach(child => {
+                if (!state.dockItems.some(i => i.id === child.dataset.id)) {
+                    child.remove();
+                }
+            });
+        }
+
+        function updateFolderMiniIcons(el, folder) {
+            // Refresh folder mini icons without recreating the card
+            const minis = el.querySelectorAll('.folder-mini-icon');
+            minis.forEach(m => m.remove());
+            folder.appIds.slice(0, 4).forEach(appId => {
+                const app = state.apps.find(a => a.id === appId);
+                if (app) {
+                    const mini = document.createElement('div');
+                    mini.className = 'folder-mini-icon';
+                    const img = document.createElement('img');
+                    img.src = app.icon;
+                    mini.appendChild(img);
+                    el.appendChild(mini);
+                }
+            });
+        }
+
 
         function createItemElement(item) {
             if (item.type === 'app') {
@@ -710,8 +937,8 @@
             if (!state.isEditing) {
                 clearTimeout(pressTimer);
                 pressTimer = setTimeout(() => {
-                    openSettings();
-                }, 800);
+                    if (!isSwiping) openSettings();
+                }, 1000);
             }
         });
 
@@ -750,6 +977,8 @@
             isSwiping = false;
         });
 
+        let longPressTimer = null;
+
         function setupItemEvents(el) {
             el.addEventListener('pointerdown', (e) => {
                 const now = Date.now();
@@ -759,7 +988,7 @@
                 if (isDoubleTap) {
                     clearTimeout(tapTimer);
                     tapTimer = null;
-                    clearTimeout(pressTimer); // Cancel settings on double-tap
+                    clearTimeout(longPressTimer);
                     toggleEditMode();
                     return;
                 }
@@ -768,10 +997,14 @@
                     if (activeFolderId) closeFolder(null, true);
                     startDragging(e, el);
                 } else {
-                    clearTimeout(pressTimer);
-                    pressTimer = setTimeout(() => {
-                        openSettings();
-                    }, 800);
+                    clearTimeout(longPressTimer);
+                    longPressTimer = setTimeout(() => {
+                        if (!isSwiping) {
+                            toggleEditMode();
+                            if (navigator.vibrate) navigator.vibrate(50);
+                            startDragging(e, el);
+                        }
+                    }, 600); // Android-style long press
                 }
             });
 
@@ -789,22 +1022,52 @@
                 }
             });
 
-            el.addEventListener('pointermove', handlePointerMove);
-            el.addEventListener('pointerup', handlePointerUp);
-            el.addEventListener('pointercancel', handlePointerUp);
+            el.addEventListener('pointermove', (e) => {
+                if (!state.isEditing) {
+                    const diffX = Math.abs(e.clientX - startX);
+                    const diffY = Math.abs(e.clientY - startY);
+                    if (diffX > 10 || diffY > 10) {
+                        clearTimeout(longPressTimer);
+                    }
+                }
+                handlePointerMove(e);
+            });
+            el.addEventListener('pointerup', (e) => {
+                clearTimeout(longPressTimer);
+                handlePointerUp(e);
+            });
+            el.addEventListener('pointercancel', (e) => {
+                clearTimeout(longPressTimer);
+                handlePointerUp(e);
+            });
         }
 
         function startDragging(e, el) {
+            if (dragItem) return;
             dragItem = el;
             const rect = el.getBoundingClientRect();
             dragOffsetX = e.clientX - rect.left;
             dragOffsetY = e.clientY - rect.top;
 
+            // Move to body to persist through renderPages
+            document.body.appendChild(dragItem);
             dragItem.classList.add('dragging');
+            dragItem.style.position = 'fixed';
+            dragItem.style.width = rect.width + 'px';
+            dragItem.style.height = rect.height + 'px';
             dragItem.style.left = `${e.clientX - dragOffsetX}px`;
             dragItem.style.top = `${e.clientY - dragOffsetY}px`;
-            dragItem.setPointerCapture(e.pointerId);
+
+            try {
+                dragItem.setPointerCapture(e.pointerId);
+            } catch(e) {}
+
+            // Re-render to show the hole
+            renderPages();
         }
+
+        let folderTimer = null;
+        let lastTargetId = null;
 
         function handlePointerMove(e) {
             if (!dragItem) {
@@ -817,18 +1080,108 @@
             dragItem.style.left = `${x - dragOffsetX}px`;
             dragItem.style.top = `${y - dragOffsetY}px`;
 
-            updateDropPreview(x, y);
+            // Real-time pushing logic
+            const targets = document.elementsFromPoint(x, y);
+            const targetCard = targets.find(t => t.classList.contains('app-card') && t !== dragItem && !t.classList.contains('dragging'));
 
-            if (x < 30 && state.currentPage > 0) {
-                 throttle(() => goToPage(state.currentPage - 1), 1000);
-            } else if (x > window.innerWidth - 30) {
+            if (targetCard) {
+                const targetId = targetCard.dataset.id;
+                const rect = targetCard.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const dist = Math.hypot(x - centerX, y - centerY);
+
+                if (dist < rect.width / 3) {
+                    // Potential folder creation
+                    if (targetId !== lastTargetId) {
+                        clearTimeout(folderTimer);
+                        // Clean up old target
+                        if (lastTargetId) {
+                             const oldTarget = document.querySelector(`[data-id="${lastTargetId}"]`);
+                             if (oldTarget) oldTarget.classList.remove('folder-target');
+                        }
+                        lastTargetId = targetId;
+                        folderTimer = setTimeout(() => {
+                            targetCard.classList.add('folder-target');
+                            if (navigator.vibrate) navigator.vibrate(50);
+                        }, 600);
+                    }
+                } else {
+                    clearTimeout(folderTimer);
+                    if (lastTargetId) {
+                        const lastEl = document.querySelector(`[data-id="${lastTargetId}"]`);
+                        if (lastEl) lastEl.classList.remove('folder-target');
+                        lastTargetId = null;
+                    }
+
+                    // Push logic
+                    if (targetCard.classList.contains('dock-item')) {
+                        moveWithinDock(dragItem.dataset.id, parseInt(targetCard.dataset.dockIndex));
+                    } else {
+                        moveWithinLayout(dragItem.dataset.id, parseInt(targetCard.dataset.index));
+                    }
+                }
+            } else {
+                clearTimeout(folderTimer);
+                lastTargetId = null;
+            }
+
+            if (x < 50 && state.currentPage > 0) {
+                 throttle(() => {
+                    if (dragItem) {
+                        goToPage(state.currentPage - 1);
+                        if (navigator.vibrate) navigator.vibrate(50);
+                    }
+                 }, 1000);
+            } else if (x > window.innerWidth - 50) {
                  throttle(() => {
                     const wrapper = document.getElementById('pagesWrapper');
-                    if (state.currentPage < wrapper.children.length - 1) {
+                    if (dragItem && state.currentPage < wrapper.children.length - 1) {
                         goToPage(state.currentPage + 1);
+                        if (navigator.vibrate) navigator.vibrate(50);
                     }
                  }, 1000);
             }
+        }
+
+        function moveWithinLayout(itemId, targetIndex) {
+            const itemType = itemId.startsWith('folder_') ? 'folder' : 'app';
+            const currentIndex = state.orderedLayout.findIndex(i => i.id === itemId);
+
+            if (currentIndex !== -1) {
+                if (currentIndex === targetIndex) return;
+                state.orderedLayout.splice(currentIndex, 1);
+                state.orderedLayout.splice(targetIndex, 0, { id: itemId, type: itemType });
+            } else {
+                // Moving from Dock to Layout
+                const dockIdx = state.dockItems.findIndex(i => i.id === itemId);
+                if (dockIdx !== -1) {
+                    state.dockItems.splice(dockIdx, 1);
+                    state.orderedLayout.splice(targetIndex, 0, { id: itemId, type: itemType });
+                }
+            }
+            renderPages();
+        }
+
+        function moveWithinDock(itemId, targetIndex) {
+            if (state.dockItems.length >= 4 && !state.dockItems.some(i => i.id === itemId)) return;
+
+            const itemType = itemId.startsWith('folder_') ? 'folder' : 'app';
+            const currentIndex = state.dockItems.findIndex(i => i.id === itemId);
+
+            if (currentIndex !== -1) {
+                if (currentIndex === targetIndex) return;
+                state.dockItems.splice(currentIndex, 1);
+                state.dockItems.splice(targetIndex, 0, { id: itemId, type: itemType });
+            } else {
+                // Moving from Layout to Dock
+                const layoutIdx = state.orderedLayout.findIndex(i => i.id === itemId);
+                if (layoutIdx !== -1) {
+                    state.orderedLayout.splice(layoutIdx, 1);
+                    state.dockItems.splice(targetIndex, 0, { id: itemId, type: itemType });
+                }
+            }
+            renderPages();
         }
 
         function updateDropPreview(x, y) {
@@ -877,15 +1230,20 @@
             const x = e.clientX;
             const y = e.clientY;
 
-            document.querySelectorAll('.drop-preview').forEach(p => p.style.display = 'none');
-
-            dragItem.classList.remove('dragging');
-            dragItem.style.left = '';
-            dragItem.style.top = '';
+            // Stop tracking movement
             dragItem.releasePointerCapture(e.pointerId);
 
-            finalizeMove(dragItem, x, y);
-            dragItem = null;
+            // Find target element before clearing styles
+            const targets = document.elementsFromPoint(x, y);
+            const targetCard = targets.find(t => t.classList.contains('app-card') && t !== dragItem && !t.classList.contains('dragging'));
+
+            // Cleanup visual hints
+            if (lastTargetId) {
+                const lastEl = document.querySelector(`[data-id="${lastTargetId}"]`);
+                if (lastEl) lastEl.classList.remove('folder-target');
+            }
+
+            finalizeMove(dragItem, x, y, targetCard);
         }
 
         function createFolder(appId1, appId2) {
@@ -964,22 +1322,11 @@
             }
         };
 
-        function finalizeMove(item, x, y) {
-            const targets = document.elementsFromPoint(x, y);
-            const targetCard = targets.find(t => t.classList.contains('app-card') && t !== item && !t.classList.contains('dragging'));
+        function finalizeMove(item, x, y, targetCard) {
             const itemId = item.dataset.id;
+            clearTimeout(folderTimer);
 
-            const pageEl = document.querySelectorAll('.page')[state.currentPage];
-            const pageRect = pageEl.getBoundingClientRect();
-            const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cols'));
-            const rows = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rows'));
-
-            const relativeX = x - pageRect.left;
-            const relativeY = y - pageRect.top;
-
-            let col = Math.floor(relativeX / (pageRect.width / cols));
-            col = (cols - 1) - col;
-            const row = Math.floor(relativeY / (pageRect.height / rows));
+            let folderCreated = false;
 
             if (targetCard) {
                 const targetId = targetCard.dataset.id;
@@ -992,68 +1339,62 @@
                     if (targetCard.dataset.type === 'folder') {
                         removeFromFolder(itemId);
                         addToFolder(itemId, targetId);
-                        state.layout = state.layout.filter(l => l.id !== itemId);
-                    } else {
+                        removeFromLayout(itemId);
+                        folderCreated = true;
+                        if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+                    } else if (targetId !== itemId) {
                         removeFromFolder(itemId);
                         const newFolderId = createFolder(itemId, targetId);
                         if (newFolderId) {
-                            const targetIdx = state.layout.findIndex(l => l.id === targetId);
-                            if (targetIdx !== -1) {
-                                const { page, row, col } = state.layout[targetIdx];
-                                state.layout[targetIdx] = { id: newFolderId, type: 'folder', page, row, col };
+                            const isDock = targetCard.classList.contains('dock-item');
+                            if (isDock) {
+                                const targetIdx = state.dockItems.findIndex(i => i.id === targetId);
+                                state.dockItems[targetIdx] = { id: newFolderId, type: 'folder' };
+                            } else {
+                                const targetIdx = state.orderedLayout.findIndex(i => i.id === targetId);
+                                state.orderedLayout[targetIdx] = { id: newFolderId, type: 'folder' };
                             }
-                            state.layout = state.layout.filter(l => l.id !== itemId);
+                            removeFromLayout(itemId);
+                            folderCreated = true;
+                            if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
                         }
                     }
-                } else {
-                    swapItems(itemId, col, row);
-                }
-            } else {
-                if (col >= 0 && col < cols && row >= 0 && row < rows) {
-                    swapItems(itemId, col, row);
                 }
             }
+
+            lastTargetId = null;
             saveState();
+
+            // Snap back animation logic
+            const currentItem = item;
+            currentItem.classList.remove('dragging');
+            currentItem.classList.add('snap-back');
+
+            // Clear global dragItem so renderPages() can create the new placeholder
+            dragItem = null;
             renderPages();
+
+            const targetEl = document.querySelector(`.app-card[data-id="${itemId}"]`);
+            if (targetEl && !folderCreated) {
+                targetEl.style.opacity = '0';
+                const rect = targetEl.getBoundingClientRect();
+
+                currentItem.style.left = `${rect.left}px`;
+                currentItem.style.top = `${rect.top}px`;
+                currentItem.style.transform = 'scale(1)';
+
+                setTimeout(() => {
+                    currentItem.remove();
+                    targetEl.style.opacity = '1';
+                }, 400);
+            } else {
+                currentItem.remove();
+            }
         }
 
-        function swapItems(itemId, newCol, newRow) {
-            const existingIdx = state.layout.findIndex(l => l.page === state.currentPage && l.row === newRow && l.col === newCol);
-            const currentIdx = state.layout.findIndex(l => l.id === itemId);
-
-            removeFromFolder(itemId);
-
-            if (existingIdx !== -1 && state.layout[existingIdx].id !== itemId) {
-                const existing = state.layout[existingIdx];
-                if (currentIdx !== -1) {
-                    const current = state.layout[currentIdx];
-                    const tempPage = existing.page;
-                    const tempRow = existing.row;
-                    const tempCol = existing.col;
-
-                    existing.page = current.page;
-                    existing.row = current.row;
-                    existing.col = current.col;
-
-                    current.page = tempPage;
-                    current.row = tempRow;
-                    current.col = tempCol;
-                } else {
-                    const empty = findFirstEmptySpot();
-                    existing.page = empty.page;
-                    existing.row = empty.row;
-                    existing.col = empty.col;
-                    const itemType = itemId.startsWith('folder_') ? 'folder' : 'app';
-                    state.layout.push({ id: itemId, type: itemType, page: state.currentPage, row: newRow, col: newCol });
-                }
-            } else if (currentIdx !== -1) {
-                state.layout[currentIdx].page = state.currentPage;
-                state.layout[currentIdx].row = newRow;
-                state.layout[currentIdx].col = newCol;
-            } else {
-                const itemType = itemId.startsWith('folder_') ? 'folder' : 'app';
-                state.layout.push({ id: itemId, type: itemType, page: state.currentPage, row: newRow, col: newCol });
-            }
+        function removeFromLayout(itemId) {
+            state.orderedLayout = state.orderedLayout.filter(i => i.id !== itemId);
+            state.dockItems = state.dockItems.filter(i => i.id !== itemId);
         }
 
         function removeFromFolder(appId) {
@@ -1066,25 +1407,11 @@
 
                 if (folder.appIds.length < 1) {
                     delete state.folders[fid];
-                    state.layout = state.layout.filter(l => l.id !== fid);
+                    removeFromLayout(fid);
                 }
             });
             if (changed) saveState();
             return changed;
-        }
-
-        function findFirstEmptySpot() {
-            const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cols'));
-            const rows = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rows'));
-            for (let p = 0; ; p++) {
-                for (let r = 0; r < rows; r++) {
-                    for (let c = 0; c < cols; c++) {
-                        if (!state.layout.some(l => l.page === p && l.row === r && l.col === c)) {
-                            return { page: p, row: r, col: c };
-                        }
-                    }
-                }
-            }
         }
 
         function openSettings() {
@@ -1114,19 +1441,86 @@
             if (navigator.vibrate) navigator.vibrate(100);
             renderPages();
         }
-
-        function goToPage(pageIndex) {
-            state.currentPage = pageIndex;
-            const wrapper = document.getElementById('pagesWrapper');
-            wrapper.style.transform = `translateX(${pageIndex * 100}%)`;
-            document.querySelectorAll('.dot').forEach((dot, idx) => {
-                dot.classList.toggle('active', idx === pageIndex);
-            });
-            saveState();
-        }
-
         loadState();
         renderPages(true);
+
+        // --- مدیریت سرویس ورکر و همگام‌سازی ---
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // پاکسازی سرویس ورکرهای قدیمی از زیرپوشه‌ها برای جلوگیری از تداخل
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for (let registration of registrations) {
+                        const path = new URL(registration.scope).pathname;
+                        if (path.includes('/gym/') || path.includes('/gold/') || path.includes('/profit-calculator/')) {
+                            registration.unregister().then(success => {
+                                if (success) console.log(`Legacy SW at ${path} unregistered.`);
+                            });
+                        }
+                    }
+                });
+
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered!'))
+                    .catch(err => console.error('SW registration failed:', err));
+            });
+        }
+
+        async function handleSync() {
+            const btn = document.getElementById('syncButton');
+            const toast = document.getElementById('toast');
+
+            if (btn.classList.contains('loading')) return;
+
+            if (!navigator.onLine) {
+                const jokes = [
+                    "اینترنت قطعه عزیز! با کبوتر باوفا برات آپدیت بیارم؟ 🕊️",
+                    "الان حتی مودمت هم خوابیده، اصرار نکن... 💤",
+                    "بدون اینترنت؟ مگه جادوگری؟ اول وصل شو بعداً بزن! ✨",
+                    "سیگنال نیست... داری با روح عمارت بازی می‌کنی؟ 👻"
+                ];
+                showToast(jokes[Math.floor(Math.random() * jokes.length)]);
+                return;
+            }
+
+            btn.classList.add('loading');
+            showToast("در حال نوسازی عمارت... طاقت بیار! 🏗️");
+
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        await registration.update();
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    window.location.reload();
+                }
+            } catch (err) {
+                console.error("Update failed:", err);
+                btn.classList.remove('loading');
+                showToast("یه مشکلی پیش اومد، ولی بیخیال، دوباره امتحان کن!");
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.style.display = 'block';
+
+            // بازنشانی انیمیشن
+            toast.style.animation = 'none';
+            toast.offsetHeight; /* trigger reflow */
+            toast.style.animation = null;
+
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
     </script>
 </body>
 </html>

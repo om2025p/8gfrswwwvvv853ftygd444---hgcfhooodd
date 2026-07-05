@@ -138,14 +138,7 @@
             });
         }
 
-        // Service Worker registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js', { scope: './' })
-                    .then(reg => console.log('Profit Calculator SW Registered'))
-                    .catch(err => console.log('Profit Calculator SW Failed', err));
-            });
-        }
+        // سرویس ورکر اکنون به صورت مرکزی از منوی اصلی مدیریت می‌شود
     </script>
 </body>
 </html>
