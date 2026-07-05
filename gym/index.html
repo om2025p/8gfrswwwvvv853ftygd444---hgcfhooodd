@@ -605,6 +605,51 @@
         .manage-btn.btn-delete { color: var(--danger-color); font-size: 1rem; }
         .manage-btn.btn-restore { color: var(--success-color); }
 
+        .ex-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .ex-dropdown-content {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: 100%;
+            background-color: var(--card-bg);
+            min-width: 130px;
+            box-shadow: var(--shadow);
+            z-index: 100;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .ex-dropdown.show .ex-dropdown-content {
+            display: block;
+        }
+
+        .ex-dropdown-content button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background: none;
+            text-align: right;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ex-dropdown-content button:last-child {
+            border-bottom: none;
+        }
+
+        .ex-dropdown-content button:hover {
+            background: var(--row-bg);
+        }
+
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -860,13 +905,13 @@
 
         <div class="stats-card">
             <h3>📍 تحلیل جامع پارامترها</h3>
-            <div style="margin-bottom: 15px; font-size: 0.75rem; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
-                <span style="color: #ff5722;">● شکم</span>
-                <span style="color: #4caf50;">● کیفیت</span>
-                <span style="color: #2196f3;">● خستگی</span>
-                <span style="color: #ffc107;">● دما</span>
-                <span style="color: #9c27b0;">● ذهن</span>
-                <span style="color: #607d8b;">● مدت (دقیقه)</span>
+            <div style="margin-bottom: 15px; font-size: 0.75rem; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;" id="chartFilters">
+                <label style="color: #ff5722;"><input type="checkbox" checked value="stomach" onchange="renderComparisonChartFromFilters()"> ● شکم</label>
+                <label style="color: #4caf50;"><input type="checkbox" checked value="quality" onchange="renderComparisonChartFromFilters()"> ● کیفیت</label>
+                <label style="color: #2196f3;"><input type="checkbox" checked value="fatigue" onchange="renderComparisonChartFromFilters()"> ● خستگی</label>
+                <label style="color: #ffc107;"><input type="checkbox" checked value="temp" onchange="renderComparisonChartFromFilters()"> ● دما</label>
+                <label style="color: #9c27b0;"><input type="checkbox" checked value="mental" onchange="renderComparisonChartFromFilters()"> ● ذهن</label>
+                <label style="color: #607d8b;"><input type="checkbox" checked value="duration" onchange="renderComparisonChartFromFilters()"> ● مدت (دقیقه)</label>
             </div>
             <div id="comparisonChart" class="chart-container" style="height: 250px;"></div>
         </div>
@@ -1381,6 +1426,9 @@
         if (!event.target.closest('.dropdown')) {
             document.getElementById('mainMenu').classList.remove('show');
         }
+        if (!event.target.closest('.ex-dropdown')) {
+            document.querySelectorAll('.ex-dropdown').forEach(d => d.classList.remove('show'));
+        }
     });
 
     function toggleTheme() {
@@ -1514,16 +1562,17 @@
 
         // محاسبه مدت زمان تمرین
         let startTime = Infinity;
-        let endTime = -Infinity;
+        let endTime = Date.now(); // زمان فعلی به عنوان پایان نهایی
+        let activityFound = false;
         Object.values(sessionState).forEach(s => {
             if (s.done && s.rawTime) {
                 if (s.rawTime < startTime) startTime = s.rawTime;
-                if (s.rawTime > endTime) endTime = s.rawTime;
+                activityFound = true;
             }
         });
 
         let duration = 0;
-        if (startTime !== Infinity && endTime !== -Infinity) {
+        if (activityFound && startTime !== Infinity) {
             duration = Math.round((endTime - startTime) / (1000 * 60)); // به دقیقه
         }
 
@@ -1602,9 +1651,25 @@
         const container = document.getElementById('history');
         container.innerHTML = '<h2 style="font-size: 1.1rem; margin-bottom: 15px;">📜 تاریخچه تمرینات</h2>';
 
-        history.forEach(rec => {
+        // محاسبه میانگین کل
+        const validDurations = history.filter(r => r.duration !== undefined).map(r => r.duration);
+        const avgDuration = validDurations.length > 0 ? validDurations.reduce((a, b) => a + b, 0) / validDurations.length : 0;
+
+        history.forEach((rec, index) => {
             const card = document.createElement('div');
             card.className = 'card history-card';
+
+            let diffHtml = '';
+            if (rec.duration !== undefined && avgDuration > 0) {
+                const diffFromAvg = rec.duration - avgDuration;
+                if (diffFromAvg < -5) {
+                    diffHtml = `<span style="color:var(--success-color); font-size:0.75rem;" title="میانگین: ${Math.round(avgDuration)}">🚀 جت شدی! ${toPersianDigits(Math.abs(Math.round(diffFromAvg)))} دقیقه از میانگینت فرزتری!</span>`;
+                } else if (diffFromAvg > 5) {
+                    diffHtml = `<span style="color:var(--danger-color); font-size:0.75rem;" title="میانگین: ${Math.round(avgDuration)}">🐢 پهلوان، شل کردی؟ ${toPersianDigits(Math.round(diffFromAvg))} دقیقه از میانگینت عقب‌تری!</span>`;
+                } else {
+                    diffHtml = `<span style="color:var(--primary-color); font-size:0.75rem;" title="میانگین: ${Math.round(avgDuration)}">⚖️ رو روال میانگینی؛ ایول!</span>`;
+                }
+            }
 
             let exListHtml = rec.exercises.map(ex => {
                 if (ex.r !== undefined) {
@@ -1634,6 +1699,7 @@
                     <div class="meta-item">😴 خستگی: ${toPersianDigits(rec.ratings.fatigue)}</div>
                     <div class="meta-item">🌡️ دما: ${toPersianDigits(rec.ratings.temp)}</div>
                     <div class="meta-item">🧠 ذهن: ${toPersianDigits(rec.ratings.mental)}</div>
+                    <div class="meta-item">⏱️ زمان: ${toPersianDigits(rec.duration || 0)} د ${diffHtml}</div>
                 </div>
                 <div class="history-notes">
                     📝 <span id="note-content-${rec.id}">${rec.notes || '<span style="color:var(--secondary-color)">بدون یادداشت...</span>'}</span>
@@ -1818,13 +1884,15 @@
         const lightCount = history.filter(r => r.typeCode === 'light').length;
 
         const totalDuration = history.reduce((sum, rec) => sum + (rec.duration || 0), 0);
-        const avgDuration = Math.round(totalDuration / total);
+        const hours = Math.floor(totalDuration / 60);
+        const minutes = totalDuration % 60;
+        const totalTimeStr = hours > 0 ? `${toPersianDigits(hours)}س و ${toPersianDigits(minutes)}د` : `${toPersianDigits(minutes)}د`;
 
         container.innerHTML = `<div class="stats-card" style="display:flex; justify-content:space-around; text-align:center; flex-wrap: wrap; gap: 10px;">
             <div style="flex:1; min-width:60px;"><div style="font-size:1.2rem; font-weight:bold; color:var(--primary-color);">${toPersianDigits(total)}</div><div style="font-size:0.7rem;">جلسات</div></div>
             <div style="flex:1; min-width:60px;"><div style="font-size:1.2rem; font-weight:bold; color:var(--danger-color);">${toPersianDigits(heavyCount)}</div><div style="font-size:0.7rem;">سنگین</div></div>
             <div style="flex:1; min-width:60px;"><div style="font-size:1.2rem; font-weight:bold; color:var(--success-color);">${toPersianDigits(lightCount)}</div><div style="font-size:0.7rem;">سبک</div></div>
-            <div style="flex:1; min-width:60px;"><div style="font-size:1.2rem; font-weight:bold; color:#607d8b;">${toPersianDigits(avgDuration)}</div><div style="font-size:0.7rem;">م. زمان (دقیقه)</div></div>
+            <div style="flex:1; min-width:60px;"><div style="font-size:1.1rem; font-weight:bold; color:#607d8b;">${totalTimeStr}</div><div style="font-size:0.7rem;">کل زمان ورزش</div></div>
         </div>`;
 
         renderProgressionChart(history);
@@ -1874,21 +1942,29 @@
         </svg>`;
     }
 
-    function renderComparisonChart(history) {
+    function renderComparisonChartFromFilters() {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]').slice().reverse();
+        const selected = Array.from(document.querySelectorAll('#chartFilters input:checked')).map(i => i.value);
+        renderComparisonChart(history, selected);
+    }
+
+    function renderComparisonChart(history, selectedKeys = null) {
         const container = document.getElementById('comparisonChart');
         if (!container) return;
         const width = container.clientWidth || 300;
         const height = 250;
         const padding = 30;
 
-        const params = [
+        const allParams = [
             { key: 'stomach', color: '#ff5722', max: 10 },
             { key: 'quality', color: '#4caf50', max: 10 },
             { key: 'fatigue', color: '#2196f3', max: 10 },
             { key: 'temp', color: '#ffc107', max: 10 },
             { key: 'mental', color: '#9c27b0', max: 10 },
-            { key: 'duration', color: '#607d8b', max: 120 } // Max duration 2 hours for scale
+            { key: 'duration', color: '#607d8b', max: 120 }
         ];
+
+        const params = selectedKeys ? allParams.filter(p => selectedKeys.includes(p.key)) : allParams;
 
         const xScale = (width - 2 * padding) / (history.length - 1 || 1);
 
@@ -1957,6 +2033,13 @@
         alert(`✅ حرکت "${name}" با موفقیت اضافه شد.`);
     }
 
+    function toggleExMenu(id) {
+        document.querySelectorAll('.ex-dropdown').forEach(d => {
+            if (d.id !== `ex-menu-${id}`) d.classList.remove('show');
+        });
+        document.getElementById(`ex-menu-${id}`).classList.toggle('show');
+    }
+
     function renderExerciseManager() {
         const container = document.getElementById('exerciseManagerList');
         container.innerHTML = '';
@@ -1968,8 +2051,13 @@
                 <div class="manage-controls">
                     <button class="manage-btn" onclick="moveExercise(${index}, -1)" title="بالا">↑</button>
                     <button class="manage-btn" onclick="moveExercise(${index}, 1)" title="پایین">↓</button>
-                    <button class="manage-btn btn-archive" onclick="archiveExercise(${index})" title="بایگانی">📦</button>
-                    <button class="manage-btn btn-delete" onclick="deleteExercisePermanently(${index}, false)" title="حذف">🗑️</button>
+                    <div class="ex-dropdown" id="ex-menu-${ex.id}">
+                        <button class="manage-btn" onclick="toggleExMenu('${ex.id}')">☰</button>
+                        <div class="ex-dropdown-content">
+                            <button onclick="archiveExercise(${index})"><span class="icon">📦</span> بایگانی</button>
+                            <button onclick="deleteExercisePermanently(${index}, false)" style="color:var(--danger-color)"><span class="icon">🗑️</span> حذف کامل</button>
+                        </div>
+                    </div>
                 </div>`;
             container.appendChild(div);
         });
