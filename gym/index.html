@@ -1562,16 +1562,17 @@
 
         // محاسبه مدت زمان تمرین
         let startTime = Infinity;
-        let endTime = -Infinity;
+        let endTime = Date.now(); // زمان فعلی به عنوان پایان نهایی
+        let activityFound = false;
         Object.values(sessionState).forEach(s => {
             if (s.done && s.rawTime) {
                 if (s.rawTime < startTime) startTime = s.rawTime;
-                if (s.rawTime > endTime) endTime = s.rawTime;
+                activityFound = true;
             }
         });
 
         let duration = 0;
-        if (startTime !== Infinity && endTime !== -Infinity) {
+        if (activityFound && startTime !== Infinity) {
             duration = Math.round((endTime - startTime) / (1000 * 60)); // به دقیقه
         }
 
@@ -1650,21 +1651,23 @@
         const container = document.getElementById('history');
         container.innerHTML = '<h2 style="font-size: 1.1rem; margin-bottom: 15px;">📜 تاریخچه تمرینات</h2>';
 
+        // محاسبه میانگین کل
+        const validDurations = history.filter(r => r.duration !== undefined).map(r => r.duration);
+        const avgDuration = validDurations.length > 0 ? validDurations.reduce((a, b) => a + b, 0) / validDurations.length : 0;
+
         history.forEach((rec, index) => {
             const card = document.createElement('div');
             card.className = 'card history-card';
 
-            // مقایسه با تمرین قبلی (تمرین بعدی در آرایه چون آرایه نزولی است)
             let diffHtml = '';
-            const prevRec = history[index + 1];
-            if (prevRec && rec.duration !== undefined && prevRec.duration !== undefined) {
-                const diff = rec.duration - prevRec.duration;
-                if (diff < 0) {
-                    diffHtml = `<span style="color:var(--success-color); font-size:0.75rem;">(🚀 ${toPersianDigits(Math.abs(diff))} دقیقه سریع‌تر از قبل)</span>`;
-                } else if (diff > 0) {
-                    diffHtml = `<span style="color:var(--danger-color); font-size:0.75rem;">(🐢 ${toPersianDigits(diff)} دقیقه کندتر از قبل)</span>`;
+            if (rec.duration !== undefined && avgDuration > 0) {
+                const diffFromAvg = rec.duration - avgDuration;
+                if (diffFromAvg < -5) {
+                    diffHtml = `<span style="color:var(--success-color); font-size:0.75rem;" title="میانگین: ${Math.round(avgDuration)}">🚀 جت شدی! ${toPersianDigits(Math.abs(Math.round(diffFromAvg)))} دقیقه از میانگینت فرزتری!</span>`;
+                } else if (diffFromAvg > 5) {
+                    diffHtml = `<span style="color:var(--danger-color); font-size:0.75rem;" title="میانگین: ${Math.round(avgDuration)}">🐢 پهلوان، شل کردی؟ ${toPersianDigits(Math.round(diffFromAvg))} دقیقه از میانگینت عقب‌تری!</span>`;
                 } else {
-                    diffHtml = `<span style="color:var(--secondary-color); font-size:0.75rem;">(⚖️ هم‌زمان با قبل)</span>`;
+                    diffHtml = `<span style="color:var(--primary-color); font-size:0.75rem;" title="میانگین: ${Math.round(avgDuration)}">⚖️ رو روال میانگینی؛ ایول!</span>`;
                 }
             }
 
