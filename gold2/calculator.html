@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ماشین حساب درصد | اعداد انگلیسی + کپی با نگه داشتن</title>
+    <style>
+        body {
+            font-family: Tahoma, 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0faf0 0%, #e0f2e0 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 28px;
+            box-shadow: 0 12px 32px rgba(0, 100, 0, 0.15);
+            padding: 25px;
+            width: 95%;
+            max-width: 720px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1b5e20;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .calculator-section {
+            background: #fafffa;
+            border: 1px solid #c8e6c9;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            color: #2e7d32;
+            font-size: 1.2rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #1b5e20;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #a5d6a7;
+            border-radius: 14px;
+            font-size: 1em;
+            font-family: monospace;
+            box-sizing: border-box;
+            transition: all 0.2s;
+            background: #fff;
+            direction: ltr;
+            text-align: left;
+        }
+
+        input[type="text"]:focus {
+            border-color: #4caf50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+        }
+
+        button {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            transition: all 0.2s;
+            margin: 5px 5px 0 0;
+        }
+
+        button:hover {
+            background-color: #2e7d32;
+            transform: scale(1.02);
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 14px;
+            border-radius: 16px;
+            font-weight: 500;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .positive { background: #c8e6c9; color: #1b5e20; border-right: 4px solid #2e7d32; }
+        .negative { background: #ffebee; color: #b71c1c; border-right: 4px solid #f44336; }
+        .neutral { background: #f5f5f5; color: #5d4037; border-right: 4px solid #9e9e9e; }
+
+        .history-section {
+            position: relative;
+        }
+
+        .history-dropdown {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .history-btn {
+            background-color: #2196f3;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-btn:hover {
+            background-color: #0b7dda;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #fff;
+            min-width: 100%;
+            max-height: 380px;
+            overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            border-radius: 18px;
+            z-index: 1000;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .history-section.show .dropdown-content {
+            display: block;
+        }
+
+        .history-item {
+            padding: 14px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+            user-select: none;
+        }
+
+        .history-item:hover {
+            background-color: #e8f5e9;
+        }
+
+        .history-item .copyable-number,
+        .history-item .copyable-percent,
+        .history-item .copyable-full {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 12px;
+            transition: background 0.1s;
+        }
+
+        .history-item .copyable-number:active,
+        .history-item .copyable-percent:active {
+            background-color: #ffd54f;
+            transform: scale(0.98);
+        }
+
+        .history-item .date {
+            color: #666;
+            font-size: 0.7rem;
+            direction: ltr;
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+        }
+
+        .history-item .details {
+            font-weight: 600;
+            color: #2e7d32;
+            font-size: 0.9rem;
+            margin: 5px 0;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .history-item .percent-badge {
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .clear-history {
+            background-color: #f44336;
+            margin-top: 12px;
+            width: 100%;
+        }
+
+        .clear-history:hover {
+            background-color: #c62828;
+        }
+
+        .badge {
+            background: #ff9800;
+            border-radius: 30px;
+            padding: 2px 10px;
+            font-size: 0.7rem;
+            margin-right: 8px;
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #323232;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+            font-family: Tahoma, 'Segoe UI', Arial, sans-serif;
+        }
+
+        .dropdown-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .dropdown-content::-webkit-scrollbar-track {
+            background: #e0e0e0;
+            border-radius: 10px;
+        }
+        .dropdown-content::-webkit-scrollbar-thumb {
+            background: #4caf50;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 16px; }
+            .history-item .details { font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🧮 ماشین حساب درصد <span style="font-size: 0.7rem;">🔢 اعداد انگلیسی</span></h1>
+
+    <div class="calculator-section">
+        <h2>📊 محاسبه تغییرات درصد</h2>
+        <div class="input-group">
+            <label>🔢 عدد پایه (با کاما):</label>
+            <input type="text" id="fixedIncome_number1" placeholder="مثال: 1,000,000">
+        </div>
+        <div class="input-group">
+            <label>🆕 عدد جدید (با کاما):</label>
+            <input type="text" id="fixedIncome_number2" placeholder="مثال: 500,000">
+        </div>
+        <button id="fixedIncome_calculateDifference">✨ محاسبه و ذخیره در تاریخچه</button>
+        <div class="result" id="fixedIncome_differenceResult"></div>
+    </div>
+
+    <div class="history-section" id="historySection">
+        <div class="history-dropdown">
+            <button class="history-btn" id="historyToggleBtn">
+                📜 نمایش/بستن تاریخچه محاسبات <span class="badge" id="historyCount">0</span> ▼
+            </button>
+            <div class="dropdown-content" id="historyList">
+                <div style="padding: 15px; text-align: center; color: #888;">📭 هنوز محاسبه‌ای انجام نشده</div>
+            </div>
+        </div>
+        <button class="clear-history" id="clearHistoryBtn">🗑️ پاک کردن کل تاریخچه</button>
+    </div>
+</div>
+
+<div id="toastMsg" class="toast-msg">✅ کپی شد!</div>
+
+<script>
+    // کلیدهای ذخیره‌سازی
+    const STORAGE_BASE = 'fixedIncome_baseNumber';
+    const STORAGE_HISTORY = 'fixedIncome_history';
+
+    // المان‌ها
+    const num1Input = document.getElementById('fixedIncome_number1');
+    const num2Input = document.getElementById('fixedIncome_number2');
+    const resultDiv = document.getElementById('fixedIncome_differenceResult');
+    const calcBtn = document.getElementById('fixedIncome_calculateDifference');
+    const historyToggleBtn = document.getElementById('historyToggleBtn');
+    const historyListDiv = document.getElementById('historyList');
+    const historyCountSpan = document.getElementById('historyCount');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const historySection = document.getElementById('historySection');
+    const toastMsg = document.getElementById('toastMsg');
+
+    // ========== تبدیل اعداد فارسی/عربی به انگلیسی ==========
+    function convertToEnglishNumbers(input) {
+        if (!input && input !== 0) return '';
+        const str = String(input);
+        // نقشه تبدیل اعداد فارسی و عربی به انگلیسی
+        const persianNumbers = {
+            '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
+            '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
+            '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+            '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9'
+        };
+        return str.replace(/[۰-۹٠-٩]/g, (match) => persianNumbers[match] || match);
+    }
+
+    // تبدیل کل رشته (مثلاً ممکنه کاما هم داشته باشه)
+    function normalizeNumberString(str) {
+        if (!str) return '';
+        let converted = convertToEnglishNumbers(str);
+        // حذف هر کاراکتر غیر عدد و کاما و نقطه
+        converted = converted.replace(/[^0-9,.]/g, '');
+        return converted;
+    }
+
+    // ========== توابع کمکی ==========
+    function showToast(text) {
+        toastMsg.textContent = text || '✅ کپی شد!';
+        toastMsg.style.opacity = '1';
+        setTimeout(() => {
+            toastMsg.style.opacity = '0';
+        }, 1500);
+    }
+
+    function copyToClipboard(text) {
+        if (!text) return;
+        // اطمینان از انگلیسی بودن متن کپی شده
+        const englishText = convertToEnglishNumbers(text);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(englishText).then(() => {
+                showToast(`📋 کپی شد: ${englishText.length > 30 ? englishText.substring(0, 30) + '...' : englishText}`);
+            }).catch(() => {
+                fallbackCopy(englishText);
+            });
+        } else {
+            fallbackCopy(englishText);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(`📋 کپی شد: ${text.length > 30 ? text.substring(0, 30) + '...' : text}`);
+    }
+
+    function formatNumberWithCommas(x) {
+        if (x === undefined || x === null || isNaN(x)) return '';
+        // عدد رو به انگلیسی فرمت می‌کنیم (مثل 1,234,567)
+        return Number(x).toLocaleString('en-US');
+    }
+
+    function parseNumberWithCommas(str) {
+        if (!str || str.trim() === '') return NaN;
+        // اول تبدیل به انگلیسی، بعد حذف کاما
+        const normalized = normalizeNumberString(str);
+        const cleaned = normalized.replace(/,/g, '');
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? NaN : num;
+    }
+
+    function toPersianDate(date) {
+        return new Intl.DateTimeFormat('fa-IR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }).format(new Date(date));
+    }
+
+    // ========== مدیریت تاریخچه ==========
+    function getHistory() {
+        const raw = localStorage.getItem(STORAGE_HISTORY);
+        if (!raw) return [];
+        try {
+            return JSON.parse(raw);
+        } catch(e) {
+            return [];
+        }
+    }
+
+    function saveHistory(history) {
+        localStorage.setItem(STORAGE_HISTORY, JSON.stringify(history));
+        renderHistory();
+    }
+
+    function addToHistory(baseNum, newNum, percent, diffType, rawBase, rawNew) {
+        const history = getHistory();
+        const now = new Date();
+        history.unshift({
+            id: Date.now(),
+            base: baseNum,
+            new: newNum,
+            percent: percent,
+            type: diffType,
+            rawBase: rawBase,
+            rawNew: rawNew,
+            timestamp: now.toISOString(),
+            persianDate: toPersianDate(now)
+        });
+        if (history.length > 60) history.pop();
+        saveHistory(history);
+    }
+
+    function getRawBaseFromHistoryItem(item) {
+        if (item.rawBase !== undefined && item.rawBase !== null && !isNaN(item.rawBase)) {
+            return item.rawBase;
+        }
+        if (item.base) return parseNumberWithCommas(item.base);
+        return NaN;
+    }
+
+    function getRawNewFromHistoryItem(item) {
+        if (item.rawNew !== undefined && item.rawNew !== null && !isNaN(item.rawNew)) {
+            return item.rawNew;
+        }
+        if (item.new) return parseNumberWithCommas(item.new);
+        return NaN;
+    }
+
+    function renderHistory() {
+        const history = getHistory();
+        historyCountSpan.innerText = history.length;
+
+        if (history.length === 0) {
+            historyListDiv.innerHTML = '<div style="padding: 15px; text-align: center; color: #888;">📭 هیچ محاسبه‌ای توی تاریخچه نیست</div>';
+            return;
+        }
+
+        historyListDiv.innerHTML = history.map(item => {
+            const percentNum = parseFloat(item.percent);
+            const percentColor = percentNum > 0 ? '#2e7d32' : (percentNum < 0 ? '#c62828' : '#666');
+            const typeText = item.type === 'increase' ? '📈 افزایش' : (item.type === 'decrease' ? '📉 کاهش' : '⚖️ بدون تغییر');
+            // اطمینان از انگلیسی بودن اعداد نمایش داده شده
+            const baseDisplay = convertToEnglishNumbers(item.base || '???');
+            const newDisplay = convertToEnglishNumbers(item.new || '???');
+            const percentDisplay = convertToEnglishNumbers(item.percent || '0');
+            return `
+                <div class="history-item" data-id="${item.id}">
+                    <div class="date">📅 ${item.persianDate || toPersianDate(item.timestamp)}</div>
+                    <div class="details">
+                        <span class="copyable-number" data-copy-type="base" data-value="${baseDisplay}" data-raw="${getRawBaseFromHistoryItem(item)}">${baseDisplay}</span>
+                        →
+                        <span class="copyable-number" data-copy-type="new" data-value="${newDisplay}" data-raw="${getRawNewFromHistoryItem(item)}">${newDisplay}</span>
+                        <span class="copyable-percent" data-copy-type="percent" data-value="${percentDisplay}" style="color: ${percentColor}; font-weight: bold; cursor: pointer;"> (${percentDisplay}%)</span>
+                    </div>
+                    <div style="font-size: 0.7rem; color: #777;" class="copyable-full" data-copy-type="full" data-base="${baseDisplay}" data-new="${newDisplay}" data-percent="${percentDisplay}" data-type="${typeText}">${typeText}</div>
+                </div>
+            `;
+        }).join('');
+
+        attachCopyEvents();
+
+        document.querySelectorAll('.history-item').forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target.classList.contains('copyable-number') ||
+                    e.target.classList.contains('copyable-percent') ||
+                    e.target.classList.contains('copyable-full')) {
+                    return;
+                }
+                e.stopPropagation();
+                const id = parseInt(el.dataset.id);
+                const historyItem = getHistory().find(h => h.id === id);
+                if (historyItem) {
+                    const rawBase = getRawBaseFromHistoryItem(historyItem);
+                    const rawNew = getRawNewFromHistoryItem(historyItem);
+                    if (!isNaN(rawBase) && !isNaN(rawNew)) {
+                        num1Input.value = formatNumberWithCommas(rawBase);
+                        num2Input.value = formatNumberWithCommas(rawNew);
+                        calculateAndSave(false);
+                    } else {
+                        resultDiv.textContent = '⚠️ داده این آیتم تاریخچه ناقص است';
+                        resultDiv.className = 'result negative';
+                    }
+                    historySection.classList.remove('show');
+                }
+            });
+        });
+    }
+
+    function attachCopyEvents() {
+        const copyElements = document.querySelectorAll('.copyable-number, .copyable-percent, .copyable-full');
+        let pressTimer = null;
+
+        copyElements.forEach(el => {
+            const startPress = (e) => {
+                pressTimer = setTimeout(() => {
+                    let copyText = '';
+                    const type = el.dataset.copyType;
+
+                    if (type === 'base') {
+                        copyText = el.dataset.value || '';
+                    } else if (type === 'new') {
+                        copyText = el.dataset.value || '';
+                    } else if (type === 'percent') {
+                        copyText = el.dataset.value || '';
+                        copyText = copyText.replace('%', '');
+                    } else if (type === 'full') {
+                        copyText = `${el.dataset.base} → ${el.dataset.new} | ${el.dataset.percent}% ${el.dataset.type || ''}`;
+                    }
+
+                    if (copyText) {
+                        copyToClipboard(copyText);
+                    }
+
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    clearTimeout(pressTimer);
+                }, 500);
+            };
+
+            const cancelPress = () => {
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                }
+            };
+
+            el.addEventListener('mousedown', startPress);
+            el.addEventListener('mouseup', cancelPress);
+            el.addEventListener('mouseleave', cancelPress);
+            el.addEventListener('touchstart', startPress);
+            el.addEventListener('touchend', cancelPress);
+            el.addEventListener('touchcancel', cancelPress);
+        });
+    }
+
+    // ========== محاسبه اصلی ==========
+    function calculateAndSave(saveToHistory = true) {
+        let baseStr = num1Input.value;
+        let newStr = num2Input.value;
+
+        // تبدیل فارسی به انگلیسی
+        baseStr = normalizeNumberString(baseStr);
+        newStr = normalizeNumberString(newStr);
+
+        // آپدیت کردن فیلدها با نسخه انگلیسی و فرمت شده
+        const baseNum = parseNumberWithCommas(baseStr);
+        const newNum = parseNumberWithCommas(newStr);
+
+        // نمایش دوباره با فرمت مناسب
+        if (!isNaN(baseNum) && baseNum.toString() !== 'NaN') {
+            num1Input.value = formatNumberWithCommas(baseNum);
+        }
+        if (!isNaN(newNum) && newNum.toString() !== 'NaN') {
+            num2Input.value = formatNumberWithCommas(newNum);
+        }
+
+        resultDiv.className = 'result';
+
+        if (isNaN(baseNum) || isNaN(newNum)) {
+            resultDiv.textContent = '❌ لطفاً اعداد معتبر وارد کنید (فقط رقم و کاما)';
+            resultDiv.classList.add('negative');
+            return false;
+        }
+        if (baseNum === 0) {
+            resultDiv.textContent = '⚠️ عدد پایه نمی‌تواند صفر باشد!';
+            resultDiv.classList.add('negative');
+            return false;
+        }
+
+        const diff = newNum - baseNum;
+        const percent = (diff / baseNum) * 100;
+        let percentFixed = percent.toFixed(2);
+        let type = 'neutral';
+        let resultText = `📊 تغییرات درصد: ${percentFixed}%`;
+
+        if (percent > 0) {
+            resultText += ' 📈 (افزایش)';
+            type = 'increase';
+            resultDiv.classList.add('positive');
+        } else if (percent < 0) {
+            resultText += ' 📉 (کاهش)';
+            type = 'decrease';
+            resultDiv.classList.add('negative');
+        } else {
+            resultText += ' ⚖️ (بدون تغییر)';
+            type = 'neutral';
+            resultDiv.classList.add('neutral');
+        }
+
+        const changeAmount = Math.abs((percent/100) * baseNum);
+        if (percent > 0) {
+            resultText += ` — 🎉 یعنی ${formatNumberWithCommas(Math.round(changeAmount))} تومان بیشتر شدی!`;
+        } else if (percent < 0) {
+            resultText += ` — 😢 یعنی ${formatNumberWithCommas(Math.round(changeAmount))} تومان کمتر شدی!`;
+        }
+
+        resultDiv.textContent = resultText;
+
+        if (saveToHistory) {
+            addToHistory(
+                formatNumberWithCommas(baseNum),
+                formatNumberWithCommas(newNum),
+                percentFixed,
+                type,
+                baseNum,
+                newNum
+            );
+        }
+        return true;
+    }
+
+    // ========== رویدادها با تبدیل خودکار ==========
+    function handleNumberInput(e) {
+        let val = e.target.value;
+        const converted = normalizeNumberString(val);
+        const num = parseNumberWithCommas(converted);
+        if (!isNaN(num)) {
+            e.target.value = formatNumberWithCommas(num);
+        } else if (converted === '') {
+            e.target.value = '';
+        } else {
+            e.target.value = converted;
+        }
+
+        // ذخیره عدد پایه
+        if (e.target.id === 'fixedIncome_number1') {
+            localStorage.setItem(STORAGE_BASE, e.target.value);
+        }
+
+        if (resultDiv.textContent !== '') {
+            resultDiv.textContent = '';
+            resultDiv.className = 'result';
+        }
+    }
+
+    num1Input.addEventListener('input', handleNumberInput);
+    num2Input.addEventListener('input', handleNumberInput);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedBase = localStorage.getItem(STORAGE_BASE);
+        if (savedBase) {
+            const converted = normalizeNumberString(savedBase);
+            const num = parseNumberWithCommas(converted);
+            if (!isNaN(num)) {
+                num1Input.value = formatNumberWithCommas(num);
+            }
+        }
+        renderHistory();
+        num1Input.focus();
+    });
+
+    calcBtn.addEventListener('click', () => calculateAndSave(true));
+
+    clearHistoryBtn.addEventListener('click', () => {
+        if (confirm('❗ همه تاریخچه پاک می‌شه! مطمئنی؟')) {
+            localStorage.removeItem(STORAGE_HISTORY);
+            renderHistory();
+            resultDiv.textContent = '🧹 تاریخچه با موفقیت پاک شد';
+            resultDiv.className = 'result neutral';
+            setTimeout(() => {
+                if(resultDiv.textContent === '🧹 تاریخچه با موفقیت پاک شد') {
+                    resultDiv.textContent = '';
+                    resultDiv.className = 'result';
+                }
+            }, 2000);
+        }
+    });
+
+    historyToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        historySection.classList.toggle('show');
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!historySection.contains(e.target)) {
+            historySection.classList.remove('show');
+        }
+    });
+
+    const handleEnter = (e) => { if (e.key === 'Enter') calculateAndSave(true); };
+    num1Input.addEventListener('keypress', handleEnter);
+    num2Input.addEventListener('keypress', handleEnter);
+</script>
+</body>
+</html>
