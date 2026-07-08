@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>محاسبه سود درآمد ثابت کیان - نسخه آفلاین</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: pan-x pan-y;
+        }
+
+        body {
+            font-family: Tahoma, 'Segoe UI', Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .page {
+            display: none;
+            padding: 0;
+            padding-top: 40px;
+            width: 100%;
+        }
+
+        .active-page {
+            display: block;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 5px;
+            margin: 0;
+        }
+
+        .container > h1,
+        .container > .goal-section,
+        .container > .percent-list,
+        .container > input,
+        .container > button,
+        .container > .total-percent,
+        .container > .nav-buttons,
+        .container > .trash-container {
+            margin-left: 8px;
+            margin-right: 8px;
+        }
+
+        h1 {
+            color: #2196F3;
+            font-size: 22px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        /* ===== منوی کشویی آمار ===== */
+        .stats-dropdown {
+            margin: 10px 8px 15px 8px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+            border: 1px solid #e0e0e0;
+        }
+        .stats-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            user-select: none;
+        }
+        .stats-header:hover { opacity: 0.95; }
+        .stats-header .arrow {
+            font-size: 16px;
+            transition: transform 0.3s ease;
+        }
+        .stats-header .arrow.open { transform: rotate(180deg); }
+        .stats-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+            background: white;
+        }
+        .stats-content.open { max-height: 500px; transition: max-height 0.4s ease-in; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .stat-card {
+            text-align: center;
+            background: rgba(255,255,255,0.15);
+            padding: 10px 5px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            color: white;
+        }
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            direction: ltr;
+        }
+        .stat-label {
+            font-size: 10px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .percent-list {
+            list-style: none;
+            padding: 0;
+            margin: 15px 8px;
+            background-color: #fafafa;
+            border-radius: 10px;
+            max-height: 160px;
+            overflow-y: auto;
+            direction: rtl;
+        }
+
+        .percent-item {
+            font-size: 14px;
+            padding: 10px;
+            margin: 6px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #e3f2fd;
+        }
+
+        .highlighted-persist {
+            background-color: yellow !important;
+        }
+
+        .chart-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            direction: ltr;
+            background: #f0f0f0;
+            border-radius: 12px;
+            border: 1px solid #ccc;
+        }
+
+        .chart-container {
+            width: max-content;
+            min-width: 100%;
+            height: 60vh;
+            position: relative;
+            background: white;
+        }
+
+        canvas {
+            display: block;
+            background: white;
+            cursor: pointer;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 12px;
+            margin: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .chart-controls button {
+            padding: 8px 18px;
+            font-size: 14px;
+            background-color: #3f51b5;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .goal-section {
+            margin: 15px 8px;
+            padding: 10px;
+            background-color: #e8f5e9;
+            border-radius: 8px;
+            border: 2px solid #c8e6c9;
+        }
+
+        .progress-bar {
+            background-color: #eee;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .nav-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 8px;
+        }
+
+        button {
+            padding: 12px;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:active { opacity: 0.8; }
+
+        .delete-btn {
+            background-color: #ff5722;
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .restore-btn {
+            background-color: #4CAF50;
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .positive { color: #4CAF50; }
+        .negative { color: #F44336; }
+
+        .trash-container {
+            margin: 15px 8px;
+            padding: 10px;
+            border: 2px dashed #ff5722;
+            border-radius: 10px;
+            background-color: #fff3e0;
+        }
+
+        input[type="number"] {
+            width: calc(100% - 16px);
+            margin: 5px 8px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: Tahoma, sans-serif;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .date-time {
+            font-family: monospace;
+            font-size: 10px;
+            color: #666;
+            direction: ltr;
+        }
+
+        .goal-status {
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        /* ===== یادداشت‌ها ===== */
+        .notes-toggle-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        #notesToggle {
+            background-color: #607d8b;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 0 0 10px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background-color 0.3s;
+            height: 30px;
+        }
+        #notesToggle:hover { background-color: #546e7a; }
+
+        #notesDrawer {
+            background-color: #eceff1;
+            padding: 10px;
+            padding-top: 40px;
+            border-bottom: 2px solid #cfd8dc;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            transform: translateY(-100%);
+            transition: transform 0.4s ease-in-out;
+            z-index: 1000;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        #notesDrawer.open { transform: translateY(0); }
+
+        .notes-drawer-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .note-item {
+            background-color: #fff;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .note-content {
+            flex-grow: 1;
+            padding: 5px;
+            border: 1px dashed transparent;
+            min-height: 30px;
+        }
+        .note-content[contenteditable="true"]:focus {
+            border: 1px dashed #90a4ae;
+            background-color: #fafafa;
+        }
+
+        .note-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .note-actions button {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+        .note-actions .save-edit-btn { background-color: #00796b; }
+        .note-actions .delete-note-btn { background-color: #d32f2f; }
+
+        @media (max-width: 600px) {
+            .chart-container { height: 450px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .stat-value { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="notes-toggle-container">
+        <div id="notesToggle" onclick="toggleNotesDrawer()">📝 یادداشت‌ها ▼</div>
+    </div>
+
+    <div id="notesDrawer">
+        <div class="notes-drawer-content">
+            <h2>📝 یادداشت‌های شما</h2>
+            <textarea id="newNoteInput" placeholder="یادداشت جدید خود را اینجا بنویسید..."></textarea>
+            <button onclick="addNote()" style="width: auto; padding: 10px 20px; background-color: #673ab7; margin-bottom:10px;">➕ افزودن یادداشت</button>
+            <div id="notesListContainer">
+                <ul id="notesList" class="percent-list" style="max-height: calc(70vh - 150px); background-color: transparent;"></ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainPage" class="page active-page">
+        <div class="container">
+            <h1>📊 محاسبه سود درآمد ثابت کیان</h1>
+
+            <!-- ===== منوی کشویی آمار ===== -->
+            <div class="stats-dropdown">
+                <div class="stats-header" onclick="toggleStatsMenu()">
+                    <span>📈 آمار و میانگین‌های سود</span>
+                    <span class="arrow" id="statsArrow">▼</span>
+                </div>
+                <div class="stats-content" id="statsContent">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalProfit">0%</div>
+                            <div class="stat-label">💰 سود کل</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avgDaily">0%</div>
+                            <div class="stat-label">📅 میانگین روزانه</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avgWeekly">0%</div>
+                            <div class="stat-label">📆 میانگین هفتگی</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avgMonthly">0%</div>
+                            <div class="stat-label">🗓️ میانگین ماهانه</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="bestTrade">0%</div>
+                            <div class="stat-label">🏆 بهترین معامله</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="worstTrade">0%</div>
+                            <div class="stat-label">💔 بدترین معامله</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="daysCount">0</div>
+                            <div class="stat-label">⏱️ روزهای معاملاتی</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="tradesCount">0</div>
+                            <div class="stat-label">💹 تعداد معاملات</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="goal-section">
+                <div class="nav-buttons" style="margin:0">
+                    <input type="number" id="goalInput" placeholder="هدف درصدی (مثبت یا منفی)" style="margin:0">
+                    <button onclick="setGoal()">🎯 ثبت هدف</button>
+                </div>
+                <div id="goalProgress" class="goal-status"></div>
+            </div>
+
+            <ul class="percent-list" id="percentList"></ul>
+
+            <input type="number" id="percentInput" placeholder="مقدار درصد (مثبت یا منفی)">
+            <button onclick="addPercent()" style="width: calc(100% - 16px); margin: 10px 8px;">➕ افزودن درصد جدید</button>
+
+            <div class="total-percent goal-status">
+                مجموع تغییرات: <span id="totalPercent">0</span>%
+            </div>
+            <div class="total-percent goal-status">
+                تعداد کل درصد ثبت شده: <span id="percentCount">0</span> مورد
+            </div>
+
+            <div class="nav-buttons">
+                <button onclick="showPage('chartPage')">📈 نمودار</button>
+                <button onclick="toggleTrash()">🗑️ سطل زباله</button>
+                <button onclick="backupData()">💾 ذخیره</button>
+                <button onclick="exportToCSV()">📊 خروجی CSV</button>
+                <button onclick="document.getElementById('fileInput').click()">📤 بازیابی</button>
+            </div>
+
+            <div class="trash-container" id="trashContainer" style="display: none;">
+                <div class="trash-title">⚠️ موارد حذف شده</div>
+                <ul class="percent-list" id="trashList"></ul>
+                <div class="nav-buttons">
+                    <button onclick="clearTrash()">🧹 پاکسازی</button>
+                    <button onclick="toggleTrash()">✖️ بستن</button>
+                </div>
+            </div>
+            <input type="file" id="fileInput" style="display:none;" onchange="recoveryData(event)">
+        </div>
+    </div>
+
+    <div id="chartPage" class="page">
+        <div class="container">
+            <h1>📊 نمودار خطی سودهی</h1>
+            <div class="chart-controls">
+                <button onclick="zoomIn()">➕ زوم بزرگ</button>
+                <button onclick="zoomOut()">➖ زوم کوچک</button>
+                <button onclick="resetZoom()">🔄 ریست</button>
+                <button onclick="scrollToEnd()">⬅️ آخرین نقطه</button>
+            </div>
+            <div class="chart-wrapper" id="chartWrapper">
+                <div class="chart-container" id="chartContainer">
+                    <canvas id="liveChartCanvas"></canvas>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button onclick="showPage('mainPage')">🔙 بازگشت</button>
+                <button onclick="downloadChartAsImage()">📸 ذخیره تصویر (PNG)</button>
+            </div>
+            <p style="font-size:12px; color:#888; text-align:center; margin:10px;">💡 کلیک روی هر نقطه = هایلایت قرمز | اسکرول افقی | زوم با دکمه‌ها | کاملاً آفلاین</p>
+        </div>
+    </div>
+
+    <script>
+        // ✅ درست شد - از همون کلید قبلی استفاده می‌کنه تا داده‌های ذخیره شده رو ببینه
+        const STORAGE_PREFIX = "kian_";
+
+        let percents = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "percents")) || [];
+        let trash = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "trash")) || [];
+        let goal = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "goal")) || null;
+        let highlightedStates = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "highlightedStates")) || {};
+        let highlightedPointIndices = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "highlightedPointIndices")) || [];
+        let notes = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "notes")) || [];
+        let investmentValue = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "investmentValue")) || 0;
+        let statsMenuOpen = localStorage.getItem(STORAGE_PREFIX + "statsMenuOpen") === "true";
+
+        let zoomLevel = 1.0;
+        let currentDataCache = null;
+        let chartCanvas = null, chartCtx = null;
+
+        // ===== منوی کشویی آمار =====
+        function toggleStatsMenu() {
+            statsMenuOpen = !statsMenuOpen;
+            localStorage.setItem(STORAGE_PREFIX + "statsMenuOpen", statsMenuOpen);
+            let content = document.getElementById('statsContent');
+            let arrow = document.getElementById('statsArrow');
+            if(statsMenuOpen) {
+                content.classList.add('open');
+                arrow.classList.add('open');
+            } else {
+                content.classList.remove('open');
+                arrow.classList.remove('open');
+            }
+        }
+
+        // ===== توابع آمار =====
+        function calculateAverages() {
+            if(percents.length === 0) {
+                return { total: 0, avgDaily: 0, avgWeekly: 0, avgMonthly: 0, daysDiff: 0, bestTrade: 0, worstTrade: 0 };
+            }
+
+            let totalProfit = percents.reduce((s,p) => s + p.value, 0);
+            let bestTrade = Math.max(...percents.map(p => p.value));
+            let worstTrade = Math.min(...percents.map(p => p.value));
+
+            let firstDate = new Date(percents[0].timestamp);
+            let lastDate = new Date(percents[percents.length-1].timestamp);
+            let daysDiff = Math.max(1, Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24)));
+
+            let avgDaily = totalProfit / daysDiff;
+            let avgWeekly = avgDaily * 7;
+            let avgMonthly = avgDaily * 30;
+
+            return {
+                total: totalProfit,
+                avgDaily: avgDaily,
+                avgWeekly: avgWeekly,
+                avgMonthly: avgMonthly,
+                daysDiff: daysDiff,
+                tradesCount: percents.length,
+                bestTrade: bestTrade,
+                worstTrade: worstTrade
+            };
+        }
+
+        function updateStats() {
+            let stats = calculateAverages();
+            document.getElementById('totalProfit').innerHTML = stats.total.toFixed(2) + '%';
+            document.getElementById('avgDaily').innerHTML = (stats.avgDaily > 0 ? '+' : '') + stats.avgDaily.toFixed(2) + '%';
+            document.getElementById('avgWeekly').innerHTML = (stats.avgWeekly > 0 ? '+' : '') + stats.avgWeekly.toFixed(2) + '%';
+            document.getElementById('avgMonthly').innerHTML = (stats.avgMonthly > 0 ? '+' : '') + stats.avgMonthly.toFixed(2) + '%';
+            document.getElementById('daysCount').innerHTML = stats.daysDiff;
+            document.getElementById('tradesCount').innerHTML = stats.tradesCount;
+            document.getElementById('bestTrade').innerHTML = (stats.bestTrade > 0 ? '+' : '') + stats.bestTrade.toFixed(2) + '%';
+            document.getElementById('worstTrade').innerHTML = (stats.worstTrade > 0 ? '+' : '') + stats.worstTrade.toFixed(2) + '%';
+        }
+
+        // ===== یادداشت‌ها =====
+        function toggleNotesDrawer() {
+            const drawer = document.getElementById('notesDrawer');
+            const toggleButton = document.getElementById('notesToggle');
+            drawer.classList.toggle('open');
+            if (drawer.classList.contains('open')) {
+                toggleButton.innerHTML = '📝 یادداشت‌ها ▲';
+                renderNotes();
+            } else {
+                toggleButton.innerHTML = '📝 یادداشت‌ها ▼';
+            }
+        }
+
+        function addNote() {
+            const noteInput = document.getElementById('newNoteInput');
+            const noteText = noteInput.value.trim();
+            if (noteText) {
+                notes.push({
+                    id: Date.now(),
+                    htmlContent: noteText.replace(/\n/g, '<br>'),
+                    createdAt: Date.now()
+                });
+                noteInput.value = '';
+                renderNotes();
+                saveData();
+            }
+        }
+
+        function renderNotes() {
+            const notesList = document.getElementById('notesList');
+            notesList.innerHTML = '';
+            const sortedNotes = [...notes].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            sortedNotes.forEach(note => {
+                const li = document.createElement('li');
+                li.className = 'note-item';
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'note-content';
+                contentDiv.innerHTML = note.htmlContent;
+                contentDiv.setAttribute('contenteditable', 'true');
+                contentDiv.dataset.noteId = note.id;
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'note-actions';
+                const saveButton = document.createElement('button');
+                saveButton.textContent = 'ذخیره';
+                saveButton.className = 'save-edit-btn';
+                saveButton.onclick = () => saveEditedNote(note.id);
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'حذف';
+                deleteButton.className = 'delete-note-btn';
+                deleteButton.onclick = () => deleteNote(note.id);
+                actionsDiv.appendChild(saveButton);
+                actionsDiv.appendChild(deleteButton);
+                li.appendChild(contentDiv);
+                li.appendChild(actionsDiv);
+                notesList.appendChild(li);
+            });
+        }
+
+        function saveEditedNote(noteId) {
+            const noteIndex = notes.findIndex(note => note.id === noteId);
+            if (noteIndex > -1) {
+                const contentDiv = document.querySelector(`.note-content[data-note-id="${noteId}"]`);
+                if (contentDiv) {
+                    notes[noteIndex].htmlContent = contentDiv.innerHTML;
+                    notes[noteIndex].updatedAt = Date.now();
+                    saveData();
+                    alert('یادداشت به‌روزرسانی شد!');
+                }
+            }
+        }
+
+        function deleteNote(noteId) {
+            if (confirm('آیا از حذف این یادداشت مطمئن هستید؟')) {
+                notes = notes.filter(note => note.id !== noteId);
+                renderNotes();
+                saveData();
+            }
+        }
+
+        // ===== توابع اصلی =====
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+            document.getElementById(pageId).classList.add('active-page');
+            if(pageId === 'chartPage') setTimeout(() => drawChart(), 50);
+        }
+
+        function addPercent() {
+            const input = document.getElementById('percentInput');
+            const value = parseFloat(input.value);
+            if(!isNaN(value)) {
+                percents.push({value, timestamp: Date.now()});
+                input.value = '';
+                updateInvestment(value);
+                updateUI();
+                saveData();
+                checkGoalAchievement();
+            }
+        }
+
+        function setGoal() {
+            const input = document.getElementById('goalInput');
+            const value = parseFloat(input.value);
+            if(!isNaN(value)) {
+                goal = {target: value, setAt: Date.now()};
+                input.value = '';
+                updateUI();
+                saveData();
+            }
+        }
+
+        function checkGoalAchievement() {
+            if(!goal) return;
+            let start = percents.findIndex(p => p.timestamp > goal.setAt);
+            if(start === -1) return;
+            let total = percents.slice(start).reduce((s,item) => s + item.value, 0);
+            if(total >= goal.target && goal.target > 0) {
+                alert(`🎉 تبریک! به هدف ${goal.target}% رسیدید!`);
+                clearGoal();
+            } else if (total <= goal.target && goal.target < 0) {
+                alert(`🎉 به هدف ${goal.target}% رسیدید!`);
+                clearGoal();
+            }
+        }
+
+        function updateUI() {
+            updatePercentList();
+            updateGoalProgress();
+            updateTrashUI();
+            updatePercentCount();
+            updateStats();
+            if(document.getElementById('chartPage').classList.contains('active-page')) drawChart();
+        }
+
+        function updatePercentList() {
+            const listElement = document.getElementById('percentList');
+            const total = percents.reduce((sum, item) => sum + item.value, 0);
+            document.getElementById('totalPercent').textContent = total.toFixed(2);
+
+            const formatterTime = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+            });
+
+            listElement.innerHTML = percents.map((item, index) => {
+                const dateFormatted = formatterTime.format(new Date(item.timestamp));
+                return `
+                    <li class="percent-item ${item.value >= 0 ? 'positive' : 'negative'} ${highlightedStates[index] ? 'highlighted-persist' : ''}" data-index="${index}">
+                        ${item.value}%
+                        <div>
+                            <span class="date-time" style="font-size: 10px; color: #666;" onclick="toggleHighlight(${index})">
+                                ${dateFormatted}
+                            </span>
+                            <button class="delete-btn" onclick="deletePercent(${index})">حذف</button>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function updateGoalProgress() {
+            const goalElement = document.getElementById('goalProgress');
+            if(!goal) {
+                goalElement.innerHTML = 'ℹ️ هیچ هدفی تنظیم نشده است';
+                return;
+            }
+            let start = percents.findIndex(p => p.timestamp > goal.setAt);
+            let total = start === -1 ? 0 : percents.slice(start).reduce((sum, item) => sum + item.value, 0);
+            const remaining = goal.target - total;
+            const progress = Math.min(Math.abs((total / goal.target) * 100), 100);
+
+            let stats = calculateAverages();
+            let daysToGoal = (stats.avgDaily > 0 && remaining > 0) ? Math.ceil(remaining / stats.avgDaily) : null;
+
+            goalElement.innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    <span style="color: #2e7d32;">🎯 هدف: ${goal.target}%</span>
+                    <button onclick="clearGoal()" class="delete-btn" style="margin-right: 10px;">حذف هدف</button>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${progress}%; background-color: ${remaining > 0 ? '#4CAF50' : '#F44336'}"></div>
+                </div>
+                <div style="margin-top: 10px; color: ${remaining > 0 ? '#2e7d32' : '#F44336'}">
+                    ${remaining > 0 ? '📌 باقیمانده: ' : '✅ بیش از هدف: '} ${Math.abs(remaining).toFixed(2)}%
+                </div>
+                ${daysToGoal ? `<div>⏱️ با میانگین فعلی، حدود ${daysToGoal} روز تا هدف مونده</div>` : ''}
+            `;
+        }
+
+        function clearGoal() { goal = null; updateUI(); saveData(); }
+
+        function deletePercent(index) {
+            trash.push({...percents[index], deletedAt: Date.now()});
+            percents.splice(index, 1);
+            delete highlightedStates[index];
+            updateUI();
+            saveData();
+        }
+
+        function restorePercent(index) {
+            percents.push(trash[index]);
+            trash.splice(index, 1);
+            updateInvestment(percents[percents.length-1].value);
+            updateUI();
+            saveData();
+        }
+
+        function toggleTrash() {
+            const trashContainer = document.getElementById('trashContainer');
+            trashContainer.style.display = trashContainer.style.display === 'block' ? 'none' : 'block';
+            updateTrashUI();
+        }
+
+        function updateTrashUI() {
+            const trashList = document.getElementById('trashList');
+            const formatterTime = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
+                year: 'numeric', month:'2-digit', day:'2-digit',
+                hour:'2-digit', minute:'2-digit', second:'2-digit',
+            });
+            trashList.innerHTML = trash.map((item, index) => {
+                const dateFormatted = formatterTime.format(new Date(item.timestamp));
+                return `
+                    <li class="percent-item ${item.value >= 0 ? 'positive' : 'negative'}">
+                        ${item.value}%
+                        <div>
+                            <span class="date-time">${dateFormatted}</span>
+                            <button class="restore-btn" onclick="restorePercent(${index})">بازیابی</button>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function clearTrash() { trash = []; updateUI(); saveData(); }
+
+        function backupData() {
+            const data = { percents, trash, goal, highlightedStates, highlightedPointIndices, investmentValue, notes, version: 3.0, timestamp: Date.now() };
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            const now = new Date();
+            const timestamp = now.getFullYear().toString() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + '-' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+            link.download = `kian-fixed-income-backup-${timestamp}.json`;
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(link.href), 100);
+        }
+
+        function recoveryData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    percents = data.percents || [];
+                    trash = data.trash || [];
+                    goal = data.goal || null;
+                    highlightedStates = data.highlightedStates || {};
+                    highlightedPointIndices = data.highlightedPointIndices || [];
+                    investmentValue = data.investmentValue || 0;
+                    notes = data.notes || [];
+                    updateUI();
+                    if(document.getElementById('chartPage').classList.contains('active-page')) drawChart();
+                    if(document.getElementById('notesDrawer').classList.contains('open')) renderNotes();
+                    saveData();
+                    alert('بازیابی اطلاعات با موفقیت انجام شد!');
+                } catch(error) {
+                    alert('خطا در بازیابی: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = null;
+        }
+
+        function exportToCSV() {
+            let headers = ["ردیف", "درصد", "تاریخ", "ساعت"];
+            let rows = [];
+            for(let i=0; i<percents.length; i++) {
+                let date = new Date(percents[i].timestamp);
+                rows.push([i+1, percents[i].value, date.toLocaleDateString('fa-IR'), date.toLocaleTimeString('fa-IR')]);
+            }
+            let stats = calculateAverages();
+            rows.push([], ["--- آمار ---"], ["سود کل", stats.total.toFixed(2) + "%"], ["میانگین روزانه", stats.avgDaily.toFixed(2) + "%"], ["تعداد معاملات", stats.tradesCount]);
+            let csvContent = headers.join(",") + "\n" + rows.map(row => row.join(",")).join("\n");
+            let blob = new Blob(["\uFEFF" + csvContent], {type: "text/csv;charset=utf-8;"});
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `kian-data-${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_PREFIX + "percents", JSON.stringify(percents));
+            localStorage.setItem(STORAGE_PREFIX + "trash", JSON.stringify(trash));
+            localStorage.setItem(STORAGE_PREFIX + "goal", JSON.stringify(goal));
+            localStorage.setItem(STORAGE_PREFIX + "highlightedStates", JSON.stringify(highlightedStates));
+            localStorage.setItem(STORAGE_PREFIX + "highlightedPointIndices", JSON.stringify(highlightedPointIndices));
+            localStorage.setItem(STORAGE_PREFIX + "investmentValue", JSON.stringify(investmentValue));
+            localStorage.setItem(STORAGE_PREFIX + "notes", JSON.stringify(notes));
+        }
+
+        function updateInvestment(percentChange) {
+            const profit = investmentValue * (percentChange / 100);
+            investmentValue = investmentValue + profit;
+            if (investmentValue < 0) investmentValue = 0;
+            investmentValue = parseFloat(investmentValue.toFixed(0));
+            saveData();
+        }
+
+        function updatePercentCount() {
+            document.getElementById('percentCount').textContent = percents.length;
+        }
+
+        function toggleHighlight(index) {
+            const item = document.querySelector(`.percent-item[data-index="${index}"]`);
+            if (item) {
+                item.classList.toggle('highlighted-persist');
+                highlightedStates[index] = item.classList.contains('highlighted-persist');
+                saveData();
+            }
+        }
+
+        // ===== رسم چارت با Canvas خالص =====
+        function prepareChartData() {
+            if(percents.length === 0) return null;
+            let cumData = [];
+            let sum = 0;
+            for(let p of percents) {
+                sum += p.value;
+                cumData.push(sum);
+            }
+            let maxVal = Math.max(...cumData, goal ? cumData[cumData.length-1] + goal.target : 0, 0.1);
+            let minVal = Math.min(...cumData, goal ? cumData[cumData.length-1] + goal.target : 0, -0.1);
+            return { cumData, maxVal, minVal };
+        }
+
+        function drawChart() {
+            chartCanvas = document.getElementById('liveChartCanvas');
+            if(!chartCanvas) return;
+            chartCtx = chartCanvas.getContext('2d');
+
+            let container = document.getElementById('chartContainer');
+            let pointSpacing = 85 * zoomLevel;
+            let totalWidth = Math.max(800, (percents.length - 1) * pointSpacing + 180);
+            let height = container.clientHeight || 500;
+
+            chartCanvas.width = totalWidth;
+            chartCanvas.height = height - 20;
+
+            if(percents.length === 0) {
+                chartCtx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+                chartCtx.font = "18px Tahoma";
+                chartCtx.fillStyle = "#999";
+                chartCtx.fillText("📭 هنوز داده‌ای ثبت نشده", chartCanvas.width/2-120, chartCanvas.height/2);
+                return;
+            }
+
+            let data = prepareChartData();
+            if(!data) return;
+            let { cumData, maxVal, minVal } = data;
+            currentDataCache = { cumData, maxVal, minVal };
+
+            let yRange = maxVal - minVal;
+            if(yRange === 0) yRange = 1;
+            let padding = { top: 55, bottom: 75, left: 75, right: 55 };
+            let chartH = chartCanvas.height - padding.top - padding.bottom;
+
+            chartCtx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+            chartCtx.save();
+
+            // خطوط افقی
+            chartCtx.strokeStyle = "#ddd";
+            chartCtx.lineWidth = 0.8;
+            for(let i=0; i<=5; i++) {
+                let yVal = minVal + (i/5) * yRange;
+                let y = padding.top + chartH - ((yVal - minVal)/yRange) * chartH;
+                chartCtx.beginPath();
+                chartCtx.moveTo(padding.left, y);
+                chartCtx.lineTo(chartCanvas.width - padding.right, y);
+                chartCtx.stroke();
+                chartCtx.fillStyle = "#444";
+                chartCtx.font = "11px Tahoma";
+                chartCtx.fillText(yVal.toFixed(1)+"%", 5, y+4);
+            }
+
+            // خط هدف
+            if(goal && cumData.length) {
+                let finalCum = cumData[cumData.length-1];
+                let goalValue = finalCum + goal.target;
+                let goalY = padding.top + chartH - ((goalValue - minVal)/yRange) * chartH;
+                chartCtx.beginPath();
+                chartCtx.setLineDash([8,6]);
+                chartCtx.strokeStyle = "#e91e63";
+                chartCtx.lineWidth = 2;
+                chartCtx.moveTo(padding.left, goalY);
+                chartCtx.lineTo(chartCanvas.width - padding.right, goalY);
+                chartCtx.stroke();
+                chartCtx.setLineDash([]);
+                chartCtx.fillStyle = "#e91e63";
+                chartCtx.font = "bold 10px Tahoma";
+                chartCtx.fillText(`هدف ${goal.target}%`, chartCanvas.width - padding.right - 90, goalY-5);
+            }
+
+            // نقاط
+            let points = [];
+            for(let i=0; i<cumData.length; i++) {
+                let x = padding.left + (i / (cumData.length-1 || 1)) * (chartCanvas.width - padding.left - padding.right);
+                let y = padding.top + chartH - ((cumData[i] - minVal)/yRange) * chartH;
+                points.push({x, y, index: i, percentValue: percents[i].value, cumValue: cumData[i]});
+            }
+
+            // خط روند
+            chartCtx.beginPath();
+            chartCtx.strokeStyle = "#673ab7";
+            chartCtx.lineWidth = 2.5;
+            for(let i=0; i<points.length-1; i++) {
+                chartCtx.moveTo(points[i].x, points[i].y);
+                chartCtx.lineTo(points[i+1].x, points[i+1].y);
+                chartCtx.stroke();
+            }
+
+            // نقاط
+            for(let p of points) {
+                let isHighlighted = highlightedPointIndices.includes(p.index);
+                chartCtx.beginPath();
+                chartCtx.fillStyle = isHighlighted ? "#e91e63" : "#3f51b5";
+                chartCtx.arc(p.x, p.y, 7, 0, 2*Math.PI);
+                chartCtx.fill();
+                chartCtx.fillStyle = "white";
+                chartCtx.arc(p.x, p.y, 2.5, 0, 2*Math.PI);
+                chartCtx.fill();
+
+                chartCtx.fillStyle = isHighlighted ? "#e91e63" : "#2c3e66";
+                chartCtx.font = "bold 10px Tahoma";
+                let sign = p.percentValue > 0 ? "+" : "";
+                chartCtx.fillText(`${sign}${p.percentValue}%`, p.x-15, p.y-12);
+            }
+
+            // تاریخ‌ها
+            let dateFormatter = new Intl.DateTimeFormat('fa-IR', { month:'2-digit', day:'2-digit' });
+            for(let i=0; i<percents.length; i+=Math.max(1, Math.floor(percents.length/7))) {
+                let x = padding.left + (i / (cumData.length-1 || 1)) * (chartCanvas.width - padding.left - padding.right);
+                let label = dateFormatter.format(new Date(percents[i].timestamp));
+                chartCtx.save();
+                chartCtx.translate(x, chartCanvas.height - padding.bottom + 8);
+                chartCtx.rotate(-0.45);
+                chartCtx.fillStyle = "#666";
+                chartCtx.font = "8px Tahoma";
+                chartCtx.fillText(label, 0, 0);
+                chartCtx.restore();
+            }
+
+            chartCtx.restore();
+
+            // کلیک روی نقاط
+            chartCanvas.onclick = (e) => {
+                let rect = chartCanvas.getBoundingClientRect();
+                let scaleX = chartCanvas.width / rect.width;
+                let scaleY = chartCanvas.height / rect.height;
+                let mouseX = (e.clientX - rect.left) * scaleX;
+                let mouseY = (e.clientY - rect.top) * scaleY;
+
+                if(!currentDataCache) return;
+                let { cumData: cum, maxVal: mx, minVal: mn } = currentDataCache;
+                let yRng = mx - mn || 1;
+                let pad = { top: 55, bottom: 75, left: 75, right: 55 };
+                let chH = chartCanvas.height - pad.top - pad.bottom;
+
+                for(let i=0; i<cum.length; i++) {
+                    let x = pad.left + (i / (cum.length-1 || 1)) * (chartCanvas.width - pad.left - pad.right);
+                    let y = pad.top + chH - ((cum[i] - mn)/yRng) * chH;
+                    if(Math.hypot(mouseX - x, mouseY - y) < 20) {
+                        if(highlightedPointIndices.includes(i)) {
+                            highlightedPointIndices = highlightedPointIndices.filter(idx => idx !== i);
+                        } else {
+                            highlightedPointIndices.push(i);
+                        }
+                        saveData();
+                        drawChart();
+                        updateUI();
+                        break;
+                    }
+                }
+            };
+        }
+
+        function zoomIn() { zoomLevel = Math.min(2.8, zoomLevel + 0.2); drawChart(); }
+        function zoomOut() { zoomLevel = Math.max(0.45, zoomLevel - 0.2); drawChart(); }
+        function resetZoom() { zoomLevel = 1.0; drawChart(); }
+        function scrollToEnd() {
+            let wrapper = document.getElementById('chartWrapper');
+            if(wrapper) wrapper.scrollLeft = wrapper.scrollWidth;
+        }
+
+        function downloadChartAsImage() {
+            if(chartCanvas) {
+                let link = document.createElement('a');
+                link.download = `chart-${Date.now()}.png`;
+                link.href = chartCanvas.toDataURL();
+                link.click();
+            }
+        }
+
+        function initStatsMenu() {
+            let content = document.getElementById('statsContent');
+            let arrow = document.getElementById('statsArrow');
+            if(statsMenuOpen) {
+                content.classList.add('open');
+                arrow.classList.add('open');
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            if(document.getElementById('chartPage').classList.contains('active-page')) setTimeout(drawChart, 60);
+        });
+        window.addEventListener('beforeunload', saveData);
+
+        initStatsMenu();
+        updateUI();
+
+        // اگه داده‌ای توی مرورگر داری، توی کنسول لاگ کن
+        console.log("✅ داده‌های ذخیره شده:", percents.length, "مورد");
+    </script>
+</body>
+</html>
