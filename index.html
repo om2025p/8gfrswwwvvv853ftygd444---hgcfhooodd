@@ -9,7 +9,6 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <title>عمارت دیجیتال</title>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
             --glass-bg: rgba(255, 255, 255, 0.15);
@@ -17,10 +16,9 @@
             --opaque-white: rgba(255, 255, 255, 0.9);
             --text-color: #ffffff;
             --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            --icon-size: 60px;
         }
 
-        html, body {
+        body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             display: flex;
@@ -32,9 +30,9 @@
             user-select: none;
             -webkit-user-select: none;
             transition: background 1s ease;
-            touch-action: none;
         }
 
+        /* تم روز - آسمانی */
         body.day-theme {
             background: linear-gradient(180deg, #87CEEB 0%, #B0E2FF 100%);
             color: #1e3a8a;
@@ -46,11 +44,13 @@
         }
         body.day-theme .app-title { font-weight: 600; }
 
+        /* تم شب - ستاره‌ای */
         body.night-theme {
             background: radial-gradient(circle at center, #1e3a8a 0%, #020617 100%);
             color: #ffffff;
         }
 
+        /* المان‌های تزئینی */
         .sky-elements {
             position: fixed;
             top: 0;
@@ -88,6 +88,7 @@
             50% { opacity: 0.7; transform: scale(1.2); }
         }
 
+        /* لایه شیشه‌ای مات روی کل صفحه */
         body::before {
             content: "";
             position: fixed;
@@ -101,64 +102,20 @@
         }
 
         .container {
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            position: relative;
-            overflow: hidden;
         }
 
-        .pages-wrapper {
-            display: flex;
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
             width: 100%;
-            height: 80%;
-            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-
-        .page {
-            min-width: 100%;
-            height: 100%;
-            display: grid;
-            grid-template-columns: repeat(var(--cols, 3), 1fr);
-            grid-template-rows: repeat(var(--rows, 4), 1fr);
-            gap: 20px;
-            padding: 40px 20px;
-            box-sizing: border-box;
             position: relative;
-            align-content: start;
-            justify-items: center;
-        }
-
-        .grid-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: grid;
-            grid-template-columns: repeat(var(--cols, 3), 1fr);
-            grid-template-rows: repeat(var(--rows, 4), 1fr);
-            gap: 20px;
-            padding: 40px 20px;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: -1;
-        }
-        .editing .grid-overlay { opacity: 0.5; }
-        .grid-cell {
-            border: 1px dashed rgba(255,255,255,0.4);
-            box-sizing: border-box;
-        }
-
-        .drop-preview {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px dashed rgba(255, 255, 255, 0.5);
-            border-radius: 24px;
-            pointer-events: none;
-            display: none;
-            z-index: 5;
         }
 
         .app-card {
@@ -166,98 +123,44 @@
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border-radius: 24px;
+            padding: 15px 5px;
             text-align: center;
             text-decoration: none;
             color: inherit;
             box-shadow: var(--shadow);
             border: 1px solid var(--glass-border);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s, border-color 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
-            width: var(--icon-size);
-            height: var(--icon-size);
-            padding: 20px;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                        background 0.3s, border-color 0.3s, opacity 0.3s;
-            user-select: none;
-            cursor: pointer;
+            touch-action: none;
+            -webkit-touch-callout: none; /* Disable callout, e.g., on iOS */
         }
 
-        @keyframes flyInCorner {
-            0% { transform: scale(0) translate(var(--tw-tx, 0), var(--tw-ty, 0)); opacity: 0; }
-            100% { transform: scale(1) translate(0, 0); opacity: 1; }
+        .app-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
         }
 
-        .fly-in {
-            animation: flyInCorner 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        .app-card:active {
+            transform: scale(0.95);
         }
-
-        .app-card.dragging {
-            z-index: 5000;
-            opacity: 0.85;
-            transform: scale(1.15) !important;
-            position: fixed !important;
-            pointer-events: none;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-            transition: transform 0.2s ease, opacity 0.2s ease !important;
-            border-color: rgba(255,255,255,0.5) !important;
-        }
-
-        .app-card.placeholder {
-            opacity: 0.3;
-            background: rgba(255,255,255,0.1);
-            border: 2px dashed rgba(255,255,255,0.3);
-            animation: none !important;
-            box-shadow: none !important;
-        }
-
-        .folder-target {
-            transform: scale(1.2) !important;
-            box-shadow: 0 0 25px 5px rgba(255,255,255,0.6) !important;
-            z-index: 100;
-            transition: all 0.3s ease !important;
-        }
-
-        .snap-back {
-            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1) !important;
-            z-index: 1999;
-        }
-
-        .app-card.folder {
-            background: rgba(255, 255, 255, 0.2);
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 4px;
-            padding: 8px;
-        }
-
-        .folder-mini-icon {
-            width: 100%;
-            height: 100%;
-            border-radius: 4px;
-            background: var(--opaque-white);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.5rem;
-        }
-        .folder-mini-icon img { width: 80%; height: 80%; object-fit: contain; }
 
         .app-icon {
-            font-size: 2rem;
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
             display: flex;
             align-items: center;
             justify-content: center;
-            width: var(--icon-size);
-            height: var(--icon-size);
+            pointer-events: none;
         }
 
         .app-icon img {
-            width: 100%;
-            height: 100%;
+            width: 55px;
+            height: 55px;
             object-fit: contain;
             border-radius: 14px;
             background: var(--opaque-white);
@@ -265,386 +168,72 @@
         }
 
         .app-title {
-            font-size: 0.75rem;
-            margin-top: 5px;
+            font-size: 0.85rem;
+            font-weight: 500;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 90%;
+            pointer-events: none;
         }
 
+        .coming-soon {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* حالت لرزش */
         @keyframes jiggle {
-            0% { transform: rotate(-1deg); }
-            50% { transform: rotate(1deg); }
-            100% { transform: rotate(-1deg); }
-        }
-        .editing .app-card:not(.dragging) {
-            animation: jiggle 0.3s infinite;
+            0% { transform: rotate(-1.5deg); }
+            50% { transform: rotate(1.5deg); }
+            100% { transform: rotate(-1.5deg); }
         }
 
-        .page-indicators {
-            position: absolute;
-            bottom: 120px;
-            display: flex;
-            gap: 8px;
-            z-index: 100;
+        .editing .app-card {
+            animation: jiggle 0.25s infinite ease-in-out;
         }
 
-        .dock-container {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            padding: 0 20px;
-            box-sizing: border-box;
+        .editing .app-card:active, .editing .app-card.dragging {
+            animation: none;
+            transform: scale(1.1);
+            z-index: 1000;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            background: rgba(255,255,255,0.25);
+            opacity: 0.9;
+        }
+
+        /* انیمیشن‌های ورود */
+        @keyframes flyIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .fly-in {
+            animation: flyIn 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        @media (max-width: 400px) {
+            .app-grid { gap: 12px; }
+            .app-icon img { width: 50px; height: 50px; }
+            .app-title { font-size: 0.75rem; }
+        }
+
+        /* استایل کشیدن */
+        .dragging {
             z-index: 1000;
         }
-
-        .dock {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 35px;
-            height: 90px;
-            width: 90%;
-            max-width: 400px;
-            position: relative;
-            padding: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .dock-item {
-            margin: 0 !important;
-            width: 65px !important;
-            height: 65px !important;
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            transition: all 0.3s;
-        }
-
-        .dot.active {
-            background: #fff;
-            transform: scale(1.2);
-        }
-
-        .settings-panel {
-            position: fixed;
-            bottom: -100%;
-            left: 0;
-            width: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border-top: 1px solid rgba(255,255,255,0.2);
-            border-radius: 30px 30px 0 0;
-            padding: 25px;
-            box-sizing: border-box;
-            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 5000;
-            color: #fff;
-        }
-
-        .settings-panel.open { bottom: 0 !important; }
-
-        .settings-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .slider {
-            flex-grow: 1;
-            margin: 0 15px;
-            accent-color: #3b82f6;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            z-index: 4000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .folder-modal {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 40px;
-            width: 85%;
-            max-width: 350px;
-            padding: 20px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-        }
-
-        .folder-header {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .folder-name-input {
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid rgba(255,255,255,0.5);
-            color: #fff;
-            font-size: 1.5rem;
-            text-align: center;
-            width: 80%;
-            outline: none;
-        }
-
-        .color-presets {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .color-dot {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-        .color-dot.active { border-color: #fff; }
-
-        .folder-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            min-height: 100px;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider-round {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-        .slider-round:before {
-            position: absolute;
-            content: "";
-            height: 18px; width: 18px;
-            left: 4px; bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider-round { background-color: #2196F3; }
-        input:checked + .slider-round:before { transform: translateX(26px); }
-
-        /* دکمه هنگام‌سازی شیشه‌ای */
-        .sync-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 45px;
-            height: 45px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 1000;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .sync-btn:active {
-            transform: scale(0.9) rotate(30deg);
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .sync-btn svg {
-            width: 24px;
-            height: 24px;
-            fill: #fff;
-            transition: transform 0.6s ease;
-        }
-
-        .sync-btn.loading svg {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        /* استایل برای پیام‌های شوخ‌طبعانه */
-        .toast {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            z-index: 10000;
-            display: none;
-            animation: fadeInOut 3s forwards;
-            white-space: nowrap;
-        }
-
-        @keyframes fadeInOut {
-            0% { opacity: 0; bottom: 80px; }
-            15% { opacity: 1; bottom: 100px; }
-            85% { opacity: 1; bottom: 100px; }
-            100% { opacity: 0; bottom: 120px; }
-        }
-
     </style>
 </head>
 <body class="day-theme">
-
-    <div class="sync-btn" id="syncButton" onclick="handleSync()">
-        <svg viewBox="0 0 24 24">
-            <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" />
-        </svg>
-    </div>
-
-    <div id="toast" class="toast"></div>
 
     <div class="sky-elements" id="skyElements">
         <div class="moon"></div>
     </div>
 
-    <div class="container" id="mainContainer">
-        <div class="pages-wrapper" id="pagesWrapper">
-            <!-- Pages will be rendered here -->
-        </div>
-        <div class="page-indicators" id="pageIndicators"></div>
-        <div class="dock-container">
-            <div class="dock" id="dock"></div>
-        </div>
-    </div>
-
-    <div id="settingsPanel" class="settings-panel">
-        <h3 style="margin-top: 0; text-align: center;">تنظیمات میز کار</h3>
-        <div class="settings-row">
-            <span>اندازه آیکون‌ها</span>
-            <input type="range" min="40" max="80" value="60" class="slider" id="iconScaleSlider">
-        </div>
-        <div class="settings-row">
-            <span>حالت آزادانه</span>
-            <label class="switch">
-                <input type="checkbox" id="freeModeToggle" checked>
-                <span class="slider-round"></span>
-            </label>
-        </div>
-        <button onclick="closeSettings()" style="width: 100%; padding: 10px; border-radius: 15px; border: none; background: #3b82f6; color: white; font-weight: bold;">تایید</button>
-    </div>
-
-    <div class="modal-overlay" id="modalOverlay" onclick="closeFolder(event)">
-        <div class="folder-modal" onclick="event.stopPropagation()">
-            <div class="folder-header">
-                <input type="text" class="folder-name-input" id="folderNameInput" placeholder="نام پوشه...">
-                <div class="color-presets">
-                    <div class="color-dot" style="background: rgba(255,255,255,0.2);" data-color="rgba(255,255,255,0.2)"></div>
-                    <div class="color-dot" style="background: rgba(255, 0, 0, 0.3);" data-color="rgba(255, 0, 0, 0.3)"></div>
-                    <div class="color-dot" style="background: rgba(0, 255, 0, 0.3);" data-color="rgba(0, 255, 0, 0.3)"></div>
-                    <div class="color-dot" style="background: rgba(0, 0, 255, 0.3);" data-color="rgba(0, 0, 255, 0.3)"></div>
-                    <input type="color" id="folderColorPicker" style="width: 24px; height: 24px; border: none; padding: 0; background: none;">
-                </div>
-            </div>
-            <div class="folder-grid" id="folderGrid">
-                <!-- Folder items -->
-            </div>
+    <div class="container">
+        <div class="app-grid" id="appGrid">
+            <!-- آیتم‌ها توسط جاوا اسکریپت رندر می‌شوند -->
         </div>
     </div>
 
     <script>
-        const DEFAULT_APPS = [
-            { id: 'gym', title: 'Activity', icon: 'gym/icon-192.png', url: 'gym/index.html' },
-            { id: 'gold', title: 'ثبت درصد ۱', icon: 'gold/icon-192.png', url: 'gold/index.html' },
-            { id: 'profit', title: 'محاسبه گر سود', icon: 'profit-calculator/icon-192.png', url: 'profit-calculator/index.html' }
-        ];
-
-        let state = {
-            apps: [],
-            orderedLayout: [],
-            dockItems: [],
-            currentPage: 0,
-            isEditing: false,
-            freeMode: true,
-            iconSize: 60,
-            folders: {}
-        };
-
-        const STORAGE_KEY = 'portal_v3_state';
-
-        function loadState() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    // Migration from old layout to orderedLayout
-                    if (parsed.layout && (!parsed.orderedLayout || parsed.orderedLayout.length === 0)) {
-                        parsed.orderedLayout = parsed.layout
-                            .sort((a, b) => (a.page * 100 + a.row * 10 + a.col) - (b.page * 100 + b.row * 10 + b.col))
-                            .map(l => ({ id: l.id, type: l.type }));
-                        delete parsed.layout;
-                    }
-                    state = { ...state, ...parsed };
-                } catch(e) {
-                    console.error("Failed to load state", e);
-                    state.apps = [...DEFAULT_APPS];
-                }
-            } else {
-                state.apps = [...DEFAULT_APPS];
-            }
-
-            if (!state.orderedLayout || state.orderedLayout.length === 0) {
-                initializeLayout();
-            }
-
-            document.documentElement.style.setProperty('--icon-size', `${state.iconSize}px`);
-            document.getElementById('iconScaleSlider').value = state.iconSize;
-            document.getElementById('freeModeToggle').checked = state.freeMode;
-        }
-
-        function saveState() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        }
-
         function updateTheme() {
             const hour = new Date().getHours();
             const isNight = hour < 6 || hour >= 18;
@@ -683,210 +272,52 @@
         }
 
         updateTheme();
-        setInterval(updateTheme, 60000);
+        setInterval(updateTheme, 60000); // چک کردن هر دقیقه
 
-        function initializeLayout() {
-            state.orderedLayout = [];
-            state.dockItems = [];
+        const DEFAULT_APPS = [
+            { id: 'gym', title: 'Activity', icon: 'gym/icon-192.png', url: 'gym/index.html' },
+            { id: 'gold', title: 'ثبت درصد ۱', icon: 'gold/icon-192.png', url: 'gold/index.html' },
+            { id: 'profit', title: 'محاسبه گر سود', icon: 'profit-calculator/icon-192.png', url: 'profit-calculator/index.html' }
+        ];
 
-            state.apps.forEach(app => {
-                const inFolder = Object.values(state.folders).some(f => f.appIds.includes(app.id));
-                if (!inFolder) {
-                    state.orderedLayout.push({ id: app.id, type: 'app' });
-                }
-            });
+        let savedApps = JSON.parse(localStorage.getItem('portal_app_order'));
+        // فیلتر کردن برای حذف آیتم‌های قدیمی "به زودی" اگر در استوریج مانده باشند
+        let apps = savedApps ? savedApps.filter(a => !a.comingSoon) : DEFAULT_APPS;
+        let isEditing = false;
+        let dragItem = null;
+        let pressTimer = null;
 
-            Object.keys(state.folders).forEach(fid => {
-                state.orderedLayout.push({ id: fid, type: 'folder' });
-            });
-            saveState();
-        }
+        const grid = document.getElementById('appGrid');
 
-        function goToPage(p) {
-            state.currentPage = p;
-            renderPages();
-        }
-
-        function getGridSize() {
-            const containerWidth = window.innerWidth;
-            const containerHeight = window.innerHeight * 0.7;
-            const cols = Math.floor(containerWidth / (state.iconSize + 40)) || 3;
-            const rows = Math.floor(containerHeight / (state.iconSize + 60)) || 3;
-            return { cols, rows, itemsPerPage: cols * rows };
-        }
-
-        let sortableInstances = [];
-
-        function renderPages(withAnimation = false) {
-            const wrapper = document.getElementById('pagesWrapper');
-            const indicators = document.getElementById('pageIndicators');
-            const dock = document.getElementById('dock');
-
-            sortableInstances.forEach(s => s.destroy());
-            sortableInstances = [];
-
-            const { cols, rows, itemsPerPage } = getGridSize();
-            document.documentElement.style.setProperty('--cols', cols);
-            document.documentElement.style.setProperty('--rows', rows);
-
-            const pageCount = Math.max(1, Math.ceil(state.orderedLayout.length / itemsPerPage) + (state.isEditing ? 1 : 0));
-
-            wrapper.innerHTML = '';
-            indicators.innerHTML = '';
-
-            // Clean up old overlay if it exists (though innerHTML = '' handles it)
-
-            for (let p = 0; p < pageCount; p++) {
-                const page = document.createElement('div');
-                page.className = 'page';
-                page.dataset.page = p;
-
-                // Restore Grid Overlay visually
-                const overlay = document.createElement('div');
-                overlay.className = 'grid-overlay';
-                overlay.style.opacity = state.isEditing ? '0.5' : '0';
-                for (let i = 0; i < itemsPerPage; i++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'grid-cell';
-                    overlay.appendChild(cell);
-                }
-                page.appendChild(overlay);
-
-                const pageItems = state.orderedLayout.slice(p * itemsPerPage, (p + 1) * itemsPerPage);
-                pageItems.forEach((item, idx) => {
-                    const dataItem = item.type === 'app' ?
-                        { type: 'app', data: state.apps.find(a => a.id === item.id) } :
-                        { type: 'folder', id: item.id, data: state.folders[item.id] };
-
-                    if (dataItem.data) {
-                        const el = createItemElement(dataItem);
-                        page.appendChild(el);
-                    }
-                });
-
-                wrapper.appendChild(page);
-
-                const dot = document.createElement('div');
-                dot.className = `dot ${p === state.currentPage ? 'active' : ''}`;
-                dot.onclick = () => goToPage(p);
-                indicators.appendChild(dot);
-
-                if (state.isEditing) {
-                    sortableInstances.push(new Sortable(page, {
-                        group: 'shared',
-                        animation: 150,
-                        ghostClass: 'placeholder',
-                        draggable: '.app-card',
-                        forceFallback: true,
-                        fallbackTolerance: 3,
-                        onEnd: handleSortEnd,
-                        onMove: (evt) => {
-                            // Logic to prevent moving onto folders to simulate group potential
-                            if (evt.related.classList.contains('folder')) {
-                                return false; // Prevent swap for now, can enhance to folder logic
-                            }
-                        }
-                    }));
-                }
-            }
-
-            dock.innerHTML = '';
-            state.dockItems.forEach(item => {
-                const dataItem = item.type === 'app' ?
-                    { type: 'app', data: state.apps.find(a => a.id === item.id) } :
-                    { type: 'folder', id: item.id, data: state.folders[item.id] };
-
-                if (dataItem.data) {
-                    const el = createItemElement(dataItem);
-                    el.classList.add('dock-item');
-                    dock.appendChild(el);
-                }
-            });
-
-            if (state.isEditing) {
-                sortableInstances.push(new Sortable(dock, {
-                    group: 'shared',
-                    animation: 150,
-                    ghostClass: 'placeholder',
-                    draggable: '.app-card',
-                    forceFallback: true,
-                    fallbackTolerance: 3,
-                    onEnd: handleSortEnd
-                }));
-            }
-
-            wrapper.style.transform = `translateX(${state.currentPage * 100}%)`;
-        }
-
-        function handleSortEnd() {
-            const wrapper = document.getElementById('pagesWrapper');
-            const dock = document.getElementById('dock');
-
-            const newLayout = [];
-            const { itemsPerPage } = getGridSize();
-
-            Array.from(wrapper.children).forEach(page => {
-                Array.from(page.children).forEach(el => {
-                    if (el.dataset.id && !el.classList.contains('sortable-fallback')) {
-                        newLayout.push({ id: el.dataset.id, type: el.dataset.type });
-                    }
-                });
-            });
-
-            // Limit each page to itemsPerPage by shifting overflow to next page
-            // SortableJS might put more items in a container than we want visually
-            state.orderedLayout = newLayout;
-
-            const newDock = [];
-            Array.from(dock.children).forEach(el => {
-                if (el.dataset.id && !el.classList.contains('sortable-fallback')) {
-                    newDock.push({ id: el.dataset.id, type: el.dataset.type });
-                }
-            });
-
-            // Limit dock to 4 items
-            if (newDock.length > 4) {
-                const overflow = newDock.splice(4);
-                state.orderedLayout = [...overflow, ...state.orderedLayout];
-            }
-            state.dockItems = newDock;
-
-            saveState();
-            renderPages();
-        }
-
-        function updateFolderMiniIcons(el, folder) {
-            // Refresh folder mini icons without recreating the card
-            const minis = el.querySelectorAll('.folder-mini-icon');
-            minis.forEach(m => m.remove());
-            folder.appIds.slice(0, 4).forEach(appId => {
-                const app = state.apps.find(a => a.id === appId);
-                if (app) {
-                    const mini = document.createElement('div');
-                    mini.className = 'folder-mini-icon';
-                    const img = document.createElement('img');
-                    img.src = app.icon;
-                    mini.appendChild(img);
-                    el.appendChild(mini);
-                }
-            });
-        }
-
-
-        function createItemElement(item) {
-            if (item.type === 'app') {
-                const app = item.data;
-                const card = document.createElement('div');
-                card.className = 'app-card';
+        function renderApps() {
+            grid.innerHTML = '';
+            apps.forEach((app, index) => {
+                const card = document.createElement('a');
+                card.href = app.url;
+                card.className = `app-card fly-in ${app.comingSoon ? 'coming-soon' : ''}`;
                 card.dataset.id = app.id;
-                card.dataset.type = 'app';
-                card.dataset.url = app.url;
+                card.style.animationDelay = `${index * 0.05}s`;
+
+                // غیرفعال کردن انیمیشن بعد از پایان برای جلوگیری از ریست شدن در درگ
+                card.addEventListener('animationend', () => {
+                    card.style.opacity = '1';
+                    card.classList.remove('fly-in');
+                }, { once: true });
+
+                card.onclick = (e) => {
+                    if (isEditing || app.comingSoon) e.preventDefault();
+                };
 
                 const iconDiv = document.createElement('div');
                 iconDiv.className = 'app-icon';
-                const img = document.createElement('img');
-                img.src = app.icon;
-                iconDiv.appendChild(img);
+                if (app.icon.endsWith('.png')) {
+                    const img = document.createElement('img');
+                    img.src = app.icon;
+                    img.alt = app.title;
+                    iconDiv.appendChild(img);
+                } else {
+                    iconDiv.innerText = app.icon;
+                }
 
                 const titleDiv = document.createElement('div');
                 titleDiv.className = 'app-title';
@@ -895,330 +326,126 @@
                 card.appendChild(iconDiv);
                 card.appendChild(titleDiv);
 
-                setupItemEvents(card);
-                return card;
-            } else {
-                const folder = item.data;
-                const card = document.createElement('div');
-                card.className = 'app-card folder';
-                card.dataset.id = item.id;
-                card.dataset.type = 'folder';
-                card.style.background = folder.color || 'rgba(255,255,255,0.2)';
+                card.onpointerdown = handlePointerDown;
+                card.onpointerup = handlePointerUp;
+                card.onpointercancel = handlePointerUp;
+                card.onpointermove = handlePointerMove;
+                card.oncontextmenu = (e) => e.preventDefault(); // Prevent context menu on long press
 
-                folder.appIds.slice(0, 4).forEach(appId => {
-                    const app = state.apps.find(a => a.id === appId);
-                    if (app) {
-                        const mini = document.createElement('div');
-                        mini.className = 'folder-mini-icon';
-                        const img = document.createElement('img');
-                        img.src = app.icon;
-                        mini.appendChild(img);
-                        card.appendChild(mini);
-                    }
-                });
-
-                const titleDiv = document.createElement('div');
-                titleDiv.className = 'app-title';
-                titleDiv.style.position = 'absolute';
-                titleDiv.style.bottom = '-20px';
-                titleDiv.innerText = folder.title || 'پوشه';
-                card.appendChild(titleDiv);
-
-                setupItemEvents(card);
-                return card;
-            }
+                grid.appendChild(card);
+            });
         }
 
-        let startX = null, startY = null, isSwiping = false;
-        let lastTap = 0;
-        let tapTimer = null;
-        let dragItem = null;
-        let dragOffsetX = 0;
-        let dragOffsetY = 0;
-        let pressTimer = null;
-        const mainContainer = document.getElementById('mainContainer');
-
-        mainContainer.addEventListener('pointerdown', e => {
-            startX = e.clientX;
-            startY = e.clientY;
-            isSwiping = false;
-
-            if (e.target.closest('.app-card')) return;
-
-            if (!state.isEditing) {
-                clearTimeout(pressTimer);
+        function handlePointerDown(e) {
+            if (isEditing) {
+                startDragging(e);
+            } else {
+                const target = e.currentTarget;
+                const pointerId = e.pointerId;
                 pressTimer = setTimeout(() => {
-                    if (!isSwiping) openSettings();
-                }, 1000);
+                    enterEditMode();
+                    // شروع جابجایی بلافاصله پس از ورود به حالت ویرایش
+                    startDraggingManual(target, pointerId);
+                }, 500);
             }
-        });
+        }
 
-        mainContainer.addEventListener('pointermove', e => {
-            if (startX === null) return;
-            const diffX = e.clientX - startX;
-            const diffY = e.clientY - startY;
-
-            if (Math.abs(diffX) > 15 || Math.abs(diffY) > 15) {
-                isSwiping = true;
-                clearTimeout(pressTimer);
-            }
-
-            if (!isSwiping) return;
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                e.preventDefault();
-            }
-        });
-
-        mainContainer.addEventListener('pointerup', e => {
+        function handlePointerUp(e) {
             clearTimeout(pressTimer);
-            const sx = startX;
-            startX = null;
-            startY = null;
-            if (!isSwiping || sx === null) return;
-
-            const diffX = e.clientX - sx;
-            if (Math.abs(diffX) > 50) {
-                if (diffX > 0) {
-                    const wrapper = document.getElementById('pagesWrapper');
-                    if (state.currentPage < wrapper.children.length - 1) goToPage(state.currentPage + 1);
-                } else if (diffX < 0 && state.currentPage > 0) {
-                    goToPage(state.currentPage - 1);
-                }
+            if (isEditing && dragItem) {
+                stopDragging(e);
             }
-            isSwiping = false;
-        });
+        }
 
-        let longPressTimer = null;
-
-        function setupItemEvents(el) {
-            el.addEventListener('pointerdown', (e) => {
-                const now = Date.now();
-                const isDoubleTap = (now - lastTap < 300);
-                lastTap = now;
-
-                if (isDoubleTap) {
-                    clearTimeout(tapTimer);
-                    tapTimer = null;
-                    clearTimeout(longPressTimer);
-                    toggleEditMode();
-                    return;
-                }
-
-                if (!state.isEditing) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = setTimeout(() => {
-                        if (!isSwiping) {
-                            toggleEditMode();
-                            if (navigator.vibrate) navigator.vibrate(50);
-                        }
-                    }, 600); // Android-style long press
-                }
-            });
-
-            el.addEventListener('click', (e) => {
-                if (!state.isEditing && !isSwiping) {
+        function handlePointerMove(e) {
+            if (!isEditing) {
+                // اضافه کردن کمی تلرانس برای لرزش دست موقع نگه داشتن آیکون
+                if (Math.abs(e.movementX) > 3 || Math.abs(e.movementY) > 3) {
                     clearTimeout(pressTimer);
-                    clearTimeout(tapTimer);
-                    tapTimer = setTimeout(() => {
-                        if (el.dataset.type === 'app' && el.dataset.url) {
-                            window.location.href = el.dataset.url;
-                        } else if (el.dataset.type === 'folder') {
-                            openFolder(el.dataset.id);
-                        }
-                    }, 250);
                 }
-            });
-
-            el.addEventListener('pointermove', (e) => {
-                if (!state.isEditing) {
-                    const diffX = Math.abs(e.clientX - startX);
-                    const diffY = Math.abs(e.clientY - startY);
-                    if (diffX > 10 || diffY > 10) {
-                        clearTimeout(longPressTimer);
-                    }
-                }
-            });
-            el.addEventListener('pointerup', (e) => {
-                clearTimeout(longPressTimer);
-            });
-        }
-
-        function updateDropPreview(x, y) {
-            const pageEl = document.querySelectorAll('.page')[state.currentPage];
-            if (!pageEl) return;
-            const preview = pageEl.querySelector('.drop-preview');
-            const pageRect = pageEl.getBoundingClientRect();
-            const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cols'));
-            const rows = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rows'));
-
-            const relativeX = x - pageRect.left;
-            const relativeY = y - pageRect.top;
-
-            let col = Math.floor(relativeX / (pageRect.width / cols));
-            col = (cols - 1) - col;
-            const row = Math.floor(relativeY / (pageRect.height / rows));
-
-            if (col >= 0 && col < cols && row >= 0 && row < rows) {
-                const cellW = pageRect.width / cols;
-                const cellH = pageRect.height / rows;
-                preview.style.display = 'block';
-                preview.style.width = `${cellW - 20}px`;
-                preview.style.height = `${cellH - 20}px`;
-                const visualCol = (cols - 1) - col;
-                preview.style.left = `${visualCol * cellW + 10}px`;
-                preview.style.top = `${row * cellH + 10}px`;
-            } else {
-                preview.style.display = 'none';
+            } else if (dragItem) {
+                moveDragging(e);
             }
         }
 
-        let throttleTimer = null;
-        function throttle(callback, time) {
-            if (throttleTimer) return;
-            throttleTimer = true;
-            setTimeout(() => {
-                callback();
-                throttleTimer = false;
-            }, time);
-        }
-
-
-        function createFolder(appId1, appId2) {
-            if (appId1.startsWith('folder_') || appId2.startsWith('folder_')) return null;
-
-            const folderId = 'folder_' + Date.now();
-            state.folders[folderId] = {
-                title: 'پوشه جدید',
-                color: 'rgba(255,255,255,0.2)',
-                appIds: [appId1, appId2]
-            };
-            saveState();
-            return folderId;
-        }
-
-        function addToFolder(appId, folderId) {
-            if (!state.folders[folderId].appIds.includes(appId)) {
-                state.folders[folderId].appIds.push(appId);
-                saveState();
-            }
-        }
-
-        let activeFolderId = null;
-        function openFolder(folderId) {
-            if (state.isEditing) return;
-            if (dragItem) return;
-            activeFolderId = folderId;
-            const folder = state.folders[folderId];
-            document.getElementById('modalOverlay').style.display = 'flex';
-            document.getElementById('folderNameInput').value = folder.title;
-            renderFolderGrid(folderId);
-        }
-
-        function renderFolderGrid(folderId) {
-            const grid = document.getElementById('folderGrid');
-            grid.innerHTML = '';
-            const folder = state.folders[folderId];
-            folder.appIds.forEach(appId => {
-                const app = state.apps.find(a => a.id === appId);
-                if (app) {
-                    const item = createItemElement({ type: 'app', data: app });
-                    grid.appendChild(item);
-                }
-            });
-        }
-
-        function closeFolder(e, noRender = false) {
-            if (e && e.target !== document.getElementById('modalOverlay')) return;
-            document.getElementById('modalOverlay').style.display = 'none';
-            activeFolderId = null;
-            if (!noRender) renderPages();
-        }
-
-        document.getElementById('folderNameInput').oninput = (e) => {
-            if (activeFolderId) {
-                state.folders[activeFolderId].title = e.target.value;
-                saveState();
-            }
-        };
-
-        document.querySelectorAll('.color-dot').forEach(dot => {
-            dot.onclick = () => {
-                if (activeFolderId) {
-                    state.folders[activeFolderId].color = dot.dataset.color;
-                    saveState();
-                    renderPages();
-                }
-            };
-        });
-
-        document.getElementById('folderColorPicker').oninput = (e) => {
-            if (activeFolderId) {
-                state.folders[activeFolderId].color = e.target.value;
-                saveState();
-                renderPages();
-            }
-        };
-
-
-        function removeFromLayout(itemId) {
-            state.orderedLayout = state.orderedLayout.filter(i => i.id !== itemId);
-            state.dockItems = state.dockItems.filter(i => i.id !== itemId);
-        }
-
-        function removeFromFolder(appId) {
-            let changed = false;
-            Object.keys(state.folders).forEach(fid => {
-                const folder = state.folders[fid];
-                const originalLength = folder.appIds.length;
-                folder.appIds = folder.appIds.filter(id => id !== appId);
-                if (folder.appIds.length !== originalLength) changed = true;
-
-                if (folder.appIds.length < 1) {
-                    delete state.folders[fid];
-                    removeFromLayout(fid);
-                }
-            });
-            if (changed) saveState();
-            return changed;
-        }
-
-        function openSettings() {
-            document.getElementById('settingsPanel').classList.add('open');
-        }
-
-        function closeSettings() {
-            document.getElementById('settingsPanel').classList.remove('open');
-            saveState();
-            renderPages();
-        }
-
-        document.getElementById('iconScaleSlider').oninput = (e) => {
-            state.iconSize = parseInt(e.target.value);
-            document.documentElement.style.setProperty('--icon-size', `${state.iconSize}px`);
-        };
-
-        document.getElementById('freeModeToggle').onchange = (e) => {
-            state.freeMode = e.target.checked;
-        };
-
-        function toggleEditMode() {
-            // Cancel any pending navigation when entering edit mode
-            clearTimeout(tapTimer);
-            state.isEditing = !state.isEditing;
-            document.body.classList.toggle('editing', state.isEditing);
-
-            // Toggle grid overlay visibility immediately for smoother transition
-            document.querySelectorAll('.grid-overlay').forEach(ov => {
-                ov.style.opacity = state.isEditing ? '0.5' : '0';
-            });
-
+        function enterEditMode() {
+            isEditing = true;
+            document.body.classList.add('editing');
             if (navigator.vibrate) navigator.vibrate(100);
-            renderPages();
-        }
-        loadState();
-        renderPages(true);
 
-        // --- مدیریت سرویس ورکر و همگام‌سازی ---
+            const exitHandler = (e) => {
+                if (!e.target.closest('.app-card')) {
+                    exitEditMode();
+                    window.removeEventListener('pointerdown', exitHandler);
+                }
+            };
+            window.addEventListener('pointerdown', exitHandler);
+        }
+
+        function exitEditMode() {
+            isEditing = false;
+            document.body.classList.remove('editing');
+            saveOrder();
+        }
+
+        function saveOrder() {
+            const currentOrder = Array.from(grid.children).map(card => {
+                const appId = card.dataset.id;
+                return apps.find(a => a.id === appId);
+            }).filter(Boolean);
+
+            if (currentOrder.length > 0) {
+                localStorage.setItem('portal_app_order', JSON.stringify(currentOrder));
+                apps = currentOrder;
+            }
+        }
+
+        function startDragging(e) {
+            startDraggingManual(e.currentTarget, e.pointerId);
+        }
+
+        function startDraggingManual(element, pointerId) {
+            dragItem = element;
+            dragItem.classList.add('dragging');
+            dragItem.setPointerCapture(pointerId);
+        }
+
+        function moveDragging(e) {
+            if (!dragItem) return;
+            const afterElement = getDragAfterElement(grid, e.clientX, e.clientY);
+            if (afterElement == null) {
+                grid.appendChild(dragItem);
+            } else {
+                grid.insertBefore(dragItem, afterElement);
+            }
+        }
+
+        function stopDragging(e) {
+            if (!dragItem) return;
+            dragItem.classList.remove('dragging');
+            dragItem.releasePointerCapture(e.pointerId);
+            dragItem = null;
+            saveOrder();
+        }
+
+        function getDragAfterElement(container, x, y) {
+            const draggableElements = [...container.querySelectorAll('.app-card:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const centerX = box.left + box.width / 2;
+                const centerY = box.top + box.height / 2;
+                const distance = Math.hypot(x - centerX, y - centerY);
+
+                if (distance < closest.distance) {
+                    return { distance: distance, element: child };
+                } else {
+                    return closest;
+                }
+            }, { distance: 1000 }).element; // Limit distance to prevent jumping
+        }
+
+        renderApps();
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -1239,62 +466,7 @@
                     .catch(err => console.error('SW registration failed:', err));
             });
         }
-
-        async function handleSync() {
-            const btn = document.getElementById('syncButton');
-            const toast = document.getElementById('toast');
-
-            if (btn.classList.contains('loading')) return;
-
-            if (!navigator.onLine) {
-                const jokes = [
-                    "اینترنت قطعه عزیز! با کبوتر باوفا برات آپدیت بیارم؟ 🕊️",
-                    "الان حتی مودمت هم خوابیده، اصرار نکن... 💤",
-                    "بدون اینترنت؟ مگه جادوگری؟ اول وصل شو بعداً بزن! ✨",
-                    "سیگنال نیست... داری با روح عمارت بازی می‌کنی؟ 👻"
-                ];
-                showToast(jokes[Math.floor(Math.random() * jokes.length)]);
-                return;
-            }
-
-            btn.classList.add('loading');
-            showToast("در حال نوسازی عمارت... طاقت بیار! 🏗️");
-
-            try {
-                if ('serviceWorker' in navigator) {
-                    const registration = await navigator.serviceWorker.getRegistration();
-                    if (registration) {
-                        await registration.update();
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
-                    } else {
-                        window.location.reload();
-                    }
-                } else {
-                    window.location.reload();
-                }
-            } catch (err) {
-                console.error("Update failed:", err);
-                btn.classList.remove('loading');
-                showToast("یه مشکلی پیش اومد، ولی بیخیال، دوباره امتحان کن!");
-            }
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.innerText = message;
-            toast.style.display = 'block';
-
-            // بازنشانی انیمیشن
-            toast.style.animation = 'none';
-            toast.offsetHeight; /* trigger reflow */
-            toast.style.animation = null;
-
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 3000);
-        }
     </script>
+
 </body>
 </html>
