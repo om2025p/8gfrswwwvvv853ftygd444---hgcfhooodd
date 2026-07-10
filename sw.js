@@ -1,8 +1,9 @@
-const CACHE_NAME = 'emarat-portal-v6';
+const CACHE_NAME = 'emarat-portal-v7';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './cloud-sync.js',
   './icon-192.png',
   './icon-512.png',
   './icon-192-maskable.png',
