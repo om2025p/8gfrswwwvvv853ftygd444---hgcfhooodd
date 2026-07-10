@@ -1,6 +1,6 @@
 {
   "name": "محاسبه گر سود",
-  "short_name": "سود",
+  "short_name": "محاسبه‌گر سود",
   "description": "ماشین حساب جامع سود مرکب و محاسبات مالی",
   "start_url": "index.html",
   "display": "standalone",
