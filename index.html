@@ -448,6 +448,19 @@
 
         renderApps();
 
+        // فعال‌سازی سپر پایداری داده‌ها (Persistent Storage) برای بیمه کردن LocalStorage و داده‌ها
+        if (navigator.storage && navigator.storage.persist) {
+            navigator.storage.persist().then(granted => {
+                if (granted) {
+                    console.log('Persistent storage granted successfully!');
+                } else {
+                    console.log('Persistent storage request was not granted yet.');
+                }
+            }).catch(err => {
+                console.error('Error requesting persistent storage:', err);
+            });
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 // پاکسازی سرویس ورکرهای قدیمی از زیرپوشه‌ها برای جلوگیری از تداخل
