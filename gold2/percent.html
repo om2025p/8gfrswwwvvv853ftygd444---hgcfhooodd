@@ -460,6 +460,7 @@
                 <button onclick="backupData()">💾 ذخیره</button>
                 <button onclick="exportToCSV()">📊 خروجی CSV</button>
                 <button onclick="document.getElementById('fileInput').click()">📤 بازیابی</button>
+                <button onclick="openGithubSettings()" style="background-color: #24292e;">⚙️ گیت‌هاب</button>
             </div>
 
             <div class="trash-container" id="trashContainer" style="display: none;">
@@ -473,6 +474,33 @@
             <input type="file" id="fileInput" style="display:none;" onchange="recoveryData(event)">
         </div>
     </div>
+
+<!-- GitHub Settings Modal -->
+<div id="githubSettingsModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.6); backdrop-filter:blur(5px); justify-content:center; align-items:center;">
+    <div style="background-color:#fff; color:#333; margin:auto; padding:20px; border-radius:15px; width:90%; max-width:450px; box-shadow:0 5px 15px rgba(0,0,0,0.3); direction:rtl; font-family:Tahoma,sans-serif;">
+        <h3 style="margin-top:0; color:#2196F3; text-align:center;">⚙️ تنظیمات پشتیبان‌گیری در گیت‌هاب</h3>
+        <p style="font-size:12px; color:#666; line-height:1.6; margin-bottom:15px; text-align:justify;">
+            با فعال‌سازی این بخش، با هر بار زدن دکمه‌ی «ذخیره»، اطلاعات شما علاوه بر ذخیره در فایل محلی، به صورت خودکار به مخزن گیت‌هاب شخصی شما ارسال می‌شود. این اطلاعات فقط در مرورگر شما ذخیره می‌شوند و ۱۰۰٪ امن هستند.
+        </p>
+
+        <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; text-align:right;">🔑 توکن شخصی گیت‌هاب (PAT):</label>
+        <input type="password" id="gh_token" placeholder="ghp_..." style="width:100%; padding:10px; border:2px solid #ddd; border-radius:8px; margin-bottom:12px; font-family:monospace; direction:ltr; box-sizing:border-box;">
+
+        <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; text-align:right;">📦 مالک و نام مخزن (Owner/Repo):</label>
+        <input type="text" id="gh_repo" placeholder="username/repository-name" style="width:100%; padding:10px; border:2px solid #ddd; border-radius:8px; margin-bottom:12px; font-family:monospace; direction:ltr; box-sizing:border-box;">
+
+        <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; text-align:right;">🌿 نام شاخه (Branch):</label>
+        <input type="text" id="gh_branch" placeholder="main (پیش‌فرض)" style="width:100%; padding:10px; border:2px solid #ddd; border-radius:8px; margin-bottom:12px; font-family:monospace; direction:ltr; box-sizing:border-box;">
+
+        <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; text-align:right;">📁 مسیر ذخیره فایل در مخزن (File Path):</label>
+        <input type="text" id="gh_filepath" placeholder="backups/gold2_backup.json" style="width:100%; padding:10px; border:2px solid #ddd; border-radius:8px; margin-bottom:15px; font-family:monospace; direction:ltr; box-sizing:border-box;">
+
+        <div style="display:flex; gap:10px;">
+            <button onclick="saveGithubSettings()" style="flex:1; padding:10px; border:none; border-radius:8px; background-color:#4CAF50; color:white; cursor:pointer; font-weight:bold;">💾 ذخیره تنظیمات</button>
+            <button onclick="closeGithubSettings()" style="flex:1; padding:10px; border:none; border-radius:8px; background-color:#f44336; color:white; cursor:pointer; font-weight:bold;">✖️ انصراف</button>
+        </div>
+    </div>
+</div>
 
     <div id="chartPage" class="page">
         <div class="container">
@@ -804,9 +832,87 @@
 
         function clearTrash() { trash = []; updateUI(); saveData(); }
 
-        function backupData() {
+        async function uploadToGitHub(contentString, fileName) {
+            const token = localStorage.getItem("github_backup_token");
+            const repo = localStorage.getItem("github_backup_repo");
+            const branch = localStorage.getItem("github_backup_branch") || "main";
+            let filePath = localStorage.getItem("github_backup_filepath");
+
+            if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست." };
+
+            if (!filePath) {
+                filePath = `backups/${fileName}`;
+            } else if (filePath.endsWith("/")) {
+                filePath += fileName;
+            }
+
+            const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
+            const headers = {
+                "Authorization": `token ${token}`,
+                "Accept": "application/vnd.github.v3+json"
+            };
+
+            try {
+                let sha = null;
+                try {
+                    const checkRes = await fetch(`${url}?ref=${branch}`, { headers });
+                    if (checkRes.status === 200) {
+                        const fileData = await checkRes.json();
+                        sha = fileData.sha;
+                    }
+                } catch (e) {}
+
+                const base64Content = btoa(unescape(encodeURIComponent(contentString)));
+                const body = {
+                    message: `بکاپ خودکار برنامه - ${new Date().toLocaleString('fa-IR')}`,
+                    content: base64Content,
+                    branch: branch
+                };
+                if (sha) body.sha = sha;
+
+                const putRes = await fetch(url, {
+                    method: "PUT",
+                    headers: { ...headers, "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                });
+
+                return putRes.ok ? { success: true } : { success: false, message: "خطا در آپلود به API گیت‌هاب" };
+            } catch (err) {
+                return { success: false, message: err.message };
+            }
+        }
+
+        function openGithubSettings() {
+            document.getElementById("githubSettingsModal").style.display = "flex";
+            document.getElementById("gh_token").value = localStorage.getItem("github_backup_token") || "";
+            document.getElementById("gh_repo").value = localStorage.getItem("github_backup_repo") || "";
+            document.getElementById("gh_branch").value = localStorage.getItem("github_backup_branch") || "";
+            document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "backups/gold2_backup.json";
+        }
+
+        function closeGithubSettings() {
+            document.getElementById("githubSettingsModal").style.display = "none";
+        }
+
+        function saveGithubSettings() {
+            const token = document.getElementById("gh_token").value.trim();
+            const repo = document.getElementById("gh_repo").value.trim();
+            const branch = document.getElementById("gh_branch").value.trim();
+            const filepath = document.getElementById("gh_filepath").value.trim();
+
+            localStorage.setItem("github_backup_token", token);
+            localStorage.setItem("github_backup_repo", repo);
+            localStorage.setItem("github_backup_branch", branch || "main");
+            localStorage.setItem("github_backup_filepath", filepath || "backups/gold2_backup.json");
+
+            alert("✅ تنظیمات گیت‌هاب با موفقیت ذخیره شد!");
+            closeGithubSettings();
+        }
+
+        async function backupData() {
             const data = { percents, trash, goal, highlightedStates, highlightedPointIndices, investmentValue, notes, version: 3.0, timestamp: Date.now() };
-            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            const dataStr = JSON.stringify(data);
+            const blob = new Blob([dataStr], { type: 'application/json' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             const now = new Date();
@@ -814,6 +920,27 @@
             link.download = `kian-fixed-income-backup-${timestamp}.json`;
             link.click();
             setTimeout(() => URL.revokeObjectURL(link.href), 100);
+
+            // همگام‌سازی فوری با ابر
+            if (window.parent && window.parent.EmaratCloudSync) {
+                window.parent.EmaratCloudSync.push();
+            } else if (window.EmaratCloudSync) {
+                window.EmaratCloudSync.push();
+            }
+
+            // پشتیبان‌گیری در گیت‌هاب شخصی
+            const token = localStorage.getItem("github_backup_token");
+            if (token) {
+                const fileName = `kian-fixed-income-backup-${timestamp}.json`;
+                setTimeout(async () => {
+                    const result = await uploadToGitHub(dataStr, fileName);
+                    if (result.success) {
+                        alert("✅ پشتیبان‌گیری با موفقیت به گیت‌هاب ارسال شد!");
+                    } else {
+                        alert("❌ خطا در ارسال به گیت‌هاب: " + result.message);
+                    }
+                }, 200);
+            }
         }
 
         function recoveryData(event) {

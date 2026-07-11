@@ -56,8 +56,8 @@
                 if (cloudBackup && cloudBackup.timestamp && cloudBackup.data) {
                     const localTimestamp = parseInt(localStorage.getItem('emarat_last_modified')) || 0;
 
-                    // اگر حافظه محلی کاملاً خالی است (داده‌ها پاک شده‌اند) یا بکاپ ابری جدیدتر است
-                    const isLocalEmpty = localStorage.length <= 1; // فقط کلید emarat_last_modified باشد یا کلا خالی
+                    // اگر حافظه محلی کاملاً خالی است یا بکاپ ابری جدیدتر است
+                    const isLocalEmpty = localStorage.length <= 2; // فقط کلید emarat_last_modified یا emarat_sync_counter باشد یا کلا خالی
 
                     if (isLocalEmpty || cloudBackup.timestamp > localTimestamp) {
                         console.log("Newer backup found! Restoring data...");
@@ -110,9 +110,9 @@
 
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key !== 'emarat_last_modified') {
+            if (key !== 'emarat_last_modified' && key !== 'emarat_sync_counter') {
                 // چک کردن برای کلیدهای مهم برنامه (ورزش، طلا، درصدها، چیدمان پرتال و سود)
-                if (key.includes('workout') || key.includes('gold') || key.includes('portal') || key.includes('percent') || key.includes('trash') || key.includes('goal')) {
+                if (key.includes('workout') || key.includes('gold') || key.includes('portal') || key.includes('percent') || key.includes('trash') || key.includes('goal') || key.includes('kian_') || key.includes('percents') || key.includes('highlighted')) {
                     hasRealData = true;
                 }
                 keysToBackup[key] = localStorage.getItem(key);
@@ -148,27 +148,47 @@
         }
     }
 
-    // اجرای اولین هماهنگ‌سازی زمان بالا آمدن صفحه
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', pullFromCloud);
-    } else {
-        pullFromCloud();
+    // تابع برای افزایش شمارنده ورود/خروج و چک کردن زمان سینک (هر ۳ بار)
+    function incrementAndCheckSync() {
+        let counter = parseInt(localStorage.getItem('emarat_sync_counter')) || 0;
+        counter++;
+        console.log("Session event detected. Current counter:", counter);
+        if (counter >= 3) {
+            console.log("Sync counter reached 3. Triggering cloud push...");
+            pushToCloud();
+            counter = 0;
+        }
+        localStorage.setItem('emarat_sync_counter', counter);
     }
 
-    // بکاپ‌گیری دوره‌ای هر ۱۰ ثانیه در پس‌زمینه در صورت کار با برنامه
-    setInterval(() => {
-        pushToCloud();
-    }, 10000);
+    // اجرای اولین هماهنگ‌سازی زمان بالا آمدن صفحه و افزایش شمارشگر
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            pullFromCloud().then(() => {
+                incrementAndCheckSync();
+            });
+        });
+    } else {
+        pullFromCloud().then(() => {
+            incrementAndCheckSync();
+        });
+    }
 
-    // بکاپ‌گیری اضطراری هنگام خروج از صفحه یا بستن تب
+    // بکاپ‌گیری اضطراری و افزایش شمارشگر هنگام خروج از صفحه یا بستن تب
     window.addEventListener('beforeunload', () => {
-        pushToCloud();
+        incrementAndCheckSync();
     });
 
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
-            pushToCloud();
+            incrementAndCheckSync();
         }
     });
+
+    // اکسپورت توابع به محیط گلوبال جهت فراخوانی دستی بعد از عملیات حساس
+    window.EmaratCloudSync = {
+        push: pushToCloud,
+        pull: pullFromCloud
+    };
 
 })();
