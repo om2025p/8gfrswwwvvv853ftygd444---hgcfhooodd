@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v7';
+const CACHE_NAME = 'emarat-portal-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -75,11 +75,32 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// استراتژی Cache First برای لود آفلاین
+// استراتژی Stale-While-Revalidate برای لود فوق‌سریع همراه با به‌روزرسانی پس‌زمینه
 self.addEventListener('fetch', (event) => {
+  // فقط درخواست‌های GET با پروتکل‌های محلی کنترل می‌شوند
+  if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+  // کش کردن فقط برای مبدا خود برنامه (فایل‌های محلی)
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.match(event.request).then((cachedResponse) => {
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        }).catch(() => {
+          // خطا در شبکه (مثلا آفلاین بودن) - خطای fetch ساکت می‌شود تا از مقدار کش استفاده شود
+        });
+
+        // اگر در کش بود فوراً پاسخ بده، در غیر این صورت منتظر پاسخ شبکه بمان
+        return cachedResponse || fetchPromise;
+      });
     })
   );
 });
