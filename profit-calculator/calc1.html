@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>ماشین حساب سود مرکب | نسخه نهایی جامع</title>
+    <title>ماشین حساب سود مرکب | نسخه شب/روز + محاسبه دوره هدف</title>
     <style>
         * {
             box-sizing: border-box;
@@ -21,6 +21,8 @@
             --text-secondary: #666666;
             --border: #dddddd;
             --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.4);
         }
 
         [data-theme="dark"] {
@@ -31,6 +33,8 @@
             --text: #ffffff;
             --text-secondary: #b0b0b0;
             --border: #333333;
+            --glass-bg: rgba(30, 30, 30, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.2);
         }
 
         body {
@@ -172,14 +176,17 @@
             background: rgba(0, 0, 0, 0.3);
         }
 
+        /* شیشه‌ای کردن منوی کشویی */
         .dropdown-menu {
             position: absolute;
             top: 50px;
             left: 10px;
-            background: var(--surface);
-            border: 1px solid var(--primary);
-            border-radius: 12px;
-            box-shadow: var(--card-shadow);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
             z-index: 100;
             display: none;
             flex-direction: column;
@@ -201,7 +208,8 @@
             font-size: 14px;
             font-weight: 500;
             color: var(--text);
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.05);
         }
 
         .menu-item:last-child {
@@ -209,7 +217,7 @@
         }
 
         .menu-item:hover {
-            background: rgba(0, 200, 83, 0.1);
+            background: rgba(0, 200, 83, 0.2);
         }
 
         .menu-item:active {
@@ -448,6 +456,158 @@
             border: 1px solid rgba(255,255,255,0.3);
         }
 
+        /* ابزارهای تب خلاصه */
+        .tools-section {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+        }
+        .theme-btn-glass {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 40px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 200, 83, 0.2);
+        }
+        .theme-btn-glass:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        /* آکاردئون مدرن و شیک برای سود هدف */
+        .accordion-item {
+            border: 1px dashed var(--primary);
+            border-radius: 16px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] .accordion-item {
+            background: rgba(255, 255, 255, 0.01);
+            border-color: rgba(0, 200, 83, 0.4);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .accordion-toggle {
+            width: 100%;
+            background: none;
+            color: var(--text);
+            padding: 14px 18px;
+            font-size: 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            text-align: right;
+            transition: all 0.3s ease;
+        }
+
+        .accordion-toggle:hover {
+            background: rgba(0, 200, 83, 0.08);
+        }
+
+        .accordion-icon {
+            font-size: 14px;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: var(--primary);
+            display: inline-block;
+        }
+
+        .accordion-item.active {
+            border-style: solid;
+            box-shadow: 0 8px 30px rgba(0, 200, 83, 0.15);
+        }
+
+        .accordion-item.active .accordion-icon {
+            transform: rotate(-180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .goal-section {
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            background: rgba(0, 200, 83, 0.02);
+            border-radius: 0 0 16px 16px;
+        }
+        .goal-section label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .goal-input-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .goal-input-group input {
+            flex: 2;
+            min-width: 100px;
+            margin: 0;
+            border-radius: 10px;
+        }
+        .goal-input-group button {
+            flex: 1;
+            background: var(--primary);
+            color: #000;
+            border-radius: 10px;
+            padding: 12px;
+            transition: all 0.3s ease;
+        }
+        .goal-input-group button:hover {
+            background: var(--primary-dark);
+        }
+        .period-result-text {
+            margin-top: 12px;
+            font-size: 14px;
+            background: rgba(0,200,83,0.08);
+            border: 1px solid rgba(0, 200, 83, 0.2);
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .apply-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .apply-buttons button {
+            flex: 1;
+            background: #444;
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        .apply-buttons button:hover {
+            background: #555;
+            transform: translateY(-1px);
+        }
+
         @media (max-width: 640px) {
             .table-wrapper th,
             .table-wrapper td {
@@ -489,7 +649,28 @@
         </div>
         <div class="content">
             <div id="pane0" class="pane active">
-                <div id="displayArea">
+                <div class="tools-section">
+                    <button id="themeTogglePaneBtn" class="theme-btn-glass">🌙 تم شب</button>
+                    <div class="accordion-item">
+                        <button class="accordion-toggle" id="goalAccordionToggle">
+                            <span>🎯 محاسبه دوره سود هدف</span>
+                            <span class="accordion-icon">▼</span>
+                        </button>
+                        <div class="accordion-content" id="goalAccordionContent">
+                            <div class="goal-section">
+                                <label>🎯 درصد سود هدف (کل):</label>
+                                <div class="goal-input-group">
+                                    <input type="text" id="goalPercentInput" placeholder="مثال: 1000" inputmode="decimal">
+                                    <button id="calcPeriodsNeededBtn">محاسبه دوره لازم</button>
+                                </div>
+                                <div id="periodResultDisplay" class="period-result-text">
+                                    <!-- نتیجه محاسبه اینجا نمایش داده می‌شود -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="resultArea">
                     <p class="empty-msg">اعداد را وارد کنید و دکمه محاسبه را بزنید.</p>
                 </div>
             </div>
@@ -497,7 +678,7 @@
                 <div class="table-wrapper">
                     <table id="dataTable">
                         <thead><tr><th>دوره</th><th>سرمایه اولیه</th><th>سود دوره</th><th>سرمایه نهایی</th></tr></thead>
-                        <tbody id="tableBody"><tr><td colspan="4">هنوز محاسبه‌ای نشده<\/td></tr></tbody>
+                        <tbody id="tableBody"><tr><td colspan="4">هنوز محاسبه‌ای نشده</td></tr></tbody>
                     </table>
                 </div>
                 <button id="exportCurrentBtn" class="export-current-btn">خروجی HTML تعاملی (همین محاسبه)</button>
@@ -518,14 +699,33 @@
             const inpRate = document.getElementById('inpRate');
             const inpCycle = document.getElementById('inpCycle');
             const unitBtn = document.getElementById('unitBtn');
-            const displayArea = document.getElementById('displayArea');
+            const resultArea = document.getElementById('resultArea');
             const tableBody = document.getElementById('tableBody');
             const historyList = document.getElementById('historyList');
             const calcBtn = document.getElementById('calcBtn');
             const exportCurrentBtn = document.getElementById('exportCurrentBtn');
 
+            const themeTogglePaneBtn = document.getElementById('themeTogglePaneBtn');
+            const goalPercentInput = document.getElementById('goalPercentInput');
+            const calcPeriodsNeededBtn = document.getElementById('calcPeriodsNeededBtn');
+            const periodResultDisplay = document.getElementById('periodResultDisplay');
+
+            const goalAccordionToggle = document.getElementById('goalAccordionToggle');
+            const accordionItem = goalAccordionToggle.closest('.accordion-item');
+            const goalAccordionContent = document.getElementById('goalAccordionContent');
+
             let amountBox = null;
             let simpleTooltip = null;
+
+            // کنش باز و بسته کردن آکاردئون با افکت ارتفاع متحرک
+            goalAccordionToggle.onclick = () => {
+                const isActive = accordionItem.classList.toggle('active');
+                if (isActive) {
+                    goalAccordionContent.style.maxHeight = goalAccordionContent.scrollHeight + "px";
+                } else {
+                    goalAccordionContent.style.maxHeight = "0";
+                }
+            };
 
             // ========== تبدیل عدد به حروف ==========
             function numberToWordsTomans(num) {
@@ -830,8 +1030,8 @@
                 if (isNaN(init) || isNaN(rateP) || isNaN(cycles) || cycles <= 0) {
                     if (!updateOnly) alert("لطفاً مقادیر معتبر وارد کنید.");
                     if (!updateOnly) {
-                        displayArea.innerHTML = `<p class="empty-msg">مقادیر ورودی نامعتبر است.</p>`;
-                        tableBody.innerHTML = `<tr><td colspan="4">لطفاً اعداد معتبر وارد کنید<\/td></tr>`;
+                        resultArea.innerHTML = `<p class="empty-msg">مقادیر ورودی نامعتبر است.</p>`;
+                        tableBody.innerHTML = `<tr><td colspan="4">لطفاً اعداد معتبر وارد کنید</td></tr>`;
                     }
                     return;
                 }
@@ -851,7 +1051,7 @@
                     finalFormatted: formatNumberForDisplay(finalAmount)
                 };
 
-                displayArea.innerHTML = `
+                resultArea.innerHTML = `
                     <div class="res-card" id="resCard">
                         <div class="res-item"><span class="res-label">سرمایه اولیه</span><div class="res-val">${fmt(init)}</div></div>
                         <div class="res-item"><span class="res-label">سود کل (مرکب)</span><div class="res-val profit-highlight">${fmt(totalProfit)}</div></div>
@@ -873,9 +1073,9 @@
                     const profit = cur * rate;
                     const prev = cur;
                     cur += profit;
-                    rows += `<tr><td class="period-cell" data-period="${i}">${i}<\/td><td>${fmt(prev)}<\/td><td>${fmt(profit)}<\/td><td>${fmt(cur)}<\/td><\/tr>`;
+                    rows += `<tr><td class="period-cell" data-period="${i}">${i}</td><td>${fmt(prev)}</td><td>${fmt(profit)}</td><td>${fmt(cur)}</td></tr>`;
                 }
-                if (cycles > limit) rows += `<tr><td colspan="4" style="color:orange;">تعداد دوره بیشتر از ${limit} است. فقط ${limit} دوره اول نمایش داده شده.<\/td><\/tr>`;
+                if (cycles > limit) rows += `<tr><td colspan="4" style="color:orange;">تعداد دوره بیشتر از ${limit} است. فقط ${limit} دوره اول نمایش داده شده.</td></tr>`;
                 tableBody.innerHTML = rows;
 
                 attachPeriodTooltips();
@@ -891,6 +1091,77 @@
                     localStorage.setItem('calc_history_v3', JSON.stringify(historyData));
                     renderHistory();
                 }
+            }
+
+            function calculateRequiredPeriods() {
+                let rawRate = fixNumbers(inpRate.value).replace(/,/g, '');
+                let rateP = parseFloat(rawRate);
+                let targetPercentRaw = fixNumbers(goalPercentInput.value).replace(/,/g, '');
+                let targetPercent = parseFloat(targetPercentRaw);
+
+                if (isNaN(rateP) || rateP <= 0) {
+                    periodResultDisplay.innerHTML = "⚠️ لطفاً ابتدا نرخ سود هر دوره را وارد کنید.";
+                    // اگر آکاردئون باز است، ارتفاع آن را بر اساس محتوای جدید به‌روزرسانی می‌کنیم
+                    if (accordionItem.classList.contains('active')) {
+                        goalAccordionContent.style.maxHeight = goalAccordionContent.scrollHeight + "px";
+                    }
+                    return;
+                }
+                if (isNaN(targetPercent) || targetPercent <= 0) {
+                    periodResultDisplay.innerHTML = "⚠️ درصد هدف معتبر وارد کنید (مثلاً 1000 برای ۱۰۰۰٪ سود).";
+                    if (accordionItem.classList.contains('active')) {
+                        goalAccordionContent.style.maxHeight = goalAccordionContent.scrollHeight + "px";
+                    }
+                    return;
+                }
+
+                let simplePeriods = targetPercent / rateP;
+                let simplePeriodsRounded = Math.ceil(simplePeriods);
+
+                const targetMultiplier = 1 + (targetPercent / 100);
+                const rateDecimal = rateP / 100;
+                let compoundPeriods = Math.log(targetMultiplier) / Math.log(1 + rateDecimal);
+                let compoundPeriodsRounded = Math.ceil(compoundPeriods);
+
+                let resultHtml = `
+                    <div style="direction:rtl; text-align:center;">
+                        🎯 برای رسیدن به <strong>${targetPercent}%</strong> سود کل با نرخ <strong>${rateP}%</strong> در هر دوره:
+                        <br><br>
+                        📌 <span style="color:var(--primary);">سود ساده</span> → <strong>${simplePeriodsRounded}</strong> دوره<br>
+                        <small>(${simplePeriods.toFixed(2)} دوره دقیق)</small><br><br>
+                        ✨ <span style="color:var(--primary);">سود مرکب</span> → <strong>${compoundPeriodsRounded}</strong> دوره<br>
+                        <small>(${compoundPeriods.toFixed(2)} دوره دقیق)</small>
+                    </div>
+                `;
+                periodResultDisplay.innerHTML = resultHtml;
+
+                const applyDiv = document.createElement('div');
+                applyDiv.className = 'apply-buttons';
+                applyDiv.innerHTML = `
+                    <button id="applySimpleBtn" class="apply-simple">➕ اعمال سود ساده (${simplePeriodsRounded} دوره)</button>
+                    <button id="applyCompoundBtn" class="apply-compound">✨ اعمال سود مرکب (${compoundPeriodsRounded} دوره)</button>
+                `;
+                const oldApply = periodResultDisplay.querySelector('.apply-buttons');
+                if (oldApply) oldApply.remove();
+                periodResultDisplay.appendChild(applyDiv);
+
+                // به‌روزرسانی ارتفاع آکاردئون برای جا دادن دکمه‌های جدید و دوری از بریده شدن محتوا
+                if (accordionItem.classList.contains('active')) {
+                    goalAccordionContent.style.maxHeight = goalAccordionContent.scrollHeight + "px";
+                }
+
+                document.getElementById('applySimpleBtn')?.addEventListener('click', () => {
+                    inpCycle.value = simplePeriodsRounded;
+                    saveInputs();
+                    calculate(false);
+                    showToast(`تعداد دوره به ${simplePeriodsRounded} تغییر کرد (بر اساس سود ساده)`, true);
+                });
+                document.getElementById('applyCompoundBtn')?.addEventListener('click', () => {
+                    inpCycle.value = compoundPeriodsRounded;
+                    saveInputs();
+                    calculate(false);
+                    showToast(`تعداد دوره به ${compoundPeriodsRounded} تغییر کرد (بر اساس سود مرکب)`, true);
+                });
             }
 
             function renderHistory() {
@@ -927,7 +1198,6 @@
                 renderHistory();
             };
 
-            // ========== فایل خروجی HTML تعاملی کامل ==========
             function generateInteractiveHTML(initialValue, ratePercent, cycles, isInputInToman, uniqueId) {
                 let initialUSD = isInputInToman ? (initialValue / 50000) : initialValue;
                 let periods = [];
@@ -1255,7 +1525,6 @@
         let currencyIndex = isTomanModeInitial ? 1 : 0;
         const currencyNames = ["$", "تومان", "ریال"];
 
-        // ========== توابع کمکی ==========
         function formatDuration(ms) {
             if (!ms) return "—";
             let totalSeconds = Math.floor(ms / 1000);
@@ -1453,7 +1722,6 @@
             updateStatsUI();
         }
 
-        // ========== رویدادها ==========
         document.getElementById("themeToggleBtn").addEventListener("click", () => {
             const currentTheme = document.documentElement.getAttribute("data-theme");
             if (currentTheme === "dark") {
@@ -1488,7 +1756,6 @@
         document.getElementById("resetBtn").addEventListener("click", resetAllChecks);
         document.getElementById("exportReportBtn").addEventListener("click", copyReport);
 
-        // تغییر عنوان
         const titleEditor = document.getElementById("titleEditor");
         titleEditor.addEventListener("blur", function() {
             if (!this.innerText.trim()) this.innerText = "📊 گزارش سود مرکب";
@@ -1544,9 +1811,35 @@
                 if (inpInv.value && inpRate.value && inpCycle.value) calculate(true);
             }
 
+            function initTheme() {
+                const root = document.documentElement;
+                const isDark = localStorage.getItem('theme_mode') === 'dark';
+                if (isDark) {
+                    root.setAttribute('data-theme', 'dark');
+                    themeTogglePaneBtn.innerHTML = '☀️ تم روشن';
+                } else {
+                    root.removeAttribute('data-theme');
+                    themeTogglePaneBtn.innerHTML = '🌙 تم شب';
+                }
+            }
+            function toggleTheme() {
+                const root = document.documentElement;
+                if (root.hasAttribute('data-theme')) {
+                    root.removeAttribute('data-theme');
+                    localStorage.setItem('theme_mode', 'light');
+                    themeTogglePaneBtn.innerHTML = '🌙 تم شب';
+                } else {
+                    root.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme_mode', 'dark');
+                    themeTogglePaneBtn.innerHTML = '☀️ تم روشن';
+                }
+            }
+
             calcBtn.onclick = () => calculate(false);
             exportCurrentBtn.onclick = () => window.exportCurrentAsInteractive();
             unitBtn.onclick = () => toggleUnit();
+            themeTogglePaneBtn.onclick = () => toggleTheme();
+            calcPeriodsNeededBtn.onclick = () => calculateRequiredPeriods();
 
             [inpInv, inpRate, inpCycle].forEach(inp => {
                 inp.addEventListener('input', function (e) {
@@ -1581,6 +1874,7 @@
             renderHistory();
             initAmountBox();
             initSimpleTooltip();
+            initTheme();
         })();
     </script>
 </body>
