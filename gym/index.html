@@ -966,33 +966,40 @@
     // =======================================================
     const defaultWorkoutData = {
         heavy: [
-            { id: 1, name: "پرش پروانه", target: 2, unit: "ثانیه" },
-            { id: 2, name: "اسکات با دمبل ۱۰ کیلویی رو به سینه", target: 2, unit: "تکرار" },
-            { id: 3, name: "پل باسن با دمبل ۱۰ کیلویی", target: 3, unit: "تکرار" },
-            { id: 4, name: "لانجز معکوس (با یا بدون دمبل)", target: 1, unit: "تکرار", side: true },
-            { id: 5, name: "کیک‌بک باسن (دمبل پشت زانو)", target: 1, unit: "تکرار", side: true },
-            { id: 6, name: "ددلیفت رومانیایی با دمبل ۱۰ کیلویی", target: 2, unit: "تکرار" },
-            { id: 7, name: "شنا سوئدی روی زانو", target: 1, unit: "تکرار" },
-            { id: 8, name: "زیربغل دمبل خم یک‌دست", target: 1, unit: "تکرار", side: true },
-            { id: 9, name: "دمبل چکشی جلو بازو ۱۰ کیلویی", target: 1, unit: "تکرار", side: true },
-            { id: 10, name: "پلانک ثابت حرفه‌ای (۳ ست)", target: 2, unit: "ثانیه" }
+            { id: 1, name: "پرش پروانه", target: 75, unit: "ثانیه" },
+            { id: 2, name: "اسکات با دمبل ۱۰ کیلویی رو به سینه", target: 15, unit: "تکرار" },
+            { id: 3, name: "پل باسن با دمبل ۱۰ کیلویی", target: 20, unit: "تکرار" },
+            { id: 4, name: "لانجز معکوس (با یا بدون دمبل)", target: 9, unit: "تکرار", side: true },
+            { id: 5, name: "کیک‌بک باسن (دمبل پشت زانو)", target: 20, unit: "تکرار", side: true },
+            { id: 6, name: "ددلیفت رومانیایی با دمبل ۱۰ کیلویی", target: 10, unit: "تکرار" },
+            { id: 7, name: "شنا سوئدی روی زانو", target: 30, unit: "تکرار" },
+            { id: 8, name: "زیربغل دمبل خم یک‌دست", target: 10, unit: "تکرار", side: true },
+            { id: 9, name: "دمبل چکشی جلو بازو ۱۰ کیلویی", target: 16, unit: "تکرار", side: true },
+            { id: 10, name: "پلانک ثابت حرفه‌ای (۳ ست)", target: 75, unit: "ثانیه" }
         ],
         light: [
-            { id: 1, name: "پرش پروانه", target: 1, unit: "ثانیه" },
-            { id: 2, name: "اسکات با دمبل ۱۰ کیلویی رو به سینه", target: 1, unit: "تکرار" },
-            { id: 3, name: "پل باسن با دمبل ۱۰ کیلویی", target: 2, unit: "تکرار" },
-            { id: 4, name: "لانجز معکوس (با یا بدون دمبل)", target: 1, unit: "تکرار", side: true },
-            { id: 5, name: "کیک‌بک باسن (دمبل پشت زانو)", target: 1, unit: "تکرار", side: true },
-            { id: 6, name: "ددلیفت رومانیایی با دمبل ۱۰ کیلویی", target: 1, unit: "تکرار" },
-            { id: 7, name: "شنا سوئدی روی زانو", target: 1, unit: "تکرار" },
-            { id: 8, name: "زیربغل دمبل خم یک‌دست", target: 1, unit: "تکرار", side: true },
-            { id: 9, name: "دمبل چکشی جلو بازو ۱۰ کیلویی", target: 1, unit: "تکرار", side: true },
-            { id: 10, name: "پلانک ثابت حرفه‌ای (۳ ست)", target: 1, unit: "ثانیه" }
+            { id: 1, name: "پرش پروانه", target: 63, unit: "ثانیه" },
+            { id: 2, name: "اسکات با دمبل ۱۰ کیلویی رو به سینه", target: 7, unit: "تکرار" },
+            { id: 3, name: "پل باسن با دمبل ۱۰ کیلویی", target: 10, unit: "تکرار" },
+            { id: 4, name: "لانجز معکوس (با یا بدون دمبل)", target: 5, unit: "تکرار", side: true },
+            { id: 5, name: "کیک‌بک باسن (دمبل پشت زانو)", target: 10, unit: "تکرار", side: true },
+            { id: 6, name: "ددلیفت رومانیایی با دمبل ۱۰ کیلویی", target: 15, unit: "تکرار" },
+            { id: 7, name: "شنا سوئدی روی زانو", target: 20, unit: "تکرار" },
+            { id: 8, name: "زیربغل دمبل خم یک‌دست", target: 15, unit: "تکرار", side: true },
+            { id: 9, name: "دمبل چکشی جلو بازو ۱۰ کیلویی", target: 8, unit: "تکرار", side: true },
+            { id: 10, name: "پلانک ثابت حرفه‌ای (۳ ست)", target: 35, unit: "ثانیه" }
         ],
         archived: []
     };
 
     let workoutData = JSON.parse(localStorage.getItem(STORAGE_KEYS.BASE_DATA)) || defaultWorkoutData;
+    // مهاجرت خودکار به ساختار تمرینی جدید
+    const MIGRATION_KEY = 'workout_new_base_v3_migrated';
+    if (!localStorage.getItem(MIGRATION_KEY)) {
+        workoutData = defaultWorkoutData;
+        localStorage.setItem(STORAGE_KEYS.BASE_DATA, JSON.stringify(workoutData));
+        localStorage.setItem(MIGRATION_KEY, 'true');
+    }
     if (!workoutData.archived) workoutData.archived = [];
     let sessionState = {};
     let ratings = { stomach: 5, quality: 5, fatigue: 1, temp: 5, mental: 10 };
@@ -1136,7 +1143,7 @@
         listDiv.innerHTML = '';
 
         if (!isLoadingDraft) {
-            sessionState = { warmup: { done: false, name: "نرمش قبل از تمرین انجام شد ؟", time: null, rawTime: null } };
+            sessionState = { warmup: { done: false, name: "نرمش قبل از تمرین انجام شد ؟", time: null, rawTime: null, note: "" } };
             document.getElementById('nut-eggs').value = 0;
             document.getElementById('nut-soy').value = 0;
             document.getElementById('nut-potatoes').value = 0;
@@ -1144,7 +1151,7 @@
             if (notesEditor) notesEditor.setContent('');
         } else if (!sessionState || !sessionState.warmup) {
             sessionState = sessionState || {};
-            sessionState.warmup = { done: false, name: "نرمش قبل از تمرین انجام شد ؟", time: null, rawTime: null };
+            sessionState.warmup = { done: false, name: "نرمش قبل از تمرین انجام شد ؟", time: null, rawTime: null, note: "" };
         }
 
         // نرمش قبل از تمرین
@@ -1155,6 +1162,9 @@
             <div class="exercise-header">
                 <div class="exercise-name"><span class="icon">🧘</span> نرمش قبل از تمرین انجام شد ؟</div>
                 <button class="check-btn ${sessionState.warmup.done ? 'active' : ''}" id="warmup-btn" onclick="toggleWarmup()">✓</button>
+            </div>
+            <div style="margin-top: 8px;">
+                <input type="text" id="warmup-note" placeholder="📝 یادداشت این نرمش..." value="${sessionState.warmup.note || ''}" oninput="updateWarmupNote(this.value)" style="padding: 6px 10px; font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">
             </div>
         `;
         listDiv.appendChild(warmupCard);
@@ -1168,8 +1178,8 @@
             if (ex.side) {
                 const rKey = `${ex.id}-r`;
                 const lKey = `${ex.id}-l`;
-                if (!sessionState[rKey]) sessionState[rKey] = { done: false, value: ex.target, time: null, rawTime: null };
-                if (!sessionState[lKey]) sessionState[lKey] = { done: false, value: ex.target, time: null, rawTime: null };
+                if (!sessionState[rKey]) sessionState[rKey] = { done: false, value: ex.target, time: null, rawTime: null, note: "" };
+                if (!sessionState[lKey]) sessionState[lKey] = { done: false, value: ex.target, time: null, rawTime: null, note: "" };
 
                 card.innerHTML = `
                     <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${escapeHtml(ex.unit)})</div>
@@ -1181,6 +1191,9 @@
                             <button class="check-btn ${sessionState[rKey].done ? 'active' : ''}" id="ex-${ex.id}-r-btn" onclick="toggleCheck(${ex.id}, 'r')">✓</button>
                         </div>
                     </div>
+                    <div style="margin-top: 4px; padding-right: 15px;">
+                        <input type="text" id="ex-${ex.id}-r-note" placeholder="📝 یادداشت سمت راست..." value="${sessionState[rKey].note || ''}" oninput="updateSessionNote(${ex.id}, 'r', this.value)" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); width: calc(100% - 15px);">
+                    </div>
                     <div id="timer-panel-${ex.id}-r" class="exercise-timer-panel"></div>
                     <div class="side-row">
                         <span>👈 چپ:</span>
@@ -1190,11 +1203,14 @@
                             <button class="check-btn ${sessionState[lKey].done ? 'active' : ''}" id="ex-${ex.id}-l-btn" onclick="toggleCheck(${ex.id}, 'l')">✓</button>
                         </div>
                     </div>
+                    <div style="margin-top: 4px; padding-right: 15px; margin-bottom: 8px;">
+                        <input type="text" id="ex-${ex.id}-l-note" placeholder="📝 یادداشت سمت چپ..." value="${sessionState[lKey].note || ''}" oninput="updateSessionNote(${ex.id}, 'l', this.value)" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); width: calc(100% - 15px);">
+                    </div>
                     <div id="timer-panel-${ex.id}-l" class="exercise-timer-panel"></div>
                 `;
             } else {
                 const key = ex.id;
-                if (!sessionState[key]) sessionState[key] = { done: false, value: ex.target, time: null, rawTime: null };
+                if (!sessionState[key]) sessionState[key] = { done: false, value: ex.target, time: null, rawTime: null, note: "" };
 
                 card.innerHTML = `
                     <div class="exercise-header">
@@ -1204,6 +1220,9 @@
                             <input type="number" id="ex-${ex.id}-val" value="${sessionState[key].value}" oninput="updateSessionValue(${ex.id}, null, this.value)">
                             <button class="check-btn ${sessionState[key].done ? 'active' : ''}" id="ex-${ex.id}-btn" onclick="toggleCheck(${ex.id})">✓</button>
                         </div>
+                    </div>
+                    <div style="margin-top: 4px;">
+                        <input type="text" id="ex-${ex.id}-note" placeholder="📝 یادداشت این حرکت..." value="${sessionState[key].note || ''}" oninput="updateSessionNote(${ex.id}, null, this.value)" style="padding: 6px 10px; font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">
                     </div>
                     <div id="timer-panel-${ex.id}" class="exercise-timer-panel"></div>
                 `;
@@ -1222,9 +1241,11 @@
         if (!isActive) {
             panel.classList.add('active');
             panel.innerHTML = `
-                <div class="timer-display" id="display-${key}">${toPersianDigits(target)}</div>
+                <div class="timer-display-wrapper" style="display: flex; justify-content: center; align-items: center; margin: 10px 0;">
+                    <input type="number" class="timer-display" id="display-${key}" value="${target}" style="width: 120px; font-family: monospace; font-size: 2rem; font-weight: bold; text-align: center; border: 1px dashed var(--primary-color); border-radius: 8px; background: transparent; color: var(--primary-color); padding: 5px;">
+                </div>
                 <div class="timer-controls">
-                    <button class="backup-btns" onclick="startExerciseTimer('${key}', ${target})" id="start-${key}"><span class="icon">▶️</span> شروع</button>
+                    <button class="backup-btns" onclick="startExerciseTimer('${key}')" id="start-${key}"><span class="icon">▶️</span> شروع</button>
                     <button class="backup-btns" onclick="stopExerciseTimer()" style="display:none" id="stop-${key}"><span class="icon">⏹️</span> توقف</button>
                     <button class="backup-btns" onclick="resetExerciseTimer('${key}', ${target})"><span class="icon">🔄</span> بازنشانی</button>
                 </div>
@@ -1257,14 +1278,20 @@
     }
 
     let beepTimeout;
-    function startExerciseTimer(key, totalSeconds) {
+    function startExerciseTimer(key) {
         initAudio();
         if (timerRunning) stopExerciseTimer();
+
+        const timerInput = document.getElementById(`display-${key}`);
+        let totalSeconds = parseInt(timerInput.value) || 0;
+        if (totalSeconds <= 0) return;
 
         timerRunning = true;
         currentTimerId = key;
         let remaining = totalSeconds;
         const mode = document.querySelector(`input[name="sound-${key}"]:checked`).value;
+
+        timerInput.disabled = true;
 
         document.getElementById(`start-${key}`).style.display = 'none';
         document.getElementById(`stop-${key}`).style.display = 'inline-block';
@@ -1305,7 +1332,7 @@
 
         timerInterval = setInterval(() => {
             remaining--;
-            document.getElementById(`display-${key}`).innerText = toPersianDigits(Math.max(0, remaining));
+            timerInput.value = Math.max(0, remaining);
 
             if (remaining <= 0) {
                 stopExerciseTimer();
@@ -1326,20 +1353,41 @@
         if (currentTimerId) {
             const startBtn = document.getElementById(`start-${currentTimerId}`);
             const stopBtn = document.getElementById(`stop-${currentTimerId}`);
+            const timerInput = document.getElementById(`display-${currentTimerId}`);
             if (startBtn) startBtn.style.display = 'inline-block';
             if (stopBtn) stopBtn.style.display = 'none';
+            if (timerInput) timerInput.disabled = false;
         }
     }
 
     function resetExerciseTimer(key, totalSeconds) {
         stopExerciseTimer();
-        document.getElementById(`display-${key}`).innerText = toPersianDigits(totalSeconds);
+        const timerInput = document.getElementById(`display-${key}`);
+        if (timerInput) {
+            timerInput.value = totalSeconds;
+            timerInput.disabled = false;
+        }
     }
 
     function updateSessionValue(id, side, val) {
         const key = side ? `${id}-${side}` : id;
         if (sessionState[key]) {
             sessionState[key].value = val;
+        }
+        saveDraft();
+    }
+
+    function updateSessionNote(id, side, note) {
+        const key = side ? `${id}-${side}` : id;
+        if (sessionState[key]) {
+            sessionState[key].note = note;
+        }
+        saveDraft();
+    }
+
+    function updateWarmupNote(note) {
+        if (sessionState && sessionState.warmup) {
+            sessionState.warmup.note = note;
         }
         saveDraft();
     }
@@ -1480,38 +1528,22 @@
     function applyProgression(lastWorkout) {
         const lastIncrementedId = localStorage.getItem(STORAGE_KEYS.LAST_INCREMENTED);
         if (lastIncrementedId !== lastWorkout.id.toString()) {
-            // افزایش کلی یک واحد به همه
-            workoutData.heavy.forEach(ex => ex.target += 1);
-            workoutData.light.forEach(ex => ex.target += 1);
+            // بررسی نوع تمرین بعدی که نوبت انجام دادنشه
+            const nextType = localStorage.getItem(STORAGE_KEYS.NEXT_TYPE) || 'heavy';
 
-            // بررسی تک تک حرکات انجام شده
-            lastWorkout.exercises.forEach(recordedEx => {
-                // پیدا کردن حرکت در دیتای پایه
-                const baseExHeavy = workoutData.heavy.find(e => e.name === recordedEx.name);
-                const baseExLight = workoutData.light.find(e => e.name === recordedEx.name);
-
-                if (baseExHeavy) {
-                    if (recordedEx.r !== undefined) {
-                        // حرکات دوطرفه - میانگین یا کدام؟ فعلا راست
-                        const val = parseInt(recordedEx.r) || baseExHeavy.target - 1;
-                        baseExHeavy.target = val + 1;
-                        if (baseExLight) baseExLight.target = Math.floor((val + 1) / 2) || 1;
-                    } else if (recordedEx.value !== undefined && recordedEx.value !== '✅') {
-                        const val = parseInt(recordedEx.value);
-                        if (!isNaN(val)) {
-                            baseExHeavy.target = val + 1;
-                            if (baseExLight) baseExLight.target = Math.floor((val + 1) / 2) || 1;
-                        }
-                    }
-                }
-            });
+            // فقط به حرکات تمرینی که نوبتش هست ۱ واحد یا ۱ ثانیه اضافه میشه
+            if (workoutData[nextType]) {
+                workoutData[nextType].forEach(ex => {
+                    ex.target += 1;
+                });
+            }
 
             saveWorkoutData();
             localStorage.setItem(STORAGE_KEYS.LAST_INCREMENTED, lastWorkout.id.toString());
-            const nextType = localStorage.getItem(STORAGE_KEYS.NEXT_TYPE);
+
             if (nextType) document.getElementById('workoutType').value = nextType;
 
-            alert('مربی: وقت تمرین شد! همه حرکات یک واحد سنگین‌تر شدن، اونایی هم که ترکوندی بیشتر اضافه شدن! بترکون 💪');
+            alert('مربی: قهرمان من، وقت تمرین شد! چون استراحت ۴۸ ساعته‌ت پر شده، اهداف تمرین جدیدت (مخصوص این نوبت) ۱ واحد/ثانیه سنگین‌تر شدن! برو واسه ثبت یک رکورد معرکه 💪🔥');
             initWorkout();
             renderExerciseManager();
         }
@@ -1598,7 +1630,8 @@
                 value: '✅',
                 time: sessionState.warmup.time,
                 unit: '',
-                rawTime: sessionState.warmup.rawTime
+                rawTime: sessionState.warmup.rawTime,
+                note: sessionState.warmup.note || ''
             });
         }
 
@@ -1611,8 +1644,10 @@
                         name: ex.name,
                         r: rDone ? sessionState[`${ex.id}-r`].value : '-',
                         rTime: sessionState[`${ex.id}-r`].time,
+                        rNote: rDone ? sessionState[`${ex.id}-r`].note : '',
                         l: lDone ? sessionState[`${ex.id}-l`].value : '-',
                         lTime: sessionState[`${ex.id}-l`].time,
+                        lNote: lDone ? sessionState[`${ex.id}-l`].note : '',
                         unit: ex.unit
                     });
                 }
@@ -1622,7 +1657,8 @@
                         name: ex.name,
                         value: sessionState[ex.id].value,
                         time: sessionState[ex.id].time,
-                        unit: ex.unit
+                        unit: ex.unit,
+                        note: sessionState[ex.id].note || ''
                     });
                 }
             }
@@ -1716,9 +1752,12 @@
 
             let exListHtml = rec.exercises.map(ex => {
                 if (ex.r !== undefined) {
-                    return `<div class="ex-row"><b>${escapeHtml(ex.name)}</b><br/>${ex.r !== '-' ? `👉 راست: ${ex.r} ${ex.unit} (${ex.rTime || ''})` : ''}${ex.l !== '-' ? `<br/>👈 چپ: ${ex.l} ${ex.unit} (${ex.lTime || ''})` : ''}</div>`;
+                    let rNoteHtml = ex.rNote ? `<span style="display:block; font-size:0.8rem; color:var(--secondary-color); margin-right:15px;">📝 ${escapeHtml(ex.rNote)}</span>` : '';
+                    let lNoteHtml = ex.lNote ? `<span style="display:block; font-size:0.8rem; color:var(--secondary-color); margin-right:15px;">📝 ${escapeHtml(ex.lNote)}</span>` : '';
+                    return `<div class="ex-row"><b>${escapeHtml(ex.name)}</b><br/>${ex.r !== '-' ? `👉 راست: ${ex.r} ${ex.unit} (${ex.rTime || ''})${rNoteHtml}` : ''}${ex.l !== '-' ? `<br/>👈 چپ: ${ex.l} ${ex.unit} (${ex.lTime || ''})${lNoteHtml}` : ''}</div>`;
                 }
-                return `<div class="ex-row"><b>${escapeHtml(ex.name)}</b>: ${ex.value} ${ex.unit} (${ex.time || ''})</div>`;
+                let noteHtml = ex.note ? `<span style="display:block; font-size:0.8rem; color:var(--secondary-color); margin-right:10px;">📝 ${escapeHtml(ex.note)}</span>` : '';
+                return `<div class="ex-row"><b>${escapeHtml(ex.name)}</b>: ${ex.value} ${ex.unit} (${ex.time || ''})${noteHtml}</div>`;
             }).join('');
 
             card.innerHTML = `
