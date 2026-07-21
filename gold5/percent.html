@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>⚡ صندوق گواهی نفت · برق · گاز · سینرژی</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --oil-color: #d84315;
+            --gas-color: #0288d1;
+            --electric-color: #fbc02d;
+            --bg-color: #f5f0e1;
+            --card-bg: #ffffff;
+            --text-dark: #2c3e2f;
+            --border-radius: 20px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.05);
+            --input-bg: #ffffff;
+            --delete-color: #c62828;
+            --restore-color: #2e7d32;
+        }
+
+        body {
+            font-family: Tahoma, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            direction: rtl;
+        }
+
+        .page {
+            display: none;
+            padding: 20px 12px 30px;
+            padding-top: 50px;
+        }
+        .active-page {
+            display: block;
+        }
+
+        .container {
+            max-width: 550px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 18px 16px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+            margin: 0 0 12px 0;
+            font-weight: 700;
+        }
+        h1 {
+            font-size: 1.6rem;
+            background: linear-gradient(135deg, var(--oil-color), var(--gas-color), var(--electric-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        /* ===== منوی کشویی آمار ===== */
+        .stats-dropdown {
+            margin: 10px 0 15px 0;
+            border-radius: 16px;
+            overflow: hidden;
+            background: var(--card-bg);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .stats-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            user-select: none;
+        }
+        .stats-header:hover { opacity: 0.95; }
+        .stats-header .arrow {
+            font-size: 16px;
+            transition: transform 0.3s ease;
+        }
+        .stats-header .arrow.open { transform: rotate(180deg); }
+        .stats-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+            background: var(--card-bg);
+        }
+        .stats-content.open { max-height: 500px; transition: max-height 0.4s ease-in; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            padding: 15px;
+            background: #667eea;
+        }
+        .stat-card {
+            text-align: center;
+            background: rgba(255,255,255,0.15);
+            padding: 10px 5px;
+            border-radius: 10px;
+            color: white;
+        }
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            direction: ltr;
+        }
+        .stat-label {
+            font-size: 10px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .percent-list {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+            background: #fef7e8;
+            border-radius: 16px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .percent-item, .period-item, .note-item {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 10px 14px;
+            margin: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-right: 6px solid var(--oil-color);
+            transition: 0.2s;
+        }
+        .period-item {
+            flex-direction: column;
+            align-items: flex-start;
+            border-right-color: var(--gas-color);
+        }
+        .note-item {
+            flex-direction: column;
+            align-items: stretch;
+            border-right-color: var(--electric-color);
+        }
+        .highlighted-persist {
+            background-color: #fff3cf;
+            border-right-width: 8px;
+        }
+        .positive { color: #2b7a3e; font-weight: bold; }
+        .negative { color: #c0392b; font-weight: bold; }
+
+        .date-time {
+            font-family: monospace;
+            font-size: 11px;
+            color: #5d6e5d;
+        }
+
+        input, textarea, button {
+            font-family: inherit;
+            border-radius: 40px;
+            border: none;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+        }
+        input, textarea {
+            background: var(--input-bg);
+            border: 1px solid #ddd;
+            width: 100%;
+            margin: 8px 0;
+        }
+        button {
+            background: linear-gradient(95deg, var(--oil-color), var(--gas-color));
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        button:active { transform: scale(0.97); opacity: 0.9; }
+        .delete-btn { background: var(--delete-color); padding: 6px 12px; font-size: 12px; }
+        .restore-btn { background: var(--restore-color); padding: 6px 12px; font-size: 12px; }
+        .secondary-btn { background: #5e6b5e; }
+        .add-percent-btn { width: 100%; margin-top: 6px; }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 12px;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--electric-color);
+            transition: width 0.3s;
+        }
+
+        .goal-status, .total-percent {
+            text-align: center;
+            margin: 12px 0;
+            font-weight: 500;
+        }
+        .real-compound-interest {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--oil-color);
+            background: #fff0db;
+            border-radius: 40px;
+            padding: 6px;
+        }
+
+        .nav-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0 10px;
+        }
+
+        .chart-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            direction: ltr;
+            background: #f0f0f0;
+            border-radius: 16px;
+            border: 1px solid #ddd;
+        }
+        .chart-container {
+            width: max-content;
+            min-width: 100%;
+            height: 55vh;
+            position: relative;
+            background: white;
+        }
+        canvas {
+            display: block;
+            background: white;
+            cursor: pointer;
+        }
+        .chart-controls {
+            display: flex;
+            gap: 12px;
+            margin: 15px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .chart-controls button {
+            padding: 8px 18px;
+            font-size: 14px;
+            background-color: #3f51b5;
+            border: none;
+            border-radius: 25px;
+        }
+
+        .trash-container, .achieved-periods-container {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 20px;
+            background: #f8efdc;
+            border: 2px dashed var(--oil-color);
+        }
+        .notes-toggle-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 100;
+        }
+        #notesToggle {
+            background: var(--gas-color);
+            color: white;
+            border-radius: 0 0 20px 20px;
+            padding: 6px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        #notesDrawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            background: #fff3e2;
+            padding: 20px;
+            z-index: 200;
+            max-height: 70vh;
+            overflow-y: auto;
+            border-radius: 0 0 24px 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        #notesDrawer.open {
+            transform: translateY(0);
+        }
+        .note-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        footer {
+            text-align: center;
+            font-size: 11px;
+            margin-top: 15px;
+            color: #7f8c5e;
+        }
+    </style>
+</head>
+<body>
+
+<div class="notes-toggle-container">
+    <div id="notesToggle" onclick="toggleNotesDrawer()">📝 یادداشت‌ها ▼</div>
+</div>
+<div id="notesDrawer">
+    <h2>📌 یادداشت‌های انرژی</h2>
+    <textarea id="newNoteInput" placeholder="یادداشت خود را بنویسید..."></textarea>
+    <button onclick="addNote()" style="margin-bottom: 15px;">➕ افزودن یادداشت</button>
+    <ul id="notesList" class="percent-list" style="max-height: 40vh;"></ul>
+    <button onclick="toggleNotesDrawer()" class="secondary-btn">بستن</button>
+</div>
+
+<div id="mainPage" class="page active-page">
+    <div class="container">
+        <h1>🔌 صندوق گواهی<br>نفت · برق · گاز · سینرژی</h1>
+
+        <div class="stats-dropdown">
+            <div class="stats-header" onclick="toggleStatsMenu()">
+                <span>📈 آمار و میانگین‌های سود</span>
+                <span class="arrow" id="statsArrow">▼</span>
+            </div>
+            <div class="stats-content" id="statsContent">
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-value" id="statTotalProfit">0%</div><div class="stat-label">💰 سود کل</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statAvgDaily">0%</div><div class="stat-label">📅 میانگین روزانه</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statAvgWeekly">0%</div><div class="stat-label">📆 میانگین هفتگی</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statAvgMonthly">0%</div><div class="stat-label">🗓️ میانگین ماهانه</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statBestTrade">0%</div><div class="stat-label">🏆 بهترین معامله</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statWorstTrade">0%</div><div class="stat-label">💔 بدترین معامله</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statDaysCount">0</div><div class="stat-label">⏱️ روزهای معاملاتی</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statTradesCount">0</div><div class="stat-label">💹 تعداد معاملات</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="goal-section">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <input type="number" id="goalInput" placeholder="هدف کلی درصدی (مثبت/منفی)">
+                <button onclick="setGoal()">🎯 ثبت هدف</button>
+            </div>
+            <div id="goalProgress" class="goal-status"></div>
+        </div>
+
+        <ul class="percent-list" id="percentList"></ul>
+        <input type="number" id="percentInput" placeholder="مقدار درصد (مثبت یا منفی)">
+        <button onclick="addPercent()" class="add-percent-btn">➕ افزودن درصد جدید</button>
+
+        <div class="total-percent"> مجموع تغییرات خطی: <span id="totalPercent">0</span>% </div>
+        <div class="real-compound-interest">⚡ سود مرکب واقعی: <span id="realCompoundInterest">0</span>% </div>
+        <div class="total-percent"> تعداد ثبت‌شده: <span id="percentCount">0</span> مورد </div>
+        <div class="total-percent"> میانگین روزانه (در <span id="daysCount">0</span> روز): <span id="averagePercent">0</span>% </div>
+
+        <div class="nav-buttons">
+            <button onclick="showPage('chartPage')">📈 نمودار مرکب</button>
+            <button onclick="toggleTrash()">🗑️ سطل زباله</button>
+            <button onclick="toggleAchievedPeriods()">🏆 دوره‌های سود</button>
+            <button onclick="backupData()">💾 ذخیره فایل</button>
+            <button onclick="exportToCSV()">📊 خروجی CSV</button>
+            <button onclick="document.getElementById('fileInput').click()">📤 بازیابی فایل</button>
+            <button onclick="openGithubSettings()" style="grid-column: span 2; background-color: #24292e; color: white;">⚙️ تنظیمات گیت‌هاب</button>
+        </div>
+
+        <!-- GitHub Settings Modal -->
+        <div id="githubSettingsModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.6); backdrop-filter:blur(5px); justify-content:center; align-items:center;">
+            <div style="background-color:#fff; color:#333; margin:auto; padding:20px; border-radius:15px; width:90%; max-width:450px; box-shadow:0 5px 15px rgba(0,0,0,0.3); direction:rtl; font-family:Tahoma,sans-serif;">
+                <h3 style="margin-top:0; color:#0288d1; text-align:center;">⚙️ تنظیمات پشتیبان‌گیری در گیت‌هاب</h3>
+                <p style="font-size:12px; color:#666; line-height:1.6; margin-bottom:15px; text-align:justify;">
+                    با فعال‌سازی این بخش، با هر بار زدن دکمه‌ی «ذخیره فایل»، اطلاعات شما علاوه بر ذخیره در فایل محلی، به صورت خودکار به مخزن گیت‌هاب شخصی شما ارسال می‌شود. این اطلاعات فقط در مرورگر شما ذخیره می‌شوند و ۱۰۰٪ امن هستند.
+                </p>
+                <div style="margin-bottom:12px;">
+                    <label style="display:block; font-size:13px; margin-bottom:5px; font-weight:bold;">توکن شخصی گیت‌هاب (Personal Access Token):</label>
+                    <input type="password" id="gh_token" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="ghp_...">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="display:block; font-size:13px; margin-bottom:5px; font-weight:bold;">نام مخزن (مثال: username/repo):</label>
+                    <input type="text" id="gh_repo" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="myusername/my-backup-repo">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="display:block; font-size:13px; margin-bottom:5px; font-weight:bold;">شاخه (Branch - پیش‌فرض: main):</label>
+                    <input type="text" id="gh_branch" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="main">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="display:block; font-size:13px; margin-bottom:5px; font-weight:bold;">مسیر ذخیره فایل در مخزن:</label>
+                    <input type="text" id="gh_filepath" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="backups/synergy_percent_backup.json">
+                </div>
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button onclick="saveGithubSettings()" style="flex:1; background-color:#2e7d32; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;">ذخیره</button>
+                    <button onclick="closeGithubSettings()" style="flex:1; background-color:#757575; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;">انصراف</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="achieved-periods-container" id="achievedPeriodsContainer" style="display: none;">
+            <h2>🏆 دوره‌های سود</h2>
+            <div class="period-input-section">
+                <p><strong>هدف خودکار:</strong></p>
+                <div style="display: flex; gap: 6px;">
+                    <input type="number" id="periodTargetInput" placeholder="مثلا 5">
+                    <button onclick="setPeriodTarget()">تنظیم هدف</button>
+                </div>
+                <div id="currentPeriodTarget" class="goal-status"></div>
+            </div>
+            <div class="period-input-section">
+                <p><strong>بر اساس هایلایت زرد:</strong></p>
+                <button onclick="calculatePeriodsByHighlight()">🟡 محاسبه دوره‌ها</button>
+            </div>
+            <ul class="percent-list" id="achievedPeriodsList"></ul>
+            <button onclick="toggleAchievedPeriods()" class="secondary-btn">بستن</button>
+        </div>
+
+        <div class="trash-container" id="trashContainer" style="display: none;">
+            <h2>⚠️ موارد حذف شده</h2>
+            <ul class="percent-list" id="trashList"></ul>
+            <div class="nav-buttons">
+                <button class="delete-btn" onclick="clearTrash()">🧹 پاکسازی کامل</button>
+                <button class="secondary-btn" onclick="toggleTrash()">بستن</button>
+            </div>
+        </div>
+        <input type="file" id="fileInput" style="display:none;" onchange="recoveryData(event)">
+        <footer>🔋 انرژی پاک · نفت، گاز، برق | همه داده‌ها در مرورگر ذخیره می‌شود</footer>
+    </div>
+</div>
+
+<div id="chartPage" class="page">
+    <div class="container">
+        <h1>📊 روند سود مرکب</h1>
+        <div class="chart-controls">
+            <button onclick="zoomIn()">➕ زوم بزرگ</button>
+            <button onclick="zoomOut()">➖ زوم کوچک</button>
+            <button onclick="resetZoom()">🔄 ریست</button>
+            <button onclick="scrollToEnd()">⬅️ آخرین نقطه</button>
+        </div>
+        <div class="chart-wrapper" id="chartWrapper">
+            <div class="chart-container" id="chartContainer">
+                <canvas id="compoundChartCanvas"></canvas>
+            </div>
+        </div>
+        <div class="nav-buttons">
+            <button onclick="showPage('mainPage')">🔙 بازگشت</button>
+            <button onclick="downloadChartAsImage()">📸 ذخیره تصویر (PNG)</button>
+        </div>
+        <p style="font-size:12px; color:#5d6e5d; text-align:center; margin:10px;">💡 کلیک روی هر نقطه = هایلایت زرد | اسکرول افقی | زوم با دکمه‌ها</p>
+    </div>
+</div>
+
+<script>
+    (function(){
+        const STORAGE_KEY = "energy_fund_synergy";
+
+        let percents = [];
+        let trash = [];
+        let goal = null;
+        let highlightedStates = {};
+        let notes = [];
+        let periodTarget = null;
+        let achievedPeriods = [];
+        let statsMenuOpen = localStorage.getItem(STORAGE_KEY + "_statsOpen") === "true";
+
+        let zoomLevel = 1.0;
+        let currentDataCache = null;
+        let chartCanvas = null, chartCtx = null;
+
+        const ACHIEVEMENT_START_DATE = new Date('2025-02-11T00:00:00Z').getTime();
+
+        window.toggleStatsMenu = function() {
+            statsMenuOpen = !statsMenuOpen;
+            localStorage.setItem(STORAGE_KEY + "_statsOpen", statsMenuOpen);
+            let content = document.getElementById('statsContent');
+            let arrow = document.getElementById('statsArrow');
+            if(statsMenuOpen) {
+                content.classList.add('open');
+                arrow.classList.add('open');
+            } else {
+                content.classList.remove('open');
+                arrow.classList.remove('open');
+            }
+        };
+
+        function calculateStats() {
+            if(percents.length === 0) {
+                return { total: 0, avgDaily: 0, avgWeekly: 0, avgMonthly: 0, daysDiff: 0, bestTrade: 0, worstTrade: 0 };
+            }
+            let totalProfit = percents.reduce((s,p) => s + p.value, 0);
+            let bestTrade = Math.max(...percents.map(p => p.value));
+            let worstTrade = Math.min(...percents.map(p => p.value));
+            let firstDate = new Date(percents[0].timestamp);
+            let lastDate = new Date(percents[percents.length-1].timestamp);
+            let daysDiff = Math.max(1, Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24)));
+            let avgDaily = totalProfit / daysDiff;
+            let avgWeekly = avgDaily * 7;
+            let avgMonthly = avgDaily * 30;
+            return { total: totalProfit, avgDaily, avgWeekly, avgMonthly, daysDiff, tradesCount: percents.length, bestTrade, worstTrade };
+        }
+
+        function updateStatsMenu() {
+            let stats = calculateStats();
+            document.getElementById('statTotalProfit').innerHTML = stats.total.toFixed(2) + '%';
+            document.getElementById('statAvgDaily').innerHTML = (stats.avgDaily > 0 ? '+' : '') + stats.avgDaily.toFixed(2) + '%';
+            document.getElementById('statAvgWeekly').innerHTML = (stats.avgWeekly > 0 ? '+' : '') + stats.avgWeekly.toFixed(2) + '%';
+            document.getElementById('statAvgMonthly').innerHTML = (stats.avgMonthly > 0 ? '+' : '') + stats.avgMonthly.toFixed(2) + '%';
+            document.getElementById('statDaysCount').innerHTML = stats.daysDiff;
+            document.getElementById('statTradesCount').innerHTML = stats.tradesCount;
+            document.getElementById('statBestTrade').innerHTML = (stats.bestTrade > 0 ? '+' : '') + stats.bestTrade.toFixed(2) + '%';
+            document.getElementById('statWorstTrade').innerHTML = (stats.worstTrade > 0 ? '+' : '') + stats.worstTrade.toFixed(2) + '%';
+        }
+
+        window.exportToCSV = function() {
+            let headers = ["ردیف", "درصد", "تاریخ", "ساعت"];
+            let rows = [];
+            for(let i=0; i<percents.length; i++) {
+                let date = new Date(percents[i].timestamp);
+                rows.push([i+1, percents[i].value, date.toLocaleDateString('fa-IR'), date.toLocaleTimeString('fa-IR')]);
+            }
+            let stats = calculateStats();
+            rows.push([], ["--- آمار ---"], ["سود کل", stats.total.toFixed(2) + "%"], ["میانگین روزانه", stats.avgDaily.toFixed(2) + "%"], ["تعداد معاملات", stats.tradesCount]);
+            let csvContent = headers.join(",") + "\n" + rows.map(row => row.join(",")).join("\n");
+            let blob = new Blob(["\uFEFF" + csvContent], {type: "text/csv;charset=utf-8;"});
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `energy-fund-data-${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+        };
+
+        function computeCompoundInterest() {
+            let factor = 1;
+            percents.forEach(p => factor *= (1 + p.value/100));
+            return (factor - 1) * 100;
+        }
+
+        function saveData() {
+            const toStore = { percents, trash, goal, highlightedStates, periodTarget, achievedPeriods, notes };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+            localStorage.setItem(STORAGE_KEY + "_statsOpen", statsMenuOpen);
+        }
+
+        function loadData() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if(!raw) return;
+            try {
+                const data = JSON.parse(raw);
+                percents = data.percents || [];
+                percents.sort((a,b)=>a.timestamp - b.timestamp);
+                trash = data.trash || [];
+                goal = data.goal || null;
+                highlightedStates = data.highlightedStates || {};
+                periodTarget = data.periodTarget || null;
+                achievedPeriods = data.achievedPeriods || [];
+                notes = data.notes || [];
+                notes = notes.map(n => {
+                    if(typeof n === 'string') return { id: Date.now()+Math.random(), content: n.replace(/\n/g,'<br>'), createdAt: Date.now() };
+                    if(!n.id) n.id = Date.now()+Math.random();
+                    if(!n.content) n.content = '';
+                    return n;
+                });
+            } catch(e) { console.warn(e); }
+        }
+
+        function updateUI() {
+            renderPercentList();
+            updateGoalProgress();
+            renderTrash();
+            updateStats();
+            updateStatsMenu();
+            if(document.getElementById('achievedPeriodsContainer').style.display === 'block') updateAchievedPeriodsUI();
+            if(document.getElementById('notesDrawer').classList.contains('open')) renderNotes();
+        }
+
+        function renderPercentList() {
+            const list = document.getElementById('percentList');
+            const formatter = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' });
+            list.innerHTML = percents.map((item, idx) => `
+                <li class="percent-item ${highlightedStates[idx] ? 'highlighted-persist' : ''}" onclick="toggleHighlight(${idx})">
+                    <span class="${item.value>=0 ? 'positive' : 'negative'}">${item.value.toFixed(2)}%</span>
+                    <div style="display: flex; gap: 8px; align-items:center;">
+                        <span class="date-time">${formatter.format(new Date(item.timestamp))}</span>
+                        <button class="delete-btn" onclick="deletePercent(${idx}, event)">حذف</button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function renderTrash() {
+            const trashDiv = document.getElementById('trashList');
+            const formatter = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' });
+            trashDiv.innerHTML = trash.map((item, idx) => `
+                <li class="percent-item">
+                    <span class="${item.value>=0 ? 'positive' : 'negative'}">${item.value.toFixed(2)}%</span>
+                    <div><span class="date-time">${formatter.format(new Date(item.timestamp))}</span>
+                    <button class="restore-btn" onclick="restorePercent(${idx})">بازیابی</button></div>
+                </li>
+            `).join('');
+        }
+
+        function updateGoalProgress() {
+            const goalDiv = document.getElementById('goalProgress');
+            if(!goal) {
+                goalDiv.innerHTML = 'ℹ️ هیچ هدف کلی تنظیم نشده';
+                return;
+            }
+            let total = percents.filter(p => p.timestamp >= goal.setAt).reduce((s, p)=> s + p.value, 0);
+            const remain = goal.target - total;
+            const progress = goal.target!==0 ? Math.min(Math.abs(total/goal.target)*100,100) : 0;
+            goalDiv.innerHTML = `
+                <div>🎯 هدف: ${goal.target.toFixed(2)}% <button class="delete-btn" style="padding:2px 8px;" onclick="clearGoal()">حذف هدف</button></div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${progress}%; background:var(--electric-color);"></div></div>
+                <div>${remain > 0 ? '📌 باقیمانده: ' : '✅ بیش از هدف: '} ${Math.abs(remain).toFixed(2)}%</div>
+            `;
+        }
+
+        function updateStats() {
+            document.getElementById('totalPercent').textContent = percents.reduce((s,p)=>s+p.value,0).toFixed(2);
+            document.getElementById('percentCount').textContent = percents.length;
+            document.getElementById('realCompoundInterest').textContent = computeCompoundInterest().toFixed(2);
+            if(percents.length < 2) {
+                document.getElementById('daysCount').textContent = percents.length>0?'1':'0';
+                document.getElementById('averagePercent').textContent = percents.length>0 ? percents[0].value.toFixed(3) : '0';
+            } else {
+                const first = percents[0].timestamp;
+                const last = percents[percents.length-1].timestamp;
+                const days = Math.max(1, Math.round((last-first)/(1000*3600*24)));
+                document.getElementById('daysCount').textContent = days;
+                const total = percents.reduce((s,p)=>s+p.value,0);
+                document.getElementById('averagePercent').textContent = (total/days).toFixed(4);
+            }
+        }
+
+        window.addPercent = function() {
+            const input = document.getElementById('percentInput');
+            const val = parseFloat(input.value);
+            if(isNaN(val)) { alert('عدد معتبر وارد کنید'); return; }
+            percents.push({ value: val, timestamp: Date.now() });
+            percents.sort((a,b)=>a.timestamp - b.timestamp);
+            input.value = '';
+            checkPeriodAchievement();
+            checkGoalAchievement();
+            updateUI();
+            saveData();
+            if(document.getElementById('chartPage').classList.contains('active-page')) drawChart();
+        };
+
+        window.deletePercent = function(idx, ev) {
+            if(ev) ev.stopPropagation();
+            trash.push({...percents[idx], deletedAt: Date.now()});
+            percents.splice(idx,1);
+            const newHigh = {};
+            for(let k in highlightedStates) {
+                let nk = Number(k);
+                if(nk < idx) newHigh[nk] = highlightedStates[k];
+                else if(nk > idx) newHigh[nk-1] = highlightedStates[k];
+            }
+            highlightedStates = newHigh;
+            checkPeriodAchievement();
+            updateUI();
+            saveData();
+            if(document.getElementById('chartPage').classList.contains('active-page')) drawChart();
+        };
+
+        window.restorePercent = function(idx) {
+            percents.push(trash[idx]);
+            percents.sort((a,b)=>a.timestamp - b.timestamp);
+            trash.splice(idx,1);
+            checkPeriodAchievement();
+            updateUI();
+            saveData();
+            if(document.getElementById('chartPage').classList.contains('active-page')) drawChart();
+        };
+
+        window.toggleHighlight = function(idx) {
+            highlightedStates[idx] = !highlightedStates[idx];
+            if(!highlightedStates[idx]) delete highlightedStates[idx];
+            updateUI();
+            saveData();
+            if(document.getElementById('chartPage').classList.contains('active-page')) drawChart();
+        };
+
+        window.setGoal = function() {
+            const input = document.getElementById('goalInput');
+            const val = parseFloat(input.value);
+            if(isNaN(val)) { alert('هدف عددی وارد کنید'); return; }
+            goal = { target: val, setAt: Date.now() };
+            input.value = '';
+            updateUI();
+            saveData();
+        };
+
+        window.clearGoal = function() {
+            goal = null;
+            updateUI();
+            saveData();
+        };
+
+        function checkGoalAchievement() {
+            if(!goal) return;
+            let total = percents.filter(p=>p.timestamp >= goal.setAt).reduce((s,p)=>s+p.value,0);
+            if((goal.target>0 && total>=goal.target) || (goal.target<0 && total<=goal.target)) {
+                alert(`🎉 به هدف ${goal.target}% رسیدید!`);
+                goal = null;
+                updateUI();
+                saveData();
+            }
+        }
+
+        function checkPeriodAchievement() {
+            if(!periodTarget || percents.length===0) { achievedPeriods = []; return; }
+            achievedPeriods = [];
+            let lastDate = ACHIEVEMENT_START_DATE;
+            while(true) {
+                const startIdx = percents.findIndex(p=>p.timestamp >= lastDate);
+                if(startIdx===-1) break;
+                let cum = 0;
+                let endIdx = -1;
+                for(let i=startIdx; i<percents.length; i++) {
+                    cum += percents[i].value;
+                    if(cum >= periodTarget) { endIdx = i; break; }
+                }
+                if(endIdx !== -1) {
+                    achievedPeriods.push({
+                        startDate: percents[startIdx].timestamp,
+                        endDate: percents[endIdx].timestamp,
+                        achievedPercent: cum
+                    });
+                    lastDate = percents[endIdx].timestamp + 1;
+                } else break;
+            }
+            saveData();
+        }
+
+        window.setPeriodTarget = function() {
+            const input = document.getElementById('periodTargetInput');
+            const val = parseFloat(input.value);
+            if(isNaN(val) || val<=0) { alert('هدف مثبت وارد کنید'); return; }
+            periodTarget = val;
+            input.value = '';
+            checkPeriodAchievement();
+            updateAchievedPeriodsUI();
+            saveData();
+            alert(`هدف دوره ${val}% ثبت شد`);
+        };
+
+        function updateAchievedPeriodsUI() {
+            const targetDiv = document.getElementById('currentPeriodTarget');
+            if(periodTarget) targetDiv.innerHTML = `🎯 هدف فعلی: ${periodTarget}% <button class="delete-btn" style="padding:2px 8px;" onclick="periodTarget=null; checkPeriodAchievement(); updateUI(); saveData();">حذف</button>`;
+            else targetDiv.innerHTML = '⛔ هدفی تنظیم نشده';
+            renderPeriods(achievedPeriods, false);
+        }
+
+        window.calculatePeriodsByHighlight = function() {
+            const highlightedIndices = Object.keys(highlightedStates).filter(k=>highlightedStates[k]).map(Number).sort((a,b)=>a-b);
+            if(highlightedIndices.length===0) { renderPeriods([], true); return; }
+            const startIdx = percents.findIndex(p=>p.timestamp >= ACHIEVEMENT_START_DATE);
+            if(startIdx===-1) { renderPeriods([], true); return; }
+            let periods = [];
+            let current = startIdx;
+            for(let hi of highlightedIndices) {
+                if(hi < current) continue;
+                const slice = percents.slice(current, hi+1);
+                if(slice.length) {
+                    const sum = slice.reduce((s,p)=>s+p.value,0);
+                    periods.push({
+                        startDate: slice[0].timestamp,
+                        endDate: slice[slice.length-1].timestamp,
+                        achievedPercent: sum
+                    });
+                }
+                current = hi+1;
+            }
+            renderPeriods(periods, true);
+        };
+
+        function renderPeriods(periods, isHighlight) {
+            const list = document.getElementById('achievedPeriodsList');
+            if(periods.length===0) {
+                list.innerHTML = `<li style="text-align:center; justify-content:center;">${isHighlight ? 'هیچ دوره‌ای یافت نشد' : 'هنوز دوره‌ای تکمیل نشده'}</li>`;
+                return;
+            }
+            const formatter = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short' });
+            list.innerHTML = periods.map(p => {
+                const days = Math.ceil((p.endDate - p.startDate)/(1000*3600*24)) || 1;
+                return `<li class="period-item ${isHighlight ? 'highlighted-persist' : ''}">
+                    <strong>✅ سود ${p.achievedPercent.toFixed(2)}% در ${days} روز</strong>
+                    <div>از ${formatter.format(new Date(p.startDate))} تا ${formatter.format(new Date(p.endDate))}</div>
+                </li>`;
+            }).join('');
+        }
+
+        window.addNote = function() {
+            const input = document.getElementById('newNoteInput');
+            if(!input.value.trim()) return;
+            notes.unshift({ id: Date.now(), content: input.value.trim().replace(/\n/g,'<br>'), createdAt: Date.now() });
+            input.value = '';
+            renderNotes();
+            saveData();
+        };
+
+        function renderNotes() {
+            const list = document.getElementById('notesList');
+            list.innerHTML = notes.map(n => `
+                <li class="note-item">
+                    <div class="note-content" contenteditable="true" onblur="updateNote(${n.id}, this)">${n.content}</div>
+                    <div class="note-actions"><button class="delete-btn" onclick="deleteNote(${n.id})">🗑️ حذف</button></div>
+                </li>
+            `).join('');
+        }
+
+        window.updateNote = function(id, element) {
+            const note = notes.find(n=>n.id===id);
+            if(note) { note.content = element.innerHTML.trim(); saveData(); }
+        };
+
+        window.deleteNote = function(id) {
+            notes = notes.filter(n=>n.id!==id);
+            renderNotes();
+            saveData();
+        };
+
+        function prepareChartData() {
+            if(percents.length === 0) return null;
+            let factor = 1;
+            let cumData = [];
+            for(let p of percents) {
+                factor *= (1 + p.value/100);
+                cumData.push((factor - 1) * 100);
+            }
+            let maxVal = Math.max(...cumData, 0.1);
+            let minVal = Math.min(...cumData, -0.1);
+            return { cumData, maxVal, minVal };
+        }
+
+        function drawChart() {
+            chartCanvas = document.getElementById('compoundChartCanvas');
+            if(!chartCanvas) return;
+            chartCtx = chartCanvas.getContext('2d');
+
+            let container = document.getElementById('chartContainer');
+            let pointSpacing = 85 * zoomLevel;
+            let totalWidth = Math.max(800, (percents.length - 1) * pointSpacing + 180);
+            let height = container.clientHeight || 500;
+
+            chartCanvas.width = totalWidth;
+            chartCanvas.height = height - 20;
+
+            if(percents.length === 0) {
+                chartCtx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+                chartCtx.font = "14px Tahoma";
+                chartCtx.fillStyle = "#999";
+                chartCtx.fillText("📭 هنوز داده‌ای ثبت نشده", chartCanvas.width/2-120, chartCanvas.height/2);
+                return;
+            }
+
+            let data = prepareChartData();
+            if(!data) return;
+            let { cumData, maxVal, minVal } = data;
+            currentDataCache = { cumData, maxVal, minVal };
+
+            let yRange = maxVal - minVal;
+            if(yRange === 0) yRange = 1;
+            let padding = { top: 55, bottom: 75, left: 75, right: 55 };
+            let chartH = chartCanvas.height - padding.top - padding.bottom;
+
+            chartCtx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+            chartCtx.save();
+
+            chartCtx.strokeStyle = "#ddd";
+            chartCtx.lineWidth = 0.8;
+            for(let i = 0; i <= 5; i++) {
+                let yVal = minVal + (i/5) * yRange;
+                let y = padding.top + chartH - ((yVal - minVal)/yRange) * chartH;
+                chartCtx.beginPath();
+                chartCtx.moveTo(padding.left, y);
+                chartCtx.lineTo(chartCanvas.width - padding.right, y);
+                chartCtx.stroke();
+                chartCtx.fillStyle = "#444";
+                chartCtx.font = "10px Tahoma";
+                chartCtx.fillText(yVal.toFixed(1)+"%", 5, y+4);
+            }
+
+            let points = [];
+            for(let i = 0; i < cumData.length; i++) {
+                let x = padding.left + (i / (cumData.length-1 || 1)) * (chartCanvas.width - padding.left - padding.right);
+                let y = padding.top + chartH - ((cumData[i] - minVal)/yRange) * chartH;
+                points.push({ x, y, index: i, percentValue: percents[i].value, cumValue: cumData[i] });
+            }
+
+            chartCtx.beginPath();
+            chartCtx.strokeStyle = "#d84315";
+            chartCtx.lineWidth = 2.5;
+            for(let i = 0; i < points.length - 1; i++) {
+                chartCtx.moveTo(points[i].x, points[i].y);
+                chartCtx.lineTo(points[i+1].x, points[i+1].y);
+                chartCtx.stroke();
+            }
+
+            for(let p of points) {
+                let isHighlighted = highlightedStates[p.index];
+                chartCtx.beginPath();
+                chartCtx.fillStyle = isHighlighted ? "#ffc107" : "#0288d1";
+                chartCtx.arc(p.x, p.y, 7, 0, 2*Math.PI);
+                chartCtx.fill();
+                chartCtx.fillStyle = "white";
+                chartCtx.arc(p.x, p.y, 2.5, 0, 2*Math.PI);
+                chartCtx.fill();
+
+                chartCtx.fillStyle = isHighlighted ? "#e67e22" : "#2c3e2f";
+                chartCtx.font = "bold 10px Tahoma";
+                let sign = p.percentValue > 0 ? "+" : "";
+                chartCtx.fillText(`${sign}${p.percentValue}%`, p.x-15, p.y-12);
+            }
+
+            let dateFormatter = new Intl.DateTimeFormat('fa-IR', { month:'2-digit', day:'2-digit' });
+            for(let i = 0; i < percents.length; i += Math.max(1, Math.floor(percents.length/7))) {
+                let x = padding.left + (i / (cumData.length-1 || 1)) * (chartCanvas.width - padding.left - padding.right);
+                let label = dateFormatter.format(new Date(percents[i].timestamp));
+                chartCtx.save();
+                chartCtx.translate(x, chartCanvas.height - padding.bottom + 8);
+                chartCtx.rotate(-0.45);
+                chartCtx.fillStyle = "#666";
+                chartCtx.font = "8px Tahoma";
+                chartCtx.fillText(label, 0, 0);
+                chartCtx.restore();
+            }
+
+            chartCtx.restore();
+
+            chartCanvas.onclick = (e) => {
+                let rect = chartCanvas.getBoundingClientRect();
+                let scaleX = chartCanvas.width / rect.width;
+                let scaleY = chartCanvas.height / rect.height;
+                let mouseX = (e.clientX - rect.left) * scaleX;
+                let mouseY = (e.clientY - rect.top) * scaleY;
+
+                if(!currentDataCache) return;
+                let { cumData: cum, maxVal: mx, minVal: mn } = currentDataCache;
+                let yRng = mx - mn || 1;
+                let pad = { top: 55, bottom: 75, left: 75, right: 55 };
+                let chH = chartCanvas.height - pad.top - pad.bottom;
+
+                for(let i = 0; i < cum.length; i++) {
+                    let x = pad.left + (i / (cum.length-1 || 1)) * (chartCanvas.width - pad.left - pad.right);
+                    let y = pad.top + chH - ((cum[i] - mn)/yRng) * chH;
+                    if(Math.hypot(mouseX - x, mouseY - y) < 20) {
+                        toggleHighlight(i);
+                        drawChart();
+                        break;
+                    }
+                }
+            };
+        }
+
+        window.zoomIn = function() { zoomLevel = Math.min(2.8, zoomLevel + 0.2); drawChart(); };
+        window.zoomOut = function() { zoomLevel = Math.max(0.45, zoomLevel - 0.2); drawChart(); };
+        window.resetZoom = function() { zoomLevel = 1.0; drawChart(); };
+        window.scrollToEnd = function() {
+            let wrapper = document.getElementById('chartWrapper');
+            if(wrapper) wrapper.scrollLeft = wrapper.scrollWidth;
+        };
+
+        window.downloadChartAsImage = function() {
+            if(chartCanvas) {
+                let link = document.createElement('a');
+                link.download = `energy-chart-${Date.now()}.png`;
+                link.href = chartCanvas.toDataURL();
+                link.click();
+            }
+        };
+
+        window.showPage = function(pageId) {
+            document.querySelectorAll('.page').forEach(p=>p.classList.remove('active-page'));
+            document.getElementById(pageId).classList.add('active-page');
+            if(pageId === 'chartPage') setTimeout(() => drawChart(), 50);
+        };
+
+        window.toggleTrash = function() {
+            const div = document.getElementById('trashContainer');
+            div.style.display = div.style.display === 'block' ? 'none' : 'block';
+        };
+
+        window.toggleAchievedPeriods = function() {
+            const div = document.getElementById('achievedPeriodsContainer');
+            div.style.display = div.style.display === 'block' ? 'none' : 'block';
+            if(div.style.display === 'block') updateAchievedPeriodsUI();
+        };
+
+        window.toggleNotesDrawer = function() {
+            const drawer = document.getElementById('notesDrawer');
+            const btn = document.getElementById('notesToggle');
+            drawer.classList.toggle('open');
+            btn.innerHTML = drawer.classList.contains('open') ? '📝 یادداشت‌ها ▲' : '📝 یادداشت‌ها ▼';
+            if(drawer.classList.contains('open')) renderNotes();
+        };
+
+        window.clearTrash = function() {
+            if(confirm('پاکسازی کامل سطل زباله؟')) { trash = []; updateUI(); saveData(); }
+        };
+
+        async function uploadToGitHub(contentString, fileName) {
+            const token = localStorage.getItem("github_backup_token");
+            const repo = localStorage.getItem("github_backup_repo");
+            const branch = localStorage.getItem("github_backup_branch") || "main";
+            let filePath = localStorage.getItem("github_backup_filepath");
+
+            if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست." };
+
+            if (!filePath) {
+                filePath = `backups/${fileName}`;
+            } else if (filePath.endsWith("/")) {
+                filePath += fileName;
+            }
+
+            const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
+            const headers = {
+                "Authorization": `token ${token}`,
+                "Accept": "application/vnd.github.v3+json"
+            };
+
+            try {
+                let sha = null;
+                try {
+                    const checkRes = await fetch(`${url}?ref=${branch}`, { headers });
+                    if (checkRes.status === 200) {
+                        const fileData = await checkRes.json();
+                        sha = fileData.sha;
+                    }
+                } catch (e) {}
+
+                const base64Content = btoa(unescape(encodeURIComponent(contentString)));
+                const body = {
+                    message: `بکاپ خودکار برنامه - ${new Date().toLocaleString('fa-IR')}`,
+                    content: base64Content,
+                    branch: branch
+                };
+                if (sha) body.sha = sha;
+
+                const putRes = await fetch(url, {
+                    method: "PUT",
+                    headers: { ...headers, "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                });
+
+                return putRes.ok ? { success: true } : { success: false, message: "خطا در آپلود" };
+            } catch (err) {
+                return { success: false, message: err.message };
+            }
+        }
+
+        window.openGithubSettings = function() {
+            document.getElementById("githubSettingsModal").style.display = "flex";
+            document.getElementById("gh_token").value = localStorage.getItem("github_backup_token") || "";
+            document.getElementById("gh_repo").value = localStorage.getItem("github_backup_repo") || "";
+            document.getElementById("gh_branch").value = localStorage.getItem("github_backup_branch") || "";
+            document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "backups/synergy_percent_backup.json";
+        };
+
+        window.closeGithubSettings = function() {
+            document.getElementById("githubSettingsModal").style.display = "none";
+        };
+
+        window.saveGithubSettings = function() {
+            const token = document.getElementById("gh_token").value.trim();
+            const repo = document.getElementById("gh_repo").value.trim();
+            const branch = document.getElementById("gh_branch").value.trim();
+            const filepath = document.getElementById("gh_filepath").value.trim();
+
+            localStorage.setItem("github_backup_token", token);
+            localStorage.setItem("github_backup_repo", repo);
+            localStorage.setItem("github_backup_branch", branch || "main");
+            localStorage.setItem("github_backup_filepath", filepath || "backups/synergy_percent_backup.json");
+
+            alert("✅ تنظیمات گیت‌هاب ذخیره شد");
+            closeGithubSettings();
+        };
+
+        window.backupData = function() {
+            const backup = { percents, trash, goal, highlightedStates, periodTarget, achievedPeriods, notes };
+            const dataStr = JSON.stringify(backup,null,2);
+            const blob = new Blob([dataStr], {type:'application/json'});
+            const a = document.createElement('a');
+            const d = new Date();
+            const timestamp = d.toISOString().slice(0,19).replace(/:/g, "-");
+            const fileName = `backup_synergy_percent_${timestamp}.json`;
+            a.download = fileName;
+            a.href = URL.createObjectURL(blob);
+            a.click();
+            setTimeout(()=>URL.revokeObjectURL(a.href),100);
+
+            // پشتیبان‌گیری گیت‌هاب
+            const token = localStorage.getItem("github_backup_token");
+            if (token) {
+                setTimeout(async () => {
+                    const result = await uploadToGitHub(dataStr, fileName);
+                    if (result.success) {
+                        alert("✅ پشتیبان به گیت‌هاب ارسال شد");
+                    } else {
+                        alert("❌ خطای گیت‌هاب: " + result.message);
+                    }
+                }, 200);
+            }
+        };
+
+        window.recoveryData = function(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    percents = data.percents || [];
+                    percents.sort((a,b)=>a.timestamp-b.timestamp);
+                    trash = data.trash || [];
+                    goal = data.goal || null;
+                    highlightedStates = data.highlightedStates || {};
+                    periodTarget = data.periodTarget || null;
+                    achievedPeriods = data.achievedPeriods || [];
+                    notes = data.notes || [];
+                    checkPeriodAchievement();
+                    updateUI();
+                    saveData();
+
+                    if (window.parent && window.parent.EmaratCloudSync) {
+                        window.parent.EmaratCloudSync.push();
+                    } else if (window.EmaratCloudSync) {
+                        window.EmaratCloudSync.push();
+                    }
+
+                    alert('بازیابی با موفقیت انجام شد');
+                    if(document.getElementById('chartPage').classList.contains('active-page')) drawChart();
+                } catch(err) { alert('فایل نامعتبر'); }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        };
+
+        function initStatsMenu() {
+            let content = document.getElementById('statsContent');
+            let arrow = document.getElementById('statsArrow');
+            if(statsMenuOpen) {
+                content.classList.add('open');
+                arrow.classList.add('open');
+            } else {
+                content.classList.remove('open');
+                arrow.classList.remove('open');
+            }
+        }
+
+        window.addEventListener('resize', ()=> { if(document.getElementById('chartPage').classList.contains('active-page')) drawChart(); });
+
+        loadData();
+        if(!percents.length) percents = [];
+        checkPeriodAchievement();
+        initStatsMenu();
+        updateUI();
+        saveData();
+    })();
+</script>
+</body>
+</html>

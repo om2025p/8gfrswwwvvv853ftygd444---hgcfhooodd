@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>ثبت قیمت ابطال + جدول رشد | صندوق سینرژی</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0a1f1f; margin: 0; padding: 8px; min-height: 100vh; color: #e2f0ef; }
+        .container { max-width: 1200px; margin: 0 auto; background: #1a3a35; border-radius: 24px; padding: 12px; border: 1px solid #2c8c7a; }
+        h1 { font-size: 1.4rem; text-align: center; color: #8effdb; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .card { background: #1e3a35; border-radius: 20px; padding: 14px; margin-bottom: 16px; border-right: 3px solid #47cfb1; }
+        .input-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+        label { font-weight: bold; color: #baffe8; display: flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+        input { background: #0d2622; border: 1px solid #3fa58f; padding: 10px 14px; border-radius: 18px; font-size: 0.9rem; color: #fff; font-family: monospace; text-align: left; direction: ltr; }
+        input:focus { outline: none; border-color: #8effdb; box-shadow: 0 0 0 2px rgba(142, 255, 219, 0.3); }
+        button { background: #2fba9b; border: none; padding: 10px 18px; font-weight: bold; border-radius: 35px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; color: #0a2a24; margin: 4px 4px 0 0; }
+        button:hover { background: #1d9e81; transform: scale(0.98); }
+        .btn-outline { background: transparent; border: 1px solid #47cfb1; color: #c0fff0; }
+        .btn-outline:hover { background: #2fba9b33; }
+        .btn-danger { background: #aa4e3a; color: white; }
+        .btn-danger:hover { background: #8a3a28; }
+        .price-list { background: #14302b; border-radius: 20px; padding: 10px; max-height: 280px; overflow-y: auto; }
+        .price-item { background: #1c423c; margin: 6px 0; padding: 8px 12px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+        .price-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 2; }
+        .date-badge { background: #196b5b; padding: 3px 8px; border-radius: 25px; font-size: 0.65rem; font-family: monospace; cursor: pointer; transition: 0.1s; }
+        .date-badge:hover { background: #2a9b83; }
+        .value-badge { font-weight: bold; font-size: 0.9rem; direction: ltr; cursor: pointer; }
+        .percent-badge { background: #0f2e28; padding: 2px 6px; border-radius: 20px; font-size: 0.6rem; font-weight: bold; direction: ltr; }
+        .percent-positive { color: #6bffb0; }
+        .percent-negative { color: #ff9a8b; }
+        .item-actions { display: flex; gap: 5px; }
+        .icon-btn { background: #2d5a50; padding: 4px 10px; font-size: 0.7rem; margin: 0; border-radius: 25px; }
+        .icon-btn.edit-btn { background: #3a7c6b; }
+        .icon-btn.delete-btn { background: #aa4e3a; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; justify-content: center; align-items: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: #1e3a35; border-radius: 28px; padding: 18px; width: 300px; border: 2px solid #47cfb1; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 5px; flex-wrap: wrap; }
+        .calendar-header button { background: #2fba9b; padding: 6px 12px; font-size: 0.75rem; margin: 0; }
+        .calendar-month-year { font-weight: bold; background: #0d2622; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; }
+        .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; margin-bottom: 8px; font-size: 0.65rem; color: #7fffd4; }
+        .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .calendar-day { background: #14302b; text-align: center; padding: 8px 0; border-radius: 12px; font-size: 0.7rem; cursor: pointer; transition: 0.1s; }
+        .calendar-day:hover { background: #2fba9b; color: #0a2a24; }
+        .calendar-day.empty { background: transparent; cursor: default; }
+        .modal-actions { display: flex; justify-content: space-between; margin-top: 15px; gap: 8px; }
+        .modal-actions button { flex: 1; margin: 0; }
+        .stats { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-top: 12px; }
+        .stat-card { background: #0b2a26; padding: 8px 10px; border-radius: 16px; flex: 1; text-align: center; border-top: 2px solid #47cfb1; font-size: 0.75rem; }
+        .stat-card span { font-size: 1rem; font-weight: bold; display: block; margin-top: 4px; }
+        .positive { color: #6bffb0; }
+        .negative { color: #ff9a8b; }
+        .neutral { color: #c2f0ff; }
+        .chart-scroll-container { overflow-x: auto; overflow-y: hidden; border-radius: 16px; background: #0a1f1c; padding: 8px 0; cursor: grab; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        .chart-scroll-container:active { cursor: grabbing; }
+        .chart-scroll-container svg { display: block; background: #0a1f1c; border-radius: 14px; height: auto; font-family: monospace; }
+        .scroll-hint { font-size: 0.65rem; background: #0f2e28; display: inline-block; padding: 3px 10px; border-radius: 40px; color: #7fffd4; }
+        .growth-table-section { background: #1e3a35; border-radius: 20px; padding: 12px; margin-top: 16px; }
+        .growth-table-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+        .milestone-input { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .forecast-days-input { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .milestone-input label, .forecast-days-input label { margin-bottom: 0; font-size: 0.75rem; }
+        .milestone-input input, .forecast-days-input input { width: 70px; padding: 6px 8px; font-size: 0.8rem; }
+        .apply-milestone-btn, .forecast-btn { margin: 0; padding: 5px 12px; }
+        .forecast-btn { background-color: #e67e22; }
+        .table-wrapper { max-height: 400px; overflow-y: auto; overflow-x: auto; border-radius: 14px; border: 1px solid #3e8e7a; }
+        .growth-table { width: 100%; border-collapse: collapse; table-layout: auto; font-family: monospace; font-size: 0.7rem; min-width: 500px; }
+        .growth-table th { background: #3bc9b0; color: #0a2f28; padding: 8px 4px; position: sticky; top: 0; font-weight: bold; text-align: center; white-space: nowrap; }
+        .growth-table td { padding: 6px 4px; text-align: center; border-bottom: 1px solid #3e6a5e; white-space: nowrap; }
+        .growth-table tr:hover { background: #2a4a42; }
+        .growth-table tr.highlight { background: #f9e45b; color: #1a1a1a; }
+        .growth-table tr.highlight td { color: #1a1a1a; font-weight: bold; }
+        .col-right { text-align: right; direction: ltr; }
+        .col-center { text-align: center; }
+        .col-left { text-align: left; direction: ltr; }
+        .col-day { text-align: center; font-weight: bold; color: #7fffd4; }
+        .stats-bar { background: #0f2e28; border-radius: 14px; padding: 8px 10px; margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: space-around; gap: 8px; font-size: 0.7rem; text-align: center; }
+        .stat-item { flex: 1; min-width: 60px; }
+        .stat-label { color: #7fffd4; font-size: 0.6rem; }
+        .stat-value { font-weight: bold; font-size: 0.8rem; color: #f9e45b; }
+        .formula-badge { background: #0f2e28; border-radius: 12px; padding: 5px 8px; font-size: 0.6rem; text-align: center; margin-top: 8px; color: #7fffd4; }
+        .flex-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .archive-panel { display: none; margin-top: 12px; background: #0f2e28; border-radius: 16px; padding: 10px; }
+        .archive-panel.show { display: block; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #000000cc; backdrop-filter: blur(12px); color: #8effdb; padding: 6px 16px; border-radius: 40px; font-size: 0.75rem; opacity: 0; transition: 0.2s; pointer-events: none; z-index: 10000; }
+        @media (max-width: 600px) { .container { padding: 8px; } .price-item { flex-direction: column; align-items: stretch; } .growth-table th, .growth-table td { font-size: 0.6rem; padding: 4px 2px; } .modal-content { width: 90%; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📈 ثبت قیمت ابطال + جدول رشد <span style="font-size:0.7rem;">| صندوق سینرژی</span></h1>
+    <div class="card">
+        <div class="input-row">
+            <label>💰 قیمت امروز (تومان):</label>
+            <input type="text" id="todayPrice" placeholder="مثال: 1,250,000" autocomplete="off">
+            <button id="saveBtn">➕ ثبت قیمت امروز</button>
+        </div>
+        <div class="stats" id="statsArea">
+            <div class="stat-card">📆 نسبت به دیروز<br><span id="dailyPercent">—-</span></div>
+            <div class="stat-card">📊 نسبت به اولین روز<br><span id="totalPercent">—-</span></div>
+            <div class="stat-card">⚡ میانگین رشد روزانه<br><span id="avgPercent">—-</span></div>
+        </div>
+    </div>
+    <div class="card">
+        <h3 style="margin:0 0 8px 0; font-size:1rem;">🗂 تاریخچه قیمت‌ها</h3>
+        <div class="price-list" id="priceList"><div style="text-align:center; padding:15px;">📭 هنوز قیمتی ثبت نشده</div></div>
+        <div class="flex-btns">
+            <button id="backupBtn" class="btn-outline">📦 پشتیبان‌گیری</button>
+            <button id="restoreBtn" class="btn-outline">🔄 بازیابی</button>
+            <button id="toggleArchiveBtn" class="btn-outline">⚙️ بایگانی</button>
+            <button id="ghSettingsBtn" class="btn-outline" style="background-color: #24292e; color: white; border-color: #24292e;">⚙️ تنظیمات گیت‌هاب</button>
+        </div>
+        <div id="archivePanel" class="archive-panel">
+            <p style="margin:0 0 8px 0; font-size:0.8rem;">⚠️ پاک کردن کل تاریخچه فقط اینجاست!</p>
+            <button id="dangerClearBtn" class="btn-danger">🗑 پاک کردن کل تاریخچه</button>
+        </div>
+    </div>
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+            <span class="scroll-hint">↔️ بکشید برای دیدن کل روند</span>
+        </div>
+        <div class="chart-scroll-container" id="chartScrollContainer">
+            <svg id="priceChart" width="100%" height="180" viewBox="0 0 600 180" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div class="small-note" style="font-size:0.6rem; text-align:center; margin-top:6px;">📊 هر نقطه = یک ثبت | دوبار کلیک روی تاریخ = تغییر تاریخ</div>
+    </div>
+    <div class="growth-table-section">
+        <div class="growth-table-header">
+            <h3 style="margin:0; font-size:0.95rem;">📊 جدول رشد پیش‌بینی (روزهای آینده)</h3>
+            <div class="milestone-input">
+                <label>🌟 درصد نقطه عطف:</label>
+                <input type="text" id="milestone_percent" value="10">
+                <span style="font-size:0.7rem;">%</span>
+                <button id="applyMilestoneBtn" class="apply-milestone-btn">✅ اعمال</button>
+            </div>
+        </div>
+        <div class="forecast-days-input">
+            <label>📅 تعداد روز پیش‌بینی:</label>
+            <input type="text" id="forecastDays" value="30" placeholder="30">
+            <button id="forecastBtn" class="forecast-btn">🔮 نمایش جدول</button>
+        </div>
+        <div id="growthTableContainer">
+            <div class="neutral" style="padding:15px; text-align:center; font-size:0.8rem;">📋 ابتدا حداقل ۲ قیمت ثبت کنید</div>
+        </div>
+        <div class="formula-badge">💡 بر اساس میانگین رشد روزانه واقعی، رشد مرکب محاسبه می‌شود</div>
+    </div>
+</div>
+<div id="toastMsg" class="toast">✅ انجام شد</div>
+
+<div id="calendarModal" class="modal">
+    <div class="modal-content">
+        <div class="calendar-header">
+            <button id="calYearPrev">&lt;&lt;</button>
+            <button id="calMonthPrev">&lt;</button>
+            <span id="calMonthYear" class="calendar-month-year"></span>
+            <button id="calMonthNext">&gt;</button>
+            <button id="calYearNext">&gt;&gt;</button>
+        </div>
+        <div class="calendar-weekdays">
+            <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
+        </div>
+        <div id="calendarDays" class="calendar-days"></div>
+        <div class="modal-actions">
+            <button id="cancelCalendarBtn" class="btn-outline">انصراف</button>
+            <button id="confirmCalendarBtn" class="apply-milestone-btn">تأیید</button>
+        </div>
+    </div>
+</div>
+
+<!-- GitHub Settings Modal -->
+<div id="githubSettingsModal" class="modal" style="display:none; z-index:10002; direction:rtl;">
+    <div class="modal-content" style="background-color:#1e3a35; border: 2px solid #2fba9b; border-radius:28px; width:300px;">
+        <h3 style="margin-top:0; color:#8effdb; text-align:center; font-size:1rem;">⚙️ تنظیمات پشتیبان‌گیری در گیت‌هاب</h3>
+        <p style="font-size:0.7rem; color:#baffe8; line-height:1.6; margin-bottom:15px; text-align:justify;">
+            با فعال‌سازی این بخش، با هر بار زدن دکمه‌ی «پشتیبان‌گیری»، اطلاعات شما علاوه بر فایل محلی، به صورت خودکار به مخزن گیت‌هاب شخصی شما ارسال می‌شود.
+        </p>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.75rem; margin-bottom:5px; font-weight:bold; color:#baffe8;">توکن شخصی گیت‌هاب (PAT):</label>
+            <input type="password" id="gh_token" style="width:100%; padding:8px; border:1px solid #3fa58f; border-radius:12px; background:#0d2622; color:#fff; text-align:left; direction:ltr;" placeholder="ghp_...">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.75rem; margin-bottom:5px; font-weight:bold; color:#baffe8;">نام مخزن (username/repo):</label>
+            <input type="text" id="gh_repo" style="width:100%; padding:8px; border:1px solid #3fa58f; border-radius:12px; background:#0d2622; color:#fff; text-align:left; direction:ltr;" placeholder="myusername/my-repo">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.75rem; margin-bottom:5px; font-weight:bold; color:#baffe8;">شاخه (Branch):</label>
+            <input type="text" id="gh_branch" style="width:100%; padding:8px; border:1px solid #3fa58f; border-radius:12px; background:#0d2622; color:#fff; text-align:left; direction:ltr;" placeholder="main">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.75rem; margin-bottom:5px; font-weight:bold; color:#baffe8;">مسیر ذخیره فایل در مخزن:</label>
+            <input type="text" id="gh_filepath" style="width:100%; padding:8px; border:1px solid #3fa58f; border-radius:12px; background:#0d2622; color:#fff; text-align:left; direction:ltr;" placeholder="backups/synergy_price_backup.json">
+        </div>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button id="saveGhBtn" class="apply-milestone-btn" style="flex:1; margin:0; padding:8px;">ذخیره</button>
+            <button id="closeGhBtn" class="btn-outline" style="flex:1; margin:0; padding:8px;">انصراف</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const STORAGE_PRICES = "daily_asset_prices_v2";
+    const priceInput = document.getElementById("todayPrice");
+    const saveBtn = document.getElementById("saveBtn");
+    const priceListDiv = document.getElementById("priceList");
+    const dailySpan = document.getElementById("dailyPercent");
+    const totalSpan = document.getElementById("totalPercent");
+    const avgSpan = document.getElementById("avgPercent");
+    const toastMsgDiv = document.getElementById("toastMsg");
+    const backupBtn = document.getElementById("backupBtn");
+    const restoreBtn = document.getElementById("restoreBtn");
+    const toggleArchiveBtn = document.getElementById("toggleArchiveBtn");
+    const archivePanel = document.getElementById("archivePanel");
+    const dangerClearBtn = document.getElementById("dangerClearBtn");
+    const chartSvg = document.getElementById("priceChart");
+    const chartScrollContainer = document.getElementById("chartScrollContainer");
+    const milestoneInput = document.getElementById("milestone_percent");
+    const applyMilestoneBtn = document.getElementById("applyMilestoneBtn");
+    const growthTableContainer = document.getElementById("growthTableContainer");
+    const forecastBtn = document.getElementById("forecastBtn");
+    const forecastDaysInput = document.getElementById("forecastDays");
+    const calendarModal = document.getElementById("calendarModal");
+    const calYearPrev = document.getElementById("calYearPrev");
+    const calMonthPrev = document.getElementById("calMonthPrev");
+    const calMonthNext = document.getElementById("calMonthNext");
+    const calYearNext = document.getElementById("calYearNext");
+    const calMonthYearSpan = document.getElementById("calMonthYear");
+    const calendarDaysDiv = document.getElementById("calendarDays");
+    const cancelCalendarBtn = document.getElementById("cancelCalendarBtn");
+    const confirmCalendarBtn = document.getElementById("confirmCalendarBtn");
+
+    let lastAvgPercent = 0;
+    let lastBasePrice = 0;
+    let currentYear = 1403;
+    let currentMonth = 1;
+    let selectedDay = null;
+    let currentEditingItemId = null;
+
+    function showMessage(msg, isError = false) {
+        toastMsgDiv.textContent = msg;
+        toastMsgDiv.style.opacity = "1";
+        toastMsgDiv.style.background = isError ? "#aa3e2ecc" : "#000000cc";
+        setTimeout(() => { toastMsgDiv.style.opacity = "0"; }, 2000);
+    }
+
+    function toEnglishNumber(input) {
+        if (!input && input !== 0) return "";
+        const str = String(input);
+        const map = { '۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9', '٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9' };
+        return str.replace(/[۰-۹٠-٩]/g, m => map[m] || m);
+    }
+
+    function parsePrice(raw) {
+        let cleaned = toEnglishNumber(raw);
+        cleaned = cleaned.replace(/[^0-9.]/g, "");
+        if (cleaned === "") return NaN;
+        let num = parseFloat(cleaned);
+        return isNaN(num) ? NaN : num;
+    }
+
+    function formatWithCommas(x) {
+        if (isNaN(x)) return "";
+        return Math.round(x).toLocaleString("en-US");
+    }
+
+    function formatPercent(percent) {
+        if (percent === null || isNaN(percent)) return "—";
+        const sign = percent >= 0 ? "+" : "";
+        return `${sign}${percent.toFixed(2)}%`;
+    }
+
+    function getPersianDate() {
+        return new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    }
+
+    function getCurrentPersianYearMonth() {
+        const now = new Date();
+        const formatter = new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "numeric", day: "numeric" });
+        const parts = formatter.formatToParts(now);
+        let year = 1403, month = 1, day = 1;
+        for(let p of parts) {
+            if(p.type === "year") year = parseInt(p.value, 10);
+            if(p.type === "month") month = parseInt(p.value, 10);
+            if(p.type === "day") day = parseInt(p.value, 10);
+        }
+        return { year, month, day };
+    }
+
+    function getPersianMonthDays(year, month) {
+        if(month < 1 || month > 12) return 30;
+        if(month <= 6) return 31;
+        if(month <= 11) return 30;
+        const isLeap = (year % 33 === 1 || year % 33 === 2 || year % 33 === 3);
+        return isLeap ? 30 : 29;
+    }
+
+    function getWeekdayOfFirstDay(year, month) {
+        const refYear = 1403, refMonth = 1, refWeekday = 5;
+        let totalMonthsDiff = (year - refYear) * 12 + (month - refMonth);
+        let totalDaysDiff = 0;
+        let y = refYear, m = refMonth;
+        if(totalMonthsDiff > 0) {
+            for(let i = 0; i < totalMonthsDiff; i++) {
+                totalDaysDiff += getPersianMonthDays(y, m);
+                m++;
+                if(m > 12) { m = 1; y++; }
+            }
+        } else if(totalMonthsDiff < 0) {
+            for(let i = 0; i < -totalMonthsDiff; i++) {
+                m--;
+                if(m < 1) { m = 12; y--; }
+                totalDaysDiff -= getPersianMonthDays(y, m);
+            }
+        }
+        let firstWeekday = (refWeekday + totalDaysDiff) % 7;
+        if(firstWeekday < 0) firstWeekday += 7;
+        return firstWeekday;
+    }
+
+    function renderCalendar(year, month) {
+        if (isNaN(year) || year < 1300) year = 1403;
+        if (isNaN(month) || month < 1 || month > 12) month = 1;
+
+        const daysCount = getPersianMonthDays(year, month);
+        const firstWeekday = getWeekdayOfFirstDay(year, month);
+        calMonthYearSpan.innerText = `${year} / ${month.toString().padStart(2,'0')}`;
+        calendarDaysDiv.innerHTML = "";
+        let totalCells = Math.ceil((firstWeekday + daysCount) / 7) * 7;
+        for(let i = 0; i < totalCells; i++) {
+            const dayNumber = i - firstWeekday + 1;
+            const div = document.createElement("div");
+            div.className = "calendar-day";
+            if(dayNumber >= 1 && dayNumber <= daysCount) {
+                div.innerText = dayNumber;
+                if(selectedDay === dayNumber) {
+                    div.style.background = "#47cfb1";
+                }
+                div.addEventListener("click", (function(day) {
+                    return function() {
+                        document.querySelectorAll(".calendar-days .calendar-day").forEach(d => d.style.background = "");
+                        this.style.background = "#47cfb1";
+                        selectedDay = day;
+                    };
+                })(dayNumber));
+            } else {
+                div.innerText = "";
+                div.classList.add("empty");
+            }
+            calendarDaysDiv.appendChild(div);
+        }
+    }
+
+    function showCalendarForItem(itemId, currentDateStr) {
+        currentEditingItemId = itemId;
+
+        let parts = currentDateStr?.split("/") || [];
+        if(parts.length === 3) {
+            let y = parseInt(parts[0], 10);
+            let m = parseInt(parts[1], 10);
+            let d = parseInt(parts[2], 10);
+
+            if (!isNaN(y) && !isNaN(m) && !isNaN(d) && y > 1300 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                currentYear = y;
+                currentMonth = m;
+                selectedDay = d;
+            } else {
+                const now = getCurrentPersianYearMonth();
+                currentYear = now.year;
+                currentMonth = now.month;
+                selectedDay = now.day;
+            }
+        } else {
+            const now = getCurrentPersianYearMonth();
+            currentYear = now.year;
+            currentMonth = now.month;
+            selectedDay = now.day;
+        }
+
+        if (isNaN(currentYear) || currentYear < 1300) currentYear = 1403;
+        if (isNaN(currentMonth) || currentMonth < 1 || currentMonth > 12) currentMonth = 1;
+        if (isNaN(selectedDay) || selectedDay < 1) selectedDay = 1;
+
+        renderCalendar(currentYear, currentMonth);
+        calendarModal.classList.add("show");
+    }
+
+    function closeCalendar() {
+        calendarModal.classList.remove("show");
+        currentEditingItemId = null;
+        selectedDay = null;
+    }
+
+    function confirmCalendarChange() {
+        if(currentEditingItemId === null || selectedDay === null) {
+            closeCalendar();
+            return;
+        }
+        const newDateStr = `${currentYear}/${currentMonth.toString().padStart(2,'0')}/${selectedDay.toString().padStart(2,'0')}`;
+        let prices = getPrices();
+        const item = prices.find(p => p.id == currentEditingItemId);
+        if(item) {
+            item.date = newDateStr;
+            prices.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+            savePrices(prices);
+            showMessage(`📅 تاریخ به ${newDateStr} تغییر کرد`);
+        } else {
+            showMessage("❌ خطا در یافتن آیتم", true);
+        }
+        closeCalendar();
+    }
+
+    function getPrices() {
+        const raw = localStorage.getItem(STORAGE_PRICES);
+        if (!raw) return [];
+        try { return JSON.parse(raw); } catch(e) { return []; }
+    }
+
+    function savePrices(pricesArray) {
+        localStorage.setItem(STORAGE_PRICES, JSON.stringify(pricesArray));
+        renderAll();
+    }
+
+    function calculateChangePercent(currentPrice, previousPrice) {
+        if (!previousPrice || previousPrice === 0) return null;
+        return ((currentPrice - previousPrice) / previousPrice) * 100;
+    }
+
+    function calculateStats(prices) {
+        if (!prices.length) {
+            dailySpan.innerText = "—"; totalSpan.innerText = "—"; avgSpan.innerText = "—";
+            lastAvgPercent = 0;
+            return;
+        }
+        const lastPrice = prices[prices.length - 1].price;
+        lastBasePrice = prices[0].price;
+        if (prices.length >= 2) {
+            const prevPrice = prices[prices.length - 2].price;
+            const diff = lastPrice - prevPrice;
+            const dailyPercent = (diff / prevPrice) * 100;
+            const sign = dailyPercent >= 0 ? "📈" : "📉";
+            const cls = dailyPercent >= 0 ? "positive" : "negative";
+            dailySpan.innerHTML = `<span class="${cls}">${sign} ${dailyPercent.toFixed(2)}%</span>`;
+        } else {
+            dailySpan.innerHTML = `<span class="neutral">📅 اولین ثبت</span>`;
+        }
+        const firstPrice = prices[0].price;
+        const totalPercentVal = ((lastPrice - firstPrice) / firstPrice) * 100;
+        totalSpan.innerHTML = `<span class="${totalPercentVal>=0?'positive':'negative'}">${totalPercentVal.toFixed(2)}%</span>`;
+
+        if (prices.length >= 2) {
+            let sumPercent = 0;
+            for (let i = 1; i < prices.length; i++) {
+                const prev = prices[i-1].price;
+                const curr = prices[i].price;
+                sumPercent += ((curr - prev) / prev) * 100;
+            }
+            const avgVal = sumPercent / (prices.length - 1);
+            lastAvgPercent = avgVal;
+            avgSpan.innerHTML = `<span class="${avgVal>=0?'positive':'negative'}">${avgVal.toFixed(2)}%</span>`;
+        } else {
+            avgSpan.innerHTML = `<span class="neutral">نیاز به ۲ ثبت</span>`;
+            lastAvgPercent = 0;
+        }
+    }
+
+    function drawChart(prices) {
+        if (!prices.length) {
+            chartSvg.innerHTML = `<text x="300" y="90" text-anchor="middle" fill="#aaa" dy=".3em" font-size="12">📉 ثبت قیمت برای دیدن نمودار</text>`;
+            chartSvg.setAttribute("width", "100%");
+            return;
+        }
+        const baseHeight = 180;
+        const padding = 30;
+        const pointsCount = prices.length;
+        const pointWidth = 38;
+        const dynamicWidth = Math.max(600, pointsCount * pointWidth);
+        const innerWidth = dynamicWidth - 2 * padding;
+        const innerHeight = baseHeight - 2 * padding;
+        const values = prices.map(p => p.price);
+        const minVal = Math.min(...values);
+        const maxVal = Math.max(...values);
+        const range = maxVal - minVal;
+        const yScale = (val) => {
+            if (range === 0) return padding + innerHeight / 2;
+            return padding + innerHeight - ((val - minVal) / range) * innerHeight;
+        };
+        const xStep = innerWidth / (values.length - 1 || 1);
+        let points = "", circles = "", lastLabels = "";
+        values.forEach((val, idx) => {
+            const x = padding + idx * xStep;
+            const y = yScale(val);
+            points += `${x},${y} `;
+            circles += `<circle cx="${x}" cy="${y}" r="3" fill="#7fffd4" stroke="#1e5a50" stroke-width="1.2" />`;
+            if (idx === values.length - 1) {
+                lastLabels += `<text x="${x+6}" y="${y-4}" fill="#baffe8" font-size="8">${formatWithCommas(val)}</text>`;
+            }
+        });
+        const minY = yScale(minVal);
+        const maxY = yScale(maxVal);
+        const labels = `<text x="${padding-6}" y="${maxY-2}" fill="#8effdb" font-size="7">${formatWithCommas(maxVal)}</text>
+                        <text x="${padding-6}" y="${minY+10}" fill="#8effdb" font-size="7">${formatWithCommas(minVal)}</text>`;
+        chartSvg.setAttribute("width", dynamicWidth);
+        chartSvg.setAttribute("height", baseHeight);
+        chartSvg.setAttribute("viewBox", `0 0 ${dynamicWidth} ${baseHeight}`);
+        chartSvg.innerHTML = `<polyline points="${points.trim()}" fill="none" stroke="#47cfb1" stroke-width="2" stroke-linecap="round" />${circles}${labels}${lastLabels}`;
+        setTimeout(() => { if(chartScrollContainer) chartScrollContainer.scrollLeft = chartScrollContainer.scrollWidth; }, 50);
+    }
+
+    function renderGrowthTable(basePrice, avgPercent, forecastDays, milestoneValue = null) {
+        if (!basePrice || basePrice <= 0 || !avgPercent || avgPercent <= 0 || forecastDays <= 0) {
+            growthTableContainer.innerHTML = '<div class="neutral" style="padding:15px;text-align:center;">📊 حداقل ۲ قیمت ثبت کنید و تعداد روز پیش‌بینی را وارد کنید</div>';
+            return;
+        }
+
+        const growthFactor = 1 + (avgPercent / 100);
+        let currentAmount = basePrice;
+        const rows = [];
+        let milestone = milestoneValue;
+        if (milestone === null) {
+            let m = parseFloat(milestoneInput.value.trim());
+            milestone = (isNaN(m) || m <= 0) ? null : m;
+        }
+
+        let prevMilestoneFloor = 0;
+        for (let day = 1; day <= forecastDays; day++) {
+            const startAmount = currentAmount;
+            const endAmount = startAmount * growthFactor;
+            const cumPercent = ((endAmount / basePrice) - 1) * 100;
+            let isHighlight = false;
+            if (milestone) {
+                const curFloor = Math.floor(cumPercent / milestone);
+                if (curFloor > prevMilestoneFloor && cumPercent >= milestone) isHighlight = true;
+                prevMilestoneFloor = curFloor;
+            }
+            rows.push({ day, startAmount, endAmount, cumPercent, isHighlight });
+            currentAmount = endAmount;
+        }
+
+        const yellowRows = [];
+        for (let i = 0; i < rows.length; i++) {
+            if (rows[i].isHighlight) {
+                yellowRows.push(rows[i]);
+            }
+        }
+
+        for (let i = 0; i < yellowRows.length; i++) {
+            const currentYellow = yellowRows[i];
+            const targetPercent = (Math.floor(currentYellow.cumPercent / milestone) + 1) * milestone;
+            const targetAmountNeeded = basePrice * (1 + targetPercent / 100);
+            let daysNeeded = currentYellow.day;
+            let temp = basePrice * Math.pow(growthFactor, currentYellow.day);
+            while (temp < targetAmountNeeded && daysNeeded <= forecastDays + 365) {
+                temp *= growthFactor;
+                daysNeeded++;
+            }
+            const distance = daysNeeded - currentYellow.day;
+            if (distance > 0 && distance < 10000) {
+                currentYellow.distanceToNext = distance + ' روز بعد';
+            } else {
+                currentYellow.distanceToNext = '-';
+            }
+        }
+
+        const yellowCount = yellowRows.length;
+        const distances = [];
+        for (let i = 0; i < yellowRows.length - 1; i++) {
+            distances.push(yellowRows[i+1].day - yellowRows[i].day);
+        }
+        const avgDist = distances.length ? (distances.reduce((a,b)=>a+b,0)/distances.length).toFixed(1) : '-';
+        const minDist = distances.length ? Math.min(...distances) : '-';
+        const maxDist = distances.length ? Math.max(...distances) : '-';
+        let nextPrediction = '-';
+        if (yellowRows.length && milestone) {
+            const lastYellow = yellowRows[yellowRows.length-1];
+            if (lastYellow.distanceToNext && lastYellow.distanceToNext !== '-') {
+                nextPrediction = lastYellow.distanceToNext;
+            }
+        }
+
+        let statsHtml = `<div class="stats-bar">
+            <div class="stat-item"><div class="stat-label">🔢 تعداد زردها</div><div class="stat-value">${yellowCount}</div></div>
+            <div class="stat-item"><div class="stat-label">⏱️ میانگین فاصله</div><div class="stat-value">${avgDist !== '-' ? avgDist+' روز' : '-'}</div></div>
+            <div class="stat-item"><div class="stat-label">⚡ کمترین فاصله</div><div class="stat-value">${minDist !== '-' ? minDist+' روز' : '-'}</div></div>
+            <div class="stat-item"><div class="stat-label">🐢 بیشترین فاصله</div><div class="stat-value">${maxDist !== '-' ? maxDist+' روز' : '-'}</div></div>
+            <div class="stat-item"><div class="stat-label">📍 زرد بعدی</div><div class="stat-value">${nextPrediction}</div></div>
+        </div>`;
+
+        let tableHtml = statsHtml + `<div class="table-wrapper"><table class="growth-table" dir="ltr"><thead><tr>
+            <th>💰 عدد دوم</th>
+            <th>📊 درصد</th>
+            <th>💵 عدد اول</th>
+            <th>📆 روز</th>
+            <th>⏱️ تا زرد بعدی</th>
+        </tr></thead><tbody>`;
+
+        for (let i = 0; i < rows.length; i++) {
+            const r = rows[i];
+            const highlightClass = r.isHighlight ? 'highlight' : '';
+            let distanceToNext = '-';
+            if (r.isHighlight) {
+                const yellowRow = yellowRows.find(y => y.day === r.day);
+                if (yellowRow && yellowRow.distanceToNext) {
+                    distanceToNext = yellowRow.distanceToNext;
+                }
+            }
+            tableHtml += `<tr class="${highlightClass}">
+                <td class="col-right">${formatWithCommas(Math.round(r.endAmount))} تومان</td>
+                <td class="col-center">${r.cumPercent.toFixed(2)}%</td>
+                <td class="col-left">${formatWithCommas(Math.round(r.startAmount))} تومان</td>
+                <td class="col-day">${r.day}</td>
+                <td class="col-center">${distanceToNext}</td>
+             </tr>`;
+        }
+        tableHtml += `</tbody></table></div>
+        <div class="formula-badge">📌 میانگین رشد روزانه واقعی: ${avgPercent.toFixed(2)}% | پیش‌بینی ${forecastDays} روز آینده</div>`;
+        growthTableContainer.innerHTML = tableHtml;
+    }
+
+    function refreshGrowthTable() {
+        const prices = getPrices();
+        if (prices.length < 2) {
+            growthTableContainer.innerHTML = '<div class="neutral" style="padding:15px;text-align:center;">📊 حداقل ۲ قیمت ثبت کنید تا میانگین رشد محاسبه شود</div>';
+            return;
+        }
+        const lastPrice = prices[prices.length-1].price;
+        let forecastDays = parseInt(forecastDaysInput.value);
+        if (isNaN(forecastDays) || forecastDays <= 0) forecastDays = 30;
+        forecastDaysInput.value = forecastDays;
+        let milestone = parseFloat(milestoneInput.value.trim());
+        milestone = (isNaN(milestone) || milestone <= 0) ? null : milestone;
+        renderGrowthTable(lastPrice, lastAvgPercent, forecastDays, milestone);
+    }
+
+    function editPriceItem(id) {
+        const prices = getPrices();
+        const item = prices.find(p => p.id == id);
+        if (!item) return;
+        const newPriceRaw = prompt(
+            `✏️ ویرایش قیمت ${item.date}\n` +
+            `قیمت فعلی: ${formatWithCommas(item.price)}\n` +
+            `عدد جدید را وارد کن (تاریخ و جایگاه تغییر نمی‌کنه):`,
+            item.price
+        );
+        if (newPriceRaw === null) return;
+        const newPrice = parsePrice(newPriceRaw);
+        if (isNaN(newPrice) || newPrice <= 0) {
+            showMessage("❌ عدد معتبر وارد کن", true);
+            return;
+        }
+        item.price = newPrice;
+        prices.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        savePrices(prices);
+        showMessage(`✏️ قیمت ${formatWithCommas(newPrice)} تومان در همون جایگاه ذخیره شد`);
+    }
+
+    function deletePriceItem(id) {
+        if (!confirm("🗑 حذف شود؟")) return;
+        let prices = getPrices();
+        prices = prices.filter(p => p.id != id);
+        savePrices(prices);
+        showMessage(`🗑 حذف شد`);
+    }
+
+    function renderHistoryAndStats() {
+        const prices = getPrices();
+        if (!prices.length) {
+            priceListDiv.innerHTML = `<div style="text-align:center; padding:15px;">📭 هیچ قیمتی ثبت نشده</div>`;
+            calculateStats(prices);
+            drawChart(prices);
+            return;
+        }
+
+        const reversed = [...prices].reverse();
+
+        priceListDiv.innerHTML = reversed.map((item, idx) => {
+            let percentChange = null;
+            if (idx < reversed.length - 1) {
+                percentChange = calculateChangePercent(item.price, reversed[idx + 1].price);
+            }
+            const percentHtml = percentChange !== null
+                ? `<span class="percent-badge ${percentChange >= 0 ? 'percent-positive' : 'percent-negative'}">${percentChange >= 0 ? '📈' : '📉'} ${formatPercent(percentChange)}</span>`
+                : `<span class="percent-badge">—</span>`;
+
+            return `
+            <div class="price-item" data-id="${item.id}">
+                <div class="price-info">
+                    <span class="date-badge" data-id="${item.id}" data-date="${item.date}">📅 ${item.date}</span>
+                    <span class="value-badge" data-price="${item.price}">💰 ${formatWithCommas(item.price)} تومان</span>
+                    ${percentHtml}
+                </div>
+                <div class="item-actions">
+                    <button class="icon-btn edit-btn" data-id="${item.id}" data-action="edit">✏️</button>
+                    <button class="icon-btn delete-btn" data-id="${item.id}" data-action="delete">❌</button>
+                </div>
+            </div>
+        `}).join("");
+
+        document.querySelectorAll(".value-badge").forEach(el => {
+            el.addEventListener("click", () => {
+                const priceVal = parseFloat(el.dataset.price);
+                if (!isNaN(priceVal)) priceInput.value = formatWithCommas(priceVal);
+            });
+        });
+
+        document.querySelectorAll(".date-badge").forEach(el => {
+            el.addEventListener("dblclick", (e) => {
+                e.stopPropagation();
+                const itemId = parseInt(el.dataset.id);
+                const currentDate = el.dataset.date;
+                showCalendarForItem(itemId, currentDate);
+            });
+        });
+
+        document.querySelectorAll(".edit-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => { e.stopPropagation(); editPriceItem(parseInt(btn.dataset.id)); });
+        });
+        document.querySelectorAll(".delete-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => { e.stopPropagation(); deletePriceItem(parseInt(btn.dataset.id)); });
+        });
+        calculateStats(prices);
+        drawChart(prices);
+    }
+
+    function renderAll() {
+        renderHistoryAndStats();
+        refreshGrowthTable();
+    }
+
+    function addNewPrice(priceValue) {
+        if (isNaN(priceValue) || priceValue <= 0) { showMessage("❌ عدد معتبر", true); return false; }
+        const prices = getPrices();
+        prices.push({ id: Date.now(), date: getPersianDate(), timestamp: new Date().toISOString(), price: priceValue });
+        prices.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+        savePrices(prices);
+        showMessage(`✅ ${formatWithCommas(priceValue)} تومان ثبت شد`);
+        return true;
+    }
+
+    function handleSave() {
+        const raw = priceInput.value;
+        const numPrice = parsePrice(raw);
+        if (isNaN(numPrice) || numPrice <= 0) { showMessage("❌ قیمت معتبر وارد کن", true); return; }
+        priceInput.value = formatWithCommas(numPrice);
+        addNewPrice(numPrice);
+        priceInput.value = "";
+        priceInput.focus();
+    }
+
+    async function uploadToGitHub(contentString, fileName) {
+        const token = localStorage.getItem("github_backup_token");
+        const repo = localStorage.getItem("github_backup_repo");
+        const branch = localStorage.getItem("github_backup_branch") || "main";
+        let filePath = localStorage.getItem("github_backup_filepath");
+
+        if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست." };
+
+        if (!filePath) {
+            filePath = `backups/${fileName}`;
+        } else if (filePath.endsWith("/")) {
+            filePath += fileName;
+        }
+
+        const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
+        const headers = {
+            "Authorization": `token ${token}`,
+            "Accept": "application/vnd.github.v3+json"
+        };
+
+        try {
+            let sha = null;
+            try {
+                const checkRes = await fetch(`${url}?ref=${branch}`, { headers });
+                if (checkRes.status === 200) {
+                    const fileData = await checkRes.json();
+                    sha = fileData.sha;
+                }
+            } catch (e) {}
+
+            const base64Content = btoa(unescape(encodeURIComponent(contentString)));
+            const body = {
+                message: `بکاپ خودکار برنامه - ${new Date().toLocaleString('fa-IR')}`,
+                content: base64Content,
+                branch: branch
+            };
+            if (sha) body.sha = sha;
+
+            const putRes = await fetch(url, {
+                method: "PUT",
+                headers: { ...headers, "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+
+            return putRes.ok ? { success: true } : { success: false, message: "خطا در آپلود" };
+        } catch (err) {
+            return { success: false, message: err.message };
+        }
+    }
+
+    function openGithubSettings() {
+        document.getElementById("githubSettingsModal").style.display = "flex";
+        document.getElementById("gh_token").value = localStorage.getItem("github_backup_token") || "";
+        document.getElementById("gh_repo").value = localStorage.getItem("github_backup_repo") || "";
+        document.getElementById("gh_branch").value = localStorage.getItem("github_backup_branch") || "";
+        document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "backups/synergy_price_backup.json";
+    }
+
+    function closeGithubSettings() {
+        document.getElementById("githubSettingsModal").style.display = "none";
+    }
+
+    function saveGithubSettings() {
+        const token = document.getElementById("gh_token").value.trim();
+        const repo = document.getElementById("gh_repo").value.trim();
+        const branch = document.getElementById("gh_branch").value.trim();
+        const filepath = document.getElementById("gh_filepath").value.trim();
+
+        localStorage.setItem("github_backup_token", token);
+        localStorage.setItem("github_backup_repo", repo);
+        localStorage.setItem("github_backup_branch", branch || "main");
+        localStorage.setItem("github_backup_filepath", filepath || "backups/synergy_price_backup.json");
+
+        showMessage("✅ تنظیمات گیت‌هاب ذخیره شد");
+        closeGithubSettings();
+    }
+
+    function backupData() {
+        const prices = getPrices();
+        const dataStr = JSON.stringify(prices, null, 2);
+        const blob = new Blob([dataStr], {type: "application/json"});
+        const a = document.createElement("a");
+        const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, "-");
+        const fileName = `backup_prices_${timestamp}.json`;
+        a.download = fileName;
+        a.href = URL.createObjectURL(blob);
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showMessage("📦 پشتیبان ذخیره شد");
+
+        // پشتیبان‌گیری گیت‌هاب
+        const token = localStorage.getItem("github_backup_token");
+        if (token) {
+            setTimeout(async () => {
+                const result = await uploadToGitHub(dataStr, fileName);
+                if (result.success) {
+                    showMessage("✅ پشتیبان به گیت‌هاب ارسال شد");
+                } else {
+                    showMessage("❌ خطای گیت‌هاب: " + result.message, true);
+                }
+            }, 200);
+        }
+    }
+
+    function restoreFromFile() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "application/json";
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const imported = JSON.parse(ev.target.result);
+                    if (Array.isArray(imported) && imported.every(i => typeof i.price === "number" && i.date && i.timestamp)) {
+                        localStorage.setItem(STORAGE_PRICES, JSON.stringify(imported));
+                        renderAll();
+
+                        if (window.parent && window.parent.EmaratCloudSync) {
+                            window.parent.EmaratCloudSync.push();
+                        } else if (window.EmaratCloudSync) {
+                            window.EmaratCloudSync.push();
+                        }
+
+                        showMessage("✅ بازیابی شد");
+                    } else throw new Error();
+                } catch(err) { showMessage("❌ فایل نامعتبر", true); }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    function dangerousClear() {
+        if (confirm("⚠️ تمام تاریخچه پاک میشود! اطمینان؟")) {
+            localStorage.removeItem(STORAGE_PRICES);
+            renderAll();
+            growthTableContainer.innerHTML = '<div class="neutral" style="padding:15px;text-align:center;">📋 ابتدا قیمت ثبت کنید</div>';
+            showMessage("🗑 تاریخچه پاک شد");
+        }
+    }
+
+    function toggleArchive() { archivePanel.classList.toggle("show"); }
+
+    calYearPrev.addEventListener("click", () => { currentYear--; renderCalendar(currentYear, currentMonth); });
+    calMonthPrev.addEventListener("click", () => { currentMonth--; if(currentMonth < 1) { currentMonth = 12; currentYear--; } renderCalendar(currentYear, currentMonth); });
+    calMonthNext.addEventListener("click", () => { currentMonth++; if(currentMonth > 12) { currentMonth = 1; currentYear++; } renderCalendar(currentYear, currentMonth); });
+    calYearNext.addEventListener("click", () => { currentYear++; renderCalendar(currentYear, currentMonth); });
+    cancelCalendarBtn.addEventListener("click", closeCalendar);
+    confirmCalendarBtn.addEventListener("click", confirmCalendarChange);
+
+    const ghSettingsBtn = document.getElementById("ghSettingsBtn");
+    const saveGhBtn = document.getElementById("saveGhBtn");
+    const closeGhBtn = document.getElementById("closeGhBtn");
+
+    ghSettingsBtn.addEventListener("click", openGithubSettings);
+    saveGhBtn.addEventListener("click", saveGithubSettings);
+    closeGhBtn.addEventListener("click", closeGithubSettings);
+
+    saveBtn.addEventListener("click", handleSave);
+    backupBtn.addEventListener("click", backupData);
+    restoreBtn.addEventListener("click", restoreFromFile);
+    toggleArchiveBtn.addEventListener("click", toggleArchive);
+    dangerClearBtn.addEventListener("click", dangerousClear);
+    applyMilestoneBtn.addEventListener("click", refreshGrowthTable);
+    forecastBtn.addEventListener("click", refreshGrowthTable);
+    priceInput.addEventListener("keypress", (e) => { if (e.key === "Enter") handleSave(); });
+    forecastDaysInput.addEventListener("keypress", (e) => { if (e.key === "Enter") refreshGrowthTable(); });
+
+    renderAll();
+</script>
+</body>
+</html>
