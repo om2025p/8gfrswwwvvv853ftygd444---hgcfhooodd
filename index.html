@@ -277,15 +277,35 @@
 
         const DEFAULT_APPS = [
             { id: 'gym', title: 'Activity', icon: 'gym/icon-192.png', url: 'gym/index.html' },
-            { id: 'gold', title: 'ثبت درصد ۱', icon: 'gold/icon-192.png', url: 'gold/index.html' },
-            { id: 'gold2', title: 'ثبت درصد ۲', icon: 'gold2/icon-192.png', url: 'gold2/index.html' },
-            { id: 'gold3', title: 'ثبت درصد ۳', icon: 'gold3/icon-192.png', url: 'gold3/index.html' },
+            { id: 'gold', title: 'ثبت درصد 1', icon: 'gold/icon-192.png', url: 'gold/index.html' },
+            { id: 'gold2', title: 'ثبت درصد 2', icon: 'gold2/icon-192.png', url: 'gold2/index.html' },
+            { id: 'gold3', title: 'ثبت درصد 3', icon: 'gold3/icon-192.png', url: 'gold3/index.html' },
+            { id: 'gold4', title: 'ثبت درصد 4', icon: 'gold4/icon-192.png', url: 'gold4/index.html' },
             { id: 'profit', title: 'محاسبه گر سود', icon: 'profit-calculator/icon-192.png', url: 'profit-calculator/index.html' }
         ];
 
         let savedApps = JSON.parse(localStorage.getItem('portal_app_order'));
         // فیلتر کردن برای حذف آیتم‌های قدیمی "به زودی" اگر در استوریج مانده باشند
         let apps = savedApps ? savedApps.filter(a => !a.comingSoon) : DEFAULT_APPS;
+
+        // همگام‌سازی و بروزرسانی نام‌ها و مطمئن شدن از اضافه شدن برنامه‌های جدید
+        if (savedApps) {
+            apps = apps.map(app => {
+                const matched = DEFAULT_APPS.find(d => d.id === app.id);
+                if (matched) {
+                    app.title = matched.title;
+                    app.url = matched.url;
+                    app.icon = matched.icon;
+                }
+                return app;
+            });
+            DEFAULT_APPS.forEach(defaultApp => {
+                if (!apps.some(a => a.id === defaultApp.id)) {
+                    apps.push(defaultApp);
+                }
+            });
+        }
+
         let isEditing = false;
         let dragItem = null;
         let pressTimer = null;
@@ -469,7 +489,7 @@
                 navigator.serviceWorker.getRegistrations().then(registrations => {
                     for (let registration of registrations) {
                         const path = new URL(registration.scope).pathname;
-                        if (path.includes('/gym/') || path.includes('/gold/') || path.includes('/gold2/') || path.includes('/gold3/') || path.includes('/profit-calculator/')) {
+                        if (path.includes('/gym/') || path.includes('/gold/') || path.includes('/gold2/') || path.includes('/gold3/') || path.includes('/gold4/') || path.includes('/profit-calculator/')) {
                             registration.unregister().then(success => {
                                 if (success) console.log(`Legacy SW at ${path} unregistered.`);
                             });

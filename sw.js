@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v9';
+const CACHE_NAME = 'emarat-portal-v10';
 const ASSETS = [
   './',
   './index.html',
@@ -53,6 +53,17 @@ const ASSETS = [
   './gold3/icon-512-maskable.png',
   './gold3/apple-touch-icon.png',
   './gold3/favicon.ico',
+  // Gold 4 App
+  './gold4/index.html',
+  './gold4/calculator.html',
+  './gold4/percent.html',
+  './gold4/manifest.json',
+  './gold4/icon-192.png',
+  './gold4/icon-512.png',
+  './gold4/icon-192-maskable.png',
+  './gold4/icon-512-maskable.png',
+  './gold4/apple-touch-icon.png',
+  './gold4/favicon.ico',
   // Profit Calculator
   './profit-calculator/index.html',
   './profit-calculator/calc1.html',
