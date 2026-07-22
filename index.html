@@ -282,6 +282,7 @@
             { id: 'gold3', title: 'ثبت درصد 3', icon: 'gold3/icon-192.png', url: 'gold3/index.html' },
             { id: 'gold4', title: 'ثبت درصد 4', icon: 'gold4/icon-192.png', url: 'gold4/index.html' },
             { id: 'gold5', title: 'ثبت درصد 5', icon: 'gold5/icon-192.png', url: 'gold5/index.html' },
+            { id: 'monitor', title: 'دیدبان درصد ها', icon: '🖥️', url: 'monitor/index.html' },
             { id: 'profit', title: 'محاسبه گر سود', icon: 'profit-calculator/icon-192.png', url: 'profit-calculator/index.html' }
         ];
 
@@ -490,7 +491,7 @@
                 navigator.serviceWorker.getRegistrations().then(registrations => {
                     for (let registration of registrations) {
                         const path = new URL(registration.scope).pathname;
-                        if (path.includes('/gym/') || path.includes('/gold/') || path.includes('/gold2/') || path.includes('/gold3/') || path.includes('/gold4/') || path.includes('/profit-calculator/')) {
+                        if (path.includes('/gym/') || path.includes('/gold/') || path.includes('/gold2/') || path.includes('/gold3/') || path.includes('/gold4/') || path.includes('/monitor/') || path.includes('/profit-calculator/')) {
                             registration.unregister().then(success => {
                                 if (success) console.log(`Legacy SW at ${path} unregistered.`);
                             });
