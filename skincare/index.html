@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#ec4899">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+    <script src="../cloud-sync.js"></script>
+    <title>مراقبت پوستی 🧴</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary-color: #ec4899;
+            --primary-hover: #db2777;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --bg-gradient: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(255, 255, 255, 0.5);
+            --text-color: #1e293b;
+            --text-muted: #475569;
+            --border-radius: 16px;
+            --shadow: 0 8px 32px 0 rgba(236, 72, 153, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-color: #f1f5f9;
+            --text-muted: #cbd5e1;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 50px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .header-buttons button {
+            background: none;
+            border: 1px solid var(--card-border);
+            padding: 8px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .header-buttons button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--card-border);
+            padding: 18px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 8px;
+        }
+
+        .cream-badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-weight: normal;
+            margin-right: auto;
+        }
+
+        .badge-neuderm {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-vitalayer {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        [data-theme="dark"] .badge-neuderm {
+            background-color: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        [data-theme="dark"] .badge-vitalayer {
+            background-color: #78350f;
+            color: #fcd34d;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        [data-theme="dark"] .checkbox-item {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .checkbox-item:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        [data-theme="dark"] .checkbox-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .checkbox-item.checked {
+            border-color: var(--primary-color);
+            background: rgba(236, 72, 153, 0.08);
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .custom-check {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            border: 2px solid var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+        }
+
+        .checkbox-item.checked .custom-check {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .notes-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.5);
+            color: var(--text-color);
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        [data-theme="dark"] .notes-input {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .notes-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3);
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        /* قفل زمان ۴۸ ساعته */
+        .lock-container {
+            display: none;
+            text-align: center;
+            padding: 30px 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .lock-container.active {
+            display: block;
+        }
+
+        .lock-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+        }
+
+        .lock-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .countdown-timer {
+            font-family: monospace;
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 15px 0;
+            direction: ltr;
+            display: inline-block;
+        }
+
+        .blocked {
+            display: none !important;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        /* تاریخچه */
+        .history-item {
+            border-right: 5px solid var(--primary-color);
+            padding: 12px;
+            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        [data-theme="dark"] .history-item {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .history-delete-btn {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 2px;
+        }
+
+        .history-parts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 8px 0;
+        }
+
+        .part-badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid var(--card-border);
+        }
+
+        [data-theme="dark"] .part-badge {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .history-notes-text {
+            font-size: 0.85rem;
+            background: rgba(255, 253, 230, 0.6);
+            padding: 8px;
+            border-radius: 8px;
+            color: #334155;
+            margin-top: 6px;
+        }
+
+        [data-theme="dark"] .history-notes-text {
+            background: rgba(250, 204, 21, 0.08);
+            color: #cbd5e1;
+        }
+
+        /* مدال‌های تنظیمات و منوها */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            left: 0;
+            background-color: var(--card-bg);
+            backdrop-filter: blur(12px);
+            min-width: 180px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            z-index: 1000;
+            border-radius: 12px;
+            margin-top: 8px;
+            border: 1px solid var(--card-border);
+            overflow: hidden;
+        }
+
+        .dropdown-content button {
+            color: var(--text-color);
+            padding: 12px 16px;
+            display: block;
+            width: 100%;
+            border: none;
+            background: none;
+            text-align: right;
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--card-border);
+            transition: background 0.2s;
+        }
+
+        .dropdown-content button:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-content button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .dropdown.show .dropdown-content {
+            display: block;
+        }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--card-border);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            direction: rtl;
+        }
+
+        .modal-title {
+            margin-top: 0;
+            color: var(--primary-color);
+            text-align: center;
+            font-size: 1.15rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--card-border);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-family: monospace;
+            direction: ltr;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--text-color);
+        }
+
+        [data-theme="dark"] .modal-input {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
+        }
+
+        .modal-btn-save {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .modal-btn-cancel {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .humor-container {
+            font-size: 0.85rem;
+            text-align: center;
+            color: var(--primary-color);
+            margin-top: 10px;
+            font-style: italic;
+            background: rgba(236, 72, 153, 0.05);
+            padding: 8px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🧴 مراقبت پوستی</h1>
+        <div class="header-buttons">
+            <button onclick="toggleTheme()" title="تغییر تم">🌓</button>
+            <button onclick="openGithubSettings()" title="تنظیمات گیت‌هاب">⚙️</button>
+            <div class="dropdown" id="mainMenu">
+                <button onclick="toggleMenu()" title="منو">☰</button>
+                <div class="dropdown-content">
+                    <button onclick="exportData()"><span class="icon">📤</span> خروجی JSON</button>
+                    <button onclick="document.getElementById('importFile').click()"><span class="icon">📥</span> ورودی JSON</button>
+                </div>
+            </div>
+            <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+        </div>
+    </header>
+
+    <!-- قفل زمان ۴۸ ساعته -->
+    <div id="lockPanel" class="card lock-container">
+        <div class="lock-icon">🧖‍♀️✨</div>
+        <div class="lock-title">کرم‌های مرطوب‌کننده در حال جذب شدن هستند!</div>
+        <div style="font-size: 0.9rem; color: var(--text-muted);">پوست شما در وضعیت تعادل و طراوت کامل است. تا نوبت بعدی استفاده، صبور باشید:</div>
+        <div><span id="countdown" class="countdown-timer">۰۰:۰۰:۰۰</span></div>
+        <div id="humorQuote" class="humor-container"></div>
+    </div>
+
+    <!-- فرم اصلی مراقبت پوستی -->
+    <div id="mainForm">
+        <!-- مرطوب‌کننده دست، صورت و گردن -->
+        <div class="card">
+            <div class="card-title">
+                <span>🧴 مرطوب‌کننده NEU DERM</span>
+                <span class="cream-badge badge-neuderm">دست‌ها، صورت و گردن</span>
+            </div>
+            <div class="checkbox-group">
+                <div class="checkbox-item" onclick="togglePart('hand_r')">
+                    <div class="checkbox-label">
+                        <span class="custom-check" id="check-hand_r"></span>
+                        <span>دست راست 👉</span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">لطیف و مخملی</span>
+                </div>
+                <div class="checkbox-item" onclick="togglePart('hand_l')">
+                    <div class="checkbox-label">
+                        <span class="custom-check" id="check-hand_l"></span>
+                        <span>دست چپ 👈</span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">نرم و مرطوب</span>
+                </div>
+                <div class="checkbox-item" onclick="togglePart('face')">
+                    <div class="checkbox-label">
+                        <span class="custom-check" id="check-face"></span>
+                        <span>صورت 👩</span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">شاداب و درخشان</span>
+                </div>
+                <div class="checkbox-item" onclick="togglePart('neck')">
+                    <div class="checkbox-label">
+                        <span class="custom-check" id="check-neck"></span>
+                        <span>گردن 🦒</span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">بدون چین و چروک</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- مرطوب‌کننده پاها و شکم -->
+        <div class="card">
+            <div class="card-title">
+                <span>🧴 مرطوب‌کننده Vitalayer</span>
+                <span class="cream-badge badge-vitalayer">پاها و شکم</span>
+            </div>
+            <div class="checkbox-group">
+                <div class="checkbox-item" onclick="togglePart('feet')">
+                    <div class="checkbox-label">
+                        <span class="custom-check" id="check-feet"></span>
+                        <span>پاها 🦶</span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">نرم مثل پنبه</span>
+                </div>
+                <div class="checkbox-item" onclick="togglePart('stomach')">
+                    <div class="checkbox-label">
+                        <span class="custom-check" id="check-stomach"></span>
+                        <span>شکم 🤰</span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">مرطوب و کشسان</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- یادداشت‌های این دوره -->
+        <div class="card">
+            <div class="card-title">📝 یادداشت‌های پوست من</div>
+            <textarea id="sessionNotes" class="notes-input" placeholder="مثلاً: امروز پوستم خیلی خشک بود، بیشتر زدم..."></textarea>
+        </div>
+
+        <!-- دکمه ثبت نهایی -->
+        <button class="btn-submit" onclick="finalizeSession()">✅ ثبت نهایی و کوک کردن زمان (۴۸ ساعت)</button>
+    </div>
+
+    <!-- تاریخچه مراقبت‌های قبلی -->
+    <div class="card" style="margin-top: 20px;">
+        <div class="card-title">📜 تاریخچه لطافت پوست</div>
+        <div id="historyList"></div>
+    </div>
+</div>
+
+<!-- GitHub Settings Modal -->
+<div id="githubSettingsModal" class="modal">
+    <div class="modal-content">
+        <h3 class="modal-title">⚙️ تنظیمات پشتیبان‌گیری در گیت‌هاب</h3>
+        <p style="font-size:12px; color:var(--text-muted); line-height:1.6; margin-bottom:15px; text-align:justify;">
+            با فعال‌سازی این بخش، با هر بار زدن دکمه‌ی ذخیره/ثبت، اطلاعات لطافت پوست شما به صورت خودکار به مخزن گیت‌هاب شخصی ارسال می‌شود.
+        </p>
+
+        <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; text-align:right;">🔑 توکن شخصی گیت‌هاب (PAT):</label>
+        <input type="password" id="gh_token" placeholder="ghp_..." class="modal-input">
+
+        <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; text-align:right;">📦 مالک و نام مخزن (Owner/Repo):</label>
+        <input type="text" id="gh_repo" placeholder="username/repository-name" class="modal-input">
+
+        <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; text-align:right;">🌿 نام شاخه (Branch):</label>
+        <input type="text" id="gh_branch" placeholder="main (پیش‌فرض)" class="modal-input">
+
+        <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; text-align:right;">📁 مسیر ذخیره فایل در مخزن (File Path):</label>
+        <input type="text" id="gh_filepath" placeholder="backups/skincare_backup.json" class="modal-input">
+
+        <div class="modal-btn-group">
+            <button onclick="saveGithubSettings()" class="modal-btn modal-btn-save">💾 ذخیره تنظیمات</button>
+            <button onclick="closeGithubSettings()" class="modal-btn modal-btn-cancel">✖️ انصراف</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // کلیدهای ذخیره‌سازی محلی غیرتداخلی
+    const STORAGE_KEYS = {
+        HISTORY: 'skincare_history_v1',
+        DRAFT: 'skincare_draft_v1',
+        THEME: 'skincare_theme_v1'
+    };
+
+    // لیست اعضای بدن
+    const PARTS_METADATA = {
+        hand_r: { label: 'دست راست 👉', cream: 'NEU DERM' },
+        hand_l: { label: 'دست چپ 👈', cream: 'NEU DERM' },
+        face: { label: 'صورت 👩', cream: 'NEU DERM' },
+        neck: { label: 'گردن 🦒', cream: 'NEU DERM' },
+        feet: { label: 'پاها 🦶', cream: 'Vitalayer' },
+        stomach: { label: 'شکم 🤰', cream: 'Vitalayer' }
+    };
+
+    // نقل‌قول‌های طنزآمیز برای دوره ۴۸ ساعته
+    const HUMOROUS_QUOTES = [
+        "پوستت الان از برگ گل هم لطیف‌تره! بذار کرم‌ها کارشونو بکنن پهلوان! 🌸",
+        "کرم نیودرم و ویتالایر دارن با سلول‌های پوستت سمفونی لطافت می‌نوازن! دست به ریست نزن! 🎶",
+        "پوست شما به اندازه کافی لود شده! استفاده بیش از حد باعث تبدیل شما به هلو می‌شه! 🍑",
+        "الان پاهات مثل پنبه نرمه و صورتت مثل ماه می‌درخشه. برو به بقیه کارات برس! 🧘‍♀️",
+        "جذب رطوبت در جریان است... لطفاً پوست خود را نخارانید! 🧴✨"
+    ];
+
+    let draft = {
+        parts: { hand_r: false, hand_l: false, face: false, neck: false, feet: false, stomach: false },
+        notes: ''
+    };
+
+    let history = [];
+    let countdownInterval = null;
+
+    // بارگذاری اولیه تم
+    function initTheme() {
+        const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem(STORAGE_KEYS.THEME, newTheme);
+    }
+
+    // لود کردن و بازیابی پیش‌نویس (Draft)
+    function loadDraft() {
+        const savedDraft = localStorage.getItem(STORAGE_KEYS.DRAFT);
+        if (savedDraft) {
+            try {
+                draft = JSON.parse(savedDraft);
+                document.getElementById('sessionNotes').value = draft.notes || '';
+                Object.keys(draft.parts).forEach(part => {
+                    updateCheckboxUI(part, draft.parts[part]);
+                });
+            } catch (e) {
+                console.error("Error parsing skincare draft:", e);
+            }
+        }
+    }
+
+    // ذخیره پیش‌نویس
+    function saveDraft() {
+        draft.notes = document.getElementById('sessionNotes').value;
+        localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(draft));
+    }
+
+    function togglePart(part) {
+        draft.parts[part] = !draft.parts[part];
+        updateCheckboxUI(part, draft.parts[part]);
+        saveDraft();
+    }
+
+    function updateCheckboxUI(part, isChecked) {
+        const itemEl = document.getElementById(`check-${part}`).parentElement.parentElement;
+        const checkEl = document.getElementById(`check-${part}`);
+        if (isChecked) {
+            itemEl.classList.add('checked');
+            checkEl.innerHTML = '✓';
+        } else {
+            itemEl.classList.remove('checked');
+            checkEl.innerHTML = '';
+        }
+    }
+
+    // تبدیل اعداد به فارسی
+    function toPersianDigits(str) {
+        if (str === null || str === undefined) return '';
+        if (typeof str !== 'string') str = str.toString();
+        return str.replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+    }
+
+    // لود کردن تاریخچه
+    function loadHistory() {
+        const savedHistory = localStorage.getItem(STORAGE_KEYS.HISTORY);
+        if (savedHistory) {
+            try {
+                history = JSON.parse(savedHistory);
+            } catch (e) {
+                console.error("Error parsing skincare history:", e);
+            }
+        }
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const container = document.getElementById('historyList');
+        container.innerHTML = '';
+        if (history.length === 0) {
+            container.innerHTML = '<p style="text-align:center; font-size:0.85rem; color:var(--text-muted);">هنوز هیچ مراقبت پوستی ثبت نشده؛ وقتشه پوستتو تحویل بگیری! 🌱</p>';
+            return;
+        }
+
+        history.forEach((session, index) => {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+
+            const formattedDate = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(session.timestamp));
+
+            let partsHtml = '';
+            session.checkedParts.forEach(p => {
+                const meta = PARTS_METADATA[p];
+                if (meta) {
+                    const creamColor = meta.cream === 'NEU DERM' ? 'border-color: #93c5fd; background: rgba(147, 197, 253, 0.15);' : 'border-color: #fcd34d; background: rgba(252, 211, 77, 0.15);';
+                    partsHtml += `<span class="part-badge" style="${creamColor}">${meta.label} (${meta.cream})</span>`;
+                }
+            });
+
+            const notesHtml = session.notes ? `<div class="history-notes-text">📝 ${escapeHtml(session.notes)}</div>` : '';
+
+            item.innerHTML = `
+                <div class="history-header">
+                    <span>📅 ${toPersianDigits(formattedDate)}</span>
+                    <button class="history-delete-btn" onclick="deleteSession(${session.id})">🗑️</button>
+                </div>
+                <div class="history-parts">${partsHtml}</div>
+                ${notesHtml}
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    function deleteSession(id) {
+        if (confirm('آیا مطمئن هستید که می‌خواهید این رکورد لطافت پوست را حذف کنید؟')) {
+            history = history.filter(s => s.id !== id);
+            localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+            loadHistory();
+            checkLockStatus();
+
+            // همگام‌سازی ابری
+            triggerCloudSync();
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // ثبت نهایی جلسه مراقبت
+    function finalizeSession() {
+        const checkedParts = Object.keys(draft.parts).filter(p => draft.parts[p]);
+        if (checkedParts.length === 0) {
+            alert('⚠️ حداقل یکی از گزینه‌ها را تیک بزنید تا پوست لطیفتان شاداب شود!');
+            return;
+        }
+
+        const session = {
+            id: Date.now(),
+            timestamp: Date.now(),
+            checkedParts: checkedParts,
+            notes: document.getElementById('sessionNotes').value
+        };
+
+        history.unshift(session);
+        localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+
+        // ریست کردن درفت
+        draft = {
+            parts: { hand_r: false, hand_l: false, face: false, neck: false, feet: false, stomach: false },
+            notes: ''
+        };
+        localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(draft));
+        document.getElementById('sessionNotes').value = '';
+        Object.keys(draft.parts).forEach(p => updateCheckboxUI(p, false));
+
+        loadHistory();
+        checkLockStatus();
+
+        // همگام‌سازی ابری و آپلود گیت‌هاب خودکار در صورت وجود تنظیمات
+        triggerCloudSync();
+        triggerGithubUpload();
+    }
+
+    // بررسی و اعمال وضعیت ۴۸ ساعته
+    function checkLockStatus() {
+        if (history.length === 0) {
+            hideLockPanel();
+            return;
+        }
+
+        const lastSession = history[0];
+        const now = Date.now();
+        const diff = now - lastSession.timestamp;
+        const fortyEightHours = 48 * 60 * 60 * 1000;
+
+        if (diff < fortyEightHours) {
+            showLockPanel(fortyEightHours - diff);
+        } else {
+            hideLockPanel();
+        }
+    }
+
+    function showLockPanel(remainingMs) {
+        document.getElementById('lockPanel').classList.add('active');
+        document.getElementById('mainForm').classList.add('blocked');
+
+        // انتخاب یک متن رندوم طنزآمیز
+        const randomQuote = HUMOROUS_QUOTES[Math.floor(Math.random() * HUMOROUS_QUOTES.length)];
+        document.getElementById('humorQuote').innerText = randomQuote;
+
+        clearInterval(countdownInterval);
+        updateTimerDisplay(remainingMs);
+
+        countdownInterval = setInterval(() => {
+            remainingMs -= 1000;
+            if (remainingMs <= 0) {
+                clearInterval(countdownInterval);
+                hideLockPanel();
+            } else {
+                updateTimerDisplay(remainingMs);
+            }
+        }, 1000);
+    }
+
+    function hideLockPanel() {
+        document.getElementById('lockPanel').classList.remove('active');
+        document.getElementById('mainForm').classList.remove('blocked');
+        clearInterval(countdownInterval);
+    }
+
+    function updateTimerDisplay(ms) {
+        const hours = Math.floor(ms / (1000 * 60 * 60));
+        const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+
+        const timerStr = `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+        document.getElementById('countdown').innerText = toPersianDigits(timerStr);
+    }
+
+    // منوی ناوبری/تنظیمات فرعی
+    function toggleMenu() {
+        document.getElementById('mainMenu').classList.toggle('show');
+    }
+
+    window.addEventListener('click', e => {
+        if (!e.target.closest('.dropdown')) {
+            document.getElementById('mainMenu').classList.remove('show');
+        }
+    });
+
+    // تنظیمات گیت‌هاب (کپی شده دقیقاً از بقیه برنامه‌ها و دستورالعمل)
+    function openGithubSettings() {
+        document.getElementById("githubSettingsModal").classList.add('active');
+        document.getElementById("gh_token").value = localStorage.getItem("github_backup_token") || "";
+        document.getElementById("gh_repo").value = localStorage.getItem("github_backup_repo") || "";
+        document.getElementById("gh_branch").value = localStorage.getItem("github_backup_branch") || "";
+        document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "backups/skincare_backup.json";
+    }
+
+    function closeGithubSettings() {
+        document.getElementById("githubSettingsModal").classList.remove('active');
+    }
+
+    function saveGithubSettings() {
+        const token = document.getElementById("gh_token").value.trim();
+        const repo = document.getElementById("gh_repo").value.trim();
+        const branch = document.getElementById("gh_branch").value.trim();
+        const filepath = document.getElementById("gh_filepath").value.trim();
+
+        localStorage.setItem("github_backup_token", token);
+        localStorage.setItem("github_backup_repo", repo);
+        localStorage.setItem("github_backup_branch", branch || "main");
+        localStorage.setItem("github_backup_filepath", filepath || "backups/skincare_backup.json");
+
+        alert("✅ تنظیمات گیت‌هاب با موفقیت ذخیره شد!");
+        closeGithubSettings();
+    }
+
+    // تابع استاندارد آپلود گیت‌هاب
+    async function uploadToGitHub(contentString, fileName) {
+        const token = localStorage.getItem("github_backup_token");
+        const repo = localStorage.getItem("github_backup_repo");
+        const branch = localStorage.getItem("github_backup_branch") || "main";
+        let filePath = localStorage.getItem("github_backup_filepath");
+
+        if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست." };
+
+        if (!filePath) {
+            filePath = `backups/${fileName}`;
+        } else if (filePath.endsWith("/")) {
+            filePath += fileName;
+        }
+
+        const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
+        const headers = {
+            "Authorization": `token ${token}`,
+            "Accept": "application/vnd.github.v3+json"
+        };
+
+        try {
+            let sha = null;
+            try {
+                const checkRes = await fetch(`${url}?ref=${branch}`, { headers });
+                if (checkRes.status === 200) {
+                    const fileData = await checkRes.json();
+                    sha = fileData.sha;
+                }
+            } catch (e) {}
+
+            const base64Content = btoa(unescape(encodeURIComponent(contentString)));
+            const body = {
+                message: `بکاپ خودکار برنامه مراقبت پوستی - ${new Date().toLocaleString('fa-IR')}`,
+                content: base64Content,
+                branch: branch
+            };
+            if (sha) body.sha = sha;
+
+            const putRes = await fetch(url, {
+                method: "PUT",
+                headers: { ...headers, "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+
+            return putRes.ok ? { success: true } : { success: false, message: "خطا در آپلود" };
+        } catch (err) {
+            return { success: false, message: err.message };
+        }
+    }
+
+    // اکسپورت آفلاین به فایل
+    function exportData() {
+        const dataStr = JSON.stringify(history);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `skincare_backup_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        triggerCloudSync();
+        triggerGithubUpload();
+    }
+
+    // بازیابی آفلاین از فایل
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (Array.isArray(data)) {
+                    history = data;
+                    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+                    loadHistory();
+                    checkLockStatus();
+                    triggerCloudSync();
+                    alert('✅ اطلاعات مراقبت پوستی با موفقیت بازیابی شد.');
+                } else {
+                    alert('❌ فایل نامعتبر است.');
+                }
+            } catch (err) {
+                alert('❌ خطا در خواندن فایل!');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = ''; // ریست اینپوت
+    }
+
+    function triggerCloudSync() {
+        if (window.parent && window.parent.EmaratCloudSync) {
+            window.parent.EmaratCloudSync.push();
+        } else if (window.EmaratCloudSync) {
+            window.EmaratCloudSync.push();
+        }
+    }
+
+    async function triggerGithubUpload() {
+        const token = localStorage.getItem("github_backup_token");
+        if (token) {
+            const dataStr = JSON.stringify(history);
+            const result = await uploadToGitHub(dataStr, `skincare_backup_${Date.now()}.json`);
+            if (result.success) {
+                console.log("GitHub backup successful!");
+            } else {
+                console.error("GitHub backup failed:", result.message);
+            }
+        }
+    }
+
+    window.onload = () => {
+        initTheme();
+        loadDraft();
+        loadHistory();
+        checkLockStatus();
+
+        // ذخیره خودکار متن یادداشت با هر تایپ
+        document.getElementById('sessionNotes').addEventListener('input', saveDraft);
+    };
+</script>
+</body>
+</html>

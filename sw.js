@@ -89,7 +89,10 @@ const ASSETS = [
   './profit-calculator/icon-192-maskable.png',
   './profit-calculator/icon-512-maskable.png',
   './profit-calculator/apple-touch-icon.png',
-  './profit-calculator/favicon.ico'
+  './profit-calculator/favicon.ico',
+  // Skincare App
+  './skincare/index.html',
+  './skincare/manifest.json'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
