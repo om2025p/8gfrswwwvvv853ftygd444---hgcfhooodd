@@ -92,7 +92,11 @@ const ASSETS = [
   './profit-calculator/favicon.ico',
   // Skincare App
   './skincare/index.html',
-  './skincare/manifest.json'
+  './skincare/manifest.json',
+  './skincare/icon-192.png',
+  './skincare/icon-512.png',
+  './skincare/icon-192-maskable.png',
+  './skincare/icon-512-maskable.png'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
