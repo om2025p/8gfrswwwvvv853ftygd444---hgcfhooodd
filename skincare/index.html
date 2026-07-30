@@ -69,6 +69,10 @@
             border-radius: var(--border-radius);
             border: 1px solid var(--card-border);
             box-shadow: var(--shadow);
+            position: relative;
+            z-index: 1010;
+            transform: translate3d(0, 0, 10px);
+            will-change: transform;
         }
 
         h1 {
@@ -268,6 +272,8 @@
             text-align: center;
             padding: 30px 20px;
             animation: pulse 2s infinite;
+            position: relative;
+            z-index: 1;
         }
 
         .lock-container.active {
@@ -375,6 +381,7 @@
         .dropdown {
             position: relative;
             display: inline-block;
+            z-index: 1050;
         }
 
         .dropdown-content {
@@ -383,13 +390,16 @@
             left: 0;
             background-color: var(--card-bg);
             backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             min-width: 180px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            z-index: 1000;
+            z-index: 1100;
             border-radius: 12px;
             margin-top: 8px;
             border: 1px solid var(--card-border);
             overflow: hidden;
+            transform: translate3d(0, 0, 20px);
+            will-change: transform;
         }
 
         .dropdown-content button {
