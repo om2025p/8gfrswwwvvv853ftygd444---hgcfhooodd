@@ -341,6 +341,11 @@
         <div id="live-cards-container">
             <!-- کارت‌ها به صورت پویا با JS ساخته میشن -->
         </div>
+        <!-- مجموع کل درصدهای زنده در پایین -->
+        <div id="live-total-container" style="margin-top: 20px; padding: 18px; background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 24px; border: 1px solid var(--glass-border); box-shadow: var(--shadow); text-align: center; display: none;">
+            <div style="font-size: 0.95rem; color: var(--primary-light); font-weight: 700; margin-bottom: 8px;">📊 مجموع آخرین درصدهای ثبت‌شده</div>
+            <div id="live-total-value" style="font-size: 2.2rem; font-weight: 800; direction: ltr; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">0.00%</div>
+        </div>
     </div>
 
     <!-- تب ۲: آنالیز میانگین‌ها -->
@@ -349,6 +354,11 @@
             <div class="stats-summary-title">📈 مقایسه میانگین‌های روزانه سود</div>
             <div class="avg-grid" id="avg-analysis-container">
                 <!-- آنالیز سودها به صورت پویا ساخته میشن -->
+            </div>
+            <!-- مجموع میانگین‌های روزانه در پایین قرار می‌گیرد -->
+            <div id="analysis-total-container" style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; text-align: center; display: none;">
+                <div style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); font-weight: 600; margin-bottom: 5px;">📊 مجموع میانگین‌های روزانه سود</div>
+                <div id="analysis-total-value" style="font-size: 1.8rem; font-weight: 800; direction: ltr;">0.000%</div>
             </div>
         </div>
     </div>
@@ -511,6 +521,9 @@
             const liveContainer = document.getElementById('live-cards-container');
             liveContainer.innerHTML = '';
 
+            let liveSum = 0;
+            let hasLiveRecords = false;
+
             appsInfo.forEach(app => {
                 const lastItem = app.data && app.data.length > 0 ? app.data[app.data.length - 1] : null;
 
@@ -518,6 +531,9 @@
                 card.className = 'monitor-card';
 
                 if (lastItem) {
+                    liveSum += lastItem.value;
+                    hasLiveRecords = true;
+
                     const timeAgoText = formatTimeAgo(lastItem.timestamp);
                     const dt = formatPersianDateTime(lastItem.timestamp);
                     const isPositive = lastItem.value >= 0;
@@ -550,20 +566,46 @@
                 liveContainer.appendChild(card);
             });
 
+            // به‌روزرسانی کارت مجموع درصد‌های زنده
+            const liveTotalContainer = document.getElementById('live-total-container');
+            const liveTotalValue = document.getElementById('live-total-value');
+            if (hasLiveRecords) {
+                liveTotalContainer.style.display = 'block';
+                const isPositive = liveSum >= 0;
+                const valueSign = isPositive ? '+' : '';
+                liveTotalValue.innerText = `${valueSign}${liveSum.toFixed(2)}%`;
+                liveTotalValue.className = isPositive ? 'positive' : 'negative';
+                // استایل‌دهی رنگ متن به صورت دستی جهت هماهنگی با کلاس‌ها
+                if (isPositive) {
+                    liveTotalValue.style.color = 'var(--positive-color)';
+                } else {
+                    liveTotalValue.style.color = 'var(--negative-color)';
+                }
+            } else {
+                liveTotalContainer.style.display = 'none';
+            }
+
             // رندر تب ۲: آنالیز سودهای روزانه
             const analysisContainer = document.getElementById('avg-analysis-container');
             analysisContainer.innerHTML = '';
 
+            let analysisSum = 0;
+            let hasAnalysisRecords = false;
+
             appsInfo.forEach(app => {
                 const avgDaily = calculateDailyAverage(app.data);
                 const hasData = app.data && app.data.length > 0;
-                const isPositive = avgDaily >= 0;
-                const valueSign = isPositive ? '+' : '';
 
                 const itemCard = document.createElement('div');
                 itemCard.className = 'avg-item-card';
 
                 if (hasData) {
+                    analysisSum += avgDaily;
+                    hasAnalysisRecords = true;
+
+                    const isPositive = avgDaily >= 0;
+                    const valueSign = isPositive ? '+' : '';
+
                     itemCard.innerHTML = `
                         <span class="avg-item-title">${app.title}</span>
                         <span class="avg-item-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${avgDaily.toFixed(3)}%</span>
@@ -576,6 +618,23 @@
                 }
                 analysisContainer.appendChild(itemCard);
             });
+
+            // به‌روزرسانی کارت مجموع میانگین‌های روزانه سود
+            const analysisTotalContainer = document.getElementById('analysis-total-container');
+            const analysisTotalValue = document.getElementById('analysis-total-value');
+            if (hasAnalysisRecords) {
+                analysisTotalContainer.style.display = 'block';
+                const isPositive = analysisSum >= 0;
+                const valueSign = isPositive ? '+' : '';
+                analysisTotalValue.innerText = `${valueSign}${analysisSum.toFixed(3)}%`;
+                if (isPositive) {
+                    analysisTotalValue.style.color = 'var(--positive-color)';
+                } else {
+                    analysisTotalValue.style.color = 'var(--negative-color)';
+                }
+            } else {
+                analysisTotalContainer.style.display = 'none';
+            }
         }
 
         // لود اولیه و تنظیم آپدیت دوره‌ای (مثلاً هر ۳۰ ثانیه برای بروز ماندن «زمان گذشته»)

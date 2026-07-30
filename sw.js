@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v12';
+const CACHE_NAME = 'emarat-portal-v13';
 const ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,10 @@ const ASSETS = [
   // Monitor App
   './monitor/index.html',
   './monitor/manifest.json',
+  './monitor/icon-192.png',
+  './monitor/icon-512.png',
+  './monitor/icon-192-maskable.png',
+  './monitor/icon-512-maskable.png',
   // Gym App
   './gym/index.html',
   './gym/manifest.json',
@@ -92,7 +96,11 @@ const ASSETS = [
   './profit-calculator/favicon.ico',
   // Skincare App
   './skincare/index.html',
-  './skincare/manifest.json'
+  './skincare/manifest.json',
+  './skincare/icon-192.png',
+  './skincare/icon-512.png',
+  './skincare/icon-192-maskable.png',
+  './skincare/icon-512-maskable.png'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
