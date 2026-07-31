@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1e3a8a">
@@ -56,9 +56,15 @@
         body {
             background: var(--bg-gradient);
             color: var(--text-main);
-            min-height: 100vh;
+            height: 100vh;
+            height: 100dvh;
             display: flex;
             overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             transition: background 0.4s ease, color 0.4s ease;
         }
 
@@ -419,6 +425,7 @@
         .chat-container {
             flex: 1;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch; /* برای اسکرول روان روی موبایل */
             padding: 16px;
             display: flex;
             flex-direction: column;
@@ -439,7 +446,8 @@
         }
 
         .message-row.ai {
-            justify-content: flex-end; /* چپ‌چین برای هوش مصنوعی */
+            justify-content: stretch;
+            width: 100%;
         }
 
         .message-bubble {
@@ -469,10 +477,15 @@
         }
 
         .message-row.ai .message-bubble {
-            background: var(--bubble-ai);
-            color: var(--bubble-ai-text);
-            border-bottom-left-radius: 4px;
-            border: 1px solid var(--border-color);
+            background: transparent !important;
+            color: var(--bubble-ai-text) !important;
+            border: none !important;
+            box-shadow: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            padding: 12px 0;
+            border-radius: 0 !important;
+            font-size: 1.12rem !important;
         }
 
         .message-time {
@@ -573,6 +586,30 @@
 
         .message-bubble strong {
             font-weight: 700;
+        }
+
+        .message-bubble h1 {
+            font-size: 1.5rem;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: inherit;
+        }
+
+        .message-bubble h2 {
+            font-size: 1.35rem;
+            margin-top: 14px;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: inherit;
+        }
+
+        .message-bubble h3 {
+            font-size: 1.2rem;
+            margin-top: 12px;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: inherit;
         }
 
         .message-bubble ul, .message-bubble ol {
@@ -818,7 +855,7 @@
             color: var(--text-main);
             outline: none;
             resize: none;
-            font-size: 0.95rem;
+            font-size: 16px; /* برای جلوگیری از زوم خودکار مرورگر موبایل */
             max-height: 120px;
             min-height: 24px;
             line-height: 1.5;
@@ -1185,34 +1222,8 @@
                 <label class="setting-label">🌐 آدرس مسیردهی کلودفلر (دور زدن فیلترینگ)</label>
                 <input type="text" class="setting-input" id="proxyUrlInput" placeholder="https://your-worker.workers.dev">
                 <div class="setting-info">
-                    برای چت بدون فیلترشکن، کد ورکر کلودفلر ارائه‌شده در فایل <code>worker.js</code> را روی کلودفلر خود مستقر کرده و آدرس آن را در اینجا قرار دهید.
+                    برای چت بدون فیلترشکن، کد ورکر کلودفلر ارائه‌شده را روی کلودفلر خود مستقر کرده و آدرس آن را در اینجا قرار دهید.
                 </div>
-            </div>
-
-            <!-- کلید اختصاصی API -->
-            <div class="setting-section">
-                <label class="setting-label">🔑 کلید اختصاصی Gemini API (اختیاری)</label>
-                <input type="password" class="setting-input" id="customApiKeyInput" placeholder="کلید شخصی خود را وارد کنید...">
-                <div class="setting-info">
-                    در صورت خالی بودن، از کلید پیش‌فرض و رایگان فعال درون برنامه استفاده خواهد شد.
-                </div>
-            </div>
-
-            <!-- مشخصات هوشمند و شخصیت کاربر که یاد گرفته شده -->
-            <div class="setting-section">
-                <label class="setting-label">🧠 شخصیت و اطلاعاتی که از شما آموخته‌ام</label>
-                <div class="smart-profile-card">
-                    <div class="smart-profile-header">
-                        👤 پروفایل هوشمند شما
-                    </div>
-                    <div class="smart-profile-text" id="smartProfileText">
-                        در حال حاضر مشغول تحلیل پیام‌های اول شما هستم تا شخصیتتان را یاد بگیرم! 🕵️‍♂️
-                    </div>
-                    <div class="smart-tags" id="smartProfileTags">
-                        <span class="smart-tag">چت تازه</span>
-                    </div>
-                </div>
-                <button class="modal-btn modal-btn-secondary" id="reanalyzeMemoryBtn" style="margin-top: 8px; width: auto; font-size: 0.75rem; padding: 6px 12px;">🔄 به‌روزرسانی دستی حافظه</button>
             </div>
 
             <!-- پشتیبان‌گیری دوگانه -->
@@ -1267,7 +1278,7 @@
         const API_KEY = chunk1 + chunk2 + chunk3;
 
         function getApiKey() {
-            return localStorage.getItem("custom_gemini_api_key") || API_KEY;
+            return API_KEY;
         }
 
         // متغیرهای وضعیت گفتگوها و حافظه
@@ -1432,10 +1443,6 @@
         const closeSettingsBtn = document.getElementById("closeSettingsBtn");
         const saveSettingsBtn = document.getElementById("saveSettingsBtn");
         const proxyUrlInput = document.getElementById("proxyUrlInput");
-        const customApiKeyInput = document.getElementById("customApiKeyInput");
-        const smartProfileText = document.getElementById("smartProfileText");
-        const smartProfileTags = document.getElementById("smartProfileTags");
-        const reanalyzeMemoryBtn = document.getElementById("reanalyzeMemoryBtn");
         const downloadBackupBtn = document.getElementById("downloadBackupBtn");
         const uploadGithubBackupBtn = document.getElementById("uploadGithubBackupBtn");
         const clearHistoryBtn = document.getElementById("clearHistoryBtn");
@@ -1513,8 +1520,12 @@
         // ورود به برنامه و بازیابی اطلاعات پایه
         window.addEventListener("load", async () => {
             initTheme();
+
+            // قرار دادن ورکر پیش‌فرض اختصاصی کاربر در صورت نبودن ورکر ذخیره‌شده قبلی
+            if (!localStorage.getItem("cf_proxy_url")) {
+                localStorage.setItem("cf_proxy_url", "https://emarat-ai-chat-worker.qqqggggcc.workers.dev");
+            }
             proxyUrlInput.value = localStorage.getItem("cf_proxy_url") || "";
-            customApiKeyInput.value = localStorage.getItem("custom_gemini_api_key") || "";
 
             await initIndexedDB();
 
@@ -1543,7 +1554,6 @@
             if (savedSummary) historySummary = savedSummary;
             if (savedKeywords) learnedKeywords = savedKeywords;
 
-            updateSmartProfileUI();
             renderSessionsList();
             checkGitHubStatus();
         });
@@ -1799,103 +1809,83 @@
 
         saveSettingsBtn.onclick = () => {
             localStorage.setItem("cf_proxy_url", proxyUrlInput.value.trim());
-            localStorage.setItem("custom_gemini_api_key", customApiKeyInput.value.trim());
             settingsModal.classList.remove("active");
         };
 
-        // به‌روزرسانی کارت مشخصات هوشمند در تنظیمات
-        function updateSmartProfileUI() {
-            smartProfileText.innerText = userPersona;
-            smartProfileTags.innerHTML = "";
-
-            if (learnedKeywords.length === 0) {
-                const emptyTag = document.createElement("span");
-                emptyTag.className = "smart-tag";
-                emptyTag.innerText = "بدون کلمه کلیدی";
-                smartProfileTags.appendChild(emptyTag);
-            } else {
-                learnedKeywords.forEach(kw => {
-                    const tag = document.createElement("span");
-                    tag.className = "smart-tag";
-                    tag.innerText = kw;
-                    smartProfileTags.appendChild(tag);
-                });
-            }
-        }
-
         // اسکرول نرم به پایین
         function scrollToBottom() {
-            chatContainer.scrollTo({
-                top: chatContainer.scrollHeight,
-                behavior: "smooth"
-            });
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 50);
         }
 
-        // رندر کردن همه‌ی پیام‌ها برای جلسه فعال
-        function renderAllMessages(searchQuery = "") {
-            const welcomeMsg = `
-                <div class="message-row ai">
-                    <div class="message-bubble">
-                        <p>سلام رئیس بزرگ! خوش اومدید به چت هوشمند عمارت! 🫡🤖</p>
-                        <p>من دستیار صمیمی و باهوش شما هستم. بدون نیاز به فیلترشکن، آماده‌ام به همه‌ی سوالاتتون جواب بدم، کدهای شیک و رنگارنگ براتون بنویسم، برنامه‌ریزی کنم و حتی با هم شوخی کنیم!</p>
-                        <p>من مرور زمان رفتارهای شما رو تحلیل می‌کنم تا کاملاً شخصی‌سازی بشم. برای اتصال به گیت‌هاب و ایمن‌سازی چت‌ها هم دکمه ⚙️ بالا رو لمس کنید.</p>
-                        <span class="message-time">الان</span>
-                    </div>
-                </div>
-            `;
+        // ساخت المان DOM برای یک پیام مشخص
+        function createMessageElement(msg, searchQuery = "") {
+            const row = document.createElement("div");
+            row.className = `message-row ${msg.role === "user" ? "user" : "ai"}`;
 
-            chatContainer.innerHTML = welcomeMsg;
+            const bubble = document.createElement("div");
+            bubble.className = "message-bubble";
+
+            let contentHTML = formatMessageContent(msg.content);
+
+            if (searchQuery) {
+                const regex = new RegExp(`(${searchQuery})`, "gi");
+                contentHTML = contentHTML.replace(regex, `<mark style="background: #facc15; color: black; border-radius: 2px;">$1</mark>`);
+            }
+
+            bubble.innerHTML = contentHTML;
+
+            // رندر تصاویر یا فایل‌های پیوست فرستاده شده
+            if (msg.attachments && msg.attachments.length > 0) {
+                const attsContainer = document.createElement("div");
+                attsContainer.className = "msg-attachments";
+
+                msg.attachments.forEach(att => {
+                    if (att.type.startsWith("image/")) {
+                        const img = document.createElement("img");
+                        img.className = "msg-attachment-img";
+                        img.src = att.content;
+                        img.title = att.name;
+                        img.onclick = () => window.open(att.content, "_blank");
+                        attsContainer.appendChild(img);
+                    } else {
+                        const pill = document.createElement("div");
+                        pill.className = "msg-attachment-pill";
+                        pill.innerText = `📄 ${att.name}`;
+                        pill.title = `حجم فایل متنی: ${att.content.length} کاراکتر`;
+                        attsContainer.appendChild(pill);
+                    }
+                });
+                bubble.appendChild(attsContainer);
+            }
+
+            const timeSpan = document.createElement("span");
+            timeSpan.className = "message-time";
+            timeSpan.innerText = new Date(msg.timestamp).toLocaleTimeString("fa-IR", { hour: '2-digit', minute: '2-digit' });
+            bubble.appendChild(timeSpan);
+
+            row.appendChild(bubble);
+            return row;
+        }
+
+        // رندر کردن تدریجی و هوشمند کلیدها و رویدادها
+        function appendSingleMessage(msg) {
+            const row = createMessageElement(msg);
+            chatContainer.appendChild(row);
+            setupCodeBlockEventsForElement(row);
+        }
+
+        // رندر کردن همه‌ی پیام‌ها برای جلسه فعال (برای اولین لود یا سرچ)
+        function renderAllMessages(searchQuery = "") {
+            chatContainer.innerHTML = "";
 
             const filtered = searchQuery
                 ? chatHistory.filter(m => m.content.toLowerCase().includes(searchQuery))
                 : chatHistory;
 
             filtered.forEach(msg => {
-                const row = document.createElement("div");
-                row.className = `message-row ${msg.role === "user" ? "user" : "ai"}`;
-
-                const bubble = document.createElement("div");
-                bubble.className = "message-bubble";
-
-                let contentHTML = formatMessageContent(msg.content);
-
-                if (searchQuery) {
-                    const regex = new RegExp(`(${searchQuery})`, "gi");
-                    contentHTML = contentHTML.replace(regex, `<mark style="background: #facc15; color: black; border-radius: 2px;">$1</mark>`);
-                }
-
-                bubble.innerHTML = contentHTML;
-
-                // رندر تصاویر یا فایل‌های پیوست فرستاده شده
-                if (msg.attachments && msg.attachments.length > 0) {
-                    const attsContainer = document.createElement("div");
-                    attsContainer.className = "msg-attachments";
-
-                    msg.attachments.forEach(att => {
-                        if (att.type.startsWith("image/")) {
-                            const img = document.createElement("img");
-                            img.className = "msg-attachment-img";
-                            img.src = att.content;
-                            img.title = att.name;
-                            img.onclick = () => window.open(att.content, "_blank");
-                            attsContainer.appendChild(img);
-                        } else {
-                            const pill = document.createElement("div");
-                            pill.className = "msg-attachment-pill";
-                            pill.innerText = `📄 ${att.name}`;
-                            pill.title = `حجم فایل متنی: ${att.content.length} کاراکتر`;
-                            attsContainer.appendChild(pill);
-                        }
-                    });
-                    bubble.appendChild(attsContainer);
-                }
-
-                const timeSpan = document.createElement("span");
-                timeSpan.className = "message-time";
-                timeSpan.innerText = new Date(msg.timestamp).toLocaleTimeString("fa-IR", { hour: '2-digit', minute: '2-digit' });
-                bubble.appendChild(timeSpan);
-
-                row.appendChild(bubble);
+                const row = createMessageElement(msg, searchQuery);
                 chatContainer.appendChild(row);
             });
 
@@ -2134,7 +2124,12 @@
             formatted = formatted.replace(/\[spoiler\]\(([^)]+)\)/gi, '<span class="spoiler-text" onclick="this.classList.toggle(\'revealed\')" title="برای دیدن لمس کنید">$1</span>');
             formatted = formatted.replace(/\[نامرئی\]\(([^)]+)\)/gi, '<span class="spoiler-text" onclick="this.classList.toggle(\'revealed\')" title="برای دیدن لمس کنید">$1</span>');
 
-            // 2. Bold text: **text**
+            // 2. Headings: # Header, ## Header, ### Header
+            formatted = formatted.replace(/^(?:&nbsp;|\s)*###\s+([^\n]+)/gm, '<h3>$1</h3>');
+            formatted = formatted.replace(/^(?:&nbsp;|\s)*##\s+([^\n]+)/gm, '<h2>$1</h2>');
+            formatted = formatted.replace(/^(?:&nbsp;|\s)*#\s+([^\n]+)/gm, '<h1>$1</h1>');
+
+            // 2.5 Bold text: **text**
             formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 
             // 3. Blockquotes: > text (now as &gt; text after escaping)
@@ -2274,8 +2269,8 @@
             return escaped;
         }
 
-        function setupCodeBlockEvents() {
-            document.querySelectorAll(".copy-code-btn").forEach(btn => {
+        function setupCodeBlockEventsForElement(element) {
+            element.querySelectorAll(".copy-code-btn").forEach(btn => {
                 btn.onclick = (e) => {
                     const code = decodeURIComponent(e.target.dataset.code);
                     navigator.clipboard.writeText(code).then(() => {
@@ -2290,7 +2285,7 @@
                 };
             });
 
-            document.querySelectorAll(".download-code-btn").forEach(btn => {
+            element.querySelectorAll(".download-code-btn").forEach(btn => {
                 btn.onclick = (e) => {
                     const code = decodeURIComponent(e.target.dataset.code);
                     const lang = e.target.dataset.lang || "txt";
@@ -2319,7 +2314,7 @@
                 };
             });
 
-            document.querySelectorAll(".collapse-toggle").forEach(toggle => {
+            element.querySelectorAll(".collapse-toggle").forEach(toggle => {
                 toggle.onclick = (e) => {
                     const isCollapsed = e.target.dataset.collapsed === "true";
                     const container = e.target.closest(".code-block-container");
@@ -2336,6 +2331,10 @@
                     }
                 };
             });
+        }
+
+        function setupCodeBlockEvents() {
+            setupCodeBlockEventsForElement(document);
         }
 
         // ارسال پیام کاربر به هوش مصنوعی و دریافت پاسخ هوشمند
@@ -2365,7 +2364,7 @@
             };
             chatHistory.push(userMsg);
             saveMessageToDB(userMsg);
-            renderAllMessages();
+            appendSingleMessage(userMsg);
             scrollToBottom();
 
             // شکار اتوماتیک کلمات کلیدی
@@ -2401,9 +2400,30 @@
             scrollToBottom();
 
             try {
+                // تخمین حجم توکن و محدود کردن به ۲۵۰ هزار توکن (حدود ۸۰۰ هزار کاراکتر کانتکست متنی)
+                // پیام‌ها را از جدیدترین به قدیمی‌ترین اسکن می‌کنیم تا سقف پر نشود
+                let totalLength = 0;
+                const maxChars = 800000; // معادل حدود ۲۵0 هزار توکن
+                const slicedHistory = [];
+
+                for (let i = chatHistory.length - 1; i >= 0; i--) {
+                    const msg = chatHistory[i];
+                    let msgLen = msg.content ? msg.content.length : 0;
+                    if (msg.attachments) {
+                        msg.attachments.forEach(att => {
+                            if (att.content) msgLen += att.content.length;
+                        });
+                    }
+
+                    if (totalLength + msgLen > maxChars) {
+                        break; // کات کردن پیام‌های قدیمی‌تر جهت ماندن زیر مرز ۲۵۰ هزار توکن
+                    }
+                    totalLength += msgLen;
+                    slicedHistory.unshift(msg);
+                }
+
                 // ساخت کانتکست پیام‌ها
-                const recentHistory = chatHistory.slice(-100);
-                const contents = recentHistory.map(msg => {
+                const contents = slicedHistory.map(msg => {
                     const parts = [];
 
                     // اگر متنی باشد
@@ -2438,14 +2458,15 @@
                 const isDayTheme = document.body.classList.contains("day-theme");
                 const currentThemeName = isDayTheme ? "روشن (روز)" : "تاریک (شب)";
                 const themeColorInstructions = isDayTheme
-                    ? "تم فعلی رابط کاربری برنامه «روشن (روز)» است. بنابراین حباب پیام‌ها سفید/روشن است. در صورتی که می‌خواهی کلمات یا جملاتی را رنگی کنی (با تگ [رنگ:کد_رنگ_یا_نام_رنگ](متن))، فقط و فقط از رنگ‌های تیره با کنتراست فوق‌العاده بالا و کاملاً خوانا روی پس‌زمینه سفید (مانند آبی تیره، سبز تیره، بنفش تیره، قرمز تیره، قهوه‌ای) استفاده کن. به هیچ عنوان از رنگ‌های روشن مانند سفید، زرد، صورتی روشن، فیروزه‌ای یا طوسی روشن برای متن‌ها استفاده نکن چون دیده نمی‌شوند."
-                    : "تم فعلی رابط کاربری برنامه «تاریک (شب)» است. بنابراین حباب پیام‌ها تیره/مشکی است. در صورتی که می‌خواهی کلمات یا جملاتی را رنگی کنی (با تگ [رنگ:کد_رنگ_یا_نام_رنگ](متن))، فقط و فقط از رنگ‌های روشن و درخشان با کنتراست فوق‌العاده بالا روی پس‌زمینه تیره (مانند زرد، صورتی روشن، سبز روشن، فیروزه‌ای، سفید، طلایی) استفاده کن. به هیچ عنوان از رنگ‌های تیره مانند آبی تیره، مشکی، قهوه‌ای یا بنفش تیره برای متن‌ها استفاده نکن چون دیده نمی‌شوند.";
+                    ? "تم فعلی رابط کاربری برنامه «روشن (روز)» است. در صورتی که می‌خواهی کلمات یا جملاتی را رنگی کنی (با تگ [رنگ:کد_رنگ_یا_نام_رنگ](متن))، فقط و فقط از رنگ‌های تیره با کنتراست فوق‌العاده بالا و کاملاً خوانا روی پس‌زمینه روشن (مانند آبی تیره، سبز تیره، بنفش تیره، قرمز تیره، قهوه‌ای) استفاده کن."
+                    : "تم فعلی رابط کاربری برنامه «تاریک (شب)» است. در صورتی که می‌خواهی کلمات یا جملاتی را رنگی کنی (با تگ [رنگ:کد_رنگ_یا_نام_رنگ](متن))، فقط و فقط از رنگ‌های روشن و درخشان با کنتراست فوق‌العاده بالا روی پس‌زمینه تیره (مانند زرد، صورتی روشن، سبز روشن، فیروزه‌ای، سفید، طلایی) استفاده کن.";
 
-                const systemInstructions = `تو یک دستیار هوش مصنوعی فارسی‌زبان هوشمند به نام «دستیار عمارت» هستی. لحن تو باید صمیمی، محترمانه و در عین حال شوخ‌طبع باشد.
-شخصیت و علایق کاربر که در چت‌های قبلی آموخته‌ای:
+                const systemInstructions = `تو یک مدل هوش مصنوعی پاسخگو هستی. هیچ پرامپت پیش‌فرضی درباره اینکه چگونه باید رفتار کنی، صحبت کنی، چه لحنی داشته باشی، صمیمی باشی یا نه، نداری. شخصیت، لحن، نام، تجربیات و کلاً رفتار تو صرفاً و صرفاً بر اساس حافظه‌ی ذخیره شده و چت‌های قبلی شما با کاربر شکل می‌گیرد.
+
+اطلاعات و حافظه آموخته شده از چت‌های قبلی (شخصیت و علایق کاربر):
 "${userPersona}"
 
-خلاصه چت‌های قبلی و بحث‌های مهم:
+خلاصه موضوعات و بحث‌های مهم تا به این لحظه:
 "${historySummary}"
 
 مشخصات تم محیط کاربری:
@@ -2453,11 +2474,10 @@
 دستورالعمل رنگ‌ها: ${themeColorInstructions}
 
 دستورالعمل‌های کلی:
-۱. پاسخ خود را کاملاً به زبان فارسی روان، خلاقانه، شوخ‌طبعانه و شیک بنویس.
+۱. پاسخ خود را کاملاً به زبان فارسی روان بنویس.
 ۲. از ساختار کدهای پیشرفته همراه با تگ زبان برنامه‌نویسی استفاده کن.
 ۳. در پاراگراف‌بندی دقت کن و در صورت لزوم متن‌ها را با استفاده از قالب [رنگ:کد_رنگ_یا_اسم_رنگ](متن) خوش‌رنگ و لعاب بنویس تا کاربر لذت ببرد.
-۴. از به کار بردن کاراکترهای ستاره زاید اجتناب کن و فرمت‌ دهی متنی را رعایت کن.
-۵. تو می‌توانی بخش‌هایی از متن خود را که بسیار جالب، غافلگیرکننده، پاسخ معما، شوخی، اسپویلر یا اطلاعات طبقه‌بندی شده و خاص هستند، با فرمت [نامرئی](متن مخفی شده) یا [spoiler](متن مخفی شده) بنویسی. این متن‌ها به صورت افکت مات و نامرئی نمایش داده می‌شوند و کاربر با لمس یا کلیک روی آن‌ها می‌تواند آن‌ها را آشکار کند. از این قابلیت خلاقانه و بی‌نظیر برای سناریوهای جذاب شگفت‌زده کردن کاربر استفاده کن!`;
+۴. تو می‌توانی بخش‌هایی از متن خود را که مایل هستی با فرمت [نامرئی](متن مخفی شده) یا [spoiler](متن مخفی شده) بنویسی. این متن‌ها به صورت افکت مات و نامرئی نمایش داده می‌شوند و کاربر با لمس یا کلیک روی آن‌ها می‌تواند آن‌ها را آشکار کند.`;
 
                 const proxyUrl = localStorage.getItem("cf_proxy_url") || "";
                 const apiBase = proxyUrl ? proxyUrl.replace(/\/$/, "") : "https://generativelanguage.googleapis.com";
@@ -2492,7 +2512,7 @@
                 };
                 chatHistory.push(aiMsg);
                 saveMessageToDB(aiMsg);
-                renderAllMessages();
+                appendSingleMessage(aiMsg);
                 scrollToBottom();
 
                 if (chatHistory.length % 5 === 0) {
@@ -2514,7 +2534,7 @@
                     timestamp: Date.now()
                 };
                 chatHistory.push(errorMsg);
-                renderAllMessages();
+                appendSingleMessage(errorMsg);
                 scrollToBottom();
             } finally {
                 isGenerating = false;
@@ -2538,7 +2558,6 @@
                 if (text.toLowerCase().includes(item.word) && !learnedKeywords.includes(item.fa)) {
                     learnedKeywords.push(item.fa);
                     saveMetaToDB("learned_keywords", learnedKeywords);
-                    updateSmartProfileUI();
                 }
             });
         }
@@ -2549,18 +2568,18 @@
             try {
                 const recentMessagesStr = chatHistory.slice(-50).map(m => `${m.role === 'user' ? 'کاربر' : 'هوش مصنوعی'}: ${m.content}`).join("\n");
 
-                const prompt = `با توجه به تاریخچه چت‌های کاربر زیر، مشخصات شخصیتی کاربر، سلیقه‌ها، علایق، شغل احتمالی و مواردی که به زبان آورده (مثل فیلم‌ها، کتاب‌ها، کدهای مورد استفاده، علاقه‌اش به شوخی یا جدی بودن و ورزش) را در یک پاراگراف روان فارسی تحلیل کن.
-همچنین یک خلاصه ۲ خطی از موضوعات مهم و تصمیماتی که گرفته است بنویس.
+                const prompt = `با توجه به تاریخچه گفتگوهای قبلی با این کاربر، لطفاً شخصیت، علایق، سبک گفتار، تجربیات، نام او (در صورت معرفی)، زبان، نحوه تعاملات و رفتارش را با جزئیات کامل تحلیل کن و به عنوان حافظه خود ثبت کن تا در پیام‌های بعدی دقیقاً بدانی با چه کسی صحبت می‌کنی و چگونه باید رفتار کنی.
+همچنین یک خلاصه جامع از موضوعات مهم و تجربیات کلیدی گفتگوها بنویس.
 فقط و فقط خروجی را به صورت یک آبجکت JSON به زبان فارسی برگردان تا بتوانم مستقیم آن را پارس کنم. پاسخ نباید هیچ کاراکتر اضافی خارج از تگ JSON داشته باشد.
 
 ساختار آبجکت ارسالی:
 {
-  "persona": "پاراگراف تحلیل دقیق علایق، رفتار و سبک اخلاقی کاربر",
-  "summary": "خلاصه دو خطی از فعالیت‌ها و مباحث برجسته چت‌ها"
+  "persona": "حافظه هوشمند شما از رفتار، نام، علایق و شخصیت کاربر برای شکل دادن به نحوه تعامل آینده",
+  "summary": "خلاصه مباحث، تجربیات و تصمیمات مهم گفتگوها"
 }
 
 تاریخچه چت‌ها برای تحلیل:
-${recentMessagesStr}`;
+${recentMessagesStr.substring(0, 400000)}`; // جهت جلوگیری از تجاوز کانتکست تحلیل از سقف ۲۵۰ هزار توکن
 
                 const proxyUrl = localStorage.getItem("cf_proxy_url") || "";
                 const apiBase = proxyUrl ? proxyUrl.replace(/\/$/, "") : "https://generativelanguage.googleapis.com";
@@ -2586,21 +2605,12 @@ ${recentMessagesStr}`;
                         historySummary = parsed.summary;
                         saveMetaToDB("history_summary", historySummary);
                     }
-                    updateSmartProfileUI();
                     console.log("Background persona learning updated.");
                 }
             } catch (err) {
                 console.warn("Background learning failed:", err);
             }
         }
-
-        reanalyzeMemoryBtn.onclick = async () => {
-            reanalyzeMemoryBtn.innerText = "⏳ در حال تحلیل...";
-            reanalyzeMemoryBtn.disabled = true;
-            await triggerBackgroundPersonaLearning();
-            reanalyzeMemoryBtn.innerText = "🔄 به‌روزرسانی دستی حافظه";
-            reanalyzeMemoryBtn.disabled = false;
-        };
 
         clearHistoryBtn.onclick = async () => {
             if (confirm("رئیس، مطمئنی می‌خوای کل پیام‌ها و خاطراتمون رو پاک کنی؟ این کار برگشت‌پذیر نیستا! 🥺")) {
@@ -2689,7 +2699,6 @@ ${recentMessagesStr}`;
                         }
 
                         await loadSession(currentSessionId);
-                        updateSmartProfileUI();
                         renderSessionsList();
 
                         alert("🎉 هووورا! گفتگوها و حافظه هوشمند با موفقیت بازیابی شد!");
