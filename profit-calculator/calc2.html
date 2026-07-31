@@ -484,23 +484,11 @@
         <!-- Calculator instances will be dynamically added here -->
     </div>
 
-    <!-- بخش شیشه‌ای و مدرن مجموع کل محاسبات -->
-    <div id="cumulative-total-section" style="display: none; max-width: 400px; width: 90%; margin: 20px auto; background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05)); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 15px; padding: 20px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); direction: rtl; text-align: right; box-sizing: border-box; transition: all 0.3s ease;">
-        <h3 style="margin-top: 0; color: #4CAF50; display: flex; align-items: center; gap: 8px; font-size: 1.2rem;">📊 مجموع کل سرمایه‌گذاری‌ها</h3>
-
-        <label style="display: block; margin: 10px 0 5px; font-weight: bold; font-size: 0.95rem;">📅 مدت زمان مجموع (سال):</label>
-        <input type="number" id="cumulative-years" value="5" placeholder="مثلا: 5" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); color: inherit; text-align: center; font-size: 16px; box-sizing: border-box;">
-
-        <div style="margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 15px; display: flex; flex-direction: column; gap: 10px;">
-            <div>
-                <span style="font-size: 0.9rem; opacity: 0.85;">🏆 مجموع کل سرمایه نهایی:</span>
-                <div id="cumulative-total-amount" style="font-size: 1.3rem; font-weight: bold; color: #00c853; margin-top: 4px; font-family: 'Roboto Mono', monospace;">-- تومان</div>
-            </div>
-            <div>
-                <span style="font-size: 0.9rem; opacity: 0.85;">💵 مجموع کل سود مرکب کسب‌شده:</span>
-                <div id="cumulative-total-profit" style="font-size: 1.2rem; font-weight: bold; color: #bb86fc; margin-top: 4px; font-family: 'Roboto Mono', monospace;">-- تومان</div>
-            </div>
-        </div>
+    <!-- دکمه جادویی برای باز کردن صفحه مجموع کل در تب جدید -->
+    <div id="cumulative-total-btn-wrapper" style="display: none; max-width: 400px; width: 90%; margin: 20px auto; text-align: center; box-sizing: border-box;">
+        <button id="open-cumulative-total-btn" style="background: linear-gradient(135deg, #00c853, #008f3a); color: white; font-weight: bold; font-size: 1.1rem; padding: 14px 20px; border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 200, 83, 0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; transition: all 0.3s ease;">
+            📊 مشاهده مجموع کل در صفحه مجزا
+        </button>
     </div>
 
     <div id="tabs-bar">
@@ -830,62 +818,24 @@
 
         // محاسبه مجموع کل تب‌های علامت‌گذاری شده
         function updateCumulativeTotal() {
-            const cumulativeSection = document.getElementById('cumulative-total-section');
-            const cumulativeYearsInput = document.getElementById('cumulative-years');
-            const cumulativeTotalAmountDiv = document.getElementById('cumulative-total-amount');
-            const cumulativeTotalProfitDiv = document.getElementById('cumulative-total-profit');
+            const btnWrapper = document.getElementById('cumulative-total-btn-wrapper');
+            if (!btnWrapper) return;
 
-            if (!cumulativeSection) return;
-
-            let targetYears = parseFloat(cumulativeYearsInput.value);
-            if (isNaN(targetYears) || targetYears < 0) {
-                targetYears = 0;
-            }
-
-            // ذخیره مقدار سال کل در localStorage
-            localStorage.setItem('totalSumYears', targetYears);
-
-            let totalFinalAmount = new Decimal(0);
-            let totalProfitEarned = new Decimal(0);
             let markedTabsCount = 0;
 
-            // پیدا کردن تمام تب‌های علامت‌گذاری شده
+            // پیدا کردن تمام تب‌های علامت‌گذاری شده معتبر
             calculatorInstances.forEach((instanceData, tabId) => {
                 const isMarked = localStorage.getItem(`tabMarked_${tabId}`) === 'true';
                 if (isMarked) {
                     markedTabsCount++;
-                    // گرفتن داده‌های ورودی تب مستقیماً از localStorage یا از عناصر تب
-                    let data = JSON.parse(localStorage.getItem(`calculatorTab_${tabId}`)) || {};
-
-                    // اگر داده خالی بود یا مقداری نداشت، به صورت زنده از روی فیلدهای صفحه برداریم
-                    const elements = getCalculatorElements(instanceData.element);
-                    if (elements) {
-                        data.initialAmount = elements.initialAmount.value || data.initialAmount || "";
-                        data.rate = elements.rate.value || data.rate || "";
-                        data.rateType = (elements.rateType ? elements.rateType.value : '') || data.rateType || "annual";
-                        data.compoundFrequency = elements.compoundFrequency.value || data.compoundFrequency || "365";
-                        data.customFrequency = (elements.customFrequency ? elements.customFrequency.value : '') || data.customFrequency || "";
-                        data.monthlyDeposit = elements.monthlyDeposit.value || data.monthlyDeposit || "";
-                        data.annualIncreaseMonthlyDeposit = elements.annualIncreaseMonthlyDeposit.value || data.annualIncreaseMonthlyDeposit || "";
-                        data.biMonthlyDeposit = elements.biMonthlyDeposit.value || data.biMonthlyDeposit || "";
-                    }
-
-                    // فقط در صورتی محاسبه کنیم که حداقل یک فیلد معتبر پر شده باشد
-                    if (data.initialAmount || data.monthlyDeposit || data.biMonthlyDeposit) {
-                        const res = runCompoundingCalculation(data, targetYears);
-                        totalFinalAmount = totalFinalAmount.plus(res.finalAmount);
-                        totalProfitEarned = totalProfitEarned.plus(res.profitEarned);
-                    }
                 }
             });
 
-            // مدیریت نمایش و پنهان‌سازی بخش مجموع کل
-            if (markedTabsCount > 0) {
-                cumulativeSection.style.display = 'block';
-                cumulativeTotalAmountDiv.innerText = `${totalFinalAmount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
-                cumulativeTotalProfitDiv.innerText = `${totalProfitEarned.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            // دکمه فقط در صورتی نمایش داده می‌شود که حداقل ۲ تب علامت‌گذاری شده باشد
+            if (markedTabsCount >= 2) {
+                btnWrapper.style.display = 'block';
             } else {
-                cumulativeSection.style.display = 'none';
+                btnWrapper.style.display = 'none';
             }
         }
 
@@ -1399,15 +1349,15 @@
                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
             }
 
-            // مقداردهی اولیه فیلد سال مجموع کل و لیسنر تغییرات آن
-            const cumulativeYearsInput = document.getElementById('cumulative-years');
-            if (cumulativeYearsInput) {
-                const savedTotalSumYears = localStorage.getItem('totalSumYears');
-                if (savedTotalSumYears !== null) {
-                    cumulativeYearsInput.value = savedTotalSumYears;
-                }
-                cumulativeYearsInput.addEventListener('input', () => {
-                    updateCumulativeTotal();
+            // لیسنر کلیک برای باز کردن صفحه مجموع کل مستقل
+            const openCumBtn = document.getElementById('open-cumulative-total-btn');
+            if (openCumBtn) {
+                openCumBtn.addEventListener('click', () => {
+                    // ذخیره کردن زنده اطلاعات قبل از هدایت
+                    calculatorInstances.forEach((instanceData, tabId) => {
+                        saveInputs(instanceData.element, tabId);
+                    });
+                    window.open('total.html', '_blank');
                 });
             }
 
