@@ -250,7 +250,7 @@
             background-color: #777;
         }
 
-        .tab-button span:first-child {
+        .tab-button span:nth-child(2) {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -425,8 +425,14 @@
             <label>📅 تعداد سال‌ها:</label>
             <input type="number" class="years" placeholder="مثال: 5">
 
-            <label>📊 نرخ سود سالانه (%):</label>
-            <input type="number" class="rate" placeholder="مثال: 30">
+            <label>📊 نرخ سود (%):</label>
+            <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 5px;">
+                <input type="number" class="rate" placeholder="مثال: 30" style="margin: 0; flex: 2;">
+                <select class="rateType" style="margin: 0; flex: 1.2;">
+                    <option value="annual">سود کل سالانه</option>
+                    <option value="daily">میانگین سود روزانه</option>
+                </select>
+            </div>
 
             <label>🔄 فرکانس ترکیب (تعداد بار در سال):</label>
             <select class="compoundFrequency">
@@ -478,6 +484,25 @@
         <!-- Calculator instances will be dynamically added here -->
     </div>
 
+    <!-- بخش شیشه‌ای و مدرن مجموع کل محاسبات -->
+    <div id="cumulative-total-section" style="display: none; max-width: 400px; width: 90%; margin: 20px auto; background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05)); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 15px; padding: 20px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); direction: rtl; text-align: right; box-sizing: border-box; transition: all 0.3s ease;">
+        <h3 style="margin-top: 0; color: #4CAF50; display: flex; align-items: center; gap: 8px; font-size: 1.2rem;">📊 مجموع کل سرمایه‌گذاری‌ها</h3>
+
+        <label style="display: block; margin: 10px 0 5px; font-weight: bold; font-size: 0.95rem;">📅 مدت زمان مجموع (سال):</label>
+        <input type="number" id="cumulative-years" value="5" placeholder="مثلا: 5" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); color: inherit; text-align: center; font-size: 16px; box-sizing: border-box;">
+
+        <div style="margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+            <div>
+                <span style="font-size: 0.9rem; opacity: 0.85;">🏆 مجموع کل سرمایه نهایی:</span>
+                <div id="cumulative-total-amount" style="font-size: 1.3rem; font-weight: bold; color: #00c853; margin-top: 4px; font-family: 'Roboto Mono', monospace;">-- تومان</div>
+            </div>
+            <div>
+                <span style="font-size: 0.9rem; opacity: 0.85;">💵 مجموع کل سود مرکب کسب‌شده:</span>
+                <div id="cumulative-total-profit" style="font-size: 1.2rem; font-weight: bold; color: #bb86fc; margin-top: 4px; font-family: 'Roboto Mono', monospace;">-- تومان</div>
+            </div>
+        </div>
+    </div>
+
     <div id="tabs-bar">
         <button id="add-tab-button">+</button>
         <div id="tabs-container">
@@ -497,6 +522,7 @@
                 initialAmount: instanceElement.querySelector('.initialAmount'),
                 years: instanceElement.querySelector('.years'),
                 rate: instanceElement.querySelector('.rate'),
+                rateType: instanceElement.querySelector('.rateType'),
                 compoundFrequency: instanceElement.querySelector('.compoundFrequency'),
                 customFrequency: instanceElement.querySelector('.customFrequency'),
                 monthlyDeposit: instanceElement.querySelector('.monthlyDeposit'),
@@ -604,6 +630,7 @@
                 initialAmount: elements.initialAmount.value,
                 years: elements.years.value,
                 rate: elements.rate.value,
+                rateType: elements.rateType ? elements.rateType.value : 'annual',
                 compoundFrequency: elements.compoundFrequency.value,
                 customFrequency: elements.customFrequency ? elements.customFrequency.value : '',
                 monthlyDeposit: elements.monthlyDeposit.value,
@@ -621,6 +648,9 @@
             elements.initialAmount.value = data.initialAmount || "";
             elements.years.value = data.years || "";
             elements.rate.value = data.rate || "";
+            if (elements.rateType) {
+                elements.rateType.value = data.rateType || "annual";
+            }
             elements.compoundFrequency.value = data.compoundFrequency || "365";
             if (elements.customFrequency) {
                 elements.customFrequency.value = data.customFrequency || "";
@@ -645,20 +675,31 @@
             if (tabId) saveInputs(instanceElement, tabId);
         }
 
-        // محاسبه سود مرکب
-        function calculateCompoundInterest(instanceElement, tabId) {
-            const elements = getCalculatorElements(instanceElement);
+        // تابع مشترک برای انجام محاسبات سود مرکب برای یک تب در یک دوره زمانی خاص
+        function runCompoundingCalculation(data, targetYears) {
+            let P_initial_principal = new Decimal(data.initialAmount.replace(/,/g, "") || 0);
+            let t_years = new Decimal(targetYears || 0);
+            let r_annual_rate_percent = new Decimal(data.rate || 0);
 
-            // دریافت مقادیر اولیه
-            let P_initial_principal = new Decimal(elements.initialAmount.value.replace(/,/g, "") || 0);
-            let t_years = new Decimal(elements.years.value || 0);
-            let r_annual_rate_percent = new Decimal(elements.rate.value || 0);
+            // اگر سود روزانه وارد شده باشد، آن را ضرب در ۳۶۵ می‌کنیم تا به سود سالانه معادل تبدیل شود
+            if (data.rateType === 'daily') {
+                r_annual_rate_percent = r_annual_rate_percent.times(365);
+            }
+
             let r_annual_rate_decimal = r_annual_rate_percent.div(100);
-            let n_compound_freq_per_year = new Decimal(getCompoundFrequencyValue(elements));
 
-            let Dm_initial_monthly_deposit = new Decimal(elements.monthlyDeposit.value.replace(/,/g, "") || 0);
-            let Dm_annual_increase = new Decimal(elements.annualIncreaseMonthlyDeposit.value.replace(/,/g, "") || 0);
-            let Db_bimonthly_deposit = new Decimal(elements.biMonthlyDeposit.value.replace(/,/g, "") || 0);
+            let freqVal = 12; // پیش‌فرض ماهانه
+            if (data.compoundFrequency !== 'custom') {
+                freqVal = parseInt(data.compoundFrequency) || 12;
+            } else {
+                freqVal = parseInt(data.customFrequency) || 12;
+                if (freqVal <= 0) freqVal = 12;
+            }
+            let n_compound_freq_per_year = new Decimal(freqVal);
+
+            let Dm_initial_monthly_deposit = new Decimal(data.monthlyDeposit.replace(/,/g, "") || 0);
+            let Dm_annual_increase = new Decimal(data.annualIncreaseMonthlyDeposit.replace(/,/g, "") || 0);
+            let Db_bimonthly_deposit = new Decimal(data.biMonthlyDeposit.replace(/,/g, "") || 0);
 
             // نرخ سالانه موثر
             let effective_annual_rate = Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), n_compound_freq_per_year).minus(1).times(100);
@@ -724,7 +765,7 @@
                 profit_earned_over_initial_P = profit_earned_over_initial_P.plus(fv_of_this_bimonthly_deposit);
             }
 
-            // --- محاسبات نهایی برای نمایش ---
+            // --- محاسبات نهایی ---
             let total_periodic_deposits_made = sum_of_actual_monthly_deposits_made.plus(sum_of_actual_bimonthly_deposits_made);
             let net_total_profit = A_final_amount.minus(P_initial_principal).minus(total_periodic_deposits_made);
 
@@ -734,21 +775,118 @@
                 monthly_income = A_final_amount.times(effective_annual_rate_decimal.div(12));
             }
 
-            elements.result.innerText = `📌 مبلغ نهایی: ${A_final_amount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
-            elements.profit.innerText = `💵 سود کسب‌شده: ${profit_earned_over_initial_P.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
-            elements.netProfit.innerText = `💸 سود خالص: ${net_total_profit.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
-            elements.totalDeposits.innerText = `💵 کل واریزی در مدت سرمایه‌گذاری: ${total_periodic_deposits_made.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
-            elements.effectiveRate.innerText = `📈 سود مرکب واقعی: ${effective_annual_rate.toFixed(2)}%`;
-            elements.monthlyIncome.innerText = `💰 درآمد ماهیانه (با نرخ مؤثر): ${monthly_income.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            return {
+                finalAmount: A_final_amount,
+                profitEarned: profit_earned_over_initial_P,
+                netProfit: net_total_profit,
+                totalDeposits: total_periodic_deposits_made,
+                effectiveAnnualRate: effective_annual_rate,
+                effectiveAnnualRateDecimal: effective_annual_rate_decimal,
+                monthlyIncome: monthly_income,
+                annualRatePercent: r_annual_rate_percent
+            };
+        }
 
+        // محاسبه سود مرکب
+        function calculateCompoundInterest(instanceElement, tabId) {
+            const elements = getCalculatorElements(instanceElement);
+
+            const inputData = {
+                initialAmount: elements.initialAmount.value,
+                rate: elements.rate.value,
+                rateType: elements.rateType ? elements.rateType.value : 'annual',
+                compoundFrequency: elements.compoundFrequency.value,
+                customFrequency: elements.customFrequency ? elements.customFrequency.value : '',
+                monthlyDeposit: elements.monthlyDeposit.value,
+                annualIncreaseMonthlyDeposit: elements.annualIncreaseMonthlyDeposit.value,
+                biMonthlyDeposit: elements.biMonthlyDeposit.value
+            };
+
+            const t_years_val = elements.years.value || 0;
+            const res = runCompoundingCalculation(inputData, t_years_val);
+
+            elements.result.innerText = `📌 مبلغ نهایی: ${res.finalAmount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            elements.profit.innerText = `💵 سود کسب‌شده: ${res.profitEarned.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            elements.netProfit.innerText = `💸 سود خالص: ${res.netProfit.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            elements.totalDeposits.innerText = `💵 کل واریزی در مدت سرمایه‌گذاری: ${res.totalDeposits.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            elements.effectiveRate.innerText = `📈 سود مرکب واقعی: ${res.effectiveAnnualRate.toFixed(2)}%`;
+            elements.monthlyIncome.innerText = `💰 درآمد ماهیانه (با نرخ مؤثر): ${res.monthlyIncome.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+
+            let P_initial_principal = new Decimal(inputData.initialAmount.replace(/,/g, "") || 0);
             saveToHistory(
                 P_initial_principal.toFixed(0),
-                t_years.toFixed(0),
-                r_annual_rate_percent.toFixed(1),
-                A_final_amount.toFixed(0),
-                effective_annual_rate.toFixed(2)
+                new Decimal(t_years_val).toFixed(0),
+                res.annualRatePercent.toFixed(1),
+                res.finalAmount.toFixed(0),
+                res.effectiveAnnualRate.toFixed(2)
             );
             saveInputs(instanceElement, tabId);
+
+            // هر زمان که یک تب را محاسبه می‌کنیم، مجموع کل را هم بروزرسانی می‌کنیم
+            if (typeof updateCumulativeTotal === 'function') {
+                updateCumulativeTotal();
+            }
+        }
+
+        // محاسبه مجموع کل تب‌های علامت‌گذاری شده
+        function updateCumulativeTotal() {
+            const cumulativeSection = document.getElementById('cumulative-total-section');
+            const cumulativeYearsInput = document.getElementById('cumulative-years');
+            const cumulativeTotalAmountDiv = document.getElementById('cumulative-total-amount');
+            const cumulativeTotalProfitDiv = document.getElementById('cumulative-total-profit');
+
+            if (!cumulativeSection) return;
+
+            let targetYears = parseFloat(cumulativeYearsInput.value);
+            if (isNaN(targetYears) || targetYears < 0) {
+                targetYears = 0;
+            }
+
+            // ذخیره مقدار سال کل در localStorage
+            localStorage.setItem('totalSumYears', targetYears);
+
+            let totalFinalAmount = new Decimal(0);
+            let totalProfitEarned = new Decimal(0);
+            let markedTabsCount = 0;
+
+            // پیدا کردن تمام تب‌های علامت‌گذاری شده
+            calculatorInstances.forEach((instanceData, tabId) => {
+                const isMarked = localStorage.getItem(`tabMarked_${tabId}`) === 'true';
+                if (isMarked) {
+                    markedTabsCount++;
+                    // گرفتن داده‌های ورودی تب مستقیماً از localStorage یا از عناصر تب
+                    let data = JSON.parse(localStorage.getItem(`calculatorTab_${tabId}`)) || {};
+
+                    // اگر داده خالی بود یا مقداری نداشت، به صورت زنده از روی فیلدهای صفحه برداریم
+                    const elements = getCalculatorElements(instanceData.element);
+                    if (elements) {
+                        data.initialAmount = elements.initialAmount.value || data.initialAmount || "";
+                        data.rate = elements.rate.value || data.rate || "";
+                        data.rateType = (elements.rateType ? elements.rateType.value : '') || data.rateType || "annual";
+                        data.compoundFrequency = elements.compoundFrequency.value || data.compoundFrequency || "365";
+                        data.customFrequency = (elements.customFrequency ? elements.customFrequency.value : '') || data.customFrequency || "";
+                        data.monthlyDeposit = elements.monthlyDeposit.value || data.monthlyDeposit || "";
+                        data.annualIncreaseMonthlyDeposit = elements.annualIncreaseMonthlyDeposit.value || data.annualIncreaseMonthlyDeposit || "";
+                        data.biMonthlyDeposit = elements.biMonthlyDeposit.value || data.biMonthlyDeposit || "";
+                    }
+
+                    // فقط در صورتی محاسبه کنیم که حداقل یک فیلد معتبر پر شده باشد
+                    if (data.initialAmount || data.monthlyDeposit || data.biMonthlyDeposit) {
+                        const res = runCompoundingCalculation(data, targetYears);
+                        totalFinalAmount = totalFinalAmount.plus(res.finalAmount);
+                        totalProfitEarned = totalProfitEarned.plus(res.profitEarned);
+                    }
+                }
+            });
+
+            // مدیریت نمایش و پنهان‌سازی بخش مجموع کل
+            if (markedTabsCount > 0) {
+                cumulativeSection.style.display = 'block';
+                cumulativeTotalAmountDiv.innerText = `${totalFinalAmount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+                cumulativeTotalProfitDiv.innerText = `${totalProfitEarned.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            } else {
+                cumulativeSection.style.display = 'none';
+            }
         }
 
         // ذخیره تاریخچه
@@ -786,8 +924,13 @@
             elements.monthlyIncome.innerText = "💰 درآمد ماهیانه (با نرخ مؤثر): -- تومان";
 
             localStorage.removeItem(`calculatorTab_${tabId}`);
-            const tabButton = document.querySelector(`.tab-button[data-tab-id="${tabId}"] span:first-child`);
+            localStorage.removeItem(`tabCustomName_${tabId}`);
+            const tabButton = document.querySelector(`.tab-button[data-tab-id="${tabId}"] span:nth-child(2)`);
             if (tabButton) tabButton.textContent = `تب ${tabId}`;
+
+            if (typeof updateCumulativeTotal === 'function') {
+                updateCumulativeTotal();
+            }
         }
 
         // قابلیت‌های مخفی
@@ -1060,23 +1203,29 @@
 
             const elements = getCalculatorElements(newInstance);
 
-            elements.initialAmount.addEventListener('input', () => { formatNumber(elements.initialAmount); saveInputs(newInstance, tabId); });
-            elements.years.addEventListener('input', () => saveInputs(newInstance, tabId));
-            elements.rate.addEventListener('input', () => saveInputs(newInstance, tabId));
+            elements.initialAmount.addEventListener('input', () => { formatNumber(elements.initialAmount); saveInputs(newInstance, tabId); updateCumulativeTotal(); });
+            elements.years.addEventListener('input', () => { saveInputs(newInstance, tabId); updateCumulativeTotal(); });
+            elements.rate.addEventListener('input', () => { saveInputs(newInstance, tabId); updateCumulativeTotal(); });
             elements.compoundFrequency.addEventListener('change', () => {
                 saveInputs(newInstance, tabId);
                 updateTabName(tabId, newInstance);
                 if (elements.customFrequency) {
                     setupFrequencyField(newInstance);
                 }
+                updateCumulativeTotal();
             });
             if (elements.customFrequency) {
-                elements.customFrequency.addEventListener('input', () => saveInputs(newInstance, tabId));
+                elements.customFrequency.addEventListener('input', () => { saveInputs(newInstance, tabId); updateCumulativeTotal(); });
             }
-            elements.monthlyDeposit.addEventListener('input', () => { formatNumber(elements.monthlyDeposit); saveInputs(newInstance, tabId); });
-            elements.annualIncreaseMonthlyDeposit.addEventListener('input', () => { formatNumber(elements.annualIncreaseMonthlyDeposit); saveInputs(newInstance, tabId); });
-            elements.biMonthlyDeposit.addEventListener('input', () => { formatNumber(elements.biMonthlyDeposit); saveInputs(newInstance, tabId); });
+            elements.monthlyDeposit.addEventListener('input', () => { formatNumber(elements.monthlyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); });
+            elements.annualIncreaseMonthlyDeposit.addEventListener('input', () => { formatNumber(elements.annualIncreaseMonthlyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); });
+            elements.biMonthlyDeposit.addEventListener('input', () => { formatNumber(elements.biMonthlyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); });
 
+            elements.rateType.addEventListener('change', () => {
+                saveInputs(newInstance, tabId);
+                updateTabName(tabId, newInstance);
+                updateCumulativeTotal();
+            });
             elements.calculateButton.addEventListener('click', () => { calculateCompoundInterest(newInstance, tabId); updateTabName(tabId, newInstance); });
             elements.resetButton.addEventListener('click', () => resetForm(newInstance, tabId));
             elements.historyButton.addEventListener('click', showHistory);
@@ -1086,13 +1235,45 @@
             const tabButton = document.createElement('button');
             tabButton.classList.add('tab-button');
             tabButton.dataset.tabId = tabId;
-            tabButton.innerHTML = `<span>تب ${tabId}</span> <span class="close-tab">x</span>`;
+
+            // بازیابی وضعیت علامت‌گذاری تب
+            const isMarked = localStorage.getItem(`tabMarked_${tabId}`) === 'true';
+
+            tabButton.innerHTML = `
+                <input type="checkbox" class="tab-mark-checkbox" data-tab-id="${tabId}" ${isMarked ? 'checked' : ''} style="margin: 0 0 0 6px; width: 16px; height: 16px; cursor: pointer; flex-shrink: 0;" onclick="event.stopPropagation();">
+                <span>تب ${tabId}</span>
+                <span class="close-tab" style="margin-right: auto; margin-left: 0;">x</span>
+            `;
 
             tabButton.addEventListener('click', (event) => {
-                if (!event.target.classList.contains('close-tab')) {
+                if (!event.target.classList.contains('close-tab') && !event.target.classList.contains('tab-mark-checkbox')) {
                     switchTab(tabId.toString());
                 }
             });
+
+            tabButton.addEventListener('dblclick', (event) => {
+                event.stopPropagation();
+                const currentName = localStorage.getItem(`tabCustomName_${tabId}`) || `تب ${tabId}`;
+                const newName = prompt("✍️ نام دلخواه خود را برای این تب وارد کنید:", currentName);
+                if (newName !== null) {
+                    const trimmed = newName.trim();
+                    if (trimmed) {
+                        localStorage.setItem(`tabCustomName_${tabId}`, trimmed);
+                    } else {
+                        localStorage.removeItem(`tabCustomName_${tabId}`);
+                    }
+                    updateTabName(tabId, newInstance);
+                }
+            });
+
+            const markCheckbox = tabButton.querySelector('.tab-mark-checkbox');
+            markCheckbox.addEventListener('change', (event) => {
+                localStorage.setItem(`tabMarked_${tabId}`, event.target.checked);
+                if (typeof updateCumulativeTotal === 'function') {
+                    updateCumulativeTotal();
+                }
+            });
+
             tabButton.querySelector('.close-tab').addEventListener('click', (event) => {
                 event.stopPropagation();
                 closeTab(tabId.toString());
@@ -1137,11 +1318,17 @@
             if (instanceData) {
                 instanceData.element.remove();
                 localStorage.removeItem(`calculatorTab_${tabId}`);
+                localStorage.removeItem(`tabMarked_${tabId}`);
+                localStorage.removeItem(`tabCustomName_${tabId}`);
                 calculatorInstances.delete(tabId);
             }
 
             const tabButton = document.querySelector(`.tab-button[data-tab-id="${tabId}"]`);
             if (tabButton) tabButton.remove();
+
+            if (typeof updateCumulativeTotal === 'function') {
+                updateCumulativeTotal();
+            }
 
             if (activeTabId === tabId) {
                 const remainingTabIds = Array.from(calculatorInstances.keys());
@@ -1158,9 +1345,16 @@
 
         function updateTabName(tabId, instanceElement) {
             const elements = getCalculatorElements(instanceElement);
-            const tabButtonSpan = document.querySelector(`.tab-button[data-tab-id="${tabId}"] span:first-child`);
+            const tabButtonSpan = document.querySelector(`.tab-button[data-tab-id="${tabId}"] span:nth-child(2)`);
 
             if (tabButtonSpan) {
+                // اگر کاربر نام دلخواه برای این تب ذخیره کرده باشد، از آن استفاده می‌کنیم
+                const customName = localStorage.getItem(`tabCustomName_${tabId}`);
+                if (customName) {
+                    tabButtonSpan.textContent = customName;
+                    return;
+                }
+
                 let nameParts = [];
                 const initialAmountValue = elements.initialAmount.value.replace(/,/g, "");
                 const yearsValue = elements.years.value;
@@ -1173,7 +1367,8 @@
                     nameParts.push(`سال: ${yearsValue}`);
                 }
                 if (rateValue && parseFloat(rateValue) > 0) {
-                    nameParts.push(`سود: ${rateValue}%`);
+                    const isDaily = elements.rateType && elements.rateType.value === 'daily';
+                    nameParts.push(`سود: ${rateValue}%${isDaily ? ' روزانه' : ''}`);
                 }
 
                 if (nameParts.length > 0) {
@@ -1204,6 +1399,18 @@
                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
             }
 
+            // مقداردهی اولیه فیلد سال مجموع کل و لیسنر تغییرات آن
+            const cumulativeYearsInput = document.getElementById('cumulative-years');
+            if (cumulativeYearsInput) {
+                const savedTotalSumYears = localStorage.getItem('totalSumYears');
+                if (savedTotalSumYears !== null) {
+                    cumulativeYearsInput.value = savedTotalSumYears;
+                }
+                cumulativeYearsInput.addEventListener('input', () => {
+                    updateCumulativeTotal();
+                });
+            }
+
             const addTabButton = document.getElementById('add-tab-button');
             addTabButton.addEventListener('click', () => {
                 const newTabId = createCalculatorInstance();
@@ -1231,6 +1438,11 @@
                 switchTab(newTabId);
                 saveTabsState();
             }
+
+            // فراخوانی بروزرسانی نهایی مجموع کل پس از بارگذاری تمامی تب‌ها
+            setTimeout(() => {
+                updateCumulativeTotal();
+            }, 100);
         });
     </script>
 </body>
