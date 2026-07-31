@@ -1185,6 +1185,12 @@
             <!-- فایل‌های ضمیمه‌شده به صورت کارتی در اینجا لود می‌شوند -->
         </div>
 
+        <!-- نوار وضعیت ویرایش پیام -->
+        <div class="edit-status-bar hidden" id="editStatusBar" style="background: rgba(59, 130, 246, 0.12); border-top: 1px solid var(--border-color); padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text-main);">
+            <span>📝 در حال ویرایش پیام قبلی...</span>
+            <button id="cancelEditBtn" style="background: none; border: none; color: #ef4444; cursor: pointer; font-weight: bold; font-size: 0.8rem;">لغو ویرایش ❌</button>
+        </div>
+
         <!-- نوار پایینی ورودی -->
         <div class="input-container">
             <div class="pin-menu-container">
@@ -1293,6 +1299,26 @@
         let historySummary = "گفتگو تازه آغاز شده است.";
         let learnedKeywords = [];
         let isGenerating = false;
+        let editingMessageId = null;
+
+        function startEditMessage(msgId, content) {
+            editingMessageId = msgId;
+            chatInput.value = content;
+            chatInput.style.height = "auto";
+            chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+            document.getElementById("editStatusBar").classList.remove("hidden");
+            chatInput.focus();
+            sendBtn.disabled = false;
+        }
+
+        function cancelEditMessage() {
+            editingMessageId = null;
+            chatInput.value = "";
+            chatInput.style.height = "auto";
+            document.getElementById("editStatusBar").classList.add("hidden");
+            sendBtn.disabled = true;
+            localStorage.removeItem(`emarat_chat_draft_${currentSessionId}`);
+        }
 
         // دیتابیس IndexedDB
         function initIndexedDB() {
@@ -1617,6 +1643,11 @@
 
         // بارگذاری یک جلسه چت خاص
         async function loadSession(sessionId) {
+            // کنسل کردن حالت ویرایش پیام در صورت تعویض چت
+            if (editingMessageId) {
+                cancelEditMessage();
+            }
+
             currentSessionId = sessionId;
             localStorage.setItem("current_session_id", sessionId);
 
@@ -1626,6 +1657,19 @@
             renderSessionsList();
             updateHeaderTitle();
             scrollToBottom();
+
+            // لود کردن پیش‌نویس پیام از حافظه برای این چت خاص
+            const savedDraft = localStorage.getItem(`emarat_chat_draft_${sessionId}`);
+            if (savedDraft) {
+                chatInput.value = savedDraft;
+                chatInput.style.height = "auto";
+                chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+                sendBtn.disabled = !chatInput.value.trim() && isGenerating;
+            } else {
+                chatInput.value = "";
+                chatInput.style.height = "auto";
+                sendBtn.disabled = true;
+            }
         }
 
         function updateHeaderTitle() {
@@ -1795,11 +1839,16 @@
             }
         }
 
-        // اندازه اتوماتیک فیلد ورودی
+        // اندازه اتوماتیک فیلد ورودی و ذخیره پیش‌نویس
         chatInput.oninput = () => {
             chatInput.style.height = "auto";
             chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
             sendBtn.disabled = (!chatInput.value.trim() && attachedItems.length === 0) || isGenerating;
+
+            // ذخیره پیش‌نویس در صورتی که در حالت ویرایش نباشیم
+            if (currentSessionId && !editingMessageId) {
+                localStorage.setItem(`emarat_chat_draft_${currentSessionId}`, chatInput.value);
+            }
         };
 
         // جستجو در پیام‌ها
@@ -1838,6 +1887,8 @@
             localStorage.setItem("cf_proxy_url", proxyUrlInput.value.trim());
             settingsModal.classList.remove("active");
         };
+
+        document.getElementById("cancelEditBtn").onclick = cancelEditMessage;
 
         // اسکرول نرم به پایین
         function scrollToBottom() {
@@ -1885,6 +1936,23 @@
                     }
                 });
                 bubble.appendChild(attsContainer);
+            }
+
+            // اضافه کردن دکمه ویرایش برای پیام‌های کاربر در انتهای حباب
+            if (msg.role === "user") {
+                const editRow = document.createElement("div");
+                editRow.style = "display: flex; align-items: center; justify-content: flex-start; margin-top: 4px; gap: 6px;";
+
+                const editBtn = document.createElement("button");
+                editBtn.className = "user-edit-btn";
+                editBtn.innerText = "✏️ ویرایش پیام";
+                editBtn.style = "background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 2px 6px; color: white; cursor: pointer; font-size: 0.72rem; display: flex; align-items: center; gap: 4px;";
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    startEditMessage(msg.id, msg.content);
+                };
+                editRow.appendChild(editBtn);
+                bubble.appendChild(editRow);
             }
 
             const timeSpan = document.createElement("span");
@@ -2369,8 +2437,27 @@
             const userText = chatInput.value.trim();
             if ((!userText && attachedItems.length === 0) || isGenerating) return;
 
+            // اگر در حالت ویرایش بودیم، پیام‌های بعدی را کات می‌کنیم
+            if (editingMessageId) {
+                const editIdx = chatHistory.findIndex(m => m.id === editingMessageId);
+                if (editIdx !== -1) {
+                    const messagesToDelete = chatHistory.slice(editIdx);
+                    if (db) {
+                        const transaction = db.transaction(["messages"], "readwrite");
+                        const store = transaction.objectStore("messages");
+                        messagesToDelete.forEach(m => store.delete(m.id));
+                    }
+                    chatHistory = chatHistory.slice(0, editIdx);
+                    renderAllMessages();
+                }
+                editingMessageId = null;
+                document.getElementById("editStatusBar").classList.add("hidden");
+                localStorage.removeItem(`emarat_chat_draft_${currentSessionId}`);
+            }
+
             // تمیز کردن فیلد و دکمه ارسال
             chatInput.value = "";
+            localStorage.removeItem(`emarat_chat_draft_${currentSessionId}`);
             chatInput.style.height = "auto";
             sendBtn.disabled = true;
             isGenerating = true;
@@ -2498,18 +2585,18 @@
 ۴. در صورت استفاده از [نامرئی](متن) یا [spoiler](متن)، آن را به صورت اسپویلر رندر کن.`;
 
                 // سیستم اتصال هوشمند دوگانه: ابتدا تلاش مستقیم (در صورت روشن بودن فیلترشکن)
-                // برای جلوگیری از خطای ۴۲۹، از مدل پرسرعت و بدون لیمیت gemini-3.5-flash-lite استفاده می‌کنیم
+                // برای جلوگیری از خطای ۴۲۹، از مدل پرسرعت و بدون لیمیت gemینی استفاده می‌کنیم
                 let response;
                 let usedProxy = false;
                 const activeModel = "gemini-3.5-flash-lite";
-                const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${getApiKey()}`;
+                const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:streamGenerateContent?key=${getApiKey()}`;
                 const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
-                const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/${activeModel}:generateContent?key=${getApiKey()}`;
+                const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/${activeModel}:streamGenerateContent?key=${getApiKey()}`;
 
                 try {
-                    console.log("Attempting direct connection to Google Gemini API with model:", activeModel);
+                    console.log("Attempting direct connection to Google Gemini API (Stream) with model:", activeModel);
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 6000); // تایم‌اوت سریع ۶ ثانیه‌ای برای سوییچ به ورکر کلودفلر
+                    const timeoutId = setTimeout(() => controller.abort(), 6000); // تایم‌اوت ۶ ثانیه‌ای
 
                     response = await fetch(directUrl, {
                         method: "POST",
@@ -2542,24 +2629,94 @@
                     throw new Error(`خطای سرور گوگل: ${response.status}`);
                 }
 
-                const resData = await response.json();
+                // استریم کردن لحظه‌ای پاسخ برای رندر آنی برای کاربر حین تولید پاسخ هوش مصنوعی
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+                let accumulatedText = "";
+                let isFirstChunk = true;
+
+                const aiMsgId = "msg_" + Date.now();
+                const aiMsg = {
+                    id: aiMsgId,
+                    sessionId: currentSessionId,
+                    role: "model",
+                    content: "",
+                    timestamp: Date.now()
+                };
+
+                let aiRow, aiBubble;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+
+                    let i = 0;
+                    let braceCount = 0;
+                    let startIdx = -1;
+
+                    while (i < buffer.length) {
+                        const char = buffer[i];
+                        if (char === "{") {
+                            if (braceCount === 0) {
+                                startIdx = i;
+                            }
+                            braceCount++;
+                        } else if (char === "}") {
+                            braceCount--;
+                            if (braceCount === 0 && startIdx !== -1) {
+                                const objStr = buffer.substring(startIdx, i + 1);
+                                try {
+                                    const obj = JSON.parse(objStr);
+                                    if (obj.candidates && obj.candidates[0] && obj.candidates[0].content && obj.candidates[0].content.parts && obj.candidates[0].content.parts[0]) {
+                                        const txt = obj.candidates[0].content.parts[0].text;
+                                        if (txt) {
+                                            accumulatedText += txt;
+
+                                            if (isFirstChunk) {
+                                                isFirstChunk = false;
+                                                const typingNode = document.getElementById("typingRow");
+                                                if (typingNode) typingNode.remove();
+
+                                                aiMsg.content = accumulatedText;
+                                                aiRow = createMessageElement(aiMsg);
+                                                chatContainer.appendChild(aiRow);
+                                                aiBubble = aiRow.querySelector(".message-bubble");
+                                            } else if (aiBubble) {
+                                                aiBubble.innerHTML = formatMessageContent(accumulatedText) + `<span class="message-time">${new Date(aiMsg.timestamp).toLocaleTimeString("fa-IR", { hour: '2-digit', minute: '2-digit' })}</span>`;
+                                                setupCodeBlockEventsForElement(aiRow);
+                                            }
+                                            scrollToBottom();
+                                        }
+                                    }
+                                } catch (e) {
+                                    // خطای پارس جزیی فریمورک
+                                }
+                                buffer = buffer.substring(i + 1);
+                                i = -1;
+                                startIdx = -1;
+                                braceCount = 0;
+                            }
+                        }
+                        i++;
+                    }
+                }
 
                 const typingNode = document.getElementById("typingRow");
                 if (typingNode) typingNode.remove();
 
-                const aiReplyText = resData.candidates[0].content.parts[0].text;
-
-                const aiMsg = {
-                    id: "msg_" + Date.now(),
-                    sessionId: currentSessionId,
-                    role: "model",
-                    content: aiReplyText,
-                    timestamp: Date.now()
-                };
-                chatHistory.push(aiMsg);
-                saveMessageToDB(aiMsg);
-                appendSingleMessage(aiMsg);
-                scrollToBottom();
+                if (isFirstChunk && accumulatedText) {
+                    aiMsg.content = accumulatedText;
+                    chatHistory.push(aiMsg);
+                    saveMessageToDB(aiMsg);
+                    appendSingleMessage(aiMsg);
+                } else if (aiRow) {
+                    aiMsg.content = accumulatedText;
+                    chatHistory.push(aiMsg);
+                    saveMessageToDB(aiMsg);
+                }
 
                 if (chatHistory.length % 5 === 0) {
                     triggerBackgroundPersonaLearning();
