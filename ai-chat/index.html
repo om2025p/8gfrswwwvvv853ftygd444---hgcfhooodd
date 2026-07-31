@@ -53,6 +53,15 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        html {
+            background: #0f172a;
+            transition: background 0.4s ease;
+        }
+
+        html.day-theme-active {
+            background: #c3cfe2;
+        }
+
         body {
             background: var(--bg-gradient);
             color: var(--text-main);
@@ -68,18 +77,7 @@
             transition: background 0.4s ease, color 0.4s ease;
         }
 
-        /* لایه شیشه‌ای مات روی کل صفحه */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            z-index: -2;
-        }
+        /* لایه شیشه‌ای مات روی کل صفحه حذف شده یا فقط برای المان‌های خاص فعال است تا مشکل هاله کدر و مه‌آلود اندروید برطرف شود */
 
         /* سایدبار کشویی تاریخچه چت‌ها */
         .sidebar {
@@ -1497,7 +1495,16 @@
                     document.body.className = "day-theme";
                 }
             }
+            updateHtmlThemeClass();
             updateThemeButtonIcon();
+        }
+
+        function updateHtmlThemeClass() {
+            if (document.body.classList.contains("day-theme")) {
+                document.documentElement.classList.add("day-theme-active");
+            } else {
+                document.documentElement.classList.remove("day-theme-active");
+            }
         }
 
         function toggleTheme() {
@@ -1508,6 +1515,7 @@
                 document.body.className = "day-theme";
                 localStorage.setItem("chat_theme", "day-theme");
             }
+            updateHtmlThemeClass();
             updateThemeButtonIcon();
         }
 
@@ -1528,6 +1536,22 @@
             proxyUrlInput.value = localStorage.getItem("cf_proxy_url") || "";
 
             await initIndexedDB();
+
+            // یک‌بار برای همیشه پاکسازی حافظه و دیتابیس قدیمی جهت شروع تمیز از صفر واقعی طبق خواسته‌ی کاربر
+            if (!localStorage.getItem("emarat_chat_v31_cleared")) {
+                console.log("Upgrading database and memory to v3.1: Clearing old history and persona memory once...");
+                try {
+                    await clearAllDataFromDB();
+                    localStorage.removeItem("chat_theme");
+                    localStorage.removeItem("current_session_id");
+                    localStorage.setItem("emarat_chat_v31_cleared", "true");
+                    userPersona = "کاربر محترم و شوخ طبع عمارت";
+                    historySummary = "چت تازه آغاز شده است.";
+                    learnedKeywords = [];
+                } catch (err) {
+                    console.error("Error upgrading memory:", err);
+                }
+            }
 
             // بازیابی لیست جلسات چت
             sessions = await getAllSessionsFromDB();
@@ -2479,18 +2503,44 @@
 ۳. در پاراگراف‌بندی دقت کن و در صورت لزوم متن‌ها را با استفاده از قالب [رنگ:کد_رنگ_یا_اسم_رنگ](متن) خوش‌رنگ و لعاب بنویس تا کاربر لذت ببرد.
 ۴. تو می‌توانی بخش‌هایی از متن خود را که مایل هستی با فرمت [نامرئی](متن مخفی شده) یا [spoiler](متن مخفی شده) بنویسی. این متن‌ها به صورت افکت مات و نامرئی نمایش داده می‌شوند و کاربر با لمس یا کلیک روی آن‌ها می‌تواند آن‌ها را آشکار کند.`;
 
-                const proxyUrl = localStorage.getItem("cf_proxy_url") || "";
-                const apiBase = proxyUrl ? proxyUrl.replace(/\/$/, "") : "https://generativelanguage.googleapis.com";
-                const fetchUrl = `${apiBase}/v1beta/models/gemini-flash-latest:generateContent?key=${getApiKey()}`;
+                // سیستم اتصال هوشمند دوگانه: ابتدا تلاش مستقیم (در صورت روشن بودن فیلترشکن)
+                let response;
+                let usedProxy = false;
+                const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${getApiKey()}`;
+                const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
+                const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/gemini-flash-latest:generateContent?key=${getApiKey()}`;
 
-                const response = await fetch(fetchUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: contents,
-                        systemInstruction: { parts: [{ text: systemInstructions }] }
-                    })
-                });
+                try {
+                    console.log("Attempting direct connection to Google Gemini API...");
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000); // تایم‌اوت سریع ۶ ثانیه‌ای برای سوییچ به ورکر کلودفلر
+
+                    response = await fetch(directUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contents: contents,
+                            systemInstruction: { parts: [{ text: systemInstructions }] }
+                        }),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        throw new Error(`Google Direct Status: ${response.status}`);
+                    }
+                } catch (directError) {
+                    console.warn("Direct connection failed, switching to Cloudflare worker proxy...", directError);
+                    usedProxy = true;
+                    response = await fetch(cfUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contents: contents,
+                            systemInstruction: { parts: [{ text: systemInstructions }] }
+                        })
+                    });
+                }
 
                 if (!response.ok) {
                     throw new Error(`خطای سرور گوگل: ${response.status}`);
@@ -2581,15 +2631,30 @@
 تاریخچه چت‌ها برای تحلیل:
 ${recentMessagesStr.substring(0, 400000)}`; // جهت جلوگیری از تجاوز کانتکست تحلیل از سقف ۲۵۰ هزار توکن
 
-                const proxyUrl = localStorage.getItem("cf_proxy_url") || "";
-                const apiBase = proxyUrl ? proxyUrl.replace(/\/$/, "") : "https://generativelanguage.googleapis.com";
-                const fetchUrl = `${apiBase}/v1beta/models/gemini-flash-latest:generateContent?key=${getApiKey()}`;
+                const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
+                const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${getApiKey()}`;
+                const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/gemini-flash-latest:generateContent?key=${getApiKey()}`;
 
-                const response = await fetch(fetchUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
+                let response;
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000); // ۶ ثانیه تایم اوت مستقیم
+
+                    response = await fetch(directUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    if (!response.ok) throw new Error("Status: " + response.status);
+                } catch (e) {
+                    response = await fetch(cfUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                }
 
                 if (response.ok) {
                     const data = await response.json();
