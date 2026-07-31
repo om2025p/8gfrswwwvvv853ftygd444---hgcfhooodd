@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 گزارش مجموع کل سرمایه‌گذاری‌ها</title>
+    <script>
+        // موتور قدرتمند محاسباتی آفلاین Decimal
+        class EnhancedDecimal {
+            constructor(value) {
+                if (value instanceof EnhancedDecimal) {
+                    this.value = parseFloat(value.value);
+                } else if (typeof value === 'object' && value !== null && 'value' in value) {
+                    this.value = parseFloat(value.value);
+                } else {
+                    this.value = parseFloat(value) || 0;
+                }
+            }
+            plus(other) { return new EnhancedDecimal(this.value + new EnhancedDecimal(other).value); }
+            minus(other) { return new EnhancedDecimal(this.value - new EnhancedDecimal(other).value); }
+            times(other) { return new EnhancedDecimal(this.value * new EnhancedDecimal(other).value); }
+            div(other) {
+                const divisor = new EnhancedDecimal(other).value;
+                return new EnhancedDecimal(divisor !== 0 ? this.value / divisor : 0);
+            }
+            pow(exponent) { return new EnhancedDecimal(Math.pow(this.value, new EnhancedDecimal(exponent).value)); }
+            isNegative() { return this.value < 0; }
+            greaterThan(other) { return this.value > new EnhancedDecimal(other).value; }
+            toNumber() { return this.value; }
+            toFixed(decimals) { return this.value.toFixed(decimals); }
+            static pow(base, exponent) { return new EnhancedDecimal(Math.pow(new EnhancedDecimal(base).value, new EnhancedDecimal(exponent).value)); }
+            ceil() { return new EnhancedDecimal(Math.ceil(this.value)); }
+        }
+        window.Decimal = EnhancedDecimal;
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .glass-container {
+            max-width: 450px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        h2 {
+            color: #4CAF50;
+            margin-top: 0;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-align: right;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.07);
+            color: #ffffff;
+            text-align: center;
+            font-size: 1.1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #00c853;
+        }
+
+        .result-box {
+            margin-top: 25px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.2);
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            text-align: right;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 15px;
+            border-right: 4px solid #00c853;
+        }
+
+        .result-item.profit {
+            border-right-color: #bb86fc;
+        }
+
+        .result-title {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .warning-box {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            color: #fca5a5;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .btn-back {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-container" id="main-container">
+        <!-- داینامیک پر می‌شود -->
+    </div>
+
+    <script>
+        // تابع فرمول سود مرکب منطبق بر calc2.html
+        function runCompoundingCalculation(data, targetYears) {
+            let P_initial_principal = new Decimal(data.initialAmount.replace(/,/g, "") || 0);
+            let t_years = new Decimal(targetYears || 0);
+            let r_annual_rate_percent = new Decimal(data.rate || 0);
+
+            if (data.rateType === 'daily') {
+                r_annual_rate_percent = r_annual_rate_percent.times(365);
+            }
+
+            let r_annual_rate_decimal = r_annual_rate_percent.div(100);
+
+            let freqVal = 12;
+            if (data.compoundFrequency !== 'custom') {
+                freqVal = parseInt(data.compoundFrequency) || 12;
+            } else {
+                freqVal = parseInt(data.customFrequency) || 12;
+                if (freqVal <= 0) freqVal = 12;
+            }
+            let n_compound_freq_per_year = new Decimal(freqVal);
+
+            let Dm_initial_monthly_deposit = new Decimal(data.monthlyDeposit.replace(/,/g, "") || 0);
+            let Dm_annual_increase = new Decimal(data.annualIncreaseMonthlyDeposit.replace(/,/g, "") || 0);
+            let Db_bimonthly_deposit = new Decimal(data.biMonthlyDeposit.replace(/,/g, "") || 0);
+
+            let effective_annual_rate = Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), n_compound_freq_per_year).minus(1).times(100);
+            let effective_annual_rate_decimal = effective_annual_rate.div(100);
+
+            let A_final_amount = P_initial_principal.times(
+                Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), n_compound_freq_per_year.times(t_years))
+            );
+
+            let profit_earned_over_initial_P = A_final_amount.minus(P_initial_principal);
+
+            // واریزهای ماهیانه
+            let total_months_of_investment = t_years.times(12);
+            for (let k = 1; k <= total_months_of_investment.toNumber(); k++) {
+                let current_year_of_deposit = new Decimal(k).div(12).ceil();
+                let actual_monthly_deposit_this_period = Dm_initial_monthly_deposit;
+                if (current_year_of_deposit.greaterThan(1) && Dm_annual_increase.greaterThan(0)) {
+                     actual_monthly_deposit_this_period = actual_monthly_deposit_this_period.plus(
+                        Dm_annual_increase.times(current_year_of_deposit.minus(1))
+                    );
+                }
+
+                let time_of_deposit_in_years_tk = new Decimal(k).div(12);
+                let compounding_periods_for_this_deposit = n_compound_freq_per_year.times(t_years).minus(n_compound_freq_per_year.times(time_of_deposit_in_years_tk));
+
+                if (compounding_periods_for_this_deposit.isNegative()) {
+                    compounding_periods_for_this_deposit = new Decimal(0);
+                }
+
+                let fv_of_this_monthly_deposit = actual_monthly_deposit_this_period.times(
+                    Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), compounding_periods_for_this_deposit)
+                );
+
+                A_final_amount = A_final_amount.plus(fv_of_this_monthly_deposit);
+                profit_earned_over_initial_P = profit_earned_over_initial_P.plus(fv_of_this_monthly_deposit);
+            }
+
+            // واریزهای دو ماه یکبار
+            let total_bimonthly_periods_in_investment = t_years.times(6);
+            for (let k = 1; k <= total_bimonthly_periods_in_investment.toNumber(); k++) {
+                let time_of_deposit_in_years_tk = new Decimal(k).times(2).div(12);
+                let compounding_periods_for_this_deposit = n_compound_freq_per_year.times(t_years).minus(n_compound_freq_per_year.times(time_of_deposit_in_years_tk));
+
+                if (compounding_periods_for_this_deposit.isNegative()) {
+                    compounding_periods_for_this_deposit = new Decimal(0);
+                }
+
+                let fv_of_this_bimonthly_deposit = Db_bimonthly_deposit.times(
+                    Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), compounding_periods_for_this_deposit)
+                );
+
+                A_final_amount = A_final_amount.plus(fv_of_this_bimonthly_deposit);
+                profit_earned_over_initial_P = profit_earned_over_initial_P.plus(fv_of_this_bimonthly_deposit);
+            }
+
+            let total_periodic_deposits_made = Dm_initial_monthly_deposit.times(0); // محاسبه در بالا به صورت مستقیم انجام شد
+            let net_total_profit = A_final_amount.minus(P_initial_principal); // تقریب کلی برای صفحه مجموع
+
+            return {
+                finalAmount: A_final_amount,
+                profitEarned: profit_earned_over_initial_P
+            };
+        }
+
+        // تابع اصلی اجرای کل فرآیند
+        function calculateAndRender() {
+            const container = document.getElementById('main-container');
+
+            // بازیابی لیست تمامی تب‌های فعال
+            let savedTabs = JSON.parse(localStorage.getItem('savedTabs')) || [];
+            let markedTabs = [];
+
+            savedTabs.forEach(tabId => {
+                const isMarked = localStorage.getItem(`tabMarked_${tabId}`) === 'true';
+                if (isMarked) {
+                    let data = JSON.parse(localStorage.getItem(`calculatorTab_${tabId}`)) || {};
+                    if (data.initialAmount || data.monthlyDeposit || data.biMonthlyDeposit) {
+                        markedTabs.push({ id: tabId, data: data });
+                    }
+                }
+            });
+
+            // بررسی شرط داشتن حداقل ۲ تب علامت‌گذاری شده
+            if (markedTabs.length < 2) {
+                container.innerHTML = `
+                    <div class="warning-box">
+                        <h3>⚠️ خطای عدم تمرکز اقتصادی!</h3>
+                        <p>بزرگوار، شما در حال حاضر فقط <strong>${markedTabs.length}</strong> تب را علامت‌گذاری کرده‌اید.</p>
+                        <p>ضرب‌المثل قدیمی چینی میگه: «تمام تخم‌مرغ‌ها رو در یک سبد نذار!» حداقل باید <strong>۲ تب فعال</strong> را نشانه‌گذاری کنی تا جادوی مجموع کل برات فعال بشه! 🥚🧺</p>
+                    </div>
+                    <button class="btn-back" onclick="window.close()">🔙 بازگشت به ماشین‌حساب</button>
+                `;
+                return;
+            }
+
+            // بازیابی سال مجموع از localStorage
+            let savedYears = localStorage.getItem('totalSumYears') || '5';
+
+            container.innerHTML = `
+                <h2>📊 مجموع کل سرمایه‌گذاری‌ها (${markedTabs.length} تب)</h2>
+
+                <label>📅 مدت زمان مجموع (سال):</label>
+                <input type="number" id="target-years" value="${savedYears}" min="0">
+
+                <div class="result-box">
+                    <div class="result-item">
+                        <div class="result-title">🏆 مجموع کل سرمایه نهایی:</div>
+                        <div class="result-value" id="total-amount-val">-- تومان</div>
+                    </div>
+                    <div class="result-item profit">
+                        <div class="result-title">💵 مجموع کل سود مرکب کسب‌شده:</div>
+                        <div class="result-value" id="total-profit-val">-- تومان</div>
+                    </div>
+                </div>
+                <button class="btn-back" onclick="window.close()">🔙 بستن صفحه گزارش</button>
+            `;
+
+            const yearsInput = document.getElementById('target-years');
+            const amountValDiv = document.getElementById('total-amount-val');
+            const profitValDiv = document.getElementById('total-profit-val');
+
+            function performSum() {
+                let targetYears = parseFloat(yearsInput.value);
+                if (isNaN(targetYears) || targetYears < 0) {
+                    targetYears = 0;
+                }
+                localStorage.setItem('totalSumYears', targetYears);
+
+                let sumAmount = new Decimal(0);
+                let sumProfit = new Decimal(0);
+
+                markedTabs.forEach(tab => {
+                    const res = runCompoundingCalculation(tab.data, targetYears);
+                    sumAmount = sumAmount.plus(res.finalAmount);
+                    sumProfit = sumProfit.plus(res.profitEarned);
+                });
+
+                amountValDiv.innerText = `${sumAmount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+                profitValDiv.innerText = `${sumProfit.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            }
+
+            yearsInput.addEventListener('input', performSum);
+            performSum();
+        }
+
+        window.onload = calculateAndRender;
+    </script>
+</body>
+</html>
