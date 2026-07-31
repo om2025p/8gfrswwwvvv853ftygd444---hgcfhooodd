@@ -1294,6 +1294,7 @@
         let sessions = [];
         let currentSessionId = null;
         let chatHistory = [];
+        let activeSessionBranches = [];
         let attachedItems = []; // آرایه فایل‌ها و تصاویر سنجاق شده قبل از ارسال چت
 
         let userPersona = "کاربر عمارت";
@@ -2413,9 +2414,18 @@
         function formatMessageContent(text) {
             if (!text) return "";
 
+            // جهت رندر زنده و لحظه‌ای کدهای در حال تایپ (استریم):
+            // اگر تعداد نشانه‌های ``` فرد باشد، یعنی یک بلوک کد باز شده ولی هنوز بسته نشده است.
+            // پس ما به طور موقت یک ``` به انتهای آن اضافه می‌کنیم تا پارسور کد آن را کامل و رندر کند.
+            let streamText = text;
+            const codeBlockMatches = text.match(/```/g);
+            if (codeBlockMatches && codeBlockMatches.length % 2 !== 0) {
+                streamText += "\n```";
+            }
+
             // Protect code blocks first
             const codeBlocks = [];
-            let formatted = text.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+            let formatted = streamText.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
                 const placeholder = `___CODE_BLOCK_PLACEHOLDER_${codeBlocks.length}___`;
                 codeBlocks.push({ placeholder, lang: lang || "code", code: code.trim() });
                 return placeholder;
