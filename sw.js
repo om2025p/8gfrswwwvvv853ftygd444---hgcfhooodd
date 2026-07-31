@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v12';
+const CACHE_NAME = 'emarat-portal-v13';
 const ASSETS = [
   './',
   './index.html',
@@ -10,6 +10,15 @@ const ASSETS = [
   './icon-512-maskable.png',
   './apple-touch-icon.png',
   './favicon.ico',
+  // AI Chat App
+  './ai-chat/index.html',
+  './ai-chat/manifest.json',
+  './ai-chat/icon-192.png',
+  './ai-chat/icon-512.png',
+  './ai-chat/icon-192-maskable.png',
+  './ai-chat/icon-512-maskable.png',
+  './ai-chat/apple-touch-icon.png',
+  './ai-chat/favicon.ico',
   // Monitor App
   './monitor/index.html',
   './monitor/manifest.json',
