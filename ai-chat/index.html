@@ -2504,14 +2504,16 @@
 ۴. تو می‌توانی بخش‌هایی از متن خود را که مایل هستی با فرمت [نامرئی](متن مخفی شده) یا [spoiler](متن مخفی شده) بنویسی. این متن‌ها به صورت افکت مات و نامرئی نمایش داده می‌شوند و کاربر با لمس یا کلیک روی آن‌ها می‌تواند آن‌ها را آشکار کند.`;
 
                 // سیستم اتصال هوشمند دوگانه: ابتدا تلاش مستقیم (در صورت روشن بودن فیلترشکن)
+                // برای جلوگیری از خطای ۴۲۹، از مدل پرسرعت و بدون لیمیت gemini-3.5-flash-lite استفاده می‌کنیم
                 let response;
                 let usedProxy = false;
-                const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${getApiKey()}`;
+                const activeModel = "gemini-3.5-flash-lite";
+                const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${getApiKey()}`;
                 const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
-                const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/gemini-flash-latest:generateContent?key=${getApiKey()}`;
+                const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/${activeModel}:generateContent?key=${getApiKey()}`;
 
                 try {
-                    console.log("Attempting direct connection to Google Gemini API...");
+                    console.log("Attempting direct connection to Google Gemini API with model:", activeModel);
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 6000); // تایم‌اوت سریع ۶ ثانیه‌ای برای سوییچ به ورکر کلودفلر
 
@@ -2632,8 +2634,9 @@
 ${recentMessagesStr.substring(0, 400000)}`; // جهت جلوگیری از تجاوز کانتکست تحلیل از سقف ۲۵۰ هزار توکن
 
                 const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
-                const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${getApiKey()}`;
-                const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/gemini-flash-latest:generateContent?key=${getApiKey()}`;
+                const activeModel = "gemini-3.5-flash-lite";
+                const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${getApiKey()}`;
+                const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/${activeModel}:generateContent?key=${getApiKey()}`;
 
                 let response;
                 try {
