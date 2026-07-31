@@ -1201,6 +1201,7 @@
                     <div class="pin-dropdown-item" id="attachFolderBtn">📁 آپلود پوشه متنی</div>
                 </div>
             </div>
+            <button class="header-btn" id="webSearchToggleBtn" title="جستجو در وب فعال/غیرفعال" style="margin: 0; font-size: 1.2rem; filter: grayscale(1); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px;">🌐</button>
             <div class="input-wrapper">
                 <textarea class="chat-input" id="chatInput" rows="1" placeholder="پیام خود را بنویسید..."></textarea>
             </div>
@@ -1462,6 +1463,7 @@
         const chatInput = document.getElementById("chatInput");
         const sendBtn = document.getElementById("sendBtn");
         const themeToggleBtn = document.getElementById("themeToggleBtn");
+        const webSearchToggleBtn = document.getElementById("webSearchToggleBtn");
         const settingsToggleBtn = document.getElementById("settingsToggleBtn");
         const settingsModal = document.getElementById("settingsModal");
         const closeSettingsBtn = document.getElementById("closeSettingsBtn");
@@ -1551,6 +1553,35 @@
 
         themeToggleBtn.onclick = toggleTheme;
 
+        // منطق دکمه سوئیچ جستجو در وب (🌐)
+        let isWebSearchEnabled = localStorage.getItem("emarat_web_search") === "true";
+
+        function updateWebSearchToggleUI() {
+            if (isWebSearchEnabled) {
+                webSearchToggleBtn.style.filter = "none";
+                webSearchToggleBtn.style.color = "#3b82f6";
+                webSearchToggleBtn.style.transform = "scale(1.1)";
+                webSearchToggleBtn.title = "جستجو در وب فعال است 🌐";
+                webSearchToggleBtn.style.background = "rgba(59, 130, 246, 0.15)";
+                webSearchToggleBtn.style.border = "1px solid rgba(59, 130, 246, 0.3)";
+            } else {
+                webSearchToggleBtn.style.filter = "grayscale(1)";
+                webSearchToggleBtn.style.color = "";
+                webSearchToggleBtn.style.transform = "none";
+                webSearchToggleBtn.title = "جستجو در وب غیرفعال است (آفلاین)";
+                webSearchToggleBtn.style.background = "";
+                webSearchToggleBtn.style.border = "";
+            }
+        }
+
+        webSearchToggleBtn.onclick = () => {
+            isWebSearchEnabled = !isWebSearchEnabled;
+            localStorage.setItem("emarat_web_search", isWebSearchEnabled ? "true" : "false");
+            updateWebSearchToggleUI();
+        };
+
+        updateWebSearchToggleUI();
+
         // ورود به برنامه و بازیابی اطلاعات پایه
         window.addEventListener("load", async () => {
             initTheme();
@@ -1627,6 +1658,7 @@
             currentSessionId = newId;
 
             chatHistory = [];
+            activeSessionBranches = [];
             renderAllMessages();
             renderSessionsList();
             updateHeaderTitle();
@@ -1652,6 +1684,7 @@
             localStorage.setItem("current_session_id", sessionId);
 
             chatHistory = await getSessionMessagesFromDB(sessionId);
+            activeSessionBranches = await getMetaFromDB(`branches_${sessionId}`) || [];
 
             renderAllMessages();
             renderSessionsList();
@@ -1897,6 +1930,102 @@
             }, 50);
         }
 
+        function getSiblingBranchesForMessageIndex(index) {
+            if (index < 0 || index >= chatHistory.length) return [];
+
+            const activePrefixIds = chatHistory.slice(0, index).map(m => m.id);
+            const siblings = [];
+
+            // شاخه فعلی
+            siblings.push({
+                branchId: "active",
+                branchName: "فعلی",
+                message: chatHistory[index],
+                fullHistory: chatHistory
+            });
+
+            activeSessionBranches.forEach(branch => {
+                const branchMsgs = branch.messages || [];
+                if (branchMsgs.length <= index) return;
+
+                let matches = true;
+                for (let j = 0; j < index; j++) {
+                    if (branchMsgs[j]?.id !== activePrefixIds[j]) {
+                        matches = false;
+                        break;
+                    }
+                }
+
+                if (matches) {
+                    const siblingMsg = branchMsgs[index];
+                    if (siblingMsg && siblingMsg.id !== chatHistory[index].id) {
+                        if (!siblings.some(s => s.message.id === siblingMsg.id)) {
+                            siblings.push({
+                                branchId: branch.id,
+                                branchName: branch.name || "نسخه دیگر",
+                                message: siblingMsg,
+                                fullHistory: branchMsgs
+                            });
+                        }
+                    }
+                }
+            });
+
+            return siblings;
+        }
+
+        async function switchToBranchHistory(targetHistory) {
+            // ۱. کپی کردن حالت فعلی به عنوان شاخه در صورت لزوم
+            const alreadySaved = activeSessionBranches.some(b => {
+                return JSON.stringify(b.messages.map(m => m.id)) === JSON.stringify(chatHistory.map(m => m.id));
+            });
+            if (!alreadySaved && chatHistory.length > 0) {
+                activeSessionBranches.push({
+                    id: "branch_" + Date.now(),
+                    name: `نسخه ${activeSessionBranches.length + 1}`,
+                    messages: JSON.parse(JSON.stringify(chatHistory))
+                });
+            }
+
+            chatHistory = JSON.parse(JSON.stringify(targetHistory));
+
+            if (db) {
+                // پاک کردن پیام‌های فعلی در DB
+                const transaction = db.transaction(["messages"], "readwrite");
+                const store = transaction.objectStore("messages");
+                const indexStore = store.index("sessionId");
+                const range = IDBKeyRange.only(currentSessionId);
+
+                const deletePromise = new Promise((resolve, reject) => {
+                    const request = indexStore.openCursor(range);
+                    request.onsuccess = (e) => {
+                        const cursor = e.target.result;
+                        if (cursor) {
+                            cursor.delete();
+                            cursor.continue();
+                        } else {
+                            resolve();
+                        }
+                    };
+                    request.onerror = () => reject();
+                });
+
+                await deletePromise;
+
+                // ثبت مجدد پیام‌های این شاخه فعال
+                const insertTransaction = db.transaction(["messages"], "readwrite");
+                const insertStore = insertTransaction.objectStore("messages");
+                chatHistory.forEach(msg => {
+                    insertStore.put(msg);
+                });
+            }
+
+            await saveMetaToDB(`branches_${currentSessionId}`, activeSessionBranches);
+
+            renderAllMessages();
+            scrollToBottom();
+        }
+
         // ساخت المان DOM برای یک پیام مشخص
         function createMessageElement(msg, searchQuery = "") {
             const row = document.createElement("div");
@@ -1920,7 +2049,7 @@
                 attsContainer.className = "msg-attachments";
 
                 msg.attachments.forEach(att => {
-                    if (att.type.startsWith("image/")) {
+                    if (att.type && att.type.startsWith("image/")) {
                         const img = document.createElement("img");
                         img.className = "msg-attachment-img";
                         img.src = att.content;
@@ -1938,6 +2067,41 @@
                 bubble.appendChild(attsContainer);
             }
 
+            // اگر پیام حاوی نتایج جستجوی زنده وب بود، آن را به صورت کارت شیک تاشو نشان می‌دهیم
+            if (msg.role === "user" && msg.searchResults && msg.searchResults.length > 0) {
+                const searchSec = document.createElement("div");
+                searchSec.className = "web-search-results-box";
+                searchSec.style = "margin-top: 8px; border: 1px solid rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.05); border-radius: 8px; padding: 6px 10px; font-size: 0.75rem;";
+
+                const searchHeader = document.createElement("div");
+                searchHeader.style = "display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; font-weight: bold; color: #60a5fa;";
+                searchHeader.innerHTML = `<span>🔍 نتایج جستجوی زنده وب (${msg.searchResults.length} مورد)</span> <span class="search-toggle-arrow">▼</span>`;
+
+                const searchList = document.createElement("div");
+                searchList.style = "margin-top: 6px; display: none; flex-direction: column; gap: 6px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; max-height: 200px; overflow-y: auto;";
+
+                msg.searchResults.forEach(res => {
+                    const item = document.createElement("div");
+                    item.style = "background: rgba(255,255,255,0.03); padding: 4px 6px; border-radius: 4px;";
+                    item.innerHTML = `
+                        <a href="${res.link}" target="_blank" style="color: #60a5fa; text-decoration: underline; font-weight: bold; display: block; margin-bottom: 2px;">${res.title}</a>
+                        <div style="color: rgba(255,255,255,0.8); line-height: 1.3;">${res.snippet}</div>
+                    `;
+                    searchList.appendChild(item);
+                });
+
+                searchHeader.onclick = (e) => {
+                    e.stopPropagation();
+                    const isCollapsed = searchList.style.display === "none";
+                    searchList.style.display = isCollapsed ? "flex" : "none";
+                    searchHeader.querySelector(".search-toggle-arrow").innerText = isCollapsed ? "▲" : "▼";
+                };
+
+                searchSec.appendChild(searchHeader);
+                searchSec.appendChild(searchList);
+                bubble.appendChild(searchSec);
+            }
+
             // اضافه کردن دکمه ویرایش برای پیام‌های کاربر در انتهای حباب
             if (msg.role === "user") {
                 const editRow = document.createElement("div");
@@ -1953,6 +2117,55 @@
                 };
                 editRow.appendChild(editBtn);
                 bubble.appendChild(editRow);
+
+                // اگر پیام بیش از یک نسخه (شاخه) داشت، سوییچر نسخه‌ها را نشان می‌دهیم
+                const msgIndex = chatHistory.findIndex(m => m.id === msg.id);
+                if (msgIndex !== -1) {
+                    const siblings = getSiblingBranchesForMessageIndex(msgIndex);
+                    if (siblings.length > 1) {
+                        const activeSiblingIndex = siblings.findIndex(s => s.message.id === msg.id);
+
+                        const branchSwitcher = document.createElement("div");
+                        branchSwitcher.className = "branch-switcher";
+                        branchSwitcher.style = "display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-top: 6px; font-size: 0.72rem; color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; width: fit-content; user-select: none;";
+
+                        const prevBtn = document.createElement("button");
+                        prevBtn.innerText = "◀";
+                        prevBtn.style = "background: none; border: none; color: white; cursor: pointer; padding: 0 4px; font-size: 0.75rem;";
+                        if (activeSiblingIndex > 0) {
+                            prevBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                switchToBranchHistory(siblings[activeSiblingIndex - 1].fullHistory);
+                            };
+                        } else {
+                            prevBtn.style.opacity = "0.3";
+                            prevBtn.style.cursor = "default";
+                        }
+
+                        const indicator = document.createElement("span");
+                        indicator.innerText = `${activeSiblingIndex + 1} از ${siblings.length}`;
+                        indicator.style = "font-family: monospace; direction: ltr;";
+
+                        const nextBtn = document.createElement("button");
+                        nextBtn.innerText = "▶";
+                        nextBtn.style = "background: none; border: none; color: white; cursor: pointer; padding: 0 4px; font-size: 0.75rem;";
+                        if (activeSiblingIndex < siblings.length - 1) {
+                            nextBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                switchToBranchHistory(siblings[activeSiblingIndex + 1].fullHistory);
+                            };
+                        } else {
+                            nextBtn.style.opacity = "0.3";
+                            nextBtn.style.cursor = "default";
+                        }
+
+                        branchSwitcher.appendChild(prevBtn);
+                        branchSwitcher.appendChild(indicator);
+                        branchSwitcher.appendChild(nextBtn);
+
+                        bubble.appendChild(branchSwitcher);
+                    }
+                }
             }
 
             const timeSpan = document.createElement("span");
@@ -2212,8 +2425,9 @@
             formatted = escapeHTML(formatted);
 
             // 1. Colors: [رنگ:قرمز](متن) or [color:blue](text)
-            formatted = formatted.replace(/\[color:([^\]]+)\]\(([^)]+)\)/gi, '<span style="color: $1">$2</span>');
-            formatted = formatted.replace(/\[رنگ:([^\]]+)\]\(([^)]+)\)/gi, '<span style="color: $1">$2</span>');
+            // محدود کردن مقدار رنگ به کاراکترهای کاملا ایمن جهت جلوگیری از بروز باگ قالب‌بندی و انژکسیون استایل
+            formatted = formatted.replace(/\[color:\s*([^\]\s"';()]+)\s*\]\(([^)]+)\)/gi, '<span style="color: $1">$2</span>');
+            formatted = formatted.replace(/\[رنگ:\s*([^\]\s"';()]+)\s*\]\(([^)]+)\)/gi, '<span style="color: $1">$2</span>');
 
             // 1.5 Spoilers/Invisible Text: [نامرئی](متن) or [spoiler](text)
             formatted = formatted.replace(/\[spoiler\]\(([^)]+)\)/gi, '<span class="spoiler-text" onclick="this.classList.toggle(\'revealed\')" title="برای دیدن لمس کنید">$1</span>');
@@ -2247,8 +2461,8 @@
                 let resultHTML = [];
 
                 pLines.forEach(line => {
-                    const bulletMatch = line.match(/^[\-\*\•]\s+(.+)/);
-                    const numMatch = line.match(/^(\d+)\.\s+(.+)/);
+                    const bulletMatch = line.match(/^\s*[\-\*\•]\s+(.+)/);
+                    const numMatch = line.match(/^\s*(\d+)\.\s+(.+)/);
 
                     if (bulletMatch) {
                         let liContent = bulletMatch[1];
@@ -2305,12 +2519,23 @@
             // Restore protected code blocks
             codeBlocks.forEach(item => {
                 const highlighted = highlightCodeSyntax(item.code, item.lang);
+
+                // محاسبه دقیق و هوشمند حجم کد و تعداد خطوط آن به زبان فارسی
+                const lineCount = item.code.split("\n").length;
+                const byteSize = new Blob([item.code]).size;
+                let sizeStr = "";
+                if (byteSize < 1024) {
+                    sizeStr = `${byteSize} بایت`;
+                } else {
+                    sizeStr = `${(byteSize / 1024).toFixed(2)} کیلوبایت`;
+                }
+
                 const blockHTML = `
                     <div class="code-block-container">
                         <div class="code-block-header">
                             <span class="code-lang">
                                 <span class="collapse-toggle" data-collapsed="false">▼</span>
-                                ${item.lang}
+                                ${item.lang} <span style="margin-right: 8px; font-size: 0.72rem; color: rgba(255,255,255,0.45); font-weight: normal; font-family: system-ui;">(${lineCount} خط | ${sizeStr})</span>
                             </span>
                             <div class="code-actions">
                                 <button class="code-btn copy-code-btn" data-code="${encodeURIComponent(item.code)}">📋 کپی</button>
@@ -2467,6 +2692,26 @@
             attachedItems = [];
             renderAttachmentsPreview();
 
+            // جستجوی وب زنده در صورت فعال بودن
+            let searchResultsList = [];
+            if (isWebSearchEnabled && userText) {
+                try {
+                    const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
+                    const searchUrl = `${proxyUrl.replace(/\/$/, "")}/search?q=${encodeURIComponent(userText)}`;
+                    console.log("Performing Web Search via proxy:", searchUrl);
+
+                    const searchResponse = await fetch(searchUrl);
+                    if (searchResponse.ok) {
+                        const searchData = await searchResponse.json();
+                        if (searchData && searchData.results && searchData.results.length > 0) {
+                            searchResultsList = searchData.results;
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Web search request failed:", err);
+                }
+            }
+
             // ۱. ثبت پیام کاربر در لیست و IndexedDB
             const userMsg = {
                 id: "msg_" + Date.now(),
@@ -2474,7 +2719,8 @@
                 role: "user",
                 content: userText || "فایل‌های سنجاق شده را تحلیل کن.",
                 timestamp: Date.now(),
-                attachments: currentAttachments
+                attachments: currentAttachments,
+                searchResults: searchResultsList
             };
             chatHistory.push(userMsg);
             saveMessageToDB(userMsg);
@@ -2540,20 +2786,44 @@
                 const contents = slicedHistory.map(msg => {
                     const parts = [];
 
-                    // اگر متنی باشد
-                    parts.push({ text: msg.content });
+                    // در صورتی که نتایج جستجوی زنده اینترنتی در پیام کاربر ذخیره شده باشد، آن را به عنوان کانتکست به متن پیام پیوست می‌کنیم
+                    let textWithContext = msg.content || "";
+                    if (msg.role === "user" && msg.searchResults && msg.searchResults.length > 0) {
+                        let searchResultsText = "\n\n[نتایج جستجوی وب زنده از اینترنت]:\n";
+                        msg.searchResults.forEach((res, idx) => {
+                            searchResultsText += `[${idx + 1}] عنوان: ${res.title}\nآدرس: ${res.link}\nخلاصه: ${res.snippet}\n\n`;
+                        });
+                        textWithContext += searchResultsText;
+                    }
+
+                    // اگر متنی باشد و خالی نباشد
+                    if (textWithContext && textWithContext.trim()) {
+                        parts.push({ text: textWithContext });
+                    }
 
                     // افزودن اطلاعات مالتی‌مدیا (تصاویر یا فایل‌های متنی)
                     if (msg.attachments && msg.attachments.length > 0) {
                         msg.attachments.forEach(att => {
-                            if (att.type.startsWith("image/")) {
-                                const base64Clean = att.content.split(",")[1];
-                                parts.push({
-                                    inlineData: {
-                                        mimeType: att.type,
-                                        data: base64Clean
-                                    }
-                                });
+                            const isImage = (att.type && att.type.startsWith("image/")) ||
+                                            (att.name && /\.(png|jpe?g|webp|gif|heic|heif)$/i.test(att.name));
+                            if (isImage) {
+                                let mimeType = att.type || "image/jpeg";
+                                if (mimeType === "image/jpg" || !mimeType.startsWith("image/")) {
+                                    mimeType = "image/jpeg";
+                                }
+                                let base64Clean = att.content || "";
+                                if (base64Clean.includes(",")) {
+                                    base64Clean = base64Clean.split(",")[1];
+                                }
+                                base64Clean = base64Clean.replace(/\s/g, ""); // پاکسازی فضاهای خالی برای معتبر بودن ساختار بیس۶۴
+                                if (base64Clean) {
+                                    parts.push({
+                                        inlineData: {
+                                            mimeType: mimeType,
+                                            data: base64Clean
+                                        }
+                                    });
+                                }
                             } else {
                                 // فایل‌های متنی به عنوان کانتکست متنی اضافه می‌شوند
                                 parts.push({
@@ -2561,6 +2831,11 @@
                                 });
                             }
                         });
+                    }
+
+                    // جهت جلوگیری از ارسال پیام بدون پارت (که باعث خطای ۴۰۰ گوگل می‌شود)
+                    if (parts.length === 0) {
+                        parts.push({ text: "." });
                     }
 
                     return {
