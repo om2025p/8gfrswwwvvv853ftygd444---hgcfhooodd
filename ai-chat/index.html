@@ -1185,6 +1185,12 @@
             <!-- فایل‌های ضمیمه‌شده به صورت کارتی در اینجا لود می‌شوند -->
         </div>
 
+        <!-- نوار وضعیت ویرایش پیام -->
+        <div class="edit-status-bar hidden" id="editStatusBar" style="background: rgba(59, 130, 246, 0.12); border-top: 1px solid var(--border-color); padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text-main);">
+            <span>📝 در حال ویرایش پیام قبلی...</span>
+            <button id="cancelEditBtn" style="background: none; border: none; color: #ef4444; cursor: pointer; font-weight: bold; font-size: 0.8rem;">لغو ویرایش ❌</button>
+        </div>
+
         <!-- نوار پایینی ورودی -->
         <div class="input-container">
             <div class="pin-menu-container">
@@ -1195,6 +1201,7 @@
                     <div class="pin-dropdown-item" id="attachFolderBtn">📁 آپلود پوشه متنی</div>
                 </div>
             </div>
+            <button class="header-btn" id="webSearchToggleBtn" title="جستجو در وب فعال/غیرفعال" style="margin: 0; font-size: 1.2rem; filter: grayscale(1); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px;">🌐</button>
             <div class="input-wrapper">
                 <textarea class="chat-input" id="chatInput" rows="1" placeholder="پیام خود را بنویسید..."></textarea>
             </div>
@@ -1289,10 +1296,30 @@
         let chatHistory = [];
         let attachedItems = []; // آرایه فایل‌ها و تصاویر سنجاق شده قبل از ارسال چت
 
-        let userPersona = "کاربر محترم و شوخ طبع عمارت";
-        let historySummary = "چت تازه آغاز شده است.";
+        let userPersona = "کاربر عمارت";
+        let historySummary = "گفتگو تازه آغاز شده است.";
         let learnedKeywords = [];
         let isGenerating = false;
+        let editingMessageId = null;
+
+        function startEditMessage(msgId, content) {
+            editingMessageId = msgId;
+            chatInput.value = content;
+            chatInput.style.height = "auto";
+            chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+            document.getElementById("editStatusBar").classList.remove("hidden");
+            chatInput.focus();
+            sendBtn.disabled = false;
+        }
+
+        function cancelEditMessage() {
+            editingMessageId = null;
+            chatInput.value = "";
+            chatInput.style.height = "auto";
+            document.getElementById("editStatusBar").classList.add("hidden");
+            sendBtn.disabled = true;
+            localStorage.removeItem(`emarat_chat_draft_${currentSessionId}`);
+        }
 
         // دیتابیس IndexedDB
         function initIndexedDB() {
@@ -1436,6 +1463,7 @@
         const chatInput = document.getElementById("chatInput");
         const sendBtn = document.getElementById("sendBtn");
         const themeToggleBtn = document.getElementById("themeToggleBtn");
+        const webSearchToggleBtn = document.getElementById("webSearchToggleBtn");
         const settingsToggleBtn = document.getElementById("settingsToggleBtn");
         const settingsModal = document.getElementById("settingsModal");
         const closeSettingsBtn = document.getElementById("closeSettingsBtn");
@@ -1525,6 +1553,35 @@
 
         themeToggleBtn.onclick = toggleTheme;
 
+        // منطق دکمه سوئیچ جستجو در وب (🌐)
+        let isWebSearchEnabled = localStorage.getItem("emarat_web_search") === "true";
+
+        function updateWebSearchToggleUI() {
+            if (isWebSearchEnabled) {
+                webSearchToggleBtn.style.filter = "none";
+                webSearchToggleBtn.style.color = "#3b82f6";
+                webSearchToggleBtn.style.transform = "scale(1.1)";
+                webSearchToggleBtn.title = "جستجو در وب فعال است 🌐";
+                webSearchToggleBtn.style.background = "rgba(59, 130, 246, 0.15)";
+                webSearchToggleBtn.style.border = "1px solid rgba(59, 130, 246, 0.3)";
+            } else {
+                webSearchToggleBtn.style.filter = "grayscale(1)";
+                webSearchToggleBtn.style.color = "";
+                webSearchToggleBtn.style.transform = "none";
+                webSearchToggleBtn.title = "جستجو در وب غیرفعال است (آفلاین)";
+                webSearchToggleBtn.style.background = "";
+                webSearchToggleBtn.style.border = "";
+            }
+        }
+
+        webSearchToggleBtn.onclick = () => {
+            isWebSearchEnabled = !isWebSearchEnabled;
+            localStorage.setItem("emarat_web_search", isWebSearchEnabled ? "true" : "false");
+            updateWebSearchToggleUI();
+        };
+
+        updateWebSearchToggleUI();
+
         // ورود به برنامه و بازیابی اطلاعات پایه
         window.addEventListener("load", async () => {
             initTheme();
@@ -1545,9 +1602,12 @@
                     localStorage.removeItem("chat_theme");
                     localStorage.removeItem("current_session_id");
                     localStorage.setItem("emarat_chat_v31_cleared", "true");
-                    userPersona = "کاربر محترم و شوخ طبع عمارت";
-                    historySummary = "چت تازه آغاز شده است.";
+                    userPersona = "کاربر عمارت";
+                    historySummary = "گفتگو تازه آغاز شده است.";
                     learnedKeywords = [];
+                    saveMetaToDB("user_persona", userPersona);
+                    saveMetaToDB("history_summary", historySummary);
+                    saveMetaToDB("learned_keywords", []);
                 } catch (err) {
                     console.error("Error upgrading memory:", err);
                 }
@@ -1598,6 +1658,7 @@
             currentSessionId = newId;
 
             chatHistory = [];
+            activeSessionBranches = [];
             renderAllMessages();
             renderSessionsList();
             updateHeaderTitle();
@@ -1614,15 +1675,34 @@
 
         // بارگذاری یک جلسه چت خاص
         async function loadSession(sessionId) {
+            // کنسل کردن حالت ویرایش پیام در صورت تعویض چت
+            if (editingMessageId) {
+                cancelEditMessage();
+            }
+
             currentSessionId = sessionId;
             localStorage.setItem("current_session_id", sessionId);
 
             chatHistory = await getSessionMessagesFromDB(sessionId);
+            activeSessionBranches = await getMetaFromDB(`branches_${sessionId}`) || [];
 
             renderAllMessages();
             renderSessionsList();
             updateHeaderTitle();
             scrollToBottom();
+
+            // لود کردن پیش‌نویس پیام از حافظه برای این چت خاص
+            const savedDraft = localStorage.getItem(`emarat_chat_draft_${sessionId}`);
+            if (savedDraft) {
+                chatInput.value = savedDraft;
+                chatInput.style.height = "auto";
+                chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+                sendBtn.disabled = !chatInput.value.trim() && isGenerating;
+            } else {
+                chatInput.value = "";
+                chatInput.style.height = "auto";
+                sendBtn.disabled = true;
+            }
         }
 
         function updateHeaderTitle() {
@@ -1792,11 +1872,16 @@
             }
         }
 
-        // اندازه اتوماتیک فیلد ورودی
+        // اندازه اتوماتیک فیلد ورودی و ذخیره پیش‌نویس
         chatInput.oninput = () => {
             chatInput.style.height = "auto";
             chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
             sendBtn.disabled = (!chatInput.value.trim() && attachedItems.length === 0) || isGenerating;
+
+            // ذخیره پیش‌نویس در صورتی که در حالت ویرایش نباشیم
+            if (currentSessionId && !editingMessageId) {
+                localStorage.setItem(`emarat_chat_draft_${currentSessionId}`, chatInput.value);
+            }
         };
 
         // جستجو در پیام‌ها
@@ -1836,11 +1921,109 @@
             settingsModal.classList.remove("active");
         };
 
+        document.getElementById("cancelEditBtn").onclick = cancelEditMessage;
+
         // اسکرول نرم به پایین
         function scrollToBottom() {
             setTimeout(() => {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }, 50);
+        }
+
+        function getSiblingBranchesForMessageIndex(index) {
+            if (index < 0 || index >= chatHistory.length) return [];
+
+            const activePrefixIds = chatHistory.slice(0, index).map(m => m.id);
+            const siblings = [];
+
+            // شاخه فعلی
+            siblings.push({
+                branchId: "active",
+                branchName: "فعلی",
+                message: chatHistory[index],
+                fullHistory: chatHistory
+            });
+
+            activeSessionBranches.forEach(branch => {
+                const branchMsgs = branch.messages || [];
+                if (branchMsgs.length <= index) return;
+
+                let matches = true;
+                for (let j = 0; j < index; j++) {
+                    if (branchMsgs[j]?.id !== activePrefixIds[j]) {
+                        matches = false;
+                        break;
+                    }
+                }
+
+                if (matches) {
+                    const siblingMsg = branchMsgs[index];
+                    if (siblingMsg && siblingMsg.id !== chatHistory[index].id) {
+                        if (!siblings.some(s => s.message.id === siblingMsg.id)) {
+                            siblings.push({
+                                branchId: branch.id,
+                                branchName: branch.name || "نسخه دیگر",
+                                message: siblingMsg,
+                                fullHistory: branchMsgs
+                            });
+                        }
+                    }
+                }
+            });
+
+            return siblings;
+        }
+
+        async function switchToBranchHistory(targetHistory) {
+            // ۱. کپی کردن حالت فعلی به عنوان شاخه در صورت لزوم
+            const alreadySaved = activeSessionBranches.some(b => {
+                return JSON.stringify(b.messages.map(m => m.id)) === JSON.stringify(chatHistory.map(m => m.id));
+            });
+            if (!alreadySaved && chatHistory.length > 0) {
+                activeSessionBranches.push({
+                    id: "branch_" + Date.now(),
+                    name: `نسخه ${activeSessionBranches.length + 1}`,
+                    messages: JSON.parse(JSON.stringify(chatHistory))
+                });
+            }
+
+            chatHistory = JSON.parse(JSON.stringify(targetHistory));
+
+            if (db) {
+                // پاک کردن پیام‌های فعلی در DB
+                const transaction = db.transaction(["messages"], "readwrite");
+                const store = transaction.objectStore("messages");
+                const indexStore = store.index("sessionId");
+                const range = IDBKeyRange.only(currentSessionId);
+
+                const deletePromise = new Promise((resolve, reject) => {
+                    const request = indexStore.openCursor(range);
+                    request.onsuccess = (e) => {
+                        const cursor = e.target.result;
+                        if (cursor) {
+                            cursor.delete();
+                            cursor.continue();
+                        } else {
+                            resolve();
+                        }
+                    };
+                    request.onerror = () => reject();
+                });
+
+                await deletePromise;
+
+                // ثبت مجدد پیام‌های این شاخه فعال
+                const insertTransaction = db.transaction(["messages"], "readwrite");
+                const insertStore = insertTransaction.objectStore("messages");
+                chatHistory.forEach(msg => {
+                    insertStore.put(msg);
+                });
+            }
+
+            await saveMetaToDB(`branches_${currentSessionId}`, activeSessionBranches);
+
+            renderAllMessages();
+            scrollToBottom();
         }
 
         // ساخت المان DOM برای یک پیام مشخص
@@ -1866,7 +2049,7 @@
                 attsContainer.className = "msg-attachments";
 
                 msg.attachments.forEach(att => {
-                    if (att.type.startsWith("image/")) {
+                    if (att.type && att.type.startsWith("image/")) {
                         const img = document.createElement("img");
                         img.className = "msg-attachment-img";
                         img.src = att.content;
@@ -1882,6 +2065,107 @@
                     }
                 });
                 bubble.appendChild(attsContainer);
+            }
+
+            // اگر پیام حاوی نتایج جستجوی زنده وب بود، آن را به صورت کارت شیک تاشو نشان می‌دهیم
+            if (msg.role === "user" && msg.searchResults && msg.searchResults.length > 0) {
+                const searchSec = document.createElement("div");
+                searchSec.className = "web-search-results-box";
+                searchSec.style = "margin-top: 8px; border: 1px solid rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.05); border-radius: 8px; padding: 6px 10px; font-size: 0.75rem;";
+
+                const searchHeader = document.createElement("div");
+                searchHeader.style = "display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; font-weight: bold; color: #60a5fa;";
+                searchHeader.innerHTML = `<span>🔍 نتایج جستجوی زنده وب (${msg.searchResults.length} مورد)</span> <span class="search-toggle-arrow">▼</span>`;
+
+                const searchList = document.createElement("div");
+                searchList.style = "margin-top: 6px; display: none; flex-direction: column; gap: 6px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; max-height: 200px; overflow-y: auto;";
+
+                msg.searchResults.forEach(res => {
+                    const item = document.createElement("div");
+                    item.style = "background: rgba(255,255,255,0.03); padding: 4px 6px; border-radius: 4px;";
+                    item.innerHTML = `
+                        <a href="${res.link}" target="_blank" style="color: #60a5fa; text-decoration: underline; font-weight: bold; display: block; margin-bottom: 2px;">${res.title}</a>
+                        <div style="color: rgba(255,255,255,0.8); line-height: 1.3;">${res.snippet}</div>
+                    `;
+                    searchList.appendChild(item);
+                });
+
+                searchHeader.onclick = (e) => {
+                    e.stopPropagation();
+                    const isCollapsed = searchList.style.display === "none";
+                    searchList.style.display = isCollapsed ? "flex" : "none";
+                    searchHeader.querySelector(".search-toggle-arrow").innerText = isCollapsed ? "▲" : "▼";
+                };
+
+                searchSec.appendChild(searchHeader);
+                searchSec.appendChild(searchList);
+                bubble.appendChild(searchSec);
+            }
+
+            // اضافه کردن دکمه ویرایش برای پیام‌های کاربر در انتهای حباب
+            if (msg.role === "user") {
+                const editRow = document.createElement("div");
+                editRow.style = "display: flex; align-items: center; justify-content: flex-start; margin-top: 4px; gap: 6px;";
+
+                const editBtn = document.createElement("button");
+                editBtn.className = "user-edit-btn";
+                editBtn.innerText = "✏️ ویرایش پیام";
+                editBtn.style = "background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 2px 6px; color: white; cursor: pointer; font-size: 0.72rem; display: flex; align-items: center; gap: 4px;";
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    startEditMessage(msg.id, msg.content);
+                };
+                editRow.appendChild(editBtn);
+                bubble.appendChild(editRow);
+
+                // اگر پیام بیش از یک نسخه (شاخه) داشت، سوییچر نسخه‌ها را نشان می‌دهیم
+                const msgIndex = chatHistory.findIndex(m => m.id === msg.id);
+                if (msgIndex !== -1) {
+                    const siblings = getSiblingBranchesForMessageIndex(msgIndex);
+                    if (siblings.length > 1) {
+                        const activeSiblingIndex = siblings.findIndex(s => s.message.id === msg.id);
+
+                        const branchSwitcher = document.createElement("div");
+                        branchSwitcher.className = "branch-switcher";
+                        branchSwitcher.style = "display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-top: 6px; font-size: 0.72rem; color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; width: fit-content; user-select: none;";
+
+                        const prevBtn = document.createElement("button");
+                        prevBtn.innerText = "◀";
+                        prevBtn.style = "background: none; border: none; color: white; cursor: pointer; padding: 0 4px; font-size: 0.75rem;";
+                        if (activeSiblingIndex > 0) {
+                            prevBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                switchToBranchHistory(siblings[activeSiblingIndex - 1].fullHistory);
+                            };
+                        } else {
+                            prevBtn.style.opacity = "0.3";
+                            prevBtn.style.cursor = "default";
+                        }
+
+                        const indicator = document.createElement("span");
+                        indicator.innerText = `${activeSiblingIndex + 1} از ${siblings.length}`;
+                        indicator.style = "font-family: monospace; direction: ltr;";
+
+                        const nextBtn = document.createElement("button");
+                        nextBtn.innerText = "▶";
+                        nextBtn.style = "background: none; border: none; color: white; cursor: pointer; padding: 0 4px; font-size: 0.75rem;";
+                        if (activeSiblingIndex < siblings.length - 1) {
+                            nextBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                switchToBranchHistory(siblings[activeSiblingIndex + 1].fullHistory);
+                            };
+                        } else {
+                            nextBtn.style.opacity = "0.3";
+                            nextBtn.style.cursor = "default";
+                        }
+
+                        branchSwitcher.appendChild(prevBtn);
+                        branchSwitcher.appendChild(indicator);
+                        branchSwitcher.appendChild(nextBtn);
+
+                        bubble.appendChild(branchSwitcher);
+                    }
+                }
             }
 
             const timeSpan = document.createElement("span");
@@ -2141,8 +2425,9 @@
             formatted = escapeHTML(formatted);
 
             // 1. Colors: [رنگ:قرمز](متن) or [color:blue](text)
-            formatted = formatted.replace(/\[color:([^\]]+)\]\(([^)]+)\)/gi, '<span style="color: $1">$2</span>');
-            formatted = formatted.replace(/\[رنگ:([^\]]+)\]\(([^)]+)\)/gi, '<span style="color: $1">$2</span>');
+            // محدود کردن مقدار رنگ به کاراکترهای کاملا ایمن جهت جلوگیری از بروز باگ قالب‌بندی و انژکسیون استایل
+            formatted = formatted.replace(/\[color:\s*([^\]\s"';()]+)\s*\]\(([^)]+)\)/gi, '<span style="color: $1">$2</span>');
+            formatted = formatted.replace(/\[رنگ:\s*([^\]\s"';()]+)\s*\]\(([^)]+)\)/gi, '<span style="color: $1">$2</span>');
 
             // 1.5 Spoilers/Invisible Text: [نامرئی](متن) or [spoiler](text)
             formatted = formatted.replace(/\[spoiler\]\(([^)]+)\)/gi, '<span class="spoiler-text" onclick="this.classList.toggle(\'revealed\')" title="برای دیدن لمس کنید">$1</span>');
@@ -2176,8 +2461,8 @@
                 let resultHTML = [];
 
                 pLines.forEach(line => {
-                    const bulletMatch = line.match(/^[\-\*\•]\s+(.+)/);
-                    const numMatch = line.match(/^(\d+)\.\s+(.+)/);
+                    const bulletMatch = line.match(/^\s*[\-\*\•]\s+(.+)/);
+                    const numMatch = line.match(/^\s*(\d+)\.\s+(.+)/);
 
                     if (bulletMatch) {
                         let liContent = bulletMatch[1];
@@ -2234,12 +2519,23 @@
             // Restore protected code blocks
             codeBlocks.forEach(item => {
                 const highlighted = highlightCodeSyntax(item.code, item.lang);
+
+                // محاسبه دقیق و هوشمند حجم کد و تعداد خطوط آن به زبان فارسی
+                const lineCount = item.code.split("\n").length;
+                const byteSize = new Blob([item.code]).size;
+                let sizeStr = "";
+                if (byteSize < 1024) {
+                    sizeStr = `${byteSize} بایت`;
+                } else {
+                    sizeStr = `${(byteSize / 1024).toFixed(2)} کیلوبایت`;
+                }
+
                 const blockHTML = `
                     <div class="code-block-container">
                         <div class="code-block-header">
                             <span class="code-lang">
                                 <span class="collapse-toggle" data-collapsed="false">▼</span>
-                                ${item.lang}
+                                ${item.lang} <span style="margin-right: 8px; font-size: 0.72rem; color: rgba(255,255,255,0.45); font-weight: normal; font-family: system-ui;">(${lineCount} خط | ${sizeStr})</span>
                             </span>
                             <div class="code-actions">
                                 <button class="code-btn copy-code-btn" data-code="${encodeURIComponent(item.code)}">📋 کپی</button>
@@ -2366,8 +2662,27 @@
             const userText = chatInput.value.trim();
             if ((!userText && attachedItems.length === 0) || isGenerating) return;
 
+            // اگر در حالت ویرایش بودیم، پیام‌های بعدی را کات می‌کنیم
+            if (editingMessageId) {
+                const editIdx = chatHistory.findIndex(m => m.id === editingMessageId);
+                if (editIdx !== -1) {
+                    const messagesToDelete = chatHistory.slice(editIdx);
+                    if (db) {
+                        const transaction = db.transaction(["messages"], "readwrite");
+                        const store = transaction.objectStore("messages");
+                        messagesToDelete.forEach(m => store.delete(m.id));
+                    }
+                    chatHistory = chatHistory.slice(0, editIdx);
+                    renderAllMessages();
+                }
+                editingMessageId = null;
+                document.getElementById("editStatusBar").classList.add("hidden");
+                localStorage.removeItem(`emarat_chat_draft_${currentSessionId}`);
+            }
+
             // تمیز کردن فیلد و دکمه ارسال
             chatInput.value = "";
+            localStorage.removeItem(`emarat_chat_draft_${currentSessionId}`);
             chatInput.style.height = "auto";
             sendBtn.disabled = true;
             isGenerating = true;
@@ -2377,6 +2692,26 @@
             attachedItems = [];
             renderAttachmentsPreview();
 
+            // جستجوی وب زنده در صورت فعال بودن
+            let searchResultsList = [];
+            if (isWebSearchEnabled && userText) {
+                try {
+                    const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
+                    const searchUrl = `${proxyUrl.replace(/\/$/, "")}/search?q=${encodeURIComponent(userText)}`;
+                    console.log("Performing Web Search via proxy:", searchUrl);
+
+                    const searchResponse = await fetch(searchUrl);
+                    if (searchResponse.ok) {
+                        const searchData = await searchResponse.json();
+                        if (searchData && searchData.results && searchData.results.length > 0) {
+                            searchResultsList = searchData.results;
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Web search request failed:", err);
+                }
+            }
+
             // ۱. ثبت پیام کاربر در لیست و IndexedDB
             const userMsg = {
                 id: "msg_" + Date.now(),
@@ -2384,7 +2719,8 @@
                 role: "user",
                 content: userText || "فایل‌های سنجاق شده را تحلیل کن.",
                 timestamp: Date.now(),
-                attachments: currentAttachments
+                attachments: currentAttachments,
+                searchResults: searchResultsList
             };
             chatHistory.push(userMsg);
             saveMessageToDB(userMsg);
@@ -2450,20 +2786,44 @@
                 const contents = slicedHistory.map(msg => {
                     const parts = [];
 
-                    // اگر متنی باشد
-                    parts.push({ text: msg.content });
+                    // در صورتی که نتایج جستجوی زنده اینترنتی در پیام کاربر ذخیره شده باشد، آن را به عنوان کانتکست به متن پیام پیوست می‌کنیم
+                    let textWithContext = msg.content || "";
+                    if (msg.role === "user" && msg.searchResults && msg.searchResults.length > 0) {
+                        let searchResultsText = "\n\n[نتایج جستجوی وب زنده از اینترنت]:\n";
+                        msg.searchResults.forEach((res, idx) => {
+                            searchResultsText += `[${idx + 1}] عنوان: ${res.title}\nآدرس: ${res.link}\nخلاصه: ${res.snippet}\n\n`;
+                        });
+                        textWithContext += searchResultsText;
+                    }
+
+                    // اگر متنی باشد و خالی نباشد
+                    if (textWithContext && textWithContext.trim()) {
+                        parts.push({ text: textWithContext });
+                    }
 
                     // افزودن اطلاعات مالتی‌مدیا (تصاویر یا فایل‌های متنی)
                     if (msg.attachments && msg.attachments.length > 0) {
                         msg.attachments.forEach(att => {
-                            if (att.type.startsWith("image/")) {
-                                const base64Clean = att.content.split(",")[1];
-                                parts.push({
-                                    inlineData: {
-                                        mimeType: att.type,
-                                        data: base64Clean
-                                    }
-                                });
+                            const isImage = (att.type && att.type.startsWith("image/")) ||
+                                            (att.name && /\.(png|jpe?g|webp|gif|heic|heif)$/i.test(att.name));
+                            if (isImage) {
+                                let mimeType = att.type || "image/jpeg";
+                                if (mimeType === "image/jpg" || !mimeType.startsWith("image/")) {
+                                    mimeType = "image/jpeg";
+                                }
+                                let base64Clean = att.content || "";
+                                if (base64Clean.includes(",")) {
+                                    base64Clean = base64Clean.split(",")[1];
+                                }
+                                base64Clean = base64Clean.replace(/\s/g, ""); // پاکسازی فضاهای خالی برای معتبر بودن ساختار بیس۶۴
+                                if (base64Clean) {
+                                    parts.push({
+                                        inlineData: {
+                                            mimeType: mimeType,
+                                            data: base64Clean
+                                        }
+                                    });
+                                }
                             } else {
                                 // فایل‌های متنی به عنوان کانتکست متنی اضافه می‌شوند
                                 parts.push({
@@ -2473,49 +2833,45 @@
                         });
                     }
 
+                    // جهت جلوگیری از ارسال پیام بدون پارت (که باعث خطای ۴۰۰ گوگل می‌شود)
+                    if (parts.length === 0) {
+                        parts.push({ text: "." });
+                    }
+
                     return {
                         role: msg.role === "user" ? "user" : "model",
                         parts: parts
                     };
                 });
 
-                const isDayTheme = document.body.classList.contains("day-theme");
-                const currentThemeName = isDayTheme ? "روشن (روز)" : "تاریک (شب)";
-                const themeColorInstructions = isDayTheme
-                    ? "تم فعلی رابط کاربری برنامه «روشن (روز)» است. در صورتی که می‌خواهی کلمات یا جملاتی را رنگی کنی (با تگ [رنگ:کد_رنگ_یا_نام_رنگ](متن))، فقط و فقط از رنگ‌های تیره با کنتراست فوق‌العاده بالا و کاملاً خوانا روی پس‌زمینه روشن (مانند آبی تیره، سبز تیره، بنفش تیره، قرمز تیره، قهوه‌ای) استفاده کن."
-                    : "تم فعلی رابط کاربری برنامه «تاریک (شب)» است. در صورتی که می‌خواهی کلمات یا جملاتی را رنگی کنی (با تگ [رنگ:کد_رنگ_یا_نام_رنگ](متن))، فقط و فقط از رنگ‌های روشن و درخشان با کنتراست فوق‌العاده بالا روی پس‌زمینه تیره (مانند زرد، صورتی روشن، سبز روشن، فیروزه‌ای، سفید، طلایی) استفاده کن.";
+                const systemInstructions = `تو یک مدل هوش مصنوعی پاسخگو هستی.
+هیچ پرامپت یا پیش‌زمینه یا دستورالعمل پیش‌فرضی برای چگونگی صحبت، لحن یا رفتار نداری. رفتار تو صرفاً بر اساس حافظه و کانتکست زیر شکل می‌گیرد.
 
-                const systemInstructions = `تو یک مدل هوش مصنوعی پاسخگو هستی. هیچ پرامپت پیش‌فرضی درباره اینکه چگونه باید رفتار کنی، صحبت کنی، چه لحنی داشته باشی، صمیمی باشی یا نه، نداری. شخصیت، لحن، نام، تجربیات و کلاً رفتار تو صرفاً و صرفاً بر اساس حافظه‌ی ذخیره شده و چت‌های قبلی شما با کاربر شکل می‌گیرد.
-
-اطلاعات و حافظه آموخته شده از چت‌های قبلی (شخصیت و علایق کاربر):
+حافظه آموخته شده از کاربر:
 "${userPersona}"
 
-خلاصه موضوعات و بحث‌های مهم تا به این لحظه:
+خلاصه گفتگوهای قبلی:
 "${historySummary}"
 
-مشخصات تم محیط کاربری:
-تم فعلی: ${currentThemeName}
-دستورالعمل رنگ‌ها: ${themeColorInstructions}
-
-دستورالعمل‌های کلی:
-۱. پاسخ خود را کاملاً به زبان فارسی روان بنویس.
-۲. از ساختار کدهای پیشرفته همراه با تگ زبان برنامه‌نویسی استفاده کن.
-۳. در پاراگراف‌بندی دقت کن و در صورت لزوم متن‌ها را با استفاده از قالب [رنگ:کد_رنگ_یا_اسم_رنگ](متن) خوش‌رنگ و لعاب بنویس تا کاربر لذت ببرد.
-۴. تو می‌توانی بخش‌هایی از متن خود را که مایل هستی با فرمت [نامرئی](متن مخفی شده) یا [spoiler](متن مخفی شده) بنویسی. این متن‌ها به صورت افکت مات و نامرئی نمایش داده می‌شوند و کاربر با لمس یا کلیک روی آن‌ها می‌تواند آن‌ها را آشکار کند.`;
+دستورالعمل‌های فرمت خروجی:
+۱. به زبان فارسی پاسخ بده.
+۲. فرمت تگ‌های HTML و کدهای برنامه‌نویسی را حفظ کن.
+۳. در صورت استفاده از [رنگ:نام_رنگ](متن)، آن را رندر کن.
+۴. در صورت استفاده از [نامرئی](متن) یا [spoiler](متن)، آن را به صورت اسپویلر رندر کن.`;
 
                 // سیستم اتصال هوشمند دوگانه: ابتدا تلاش مستقیم (در صورت روشن بودن فیلترشکن)
-                // برای جلوگیری از خطای ۴۲۹، از مدل پرسرعت و بدون لیمیت gemini-3.5-flash-lite استفاده می‌کنیم
+                // برای جلوگیری از خطای ۴۲۹، از مدل پرسرعت و بدون لیمیت gemینی استفاده می‌کنیم
                 let response;
                 let usedProxy = false;
                 const activeModel = "gemini-3.5-flash-lite";
-                const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${getApiKey()}`;
+                const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:streamGenerateContent?key=${getApiKey()}`;
                 const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
-                const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/${activeModel}:generateContent?key=${getApiKey()}`;
+                const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/${activeModel}:streamGenerateContent?key=${getApiKey()}`;
 
                 try {
-                    console.log("Attempting direct connection to Google Gemini API with model:", activeModel);
+                    console.log("Attempting direct connection to Google Gemini API (Stream) with model:", activeModel);
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 6000); // تایم‌اوت سریع ۶ ثانیه‌ای برای سوییچ به ورکر کلودفلر
+                    const timeoutId = setTimeout(() => controller.abort(), 6000); // تایم‌اوت ۶ ثانیه‌ای
 
                     response = await fetch(directUrl, {
                         method: "POST",
@@ -2548,24 +2904,94 @@
                     throw new Error(`خطای سرور گوگل: ${response.status}`);
                 }
 
-                const resData = await response.json();
+                // استریم کردن لحظه‌ای پاسخ برای رندر آنی برای کاربر حین تولید پاسخ هوش مصنوعی
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+                let accumulatedText = "";
+                let isFirstChunk = true;
+
+                const aiMsgId = "msg_" + Date.now();
+                const aiMsg = {
+                    id: aiMsgId,
+                    sessionId: currentSessionId,
+                    role: "model",
+                    content: "",
+                    timestamp: Date.now()
+                };
+
+                let aiRow, aiBubble;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+
+                    let i = 0;
+                    let braceCount = 0;
+                    let startIdx = -1;
+
+                    while (i < buffer.length) {
+                        const char = buffer[i];
+                        if (char === "{") {
+                            if (braceCount === 0) {
+                                startIdx = i;
+                            }
+                            braceCount++;
+                        } else if (char === "}") {
+                            braceCount--;
+                            if (braceCount === 0 && startIdx !== -1) {
+                                const objStr = buffer.substring(startIdx, i + 1);
+                                try {
+                                    const obj = JSON.parse(objStr);
+                                    if (obj.candidates && obj.candidates[0] && obj.candidates[0].content && obj.candidates[0].content.parts && obj.candidates[0].content.parts[0]) {
+                                        const txt = obj.candidates[0].content.parts[0].text;
+                                        if (txt) {
+                                            accumulatedText += txt;
+
+                                            if (isFirstChunk) {
+                                                isFirstChunk = false;
+                                                const typingNode = document.getElementById("typingRow");
+                                                if (typingNode) typingNode.remove();
+
+                                                aiMsg.content = accumulatedText;
+                                                aiRow = createMessageElement(aiMsg);
+                                                chatContainer.appendChild(aiRow);
+                                                aiBubble = aiRow.querySelector(".message-bubble");
+                                            } else if (aiBubble) {
+                                                aiBubble.innerHTML = formatMessageContent(accumulatedText) + `<span class="message-time">${new Date(aiMsg.timestamp).toLocaleTimeString("fa-IR", { hour: '2-digit', minute: '2-digit' })}</span>`;
+                                                setupCodeBlockEventsForElement(aiRow);
+                                            }
+                                            scrollToBottom();
+                                        }
+                                    }
+                                } catch (e) {
+                                    // خطای پارس جزیی فریمورک
+                                }
+                                buffer = buffer.substring(i + 1);
+                                i = -1;
+                                startIdx = -1;
+                                braceCount = 0;
+                            }
+                        }
+                        i++;
+                    }
+                }
 
                 const typingNode = document.getElementById("typingRow");
                 if (typingNode) typingNode.remove();
 
-                const aiReplyText = resData.candidates[0].content.parts[0].text;
-
-                const aiMsg = {
-                    id: "msg_" + Date.now(),
-                    sessionId: currentSessionId,
-                    role: "model",
-                    content: aiReplyText,
-                    timestamp: Date.now()
-                };
-                chatHistory.push(aiMsg);
-                saveMessageToDB(aiMsg);
-                appendSingleMessage(aiMsg);
-                scrollToBottom();
+                if (isFirstChunk && accumulatedText) {
+                    aiMsg.content = accumulatedText;
+                    chatHistory.push(aiMsg);
+                    saveMessageToDB(aiMsg);
+                    appendSingleMessage(aiMsg);
+                } else if (aiRow) {
+                    aiMsg.content = accumulatedText;
+                    chatHistory.push(aiMsg);
+                    saveMessageToDB(aiMsg);
+                }
 
                 if (chatHistory.length % 5 === 0) {
                     triggerBackgroundPersonaLearning();
@@ -2683,8 +3109,8 @@ ${recentMessagesStr.substring(0, 400000)}`; // جهت جلوگیری از تجا
         clearHistoryBtn.onclick = async () => {
             if (confirm("رئیس، مطمئنی می‌خوای کل پیام‌ها و خاطراتمون رو پاک کنی؟ این کار برگشت‌پذیر نیستا! 🥺")) {
                 chatHistory = [];
-                userPersona = "کاربر محترم و شوخ طبع عمارت";
-                historySummary = "چت تازه آغاز شده است.";
+                userPersona = "کاربر عمارت";
+                historySummary = "گفتگو تازه آغاز شده است.";
                 learnedKeywords = [];
 
                 await clearAllDataFromDB();
