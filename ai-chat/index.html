@@ -2920,6 +2920,7 @@
                 let buffer = "";
                 let accumulatedText = "";
                 let isFirstChunk = true;
+                let lastFinishReason = null;
 
                 const aiMsgId = "msg_" + Date.now();
                 const aiMsg = {
@@ -2955,25 +2956,30 @@
                                 const objStr = buffer.substring(startIdx, i + 1);
                                 try {
                                     const obj = JSON.parse(objStr);
-                                    if (obj.candidates && obj.candidates[0] && obj.candidates[0].content && obj.candidates[0].content.parts && obj.candidates[0].content.parts[0]) {
-                                        const txt = obj.candidates[0].content.parts[0].text;
-                                        if (txt) {
-                                            accumulatedText += txt;
+                                    if (obj.candidates && obj.candidates[0]) {
+                                        if (obj.candidates[0].finishReason) {
+                                            lastFinishReason = obj.candidates[0].finishReason;
+                                        }
+                                        if (obj.candidates[0].content && obj.candidates[0].content.parts && obj.candidates[0].content.parts[0]) {
+                                            const txt = obj.candidates[0].content.parts[0].text;
+                                            if (txt) {
+                                                accumulatedText += txt;
 
-                                            if (isFirstChunk) {
-                                                isFirstChunk = false;
-                                                const typingNode = document.getElementById("typingRow");
-                                                if (typingNode) typingNode.remove();
+                                                if (isFirstChunk) {
+                                                    isFirstChunk = false;
+                                                    const typingNode = document.getElementById("typingRow");
+                                                    if (typingNode) typingNode.remove();
 
-                                                aiMsg.content = accumulatedText;
-                                                aiRow = createMessageElement(aiMsg);
-                                                chatContainer.appendChild(aiRow);
-                                                aiBubble = aiRow.querySelector(".message-bubble");
-                                            } else if (aiBubble) {
-                                                aiBubble.innerHTML = formatMessageContent(accumulatedText) + `<span class="message-time">${new Date(aiMsg.timestamp).toLocaleTimeString("fa-IR", { hour: '2-digit', minute: '2-digit' })}</span>`;
-                                                setupCodeBlockEventsForElement(aiRow);
+                                                    aiMsg.content = accumulatedText;
+                                                    aiRow = createMessageElement(aiMsg);
+                                                    chatContainer.appendChild(aiRow);
+                                                    aiBubble = aiRow.querySelector(".message-bubble");
+                                                } else if (aiBubble) {
+                                                    aiBubble.innerHTML = formatMessageContent(accumulatedText) + `<span class="message-time">${new Date(aiMsg.timestamp).toLocaleTimeString("fa-IR", { hour: '2-digit', minute: '2-digit' })}</span>`;
+                                                    setupCodeBlockEventsForElement(aiRow);
+                                                }
+                                                scrollToBottom();
                                             }
-                                            scrollToBottom();
                                         }
                                     }
                                 } catch (e) {
@@ -3009,6 +3015,24 @@
 
                 triggerAutoGitHubBackup();
 
+                // بررسی برای فعال‌سازی خودکار ادامه بده (Auto-Continue) در صورت برخورد به محدودیت حجم توکن
+                if (lastFinishReason === "MAX_TOKENS" || lastFinishReason === "max_tokens") {
+                    console.log("Max tokens reached! Activating silent auto-continue...");
+
+                    // اضافه کردن یک نوبت پنهان "ادامه بده" به تاریخچه ارسالی جهت ادامه بدون ایجاد حباب کاربری جدید
+                    const continueHistoryMsg = {
+                        id: "continue_" + Date.now(),
+                        sessionId: currentSessionId,
+                        role: "user",
+                        content: "ادامه بده"
+                    };
+                    chatHistory.push(continueHistoryMsg);
+                    saveMessageToDB(continueHistoryMsg);
+
+                    // اجرای مجدد اتصال برای دریافت بقیه خروجی و ادغام درون حباب فعلی
+                    await handleSendMessageSilentContinue(aiMsg, aiRow, aiBubble);
+                }
+
             } catch (error) {
                 console.error("AI Error:", error);
                 const typingNode = document.getElementById("typingRow");
@@ -3027,6 +3051,211 @@
             } finally {
                 isGenerating = false;
                 sendBtn.disabled = !chatInput.value.trim() && attachedItems.length === 0;
+            }
+        }
+
+        async function handleSendMessageSilentContinue(aiMsg, aiRow, aiBubble) {
+            // ایجاد افکت لودینگ جزیی در قاب برای اینکه کاربر بداند ادامه چت زنده در جریان است
+            const indicator = document.createElement("div");
+            indicator.id = "silentContinueIndicator";
+            indicator.style = "font-size: 0.72rem; color: #3b82f6; margin-top: 6px; display: flex; align-items: center; gap: 4px;";
+            indicator.innerHTML = `<span class="typing-indicator" style="display:inline-flex; transform: scale(0.6); margin: 0;"><span class="typing-dot" style="background:#3b82f6;"></span><span class="typing-dot" style="background:#3b82f6;"></span><span class="typing-dot" style="background:#3b82f6;"></span></span> در حال ادامه دادن خودکار...`;
+            aiBubble.appendChild(indicator);
+            scrollToBottom();
+
+            try {
+                // ساخت مجدد کانتکست با احتساب پیام "ادامه بده" جدید
+                let totalLength = 0;
+                const maxChars = 800000;
+                const slicedHistory = [];
+
+                for (let i = chatHistory.length - 1; i >= 0; i--) {
+                    const msg = chatHistory[i];
+                    let msgLen = msg.content ? msg.content.length : 0;
+                    if (msg.attachments) {
+                        msg.attachments.forEach(att => {
+                            if (att.content) msgLen += att.content.length;
+                        });
+                    }
+                    if (totalLength + msgLen > maxChars) break;
+                    totalLength += msgLen;
+                    slicedHistory.unshift(msg);
+                }
+
+                const contents = slicedHistory.map(msg => {
+                    const parts = [];
+                    let textWithContext = msg.content || "";
+                    if (msg.role === "user" && msg.searchResults && msg.searchResults.length > 0) {
+                        let searchResultsText = "\n\n[نتایج جستجوی وب زنده از اینترنت]:\n";
+                        msg.searchResults.forEach((res, idx) => {
+                            searchResultsText += `[${idx + 1}] عنوان: ${res.title}\nآدرس: ${res.link}\nخلاصه: ${res.snippet}\n\n`;
+                        });
+                        textWithContext += searchResultsText;
+                    }
+                    if (textWithContext && textWithContext.trim()) {
+                        parts.push({ text: textWithContext });
+                    }
+                    if (msg.attachments && msg.attachments.length > 0) {
+                        msg.attachments.forEach(att => {
+                            const isImage = (att.type && att.type.startsWith("image/")) ||
+                                            (att.name && /\.(png|jpe?g|webp|gif|heic|heif)$/i.test(att.name));
+                            if (isImage) {
+                                let mimeType = att.type || "image/jpeg";
+                                if (mimeType === "image/jpg" || !mimeType.startsWith("image/")) {
+                                    mimeType = "image/jpeg";
+                                }
+                                let base64Clean = att.content || "";
+                                if (base64Clean.includes(",")) base64Clean = base64Clean.split(",")[1];
+                                base64Clean = base64Clean.replace(/\s/g, "");
+                                if (base64Clean) {
+                                    parts.push({ inlineData: { mimeType, data: base64Clean } });
+                                }
+                            } else {
+                                parts.push({ text: `\n[محتوای ضمیمه شده: ${att.name}]:\n${att.content}\n` });
+                            }
+                        });
+                    }
+                    if (parts.length === 0) parts.push({ text: "." });
+                    return { role: msg.role === "user" ? "user" : "model", parts };
+                });
+
+                const systemInstructions = `تو یک مدل هوش مصنوعی پاسخگو هستی.
+هیچ پرامپت یا پیش‌زمینه یا دستورالعمل پیش‌فرضی برای چگونگی صحبت, لحن یا رفتار نداری. رفتار تو صرفاً بر اساس حافظه و کانتکست زیر شکل می‌گیرد.
+
+حافظه آموخته شده از کاربر:
+"${userPersona}"
+
+خلاصه گفتگوهای قبلی:
+"${historySummary}"
+
+دستورالعمل‌های بسیار مهم برای ابزار جستجوی وب:
+۱. اگر در انتهای پیام کاربر بخشی به نام ` + "`" + `[نتایج جستجوی وب زنده از اینترنت]` + "`" + ` وجود دارد، این یعنی سیستم از قبل برای تو در اینترنت جستجو کرده و نتایج دقیق را آورده است.
+۲. حتماً حتماً از این نتایج برای پاسخ به سوالات مربوط به اخبار زنده، آب‌وهوا، قیمت طلا/دلار یا هر سوال روزآمد دیگری استفاده کن و هرگز نگو به اینترنت یا ابزار جستجو دسترسی نداری! پاسخ تو باید با تکیه بر این اطلاعات به‌روزشده باشد.
+
+دستورالعمل‌های فرمت خروجی:
+۱. به زبان فارسی پاسخ بده.
+۲. فرمت تگ‌های HTML و کدهای برنامه‌نویسی را حفظ کن.
+۳. در صورت استفاده از [رنگ:نام_رنگ](متن)، آن را رندر کن.
+۴. در صورت استفاده از [نامرئی](متن) یا [spoiler](متن)، آن را به صورت اسپویلر رندر کن.`;
+
+                let response;
+                let usedProxy = false;
+                const activeModel = "gemini-3.5-flash-lite";
+                const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:streamGenerateContent?key=${getApiKey()}`;
+                const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
+                const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/${activeModel}:streamGenerateContent?key=${getApiKey()}`;
+
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000);
+                    response = await fetch(directUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contents,
+                            systemInstruction: { parts: [{ text: systemInstructions }] },
+                            generationConfig: { maxOutputTokens: 8192 }
+                        }),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    if (!response.ok) throw new Error();
+                } catch (err) {
+                    usedProxy = true;
+                    response = await fetch(cfUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contents,
+                            systemInstruction: { parts: [{ text: systemInstructions }] },
+                            generationConfig: { maxOutputTokens: 8192 }
+                        })
+                    });
+                }
+
+                if (!response.ok) throw new Error();
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+                let accumulatedText = aiMsg.content; // شروع از انتهای متن قبلی!
+                let lastFinishReason = null;
+
+                // حذف اندیکاتور پس از شروع دریافت استریم جدید
+                const indNode = document.getElementById("silentContinueIndicator");
+                if (indNode) indNode.remove();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+
+                    let i = 0;
+                    let braceCount = 0;
+                    let startIdx = -1;
+
+                    while (i < buffer.length) {
+                        const char = buffer[i];
+                        if (char === "{") {
+                            if (braceCount === 0) startIdx = i;
+                            braceCount++;
+                        } else if (char === "}") {
+                            braceCount--;
+                            if (braceCount === 0 && startIdx !== -1) {
+                                const objStr = buffer.substring(startIdx, i + 1);
+                                try {
+                                    const obj = JSON.parse(objStr);
+                                    if (obj.candidates && obj.candidates[0]) {
+                                        if (obj.candidates[0].finishReason) {
+                                            lastFinishReason = obj.candidates[0].finishReason;
+                                        }
+                                        if (obj.candidates[0].content && obj.candidates[0].content.parts && obj.candidates[0].content.parts[0]) {
+                                            const txt = obj.candidates[0].content.parts[0].text;
+                                            if (txt) {
+                                                accumulatedText += txt;
+                                                aiBubble.innerHTML = formatMessageContent(accumulatedText) + `<span class="message-time">${new Date(aiMsg.timestamp).toLocaleTimeString("fa-IR", { hour: '2-digit', minute: '2-digit' })}</span>`;
+                                                setupCodeBlockEventsForElement(aiRow);
+                                                scrollToBottom();
+                                            }
+                                        }
+                                    }
+                                } catch (e) {}
+                                buffer = buffer.substring(i + 1);
+                                i = -1;
+                                startIdx = -1;
+                                braceCount = 0;
+                            }
+                        }
+                        i++;
+                    }
+                }
+
+                // به‌روزرسانی نهایی پیام در دیتابیس فعال
+                aiMsg.content = accumulatedText;
+                const idx = chatHistory.findIndex(m => m.id === aiMsg.id);
+                if (idx !== -1) {
+                    chatHistory[idx].content = accumulatedText;
+                }
+                saveMessageToDB(aiMsg);
+
+                // اگر مجدداً به سقف توکن خوردیم، دوباره ادامه بده!
+                if (lastFinishReason === "MAX_TOKENS" || lastFinishReason === "max_tokens") {
+                    const continueHistoryMsg = {
+                        id: "continue_" + Date.now(),
+                        sessionId: currentSessionId,
+                        role: "user",
+                        content: "ادامه بده"
+                    };
+                    chatHistory.push(continueHistoryMsg);
+                    saveMessageToDB(continueHistoryMsg);
+                    await handleSendMessageSilentContinue(aiMsg, aiRow, aiBubble);
+                }
+
+            } catch (err) {
+                console.error("Silent Continue error:", err);
+                const indNode = document.getElementById("silentContinueIndicator");
+                if (indNode) indNode.remove();
             }
         }
 
