@@ -2602,14 +2602,14 @@
         function setupCodeBlockEventsForElement(element) {
             element.querySelectorAll(".copy-code-btn").forEach(btn => {
                 btn.onclick = (e) => {
-                    const code = decodeURIComponent(e.target.dataset.code);
+                    const code = decodeURIComponent(btn.dataset.code);
                     navigator.clipboard.writeText(code).then(() => {
-                        const originalText = e.target.innerText;
-                        e.target.innerText = "✅ کپی شد!";
-                        e.target.classList.add("copied");
+                        const originalText = btn.innerText;
+                        btn.innerText = "✅ کپی شد!";
+                        btn.classList.add("copied");
                         setTimeout(() => {
-                            e.target.innerText = originalText;
-                            e.target.classList.remove("copied");
+                            btn.innerText = originalText;
+                            btn.classList.remove("copied");
                         }, 2000);
                     });
                 };
@@ -2617,8 +2617,8 @@
 
             element.querySelectorAll(".download-code-btn").forEach(btn => {
                 btn.onclick = (e) => {
-                    const code = decodeURIComponent(e.target.dataset.code);
-                    const lang = e.target.dataset.lang || "txt";
+                    const code = decodeURIComponent(btn.dataset.code);
+                    const lang = btn.dataset.lang || "txt";
 
                     const extensions = {
                         javascript: "js", js: "js",
