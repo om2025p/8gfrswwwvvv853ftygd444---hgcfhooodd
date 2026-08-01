@@ -1692,6 +1692,41 @@
             updateHeaderTitle();
             scrollToBottom();
 
+            // بررسی و بازیابی خودکار پاسخ‌های نیمه‌کاره در صورت قطع اتصال یا برخورد به محدودیت توکن
+            const lastMsg = chatHistory[chatHistory.length - 1];
+            if (lastMsg && lastMsg.role === "model" && !isGenerating) {
+                const wasInterrupted = localStorage.getItem("generating_session_" + sessionId) === "true";
+                const reachedTokenLimit = lastMsg.finishReason === "MAX_TOKENS" || lastMsg.finishReason === "max_tokens";
+
+                if (wasInterrupted || reachedTokenLimit) {
+                    console.log("Auto-resume triggered for session: " + sessionId);
+
+                    const aiRows = chatContainer.querySelectorAll(".message-row.ai");
+                    if (aiRows.length > 0) {
+                        const lastAiRow = aiRows[aiRows.length - 1];
+                        const lastAiBubble = lastAiRow.querySelector(".message-bubble");
+                        if (lastAiBubble) {
+                            isGenerating = true;
+
+                            const continueHistoryMsg = {
+                                id: "continue_" + Date.now(),
+                                sessionId: sessionId,
+                                role: "user",
+                                content: "ادامه بده"
+                            };
+                            chatHistory.push(continueHistoryMsg);
+                            saveMessageToDB(continueHistoryMsg);
+
+                            handleSendMessageSilentContinue(lastMsg, lastAiRow, lastAiBubble).then(() => {
+                                isGenerating = false;
+                            }).catch(() => {
+                                isGenerating = false;
+                            });
+                        }
+                    }
+                }
+            }
+
             // لود کردن پیش‌نویس پیام از حافظه برای این چت خاص
             const savedDraft = localStorage.getItem(`emarat_chat_draft_${sessionId}`);
             if (savedDraft) {
@@ -2742,6 +2777,7 @@
             chatInput.style.height = "auto";
             sendBtn.disabled = true;
             isGenerating = true;
+            localStorage.setItem("generating_session_" + currentSessionId, "true");
 
             // بررسی هوشمند برای رهگیری و پاسخ زنده و فوری به درخواست شمارش از ۱ تا ۵۰,۰۰۰
             const isCountTo50kPrompt = /([1۱]\s*(تا|to)\s*(50\s*[,.\s]?\s*000|۵۰\s*[,.\s]?\s*۰۰۰))/i.test(userText) ||
@@ -3148,6 +3184,7 @@
                 const typingNode = document.getElementById("typingRow");
                 if (typingNode) typingNode.remove();
 
+                aiMsg.finishReason = lastFinishReason;
                 if (isFirstChunk && accumulatedText) {
                     aiMsg.content = accumulatedText;
                     chatHistory.push(aiMsg);
@@ -3181,6 +3218,9 @@
 
                     // اجرای مجدد اتصال برای دریافت بقیه خروجی و ادغام درون حباب فعلی
                     await handleSendMessageSilentContinue(aiMsg, aiRow, aiBubble);
+                } else {
+                    // تولید پاسخ با موفقیت تمام شده و به سقف توکن نخورده
+                    localStorage.removeItem("generating_session_" + currentSessionId);
                 }
 
             } catch (error) {
@@ -3198,6 +3238,7 @@
                 chatHistory.push(errorMsg);
                 appendSingleMessage(errorMsg);
                 scrollToBottom();
+                localStorage.removeItem("generating_session_" + currentSessionId);
             } finally {
                 isGenerating = false;
                 sendBtn.disabled = !chatInput.value.trim() && attachedItems.length === 0;
@@ -3205,6 +3246,7 @@
         }
 
         async function handleSendMessageSilentContinue(aiMsg, aiRow, aiBubble) {
+            localStorage.setItem("generating_session_" + currentSessionId, "true");
             // ایجاد افکت لودینگ جزیی در قاب برای اینکه کاربر بداند ادامه چت زنده در جریان است
             const indicator = document.createElement("div");
             indicator.id = "silentContinueIndicator";
@@ -3392,9 +3434,11 @@
 
                 // به‌روزرسانی نهایی پیام در دیتابیس فعال
                 aiMsg.content = accumulatedText;
+                aiMsg.finishReason = lastFinishReason;
                 const idx = chatHistory.findIndex(m => m.id === aiMsg.id);
                 if (idx !== -1) {
                     chatHistory[idx].content = accumulatedText;
+                    chatHistory[idx].finishReason = lastFinishReason;
                 }
                 saveMessageToDB(aiMsg);
 
@@ -3409,12 +3453,15 @@
                     chatHistory.push(continueHistoryMsg);
                     saveMessageToDB(continueHistoryMsg);
                     await handleSendMessageSilentContinue(aiMsg, aiRow, aiBubble);
+                } else {
+                    localStorage.removeItem("generating_session_" + currentSessionId);
                 }
 
             } catch (err) {
                 console.error("Silent Continue error:", err);
                 const indNode = document.getElementById("silentContinueIndicator");
                 if (indNode) indNode.remove();
+                localStorage.removeItem("generating_session_" + currentSessionId);
             }
         }
 
