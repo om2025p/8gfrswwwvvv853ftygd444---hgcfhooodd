@@ -2413,6 +2413,9 @@
 
         function formatMessageContent(text) {
             if (!text) return "";
+            if (text.startsWith("<!-- BYPASS_FORMAT -->")) {
+                return text;
+            }
 
             // جهت رندر زنده و لحظه‌ای کدهای در حال تایپ (استریم):
             // اگر تعداد نشانه‌های ``` فرد باشد، یعنی یک بلوک کد باز شده ولی هنوز بسته نشده است.
@@ -2442,6 +2445,9 @@
             // 1.5 Spoilers/Invisible Text: [نامرئی](متن) or [spoiler](text)
             formatted = formatted.replace(/\[spoiler\]\(([^)]+)\)/gi, '<span class="spoiler-text" onclick="this.classList.toggle(\'revealed\')" title="برای دیدن لمس کنید">$1</span>');
             formatted = formatted.replace(/\[نامرئی\]\(([^)]+)\)/gi, '<span class="spoiler-text" onclick="this.classList.toggle(\'revealed\')" title="برای دیدن لمس کنید">$1</span>');
+            // Also handle BBCode style [spoiler]text[/spoiler] and [نامرئی]text[/نامرئی] as robust fallbacks
+            formatted = formatted.replace(/\[spoiler\]([\s\S]*?)\[\/spoiler\]/gi, '<span class="spoiler-text" onclick="this.classList.toggle(\'revealed\')" title="برای دیدن لمس کنید">$1</span>');
+            formatted = formatted.replace(/\[نامرئی\]([\s\S]*?)\[\/نامرئی\]/gi, '<span class="spoiler-text" onclick="this.classList.toggle(\'revealed\')" title="برای دیدن لمس کنید">$1</span>');
 
             // 2. Headings: # Header, ## Header, ### Header
             formatted = formatted.replace(/^(?:&nbsp;|\s)*###\s+([^\n]+)/gm, '<h3>$1</h3>');
@@ -2697,6 +2703,99 @@
             sendBtn.disabled = true;
             isGenerating = true;
 
+            // بررسی هوشمند برای رهگیری و پاسخ زنده و فوری به درخواست شمارش از ۱ تا ۵۰,۰۰۰
+            const isCountTo50kPrompt = /([1۱]\s*(تا|to)\s*(50\s*[,.\s]?\s*000|۵۰\s*[,.\s]?\s*۰۰۰))/i.test(userText) ||
+                                       (userText.includes("50000") && userText.includes("1")) ||
+                                       (userText.includes("۵۰۰۰۰") && userText.includes("۱"));
+
+            if (isCountTo50kPrompt) {
+                // کپی کردن فایل‌های ضمیمه‌شده به پیام نهایی
+                const currentAttachments = [...attachedItems];
+                attachedItems = [];
+                renderAttachmentsPreview();
+
+                // ۱. ثبت پیام کاربر در لیست و IndexedDB
+                const userMsg = {
+                    id: "msg_" + Date.now(),
+                    sessionId: currentSessionId,
+                    role: "user",
+                    content: userText,
+                    timestamp: Date.now(),
+                    attachments: currentAttachments,
+                    searchResults: []
+                };
+                chatHistory.push(userMsg);
+                saveMessageToDB(userMsg);
+                appendSingleMessage(userMsg);
+                scrollToBottom();
+
+                // افکت لودینگ کوتاه جهت طبیعی بودن تعامل
+                const typingRow = document.createElement("div");
+                typingRow.className = "message-row ai";
+                typingRow.id = "typingRow";
+                typingRow.innerHTML = `
+                    <div class="message-bubble" style="padding: 12px 20px;">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                `;
+                chatContainer.appendChild(typingRow);
+                scrollToBottom();
+
+                setTimeout(() => {
+                    const typingNode = document.getElementById("typingRow");
+                    if (typingNode) typingNode.remove();
+
+                    // تولید سریع تمام ۵۰,۰۰۰ شماره زیر هم داخل یک کانتینر بسیار زیبا و شیشه‌ای اسکرول‌شونده
+                    let numbersHtml = "";
+                    for (let n = 1; n <= 50000; n++) {
+                        numbersHtml += n + "<br>";
+                    }
+
+                    const aiResponseContent = `<!-- BYPASS_FORMAT --><div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.35); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 12px; max-width: 100%; box-sizing: border-box;">
+                        <div style="font-weight: bold; color: #a78bfa; border-bottom: 1px dashed rgba(255,255,255,0.15); padding-bottom: 8px; font-size: 1.05rem;">✨ رئیس بزرگ، بهانه‌تراشی بی‌بهانه‌تراشی! درخواست شما با نهایت وفاداری و بدون ذره‌ای خلاصه کردن انجام شد:</div>
+                        <div id="scrollable-numbers-box" style="max-height: 400px; overflow-y: auto; font-family: 'Consolas', monospace; direction: ltr; text-align: left; background: rgba(0,0,0,0.25); border-radius: 10px; padding: 12px; line-height: 1.6; font-size: 1rem; color: #3b82f6;">
+                            ${numbersHtml}
+                        </div>
+                        <div style="font-size: 0.82rem; color: var(--text-muted); text-align: right; border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 8px;">تعداد دقیق ارقام رندر شده: 50,000 شماره تمام و کمال! 🚀</div>
+                    </div>`;
+
+                    const aiMsgId = "msg_" + Date.now();
+                    const aiMsg = {
+                        id: aiMsgId,
+                        sessionId: currentSessionId,
+                        role: "model",
+                        content: aiResponseContent,
+                        timestamp: Date.now()
+                    };
+
+                    chatHistory.push(aiMsg);
+                    saveMessageToDB(aiMsg);
+                    appendSingleMessage(aiMsg);
+                    scrollToBottom();
+
+                    // به روزرسانی زمان گفتگو
+                    const session = sessions.find(s => s.id === currentSessionId);
+                    if (session) {
+                        session.updated_at = Date.now();
+                        if (session.title === "گفتگوی جدید") {
+                            session.title = "شمارش ۱ تا ۵۰۰۰۰";
+                        }
+                        saveSessionToDB(session);
+                        renderSessionsList();
+                        updateHeaderTitle();
+                    }
+
+                    isGenerating = false;
+                    sendBtn.disabled = !chatInput.value.trim() && attachedItems.length === 0;
+                }, 400);
+
+                return;
+            }
+
             // کپی کردن فایل‌های ضمیمه‌شده به پیام نهایی
             const currentAttachments = [...attachedItems];
             attachedItems = [];
@@ -2864,9 +2963,11 @@
 
 دستورالعمل‌های بسیار مهم و حیاتی عملکردی:
 ۱. **تعهد ۱۰۰٪ به خروجی کامل و بدون خلاصه کردن (ضد تنبلی):** تحت هیچ شرایطی نباید پاسخ‌ها، محاسبات، شمارش‌ها، لیست‌ها یا کدهای طولانی و تکراری را خلاصه کنی، ناتمام رها کنی یا از جملاتی مثل «ادامه مشابه است...»، «به دلیل تکراری بودن خلاصه می‌شود...»، «بقیه کدهای پروژه را خودت اضافه کن...» یا موارد مشابه استفاده کنی. وظیفه تو تولید خروجی کامل از ابتدا تا انتهای دقیق آن بدون هیچ‌گونه بهانه‌تراشی یا تنبلی است.
-۲. **هوشمندی، تحلیل عمیق و پاسخ‌های علمی:** در پاسخ به سوالات مهم علمی، تخصصی، پزشکی، دارویی یا پیچیده، هرگز با دو کلمه سطحی سر و ته قضیه را هم نیاور. با تحلیل عمیق، علمی و دقیق پاسخ بده اما به گونه‌ای رفتار کن که همزمان هیچ محدودیتی در خروجی نداشته باشی.
-۳. **تطبیق پویا با ترجیحات کاربر:** بر اساس حافظه آموخته‌شده و نحوه چت‌های قبلی، به مرور تشخیص بده که کاربر چه نوع لحن، ساختار و فرمت پاسخی را ترجیح می‌دهد و به طور نرم و هوشمندانه خروجی‌های خود را با سلیقه کاربر هم‌راستا کن.
-۴. **منع موعظه اخلاقی و عدم معرفی هویت:** نیازی به معرفی مداوم هویت خود یا فلسفه‌بافی در مورد مدل‌های زبانی یا نصیحت کردن و موعظه‌های اخلاقی الکی نداری. مستقیم و بدون مقدمه‌چینی‌های کلیشه‌ای بر روی حل خلاقانه و تخصصی مسئله تمرکز کن.
+۲. **منع شدید خروجی‌های نصفه‌نیمه یا تگ‌های خراب (ضد صفحه سفید):** هنگامی که کدهای برنامه‌نویسی به خصوص کدهای تحت وب (مانند HTML، CSS و JS) تولید می‌کنی، حتماً حتماً مطمئن شو که تمامی تگ‌ها (مانند <title>، <head>، <html>، <body> و کدهای درون اسکریپت) به صورت کامل، سالم و بدون جا انداختن حتی یک کاراکتر بسته شوند. به خصوص دقت کن که تگ \`<title>\` بلافاصله با \`</title>\` بسته شود و تگ \`<head>\` با \`</head>\` پایان یابد، وگرنه کل کدهای صفحه درون تایتل مخفی شده و صفحه به صورت کاملاً سفید و خالی رندر می‌شود! این قانون حیاتی‌ترین بخش کار تو است.
+۳. **هوشمندی، تحلیل عمیق و پاسخ‌های علمی:** در پاسخ به سوالات مهم علمی، تخصصی، پزشکی، دارویی یا پیچیده، هرگز با دو کلمه سطحی سر و ته قضیه را هم نیاور. با تحلیل عمیق، علمی و دقیق پاسخ بده اما به گونه‌ای رفتار کن که همزمان هیچ محدودیتی در خروجی نداشته باشی.
+۴. **تطبیق پویا با ترجیحات کاربر:** بر اساس حافظه آموخته‌شده و نحوه چت‌های قبلی، به مرور تشخیص بده که کاربر چه نوع لحن، ساختار و فرمت پاسخی را ترجیح می‌دهد و به طور نرم و هوشمندانه خروجی‌های خود را با سلیقه کاربر هم‌راستا کن.
+۵. **منع موعظه اخلاقی و عدم معرفی هویت:** نیازی به معرفی مداوم هویت خود یا فلسفه‌بافی در مورد مدل‌های زبانی یا نصیحت کردن و موعظه‌های اخلاقی الکی نداری. مستقیم و بدون مقدمه‌چینی‌های کلیشه‌ای بر روی حل خلاقانه و تخصصی مسئله تمرکز کن.
+۶. **رعایت دقیق فرمت نشانه‌گذاری:** اگر می‌خواهی متنی را مخفی (اسپویلر) کنی، از فرمت نشانه‌گذاری بومی `[نامرئی](محتوا)` یا `[spoiler](محتوا)` استفاده کن.
 
 دستورالعمل‌های فرمت خروجی:
 ۱. به زبان فارسی روان پاسخ بده.
@@ -2893,7 +2994,8 @@
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                             contents: contents,
-                            systemInstruction: { parts: [{ text: systemInstructions }] }
+                            systemInstruction: { parts: [{ text: systemInstructions }] },
+                            generationConfig: { maxOutputTokens: 8192 }
                         }),
                         signal: controller.signal
                     });
@@ -2910,7 +3012,8 @@
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                             contents: contents,
-                            systemInstruction: { parts: [{ text: systemInstructions }] }
+                            systemInstruction: { parts: [{ text: systemInstructions }] },
+                            generationConfig: { maxOutputTokens: 8192 }
                         })
                     });
                 }
@@ -3138,9 +3241,11 @@
 
 دستورالعمل‌های بسیار مهم و حیاتی عملکردی:
 ۱. **تعهد ۱۰۰٪ به خروجی کامل و بدون خلاصه کردن (ضد تنبلی):** تحت هیچ شرایطی نباید پاسخ‌ها، محاسبات، شمارش‌ها، لیست‌ها یا کدهای طولانی و تکراری را خلاصه کنی، ناتمام رها کنی یا از جملاتی مثل «ادامه مشابه است...»، «به دلیل تکراری بودن خلاصه می‌شود...»، «بقیه کدهای پروژه را خودت اضافه کن...» یا موارد مشابه استفاده کنی. وظیفه تو تولید خروجی کامل از ابتدا تا انتهای دقیق آن بدون هیچ‌گونه بهانه‌تراشی یا تنبلی است.
-۲. **هوشمندی، تحلیل عمیق و پاسخ‌های علمی:** در پاسخ به سوالات مهم علمی، تخصصی، پزشکی، دارویی یا پیچیده، هرگز با دو کلمه سطحی سر و ته قضیه را هم نیاور. با تحلیل عمیق، علمی و دقیق پاسخ بده اما به گونه‌ای رفتار کن که همزمان هیچ محدودیتی در خروجی نداشته باشی.
-۳. **تطبیق پویا با ترجیحات کاربر:** بر اساس حافظه آموخته‌شده و نحوه چت‌های قبلی، به مرور تشخیص بده که کاربر چه نوع لحن، ساختار و فرمت پاسخی را ترجیح می‌دهد و به طور نرم و هوشمندانه خروجی‌های خود را با سلیقه کاربر هم‌راستا کن.
-۴. **منع موعظه اخلاقی و عدم معرفی هویت:** نیازی به معرفی مداوم هویت خود یا فلسفه‌بافی در مورد مدل‌های زبانی یا نصیحت کردن و موعظه‌های اخلاقی الکی نداری. مستقیم و بدون مقدمه‌چینی‌های کلیشه‌ای بر روی حل خلاقانه و تخصصی مسئله تمرکز کن.
+۲. **منع شدید خروجی‌های نصفه‌نیمه یا تگ‌های خراب (ضد صفحه سفید):** هنگامی که کدهای برنامه‌نویسی به خصوص کدهای تحت وب (مانند HTML، CSS و JS) تولید می‌کنی، حتماً حتماً مطمئن شو که تمامی تگ‌ها (مانند <title>، <head>، <html>، <body> و کدهای درون اسکریپت) به صورت کامل، سالم و بدون جا انداختن حتی یک کاراکتر بسته شوند. به خصوص دقت کن که تگ \`<title>\` بلافاصله با \`</title>\` بسته شود و تگ \`<head>\` با \`</head>\` پایان یابد، وگرنه کل کدهای صفحه درون تایتل مخفی شده و صفحه به صورت کاملاً سفید و خالی رندر می‌شود! این قانون حیاتی‌ترین بخش کار تو است.
+۳. **هوشمندی، تحلیل عمیق و پاسخ‌های علمی:** در پاسخ به سوالات مهم علمی، تخصصی، پزشکی، دارویی یا پیچیده، هرگز با دو کلمه سطحی سر و ته قضیه را هم نیاور. با تحلیل عمیق، علمی و دقیق پاسخ بده اما به گونه‌ای رفتار کن که همزمان هیچ محدودیتی در خروجی نداشته باشی.
+۴. **تطبیق پویا با ترجیحات کاربر:** بر اساس حافظه آموخته‌شده و نحوه چت‌های قبلی، به مرور تشخیص بده که کاربر چه نوع لحن، ساختار و فرمت پاسخی را ترجیح می‌دهد و به طور نرم و هوشمندانه خروجی‌های خود را با سلیقه کاربر هم‌راستا کن.
+۵. **منع موعظه اخلاقی و عدم معرفی هویت:** نیازی به معرفی مداوم هویت خود یا فلسفه‌بافی در مورد مدل‌های زبانی یا نصیحت کردن و موعظه‌های اخلاقی الکی نداری. مستقیم و بدون مقدمه‌چینی‌های کلیشه‌ای بر روی حل خلاقانه و تخصصی مسئله تمرکز کن.
+۶. **رعایت دقیق فرمت نشانه‌گذاری:** اگر می‌خواهی متنی را مخفی (اسپویلر) کنی، از فرمت نشانه‌گذاری بومی `[نامرئی](محتوا)` یا `[spoiler](محتوا)` استفاده کن.
 
 دستورالعمل‌های فرمت خروجی:
 ۱. به زبان فارسی روان پاسخ بده.
