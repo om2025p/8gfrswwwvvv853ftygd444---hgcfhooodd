@@ -395,6 +395,63 @@
             color: var(--negative-color);
         }
 
+        /* ===== استایل خلاصه وضعیت مثبت و منفی تاریخچه ===== */
+        .history-stats-summary {
+            background: rgba(255, 255, 255, 0.04);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            text-align: center;
+        }
+
+        .stats-badge-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .stats-badge {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .stats-badge.green-badge {
+            background: rgba(52, 211, 153, 0.1);
+            color: var(--positive-color);
+            border-color: rgba(52, 211, 153, 0.2);
+        }
+
+        .stats-badge.red-badge {
+            background: rgba(248, 113, 113, 0.1);
+            color: var(--negative-color);
+            border-color: rgba(248, 113, 113, 0.2);
+        }
+
+        .stats-badge-val {
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
+        .stats-witty-text {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 500;
+        }
+
         /* ===== چارت رشد سبک ===== */
         .chart-container-inner {
             padding: 15px;
@@ -536,6 +593,10 @@
                 <div class="history-list" id="live-history-list">
                     <!-- آیتم‌های تاریخچه به صورت پویا -->
                 </div>
+                <!-- بخش جدید آمار روزهای مثبت/منفی زنده -->
+                <div class="history-stats-summary" id="live-history-stats-summary">
+                    <!-- به صورت پویا پر می‌شود -->
+                </div>
                 <div class="chart-container-inner">
                     <span class="chart-title">📈 نمودار رشد مجموع درصدها</span>
                     <div class="chart-canvas-wrapper">
@@ -570,13 +631,13 @@
     <div id="analysis-tab" class="content-section">
         <div class="stats-summary-card">
             <div class="stats-summary-title">📈 مقایسه میانگین‌های روزانه سود</div>
-            <div class="avg-grid" id="avg-analysis-container">
-                <!-- آنالیز سودها به صورت پویا ساخته میشن -->
-            </div>
-            <!-- مجموع میانگین‌های روزانه در پایین قرار می‌گیرد -->
-            <div id="analysis-total-container" style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; text-align: center; display: none;">
+            <!-- مجموع میانگین‌های روزانه در بالا قرار می‌گیرد -->
+            <div id="analysis-total-container" style="margin-top: 10px; margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; text-align: center; display: none;">
                 <div style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); font-weight: 600; margin-bottom: 5px;">📊 مجموع میانگین‌های روزانه سود</div>
                 <div id="analysis-total-value" style="font-size: 1.8rem; font-weight: 800; direction: ltr;">0.000%</div>
+            </div>
+            <div class="avg-grid" id="avg-analysis-container">
+                <!-- آنالیز سودها به صورت پویا ساخته میشن -->
             </div>
         </div>
 
@@ -590,8 +651,12 @@
                 <div class="history-list" id="analysis-history-list">
                     <!-- آیتم‌های تاریخچه به صورت پویا -->
                 </div>
+                <!-- بخش جدید آمار روزهای مثبت/منفی آنالیز -->
+                <div class="history-stats-summary" id="analysis-history-stats-summary">
+                    <!-- به صورت پویا پر می‌شود -->
+                </div>
                 <div class="chart-container-inner">
-                    <span class="chart-title">📈 نمودار رشد مجموع درصدها</span>
+                    <span class="chart-title">📈 نمودار رشد میانگین درصدها</span>
                     <div class="chart-canvas-wrapper">
                         <canvas id="analysis-growth-canvas" class="growth-canvas"></canvas>
                     </div>
@@ -861,25 +926,69 @@
 
             ['live', 'analysis'].forEach(tabName => {
                 const listEl = document.getElementById(`${tabName}-history-list`);
+                const statsEl = document.getElementById(`${tabName}-history-stats-summary`);
                 if (!listEl) return;
 
                 if (history.length === 0) {
                     listEl.innerHTML = `<div class="no-data-hint" style="padding: 15px 0;">📭 هیچ تاریخچه‌ای یافت نشد.</div>`;
+                    if (statsEl) statsEl.style.display = 'none';
                     return;
                 }
 
                 listEl.innerHTML = history.map(item => {
-                    const isPositive = item.value >= 0;
+                    const isTabAnalysis = tabName === 'analysis';
+                    const val = isTabAnalysis ? (item.value / 5) : item.value;
+                    const precision = isTabAnalysis ? 3 : 2;
+                    const isPositive = val >= 0;
                     const valueSign = isPositive ? '+' : '';
                     const dateText = formatHistoryDate(item.dayString);
 
                     return `
                         <div class="history-item">
                             <span class="history-item-date">📅 ${dateText}</span>
-                            <span class="history-item-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${item.value.toFixed(2)}%</span>
+                            <span class="history-item-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${val.toFixed(precision)}%</span>
                         </div>
                     `;
                 }).join('');
+
+                // پیاده‌سازی شمارشگر عددی روزهای سبز و قرمز به شکل پویا
+                if (statsEl) {
+                    statsEl.style.display = 'flex';
+                    let positiveCount = 0;
+                    let negativeCount = 0;
+
+                    history.forEach(item => {
+                        const val = tabName === 'analysis' ? (item.value / 5) : item.value;
+                        if (val > 0) positiveCount++;
+                        else if (val < 0) negativeCount++;
+                    });
+
+                    const diff = positiveCount - negativeCount;
+                    let statsWittyText = '';
+                    if (positiveCount > negativeCount) {
+                        statsWittyText = `ارتش سبزپوش صعودی با اختلاف ${diff} روز جلوتره! خرس‌های قرمز بیچاره دارن زار زار گریه می‌کنن! 🟢🥳🚀`;
+                    } else if (negativeCount > positiveCount) {
+                        statsWittyText = `ای دل غافل! لشکر قرمزهای خرس‌نما با اختلاف ${Math.abs(diff)} روز جلو زدن. یه دمنوش بابونه بنوشید تا ان‌شاءالله فردا سبز بشیم! 🔴🐻☕`;
+                    } else {
+                        statsWittyText = `تساوی مقتدرانه! گاوهای سبز و خرس‌های سرخ شانه به شانه هم ایستادن. بازار کاملاً صلح‌آمیزه! 🕊️🤝`;
+                    }
+
+                    statsEl.innerHTML = `
+                        <div class="stats-badge-container">
+                            <div class="stats-badge green-badge">
+                                <span>روزهای سبز (مثبت)</span>
+                                <span class="stats-badge-val">🟢 ${positiveCount}</span>
+                            </div>
+                            <div class="stats-badge red-badge">
+                                <span>روزهای قرمز (منفی)</span>
+                                <span class="stats-badge-val">🔴 ${negativeCount}</span>
+                            </div>
+                        </div>
+                        <div class="stats-witty-text">
+                            ${statsWittyText}
+                        </div>
+                    `;
+                }
             });
         }
 
@@ -889,7 +998,13 @@
             if (!canvas) return;
 
             const ctx = canvas.getContext('2d');
-            const history = [...calculateDailyHistory()].reverse();
+            const isTabAnalysis = tabName === 'analysis';
+            const history = [...calculateDailyHistory()].reverse().map(item => {
+                return {
+                    ...item,
+                    value: isTabAnalysis ? (item.value / 5) : item.value
+                };
+            });
 
             const rect = canvas.getBoundingClientRect();
             canvas.width = rect.width * (window.devicePixelRatio || 1);
@@ -976,8 +1091,8 @@
             ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
             ctx.font = '10px Segoe UI, Tahoma';
             ctx.textAlign = 'right';
-            ctx.fillText(`${maxVal.toFixed(1)}%`, padding.left - 6, padding.top + 8);
-            ctx.fillText(`${minVal.toFixed(1)}%`, padding.left - 6, height - padding.bottom);
+            ctx.fillText(`${maxVal.toFixed(isTabAnalysis ? 3 : 1)}%`, padding.left - 6, padding.top + 8);
+            ctx.fillText(`${minVal.toFixed(isTabAnalysis ? 3 : 1)}%`, padding.left - 6, height - padding.bottom);
 
             ctx.textAlign = 'left';
             ctx.fillText(formatHistoryDate(history[0].dayString), padding.left, height - 4);
