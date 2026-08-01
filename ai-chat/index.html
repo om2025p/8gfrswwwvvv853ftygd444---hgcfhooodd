@@ -2169,6 +2169,46 @@
                 }
             }
 
+            // دکمه دستی ادامه پاسخ زنده برای هوش مصنوعی
+            if (msg.role === "model" && !msg.content.includes("<!-- BYPASS_FORMAT -->")) {
+                const contRow = document.createElement("div");
+                contRow.style = "display: flex; align-items: center; justify-content: flex-start; margin-top: 6px;";
+
+                const contBtn = document.createElement("button");
+                contBtn.className = "continue-ai-btn";
+                contBtn.innerHTML = "⚡ ادامه تولید پاسخ (کد کامل)";
+                contBtn.style = "background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 4px 10px; color: #60a5fa; cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; gap: 4px; transition: all 0.2s;";
+
+                contBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    if (isGenerating) return;
+
+                    contBtn.disabled = true;
+                    contBtn.innerHTML = "⏳ در حال ادامه دادن...";
+                    isGenerating = true;
+
+                    // ثبت پیام پنهان "ادامه بده" در تاریخچه
+                    const continueHistoryMsg = {
+                        id: "continue_" + Date.now(),
+                        sessionId: currentSessionId,
+                        role: "user",
+                        content: "ادامه بده"
+                    };
+                    chatHistory.push(continueHistoryMsg);
+                    saveMessageToDB(continueHistoryMsg);
+
+                    // صدا زدن ادامه پاسخ زنده روی حباب پیام فعلی
+                    await handleSendMessageSilentContinue(msg, row, bubble);
+
+                    contBtn.disabled = false;
+                    contBtn.innerHTML = "⚡ ادامه تولید پاسخ (کد کامل)";
+                    isGenerating = false;
+                };
+
+                contRow.appendChild(contBtn);
+                bubble.appendChild(contRow);
+            }
+
             const timeSpan = document.createElement("span");
             timeSpan.className = "message-time";
             timeSpan.innerText = new Date(msg.timestamp).toLocaleTimeString("fa-IR", { hour: '2-digit', minute: '2-digit' });
