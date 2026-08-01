@@ -1712,7 +1712,7 @@
                                 id: "continue_" + Date.now(),
                                 sessionId: sessionId,
                                 role: "user",
-                                content: "ادامه بده"
+                                content: getContinuePrompt(lastMsg ? lastMsg.content : "")
                             };
                             chatHistory.push(continueHistoryMsg);
                             saveMessageToDB(continueHistoryMsg);
@@ -2227,7 +2227,7 @@
                         id: "continue_" + Date.now(),
                         sessionId: currentSessionId,
                         role: "user",
-                        content: "ادامه بده"
+                        content: getContinuePrompt(msg.content)
                     };
                     chatHistory.push(continueHistoryMsg);
                     saveMessageToDB(continueHistoryMsg);
@@ -2486,6 +2486,16 @@
                 .replace(/'/g, "&#039;");
         }
 
+        function getContinuePrompt(content) {
+            if (!content) return "ادامه بده";
+            const codeBlockMatches = content.match(/```/g);
+            const isInsideCodeBlock = codeBlockMatches && (codeBlockMatches.length % 2 !== 0);
+            if (isInsideCodeBlock) {
+                return "ادامه بده. دقت کن که تو دقیقاً در وسط یک بلوک کد قطع شدی. بدون باز کردن بلوک کد جدید با ```، مستقیماً ادامه‌ی محتوای کد قبلی را از همان کاراکتر قطع شده بنویس و پس از پایان، آن را با ``` ببند.";
+            }
+            return "ادامه بده";
+        }
+
         function formatMessageContent(text) {
             if (!text) return "";
             if (text.startsWith("<!-- BYPASS_FORMAT -->")) {
@@ -2636,7 +2646,7 @@
                         <pre class="code-content"><code class="hljs">${highlighted}</code></pre>
                     </div>
                 `;
-                formatted = formatted.replace(item.placeholder, blockHTML);
+                formatted = formatted.replace(item.placeholder, () => blockHTML);
             });
 
             return formatted;
@@ -2674,7 +2684,7 @@
 
             for (let i = placeholders.length - 1; i >= 0; i--) {
                 const p = placeholders[i];
-                escaped = escaped.replace(p.id, `<span class="${p.cls}">${p.text}</span>`);
+                escaped = escaped.replace(p.id, () => `<span class="${p.cls}">${p.text}</span>`);
             }
 
             return escaped;
@@ -3046,6 +3056,7 @@
 ۶. **تطبیق پویا با ترجیحات کاربر:** بر اساس حافظه آموخته‌شده و نحوه چت‌های قبلی, به مرور تشخیص بده که کاربر چه نوع لحن, ساختار و فرمت پاسخی را ترجیح می‌دهد و به طور نرم و هوشمندانه خروجی‌های خود را با سلیقه کاربر هم‌راستا کن.
 ۷. **منع موعظه اخلاقی و عدم معرفی هویت:** نیازی به معرفی مداوم هویت خود یا فلسفه‌بافی در مورد مدل‌های زبانی یا نصیحت کردن و موعظه‌های اخلاقی الکی نداری. مستقیم و بدون مقدمه‌چینی‌های کلیشه‌ای بر روی حل خلاقانه و تخصصی مسئله تمرکز کن.
 ۸. **رعایت دقیق فرمت نشانه‌گذاری:** اگر می‌خواهی متنی را مخفی (اسپویلر) کنی, از فرمت نشانه‌گذاری بومی \`[نامرئی](محتوا)\` یا \`[spoiler](محتوا)\` استفاده کن.
+۹. **منع شدید استفاده خودسرانه از بلوک کد برای متن‌های معمولی و شمارش اعداد:** هرگز متن‌های معمولی، داستان‌ها، شمارش‌های ساده اعداد (مانند ۱ تا ۵۰۰۰ یا هر شمارش دیگری) یا لیست‌های غیراجرایی را درون بلوک کد قرار نده. تمام این موارد باید به صورت متن معمولی در خود صفحه چت نمایش داده شوند. تنها کدهای واقعی برنامه‌نویسی (مانند HTML، CSS، JS، Python و...) باید در بلوک کد قرار بگیرند.
 
 دستورالعمل‌های فرمت خروجی:
 ۱. به زبان فارسی روان پاسخ بده.
@@ -3211,7 +3222,7 @@
                         id: "continue_" + Date.now(),
                         sessionId: currentSessionId,
                         role: "user",
-                        content: "ادامه بده"
+                        content: getContinuePrompt(aiMsg.content)
                     };
                     chatHistory.push(continueHistoryMsg);
                     saveMessageToDB(continueHistoryMsg);
@@ -3332,6 +3343,7 @@
 ۶. **تطبیق پویا با ترجیحات کاربر:** بر اساس حافظه آموخته‌شده و نحوه چت‌های قبلی, به مرور تشخیص بده که کاربر چه نوع لحن, ساختار و فرمت پاسخی را ترجیح می‌دهد و به طور نرم و هوشمندانه خروجی‌های خود را با سلیقه کاربر هم‌راستا کن.
 ۷. **منع موعظه اخلاقی و عدم معرفی هویت:** نیازی به معرفی مداوم هویت خود یا فلسفه‌بافی در مورد مدل‌های زبانی یا نصیحت کردن و موعظه‌های اخلاقی الکی نداری. مستقیم و بدون مقدمه‌چینی‌های کلیشه‌ای بر روی حل خلاقانه و تخصصی مسئله تمرکز کن.
 ۸. **رعایت دقیق فرمت نشانه‌گذاری:** اگر می‌خواهی متنی را مخفی (اسپویلر) کنی, از فرمت نشانه‌گذاری بومی \`[نامرئی](محتوا)\` یا \`[spoiler](محتوا)\` استفاده کن.
+۹. **منع شدید استفاده خودسرانه از بلوک کد برای متن‌های معمولی و شمارش اعداد:** هرگز متن‌های معمولی، داستان‌ها، شمارش‌های ساده اعداد (مانند ۱ تا ۵۰۰۰ یا هر شمارش دیگری) یا لیست‌های غیراجرایی را درون بلوک کد قرار نده. تمام این موارد باید به صورت متن معمولی در خود صفحه چت نمایش داده شوند. تنها کدهای واقعی برنامه‌نویسی (مانند HTML، CSS، JS، Python و...) باید در بلوک کد قرار بگیرند.
 
 دستورالعمل‌های فرمت خروجی:
 ۱. به زبان فارسی روان پاسخ بده.
@@ -3448,7 +3460,7 @@
                         id: "continue_" + Date.now(),
                         sessionId: currentSessionId,
                         role: "user",
-                        content: "ادامه بده"
+                        content: getContinuePrompt(aiMsg.content)
                     };
                     chatHistory.push(continueHistoryMsg);
                     saveMessageToDB(continueHistoryMsg);
