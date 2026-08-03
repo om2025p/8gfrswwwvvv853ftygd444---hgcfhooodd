@@ -347,9 +347,14 @@
             </a>
             <h1>کیف پول صرافی تبدیل</h1>
         </div>
-        <button class="settings-btn" onclick="toggleSettings()">
-            <span>⚙️</span>
-        </button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="settings-btn" id="logoutBtn" style="display: none; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;" onclick="logoutWallet()">
+                <span>🚪</span>
+            </button>
+            <button class="settings-btn" onclick="toggleSettings()">
+                <span>⚙️</span>
+            </button>
+        </div>
     </header>
 
     <div class="container">
@@ -432,10 +437,69 @@
             </div>
         </div>
 
+        <!-- منوی کشویی تاریخچه تغییرات درصد -->
+        <div class="glass-panel" id="historyDropdown" style="display: none; padding: 0; overflow: hidden; border-radius: 24px;">
+            <div style="padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 700; user-select: none;" onclick="toggleHistoryDropdown()">
+                <span style="color: var(--primary-color); display: flex; align-items: center; gap: 8px;">📜 تاریخچه کامل تغییرات درصد</span>
+                <span id="historyArrow" style="transition: transform 0.3s ease; color: var(--primary-color);">▼</span>
+            </div>
+            <div id="historyDropdownContent" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease; background: rgba(0, 0, 0, 0.15); display: flex; flex-direction: column;">
+
+                <!-- بخش روزهای سبز و قرمز و متن طنز -->
+                <div style="background: rgba(255, 255, 255, 0.04); border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 15px; display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center;">
+                    <div style="display: flex; gap: 15px; justify-content: center; width: 100%;">
+                        <div style="flex: 1; padding: 8px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: bold; display: flex; flex-direction: column; gap: 4px; align-items: center; border: 1px solid rgba(52, 211, 153, 0.2); background: rgba(52, 211, 153, 0.1); color: var(--positive-color);">
+                            <span>روزهای سبز (مثبت)</span>
+                            <span id="greenDaysVal" style="font-size: 1.25rem; font-weight: 800;">🟢 ۰</span>
+                        </div>
+                        <div style="flex: 1; padding: 8px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: bold; display: flex; flex-direction: column; gap: 4px; align-items: center; border: 1px solid rgba(248, 113, 113, 0.2); background: rgba(248, 113, 113, 0.1); color: var(--negative-color);">
+                            <span>روزهای قرمز (منفی)</span>
+                            <span id="redDaysVal" style="font-size: 1.25rem; font-weight: 800;">🔴 ۰</span>
+                        </div>
+                    </div>
+                    <div id="wittyAnalysisText" style="font-size: 0.82rem; line-height: 1.5; color: rgba(255, 255, 255, 0.85); font-weight: 500;">
+                        تساوی مقتدرانه! گاوهای سبز و خرس‌های سرخ شانه به شانه هم ایستاده‌اند. 🕊️🤝
+                    </div>
+                </div>
+
+                <div id="historyList" style="padding: 15px; display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto;">
+                    <!-- آیتم‌های تاریخچه به صورت پویا -->
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
         const CF_WORKER_URL = "https://emarat-tabdeal-worker.qqqggggcc.workers.dev";
+
+        // مدیریت وضعیت دکمه خروج
+        function updateLogoutButtonVisibility() {
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (localStorage.getItem("tabdeal_api_key")) {
+                logoutBtn.style.display = 'flex';
+            } else {
+                logoutBtn.style.display = 'none';
+            }
+        }
+
+        // خروج امن از کیف پول صرافی تبدیل
+        function logoutWallet() {
+            if (confirm("آلپ عزیز، آیا واقعاً می‌خواهید از کیف پول صرافی تبدیل خارج شوید و اطلاعات محلی را پاکسازی کنید؟ 🚪🔐")) {
+                localStorage.removeItem("tabdeal_api_key");
+                localStorage.removeItem("tabdeal_api_secret");
+                localStorage.removeItem("tabdeal_cf_token");
+                localStorage.removeItem("tabdeal_cf_account_id");
+                localStorage.removeItem("tabdeal_last_percent_change");
+                localStorage.removeItem("tabdeal_last_value_toman");
+                localStorage.removeItem("tabdeal_last_value_tether");
+                localStorage.removeItem("tabdeal_last_updated_ts");
+                localStorage.removeItem("tabdeal_wallet_history");
+
+                alert("🚪 اطلاعات با موفقیت پاکسازی شد. به امید سودهای فضایی بعدی!");
+                window.location.reload();
+            }
+        }
 
         // پر کردن بقیه فیلدها از روی localStorage در صورت وجود
         if (localStorage.getItem("tabdeal_api_key")) {
@@ -464,6 +528,7 @@
             }
 
             btn.disabled = true;
+            btn.style.opacity = "0.7";
             btn.innerText = "درحال ارسال و ذخیره روی سرور کلودفلر... ☁️";
 
             try {
@@ -484,16 +549,39 @@
                     localStorage.setItem("tabdeal_cf_token", cfToken);
                     localStorage.setItem("tabdeal_cf_account_id", cfAccountId);
 
-                    alert("🎉 اطلاعات شما با موفقیت و در امنیت کامل روی کلودفلر ست شدند!");
-                    toggleSettings();
-                    loadWalletBalance();
+                    alert("🎉 اطلاعات شما با موفقیت ثبت شد!\n\n💡 سیستم به مدت ۱۰ ثانیه منتظر می‌ماند تا کلودفلر کلیدها را در سراسر جهان همگام‌سازی کند. سپس موجودی شما خودکار لود خواهد شد.");
+
+                    let secondsLeft = 10;
+                    btn.innerText = `⏳ در حال همگام‌سازی سرورها (${secondsLeft} ثانیه)...`;
+
+                    const interval = setInterval(() => {
+                        secondsLeft--;
+                        if (secondsLeft > 0) {
+                            btn.innerText = `⏳ در حال همگام‌سازی سرورها (${secondsLeft} ثانیه)...`;
+                        } else {
+                            clearInterval(interval);
+                        }
+                    }, 1000);
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.style.opacity = "1";
+                        btn.innerText = "ذخیره و تنظیم روی سرور کلودفلر ☁️";
+                        updateLogoutButtonVisibility();
+                        toggleSettings();
+                        loadWalletBalance();
+                    }, 10000);
+
                 } else {
                     alert("⚠️ خطا در ست کردن اطلاعات روی کلودفلر: " + (data.error || "خطای ناشناخته"));
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                    btn.innerText = "ذخیره و تنظیم روی سرور کلودفلر ☁️";
                 }
             } catch (err) {
                 alert("❌ خطا در برقراری ارتباط با سرور: " + err.message);
-            } finally {
                 btn.disabled = false;
+                btn.style.opacity = "1";
                 btn.innerText = "ذخیره و تنظیم روی سرور کلودفلر ☁️";
             }
         }
@@ -516,8 +604,10 @@
 
                 if (!response.ok || !data.success) {
                     if (data.error === "API_KEYS_NOT_CONFIGURED") {
-                        errBox.innerText = "🔌 کلیدهای API صرافی تبدیل روی سرور کلودفلر پیکربندی نشده‌اند. لطفاً از دکمه چرخ‌دنده ⚙️ بالا کلیدهای خود را تنظیم کنید تا محاسبات آغاز شود.";
-                        toggleSettings();
+                        errBox.innerText = "🔌 کلیدهای API صرافی تبدیل روی سرور کلودفلر هنوز همگام‌سازی نشده یا تنظیم نیستند. لطفاً چند ثانیه دیگر صفحه را رفرش کنید یا از دکمه ⚙️ تنظیمات بالا چک کنید.";
+                        if (!localStorage.getItem("tabdeal_api_key")) {
+                            toggleSettings();
+                        }
                     } else {
                         errBox.innerText = "❌ خطا در دریافت موجودی: " + (data.error || "خطای سرور");
                     }
@@ -533,6 +623,9 @@
                 // نمایش مقادیر با فرمت‌های شیک
                 document.getElementById('valToman').innerHTML = `${formatNumberPersian(Math.round(totalIrt))} <span style="color: #10b981; font-weight: 900; margin-right: 8px; font-size: 1.6rem; text-shadow: 0 0 10px rgba(16,185,129,0.3); vertical-align: middle;">تومان</span>`;
                 document.getElementById('valTether').innerHTML = `${formatNumberPersian(totalUsdt.toFixed(2))} <span style="color: #3b82f6; font-weight: 900; margin-right: 6px; font-size: 1.15rem; text-shadow: 0 0 10px rgba(59,130,246,0.3); vertical-align: middle;">تتر (USDT)</span>`;
+
+                // بروزرسانی دکمه خروج
+                updateLogoutButtonVisibility();
 
                 // بروزرسانی تاریخچه و محاسبه تغییرات ۲۴ ساعته درصدها
                 updateWalletHistory(totalIrt, totalUsdt);
@@ -642,6 +735,124 @@
 
             // رسم نمودار رشد
             renderGrowthChart(history);
+
+            // رسم تاریخچه درصدها
+            renderHistoryList(history);
+        }
+
+        // مدیریت منوی کشویی تاریخچه درصدها
+        let isHistoryDropdownOpen = false;
+        function toggleHistoryDropdown() {
+            isHistoryDropdownOpen = !isHistoryDropdownOpen;
+            const content = document.getElementById('historyDropdownContent');
+            const arrow = document.getElementById('historyArrow');
+            if (isHistoryDropdownOpen) {
+                content.style.maxHeight = '600px';
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                content.style.maxHeight = '0';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function renderHistoryList(history) {
+            const dropdown = document.getElementById('historyDropdown');
+            const listEl = document.getElementById('historyList');
+            const greenDaysVal = document.getElementById('greenDaysVal');
+            const redDaysVal = document.getElementById('redDaysVal');
+            const wittyAnalysisText = document.getElementById('wittyAnalysisText');
+
+            if (!dropdown || !listEl) return;
+
+            if (history.length < 2) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            dropdown.style.display = 'block';
+
+            // گروه‌بندی بر اساس روز شمسی برای ممانعت از تکرار ساعت‌ها
+            const dailyRecords = [];
+            const seenDates = new Set();
+
+            for (let i = history.length - 1; i >= 0; i--) {
+                const item = history[i];
+                try {
+                    const dateStr = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    }).format(new Date(item.timestamp));
+
+                    if (!seenDates.has(dateStr)) {
+                        seenDates.add(dateStr);
+                        dailyRecords.push({
+                            dateStr: dateStr,
+                            timestamp: item.timestamp,
+                            total_irt: item.total_irt,
+                            total_usdt: item.total_usdt
+                        });
+                    }
+                } catch(e) {}
+            }
+
+            // مرتب‌سازی بر اساس زمان صعودی برای محاسبه تغییرات درصد
+            dailyRecords.sort((a, b) => a.timestamp - b.timestamp);
+
+            const itemsHtml = [];
+            let positiveCount = 0;
+            let negativeCount = 0;
+
+            for (let i = 1; i < dailyRecords.length; i++) {
+                const current = dailyRecords[i];
+                const prev = dailyRecords[i - 1];
+
+                let percent = 0;
+                if (prev.total_irt > 0) {
+                    percent = ((current.total_irt - prev.total_irt) / prev.total_irt) * 100;
+                }
+
+                const isPositive = percent >= 0;
+                if (isPositive) {
+                    positiveCount++;
+                } else {
+                    negativeCount++;
+                }
+
+                const valueSign = isPositive ? '+' : '';
+                const colorClass = isPositive ? 'var(--positive-color)' : 'var(--negative-color)';
+
+                itemsHtml.push(`
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); padding: 12px 16px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.9rem;">
+                        <span style="font-weight: 600; color: rgba(255, 255, 255, 0.9);">📅 روز شمسی ${current.dateStr}</span>
+                        <span style="font-weight: 800; direction: ltr; color: ${colorClass};">${valueSign}${percent.toFixed(2)}٪</span>
+                    </div>
+                `);
+            }
+
+            if (itemsHtml.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            // بروزرسانی شاخص‌ها
+            greenDaysVal.innerText = `🟢 ${positiveCount}`;
+            redDaysVal.innerText = `🔴 ${negativeCount}`;
+
+            // متن طنز و تحلیل شوخ‌طبعانه صرافی
+            const diff = positiveCount - negativeCount;
+            let wittyText = '';
+            if (positiveCount > negativeCount) {
+                wittyText = `ارتش گاوهای سبزپوش صعودی با اختلاف ${diff} روز جلوترند! خرس‌های سرخ صرافی تبدیل دارن زار زار گریه می‌کنند! 🟢🐮🥳🚀`;
+            } else if (negativeCount > positiveCount) {
+                wittyText = `ای دل غافل! لشکر قرمزهای خرس‌نما با اختلاف ${Math.abs(diff)} روز جلو زدند. یه دمنوش بابونه بنوشید تا ان‌شاءالله فردا سبز بشیم! 🔴🐻☕️`;
+            } else {
+                wittyText = `تساوی مقتدرانه! گاوهای سبز و خرس‌های سرخ شانه به شانه هم ایستاده‌اند. بازار صلح‌آمیز و آماده صعود بعدی است! 🕊️🤝`;
+            }
+            wittyAnalysisText.innerText = wittyText;
+
+            // رندر جدیدترین به قدیمی‌ترین
+            listEl.innerHTML = itemsHtml.reverse().join('');
         }
 
         // رسم نمودار خطی دارایی روی HTML Canvas
@@ -789,7 +1000,8 @@
             }
         }
 
-        // اجرای خودکار لود در زمان ورود به صفحه
+        // اجرای خودکار لود و بررسی دکمه خروج در بدو ورود
+        updateLogoutButtonVisibility();
         loadWalletBalance();
     </script>
 </body>

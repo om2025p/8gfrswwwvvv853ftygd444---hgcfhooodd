@@ -146,27 +146,7 @@ export default {
           console.error("Error fetching spot balance:", e);
         }
 
-        // 2. Fetch Funding balances
-        let fundingAssets = [];
-        try {
-          const fundingRes = await fetchSigned("https://api1.tabdeal.org/r/api/v1/asset/get-funding-asset");
-          if (fundingRes.ok) {
-            const data = await fundingRes.json();
-            //get-funding-asset might return an array of assets if asset param isn't specified
-            const assetsList = Array.isArray(data) ? data : (data ? [data] : []);
-            fundingAssets = assetsList.map(b => ({
-              asset: b.asset,
-              free: parseFloat(b.free) || 0,
-              freeze: parseFloat(b.freeze) || 0,
-            })).filter(b => (b.free + b.freeze) > 0);
-          } else {
-            console.error("Funding API failed:", await fundingRes.text());
-          }
-        } catch (e) {
-          console.error("Error fetching funding balance:", e);
-        }
-
-        // 3. Fetch Futures balances
+        // 2. Fetch Futures balances (Note: Funding is already merged within Spot API on Tabdeal, hence omitted to prevent double valuation)
         let futuresAssets = [];
         try {
           const futuresRes = await fetchSigned("https://api1.tabdeal.org/r/fapi/v3/account");
@@ -201,7 +181,6 @@ export default {
               asset: symbol,
               total: 0,
               spot: 0,
-              funding: 0,
               futures: 0
             });
           }
@@ -211,7 +190,6 @@ export default {
         };
 
         spotAssets.forEach(a => addAsset(a, "spot"));
-        fundingAssets.forEach(a => addAsset(a, "funding"));
         futuresAssets.forEach(a => addAsset(a, "futures"));
 
         const uniqueAssets = Array.from(mergedMap.values());
