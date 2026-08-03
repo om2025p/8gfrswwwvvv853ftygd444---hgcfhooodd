@@ -395,8 +395,8 @@
             <div id="loader" class="spinner" style="margin: 20px 0;"></div>
 
             <div id="balanceData" style="display: none; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
-                <div class="val-toman" id="valToman">۰ تومان</div>
-                <div class="val-tether" id="valTether">۰ USDT</div>
+                <div class="val-toman" id="valToman">۰ <span style="color: #10b981; font-weight: 900; margin-right: 8px; font-size: 1.6rem; vertical-align: middle;">تومان</span></div>
+                <div class="val-tether" id="valTether">۰ <span style="color: #3b82f6; font-weight: 900; margin-right: 6px; font-size: 1.15rem; vertical-align: middle;">تتر (USDT)</span></div>
                 <div class="change-badge" id="changeBadge">
                     <span id="changeArrow">▲</span>
                     <span id="changeVal">۰.۰۰٪</span>
@@ -531,8 +531,8 @@
                 const totalUsdt = data.total_usdt;
 
                 // نمایش مقادیر با فرمت‌های شیک
-                document.getElementById('valToman').innerText = formatNumberPersian(Math.round(totalIrt)) + " تومان";
-                document.getElementById('valTether').innerText = formatNumberPersian(totalUsdt.toFixed(2)) + " USDT";
+                document.getElementById('valToman').innerHTML = `${formatNumberPersian(Math.round(totalIrt))} <span style="color: #10b981; font-weight: 900; margin-right: 8px; font-size: 1.6rem; text-shadow: 0 0 10px rgba(16,185,129,0.3); vertical-align: middle;">تومان</span>`;
+                document.getElementById('valTether').innerHTML = `${formatNumberPersian(totalUsdt.toFixed(2))} <span style="color: #3b82f6; font-weight: 900; margin-right: 6px; font-size: 1.15rem; text-shadow: 0 0 10px rgba(59,130,246,0.3); vertical-align: middle;">تتر (USDT)</span>`;
 
                 // بروزرسانی تاریخچه و محاسبه تغییرات ۲۴ ساعته درصدها
                 updateWalletHistory(totalIrt, totalUsdt);
