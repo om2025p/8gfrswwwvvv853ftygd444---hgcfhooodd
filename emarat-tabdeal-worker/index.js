@@ -36,27 +36,39 @@ export default {
           });
         }
 
-        // We can call Cloudflare API to update env variables of this worker
+        // We call Cloudflare API to update secrets individually using the official /secrets endpoint
         const scriptName = "emarat-tabdeal-worker";
-        const cfUrl = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/workers/scripts/${scriptName}/bindings`;
+        const baseCfUrl = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/workers/scripts/${scriptName}/secrets`;
 
-        // Fetch current bindings or simply PUT env variables
-        const response = await fetch(cfUrl, {
-          method: "PUT",
-          headers: {
-            "Authorization": `Bearer ${cfToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify([
-            { type: "secret_text", name: "TABDEAL_API_KEY", text: apiKey },
-            { type: "secret_text", name: "TABDEAL_API_SECRET", text: apiSecret }
-          ])
-        });
+        // Function to update an individual secret
+        const updateSecret = async (name, text) => {
+          return fetch(baseCfUrl, {
+            method: "PUT",
+            headers: {
+              "Authorization": `Bearer ${cfToken}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              name: name,
+              text: text,
+              type: "secret_text"
+            })
+          });
+        };
 
-        if (!response.ok) {
-          const errMsg = await response.text();
-          return new Response(JSON.stringify({ error: "Failed to update secrets on Cloudflare: " + errMsg }), {
-            status: response.status,
+        // Update TABDEAL_API_KEY and TABDEAL_API_SECRET in parallel
+        const [resKey, resSecret] = await Promise.all([
+          updateSecret("TABDEAL_API_KEY", apiKey),
+          updateSecret("TABDEAL_API_SECRET", apiSecret)
+        ]);
+
+        if (!resKey.ok || !resSecret.ok) {
+          const errKeyText = !resKey.ok ? await resKey.text() : "";
+          const errSecText = !resSecret.ok ? await resSecret.text() : "";
+          return new Response(JSON.stringify({
+            error: `Failed to update secrets on Cloudflare. Key error: ${errKeyText || "None"}. Secret error: ${errSecText || "None"}`
+          }), {
+            status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" }
           });
         }
