@@ -285,7 +285,8 @@
             { id: 'monitor', title: 'دیدبان درصد ها', icon: 'monitor/icon-192.png', url: 'monitor/index.html' },
             { id: 'skincare', title: 'مراقبت پوستی', icon: 'skincare/icon-192.png', url: 'skincare/index.html' },
             { id: 'profit', title: 'محاسبه گر سود', icon: 'profit-calculator/icon-192.png', url: 'profit-calculator/index.html' },
-            { id: 'ai-chat', title: 'چت هوشمند', icon: 'ai-chat/icon-192.png', url: 'ai-chat/index.html' }
+            { id: 'ai-chat', title: 'چت هوشمند', icon: 'ai-chat/icon-192.png', url: 'ai-chat/index.html' },
+            { id: 'tabdeal', title: 'کیف پول تبدیل', icon: 'tabdeal/icon-192.png', url: 'tabdeal/index.html' }
         ];
 
         let savedApps = JSON.parse(localStorage.getItem('portal_app_order'));
@@ -493,7 +494,7 @@
                 navigator.serviceWorker.getRegistrations().then(registrations => {
                     for (let registration of registrations) {
                         const path = new URL(registration.scope).pathname;
-                        if (path.includes('/gym/') || path.includes('/gold/') || path.includes('/gold2/') || path.includes('/gold3/') || path.includes('/gold4/') || path.includes('/monitor/') || path.includes('/skincare/') || path.includes('/profit-calculator/') || path.includes('/ai-chat/')) {
+                        if (path.includes('/gym/') || path.includes('/gold/') || path.includes('/gold2/') || path.includes('/gold3/') || path.includes('/gold4/') || path.includes('/monitor/') || path.includes('/skincare/') || path.includes('/profit-calculator/') || path.includes('/ai-chat/') || path.includes('/tabdeal/')) {
                             registration.unregister().then(success => {
                                 if (success) console.log(`Legacy SW at ${path} unregistered.`);
                             });

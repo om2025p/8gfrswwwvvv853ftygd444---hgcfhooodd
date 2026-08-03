@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
+    <title>کیف پول تبدیل</title>
+    <style>
+        :root {
+            --glass-bg: rgba(15, 23, 42, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-color: #f8fafc;
+            --primary-color: #10b981; /* Tabdeal Emerald Green */
+            --primary-glow: rgba(16, 185, 129, 0.15);
+            --secondary-color: #3b82f6;
+            --shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+            --positive-color: #10b981;
+            --negative-color: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            color: var(--text-color);
+            background: radial-gradient(circle at top left, #0f172a 0%, #020617 100%);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: -2;
+        }
+
+        header {
+            width: 100%;
+            max-width: 500px;
+            padding: 25px 20px 10px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title h1 {
+            font-size: 1.25rem;
+            margin: 0;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+            letter-spacing: -0.5px;
+        }
+
+        .back-btn, .settings-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.25s ease;
+        }
+
+        .back-btn:hover, .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 10px 16px 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* کارت شیشه‌ای دارایی‌ها */
+        .balance-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            padding: 24px 20px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            text-align: center;
+        }
+
+        .balance-card::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.5px;
+            z-index: 1;
+        }
+
+        .val-toman {
+            font-size: 2.3rem;
+            font-weight: 900;
+            color: #ffffff;
+            direction: ltr;
+            text-shadow: 0 2px 15px rgba(16, 185, 129, 0.3);
+            z-index: 1;
+        }
+
+        .val-tether {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.7);
+            direction: ltr;
+            z-index: 1;
+            margin-top: -8px;
+        }
+
+        .change-badge {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            color: var(--positive-color);
+            padding: 8px 18px;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 1;
+        }
+
+        .change-badge.negative {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: var(--negative-color);
+        }
+
+        /* بخش وضعیت و دیتای تاریخی */
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .panel-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 10px;
+            margin-bottom: 4px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .info-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-weight: 700;
+        }
+
+        /* چارت زیبا */
+        .chart-wrapper {
+            width: 100%;
+            height: 140px;
+            position: relative;
+            margin-top: 10px;
+        }
+
+        canvas.growth-canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        /* پنل تنظیمات کشویی */
+        .settings-panel {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            animation: slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .input-field {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 0.9rem;
+            color: #ffffff;
+            outline: none;
+            font-family: monospace;
+            text-align: left;
+            transition: all 0.25s ease;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            border-radius: 14px;
+            padding: 14px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-submit:active {
+            transform: scale(0.97);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .text-hint {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
+            line-height: 1.5;
+            text-align: justify;
+        }
+
+        .text-hint a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* لودر متحرک */
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: var(--negative-color);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <a href="../index.html" class="back-btn">
+                <span>◀</span>
+            </a>
+            <h1>کیف پول صرافی تبدیل</h1>
+        </div>
+        <button class="settings-btn" onclick="toggleSettings()">
+            <span>⚙️</span>
+        </button>
+    </header>
+
+    <div class="container">
+
+        <!-- بخش تنظیمات کلودفلر و API -->
+        <div class="glass-panel settings-panel" id="settingsPanel">
+            <div class="panel-title">
+                <span>⚙️ تنظیمات اتصال کلودفلر و صرافی تبدیل</span>
+            </div>
+
+            <div class="input-group">
+                <label>کد دسترسی کلودفلر (Cloudflare Token)</label>
+                <input type="password" id="cfToken" class="input-field" placeholder="cfut_...">
+            </div>
+
+            <div class="input-group">
+                <label>شناسه حساب کلودفلر (Account ID)</label>
+                <input type="text" id="cfAccountId" class="input-field" placeholder="c08aa8f701a8...">
+            </div>
+
+            <div class="input-group">
+                <label>کلید API صرافی تبدیل (API Key)</label>
+                <input type="text" id="apiKey" class="input-field" placeholder="تبدیل API Key">
+            </div>
+
+            <div class="input-group">
+                <label>کلید سری صرافی تبدیل (API Secret)</label>
+                <input type="password" id="apiSecret" class="input-field" placeholder="تبدیل API Secret">
+            </div>
+
+            <button class="btn-submit" id="btnSave" onclick="saveConfigToServer()">
+                ذخیره و تنظیم روی سرور کلودفلر ☁️
+            </button>
+
+            <p class="text-hint">
+                💡 اطلاعات API صرافی تبدیل شما به طور مستقیم و بسیار امن روی سرور ابری کلودفلر خودتان ذخیره می‌شود و مرورگر هرگز اطلاعات حساس شما را نگهداری نمی‌کند. برای دریافت کلیدهای خود می‌توانید از <a href="https://tabdeal.org/panel/settings/api" target="_blank">این آدرس در صرافی تبدیل</a> استفاده کنید.
+            </p>
+        </div>
+
+        <!-- کارت دارایی‌های اصلی -->
+        <div class="balance-card" id="balanceCard">
+            <span class="balance-label"> ارزش کل دارایی‌های دیجیتال</span>
+            <div id="loader" class="spinner" style="margin: 20px 0;"></div>
+
+            <div id="balanceData" style="display: none; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
+                <div class="val-toman" id="valToman">۰ تومان</div>
+                <div class="val-tether" id="valTether">۰ USDT</div>
+                <div class="change-badge" id="changeBadge">
+                    <span id="changeArrow">▲</span>
+                    <span id="changeVal">۰.۰۰٪</span>
+                </div>
+            </div>
+
+            <div class="error-message" id="errorMessage" style="display: none;"></div>
+        </div>
+
+        <!-- بخش آمار و تغییرات تاریخی -->
+        <div class="glass-panel" id="statsPanel" style="display: none;">
+            <div class="panel-title">
+                <span>📈 آمار و تغییرات دارایی در گذر زمان</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">آخرین زمان بروزرسانی:</span>
+                <span class="info-value" id="lastUpdatedTime">⏰ همین الان</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">تغییر کل امروز:</span>
+                <span class="info-value" id="todayChangeVal">۰ تومان</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">تعداد روزهای ثبت‌شده:</span>
+                <span class="info-value" id="recordedDaysCount">۰ روز</span>
+            </div>
+
+            <div class="chart-wrapper">
+                <canvas id="growthCanvas" class="growth-canvas"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const CF_WORKER_URL = "https://emarat-tabdeal-worker.qqqggggcc.workers.dev";
+
+        // پر کردن بقیه فیلدها از روی localStorage در صورت وجود
+        if (localStorage.getItem("tabdeal_api_key")) {
+            document.getElementById('apiKey').value = localStorage.getItem("tabdeal_api_key");
+        }
+        if (localStorage.getItem("tabdeal_api_secret")) {
+            document.getElementById('apiSecret').value = localStorage.getItem("tabdeal_api_secret");
+        }
+
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        // ذخیره کردن تنظیمات روی کلودفلر با استفاده از توکن
+        async function saveConfigToServer() {
+            const cfToken = document.getElementById('cfToken').value.trim();
+            const cfAccountId = document.getElementById('cfAccountId').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const apiSecret = document.getElementById('apiSecret').value.trim();
+            const btn = document.getElementById('btnSave');
+
+            if (!cfToken || !cfAccountId || !apiKey || !apiSecret) {
+                alert("لطفاً همه فیلدها را با دقت پر کنید.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "درحال ارسال و ذخیره روی سرور کلودفلر... ☁️";
+
+            try {
+                const response = await fetch(`${CF_WORKER_URL}/set-keys`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ apiKey, apiSecret, cfToken, cfAccountId })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // ذخیره در فرانت جهت همگام‌سازی و لود بعدی
+                    localStorage.setItem("tabdeal_api_key", apiKey);
+                    localStorage.setItem("tabdeal_api_secret", apiSecret);
+                    localStorage.setItem("tabdeal_cf_token", cfToken);
+                    localStorage.setItem("tabdeal_cf_account_id", cfAccountId);
+
+                    alert("🎉 اطلاعات شما با موفقیت و در امنیت کامل روی کلودفلر ست شدند!");
+                    toggleSettings();
+                    loadWalletBalance();
+                } else {
+                    alert("⚠️ خطا در ست کردن اطلاعات روی کلودفلر: " + (data.error || "خطای ناشناخته"));
+                }
+            } catch (err) {
+                alert("❌ خطا در برقراری ارتباط با سرور: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "ذخیره و تنظیم روی سرور کلودفلر ☁️";
+            }
+        }
+
+        // بارگذاری موجودی از ورکر کلودفلر
+        async function loadWalletBalance() {
+            const loader = document.getElementById('loader');
+            const dataSection = document.getElementById('balanceData');
+            const errBox = document.getElementById('errorMessage');
+            const statsPanel = document.getElementById('statsPanel');
+
+            loader.style.display = 'block';
+            dataSection.style.display = 'none';
+            errBox.style.display = 'none';
+            statsPanel.style.display = 'none';
+
+            try {
+                const response = await fetch(`${CF_WORKER_URL}/balance`);
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    if (data.error === "API_KEYS_NOT_CONFIGURED") {
+                        errBox.innerText = "🔌 کلیدهای API صرافی تبدیل روی سرور کلودفلر پیکربندی نشده‌اند. لطفاً از دکمه چرخ‌دنده ⚙️ بالا کلیدهای خود را تنظیم کنید تا محاسبات آغاز شود.";
+                        toggleSettings();
+                    } else {
+                        errBox.innerText = "❌ خطا در دریافت موجودی: " + (data.error || "خطای سرور");
+                    }
+                    errBox.style.display = 'block';
+                    loader.style.display = 'none';
+                    return;
+                }
+
+                // دریافت موفق دارایی‌ها
+                const totalIrt = data.total_irt;
+                const totalUsdt = data.total_usdt;
+
+                // نمایش مقادیر با فرمت‌های شیک
+                document.getElementById('valToman').innerText = formatNumberPersian(Math.round(totalIrt)) + " تومان";
+                document.getElementById('valTether').innerText = formatNumberPersian(totalUsdt.toFixed(2)) + " USDT";
+
+                // بروزرسانی تاریخچه و محاسبه تغییرات ۲۴ ساعته درصدها
+                updateWalletHistory(totalIrt, totalUsdt);
+
+                loader.style.display = 'none';
+                dataSection.style.display = 'flex';
+                statsPanel.style.display = 'flex';
+
+            } catch (err) {
+                errBox.innerText = "⚠️ اتصال به سرور کلودفلر برقرار نشد. لطفاً قندشکن خود را چک کرده یا دوباره تلاش کنید.";
+                errBox.style.display = 'block';
+                loader.style.display = 'none';
+            }
+        }
+
+        // بروزرسانی تاریخچه در LocalStorage و رسم نمودار
+        function updateWalletHistory(currentIrt, currentUsdt) {
+            let historyRaw = localStorage.getItem("tabdeal_wallet_history");
+            let history = [];
+            try { history = JSON.parse(historyRaw) || []; } catch(e) {}
+
+            const now = Date.now();
+            const oneHour = 60 * 60 * 1000;
+
+            // فقط در صورتی رکورد جدید ثبت می‌کنیم که آخرین رکورد متعلق به بیش از ۱ ساعت پیش باشد
+            let shouldAdd = true;
+            if (history.length > 0) {
+                const lastEntry = history[history.length - 1];
+                if (now - lastEntry.timestamp < oneHour) {
+                    // بجای ثبت مجدد، آخرین مورد را بروز می‌کنیم تا دیتای دقیق‌تر داشته باشیم
+                    lastEntry.total_irt = currentIrt;
+                    lastEntry.total_usdt = currentUsdt;
+                    shouldAdd = false;
+                }
+            }
+
+            if (shouldAdd) {
+                history.push({
+                    timestamp: now,
+                    total_irt: currentIrt,
+                    total_usdt: currentUsdt
+                });
+            }
+
+            // نگهداری سوابق تا حداکثر ۱۰۰ روز برای صرفه‌جویی در استوریج
+            if (history.length > 100) {
+                history.shift();
+            }
+
+            localStorage.setItem("tabdeal_wallet_history", JSON.stringify(history));
+
+            // محاسبه درصد رشد روزانه (۲۴ ساعت گذشته)
+            let percentChange = 0;
+            let absoluteChange = 0;
+
+            if (history.length > 1) {
+                // تلاش برای پیدا کردن رکوردی که نزدیک به ۲۴ ساعت پیش ثبت شده است
+                const TargetTs = now - (24 * 60 * 60 * 1000);
+                let closestEntry = history[0];
+                let minDiff = Math.abs(closestEntry.timestamp - TargetTs);
+
+                for (let i = 1; i < history.length - 1; i++) {
+                    const diff = Math.abs(history[i].timestamp - TargetTs);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestEntry = history[i];
+                    }
+                }
+
+                const oldIrt = closestEntry.total_irt;
+                if (oldIrt > 0) {
+                    percentChange = ((currentIrt - oldIrt) / oldIrt) * 100;
+                    absoluteChange = currentIrt - oldIrt;
+                }
+            }
+
+            // ذخیره آخرین درصد رشد روزانه در یک کلید مجزا تا مانیتور (دیدبان) هم بتواند راحت از آن استفاده کند
+            localStorage.setItem("tabdeal_last_percent_change", percentChange.toFixed(2));
+            localStorage.setItem("tabdeal_last_value_toman", currentIrt);
+            localStorage.setItem("tabdeal_last_value_tether", currentUsdt);
+            localStorage.setItem("tabdeal_last_updated_ts", now);
+
+            // نمایش روی ویجت تغییرات
+            const badge = document.getElementById('changeBadge');
+            const arrow = document.getElementById('changeArrow');
+            const val = document.getElementById('changeVal');
+            const todayChangeText = document.getElementById('todayChangeVal');
+
+            const isPositive = percentChange >= 0;
+            if (isPositive) {
+                badge.className = "change-badge";
+                arrow.innerText = "▲";
+                val.innerText = "+" + percentChange.toFixed(2) + "٪";
+                todayChangeText.innerText = "+" + formatNumberPersian(Math.round(absoluteChange)) + " تومان";
+                todayChangeText.style.color = "var(--positive-color)";
+            } else {
+                badge.className = "change-badge negative";
+                arrow.innerText = "▼";
+                val.innerText = percentChange.toFixed(2) + "٪";
+                todayChangeText.innerText = formatNumberPersian(Math.round(absoluteChange)) + " تومان";
+                todayChangeText.style.color = "var(--negative-color)";
+            }
+
+            // پر کردن بقیه اطلاعات آماری
+            document.getElementById('recordedDaysCount').innerText = history.length + " روز";
+            document.getElementById('lastUpdatedTime').innerText = "⏰ " + formatTimeAgo(now);
+
+            // رسم نمودار رشد
+            renderGrowthChart(history);
+        }
+
+        // رسم نمودار خطی دارایی روی HTML Canvas
+        function renderGrowthChart(history) {
+            const canvas = document.getElementById('growthCanvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * (window.devicePixelRatio || 1);
+            canvas.height = rect.height * (window.devicePixelRatio || 1);
+            ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+
+            const width = rect.width;
+            const height = rect.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            if (history.length < 2) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.font = '11px Segoe UI, Tahoma';
+                ctx.textAlign = 'center';
+                ctx.fillText('اطلاعات کافی برای رسم نمودار رشد وجود ندارد', width / 2, height / 2);
+                return;
+            }
+
+            const padding = { top: 15, bottom: 20, left: 55, right: 15 };
+            const chartW = width - padding.left - padding.right;
+            const chartH = height - padding.top - padding.bottom;
+
+            const values = history.map(h => h.total_irt);
+            const maxVal = Math.max(...values) * 1.02;
+            const minVal = Math.min(...values) * 0.98;
+            const yRange = maxVal - minVal || 1;
+
+            const points = history.map((item, i) => {
+                const x = padding.left + (i / (history.length - 1)) * chartW;
+                const y = padding.top + chartH - ((item.total_irt - minVal) / yRange) * chartH;
+                return { x, y, value: item.total_irt };
+            });
+
+            // افکت گرادینت زیر خط نمودار
+            const grad = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
+            grad.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+            grad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, height - padding.bottom);
+            points.forEach(p => ctx.lineTo(p.x, p.y));
+            ctx.lineTo(points[points.length - 1].x, height - padding.bottom);
+            ctx.closePath();
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            // رسم خط اصلی نمودار سبز زمردی تبدیل
+            ctx.beginPath();
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 2.5;
+            ctx.lineJoin = 'round';
+            points.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            });
+            ctx.stroke();
+
+            // رسم نقاط کلیدی
+            points.forEach((p, i) => {
+                if (i === 0 || i === points.length - 1 || p.value === maxVal || p.value === minVal) {
+                    ctx.beginPath();
+                    ctx.fillStyle = '#10b981';
+                    ctx.arc(p.x, p.y, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1;
+                    ctx.arc(p.x, p.y, 4, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+            });
+
+            // محورهای فرضی و برچسب‌های ارزش کل تومانی
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.font = '9px Segoe UI, Tahoma';
+            ctx.textAlign = 'right';
+            ctx.fillText(formatShortAmount(maxVal), padding.left - 6, padding.top + 8);
+            ctx.fillText(formatShortAmount(minVal), padding.left - 6, height - padding.bottom);
+
+            // نوشتن تاریخ ابتدا و انتها زیر نمودار
+            ctx.textAlign = 'left';
+            ctx.fillText(formatDateText(history[0].timestamp), padding.left, height - 4);
+            ctx.textAlign = 'right';
+            ctx.fillText(formatDateText(history[history.length - 1].timestamp), width - padding.right, height - 4);
+        }
+
+        // قالب‌بندی مختصر اعداد مثل 240M یا 15M تومان برای نمودار
+        function formatShortAmount(amount) {
+            if (amount >= 1e9) {
+                return (amount / 1e9).toFixed(1) + "B";
+            } else if (amount >= 1e6) {
+                return (amount / 1e6).toFixed(1) + "M";
+            }
+            return amount;
+        }
+
+        // قالب‌بندی تاریخ شمسی مختصر
+        function formatDateText(ts) {
+            try {
+                return new Intl.DateTimeFormat('fa-IR', {
+                    month: 'numeric',
+                    day: 'numeric'
+                }).format(new Date(ts));
+            } catch (e) {
+                return "";
+            }
+        }
+
+        // فارسی‌سازی و قالب‌بندی سه‌رقم سه‌رقم اعداد
+        function formatNumberPersian(num) {
+            if (num === null || num === undefined) return "";
+            try {
+                return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            } catch (e) {
+                return num;
+            }
+        }
+
+        // زمان سپری شده به شکل فارسی شیک
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return '';
+            const diffMs = Date.now() - timestamp;
+            const diffSeconds = Math.floor(diffMs / 1000);
+            const diffMinutes = Math.floor(diffSeconds / 60);
+            const diffHours = Math.floor(diffMinutes / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffSeconds < 60) {
+                return 'همین الان';
+            } else if (diffMinutes < 60) {
+                return `${diffMinutes} دقیقه پیش`;
+            } else if (diffHours < 24) {
+                return `${diffHours} ساعت پیش`;
+            } else {
+                return `${diffDays} روز پیش`;
+            }
+        }
+
+        // اجرای خودکار لود در زمان ورود به صفحه
+        loadWalletBalance();
+    </script>
+</body>
+</html>
