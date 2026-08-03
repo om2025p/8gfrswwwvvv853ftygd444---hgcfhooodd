@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v14';
+const CACHE_NAME = 'emarat-portal-v15';
 const ASSETS = [
   './',
   './index.html',
@@ -110,7 +110,14 @@ const ASSETS = [
   './ai-chat/icon-512-maskable.png',
   './ai-chat/apple-touch-icon.png',
   './ai-chat/favicon.ico',
-  './ai-chat/worker.js'
+  './ai-chat/worker.js',
+  // Tabdeal App
+  './tabdeal/index.html',
+  './tabdeal/manifest.json',
+  './tabdeal/icon-192.png',
+  './tabdeal/icon-512.png',
+  './tabdeal/icon-192-maskable.png',
+  './tabdeal/icon-512-maskable.png'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
