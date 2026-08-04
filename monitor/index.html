@@ -1262,6 +1262,49 @@
                 liveContainer.appendChild(card);
             });
 
+            // اضافه کردن کارت اختصاصی صرافی تبدیل آلپ
+            const tabdealLastValToman = parseFloat(localStorage.getItem("tabdeal_last_value_toman")) || 0;
+            const tabdealLastValTether = parseFloat(localStorage.getItem("tabdeal_last_value_tether")) || 0;
+            const tabdealLastChange = parseFloat(localStorage.getItem("tabdeal_last_percent_change")) || 0;
+            const tabdealLastUpdated = parseInt(localStorage.getItem("tabdeal_last_updated_ts")) || 0;
+
+            const tabdealCard = document.createElement('div');
+            tabdealCard.className = 'monitor-card';
+            tabdealCard.style.border = '1px solid rgba(16, 185, 129, 0.25)';
+            tabdealCard.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%)';
+
+            if (tabdealLastUpdated > 0) {
+                const timeAgoText = formatTimeAgo(tabdealLastUpdated);
+                const dt = formatPersianDateTime(tabdealLastUpdated);
+                const isPositive = tabdealLastChange >= 0;
+                const valueSign = isPositive ? '+' : '';
+
+                tabdealCard.innerHTML = `
+                    <div class="card-header">
+                        <span class="app-badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: bold;">💼 کیف پول صرافی تبدیل</span>
+                        <span class="time-ago">${timeAgoText}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="date-details">
+                            <span class="solar-date">📅 ${dt.date}</span>
+                            <span class="solar-time">⏰ ${dt.time}</span>
+                        </div>
+                        <span class="percent-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${tabdealLastChange.toFixed(2)}%</span>
+                    </div>
+                `;
+            } else {
+                tabdealCard.innerHTML = `
+                    <div class="card-header">
+                        <span class="app-badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: bold;">💼 کیف پول صرافی تبدیل</span>
+                        <span class="time-ago">بدون اتصال</span>
+                    </div>
+                    <div class="card-body" style="justify-content: center; padding: 10px 0;">
+                        <span class="percent-value none" style="font-size: 0.95rem;">📭 لطفاً ابتدا وارد برنامه تبدیل شوید و کلیدهای خود را ست کنید.</span>
+                    </div>
+                `;
+            }
+            liveContainer.appendChild(tabdealCard);
+
             // به‌روزرسانی کارت مجموع درصد‌های زنده
             const liveTotalContainer = document.getElementById('live-total-container');
             const liveTotalValue = document.getElementById('live-total-value');
@@ -1314,6 +1357,45 @@
                 analysisContainer.appendChild(itemCard);
             });
 
+            // افزودن میانگین رشد روزانه کیف پول تبدیل به آنالیز میانگین‌ها
+            let tabdealHistory = [];
+            try { tabdealHistory = JSON.parse(localStorage.getItem("tabdeal_wallet_history")) || []; } catch(e) {}
+
+            let tabdealAvgDaily = 0;
+            let hasTabdealHistory = tabdealHistory.length > 1;
+
+            if (hasTabdealHistory) {
+                const first = tabdealHistory[0];
+                const last = tabdealHistory[tabdealHistory.length - 1];
+                const daysDiff = Math.max(1, Math.ceil((last.timestamp - first.timestamp) / (1000 * 60 * 60 * 24)));
+                if (first.total_irt > 0) {
+                    const totalGrowthPercent = ((last.total_irt - first.total_irt) / first.total_irt) * 100;
+                    tabdealAvgDaily = totalGrowthPercent / daysDiff;
+                }
+            } else {
+                tabdealAvgDaily = parseFloat(localStorage.getItem("tabdeal_last_percent_change")) || 0;
+                hasTabdealHistory = tabdealAvgDaily !== 0;
+            }
+
+            const tabdealAnalysisCard = document.createElement('div');
+            tabdealAnalysisCard.className = 'avg-item-card';
+            tabdealAnalysisCard.style.border = '1px solid rgba(16, 185, 129, 0.2)';
+
+            if (hasTabdealHistory) {
+                const isPositive = tabdealAvgDaily >= 0;
+                const valueSign = isPositive ? '+' : '';
+                tabdealAnalysisCard.innerHTML = `
+                    <span class="avg-item-title" style="color: #10b981; font-weight: bold;">💼 میانگین رشد کیف پول تبدیل</span>
+                    <span class="avg-item-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${tabdealAvgDaily.toFixed(3)}%</span>
+                `;
+            } else {
+                tabdealAnalysisCard.innerHTML = `
+                    <span class="avg-item-title" style="color: #10b981; font-weight: bold;">💼 میانگین رشد کیف پول تبدیل</span>
+                    <span class="avg-item-value" style="color: rgba(255,255,255,0.3); font-size: 1rem;">بدون داده</span>
+                `;
+            }
+            analysisContainer.appendChild(tabdealAnalysisCard);
+
             // به‌روزرسانی کارت مجموع میانگین‌های روزانه سود
             const analysisTotalContainer = document.getElementById('analysis-total-container');
             const analysisTotalValue = document.getElementById('analysis-total-value');
@@ -1336,9 +1418,76 @@
             triggerGeminiAI();
         }
 
+        // فراخوانی و بروزرسانی خودکار دیتای کیف پول صرافی تبدیل در پس‌زمینه
+        async function fetchTabdealBalanceInBg() {
+            try {
+                const response = await fetch("https://emarat-tabdeal-worker.qqqggggcc.workers.dev/balance");
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.success) {
+                        const currentIrt = data.total_irt;
+                        const currentUsdt = data.total_usdt;
+                        const now = Date.now();
+
+                        // Update history
+                        let historyRaw = localStorage.getItem("tabdeal_wallet_history");
+                        let history = [];
+                        try { history = JSON.parse(historyRaw) || []; } catch(e) {}
+
+                        const oneHour = 60 * 60 * 1000;
+                        let shouldAdd = true;
+                        if (history.length > 0) {
+                            const lastEntry = history[history.length - 1];
+                            if (now - lastEntry.timestamp < oneHour) {
+                                lastEntry.total_irt = currentIrt;
+                                lastEntry.total_usdt = currentUsdt;
+                                shouldAdd = false;
+                            }
+                        }
+                        if (shouldAdd) {
+                            history.push({ timestamp: now, total_irt: currentIrt, total_usdt: currentUsdt });
+                        }
+                        if (history.length > 100) history.shift();
+                        localStorage.setItem("tabdeal_wallet_history", JSON.stringify(history));
+
+                        // Calculate percent change
+                        let percentChange = 0;
+                        if (history.length > 1) {
+                            const TargetTs = now - (24 * 60 * 60 * 1000);
+                            let closestEntry = history[0];
+                            let minDiff = Math.abs(closestEntry.timestamp - TargetTs);
+                            for (let i = 1; i < history.length - 1; i++) {
+                                const diff = Math.abs(history[i].timestamp - TargetTs);
+                                if (diff < minDiff) {
+                                    minDiff = diff;
+                                    closestEntry = history[i];
+                                }
+                            }
+                            const oldIrt = closestEntry.total_irt;
+                            if (oldIrt > 0) {
+                                percentChange = ((currentIrt - oldIrt) / oldIrt) * 100;
+                            }
+                        }
+
+                        localStorage.setItem("tabdeal_last_percent_change", percentChange.toFixed(2));
+                        localStorage.setItem("tabdeal_last_value_toman", currentIrt);
+                        localStorage.setItem("tabdeal_last_value_tether", currentUsdt);
+                        localStorage.setItem("tabdeal_last_updated_ts", now);
+
+                        // Re-render monitor to show fresh data
+                        renderMonitor();
+                    }
+                }
+            } catch (e) {
+                console.error("Error in background Tabdeal fetch:", e);
+            }
+        }
+
         // لود اولیه و تنظیم آپدیت دوره‌ای (مثلاً هر ۳۰ ثانیه برای بروز ماندن «زمان گذشته»)
         renderMonitor();
+        fetchTabdealBalanceInBg(); // فراخوانی خودکار پس‌زمینه
         setInterval(renderMonitor, 30000);
+        setInterval(fetchTabdealBalanceInBg, 300000); // آپدیت خودکار دیتای صرافی هر ۵ دقیقه در پس‌زمینه
     </script>
 </body>
 </html>
