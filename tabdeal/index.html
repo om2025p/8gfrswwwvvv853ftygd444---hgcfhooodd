@@ -648,16 +648,39 @@
             try { history = JSON.parse(historyRaw) || []; } catch(e) {}
 
             const now = Date.now();
-            const oneHour = 60 * 60 * 1000;
-
-            // فقط در صورتی رکورد جدید ثبت می‌کنیم که آخرین رکورد متعلق به بیش از ۱ ساعت پیش باشد
             let shouldAdd = true;
+
+            // دریافت تاریخ شمسی امروز برای مقایسه دقیق تقویمی
+            let todayStr = "";
+            try {
+                todayStr = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).format(new Date(now));
+            } catch(e) {
+                todayStr = new Date(now).toDateString();
+            }
+
             if (history.length > 0) {
                 const lastEntry = history[history.length - 1];
-                if (now - lastEntry.timestamp < oneHour) {
-                    // بجای ثبت مجدد، آخرین مورد را بروز می‌کنیم تا دیتای دقیق‌تر داشته باشیم
+                let lastEntryDateStr = "";
+                try {
+                    lastEntryDateStr = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    }).format(new Date(lastEntry.timestamp));
+                } catch(e) {
+                    lastEntryDateStr = new Date(lastEntry.timestamp).toDateString();
+                }
+
+                // اگر آخرین رکورد ثبت شده مربوط به همین امروز شمسی باشد، رکورد جدید اضافه نمی‌کنیم
+                // بلکه آخرین رکورد را با مقادیر دارایی جدید بروزرسانی می‌کنیم تا همواره یک رکورد برای هر روز داشته باشیم.
+                if (todayStr === lastEntryDateStr) {
                     lastEntry.total_irt = currentIrt;
                     lastEntry.total_usdt = currentUsdt;
+                    lastEntry.timestamp = now; // بروزرسانی زمان ثبت نهایی امروز
                     shouldAdd = false;
                 }
             }
