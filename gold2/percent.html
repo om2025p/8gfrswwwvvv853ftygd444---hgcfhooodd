@@ -39,7 +39,6 @@
         }
 
         .container > h1,
-        .container > .namespace-selector-container,
         .container > .goal-section,
         .container > .percent-list,
         .container > input,
@@ -55,37 +54,6 @@
             color: #2196F3;
             font-size: 22px;
             margin: 15px 0;
-            text-align: center;
-        }
-
-        /* ===== پنل شیک انتخاب شناسه ذخیره‌سازی ===== */
-        .namespace-selector-container {
-            margin: 10px 8px 15px 8px;
-            padding: 12px;
-            background: rgba(33, 150, 243, 0.08);
-            border: 1px dashed #2196F3;
-            border-radius: 12px;
-            text-align: center;
-        }
-        .namespace-label {
-            font-size: 13px;
-            font-weight: bold;
-            color: #1976D2;
-            display: block;
-            margin-bottom: 8px;
-        }
-        .namespace-select {
-            width: 100%;
-            padding: 8px;
-            border-radius: 8px;
-            border: 2px solid #2196F3;
-            background-color: white;
-            font-family: inherit;
-            font-size: 13px;
-            color: #1976D2;
-            outline: none;
-            cursor: pointer;
-            font-weight: bold;
             text-align: center;
         }
 
@@ -422,18 +390,6 @@
         <div class="container">
             <h1>📊 محاسبه سود درآمد ثابت کیان</h1>
 
-            <!-- ===== پنل انتخاب شناسه ذخیره‌سازی سفارشی ===== -->
-            <div class="namespace-selector-container">
-                <span class="namespace-label">💾 انتخاب حافظه ذخیره‌سازی داده‌ها:</span>
-                <select id="namespaceSelect" class="namespace-select" onchange="changeStorageNamespace(this.value)">
-                    <option value="kian_">🔑 حافظه اصلی کیان (kian_ - پیش‌فرض)</option>
-                    <option value="">📂 حافظه ثانویه بدون پیشوند (سفارشی)</option>
-                    <option value="percents">📂 حافظه عمومی پلتفرم (percents)</option>
-                    <option value="energy_">⚡️ حافظه انرژی (energy_)</option>
-                    <option value="mofid_">🦊 حافظه مفید آتیه (mofid_)</option>
-                </select>
-            </div>
-
             <!-- ===== منوی کشویی آمار ===== -->
             <div class="stats-dropdown">
                 <div class="stats-header" onclick="toggleStatsMenu()">
@@ -569,55 +525,21 @@
     </div>
 
     <script>
-        // خواندن یا مقداردهی پیش‌فرض پیشوند حافظه انتخابی کاربر
-        let STORAGE_PREFIX = localStorage.getItem("selected_gold2_namespace") || "kian_";
-        document.getElementById("namespaceSelect").value = STORAGE_PREFIX;
+        // ✅ درست شد - از همون کلید قبلی استفاده می‌کنه تا داده‌های ذخیره شده رو ببینه
+        const STORAGE_PREFIX = "kian_";
 
-        let percents = [];
-        let trash = [];
-        let goal = null;
-        let highlightedStates = {};
-        let highlightedPointIndices = [];
-        let notes = [];
-        let investmentValue = 0;
-        let statsMenuOpen = false;
+        let percents = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "percents")) || [];
+        let trash = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "trash")) || [];
+        let goal = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "goal")) || null;
+        let highlightedStates = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "highlightedStates")) || {};
+        let highlightedPointIndices = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "highlightedPointIndices")) || [];
+        let notes = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "notes")) || [];
+        let investmentValue = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "investmentValue")) || 0;
+        let statsMenuOpen = localStorage.getItem(STORAGE_PREFIX + "statsMenuOpen") === "true";
 
         let zoomLevel = 1.0;
         let currentDataCache = null;
         let chartCanvas = null, chartCtx = null;
-
-        // بارگذاری و مقداردهی متغیرها بر اساس شناسه انتخابی فعال
-        function loadNamespaceData() {
-            percents = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "percents")) || [];
-            trash = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "trash")) || [];
-            goal = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "goal")) || null;
-            highlightedStates = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "highlightedStates")) || {};
-            highlightedPointIndices = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "highlightedPointIndices")) || [];
-            notes = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "notes")) || [];
-            investmentValue = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "investmentValue")) || 0;
-            statsMenuOpen = localStorage.getItem(STORAGE_PREFIX + "statsMenuOpen") === "true";
-        }
-
-        // سوئیچ آنی بین دیتابیس‌ها و بازخوانی شیک کل رابط کاربری
-        function changeStorageNamespace(newNamespace) {
-            // ذخیره انتخاب جدید در لوکال استوریج عمومی
-            localStorage.setItem("selected_gold2_namespace", newNamespace);
-            STORAGE_PREFIX = newNamespace;
-
-            // بازخوانی همه‌چیز
-            loadNamespaceData();
-            initStatsMenu();
-            updateUI();
-
-            if(document.getElementById('notesDrawer').classList.contains('open')) {
-                renderNotes();
-            }
-
-            console.log("🔄 سوئیچ شد به حافظه:", STORAGE_PREFIX);
-        }
-
-        // اولین بارگذاری داده‌ها
-        loadNamespaceData();
 
         // ===== منوی کشویی آمار =====
         function toggleStatsMenu() {
@@ -1110,7 +1032,6 @@
             return { cumData, maxVal, minVal };
         }
 
-        // رسم چارت خالص با رعایت زوم
         function drawChart() {
             chartCanvas = document.getElementById('liveChartCanvas');
             if(!chartCanvas) return;
@@ -1284,9 +1205,6 @@
             if(statsMenuOpen) {
                 content.classList.add('open');
                 arrow.classList.add('open');
-            } else {
-                content.classList.remove('open');
-                arrow.classList.remove('open');
             }
         }
 
@@ -1299,7 +1217,7 @@
         updateUI();
 
         // اگه داده‌ای توی مرورگر داری، توی کنسول لاگ کن
-        console.log("✅ داده‌های ذخیره شده:", percents.length, "مورد تحت پیشوند:", STORAGE_PREFIX);
+        console.log("✅ داده‌های ذخیره شده:", percents.length, "مورد");
     </script>
 </body>
 </html>
