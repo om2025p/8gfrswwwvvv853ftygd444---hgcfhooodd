@@ -163,17 +163,23 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.match(event.request).then((cachedResponse) => {
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (cachedResponse) {
+          // در پس‌زمینه شبکه را آپدیت کن
+          fetch(event.request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+          }).catch(() => {});
+          return cachedResponse;
+        }
+
+        // اگر در کش نبود، مستقیماً از شبکه دریافت کن و در کش قرار بده
+        return fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             cache.put(event.request, networkResponse.clone());
           }
           return networkResponse;
-        }).catch(() => {
-          // خطا در شبکه (مثلا آفلاین بودن) - خطای fetch ساکت می‌شود تا از مقدار کش استفاده شود
         });
-
-        // اگر در کش بود فوراً پاسخ بده، در غیر این صورت منتظر پاسخ شبکه بمان
-        return cachedResponse || fetchPromise;
       });
     })
   );
