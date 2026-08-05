@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#312e81">
+    <link rel="manifest" href="manifest.json">
+    <title>کارآگاه داده‌های عمارت 🔍</title>
+    <style>
+        :root {
+            --glass-bg: rgba(30, 27, 75, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --opaque-white: rgba(255, 255, 255, 0.9);
+            --text-color: #f8fafc;
+            --text-muted: #cbd5e1;
+            --accent-color: #818cf8;
+            --accent-hover: #6366f1;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --success: #34d399;
+            --danger: #f87171;
+            --warning: #fbbf24;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #030712 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px 10px;
+            overflow-y: auto;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 40px;
+        }
+
+        /* سربرگ */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 16px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            padding: 8px 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .title-area h1 {
+            font-size: 1.3rem;
+            margin: 0;
+            font-weight: 700;
+            background: linear-gradient(to left, #c7d2fe, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title-area p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin: 4px 0 0 0;
+        }
+
+        /* تب‌بندی */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px;
+            border-radius: 14px;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-color);
+            color: #1e1b4b;
+            box-shadow: 0 4px 12px rgba(129, 140, 248, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* استایل کارت‌های شیشه‌ای */
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 12px;
+            color: var(--accent-color);
+        }
+
+        /* دکمه‌ها */
+        .btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            padding: 8px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: #1e1b4b;
+            border: none;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-success {
+            background: rgba(52, 211, 153, 0.15);
+            border-color: rgba(52, 211, 153, 0.3);
+            color: var(--success);
+        }
+
+        .btn-success:hover {
+            background: rgba(52, 211, 153, 0.25);
+        }
+
+        .btn-danger {
+            background: rgba(248, 113, 113, 0.15);
+            border-color: rgba(248, 113, 113, 0.3);
+            color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: rgba(248, 113, 113, 0.25);
+        }
+
+        /* ورودی‌ها */
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .input-field {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px 14px;
+            color: var(--text-color);
+            font-family: monospace;
+            font-size: 0.9rem;
+            direction: ltr;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2);
+        }
+
+        /* اطلاعات اثرانگشت و وضعیت ابری */
+        .badge {
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--accent-color);
+            border: 1px solid rgba(129, 140, 248, 0.2);
+            word-break: break-all;
+        }
+
+        .status-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+
+        .status-val {
+            font-weight: 600;
+        }
+
+        /* جدول کلیدهای لوکال استوریج */
+        .table-container {
+            overflow-x: auto;
+            max-height: 350px;
+            overflow-y: auto;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            text-align: right;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            font-weight: 600;
+            color: var(--accent-color);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-color);
+        }
+
+        /* کارت‌های اپلیکیشن‌ها (تب ۲) */
+        .app-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .app-item-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 16px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-item-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .app-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .app-item-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .app-item-icon {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .app-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        .app-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .app-item-actions .btn {
+            flex: 1;
+            padding: 8px 10px;
+            font-size: 0.75rem;
+        }
+
+        /* مودال نمایش جزئیات داده‌ها */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e1b4b;
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 500px;
+            padding: 24px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+            animation: modalIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: var(--text-color);
+        }
+
+        .json-viewer {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 14px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #a7f3d0;
+            overflow-x: auto;
+            max-height: 400px;
+            direction: ltr;
+            text-align: left;
+            white-space: pre-wrap;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        /* هشدارهای کوچک */
+        .alert {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-size: 0.8rem;
+            color: #fca5a5;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .alert-success {
+            background: rgba(52, 211, 153, 0.1);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            color: #a7f3d0;
+        }
+
+        /* ورودی فایل مخفی */
+        .hidden-file {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- سربرگ -->
+        <div class="header">
+            <div class="title-area">
+                <h1>کارآگاه داده‌های عمارت 🔍</h1>
+                <p>سیستم اسکن، نجات، انتقال و ادغام داده‌ها</p>
+            </div>
+            <a href="../index.html" class="back-btn">
+                <span>برگشت</span> 🏠
+            </a>
+        </div>
+
+        <!-- تب‌ها -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('generalTab')">
+                🌐 اسکنر عمومی و ابر
+            </button>
+            <button class="tab-btn" onclick="switchTab('appsTab')">
+                📱 کمد اختصاصی اپ‌ها
+            </button>
+        </div>
+
+        <!-- تب اول: عمومی -->
+        <div id="generalTab" class="tab-content active">
+            <!-- کارت وضعیت دستگاه و ابر -->
+            <div class="card">
+                <div class="card-title">🔍 وضعیت شناسایی و بکاپ ابری</div>
+
+                <div class="status-box">
+                    <span>شناسه دستگاه شما:</span>
+                    <span class="badge" id="myFingerprintBadge">درحال محاسبه...</span>
+                </div>
+
+                <div class="status-box">
+                    <span>آخرین همگام‌سازی ابری:</span>
+                    <span class="status-val" id="cloudLastSyncVal">درحال بررسی...</span>
+                </div>
+
+                <div class="status-box">
+                    <span>تعداد کلیدهای ابری:</span>
+                    <span class="status-val" id="cloudKeysCount">درحال بررسی...</span>
+                </div>
+
+                <!-- بررسی شناسه دیگر -->
+                <div style="margin-top: 16px;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 6px;">
+                        می‌خواهی شناسه دیگری (مثلا شناسه قدیمی‌ات روی گیت‌هاب) را چک کنی؟
+                    </label>
+                    <div class="input-group">
+                        <input type="text" class="input-field" id="customFpInput" placeholder="emarat_fp_...">
+                        <button class="btn btn-primary" onclick="queryCustomCloud()">بررسی ابری</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button class="btn btn-success" style="flex: 1;" onclick="manualPullFromCloud()">☁️📥 بازیابی کل عمارت از ابر</button>
+                    <button class="btn btn-primary" style="flex: 1;" onclick="manualPushToCloud()">☁️📤 پشتیبان‌گیری کل در ابر</button>
+                </div>
+            </div>
+
+            <!-- کارت کلیدهای محلی (LocalStorage) -->
+            <div class="card">
+                <div class="card-title">💾 داده‌های ذخیره‌شده روی این دامنه</div>
+                <div class="status-box" style="margin-bottom: 12px;">
+                    <span>تعداد کلیدهای موجود در مرورگر:</span>
+                    <span id="localKeysCountBadge" class="badge" style="background: var(--accent-color); color: #1e1b4b;">۰</span>
+                </div>
+
+                <div class="table-container">
+                    <table id="localStorageTable">
+                        <thead>
+                            <tr>
+                                <th>کلید</th>
+                                <th>حجم داده</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="localStorageTableBody">
+                            <!-- کلیدها رندر می‌شوند -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display: flex; gap: 8px; margin-top: 16px;">
+                    <button class="btn" style="flex: 1;" onclick="downloadFullBackup()">💾📥 دانلود کل بکاپ (.json)</button>
+                    <button class="btn btn-success" style="flex: 1;" onclick="triggerFullImport()">💾📤 بارگذاری و جایگزینی کل</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- تب دوم: اپ‌ها -->
+        <div id="appsTab" class="tab-content">
+            <div class="alert">
+                در این بخش می‌توانید وضعیت داده‌های هر اپلیکیشن را به طور مستقل رصد کنید، تاریخ آخرین تغییر آن را ببینید و آن را دانلود یا به طور تکی با داده‌های بیرونی ادغام کنید!
+            </div>
+
+            <div class="app-list" id="appListContainer">
+                <!-- کارت‌های اپلیکیشن‌ها به صورت پویا رندر می‌شوند -->
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال نمایش داده‌ها -->
+    <div class="modal" id="dataModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">مشاهده داده‌ها</div>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="json-viewer" id="modalJsonViewer"></div>
+            <div style="display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end;">
+                <button class="btn" onclick="closeModal()">بستن</button>
+                <button class="btn btn-primary" id="modalDownloadKeyBtn">📥 دانلود تک کلید</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ورودی‌های فایل پنهان -->
+    <input type="file" id="fullImportInput" class="hidden-file" accept=".json" onchange="handleFullImport(event)">
+    <input type="file" id="singleAppImportInput" class="hidden-file" accept=".json" onchange="handleSingleAppImport(event)">
+
+    <script>
+        // اثرانگشت دستگاه
+        function getDeviceFingerprint() {
+            const components = [
+                navigator.language || '',
+                screen.width + 'x' + screen.height,
+                screen.colorDepth || '',
+                new Date().getTimezoneOffset(),
+                navigator.hardwareConcurrency || '',
+                navigator.maxTouchPoints || '',
+                (() => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                        if (!gl) return '';
+                        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                        return debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : '';
+                    } catch (e) {
+                        return '';
+                    }
+                })()
+            ];
+            const str = components.join('|');
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = (hash << 5) - hash + char;
+                hash = hash & hash;
+            }
+            return 'emarat_fp_' + Math.abs(hash);
+        }
+
+        const myFingerprint = getDeviceFingerprint();
+        const namespace = "emarat-pwa-backup-v2";
+        let activeCloudFp = myFingerprint;
+
+        // نقشه‌برداری داده‌ها برای اپلیکیشن‌ها
+        const APPS_MAPPING = [
+            {
+                id: 'gold',
+                title: 'ثبت درصد 1 (طلا و ارز)',
+                icon: '🥇',
+                keys: ['percents', 'trash', 'goal', 'highlightedStates', 'highlightedPointIndices', 'statsMenuOpen'],
+                getLastUpdate: () => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('percents'));
+                        if (data && data.length > 0) {
+                            const last = data[data.length - 1];
+                            return last.timestamp || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'gold2',
+                title: 'ثبت درصد 2 (درآمد ثابت کیان)',
+                icon: '🥈',
+                keys: ['kian_percents', 'kian_trash', 'kian_goal', 'kian_highlightedStates', 'kian_highlightedPointIndices', 'kian_notes', 'kian_investmentValue', 'kian_statsMenuOpen'],
+                getLastUpdate: () => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('kian_percents'));
+                        if (data && data.length > 0) {
+                            const last = data[data.length - 1];
+                            return last.timestamp || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'gold3',
+                title: 'ثبت درصد 3 (شاخصی ۲ برابر کیان)',
+                icon: '🥉',
+                keys: ['stock____________tas9yl_new_unified', 'stock____________tas9yl_statsOpen', 'stock____________tas9yl_migrated_to_new_structure'],
+                getLastUpdate: () => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('stock____________tas9yl_new_unified'));
+                        if (data && data.percents && data.percents.length > 0) {
+                            const last = data.percents[data.percents.length - 1];
+                            return last.timestamp || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'gold4',
+                title: 'ثبت درصد 4 (بازنشستگی آتیه مفید)',
+                icon: '🏅',
+                keys: ['mofid_atie_percents', 'mofid_atie_trash', 'mofid_atie_goal', 'mofid_atie_highlightedStates', 'mofid_atie_notes', 'mofid_atie_statsMenuOpen', 'mofid_atie_periodTarget', 'mofid_atie_achievedPeriods'],
+                getLastUpdate: () => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('mofid_atie_percents'));
+                        if (data && data.length > 0) {
+                            const last = data[data.length - 1];
+                            return last.timestamp || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'gold5',
+                title: 'ثبت درصد 5 (صندوق هم‌افزا نفت و گاز)',
+                icon: '⚡',
+                keys: ['energy_fund_synergy', 'energy_fund_synergy_statsOpen'],
+                getLastUpdate: () => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('energy_fund_synergy'));
+                        if (data && data.percents && data.percents.length > 0) {
+                            const last = data.percents[data.percents.length - 1];
+                            return last.timestamp || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'monitor',
+                title: 'دیدبان درصدها',
+                icon: '📊',
+                keys: ['monitor_last_gemini_analysis', 'monitor_gemini_analysis_date'],
+                getLastUpdate: () => {
+                    try {
+                        const d = localStorage.getItem('monitor_gemini_analysis_date');
+                        if (d) {
+                            return new Date(d).getTime() || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'skincare',
+                title: 'مراقبت پوستی',
+                icon: '🧼',
+                keys: ['skincare_history_v1', 'skincare_draft_v1', 'skincare_theme_v1'],
+                getLastUpdate: () => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('skincare_history_v1'));
+                        if (data && data.length > 0) {
+                            const last = data[data.length - 1];
+                            return last.timestamp || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'profit',
+                title: 'محاسبه‌گر سود',
+                icon: '💰',
+                keys: ['history', 'savedTabs', 'activeTabId', 'tabCounter', 'decimalPlaces', 'compound_inputs', 'calc_history_v3', 'theme_mode', 'profit_calculator_checks', 'tabCustomName_0', 'tabCustomName_1', 'tabCustomName_2', 'tabCustomName_3', 'tabCustomName_4', 'tabCustomName_5', 'tabCustomName_6', 'tabCustomName_7', 'tabCustomName_8', 'tabCustomName_9', 'calculatorTab_0', 'calculatorTab_1', 'calculatorTab_2', 'calculatorTab_3', 'calculatorTab_4', 'calculatorTab_5', 'calculatorTab_6', 'calculatorTab_7', 'calculatorTab_8', 'calculatorTab_9', 'tabMarked_0', 'tabMarked_1', 'tabMarked_2', 'tabMarked_3', 'tabMarked_4', 'tabMarked_5', 'tabMarked_6', 'tabMarked_7', 'tabMarked_8', 'tabMarked_9'],
+                getLastUpdate: () => {
+                    try {
+                        const h1 = JSON.parse(localStorage.getItem('calc_history_v3'));
+                        let maxT = null;
+                        if (h1 && h1.length > 0) {
+                            maxT = h1[h1.length - 1].timestamp || null;
+                        }
+                        const h2 = JSON.parse(localStorage.getItem('history'));
+                        if (h2 && h2.length > 0) {
+                            const t = h2[h2.length - 1].timestamp || null;
+                            if (!maxT || (t && t > maxT)) maxT = t;
+                        }
+                        return maxT;
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'ai_chat',
+                title: 'چت هوشمند',
+                icon: '💬',
+                keys: ['chat_theme', 'cf_proxy_url', 'current_session_id', 'emarat_chat_v31_cleared', 'emarat_web_search'],
+                getLastUpdate: async () => {
+                    // بازیابی ناهمگام از IndexedDB
+                    return new Promise((resolve) => {
+                        try {
+                            const request = indexedDB.open('EmaratAIChatDB_v2');
+                            request.onsuccess = (e) => {
+                                const db = e.target.result;
+                                if (!db.objectStoreNames.contains('sessions')) {
+                                    resolve(null);
+                                    return;
+                                }
+                                const tx = db.transaction('sessions', 'readonly');
+                                const store = tx.objectStore('sessions');
+                                const getAll = store.getAll();
+                                getAll.onsuccess = () => {
+                                    const sessions = getAll.result;
+                                    if (sessions && sessions.length > 0) {
+                                        sessions.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+                                        resolve(sessions[0].updatedAt || null);
+                                    } else {
+                                        resolve(null);
+                                    }
+                                };
+                                getAll.onerror = () => resolve(null);
+                            };
+                            request.onerror = () => resolve(null);
+                        } catch(err) {
+                            resolve(null);
+                        }
+                    });
+                }
+            },
+            {
+                id: 'tabdeal',
+                title: 'کیف پول تبدیل',
+                icon: '💼',
+                keys: ['tabdeal_api_key', 'tabdeal_api_secret', 'tabdeal_cf_token', 'tabdeal_cf_account_id', 'tabdeal_last_percent_change', 'tabdeal_last_value_toman', 'tabdeal_last_value_tether', 'tabdeal_last_updated_ts', 'tabdeal_wallet_history'],
+                getLastUpdate: () => {
+                    try {
+                        const ts = parseInt(localStorage.getItem('tabdeal_last_updated_ts'));
+                        if (ts) return ts;
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'gym',
+                title: 'برنامه ورزشی (Activity)',
+                icon: '🏃‍♂️',
+                keys: ['workout_new_base_v2', 'workout_new_history_v2', 'workout_new_trash_v2', 'workout_new_last_inc_v2', 'workout_new_next_type_v2', 'workout_new_theme_v2', 'workout_new_draft_v2', 'last_notified_workout_id', 'data_migration_notice_shown'],
+                getLastUpdate: () => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('workout_new_history_v2'));
+                        if (data && data.length > 0) {
+                            const last = data[data.length - 1];
+                            return last.id || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            }
+        ];
+
+        // سوئیچ تب‌ها
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // پیدا کردن دکمه درست
+            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => {
+                return (tabId === 'generalTab' && b.innerText.includes('اسکنر')) || (tabId === 'appsTab' && b.innerText.includes('کمد'));
+            });
+            if (activeBtn) activeBtn.classList.add('active');
+
+            document.getElementById(tabId).classList.add('active');
+
+            if (tabId === 'appsTab') {
+                renderAppsList();
+            }
+        }
+
+        // کوئری گرفتن زنده وضعیت ابر برای شناسه مشخص
+        async function fetchCloudStatus(fp) {
+            const cloudLastSyncVal = document.getElementById('cloudLastSyncVal');
+            const cloudKeysCount = document.getElementById('cloudKeysCount');
+            const url = `https://mantledb.sh/v2/${namespace}/${fp}`;
+
+            try {
+                const res = await fetch(url);
+                if (res.status === 200) {
+                    const cloudBackup = await res.json();
+                    if (cloudBackup && cloudBackup.timestamp && cloudBackup.data) {
+                        const date = new Date(cloudBackup.timestamp);
+                        cloudLastSyncVal.innerText = date.toLocaleString('fa-IR');
+                        cloudLastSyncVal.style.color = 'var(--success)';
+                        cloudKeysCount.innerText = Object.keys(cloudBackup.data).length + ' کلید';
+                        cloudKeysCount.style.color = 'var(--accent-color)';
+                        return cloudBackup;
+                    }
+                }
+                cloudLastSyncVal.innerText = 'بکاپ یافت نشد (خالی)';
+                cloudLastSyncVal.style.color = 'var(--danger)';
+                cloudKeysCount.innerText = '۰ کلید';
+                cloudKeysCount.style.color = 'var(--text-muted)';
+            } catch (err) {
+                console.error(err);
+                cloudLastSyncVal.innerText = 'خطا در فچ کردن';
+                cloudLastSyncVal.style.color = 'var(--danger)';
+                cloudKeysCount.innerText = 'مشخص نیست';
+            }
+            return null;
+        }
+
+        // اجرای اولیه وضعیت ابری و محلی
+        async function init() {
+            document.getElementById('myFingerprintBadge').innerText = myFingerprint;
+            document.getElementById('customFpInput').value = myFingerprint;
+            await fetchCloudStatus(myFingerprint);
+            renderLocalStorageTable();
+        }
+
+        // بررسی شناسه دلخواه ابری
+        async function queryCustomCloud() {
+            const fp = document.getElementById('customFpInput').value.trim();
+            if (!fp) return alert('لطفاً یک شناسه معتبر وارد کنید.');
+            activeCloudFp = fp;
+            alert(`در حال بررسی بکاپ برای شناسه: ${fp}`);
+            await fetchCloudStatus(fp);
+        }
+
+        // جدول کلیدهای لوکال استوریج
+        function renderLocalStorageTable() {
+            const tableBody = document.getElementById('localStorageTableBody');
+            const localKeysCountBadge = document.getElementById('localKeysCountBadge');
+            tableBody.innerHTML = '';
+
+            let keysCount = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key === 'emarat_last_modified' || key === 'emarat_sync_counter') continue;
+                keysCount++;
+
+                const val = localStorage.getItem(key);
+                const size = (val.length * 2 / 1024).toFixed(2); // تخمین حجم کیلوبایت UTF-16
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 600; color: #f8fafc;">${key}</td>
+                    <td>${size} KB</td>
+                    <td>
+                        <button class="btn" onclick="viewKeyData('${key}')">🔍 دیدن</button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            }
+            localKeysCountBadge.innerText = keysCount;
+        }
+
+        // بازیابی کل عمارت از ابر
+        async function manualPullFromCloud() {
+            const confirmPull = confirm(`آیا مطمئن هستید که می‌خواهید کل داده‌های محلی این مرورگر را با بکاپ موجود در کلید ابری [${activeCloudFp}] جایگزین کنید؟ همه داده‌های فعلی اوروایت خواهند شد!`);
+            if (!confirmPull) return;
+
+            const url = `https://mantledb.sh/v2/${namespace}/${activeCloudFp}`;
+            try {
+                const res = await fetch(url);
+                if (res.status === 200) {
+                    const cloudBackup = await res.json();
+                    if (cloudBackup && cloudBackup.data) {
+                        Object.keys(cloudBackup.data).forEach(key => {
+                            localStorage.setItem(key, cloudBackup.data[key]);
+                        });
+                        localStorage.setItem('emarat_last_modified', cloudBackup.timestamp);
+                        alert('تبریک! بازیابی کل عمارت از ابر با موفقیت انجام شد. برای اعمال تغییرات صفحه ریلود می‌شود.');
+                        location.reload();
+                    } else {
+                        alert('بکاپ ابری معتبری یافت نشد.');
+                    }
+                } else {
+                    alert('خطا در دریافت بکاپ از ابر (وضعیت: ' + res.status + ')');
+                }
+            } catch (err) {
+                alert('خطا در برقراری ارتباط با ابر: ' + err.message);
+            }
+        }
+
+        // پشتیبان‌گیری کل در ابر
+        async function manualPushToCloud() {
+            const confirmPush = confirm(`آیا می‌خواهید تمام داده‌های محلی فعلی خود را روی سرور ابری تحت شناسه [${activeCloudFp}] ذخیره کنید؟`);
+            if (!confirmPush) return;
+
+            const keysToBackup = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key !== 'emarat_last_modified' && key !== 'emarat_sync_counter') {
+                    keysToBackup[key] = localStorage.getItem(key);
+                }
+            }
+
+            const timestamp = Date.now();
+            const payload = {
+                timestamp: timestamp,
+                data: keysToBackup
+            };
+
+            const url = `https://mantledb.sh/v2/${namespace}/${activeCloudFp}`;
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    alert('پشتیبان‌گیری کل عمارت روی ابر با موفقیت انجام شد!');
+                    localStorage.setItem('emarat_last_modified', timestamp.toString());
+                    await fetchCloudStatus(activeCloudFp);
+                } else {
+                    alert('خطا در ذخیره‌سازی روی ابر.');
+                }
+            } catch (err) {
+                alert('خطا در برقراری ارتباط با ابر: ' + err.message);
+            }
+        }
+
+        // مشاهده داده مودال
+        let activeModalKey = '';
+        function viewKeyData(key) {
+            activeModalKey = key;
+            document.getElementById('modalTitle').innerText = `کلید: ${key}`;
+            const val = localStorage.getItem(key);
+            const viewer = document.getElementById('modalJsonViewer');
+            try {
+                const parsed = JSON.parse(val);
+                viewer.innerText = JSON.stringify(parsed, null, 2);
+            } catch(e) {
+                viewer.innerText = val;
+            }
+            document.getElementById('modalDownloadKeyBtn').onclick = () => downloadSingleKey(key);
+            document.getElementById('dataModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('dataModal').classList.remove('active');
+        }
+
+        // دانلود تک کلید
+        function downloadSingleKey(key) {
+            const val = localStorage.getItem(key);
+            const blob = new Blob([val], {type: 'application/json'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `emarat_key_${key}.json`;
+            link.click();
+        }
+
+        // دانلود کل بکاپ
+        function downloadFullBackup() {
+            const fullData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                fullData[key] = localStorage.getItem(key);
+            }
+            const blob = new Blob([JSON.stringify(fullData, null, 2)], {type: 'application/json'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            const now = new Date();
+            const ts = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '_' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0');
+            link.download = `emarat_complete_backup_${ts}.json`;
+            link.click();
+        }
+
+        // لود کردن بکاپ کامل
+        function triggerFullImport() {
+            document.getElementById('fullImportInput').click();
+        }
+
+        function handleFullImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    const confirmRestore = confirm('آیا مطمئن هستید؟ با این کار کل داده‌های فعلی مرورگر پاک شده و داده‌های فایل بارگذاری جایگزین خواهند شد.');
+                    if (confirmRestore) {
+                        localStorage.clear();
+                        Object.keys(imported).forEach(key => {
+                            localStorage.setItem(key, imported[key]);
+                        });
+                        alert('کل بکاپ با موفقیت جایگزین شد! مرورگر ریلود می‌شود.');
+                        location.reload();
+                    }
+                } catch(err) {
+                    alert('بارگذاری با خطا مواجه شد. فرمت فایل صحیح نیست.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // رندر کردن لیست اپ‌ها (تب دوم)
+        async function renderAppsList() {
+            const container = document.getElementById('appListContainer');
+            container.innerHTML = '<div class="status-val">در حال اسکن برنامه‌ها...</div>';
+
+            const cardsHTML = [];
+
+            for (const app of APPS_MAPPING) {
+                // بررسی وجود داده برای این اپلیکیشن
+                let hasData = false;
+                let keysCount = 0;
+                let totalSizeBytes = 0;
+
+                app.keys.forEach(k => {
+                    const v = localStorage.getItem(k);
+                    if (v !== null) {
+                        hasData = true;
+                        keysCount++;
+                        totalSizeBytes += v.length * 2; // UTF-16
+                    }
+                });
+
+                let lastUpdateText = 'بدون سابقه ثبت‌شده';
+                let lastUpdateTs = null;
+
+                if (hasData) {
+                    const res = app.getLastUpdate();
+                    if (res instanceof Promise) {
+                        lastUpdateTs = await res;
+                    } else {
+                        lastUpdateTs = res;
+                    }
+
+                    if (lastUpdateTs) {
+                        lastUpdateText = new Date(lastUpdateTs).toLocaleString('fa-IR');
+                    } else {
+                        lastUpdateText = 'یافت شد (تاریخ نامشخص)';
+                    }
+                }
+
+                const totalSizeKB = (totalSizeBytes / 1024).toFixed(2);
+
+                const cardHTML = `
+                    <div class="app-item-card">
+                        <div class="app-item-header">
+                            <div class="app-item-title">
+                                <div class="app-item-icon">${app.icon}</div>
+                                <span>${app.title}</span>
+                            </div>
+                            <span class="badge" style="background: ${hasData ? 'rgba(52, 211, 153, 0.15)' : 'rgba(255, 255, 255, 0.05)'}; color: ${hasData ? 'var(--success)' : 'var(--text-muted)'}; border-color: ${hasData ? 'rgba(52, 211, 153, 0.3)' : 'rgba(255, 255, 255, 0.1)'}">
+                                ${hasData ? 'دارای داده' : 'بدون داده'}
+                            </span>
+                        </div>
+
+                        <div class="app-item-info">
+                            <div class="status-box" style="margin: 0;">
+                                <span>آخرین ثبت اطلاعات:</span>
+                                <span class="status-val" style="color: ${hasData ? '#f8fafc' : 'var(--text-muted)'}">${lastUpdateText}</span>
+                            </div>
+                            <div class="status-box" style="margin: 0;">
+                                <span>حجم فایل محلی:</span>
+                                <span class="status-val">${totalSizeKB} KB (${keysCount} کلید)</span>
+                            </div>
+                        </div>
+
+                        <div class="app-item-actions">
+                            <button class="btn btn-primary" onclick="downloadAppBackup('${app.id}')" ${hasData ? '' : 'disabled style="opacity: 0.4; cursor: not-allowed;"'}>📥 دانلود بکاپ</button>
+                            <button class="btn btn-success" onclick="triggerAppImport('${app.id}')">🔄 ادغام داده‌ها</button>
+                        </div>
+                    </div>
+                `;
+                cardsHTML.push(cardHTML);
+            }
+
+            container.innerHTML = cardsHTML.join('');
+        }
+
+        // دانلود بکاپ اختصاصی یک اپلیکیشن
+        function downloadAppBackup(appId) {
+            const app = APPS_MAPPING.find(a => a.id === appId);
+            if (!app) return;
+
+            const appData = {
+                appId: app.id,
+                title: app.title,
+                exportedAt: Date.now(),
+                data: {}
+            };
+
+            app.keys.forEach(k => {
+                const v = localStorage.getItem(k);
+                if (v !== null) {
+                    appData.data[k] = v;
+                }
+            });
+
+            const blob = new Blob([JSON.stringify(appData, null, 2)], {type: 'application/json'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `backup_${app.id}_${Date.now()}.json`;
+            link.click();
+        }
+
+        // ادغام دستی یک اپلیکیشن
+        let activeImportAppId = '';
+        function triggerAppImport(appId) {
+            activeImportAppId = appId;
+            document.getElementById('singleAppImportInput').click();
+        }
+
+        function handleSingleAppImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedObj = JSON.parse(e.target.result);
+                    const app = APPS_MAPPING.find(a => a.id === activeImportAppId);
+                    if (!app) return;
+
+                    let dataToMerge = {};
+
+                    // بررسی اینکه آیا فایل خروجی کلید اختصاصی است یا خروجی سراسری کلیدها
+                    if (importedObj && importedObj.appId === activeImportAppId && importedObj.data) {
+                        dataToMerge = importedObj.data;
+                    } else if (importedObj) {
+                        // بررسی اینکه آیا فایل خروجی کامل لوکال استوریج است و کلیدهای مورد نظر را دارد
+                        app.keys.forEach(k => {
+                            if (importedObj[k] !== undefined) {
+                                dataToMerge[k] = importedObj[k];
+                            }
+                        });
+                    }
+
+                    if (Object.keys(dataToMerge).length === 0) {
+                        return alert('هیچ داده معتبری مربوط به این برنامه در فایل انتخاب‌شده پیدا نشد.');
+                    }
+
+                    const confirmMerge = confirm(`آیا مایل هستید داده‌های برنامه [${app.title}] را با داده‌های فعلی ادغام کنید؟ داده‌های همسان بدون حذف هیچ فایلی به‌روزرسانی خواهند شد.`);
+                    if (!confirmMerge) return;
+
+                    // شروع ادغام هوشمند کلید به کلید
+                    Object.keys(dataToMerge).forEach(key => {
+                        const localVal = localStorage.getItem(key);
+                        const importVal = dataToMerge[key];
+
+                        if (!localVal) {
+                            // اگر محلی نداریم، مستقیماً وارد کن
+                            localStorage.setItem(key, importVal);
+                        } else {
+                            // در صورت تداخل، تلاش برای ادغام هوشمند آرایه‌ها
+                            try {
+                                const localParsed = JSON.parse(localVal);
+                                const importParsed = JSON.parse(importVal);
+
+                                if (Array.isArray(localParsed) && Array.isArray(importParsed)) {
+                                    // ادغام هوشمند آرایه برای ثبت درصدها
+                                    if (key.includes('percent') || key.includes('percents') || key.includes('energy_fund_synergy')) {
+                                        // فیلتر کردن رکوردهای تکراری بر اساس فیلد timestamp
+                                        const combined = [...localParsed, ...importParsed];
+                                        const seen = new Set();
+                                        const merged = [];
+                                        combined.forEach(item => {
+                                            if (item && item.timestamp) {
+                                                if (!seen.has(item.timestamp)) {
+                                                    seen.add(item.timestamp);
+                                                    merged.push(item);
+                                                }
+                                            } else {
+                                                merged.push(item);
+                                            }
+                                        });
+                                        merged.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
+                                        localStorage.setItem(key, JSON.stringify(merged));
+                                    }
+                                    // ادغام تمرینات ورزشی بر اساس id
+                                    else if (key === 'workout_new_history_v2') {
+                                        const combined = [...localParsed, ...importParsed];
+                                        const seen = new Set();
+                                        const merged = [];
+                                        combined.forEach(item => {
+                                            if (item && item.id) {
+                                                if (!seen.has(item.id)) {
+                                                    seen.add(item.id);
+                                                    merged.push(item);
+                                                }
+                                            } else {
+                                                merged.push(item);
+                                            }
+                                        });
+                                        localStorage.setItem(key, JSON.stringify(merged));
+                                    }
+                                    // ادغام کلی آرایه‌های دیگر
+                                    else {
+                                        localStorage.setItem(key, importVal);
+                                    }
+                                } else if (typeof localParsed === 'object' && typeof importParsed === 'object') {
+                                    // ادغام خواص آبجکت‌ها
+                                    const mergedObj = Object.assign({}, localParsed, importParsed);
+                                    localStorage.setItem(key, JSON.stringify(mergedObj));
+                                } else {
+                                    // کلیدهای تک مقداری ساده
+                                    localStorage.setItem(key, importVal);
+                                }
+                            } catch(err) {
+                                // اگر پارس جیسون نشد، مقدار جدید را جایگزین کن
+                                localStorage.setItem(key, importVal);
+                            }
+                        }
+                    });
+
+                    alert('ادغام هوشمند داده‌های برنامه با موفقیت پایان یافت!');
+                    renderAppsList();
+                    renderLocalStorageTable();
+                } catch(err) {
+                    alert('خطا در پارس فایل ادغام: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // اجرای خودکار در لود صفحه
+        init();
+    </script>
+</body>
+</html>
