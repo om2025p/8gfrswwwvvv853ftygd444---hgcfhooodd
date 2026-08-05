@@ -1132,6 +1132,70 @@
                 font-size: 0.95rem;
             }
         }
+
+        /* استایل جداول شیشه‌ای مارک‌داون */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin: 16px 0;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--glass-shadow);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .day-theme .table-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .table-container table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            text-align: right;
+            direction: rtl;
+            color: var(--text-main);
+        }
+
+        .table-container th {
+            padding: 12px 16px;
+            font-weight: bold;
+            color: var(--text-main);
+            background: rgba(59, 130, 246, 0.15);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .day-theme .table-container th {
+            background: rgba(79, 70, 229, 0.12);
+            color: #1e293b;
+        }
+
+        .table-container td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            transition: background-color 0.2s;
+        }
+
+        .day-theme .table-container td {
+            color: #1e293b;
+            border-bottom-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .table-container tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-container tr:hover td {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .day-theme .table-container tr:hover td {
+            background: rgba(0, 0, 0, 0.02);
+        }
     </style>
 </head>
 <body>
@@ -1199,6 +1263,17 @@
                     <div class="pin-dropdown-item" id="attachFileBtn">📄 آپلود فایل متنی</div>
                     <div class="pin-dropdown-item" id="attachImageBtn">📸 آپلود تصویر</div>
                     <div class="pin-dropdown-item" id="attachFolderBtn">📁 آپلود پوشه متنی</div>
+                </div>
+            </div>
+            <div class="pin-menu-container">
+                <button class="header-btn" id="colorBtn" title="نوشتن رنگی" style="margin: 0; font-size: 1.2rem;">🎨</button>
+                <div class="pin-dropdown" id="colorDropdown" style="width: 140px;">
+                    <div class="pin-dropdown-item" data-color="قرمز">🔴 قرمز</div>
+                    <div class="pin-dropdown-item" data-color="سبز">🟢 سبز</div>
+                    <div class="pin-dropdown-item" data-color="آبی">🔵 آبی</div>
+                    <div class="pin-dropdown-item" data-color="زرد">🟡 زرد</div>
+                    <div class="pin-dropdown-item" data-color="نارنجی">🟠 نارنجی</div>
+                    <div class="pin-dropdown-item" data-color="بنفش">🟣 بنفش</div>
                 </div>
             </div>
             <button class="header-btn" id="webSearchToggleBtn" title="جستجو در وب فعال/غیرفعال" style="margin: 0; font-size: 1.2rem; filter: grayscale(1); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px;">🌐</button>
@@ -2382,11 +2457,44 @@
         pinBtn.onclick = (e) => {
             e.stopPropagation();
             pinDropdown.classList.toggle("active");
+            colorDropdown.classList.remove("active");
+        };
+
+        const colorBtn = document.getElementById("colorBtn");
+        const colorDropdown = document.getElementById("colorDropdown");
+
+        colorBtn.onclick = (e) => {
+            e.stopPropagation();
+            colorDropdown.classList.toggle("active");
+            pinDropdown.classList.remove("active");
         };
 
         window.onclick = () => {
             pinDropdown.classList.remove("active");
+            colorDropdown.classList.remove("active");
         };
+
+        colorDropdown.querySelectorAll(".pin-dropdown-item").forEach(item => {
+            item.onclick = (e) => {
+                e.stopPropagation();
+                const color = item.dataset.color;
+                const start = chatInput.selectionStart;
+                const end = chatInput.selectionEnd;
+                const text = chatInput.value;
+                const selectedText = text.substring(start, end);
+
+                const wrappedText = `[رنگ:${color}](${selectedText || "متن"})`;
+                chatInput.value = text.substring(0, start) + wrappedText + text.substring(end);
+
+                chatInput.focus();
+                // قرار دادن کرسر در وسط یا انتهای متن رنگی
+                const newCursorPos = start + `[رنگ:${color}](`.length + (selectedText || "متن").length + 1;
+                chatInput.setSelectionRange(newCursorPos, newCursorPos);
+
+                chatInput.dispatchEvent(new Event("input"));
+                colorDropdown.classList.remove("active");
+            };
+        });
 
         // دکمه‌های منوی سنجاق
         attachFileBtn.onclick = () => fileAttachmentInput.click();
@@ -2600,6 +2708,108 @@
             return "ادامه بده";
         }
 
+        function parseMarkdownTables(text) {
+            const lines = text.split("\n");
+            const result = [];
+            let inTable = false;
+            let tableLines = [];
+            const tables = [];
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmed = line.trim();
+
+                // تشخیص تعلق به جدول: شروع با پایپ، یا حضور پایپ با پشتیبانی خط قبلی/بعدی یا ردیف جداکننده
+                const isSeparator = /^[|:\s\-]+$/.test(trimmed) && trimmed.includes("-");
+                const hasPipe = line.includes("|");
+                const isTableLine = hasPipe && (trimmed.startsWith("|") || isSeparator || (lines[i-1] && lines[i-1].includes("|")) || (lines[i+1] && lines[i+1].includes("|")));
+
+                if (isTableLine) {
+                    if (!inTable) {
+                        inTable = true;
+                        tableLines = [];
+                    }
+                    tableLines.push(line);
+                } else {
+                    if (inTable) {
+                        inTable = false;
+                        tables.push(renderTable(tableLines));
+                        result.push(`___TABLE_PLACEHOLDER_${tables.length - 1}___`);
+                    }
+                    result.push(line);
+                }
+            }
+            if (inTable) {
+                tables.push(renderTable(tableLines));
+                result.push(`___TABLE_PLACEHOLDER_${tables.length - 1}___`);
+            }
+            return { text: result.join("\n"), tables };
+        }
+
+        function formatTableCell(cellText) {
+            let cell = escapeHTML(cellText.trim());
+            // پشتیبانی از فرمت‌های رنگی و بولد داخل خانه‌های جدول
+            cell = cell.replace(/\[color:\s*([^\]\s"';()]+)\s*\]\(([^)]+)\)/gi, '<span style="color: $1">$2</span>');
+            cell = cell.replace(/\[رنگ:\s*([^\]\s"';()]+)\s*\]\(([^)]+)\)/gi, '<span style="color: $1">$2</span>');
+            cell = cell.replace(/\[color=([^\]\s"';()]+)\]([\s\S]*?)\[\/color\]/gi, '<span style="color: $1">$2</span>');
+            cell = cell.replace(/\[رنگ=([^\]\s"';()]+)\]([\s\S]*?)\[\/رنگ\]/gi, '<span style="color: $1">$2</span>');
+            cell = cell.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            return cell;
+        }
+
+        function renderTable(tableLines) {
+            // حذف خطوط جداکننده
+            const cleanLines = tableLines.filter(line => {
+                const trimmed = line.trim();
+                return !(/^[|:\s\-]+$/.test(trimmed) && trimmed.includes("-"));
+            });
+
+            if (cleanLines.length === 0) return "";
+
+            const headerLine = cleanLines[0];
+            const headerCells = headerLine.split("|").map(cell => cell.trim()).filter((cell, idx, arr) => {
+                if ((idx === 0 || idx === arr.length - 1) && cell === "" && headerLine.trim().startsWith("|") && headerLine.trim().endsWith("|")) {
+                    return false;
+                }
+                return true;
+            });
+
+            let tableHtml = `<div class="table-container">`;
+            tableHtml += `<table>`;
+
+            // هدر جدول
+            tableHtml += `<thead><tr>`;
+            headerCells.forEach(cell => {
+                tableHtml += `<th>${formatTableCell(cell)}</th>`;
+            });
+            tableHtml += `</tr></thead>`;
+
+            // بدنه جدول
+            tableHtml += `<tbody>`;
+            for (let i = 1; i < cleanLines.length; i++) {
+                const rowLine = cleanLines[i];
+                const rowCells = rowLine.split("|").map(cell => cell.trim()).filter((cell, idx, arr) => {
+                    if ((idx === 0 || idx === arr.length - 1) && cell === "" && rowLine.trim().startsWith("|") && rowLine.trim().endsWith("|")) {
+                        return false;
+                    }
+                    return true;
+                });
+
+                while (rowCells.length < headerCells.length) {
+                    rowCells.push("");
+                }
+                const cellsToRender = rowCells.slice(0, headerCells.length);
+
+                tableHtml += `<tr>`;
+                cellsToRender.forEach(cell => {
+                    tableHtml += `<td>${formatTableCell(cell)}</td>`;
+                });
+                tableHtml += `</tr>`;
+            }
+            tableHtml += `</tbody></table></div>`;
+            return tableHtml;
+        }
+
         function formatMessageContent(text) {
             if (!text) return "";
             if (text.startsWith("<!-- BYPASS_FORMAT -->")) {
@@ -2623,6 +2833,10 @@
                 return placeholder;
             });
 
+            // Protect tables next
+            const parsedTableResult = parseMarkdownTables(formatted);
+            formatted = parsedTableResult.text;
+
             // Escape everything else for XSS safety
             formatted = escapeHTML(formatted);
 
@@ -2630,6 +2844,8 @@
             // محدود کردن مقدار رنگ به کاراکترهای کاملا ایمن جهت جلوگیری از بروز باگ قالب‌بندی و انژکسیون استایل
             formatted = formatted.replace(/\[color:\s*([^\]\s"';()]+)\s*\]\(([^)]+)\)/gi, '<span style="color: $1">$2</span>');
             formatted = formatted.replace(/\[رنگ:\s*([^\]\s"';()]+)\s*\]\(([^)]+)\)/gi, '<span style="color: $1">$2</span>');
+            formatted = formatted.replace(/\[color=([^\]\s"';()]+)\]([\s\S]*?)\[\/color\]/gi, '<span style="color: $1">$2</span>');
+            formatted = formatted.replace(/\[رنگ=([^\]\s"';()]+)\]([\s\S]*?)\[\/رنگ\]/gi, '<span style="color: $1">$2</span>');
 
             // 1.5 Spoilers/Invisible Text: [نامرئی](متن) or [spoiler](text)
             formatted = formatted.replace(/\[spoiler\]\(([^)]+)\)/gi, '<span class="spoiler-text" onclick="this.classList.toggle(\'revealed\')" title="برای دیدن لمس کنید">$1</span>');
@@ -2761,6 +2977,11 @@
                     </div>
                 `;
                 formatted = formatted.replace(item.placeholder, () => blockHTML);
+            });
+
+            // Restore protected tables
+            parsedTableResult.tables.forEach((tableHtml, idx) => {
+                formatted = formatted.replace(`___TABLE_PLACEHOLDER_${idx}___`, () => tableHtml);
             });
 
             return formatted;
@@ -3114,7 +3335,7 @@
 
                 // ساخت تابع پویا برای آماده‌سازی کانتکست پیام‌ها
                 function buildGeminiContents(historyList, useCompressed = false) {
-                    return historyList.map(msg => {
+                    const parsedContents = historyList.map(msg => {
                         const parts = [];
 
                         let textWithContext = msg.content || "";
@@ -3171,6 +3392,21 @@
                             parts: parts
                         };
                     });
+
+                    // ادغام هوشمند پیام‌های متوالی با نقش یکسان جهت ممانعت مطلق از خطای ۴۰۰ گوگل
+                    const consolidatedContents = [];
+                    parsedContents.forEach(current => {
+                        if (consolidatedContents.length > 0) {
+                            const last = consolidatedContents[consolidatedContents.length - 1];
+                            if (last.role === current.role) {
+                                last.parts = last.parts.concat(current.parts);
+                                return;
+                            }
+                        }
+                        consolidatedContents.push(current);
+                    });
+
+                    return consolidatedContents;
                 }
 
                 // ساخت کانتکست پیام‌ها برای ارتباط مستقیم (بدون فشرده‌سازی)
@@ -3194,11 +3430,13 @@
 ۷. **منع موعظه اخلاقی و عدم معرفی هویت:** نیازی به معرفی مداوم هویت خود یا فلسفه‌بافی در مورد مدل‌های زبانی یا نصیحت کردن و موعظه‌های اخلاقی الکی نداری. مستقیم و بدون مقدمه‌چینی‌های کلیشه‌ای بر روی حل خلاقانه و تخصصی مسئله تمرکز کن.
 ۸. **رعایت دقیق فرمت نشانه‌گذاری:** اگر می‌خواهی متنی را مخفی (اسپویلر) کنی, از فرمت نشانه‌گذاری بومی \`[نامرئی](محتوا)\` یا \`[spoiler](محتوا)\` استفاده کن.
 ۹. **منع شدید استفاده خودسرانه از بلوک کد برای متن‌های معمولی و شمارش اعداد:** هرگز متن‌های معمولی، داستان‌ها، شمارش‌های ساده اعداد (مانند ۱ تا ۵۰۰۰ یا هر شمارش دیگری) یا لیست‌های غیراجرایی را درون بلوک کد قرار نده. تمام این موارد باید به صورت متن معمولی در خود صفحه چت نمایش داده شوند. تنها کدهای واقعی برنامه‌نویسی (مانند HTML، CSS، JS، Python و...) باید در بلوک کد قرار بگیرند.
+۱۰. **قابلیت نوشتن رنگی متون و کلمات کلیدی:** برای زیباتر کردن خروجی و تاکید بر کلمات کلیدی، از نشانه‌گذاری‌های رنگی بومی مانند '[رنگ:قرمز](متن)'، '[رنگ:سبز](متن)'، '[رنگ:آبی](متن)'، '[رنگ:بنفش](متن)'، '[رنگ:نارنجی](متن)'، '[رنگ:زرد](متن)' یا '[color=red]متن[/color]'، '[color=blue]متن[/color]' و... استفاده کن.
+۱۱. **ارائه داده‌های مقایسه‌ای و آماری در قالب جدول:** همواره داده‌های مقایسه‌ای، آماری، تضادها، لیست‌های قیمت یا پارامترهای فنی را به صورت جدول‌های استاندارد مارک‌داون (مانند '| ستون ۱ | ستون ۲ |' به همراه خط جداکننده '|---|---|') ارائه بده تا کاربر بتواند آن‌ها را به بهترین و شیک‌ترین شکل به صورت جدول‌های شیشه‌ای و منظم ببیند.
 
 دستورالعمل‌های فرمت خروجی:
 ۱. به زبان فارسی روان پاسخ بده.
 ۲. فرمت تگ‌های HTML و کدهای برنامه‌نویسی را در قالب بلوک‌های کد مناسب حفظ کن.
-۳. در صورت استفاده از [رنگ:نام_رنگ](متن)، آن را رندر کن.
+۳. در صورت استفاده از [رنگ:نام_رنگ](متن) یا [color=name]متن[/color]، آن را به عنوان متن رنگی رندر کن.
 ４. در صورت استفاده از [نامرئی](متن) یا [spoiler](متن)، آن را به صورت اسپویلر رندر کن.`;
 
                 // سیستم اتصال هوشمند دوگانه: ابتدا تلاش مستقیم (در صورت روشن بودن فیلترشکن)
@@ -3449,11 +3687,13 @@
 ۷. **منع موعظه اخلاقی و عدم معرفی هویت:** نیازی به معرفی مداوم هویت خود یا فلسفه‌بافی در مورد مدل‌های زبانی یا نصیحت کردن و موعظه‌های اخلاقی الکی نداری. مستقیم و بدون مقدمه‌چینی‌های کلیشه‌ای بر روی حل خلاقانه و تخصصی مسئله تمرکز کن.
 ۸. **رعایت دقیق فرمت نشانه‌گذاری:** اگر می‌خواهی متنی را مخفی (اسپویلر) کنی, از فرمت نشانه‌گذاری بومی \`[نامرئی](محتوا)\` یا \`[spoiler](محتوا)\` استفاده کن.
 ۹. **منع شدید استفاده خودسرانه از بلوک کد برای متن‌های معمولی و شمارش اعداد:** هرگز متن‌های معمولی، داستان‌ها، شمارش‌های ساده اعداد (مانند ۱ تا ۵۰۰۰ یا هر شمارش دیگری) یا لیست‌های غیراجرایی را درون بلوک کد قرار نده. تمام این موارد باید به صورت متن معمولی در خود صفحه چت نمایش داده شوند. تنها کدهای واقعی برنامه‌نویسی (مانند HTML، CSS، JS، Python و...) باید در بلوک کد قرار بگیرند.
+۱۰. **قابلیت نوشتن رنگی متون و کلمات کلیدی:** برای زیباتر کردن خروجی و تاکید بر کلمات کلیدی، از نشانه‌گذاری‌های رنگی بومی مانند '[رنگ:قرمز](متن)'، '[رنگ:سبز](متن)'، '[رنگ:آبی](متن)'، '[رنگ:بنفش](متن)'، '[رنگ:نارنجی](متن)'، '[رنگ:زرد](متن)' یا '[color=red]متن[/color]'، '[color=blue]متن[/color]' و... استفاده کن.
+۱۱. **ارائه داده‌های مقایسه‌ای و آماری در قالب جدول:** همواره داده‌های مقایسه‌ای، آماری، تضادها، لیست‌های قیمت یا پارامترهای فنی را به صورت جدول‌های استاندارد مارک‌داون (مانند '| ستون ۱ | ستون ۲ |' به همراه خط جداکننده '|---|---|') ارائه بده تا کاربر بتواند آن‌ها را به بهترین و شیک‌ترین شکل به صورت جدول‌های شیشه‌ای و منظم ببیند.
 
 دستورالعمل‌های فرمت خروجی:
 ۱. به زبان فارسی روان پاسخ بده.
 ２. فرمت تگ‌های HTML و کدهای برنامه‌نویسی را در قالب بلوک‌های کد مناسب حفظ کن.
-۳. در صورت استفاده از [رنگ:نام_رنگ](متن)، آن را رندر کن.
+۳. در صورت استفاده از [رنگ:نام_رنگ](متن) یا [color=name]متن[/color]، آن را به عنوان متن رنگی رندر کن.
 ۴. در صورت استفاده از [نامرئی](متن) یا [spoiler](متن)، آن را به صورت اسپویلر رندر کن.`;
 
                 let response;
