@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v15';
+const CACHE_NAME = 'emarat-portal-v16';
 const ASSETS = [
   './',
   './index.html',
