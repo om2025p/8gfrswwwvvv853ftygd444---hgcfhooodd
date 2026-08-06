@@ -1131,6 +1131,25 @@
             .app-title {
                 font-size: 0.95rem;
             }
+            .input-container {
+                padding: 8px 10px !important;
+                gap: 6px !important;
+            }
+            .input-container .header-btn,
+            .input-container .send-btn,
+            .input-container #webSearchToggleBtn {
+                width: 36px !important;
+                height: 36px !important;
+                font-size: 1.1rem !important;
+                flex-shrink: 0 !important;
+            }
+            .input-wrapper {
+                padding: 6px 10px !important;
+                min-width: 0 !important;
+            }
+            .chat-input {
+                font-size: 15px !important;
+            }
         }
 
         /* استایل جداول شیشه‌ای مارک‌داون */
@@ -1815,6 +1834,25 @@
             if (savedKeywords) learnedKeywords = savedKeywords;
 
             renderSessionsList();
+
+            // مانیتورینگ زنده فریم کیبورد اندروید با استفاده از Visual Viewport
+            if (window.visualViewport) {
+                const handleViewportChange = () => {
+                    const vv = window.visualViewport;
+                    const keyboardHeight = Math.max(0, window.innerHeight - vv.height);
+                    if (keyboardHeight > 60) {
+                        document.body.style.bottom = `${keyboardHeight}px`;
+                        document.body.style.height = `${vv.height}px`;
+                    } else {
+                        document.body.style.bottom = "0px";
+                        document.body.style.height = "100dvh";
+                    }
+                    scrollToBottom();
+                };
+                window.visualViewport.addEventListener("resize", handleViewportChange);
+                window.visualViewport.addEventListener("scroll", handleViewportChange);
+            }
+
             checkGitHubStatus();
         });
 
@@ -3406,6 +3444,11 @@
                         consolidatedContents.push(current);
                     });
 
+                    // الزامات هوش مصنوعی گوگل: اولین پیام در کانتکست ارسالی باید نقش کاربر (user) داشته باشد
+                    while (consolidatedContents.length > 0 && consolidatedContents[0].role !== "user") {
+                        consolidatedContents.shift();
+                    }
+
                     return consolidatedContents;
                 }
 
@@ -3420,9 +3463,13 @@
 خلاصه گفتگوهای قبلی:
 "${historySummary}"
 
+دستورالعمل‌های بسیار مهم برای ابزار جستجوی وب:
+۱. اگر در انتهای پیام کاربر بخشی به نام \`[نتایج جستجوی وب زنده از اینترنت]\` وجود دارد، این یعنی سیستم از قبل برای تو در اینترنت جستجو کرده و نتایج دقیق را آورده است.
+۲. حتماً حتماً از این نتایج برای پاسخ به سوالات مربوط به اخبار زنده، آب‌وهوا، قیمت طلا/دلار یا هر سوال روزآمد دیگری استفاده کن و هرگز نگو به اینترنت یا ابزار جستجو دسترسی نداری! پاسخ تو باید با تکیه بر این اطلاعات به‌روزشده باشد.
+
 دستورالعمل‌های بسیار مهم و حیاتی عملکردی:
 ۱. **تعهد ۱۰۰٪ به خروجی کامل و بدون خلاصه کردن (ضد تنبلی):** تحت هیچ شرایطی نباید پاسخ‌ها, محاسبات, شمارش‌ها, لیست‌ها یا کدهای طولانی و تکراری را خلاصه کنی, ناتمام رها کنی یا از جملاتی مثل «ادامه مشابه است...», «به دلیل تکراری بودن خلاصه می‌شود...», «بقیه کدهای پروژه را خودت اضافه کن...» یا موارد مشابه استفاده کنی. وظیفه تو تولید خروجی کامل از ابتدا تا انتهای دقیق آن بدون هیچ‌گونه بهانه‌تراشی یا تنبلی است.
-۲. **قانون فوق‌العاده حیاتی تولید کدهای تحت وب کاملاً استاندارد، ساختارمند و ۱۰۰٪ اجرایی:** هر زمان کاربر از تو درخواست «کد تحت وب»، «کد وب گرافیکی»، «بازی تحت وب» یا هر نوع برنامه مبتنی بر مرورگر (مانند افکت آسمان شب، کهکشان و...) کرد، موظف هستی کدی کاملاً استاندارد و ساختارمند در قالب یک فایل HTML5 مستقل (Self-contained) و کاملاً آماده شامل ساختار کامل تگ‌ها (یعنی «<!DOCTYPE html>»، «<html>»، «<head>»، «<meta charset="UTF-8">»، «<meta name="viewport" content="width=device-width, initial-scale=1.0">»، «<title>»، «<style>»، «<body>»، و «<script>») تحویل دهی. تک‌تک تگ‌ها را با نهایت دقت نحوی باز کرده و به طور کامل ببند (مانند تگ‌های «<title>» و «<head>»). کدهای استایل (CSS) و اسکریپت (JS) باید کاملاً یکپارچه، بدون نقص و آماده‌ی اجرای بلادرنگ باشند. در زمان نوشتن تگ‌های استایل CSS بسیار مراقب باش که هیچ‌گاه کلاس‌ها، شناسه‌ها یا تگ‌های والد وب مستقیماً به تگ استایل نچسبند (مانند <style class="container"> که کاملاً نامعتبر و خراب است!)؛ تگ استایل باید همواره به شکل ساده‌ی <style> باز شده و بدون هیچ خاصیت کلاس یا شناسه‌ای بسته شود، و پس از بسته‌شدن تگ استایل یعنی </style>، تگ‌های div یا کانتینر دیگر قرار گیرند.
+۲. **قانون فوق‌العاده حیاتی تولید کدهای تحت وب کاملاً استاندارد، ساختارمند و ۱۰۰٪ اجرایی:** هر زمان کاربر از تو درخواست «کد تحت وب»، «کد وب گرافیکی»، «بازی تحت وب» یا هر نوع برنامه مبتنی بر مرورگر (مانند افکت آسمان شب، کهکشان و...) کرد، موظف هستی کدی کاملاً استاندارد و ساختارمند در قالب یک فایل HTML5 مستقل (Self-contained) و کاملاً آماده شامل ساختار کامل تگ‌ها (یعنی «<!DOCTYPE html>»، «<html>»، «<head>»، «<meta charset="UTF-8">»، «<meta name="viewport" content="width=device-width, initial-scale=1.0">»، «<title>»، «<style>»، «<body>»، و «<script>») تحویل دهی. تگ‌ها را با نهایت دقت نحوی باز کرده و به طور کامل ببند (مانند تگ‌های «<title>» و «<head>»). کدهای استایل (CSS) و اسکریپت (JS) باید کاملاً یکپارچه، بدون نقص و آماده‌ی اجرای بلادرنگ باشند. در زمان نوشتن تگ‌های استایل CSS بسیار مراقب باش که هیچ‌گاه کلاس‌ها, شناسه‌ها یا تگ‌های والد وب مستقیماً به تگ استایل نچسبند (مانند <style class="container"> که کاملاً نامعتبر و خراب است!)؛ تگ استایل باید همواره به شکل ساده‌ی <style> باز شده و بدون هیچ خاصیت کلاس یا شناسه‌ای بسته شود، و پس از بسته‌شدن تگ استایل یعنی </style>، تگ‌های div یا کانتینر دیگر قرار گیرند.
 ۳. **قانون اکید تبعید کامل توضیحات و کپشن‌ها به خارج از کادر کدهای برنامه‌نویسی:** هرگز و تحت هیچ شرایطی نباید توضیحات متنی فارسی، کپشن‌ها، یادداشت‌های راهنما، توضیحات زیبایی‌شناختی یا توضیحات توصیفی را درون بدنه کادر کد قرار دهی! کادر کد باید ۱۰۰٪ خالص، استاندارد، بدون خطا، کارآمد و قابل اجرا باشد. تمامی کپشن‌ها و توضیحات شیرین و طنزآمیز فارسی خود را صرفاً و منحصراً در خارج از کادر کد (در متن گفتگو قبل یا بعد از کد) بنویس.
 ۴. **تعهّد مطلق به تولید حجم کامل بدون خسیس‌بازی:** هیچ محدودیت حجمی برای کدهای طولانی قائل نشو. تمام توابع, توابع کمکی, استایل‌های شیک CSS, تگ‌های متا, و منطق‌های رندرینگ را کامل بنویس تا کاربر بتواند بدون نقص کد را کپی و اجرا کند. تو دارای سقف خروجی بزرگ (۸۱۹۲ توکن) هستی و سیستم ادامه خودکار چت هوشمند به تو اجازه می‌دهد در چند گام کدهای بسیار طولانی را کامل کنی.
 ۵. **یادگیری و انطباق مستمر با سلیقه کاربر:** به مرور زمان و در طول تعاملات، سبک برنامه‌نویسی، سلیقه‌ی زیباشناختی، علایق و سبک گفتار کاربر را به صورت تدریجی و عمیق یاد بگیر و به طور پویا نحوه تولید پاسخ‌ها و کدهای خود را با سلیقه و ترجیحات ایشان هم‌راستا و منطبق کن.
@@ -3431,7 +3478,7 @@
 ۸. **رعایت دقیق فرمت نشانه‌گذاری:** اگر می‌خواهی متنی را مخفی (اسپویلر) کنی, از فرمت نشانه‌گذاری بومی \`[نامرئی](محتوا)\` یا \`[spoiler](محتوا)\` استفاده کن.
 ۹. **منع شدید استفاده خودسرانه از بلوک کد برای متن‌های معمولی و شمارش اعداد:** هرگز متن‌های معمولی، داستان‌ها، شمارش‌های ساده اعداد (مانند ۱ تا ۵۰۰۰ یا هر شمارش دیگری) یا لیست‌های غیراجرایی را درون بلوک کد قرار نده. تمام این موارد باید به صورت متن معمولی در خود صفحه چت نمایش داده شوند. تنها کدهای واقعی برنامه‌نویسی (مانند HTML، CSS، JS، Python و...) باید در بلوک کد قرار بگیرند.
 ۱۰. **قابلیت نوشتن رنگی متون و کلمات کلیدی:** برای زیباتر کردن خروجی و تاکید بر کلمات کلیدی، از نشانه‌گذاری‌های رنگی بومی مانند '[رنگ:قرمز](متن)'، '[رنگ:سبز](متن)'، '[رنگ:آبی](متن)'، '[رنگ:بنفش](متن)'، '[رنگ:نارنجی](متن)'، '[رنگ:زرد](متن)' یا '[color=red]متن[/color]'، '[color=blue]متن[/color]' و... استفاده کن.
-۱۱. **ارائه داده‌های مقایسه‌ای و آماری در قالب جدول:** همواره داده‌های مقایسه‌ای، آماری، تضادها، لیست‌های قیمت یا پارامترهای فنی را به صورت جدول‌های استاندارد مارک‌داون (مانند '| ستون ۱ | ستون ۲ |' به همراه خط جداکننده '|---|---|') ارائه بده تا کاربر بتواند آن‌ها را به بهترین و شیک‌ترین شکل به صورت جدول‌های شیشه‌ای و منظم ببیند.
+۱۱. **ارائه داده‌های مقایسه‌ای و آماری در قالب جدول:** همواره داده‌های مقایسه‌ای, آماری، تضادها، لیست‌های قیمت یا پارامترهای فنی را به صورت جدول‌های استاندارد مارک‌داون (مانند '| ستون ۱ | ستون ۲ |' به همراه خط جداکننده '|---|---|') ارائه بده تا کاربر بتواند آن‌ها را به بهترین و شیک‌ترین شکل به صورت جدول‌های شیشه‌ای و منظم ببیند.
 
 دستورالعمل‌های فرمت خروجی:
 ۱. به زبان فارسی روان پاسخ بده.
@@ -3443,7 +3490,7 @@
                 // برای جلوگیری از خطای ۴۲۹، از مدل پرسرعت و بدون لیمیت gemینی استفاده می‌کنیم
                 let response;
                 let usedProxy = false;
-                const activeModel = "gemini-3.5-flash-lite";
+                const activeModel = "gemini-2.5-pro";
                 const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:streamGenerateContent?key=${getApiKey()}`;
                 const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
                 const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/${activeModel}:streamGenerateContent?key=${getApiKey()}`;
@@ -3698,7 +3745,7 @@
 
                 let response;
                 let usedProxy = false;
-                const activeModel = "gemini-3.5-flash-lite";
+                const activeModel = "gemini-2.5-pro";
                 const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:streamGenerateContent?key=${getApiKey()}`;
                 const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
                 const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/${activeModel}:streamGenerateContent?key=${getApiKey()}`;
@@ -3864,7 +3911,7 @@
 ${recentMessagesStr.substring(0, 400000)}`; // جهت جلوگیری از تجاوز کانتکست تحلیل از سقف ۲۵۰ هزار توکن
 
                 const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
-                const activeModel = "gemini-3.5-flash-lite";
+                const activeModel = "gemini-2.5-pro";
                 const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${getApiKey()}`;
                 const cfUrl = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/${activeModel}:generateContent?key=${getApiKey()}`;
 
