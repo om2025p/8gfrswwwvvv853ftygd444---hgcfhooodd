@@ -680,6 +680,67 @@
     </footer>
 
     <script>
+        // کش سراسری موقت و کش سودهای تومانی جهت ارتقای فوق‌العاده سرعت لود و سوئیچ تب‌ها
+        let cachedAppsPercentData = null;
+        let cachedDailyHistory = null;
+        let tomanProfitCache = {};
+
+        function initializeTomanProfitCache() {
+            tomanProfitCache = {};
+            const historyKeys = {
+                1: "gold_history",
+                2: "fixedIncome_history",
+                3: "kian_history",
+                4: "pension_history",
+                5: "sinergy_history"
+            };
+
+            for (let appId = 1; appId <= 5; appId++) {
+                const historyKey = historyKeys[appId];
+                let historyRaw = localStorage.getItem(historyKey);
+                let history = [];
+                try { history = JSON.parse(historyRaw) || []; } catch(e) {}
+
+                if (history.length === 0) continue;
+
+                // ثبت از قدیم به جدید در کش، تا آخرین (جدیدترین) روی بقیه بازنویسی شود
+                // یا از جدید به قدیم بررسی کنیم و اگر قبلاً ثبت نشده بود، ذخیره کنیم.
+                // چون تاریخچه از جدید به قدیم ذخیره می‌شود، اولین برخورد جدیدترین است.
+                for (let i = 0; i < history.length; i++) {
+                    const calc = history[i];
+                    let itemDateStr = "";
+                    if (calc.timestamp) {
+                        itemDateStr = normalizeToEnglishDigits(formatPersianDateTime(new Date(calc.timestamp).getTime()).date);
+                    } else if (calc.persianDate) {
+                        itemDateStr = normalizeToEnglishDigits(calc.persianDate.split(/[\s,،]/)[0]);
+                    }
+
+                    if (!itemDateStr) continue;
+
+                    const cacheKey = `${appId}_${itemDateStr}`;
+                    if (tomanProfitCache[cacheKey] === undefined) {
+                        let rawBase = 0;
+                        let rawNew = 0;
+
+                        if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
+                            rawBase = calc.rawBase;
+                        } else if (calc.base) {
+                            rawBase = parseFloat(normalizeToEnglishDigits(calc.base).replace(/,/g, '')) || 0;
+                        }
+
+                        if (calc.rawNew !== undefined && calc.rawNew !== null && !isNaN(calc.rawNew)) {
+                            rawNew = calc.rawNew;
+                        } else if (calc.new) {
+                            rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
+                        }
+
+                        const diff = rawNew - rawBase;
+                        tomanProfitCache[cacheKey] = Math.round(diff / 10000);
+                    }
+                }
+            }
+        }
+
         // تولید ستاره‌ها برای پس‌زمینه ستاره‌ای شب
         function generateStars() {
             const container = document.getElementById('skyElements');
@@ -768,64 +829,20 @@
             return String(str).replace(/[۰-۹٠-٩]/g, m => map[m] || m);
         }
 
-        // دریافت سود تومانی یک اپ در یک روز خاص از روی تاریخچه ماشین حساب آن
+        // دریافت سود تومانی یک اپ در یک روز خاص از روی حافظه موقت (کش) به سرعت نور O(1)
         function getTomanProfitForAppAndDay(appId, timestamp) {
-            let historyKey = "";
-            if (appId === 1) historyKey = "gold_history";
-            else if (appId === 2) historyKey = "fixedIncome_history";
-            else if (appId === 3) historyKey = "kian_history";
-            else if (appId === 4) historyKey = "pension_history";
-            else if (appId === 5) historyKey = "sinergy_history";
-
-            if (!historyKey) return 0;
-
-            let historyRaw = localStorage.getItem(historyKey);
-            let history = [];
-            try { history = JSON.parse(historyRaw) || []; } catch(e) {}
-
-            if (history.length === 0) return 0;
-
-            // تبدیل زمان مدنظر به فرمت روز شمسی YYYY/MM/DD برای مقایسه دقیق روزها
-            const targetDateStr = normalizeToEnglishDigits(formatPersianDateTime(timestamp).date); // مثلاً 1402/08/29
-
-            // پیدا کردن تمامی محاسباتی که در همان روز انجام شده اند
-            const dailyCalculations = history.filter(item => {
-                let itemDateStr = "";
-                if (item.timestamp) {
-                    itemDateStr = normalizeToEnglishDigits(formatPersianDateTime(new Date(item.timestamp).getTime()).date);
-                } else if (item.persianDate) {
-                    itemDateStr = normalizeToEnglishDigits(item.persianDate.split(/[\s,،]/)[0]);
-                }
-                return itemDateStr === targetDateStr;
-            });
-
-            if (dailyCalculations.length === 0) return 0;
-
-            // گرفتن آخرین یا معتبرترین محاسبه روز (مثلاً اولین آیتم آرایه که جدیدترین است)
-            const calc = dailyCalculations[0];
-            let rawBase = 0;
-            let rawNew = 0;
-
-            if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
-                rawBase = calc.rawBase;
-            } else if (calc.base) {
-                rawBase = parseFloat(normalizeToEnglishDigits(calc.base).replace(/,/g, '')) || 0;
-            }
-
-            if (calc.rawNew !== undefined && calc.rawNew !== null && !isNaN(calc.rawNew)) {
-                rawNew = calc.rawNew;
-            } else if (calc.new) {
-                rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
-            }
-
-            const diff = rawNew - rawBase;
-            // ۴ صفر از ریال حذف کن تا تومان سفارشی بشود
-            const tomanProfit = Math.round(diff / 10000);
-            return tomanProfit;
+            const targetDateStr = normalizeToEnglishDigits(formatPersianDateTime(timestamp).date);
+            const cacheKey = `${appId}_${targetDateStr}`;
+            const cachedVal = tomanProfitCache[cacheKey];
+            return cachedVal !== undefined ? cachedVal : 0;
         }
 
-        // استخراج و تحلیل داده‌ها از LocalStorage
+        // استخراج و تحلیل داده‌ها از LocalStorage با سیستم کش بهینه‌شده
         function getAppPercentData() {
+            if (cachedAppsPercentData !== null) {
+                return cachedAppsPercentData;
+            }
+
             const result = [];
 
             // ۱. ثبت درصد 1
@@ -871,6 +888,7 @@
             } catch(e) {}
             result.push({ id: 5, title: "ثبت درصد 5", data: app5Data });
 
+            cachedAppsPercentData = result;
             return result;
         }
 
@@ -910,8 +928,12 @@
             return totalTomanProfit / daysDiff;
         }
 
-        // ---------- سیستم استخراج خودکار تاریخچه روزانه (Method A) ----------
+        // ---------- سیستم استخراج خودکار تاریخچه روزانه با کش سراسری و حلقه ایمن (Method A) ----------
         function calculateDailyHistory() {
+            if (cachedDailyHistory !== null) {
+                return cachedDailyHistory;
+            }
+
             const appsInfo = getAppPercentData();
 
             // ۱. پیدا کردن تمام تاریخ‌های یکتا که ثبتی در آن‌ها انجام شده است
@@ -945,7 +967,12 @@
             let currentDayMs = new Date(getDayString(firstTimestamp)).getTime();
             const endDayMs = new Date(todayStr).getTime();
 
-            while (currentDayMs <= endDayMs) {
+            // سوپاپ اطمینان (Safety Loop Limit) برای جلوگیری کامل از هرگونه حلقه بی‌نهایت
+            let safetyCount = 0;
+            const maxDaysLimit = 3650; // محدودیت ۱۰ سال برای سناریوهای تداخل ساعت مرورگر یا باگ داده‌های اولیه
+
+            while (currentDayMs <= endDayMs && safetyCount < maxDaysLimit) {
+                safetyCount++;
                 const dayStr = getDayString(currentDayMs);
                 const dayEndTs = currentDayMs + oneDayMs - 1;
 
@@ -990,7 +1017,8 @@
                 currentDayMs += oneDayMs;
             }
 
-            return historyResult.reverse();
+            cachedDailyHistory = historyResult.reverse();
+            return cachedDailyHistory;
         }
 
         // مدیریت باز و بسته کردن آکاردئونی تاریخچه سودها در هر دو تب
@@ -1638,10 +1666,24 @@
             }
         }
 
+        // ریست کردن کش‌ها در بدو تغییر اطلاعات جدید یا لود دوباره
+        function resetMonitorCache() {
+            cachedAppsPercentData = null;
+            cachedDailyHistory = null;
+            initializeTomanProfitCache();
+        }
+
         // لود اولیه و تنظیم آپدیت دوره‌ای (مثلاً هر ۳۰ ثانیه برای بروز ماندن «زمان گذشته»)
+        resetMonitorCache();
         renderMonitor();
         fetchTabdealBalanceInBg(); // فراخوانی خودکار پس‌زمینه
-        setInterval(renderMonitor, 30000);
+
+        // در هنگام لود دوره‌ای، همیشه کش‌ها مجدداً بررسی و نوسازی می‌شوند تا دیتای لحظه‌ای جا نماند
+        setInterval(() => {
+            resetMonitorCache();
+            renderMonitor();
+        }, 30000);
+
         setInterval(fetchTabdealBalanceInBg, 300000); // آپدیت خودکار دیتای صرافی هر ۵ دقیقه در پس‌زمینه
     </script>
 </body>
