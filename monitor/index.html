@@ -216,6 +216,14 @@
             color: var(--negative-color);
         }
 
+        .positive {
+            color: var(--positive-color);
+        }
+
+        .negative {
+            color: var(--negative-color);
+        }
+
         .percent-value.none {
             color: rgba(255,255,255,0.4);
             font-size: 1.4rem;
@@ -610,6 +618,7 @@
         <div id="live-total-container" style="margin-top: 20px; padding: 18px; background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 24px; border: 1px solid var(--glass-border); box-shadow: var(--shadow); text-align: center; display: none;">
             <div style="font-size: 0.95rem; color: var(--primary-light); font-weight: 700; margin-bottom: 8px;">📊 مجموع آخرین درصدهای ثبت‌شده</div>
             <div id="live-total-value" style="font-size: 2.2rem; font-weight: 800; direction: ltr; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">0.00%</div>
+            <div id="live-total-toman-value" style="font-size: 1.3rem; font-weight: 700; margin-top: 6px; direction: rtl;">💰 ۰ تومان</div>
         </div>
 
         <!-- کادر شیشه‌ای هوش مصنوعی جمنای کاملا ایزوله (بخش دیدبان زنده) -->
@@ -635,6 +644,7 @@
             <div id="analysis-total-container" style="margin-top: 10px; margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; text-align: center; display: none;">
                 <div style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); font-weight: 600; margin-bottom: 5px;">📊 مجموع میانگین‌های روزانه سود</div>
                 <div id="analysis-total-value" style="font-size: 1.8rem; font-weight: 800; direction: ltr;">0.000%</div>
+                <div id="analysis-total-toman-value" style="font-size: 1.25rem; font-weight: 700; margin-top: 5px; direction: rtl;">💰 ۰ تومان</div>
             </div>
             <div class="avg-grid" id="avg-analysis-container">
                 <!-- آنالیز سودها به صورت پویا ساخته میشن -->
@@ -746,6 +756,74 @@
             }
         }
 
+        // تبدیل ارقام فارسی و عربی به انگلیسی
+        function normalizeToEnglishDigits(str) {
+            if (!str) return '';
+            const map = {
+                '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
+                '۵': '5', '۶': '6', '۷': '7', '٨': '8', '۹': '9',
+                '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+                '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9'
+            };
+            return String(str).replace(/[۰-۹٠-٩]/g, m => map[m] || m);
+        }
+
+        // دریافت سود تومانی یک اپ در یک روز خاص از روی تاریخچه ماشین حساب آن
+        function getTomanProfitForAppAndDay(appId, timestamp) {
+            let historyKey = "";
+            if (appId === 1) historyKey = "gold_history";
+            else if (appId === 2) historyKey = "fixedIncome_history";
+            else if (appId === 3) historyKey = "kian_history";
+            else if (appId === 4) historyKey = "pension_history";
+            else if (appId === 5) historyKey = "sinergy_history";
+
+            if (!historyKey) return 0;
+
+            let historyRaw = localStorage.getItem(historyKey);
+            let history = [];
+            try { history = JSON.parse(historyRaw) || []; } catch(e) {}
+
+            if (history.length === 0) return 0;
+
+            // تبدیل زمان مدنظر به فرمت روز شمسی YYYY/MM/DD برای مقایسه دقیق روزها
+            const targetDateStr = normalizeToEnglishDigits(formatPersianDateTime(timestamp).date); // مثلاً 1402/08/29
+
+            // پیدا کردن تمامی محاسباتی که در همان روز انجام شده اند
+            const dailyCalculations = history.filter(item => {
+                let itemDateStr = "";
+                if (item.timestamp) {
+                    itemDateStr = normalizeToEnglishDigits(formatPersianDateTime(new Date(item.timestamp).getTime()).date);
+                } else if (item.persianDate) {
+                    itemDateStr = normalizeToEnglishDigits(item.persianDate.split(/[\s,،]/)[0]);
+                }
+                return itemDateStr === targetDateStr;
+            });
+
+            if (dailyCalculations.length === 0) return 0;
+
+            // گرفتن آخرین یا معتبرترین محاسبه روز (مثلاً اولین آیتم آرایه که جدیدترین است)
+            const calc = dailyCalculations[0];
+            let rawBase = 0;
+            let rawNew = 0;
+
+            if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
+                rawBase = calc.rawBase;
+            } else if (calc.base) {
+                rawBase = parseFloat(normalizeToEnglishDigits(calc.base).replace(/,/g, '')) || 0;
+            }
+
+            if (calc.rawNew !== undefined && calc.rawNew !== null && !isNaN(calc.rawNew)) {
+                rawNew = calc.rawNew;
+            } else if (calc.new) {
+                rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
+            }
+
+            const diff = rawNew - rawBase;
+            // ۴ صفر از ریال حذف کن تا تومان سفارشی بشود
+            const tomanProfit = Math.round(diff / 10000);
+            return tomanProfit;
+        }
+
         // استخراج و تحلیل داده‌ها از LocalStorage
         function getAppPercentData() {
             const result = [];
@@ -810,6 +888,28 @@
             return totalProfit / daysDiff;
         }
 
+        // محاسبه میانگین سود تومانی روزانه برای هر اپلیکیشن
+        function calculateDailyAverageTomanProfit(appId, percentsList) {
+            if (!percentsList || percentsList.length === 0) return 0;
+
+            let totalTomanProfit = 0;
+            // جمع آوری سود تومانی برای تمامی روزهای ثبت شده در این اپ
+            const daysTracked = new Set();
+            percentsList.forEach(item => {
+                const dayStr = formatPersianDateTime(item.timestamp).date;
+                if (!daysTracked.has(dayStr)) {
+                    daysTracked.add(dayStr);
+                    totalTomanProfit += getTomanProfitForAppAndDay(appId, item.timestamp);
+                }
+            });
+
+            let firstDate = new Date(percentsList[0].timestamp);
+            let lastDate = new Date(percentsList[percentsList.length - 1].timestamp);
+            let daysDiff = Math.max(1, Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24)));
+
+            return totalTomanProfit / daysDiff;
+        }
+
         // ---------- سیستم استخراج خودکار تاریخچه روزانه (Method A) ----------
         function calculateDailyHistory() {
             const appsInfo = getAppPercentData();
@@ -852,12 +952,16 @@
                 let dailySum = 0;
                 let hasAnyDataSoFar = false;
 
+                let dailyTomanSum = 0;
+
                 appsInfo.forEach(app => {
                     let lastValueBeforeOrOnThisDay = null;
+                    let lastTimestampBeforeOrOnThisDay = null;
                     if (app.data) {
                         for (let i = app.data.length - 1; i >= 0; i--) {
                             if (app.data[i].timestamp <= dayEndTs) {
                                 lastValueBeforeOrOnThisDay = app.data[i].value;
+                                lastTimestampBeforeOrOnThisDay = app.data[i].timestamp;
                                 break;
                             }
                         }
@@ -865,6 +969,12 @@
                     if (lastValueBeforeOrOnThisDay !== null) {
                         dailySum += lastValueBeforeOrOnThisDay;
                         hasAnyDataSoFar = true;
+
+                        // برای سود تومانی هر روز، فقط اگر در همان روز ثبت شده باشد، سود آن را اضافه کن (نکته: هر روز مبلغ همون روز فقط دیده شود)
+                        const itemDayStr = getDayString(lastTimestampBeforeOrOnThisDay);
+                        if (itemDayStr === dayStr) {
+                            dailyTomanSum += getTomanProfitForAppAndDay(app.id, lastTimestampBeforeOrOnThisDay);
+                        }
                     }
                 });
 
@@ -872,7 +982,8 @@
                     historyResult.push({
                         dayString: dayStr,
                         timestamp: currentDayMs,
-                        value: dailySum
+                        value: dailySum,
+                        tomanValue: dailyTomanSum
                     });
                 }
 
@@ -943,9 +1054,17 @@
                     const valueSign = isPositive ? '+' : '';
                     const dateText = formatHistoryDate(item.dayString);
 
+                    const tomanVal = isTabAnalysis ? (item.tomanValue / 5) : item.tomanValue;
+                    const isTomanPositive = tomanVal >= 0;
+                    const tomanValueSign = isTomanPositive ? '+' : '';
+                    const tomanDisplay = `${tomanValueSign}${Math.round(tomanVal).toLocaleString('en-US')} تومان`;
+
                     return `
                         <div class="history-item">
-                            <span class="history-item-date">📅 ${dateText}</span>
+                            <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+                                <span class="history-item-date">📅 ${dateText}</span>
+                                <span style="font-size: 0.8rem; font-weight: bold;" class="${isTomanPositive ? 'positive' : 'negative'}">💰 ${tomanDisplay}</span>
+                            </div>
                             <span class="history-item-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${val.toFixed(precision)}%</span>
                         </div>
                     `;
@@ -1220,6 +1339,8 @@
             let liveSum = 0;
             let hasLiveRecords = false;
 
+            let liveTomanSum = 0;
+
             appsInfo.forEach(app => {
                 const lastItem = app.data && app.data.length > 0 ? app.data[app.data.length - 1] : null;
 
@@ -1235,6 +1356,13 @@
                     const isPositive = lastItem.value >= 0;
                     const valueSign = isPositive ? '+' : '';
 
+                    const appTomanProfit = getTomanProfitForAppAndDay(app.id, lastItem.timestamp);
+                    liveTomanSum += appTomanProfit;
+
+                    const isTomanPositive = appTomanProfit >= 0;
+                    const tomanValueSign = isTomanPositive ? '+' : '';
+                    const tomanDisplay = `${tomanValueSign}${appTomanProfit.toLocaleString('en-US')} تومان`;
+
                     card.innerHTML = `
                         <div class="card-header">
                             <span class="app-badge">${app.title}</span>
@@ -1244,6 +1372,9 @@
                             <div class="date-details">
                                 <span class="solar-date">📅 ${dt.date}</span>
                                 <span class="solar-time">⏰ ${dt.time}</span>
+                                <div style="font-size: 0.85rem; font-weight: bold; margin-top: 4px;" class="${isTomanPositive ? 'positive' : 'negative'}">
+                                    💰 ${tomanDisplay}
+                                </div>
                             </div>
                             <span class="percent-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${lastItem.value}%</span>
                         </div>
@@ -1308,6 +1439,7 @@
             // به‌روزرسانی کارت مجموع درصد‌های زنده
             const liveTotalContainer = document.getElementById('live-total-container');
             const liveTotalValue = document.getElementById('live-total-value');
+            const liveTotalTomanValue = document.getElementById('live-total-toman-value');
             if (hasLiveRecords) {
                 liveTotalContainer.style.display = 'block';
                 const isPositive = liveSum >= 0;
@@ -1319,6 +1451,12 @@
                 } else {
                     liveTotalValue.style.color = 'var(--negative-color)';
                 }
+
+                // به‌روزرسانی مجموع تومانی زنده
+                const isLiveTomanPositive = liveTomanSum >= 0;
+                const liveTomanValueSign = isLiveTomanPositive ? '+' : '';
+                liveTotalTomanValue.innerText = `💰 ${liveTomanValueSign}${liveTomanSum.toLocaleString('en-US')} تومان`;
+                liveTotalTomanValue.className = isLiveTomanPositive ? 'positive' : 'negative';
             } else {
                 liveTotalContainer.style.display = 'none';
             }
@@ -1329,6 +1467,8 @@
 
             let analysisSum = 0;
             let hasAnalysisRecords = false;
+
+            let analysisTomanSum = 0;
 
             appsInfo.forEach(app => {
                 const avgDaily = calculateDailyAverage(app.data);
@@ -1344,9 +1484,17 @@
                     const isPositive = avgDaily >= 0;
                     const valueSign = isPositive ? '+' : '';
 
+                    const avgTomanDaily = calculateDailyAverageTomanProfit(app.id, app.data);
+                    analysisTomanSum += avgTomanDaily;
+
+                    const isTomanPositive = avgTomanDaily >= 0;
+                    const tomanValueSign = isTomanPositive ? '+' : '';
+                    const tomanDisplay = `${tomanValueSign}${Math.round(avgTomanDaily).toLocaleString('en-US')} تومان`;
+
                     itemCard.innerHTML = `
                         <span class="avg-item-title">${app.title}</span>
                         <span class="avg-item-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${avgDaily.toFixed(3)}%</span>
+                        <span style="font-size: 0.8rem; font-weight: bold; margin-top: 4px;" class="${isTomanPositive ? 'positive' : 'negative'}">${tomanDisplay}</span>
                     `;
                 } else {
                     itemCard.innerHTML = `
@@ -1399,6 +1547,7 @@
             // به‌روزرسانی کارت مجموع میانگین‌های روزانه سود
             const analysisTotalContainer = document.getElementById('analysis-total-container');
             const analysisTotalValue = document.getElementById('analysis-total-value');
+            const analysisTotalTomanValue = document.getElementById('analysis-total-toman-value');
             if (hasAnalysisRecords) {
                 analysisTotalContainer.style.display = 'block';
                 const isPositive = analysisSum >= 0;
@@ -1409,6 +1558,12 @@
                 } else {
                     analysisTotalValue.style.color = 'var(--negative-color)';
                 }
+
+                // به‌روزرسانی مجموع میانگین تومانی روزانه
+                const isAnalysisTomanPositive = analysisTomanSum >= 0;
+                const analysisTomanValueSign = isAnalysisTomanPositive ? '+' : '';
+                analysisTotalTomanValue.innerText = `💰 ${analysisTomanValueSign}${Math.round(analysisTomanSum).toLocaleString('en-US')} تومان`;
+                analysisTotalTomanValue.className = isAnalysisTomanPositive ? 'positive' : 'negative';
             } else {
                 analysisTotalContainer.style.display = 'none';
             }
