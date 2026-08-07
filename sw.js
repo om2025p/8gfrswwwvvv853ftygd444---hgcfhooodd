@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v16';
+const CACHE_NAME = 'emarat-portal-v17';
 const ASSETS = [
   './',
   './index.html',
@@ -125,7 +125,16 @@ const ASSETS = [
   './tabdeal/icon-192.png',
   './tabdeal/icon-512.png',
   './tabdeal/icon-192-maskable.png',
-  './tabdeal/icon-512-maskable.png'
+  './tabdeal/icon-512-maskable.png',
+  // Simple Chat App
+  './simple-chat/index.html',
+  './simple-chat/manifest.json',
+  './simple-chat/icon-192.png',
+  './simple-chat/icon-512.png',
+  './simple-chat/icon-192-maskable.png',
+  './simple-chat/icon-512-maskable.png',
+  './simple-chat/apple-touch-icon.png',
+  './simple-chat/favicon.ico'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
