@@ -683,10 +683,104 @@
         // کش سراسری موقت و کش سودهای تومانی جهت ارتقای فوق‌العاده سرعت لود و سوئیچ تب‌ها
         let cachedAppsPercentData = null;
         let cachedDailyHistory = null;
-        let tomanProfitCache = {};
+        let dailyTomanProfitMap = {};
+
+        function getGregorianDayString(ts) {
+            const date = new Date(ts);
+            if (isNaN(date.getTime())) return "";
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        function getLatestTomanProfit(appId) {
+            const historyKeys = {
+                1: "gold_history",
+                2: "fixedIncome_history",
+                3: "kian_history",
+                4: "pension_history",
+                5: "sinergy_history"
+            };
+            const historyKey = historyKeys[appId];
+            let historyRaw = localStorage.getItem(historyKey);
+            let history = [];
+            try { history = JSON.parse(historyRaw) || []; } catch(e) {}
+
+            if (history.length === 0) return 0;
+
+            const calc = history[0];
+            let rawBase = 0;
+            let rawNew = 0;
+
+            if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
+                rawBase = calc.rawBase;
+            } else if (calc.base) {
+                rawBase = parseFloat(normalizeToEnglishDigits(calc.base).replace(/,/g, '')) || 0;
+            }
+
+            if (calc.rawNew !== undefined && calc.rawNew !== null && !isNaN(calc.rawNew)) {
+                rawNew = calc.rawNew;
+            } else if (calc.new) {
+                rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
+            }
+
+            const diff = rawNew - rawBase;
+            return Math.round(diff / 10000);
+        }
+
+        function calculateDailyAverageTomanProfit(appId) {
+            const historyKeys = {
+                1: "gold_history",
+                2: "fixedIncome_history",
+                3: "kian_history",
+                4: "pension_history",
+                5: "sinergy_history"
+            };
+            const historyKey = historyKeys[appId];
+            let historyRaw = localStorage.getItem(historyKey);
+            let history = [];
+            try { history = JSON.parse(historyRaw) || []; } catch(e) {}
+
+            if (history.length === 0) return 0;
+
+            let totalTomanProfit = 0;
+            let firstDate = null;
+            let lastDate = null;
+
+            history.forEach(calc => {
+                let d = null;
+                if (calc.timestamp) {
+                    d = new Date(calc.timestamp);
+                }
+                if (!d || isNaN(d.getTime())) return;
+
+                if (!firstDate || d < firstDate) firstDate = d;
+                if (!lastDate || d > lastDate) lastDate = d;
+
+                let rawBase = 0;
+                let rawNew = 0;
+
+                if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
+                    rawBase = calc.rawBase;
+                } else if (calc.base) {
+                    rawBase = parseFloat(normalizeToEnglishDigits(calc.base).replace(/,/g, '')) || 0;
+                }
+
+                if (calc.rawNew !== undefined && calc.rawNew !== null && !isNaN(calc.rawNew)) {
+                    rawNew = calc.rawNew;
+                } else if (calc.new) {
+                    rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
+                }
+
+                const diff = rawNew - rawBase;
+                totalTomanProfit += Math.round(diff / 10000);
+            });
+
+            if (!firstDate || !lastDate) return 0;
+            let daysDiff = Math.max(1, Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24)));
+            return totalTomanProfit / daysDiff;
+        }
 
         function initializeTomanProfitCache() {
-            tomanProfitCache = {};
+            dailyTomanProfitMap = {};
             const historyKeys = {
                 1: "gold_history",
                 2: "fixedIncome_history",
@@ -703,39 +797,39 @@
 
                 if (history.length === 0) continue;
 
-                // ثبت از قدیم به جدید در کش، تا آخرین (جدیدترین) روی بقیه بازنویسی شود
-                // یا از جدید به قدیم بررسی کنیم و اگر قبلاً ثبت نشده بود، ذخیره کنیم.
-                // چون تاریخچه از جدید به قدیم ذخیره می‌شود، اولین برخورد جدیدترین است.
                 for (let i = 0; i < history.length; i++) {
                     const calc = history[i];
-                    let itemDateStr = "";
-                    if (calc.timestamp) {
-                        itemDateStr = normalizeToEnglishDigits(formatPersianDateTime(new Date(calc.timestamp).getTime()).date);
-                    } else if (calc.persianDate) {
-                        itemDateStr = normalizeToEnglishDigits(calc.persianDate.split(/[\s,،]/)[0]);
+                    let rawBase = 0;
+                    let rawNew = 0;
+
+                    if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
+                        rawBase = calc.rawBase;
+                    } else if (calc.base) {
+                        rawBase = parseFloat(normalizeToEnglishDigits(calc.base).replace(/,/g, '')) || 0;
                     }
 
-                    if (!itemDateStr) continue;
+                    if (calc.rawNew !== undefined && calc.rawNew !== null && !isNaN(calc.rawNew)) {
+                        rawNew = calc.rawNew;
+                    } else if (calc.new) {
+                        rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
+                    }
 
-                    const cacheKey = `${appId}_${itemDateStr}`;
-                    if (tomanProfitCache[cacheKey] === undefined) {
-                        let rawBase = 0;
-                        let rawNew = 0;
+                    const diff = rawNew - rawBase;
+                    const tomanProfit = Math.round(diff / 10000);
 
-                        if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
-                            rawBase = calc.rawBase;
-                        } else if (calc.base) {
-                            rawBase = parseFloat(normalizeToEnglishDigits(calc.base).replace(/,/g, '')) || 0;
+                    let ts = null;
+                    if (calc.timestamp) {
+                        ts = new Date(calc.timestamp).getTime();
+                    }
+
+                    if (ts && !isNaN(ts)) {
+                        const dayStr = getGregorianDayString(ts);
+                        if (dayStr) {
+                            if (dailyTomanProfitMap[dayStr] === undefined) {
+                                dailyTomanProfitMap[dayStr] = 0;
+                            }
+                            dailyTomanProfitMap[dayStr] += tomanProfit;
                         }
-
-                        if (calc.rawNew !== undefined && calc.rawNew !== null && !isNaN(calc.rawNew)) {
-                            rawNew = calc.rawNew;
-                        } else if (calc.new) {
-                            rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
-                        }
-
-                        const diff = rawNew - rawBase;
-                        tomanProfitCache[cacheKey] = Math.round(diff / 10000);
                     }
                 }
             }
@@ -829,14 +923,6 @@
             return String(str).replace(/[۰-۹٠-٩]/g, m => map[m] || m);
         }
 
-        // دریافت سود تومانی یک اپ در یک روز خاص از روی حافظه موقت (کش) به سرعت نور O(1)
-        function getTomanProfitForAppAndDay(appId, timestamp) {
-            const targetDateStr = normalizeToEnglishDigits(formatPersianDateTime(timestamp).date);
-            const cacheKey = `${appId}_${targetDateStr}`;
-            const cachedVal = tomanProfitCache[cacheKey];
-            return cachedVal !== undefined ? cachedVal : 0;
-        }
-
         // استخراج و تحلیل داده‌ها از LocalStorage با سیستم کش بهینه‌شده
         function getAppPercentData() {
             if (cachedAppsPercentData !== null) {
@@ -906,28 +992,6 @@
             return totalProfit / daysDiff;
         }
 
-        // محاسبه میانگین سود تومانی روزانه برای هر اپلیکیشن
-        function calculateDailyAverageTomanProfit(appId, percentsList) {
-            if (!percentsList || percentsList.length === 0) return 0;
-
-            let totalTomanProfit = 0;
-            // جمع آوری سود تومانی برای تمامی روزهای ثبت شده در این اپ
-            const daysTracked = new Set();
-            percentsList.forEach(item => {
-                const dayStr = formatPersianDateTime(item.timestamp).date;
-                if (!daysTracked.has(dayStr)) {
-                    daysTracked.add(dayStr);
-                    totalTomanProfit += getTomanProfitForAppAndDay(appId, item.timestamp);
-                }
-            });
-
-            let firstDate = new Date(percentsList[0].timestamp);
-            let lastDate = new Date(percentsList[percentsList.length - 1].timestamp);
-            let daysDiff = Math.max(1, Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24)));
-
-            return totalTomanProfit / daysDiff;
-        }
-
         // ---------- سیستم استخراج خودکار تاریخچه روزانه با کش سراسری و حلقه ایمن (Method A) ----------
         function calculateDailyHistory() {
             if (cachedDailyHistory !== null) {
@@ -979,16 +1043,14 @@
                 let dailySum = 0;
                 let hasAnyDataSoFar = false;
 
-                let dailyTomanSum = 0;
+                const dailyTomanSum = dailyTomanProfitMap[dayStr] || 0;
 
                 appsInfo.forEach(app => {
                     let lastValueBeforeOrOnThisDay = null;
-                    let lastTimestampBeforeOrOnThisDay = null;
                     if (app.data) {
                         for (let i = app.data.length - 1; i >= 0; i--) {
                             if (app.data[i].timestamp <= dayEndTs) {
                                 lastValueBeforeOrOnThisDay = app.data[i].value;
-                                lastTimestampBeforeOrOnThisDay = app.data[i].timestamp;
                                 break;
                             }
                         }
@@ -996,12 +1058,6 @@
                     if (lastValueBeforeOrOnThisDay !== null) {
                         dailySum += lastValueBeforeOrOnThisDay;
                         hasAnyDataSoFar = true;
-
-                        // برای سود تومانی هر روز، فقط اگر در همان روز ثبت شده باشد، سود آن را اضافه کن (نکته: هر روز مبلغ همون روز فقط دیده شود)
-                        const itemDayStr = getDayString(lastTimestampBeforeOrOnThisDay);
-                        if (itemDayStr === dayStr) {
-                            dailyTomanSum += getTomanProfitForAppAndDay(app.id, lastTimestampBeforeOrOnThisDay);
-                        }
                     }
                 });
 
@@ -1375,6 +1431,13 @@
                 const card = document.createElement('div');
                 card.className = 'monitor-card';
 
+                const appTomanProfit = getLatestTomanProfit(app.id);
+                liveTomanSum += appTomanProfit;
+
+                const isTomanPositive = appTomanProfit >= 0;
+                const tomanValueSign = isTomanPositive ? '+' : '';
+                const tomanDisplay = `${tomanValueSign}${appTomanProfit.toLocaleString('en-US')} تومان`;
+
                 if (lastItem) {
                     liveSum += lastItem.value;
                     hasLiveRecords = true;
@@ -1383,13 +1446,6 @@
                     const dt = formatPersianDateTime(lastItem.timestamp);
                     const isPositive = lastItem.value >= 0;
                     const valueSign = isPositive ? '+' : '';
-
-                    const appTomanProfit = getTomanProfitForAppAndDay(app.id, lastItem.timestamp);
-                    liveTomanSum += appTomanProfit;
-
-                    const isTomanPositive = appTomanProfit >= 0;
-                    const tomanValueSign = isTomanPositive ? '+' : '';
-                    const tomanDisplay = `${tomanValueSign}${appTomanProfit.toLocaleString('en-US')} تومان`;
 
                     card.innerHTML = `
                         <div class="card-header">
@@ -1411,10 +1467,16 @@
                     card.innerHTML = `
                         <div class="card-header">
                             <span class="app-badge">${app.title}</span>
-                            <span class="time-ago">بدون ثبت</span>
+                            <span class="time-ago">بدون ثبت درصد</span>
                         </div>
-                        <div class="card-body" style="justify-content: center; padding: 10px 0;">
-                            <span class="percent-value none">📭 هیچ درصدی ثبت نشده است</span>
+                        <div class="card-body">
+                            <div class="date-details">
+                                <span class="solar-date">📅 —</span>
+                                <div style="font-size: 0.85rem; font-weight: bold; margin-top: 4px;" class="${isTomanPositive ? 'positive' : 'negative'}">
+                                    💰 ${tomanDisplay}
+                                </div>
+                            </div>
+                            <span class="percent-value none">—%</span>
                         </div>
                     `;
                 }
@@ -1468,7 +1530,7 @@
             const liveTotalContainer = document.getElementById('live-total-container');
             const liveTotalValue = document.getElementById('live-total-value');
             const liveTotalTomanValue = document.getElementById('live-total-toman-value');
-            if (hasLiveRecords) {
+            if (hasLiveRecords || liveTomanSum !== 0) {
                 liveTotalContainer.style.display = 'block';
                 const isPositive = liveSum >= 0;
                 const valueSign = isPositive ? '+' : '';
@@ -1505,14 +1567,18 @@
                 const itemCard = document.createElement('div');
                 itemCard.className = 'avg-item-card';
 
-                if (hasData) {
-                    analysisSum += avgDaily;
-                    hasAnalysisRecords = true;
+                const avgTomanDaily = calculateDailyAverageTomanProfit(app.id);
+                const hasTomanData = avgTomanDaily !== 0;
+
+                if (hasData || hasTomanData) {
+                    if (hasData) {
+                        analysisSum += avgDaily;
+                        hasAnalysisRecords = true;
+                    }
 
                     const isPositive = avgDaily >= 0;
                     const valueSign = isPositive ? '+' : '';
 
-                    const avgTomanDaily = calculateDailyAverageTomanProfit(app.id, app.data);
                     analysisTomanSum += avgTomanDaily;
 
                     const isTomanPositive = avgTomanDaily >= 0;
@@ -1521,7 +1587,7 @@
 
                     itemCard.innerHTML = `
                         <span class="avg-item-title">${app.title}</span>
-                        <span class="avg-item-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${avgDaily.toFixed(3)}%</span>
+                        <span class="avg-item-value ${isPositive ? 'positive' : 'negative'}">${hasData ? valueSign + avgDaily.toFixed(3) + '%' : '—%'}</span>
                         <span style="font-size: 0.8rem; font-weight: bold; margin-top: 4px;" class="${isTomanPositive ? 'positive' : 'negative'}">${tomanDisplay}</span>
                     `;
                 } else {
@@ -1576,7 +1642,7 @@
             const analysisTotalContainer = document.getElementById('analysis-total-container');
             const analysisTotalValue = document.getElementById('analysis-total-value');
             const analysisTotalTomanValue = document.getElementById('analysis-total-toman-value');
-            if (hasAnalysisRecords) {
+            if (hasAnalysisRecords || analysisTomanSum !== 0) {
                 analysisTotalContainer.style.display = 'block';
                 const isPositive = analysisSum >= 0;
                 const valueSign = isPositive ? '+' : '';
