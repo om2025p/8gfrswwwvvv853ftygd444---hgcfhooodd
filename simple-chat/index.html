@@ -500,18 +500,42 @@
             try {
                 // آدرس ریکوئست مستقیم Gemini با مدل ۲.۵ پرو (بسیار قدرتمند و دقیق)
                 const activeModel = "gemini-2.5-pro";
-                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${API_KEY}`;
+                let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${API_KEY}`;
 
-                // قالب‌بندی ریکوئست استاندارد API گوگل جمنای
-                const response = await fetch(endpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        contents: chatHistory,
-                        systemInstruction: { parts: [{ text: systemInstruction }] },
-                        generationConfig: { maxOutputTokens: 2048 }
-                    })
-                });
+                // استفاده از پروکسی کلودفلر در صورت عدم امکان اتصال مستقیم (رفع تداخل یا فیلترینگ شبکه)
+                const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
+
+                let response;
+                try {
+                    console.log("Attempting direct connection to Google Gemini API...");
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 4000); // ۴ ثانیه مهلت اتصال مستقیم
+
+                    response = await fetch(endpoint, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contents: chatHistory,
+                            systemInstruction: { parts: [{ text: systemInstruction }] },
+                            generationConfig: { maxOutputTokens: 2048 }
+                        }),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    if (!response.ok) throw new Error();
+                } catch (err) {
+                    console.log("Direct connection failed or timed out. Switching to Cloudflare Worker proxy...");
+                    endpoint = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/${activeModel}:generateContent?key=${API_KEY}`;
+                    response = await fetch(endpoint, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contents: chatHistory,
+                            systemInstruction: { parts: [{ text: systemInstruction }] },
+                            generationConfig: { maxOutputTokens: 2048 }
+                        })
+                    });
+                }
 
                 const typingNode = document.getElementById("typingRow");
                 if (typingNode) typingNode.remove();
