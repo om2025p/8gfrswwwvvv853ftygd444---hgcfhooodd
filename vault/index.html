@@ -1,0 +1,2552 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#6C3CE1" />
+    <title>گاوصندوق هوشمند - نسخه حرفه‌ای</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+        /* ========================================
+                   ROOT VARIABLES & THEMES
+                ======================================== */
+        :root {
+            --primary: #6C3CE1;
+            --primary-light: #8B5CF6;
+            --primary-dark: #5B21B6;
+            --secondary: #EC4899;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
+
+            --bg-primary: #F3F4F6;
+            --bg-secondary: #FFFFFF;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --border-color: #E5E7EB;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #111827;
+            --bg-secondary: #1F2937;
+            --bg-card: rgba(31, 41, 55, 0.85);
+            --text-primary: #F9FAFB;
+            --text-secondary: #9CA3AF;
+            --border-color: #374151;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --glass-bg: rgba(31, 41, 55, 0.7);
+            --glass-border: rgba(55, 65, 81, 0.3);
+        }
+
+        /* ========================================
+                   GLOBAL RESET & BASE
+                ======================================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Tahoma', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: var(--transition);
+            padding: 20px;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        /* ========================================
+                   APP CONTAINER
+                ======================================== */
+        .app-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+        /* ========================================
+                   HEADER
+                ======================================== */
+        .app-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--glass-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: var(--transition);
+        }
+        .app-header .logo { display: flex; align-items: center; gap: 12px; }
+        .app-header .logo i {
+            font-size: 28px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-header .logo h1 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-header .header-actions { display: flex; align-items: center; gap: 12px; }
+        .app-header .header-actions .version-badge {
+            background: var(--primary-light);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .app-header .header-actions .migration-badge {
+            background: var(--warning);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+        }
+        .app-header .header-actions .migration-badge.visible { display: inline-block; }
+        .app-header .header-actions button {
+            background: none;
+            border: none;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            font-size: 18px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .app-header .header-actions button:hover { background: var(--bg-primary); color: var(--primary); }
+
+        /* ========================================
+                   TAB SYSTEM
+                ======================================== */
+        .tab-system {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-secondary);
+            padding: 4px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+        }
+        .tab-system .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-system .tab-btn:hover { background: var(--bg-primary); color: var(--text-primary); }
+        .tab-system .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 60, 225, 0.3);
+        }
+        .tab-system .tab-btn i { font-size: 16px; }
+        .tab-content { display: none; animation: fadeSlideUp 0.4s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========================================
+                   SEARCH & FILTER BAR
+                ======================================== */
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            background: var(--bg-secondary);
+            padding: 16px 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .search-bar .search-input-wrapper {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+        .search-bar .search-input-wrapper i {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        .search-bar .search-input-wrapper input {
+            width: 100%;
+            padding: 10px 40px 10px 14px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        .search-bar .search-input-wrapper input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 60, 225, 0.15);
+        }
+        .search-bar .filter-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .search-bar .filter-group select {
+            padding: 10px 14px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .search-bar .filter-group select:focus { outline: none; border-color: var(--primary); }
+        .search-bar .filter-group .view-toggle {
+            display: flex;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+        .search-bar .filter-group .view-toggle button {
+            padding: 8px 14px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        .search-bar .filter-group .view-toggle button.active {
+            background: var(--primary);
+            color: white;
+        }
+        .search-bar .filter-group .view-toggle button:hover:not(.active) { background: var(--bg-primary); }
+
+        /* ========================================
+                   ACCOUNT CARDS
+                ======================================== */
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .accounts-grid.list-view { grid-template-columns: 1fr; }
+        .account-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .account-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            opacity: 0;
+            transition: var(--transition);
+        }
+        .account-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+        .account-card:hover::before { opacity: 1; }
+        .account-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .account-card .card-header .type-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .account-card .card-header .type-badge i { font-size: 18px; }
+        .account-card .card-header .card-actions { display: flex; gap: 4px; }
+        .account-card .card-header .card-actions button {
+            background: none;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            font-size: 14px;
+        }
+        .account-card .card-header .card-actions button:hover { background: var(--bg-primary); color: var(--primary); }
+        .account-card .card-header .card-actions button.danger:hover { color: var(--danger); }
+        .account-card .card-body { display: flex; flex-direction: column; gap: 6px; }
+        .account-card .card-body .field {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: var(--bg-primary);
+            transition: var(--transition);
+        }
+        .account-card .card-body .field i { width: 18px; color: var(--primary-light); }
+        .account-card .card-body .field .value {
+            color: var(--text-primary);
+            font-weight: 500;
+            word-break: break-all;
+        }
+        .account-card .card-body .field .password-value {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+        .account-card .card-body .field .toggle-pwd {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0 4px;
+        }
+        .account-card .card-body .field .toggle-pwd:hover { color: var(--primary); }
+        .account-card .card-body .notes-field {
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            margin-top: 4px;
+            max-height: 60px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .account-card .card-footer {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .account-card .card-footer .tags { display: flex; gap: 4px; flex-wrap: wrap; }
+        .account-card .card-footer .tags .tag {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* ========================================
+                   FORM SECTION
+                ======================================== */
+        .form-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--glass-shadow);
+            transition: var(--transition);
+        }
+        .form-section .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .form-section .form-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .form-section .form-header h2 i { color: var(--primary); }
+        .form-section .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .form-section .form-grid .full-width { grid-column: 1 / -1; }
+        .form-section .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .form-section .form-group label {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .form-section .form-group label .required { color: var(--danger); }
+        .form-section .form-group input,
+        .form-section .form-group select,
+        .form-section .form-group textarea {
+            padding: 10px 14px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+        .form-section .form-group input:focus,
+        .form-section .form-group select:focus,
+        .form-section .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 60, 225, 0.15);
+        }
+        .form-section .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .form-section .form-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        /* ========================================
+                   BUTTONS
+                ======================================== */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 60, 225, 0.3);
+        }
+        .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+        .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover {
+            background: #DC2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-warning:hover {
+            background: #D97706;
+            transform: translateY(-2px);
+        }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-xs { padding: 4px 8px; font-size: 11px; }
+
+        /* ========================================
+                   TRASH SECTION
+                ======================================== */
+        .trash-section {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-top: 16px;
+            display: none;
+        }
+        .trash-section.visible { display: block; animation: fadeSlideUp 0.4s ease; }
+        .trash-section .trash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .trash-section .trash-header h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--warning);
+        }
+        .trash-section .trash-items { display: flex; flex-direction: column; gap: 8px; }
+        .trash-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            border-right: 4px solid var(--warning);
+        }
+        .trash-item .item-info { display: flex; align-items: center; gap: 12px; }
+        .trash-item .item-info .item-type { font-weight: 600; font-size: 13px; }
+        .trash-item .item-info .item-detail { font-size: 12px; color: var(--text-secondary); }
+        .trash-item .item-actions { display: flex; gap: 6px; }
+
+        /* ========================================
+                   EMPTY STATE
+                ======================================== */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+        .empty-state i { font-size: 48px; color: var(--border-color); margin-bottom: 16px; }
+        .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text-primary); }
+        .empty-state p { font-size: 14px; }
+
+        /* ========================================
+                   REPO CARDS
+                ======================================== */
+        .repo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+        .repo-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        .repo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+        .repo-card .repo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .repo-card .repo-header .repo-name { display: flex; flex-direction: column; gap: 2px; }
+        .repo-card .repo-header .repo-name .en {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .repo-card .repo-header .repo-name .fa {
+            font-size: 13px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .repo-card .repo-header .repo-badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: var(--success);
+            color: white;
+            font-weight: 600;
+        }
+        .repo-card .repo-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+        }
+        .repo-card .repo-branches {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .repo-card .repo-branches .branch-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            border-right: 3px solid var(--primary-light);
+        }
+        .repo-card .repo-branches .branch-item .branch-name { font-weight: 600; font-size: 13px; }
+        .repo-card .repo-branches .branch-item .branch-commit {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+        .repo-card .repo-branches .branch-item .branch-date {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .repo-card .repo-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* ========================================
+                   DEVELOPER PANEL
+                ======================================== */
+        .dev-panel {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+        .dev-panel .dev-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .dev-panel .dev-header h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .dev-panel .dev-header h2 i { color: var(--primary); }
+        .dev-panel .dev-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .dev-panel .dev-info-grid .info-card {
+            background: var(--bg-primary);
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+        .dev-panel .dev-info-grid .info-card .label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .dev-panel .dev-info-grid .info-card .value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .dev-panel .dev-info-grid .info-card .value i { margin-left: 6px; }
+
+        /* ========================================
+                   MODAL
+                ======================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-overlay.visible { display: flex; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 32px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+        }
+        .modal-content .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-content .modal-header h3 {
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal-content .modal-header .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        .modal-content .modal-header .close-modal:hover {
+            color: var(--danger);
+            transform: rotate(90deg);
+        }
+        .modal-content .modal-body { display: flex; flex-direction: column; gap: 14px; }
+        .modal-content .modal-body .migration-item {
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            border-right: 4px solid var(--success);
+        }
+        .modal-content .modal-body .migration-item .key {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        .modal-content .modal-body .migration-item .status {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .modal-content .modal-body .migration-item .count {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* ========================================
+                   FOOTER
+                ======================================== */
+        .app-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: 8px;
+        }
+        .app-footer .footer-actions { display: flex; gap: 8px; }
+
+        /* ========================================
+                   TOAST
+                ======================================== */
+        .toast-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-hover);
+            border: 1px solid var(--border-color);
+            z-index: 9999;
+            font-size: 14px;
+            font-weight: 500;
+            max-width: 400px;
+            animation: fadeSlideUp 0.3s ease;
+            direction: rtl;
+        }
+        .toast-notification.success { border-right: 4px solid var(--success); }
+        .toast-notification.error { border-right: 4px solid var(--danger); }
+        .toast-notification.warning { border-right: 4px solid var(--warning); }
+
+        /* ========================================
+                   RESPONSIVE
+                ======================================== */
+        @media (max-width: 768px) {
+            .app-header { flex-direction: column; gap: 12px; padding: 12px 16px; }
+            .app-header .header-actions { width: 100%; justify-content: space-between; }
+            .tab-system { overflow-x: auto; padding: 2px; }
+            .tab-system .tab-btn { padding: 8px 14px; font-size: 13px; }
+            .search-bar { flex-direction: column; }
+            .search-bar .filter-group { justify-content: stretch; }
+            .search-bar .filter-group select { flex: 1; }
+            .form-section .form-grid { grid-template-columns: 1fr; }
+            .form-section .form-grid .full-width { grid-column: 1; }
+            .accounts-grid { grid-template-columns: 1fr; }
+            .repo-grid { grid-template-columns: 1fr; }
+            .modal-content { padding: 20px; margin: 10px; }
+            .app-footer { flex-direction: column; gap: 8px; text-align: center; }
+        }
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .app-header .logo h1 { font-size: 16px; }
+            .tab-system .tab-btn { font-size: 12px; padding: 6px 10px; }
+            .tab-system .tab-btn span { display: none; }
+            .account-card { padding: 14px; }
+        }
+
+        /* ========================================
+                   UTILITY CLASSES
+                ======================================== */
+        .text-center { text-align: center; }
+        .mt-8 { margin-top: 8px; }
+        .mt-16 { margin-top: 16px; }
+        .mb-8 { margin-bottom: 8px; }
+        .mb-16 { margin-bottom: 16px; }
+        .flex { display: flex; }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+        .gap-8 { gap: 8px; }
+        .gap-12 { gap: 12px; }
+        .hidden { display: none !important; }
+
+        /* Colorful tags */
+        .tag-red { background: #FEE2E2; color: #DC2626; }
+        .tag-blue { background: #DBEAFE; color: #2563EB; }
+        .tag-green { background: #D1FAE5; color: #059669; }
+        .tag-yellow { background: #FEF3C7; color: #D97706; }
+        .tag-purple { background: #EDE9FE; color: #7C3AED; }
+        .tag-pink { background: #FCE7F3; color: #DB2777; }
+        [data-theme="dark"] .tag-red { background: #450A0A; color: #FCA5A5; }
+        [data-theme="dark"] .tag-blue { background: #172554; color: #93C5FD; }
+        [data-theme="dark"] .tag-green { background: #064E3B; color: #6EE7B7; }
+        [data-theme="dark"] .tag-yellow { background: #451A03; color: #FCD34D; }
+        [data-theme="dark"] .tag-purple { background: #2E1065; color: #C4B5FD; }
+        [data-theme="dark"] .tag-pink { background: #500724; color: #F9A8D4; }
+
+        /* Platform icon colors */
+        .platform-instagram { color: #E1306C; }
+        .platform-telegram { color: #0088cc; }
+        .platform-whatsapp { color: #25D366; }
+        .platform-gmail { color: #DB4437; }
+        .platform-github { color: #333; }
+        .platform-chatgpt { color: #74aa9c; }
+        .platform-gemini { color: #4285F4; }
+        .platform-copilot { color: #0078D4; }
+        .platform-grok { color: #1DA1F2; }
+        .platform-deepseek { color: #00a98f; }
+        [data-theme="dark"] .platform-github { color: #f0f6fc; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <!-- ========================================
+        HEADER
+        ======================================== -->
+        <header class="app-header">
+            <div class="logo">
+                <i class="fas fa-shield-halved"></i>
+                <h1>گاوصندوق هوشمند</h1>
+            </div>
+            <div class="header-actions">
+                <span class="version-badge" id="appVersion">v2.0.0</span>
+                <span class="migration-badge" id="migrationBadge">
+                    <i class="fas fa-arrow-right-arrow-left"></i>
+                    مهاجرت اطلاعات
+                </span>
+                <button id="themeToggle" title="تغییر تم">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button id="exportBtn" title="خروجی JSON">
+                    <i class="fas fa-file-export"></i>
+                </button>
+                <button id="importBtn" title="ورودی JSON">
+                    <i class="fas fa-file-import"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- ========================================
+        TAB SYSTEM
+        ======================================== -->
+        <nav class="tab-system" id="tabSystem">
+            <button class="tab-btn active" data-tab="accounts">
+                <i class="fas fa-address-card"></i>
+                <span>حساب‌ها</span>
+                <span class="badge" id="accountCount">0</span>
+            </button>
+            <button class="tab-btn" data-tab="repos">
+                <i class="fas fa-code-branch"></i>
+                <span>مخازن</span>
+            </button>
+            <button class="tab-btn" data-tab="developer">
+                <i class="fas fa-user-cog"></i>
+                <span>برنامه‌نویس</span>
+            </button>
+        </nav>
+
+        <!-- ========================================
+        TAB: ACCOUNTS
+        ======================================== -->
+        <div class="tab-content active" id="tabAccounts">
+
+            <!-- Search & Filter -->
+            <div class="search-bar">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="جستجوی حساب... (نام، نوع، یادداشت)" />
+                </div>
+                <div class="filter-group">
+                    <select id="typeFilter">
+                        <option value="">همه انواع</option>
+                        <option value="Instagram">اینستاگرام</option>
+                        <option value="Telegram">تلگرام</option>
+                        <option value="WhatsApp">واتس‌اپ</option>
+                        <option value="Gmail">جیمیل</option>
+                        <option value="GitHub">گیت‌هاب</option>
+                        <option value="ChatGPT">ChatGPT</option>
+                        <option value="Gemini">Gemini</option>
+                        <option value="Other">سایر</option>
+                    </select>
+                    <select id="sortSelect">
+                        <option value="newest">جدیدترین</option>
+                        <option value="oldest">قدیمی‌ترین</option>
+                        <option value="az">الفبا (صعودی)</option>
+                        <option value="za">الفبا (نزولی)</option>
+                    </select>
+                    <div class="view-toggle">
+                        <button class="active" data-view="grid" title="نمایش کارتی">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button data-view="list" title="نمایش لیستی">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Section -->
+            <section class="form-section" id="formSection">
+                <div class="form-header">
+                    <h2 id="formTitle"><i class="fas fa-plus-circle"></i> افزودن حساب جدید</h2>
+                    <button id="toggleFormBtn" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                </div>
+                <div class="form-grid" id="formGrid">
+                    <div class="form-group">
+                        <label>نوع پلتفرم <span class="required">*</span></label>
+                        <select id="socialType">
+                            <option value="">انتخاب کنید...</option>
+                            <optgroup label="شبکه‌های اجتماعی">
+                                <option value="Instagram">اینستاگرام</option>
+                                <option value="Telegram">تلگرام</option>
+                                <option value="WhatsApp">واتس‌اپ</option>
+                                <option value="Facebook">فیسبوک</option>
+                                <option value="Twitter">توییتر (X)</option>
+                                <option value="TikTok">تیک‌تاک</option>
+                                <option value="LinkedIn">لینکدین</option>
+                                <option value="Discord">دیسکورد</option>
+                                <option value="Snapchat">اسنپ‌چت</option>
+                                <option value="Reddit">ردیت</option>
+                                <option value="Pinterest">پینترست</option>
+                            </optgroup>
+                            <optgroup label="سرویس‌های عمومی">
+                                <option value="Gmail">جیمیل / گوگل</option>
+                                <option value="YouTube">یوتیوب</option>
+                                <option value="Spotify">اسپاتیفای</option>
+                                <option value="GitHub">گیت‌هاب</option>
+                            </optgroup>
+                            <optgroup label="هوش مصنوعی">
+                                <option value="ChatGPT">ChatGPT</option>
+                                <option value="Gemini">Gemini</option>
+                                <option value="Copilot">Copilot</option>
+                                <option value="Grok">Grok</option>
+                                <option value="DeepSeek">DeepSeek</option>
+                            </optgroup>
+                            <option value="Other">سایر</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>نام کاربری <span class="required">*</span></label>
+                        <input type="text" id="username" placeholder="نام کاربری یا شناسه" />
+                    </div>
+                    <div class="form-group">
+                        <label>ایمیل</label>
+                        <input type="email" id="email" placeholder="example@email.com" />
+                    </div>
+                    <div class="form-group">
+                        <label>شماره تلفن</label>
+                        <input type="tel" id="phone" placeholder="09123456789" />
+                    </div>
+                    <div class="form-group full-width">
+                        <label>وب‌سایت</label>
+                        <input type="url" id="websiteUrl" placeholder="https://example.com" />
+                    </div>
+                    <div class="form-group full-width">
+                        <label>گذرواژه / کلید API <span class="required">*</span></label>
+                        <input type="password" id="password" placeholder="گذرواژه یا کلید API" />
+                    </div>
+                    <div class="form-group full-width">
+                        <label>یادداشت</label>
+                        <textarea id="notes" rows="2" placeholder="اطلاعات اضافی، سوالات امنیتی، نوع اشتراک..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" id="submitBtn">
+                            <i class="fas fa-save"></i> ذخیره حساب
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="cancelBtn" style="display:none;">
+                            <i class="fas fa-times"></i> لغو ویرایش
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Accounts Grid -->
+            <div id="accountsContainer">
+                <!-- Cards will be rendered here -->
+            </div>
+
+            <!-- Trash Section -->
+            <div class="trash-section" id="trashSection">
+                <div class="trash-header">
+                    <h3><i class="fas fa-trash-alt"></i> سطل آشغال <span id="trashCount">(0)</span></h3>
+                    <div>
+                        <button class="btn btn-danger btn-sm" id="emptyTrashBtn">
+                            <i class="fas fa-dumpster-fire"></i> خالی کردن
+                        </button>
+                        <button class="btn btn-secondary btn-sm" id="closeTrashBtn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="trash-items" id="trashContainer">
+                    <!-- Trash items will be rendered here -->
+                </div>
+            </div>
+
+            <div class="app-footer">
+                <span id="totalAccounts">۰ حساب ذخیره شده</span>
+                <div class="footer-actions">
+                    <button class="btn btn-secondary btn-sm" id="toggleTrashBtn">
+                        <i class="fas fa-trash-alt"></i> سطل آشغال
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================
+        TAB: REPOS
+        ======================================== -->
+        <div class="tab-content" id="tabRepos">
+            <div id="reposContainer">
+                <!-- Repos will be rendered here -->
+            </div>
+        </div>
+
+        <!-- ========================================
+        TAB: DEVELOPER
+        ======================================== -->
+        <div class="tab-content" id="tabDeveloper">
+            <div class="dev-panel">
+                <div class="dev-header">
+                    <h2><i class="fas fa-user-cog"></i> پنل برنامه‌نویس (ایمانا)</h2>
+                    <span class="version-badge" style="background:var(--secondary);">توسعه‌دهنده</span>
+                </div>
+
+                <div class="dev-info-grid">
+                    <div class="info-card">
+                        <div class="label"><i class="fas fa-user"></i> نام کاربری گیت‌هاب</div>
+                        <div class="value">om2025p</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label"><i class="fas fa-code-branch"></i> تعداد مخازن</div>
+                        <div class="value" id="devRepoCount">3</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label"><i class="fas fa-calendar"></i> آخرین بروزرسانی</div>
+                        <div class="value" id="devLastUpdate">۱۴۰۵/۰۵/۰۸</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="label"><i class="fas fa-shield-alt"></i> وضعیت</div>
+                        <div class="value" style="color:var(--success);"><i class="fas fa-check-circle"></i> فعال</div>
+                    </div>
+                </div>
+
+                <div style="background:var(--bg-primary);padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border-color);">
+                    <p style="font-size:13px;color:var(--text-secondary);">
+                        <i class="fas fa-info-circle"></i>
+                        این بخش برای مدیریت مخازن و نسخه‌های گیت‌هاب در نظر گرفته شده است.
+                        مخازن پیش‌فرض به صورت خودکار بارگذاری شده‌اند.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================
+    MODAL
+    ======================================== -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle"><i class="fas fa-info-circle"></i> عنوان</h3>
+                <button class="close-modal" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // MAIN APPLICATION WITH FULL MIGRATION & IMPORT
+        // ========================================
+
+        (function() {
+            'use strict';
+
+            // ---------- CONSTANTS ----------
+            const APP_VERSION = '2.0.0';
+
+            // ---------- OLD STORAGE KEYS (برای مهاجرت) ----------
+            const OLD_KEYS = {
+                V1_ACCOUNTS: 'socialVault_Accounts',
+                V1_TRASH: 'socialVault_Trash',
+                V2_ACCOUNTS: 'socialVault_GroupedAccounts',
+                V2_TRASH: 'socialVault_GroupedTrash',
+                V3_ACCOUNTS: 'socialVault_GroupedAccounts_v3',
+                V3_TRASH: 'socialVault_GroupedTrash_v3',
+                V4_ACCOUNTS: 'socialVault_GroupedAccounts_v4',
+                V4_TRASH: 'socialVault_GroupedTrash_v4',
+                V5_ACCOUNTS: 'socialVault_GroupedAccounts_v5',
+                V5_TRASH: 'socialVault_GroupedTrash_v5',
+                V5_1_ACCOUNTS: 'socialVault_GroupedAccounts_v5.1',
+                V5_1_TRASH: 'socialVault_GroupedTrash_v5.1',
+                V5_2_ACCOUNTS: 'socialVault_GroupedAccounts_v5.2',
+                V5_2_TRASH: 'socialVault_GroupedTrash_v5.2',
+                V5_3_ACCOUNTS: 'socialVault_GroupedAccounts_v5.3',
+                V5_3_TRASH: 'socialVault_GroupedTrash_v5.3',
+                V5_4_ACCOUNTS: 'socialVault_GroupedAccounts_v5.4',
+                V5_4_TRASH: 'socialVault_GroupedTrash_v5.4',
+                V5_5_ACCOUNTS: 'socialVault_GroupedAccounts_v5.5',
+                V5_5_TRASH: 'socialVault_GroupedTrash_v5.5',
+                V5_6_ACCOUNTS: 'socialVault_GroupedAccounts_v5.6',
+                V5_6_TRASH: 'socialVault_GroupedTrash_v5.6',
+            };
+
+            // ---------- CURRENT STORAGE KEYS ----------
+            const STORAGE_KEYS = {
+                ACCOUNTS: 'socialVault_Accounts_v2',
+                TRASH: 'socialVault_Trash_v2',
+                THEME: 'socialVault_Theme',
+                REPOS: 'socialVault_Repos_v2',
+                MIGRATED: 'socialVault_Migrated_v2'
+            };
+
+            // ---------- DEFAULT REPOSITORIES ----------
+            const DEFAULT_REPOS = [{
+                id: 'repo_1',
+                name: '8gfrswwwvvv853ftygd444---hgcfhooodd',
+                persianName: 'اپلیکیشن‌های تحت وب (کاربر)',
+                description: 'اپلیکیشن‌های تحت وب - سمت کاربر',
+                githubUsername: 'om2025p',
+                defaultBranch: '26-13409667041321372777',
+                branches: [{
+                    name: '26-13409667041321372777',
+                    persianName: 'شاخه به‌روز کاربر',
+                    description: 'نسخه فعلی اپلیکیشن‌های تحت وب',
+                    lastCommit: 'a1b2c3d',
+                    lastUpdate: '2026-07-30T14:30:00Z'
+                }],
+                createdAt: '2026-07-30T14:30:00Z'
+            }, {
+                id: 'repo_2',
+                name: 'T',
+                persianName: 'توسعه اپلیکیشن (برنامه‌نویس)',
+                description: 'سمت کاربر - توسعه اپلیکیشن',
+                githubUsername: 'om2025p',
+                defaultBranch: 'VC-7001-6690167767336021504',
+                branches: [{
+                    name: 'VC-7001-6690167767336021504',
+                    persianName: 'شاخه به‌روز برنامه‌نویس',
+                    description: 'نسخه توسعه اپلیکیشن',
+                    lastCommit: 'e5f6g7h',
+                    lastUpdate: '2026-07-29T10:00:00Z'
+                }],
+                createdAt: '2026-07-29T10:00:00Z'
+            }, {
+                id: 'repo_3',
+                name: 'worker.js',
+                persianName: 'ابزار worker.js (توسعه‌دهنده)',
+                description: 'ابزار دریافت داده‌های اپلیکیشن',
+                githubUsername: 'om2025p',
+                defaultBranch: 'W-1003-6970073752816281478',
+                branches: [{
+                    name: 'W-1003-6970073752816281478',
+                    persianName: 'شاخه به‌روز توسعه‌دهنده',
+                    description: 'ابزار دریافت داده‌ها',
+                    lastCommit: 'i8j9k0l',
+                    lastUpdate: '2026-07-28T16:00:00Z'
+                }],
+                createdAt: '2026-07-28T16:00:00Z'
+            }];
+
+            // ---------- STATE ----------
+            let accounts = [];
+            let trash = [];
+            let repos = [];
+            let editingId = null;
+            let currentView = 'grid';
+            let currentTheme = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+            let currentTab = 'accounts';
+            let hasMigrated = false;
+
+            // ---------- DOM REFS ----------
+            const $ = (s) => document.querySelector(s);
+            const $$ = (s) => document.querySelectorAll(s);
+
+            const container = $('#accountsContainer');
+            const reposContainer = $('#reposContainer');
+            const trashContainer = $('#trashContainer');
+            const trashSection = $('#trashSection');
+            const trashCount = $('#trashCount');
+            const accountCount = $('#accountCount');
+            const totalAccounts = $('#totalAccounts');
+
+            const searchInput = $('#searchInput');
+            const typeFilter = $('#typeFilter');
+            const sortSelect = $('#sortSelect');
+
+            const formSection = $('#formSection');
+            const formGrid = $('#formGrid');
+            const formTitle = $('#formTitle');
+            const toggleFormBtn = $('#toggleFormBtn');
+            const submitBtn = $('#submitBtn');
+            const cancelBtn = $('#cancelBtn');
+
+            const socialType = $('#socialType');
+            const username = $('#username');
+            const email = $('#email');
+            const phone = $('#phone');
+            const websiteUrl = $('#websiteUrl');
+            const password = $('#password');
+            const notes = $('#notes');
+
+            const themeToggle = $('#themeToggle');
+            const exportBtn = $('#exportBtn');
+            const importBtn = $('#importBtn');
+            const toggleTrashBtn = $('#toggleTrashBtn');
+            const closeTrashBtn = $('#closeTrashBtn');
+            const emptyTrashBtn = $('#emptyTrashBtn');
+            const migrationBadge = $('#migrationBadge');
+
+            const modalOverlay = $('#modalOverlay');
+            const modalTitle = $('#modalTitle');
+            const modalBody = $('#modalBody');
+            const closeModalBtn = $('#closeModalBtn');
+
+            const tabSystem = $('#tabSystem');
+            const tabs = $$('.tab-btn');
+
+            // ---------- HELPERS ----------
+            function generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+            }
+
+            function formatDate(iso) {
+                if (!iso) return '---';
+                try {
+                    const d = new Date(iso);
+                    return new Intl.DateTimeFormat('fa-IR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }).format(d);
+                } catch { return '---'; }
+            }
+
+            function formatDateShort(iso) {
+                if (!iso) return '---';
+                try {
+                    const d = new Date(iso);
+                    return new Intl.DateTimeFormat('fa-IR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    }).format(d);
+                } catch { return '---'; }
+            }
+
+            function escapeHTML(str) {
+                if (typeof str !== 'string') return '';
+                return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[
+                    m
+                ]);
+            }
+
+            function getPlatformIcon(type) {
+                const map = {
+                    'Instagram': 'fab fa-instagram platform-instagram',
+                    'Telegram': 'fab fa-telegram platform-telegram',
+                    'WhatsApp': 'fab fa-whatsapp platform-whatsapp',
+                    'Facebook': 'fab fa-facebook',
+                    'Twitter': 'fab fa-x-twitter',
+                    'TikTok': 'fab fa-tiktok',
+                    'LinkedIn': 'fab fa-linkedin',
+                    'Discord': 'fab fa-discord',
+                    'Snapchat': 'fab fa-snapchat',
+                    'Reddit': 'fab fa-reddit-alien',
+                    'Pinterest': 'fab fa-pinterest',
+                    'Gmail': 'fas fa-envelope platform-gmail',
+                    'YouTube': 'fab fa-youtube',
+                    'Spotify': 'fab fa-spotify',
+                    'GitHub': 'fab fa-github platform-github',
+                    'ChatGPT': 'fas fa-brain platform-chatgpt',
+                    'Gemini': 'fas fa-brain platform-gemini',
+                    'Copilot': 'fas fa-brain platform-copilot',
+                    'Grok': 'fas fa-brain platform-grok',
+                    'DeepSeek': 'fas fa-brain platform-deepseek',
+                    'Other': 'fas fa-question-circle'
+                };
+                return map[type] || 'fas fa-question-circle';
+            }
+
+            function getPlatformColor(type) {
+                const map = {
+                    'Instagram': '#E1306C',
+                    'Telegram': '#0088cc',
+                    'WhatsApp': '#25D366',
+                    'Facebook': '#1877F2',
+                    'Twitter': '#1DA1F2',
+                    'TikTok': '#000000',
+                    'LinkedIn': '#0A66C2',
+                    'Discord': '#7289DA',
+                    'Snapchat': '#FFFC00',
+                    'Reddit': '#FF4500',
+                    'Pinterest': '#E60023',
+                    'Gmail': '#DB4437',
+                    'YouTube': '#FF0000',
+                    'Spotify': '#1DB954',
+                    'GitHub': '#333',
+                    'ChatGPT': '#74aa9c',
+                    'Gemini': '#4285F4',
+                    'Copilot': '#0078D4',
+                    'Grok': '#1DA1F2',
+                    'DeepSeek': '#00a98f'
+                };
+                return map[type] || '#6B7280';
+            }
+
+            function getTagClass(type) {
+                const map = {
+                    'Instagram': 'tag-pink',
+                    'Telegram': 'tag-blue',
+                    'WhatsApp': 'tag-green',
+                    'Facebook': 'tag-blue',
+                    'Twitter': 'tag-blue',
+                    'TikTok': 'tag-red',
+                    'LinkedIn': 'tag-blue',
+                    'Discord': 'tag-purple',
+                    'Snapchat': 'tag-yellow',
+                    'Reddit': 'tag-red',
+                    'Pinterest': 'tag-red',
+                    'Gmail': 'tag-red',
+                    'YouTube': 'tag-red',
+                    'Spotify': 'tag-green',
+                    'GitHub': 'tag-purple',
+                    'ChatGPT': 'tag-green',
+                    'Gemini': 'tag-blue',
+                    'Copilot': 'tag-blue',
+                    'Grok': 'tag-purple',
+                    'DeepSeek': 'tag-green'
+                };
+                return map[type] || 'tag-gray';
+            }
+
+            // ============================================
+            // MIGRATION ENGINE
+            // ============================================
+
+            function migrateData() {
+                const alreadyMigrated = localStorage.getItem(STORAGE_KEYS.MIGRATED);
+                if (alreadyMigrated === 'true') {
+                    hasMigrated = true;
+                    return false;
+                }
+
+                let migratedAccounts = [];
+                let migratedTrash = [];
+                let foundData = false;
+                let migrationDetails = [];
+
+                const accountKeys = [
+                    OLD_KEYS.V5_6_ACCOUNTS,
+                    OLD_KEYS.V5_5_ACCOUNTS,
+                    OLD_KEYS.V5_4_ACCOUNTS,
+                    OLD_KEYS.V5_3_ACCOUNTS,
+                    OLD_KEYS.V5_2_ACCOUNTS,
+                    OLD_KEYS.V5_1_ACCOUNTS,
+                    OLD_KEYS.V5_ACCOUNTS,
+                    OLD_KEYS.V4_ACCOUNTS,
+                    OLD_KEYS.V3_ACCOUNTS,
+                    OLD_KEYS.V2_ACCOUNTS,
+                    OLD_KEYS.V1_ACCOUNTS
+                ];
+
+                const trashKeys = [
+                    OLD_KEYS.V5_6_TRASH,
+                    OLD_KEYS.V5_5_TRASH,
+                    OLD_KEYS.V5_4_TRASH,
+                    OLD_KEYS.V5_3_TRASH,
+                    OLD_KEYS.V5_2_TRASH,
+                    OLD_KEYS.V5_1_TRASH,
+                    OLD_KEYS.V5_TRASH,
+                    OLD_KEYS.V4_TRASH,
+                    OLD_KEYS.V3_TRASH,
+                    OLD_KEYS.V2_TRASH,
+                    OLD_KEYS.V1_TRASH
+                ];
+
+                // ---- 1. پیدا کردن و مهاجرت حساب‌ها ----
+                for (const key of accountKeys) {
+                    const data = localStorage.getItem(key);
+                    if (data) {
+                        try {
+                            const parsed = JSON.parse(data);
+                            const converted = convertToNewFormat(parsed);
+                            if (converted && converted.length > 0) {
+                                migratedAccounts = converted;
+                                foundData = true;
+                                migrationDetails.push({
+                                    key: key,
+                                    count: converted.length,
+                                    status: '✅ موفق',
+                                    type: 'حساب'
+                                });
+                                localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(migratedAccounts));
+                                localStorage.removeItem(key);
+                                break;
+                            }
+                        } catch (e) {
+                            console.warn('خطا در خواندن کلید:', key, e);
+                            migrationDetails.push({
+                                key: key,
+                                count: 0,
+                                status: '❌ خطا',
+                                type: 'حساب'
+                            });
+                        }
+                    }
+                }
+
+                // ---- 2. پیدا کردن و مهاجرت سطل آشغال ----
+                for (const key of trashKeys) {
+                    const data = localStorage.getItem(key);
+                    if (data) {
+                        try {
+                            const parsed = JSON.parse(data);
+                            const converted = convertToNewFormat(parsed);
+                            if (converted && converted.length > 0) {
+                                migratedTrash = converted;
+                                migrationDetails.push({
+                                    key: key,
+                                    count: converted.length,
+                                    status: '✅ موفق',
+                                    type: 'سطل آشغال'
+                                });
+                                localStorage.setItem(STORAGE_KEYS.TRASH, JSON.stringify(migratedTrash));
+                                localStorage.removeItem(key);
+                                break;
+                            }
+                        } catch (e) {
+                            console.warn('خطا در خواندن کلید:', key, e);
+                            migrationDetails.push({
+                                key: key,
+                                count: 0,
+                                status: '❌ خطا',
+                                type: 'سطل آشغال'
+                            });
+                        }
+                    }
+                }
+
+                // ---- 3. ذخیره وضعیت مهاجرت ----
+                if (foundData || migrationDetails.length > 0) {
+                    localStorage.setItem(STORAGE_KEYS.MIGRATED, 'true');
+                    hasMigrated = true;
+
+                    setTimeout(() => {
+                        showMigrationResult(migrationDetails, migratedAccounts.length, migratedTrash.length);
+                    }, 500);
+
+                    return true;
+                }
+
+                localStorage.setItem(STORAGE_KEYS.MIGRATED, 'true');
+                hasMigrated = true;
+                return false;
+            }
+
+            // ============================================
+            // تابع تبدیل فرمت - پشتیبانی از همه نسخه‌ها
+            // ============================================
+            function convertToNewFormat(oldData) {
+                // ---- حالت 1: فرمت گروهی با activeAccountsData (v5.6) ----
+                if (oldData && typeof oldData === 'object') {
+                    if (oldData.activeAccountsData) {
+                        const result = [];
+                        const groups = oldData.activeAccountsData;
+                        for (const [type, items] of Object.entries(groups)) {
+                            if (Array.isArray(items)) {
+                                items.forEach(item => {
+                                    result.push({
+                                        id: item.id || generateId(),
+                                        type: type,
+                                        username: item.username || 'نامشخص',
+                                        email: item.email || '',
+                                        phone: item.phone || '',
+                                        websiteUrl: item.websiteUrl || '',
+                                        password: item.password || '',
+                                        notes: item.notes || '',
+                                        createdAt: item.createdAt || new Date().toISOString(),
+                                        deletedAt: null
+                                    });
+                                });
+                            }
+                        }
+                        if (result.length > 0) {
+                            console.log(`✅ ${result.length} حساب از فرمت v5.6 مهاجرت شد`);
+                            return result;
+                        }
+                    }
+
+                    // ---- حالت 2: فرمت گروهی ساده (v3 - v5.5) ----
+                    const keys = Object.keys(oldData);
+                    const isGrouped = keys.some(key => Array.isArray(oldData[key]));
+                    if (isGrouped) {
+                        const result = [];
+                        for (const [type, items] of Object.entries(oldData)) {
+                            if (Array.isArray(items)) {
+                                items.forEach(item => {
+                                    result.push({
+                                        id: item.id || generateId(),
+                                        type: type,
+                                        username: item.username || 'نامشخص',
+                                        email: item.email || '',
+                                        phone: item.phone || '',
+                                        websiteUrl: item.websiteUrl || '',
+                                        password: item.password || '',
+                                        notes: item.notes || '',
+                                        createdAt: item.createdAt || new Date().toISOString(),
+                                        deletedAt: item.deletedAt || null
+                                    });
+                                });
+                            }
+                        }
+                        if (result.length > 0) {
+                            console.log(`✅ ${result.length} حساب از فرمت گروهی مهاجرت شد`);
+                            return result;
+                        }
+                    }
+                }
+
+                // ---- حالت 3: آرایه ساده (v1 - v2) ----
+                if (Array.isArray(oldData)) {
+                    const result = oldData.map(item => ({
+                        id: item.id || generateId(),
+                        type: item.type || 'Other',
+                        username: item.username || 'نامشخص',
+                        email: item.email || '',
+                        phone: item.phone || '',
+                        websiteUrl: item.websiteUrl || '',
+                        password: item.password || '',
+                        notes: item.notes || '',
+                        createdAt: item.createdAt || new Date().toISOString(),
+                        deletedAt: item.deletedAt || null
+                    }));
+                    if (result.length > 0) {
+                        console.log(`✅ ${result.length} حساب از فرمت آرایه مهاجرت شد`);
+                        return result;
+                    }
+                }
+
+                console.warn('⚠️ هیچ داده‌ای برای مهاجرت پیدا نشد');
+                return [];
+            }
+
+            // ============================================
+            // نمایش نتیجه مهاجرت
+            // ============================================
+            function showMigrationResult(details, accountCount, trashCount) {
+                let html = `
+                    <div style="direction:rtl;">
+                        <h4 style="color:var(--success);margin-bottom:12px;">
+                            <i class="fas fa-check-circle"></i> مهاجرت اطلاعات با موفقیت انجام شد!
+                        </h4>
+                        <p style="margin-bottom:12px;color:var(--text-secondary);">
+                            اطلاعات از نسخه‌های قبلی گاوصندوق به نسخه جدید منتقل شد.
+                        </p>
+                        <div style="background:var(--bg-primary);padding:12px;border-radius:8px;margin-bottom:12px;">
+                            <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-color);">
+                                <span><i class="fas fa-address-card"></i> تعداد حساب‌ها</span>
+                                <span style="font-weight:700;color:var(--primary);">${accountCount}</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;padding:4px 0;">
+                                <span><i class="fas fa-trash-alt"></i> تعداد سطل آشغال</span>
+                                <span style="font-weight:700;color:var(--warning);">${trashCount}</span>
+                            </div>
+                        </div>
+                        <div style="font-size:12px;color:var(--text-secondary);">
+                            <details>
+                                <summary style="cursor:pointer;padding:4px 0;">
+                                    <i class="fas fa-list"></i> مشاهده جزئیات مهاجرت
+                                </summary>
+                                <div style="margin-top:8px;padding:8px;background:var(--bg-primary);border-radius:4px;max-height:150px;overflow-y:auto;">
+                                    ${details.map(d => `
+                                        <div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dotted var(--border-color);">
+                                            <span style="font-family:monospace;font-size:11px;">${d.key}</span>
+                                            <span style="color:${d.status === '✅ موفق' ? 'var(--success)' : 'var(--danger)'};">${d.status} (${d.count})</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </details>
+                        </div>
+                        <button class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="closeModal()">
+                            <i class="fas fa-check"></i> متوجه شدم
+                        </button>
+                    </div>
+                `;
+
+                showModal('🔄 مهاجرت اطلاعات', html);
+            }
+
+            // ---------- STORAGE ----------
+            function loadData() {
+                try {
+                    // ابتدا مهاجرت
+                    const migrationDone = migrateData();
+
+                    // بارگذاری اطلاعات جدید
+                    const storedAccounts = localStorage.getItem(STORAGE_KEYS.ACCOUNTS);
+                    accounts = storedAccounts ? JSON.parse(storedAccounts) : [];
+
+                    const storedTrash = localStorage.getItem(STORAGE_KEYS.TRASH);
+                    trash = storedTrash ? JSON.parse(storedTrash) : [];
+
+                    const storedRepos = localStorage.getItem(STORAGE_KEYS.REPOS);
+                    if (storedRepos) {
+                        repos = JSON.parse(storedRepos);
+                    } else {
+                        repos = JSON.parse(JSON.stringify(DEFAULT_REPOS));
+                        localStorage.setItem(STORAGE_KEYS.REPOS, JSON.stringify(repos));
+                    }
+
+                    // نمایش نشانگر مهاجرت
+                    if (migrationDone) {
+                        migrationBadge.classList.add('visible');
+                        migrationBadge.addEventListener('click', () => {
+                            const details = [];
+                            const accountKeys = Object.values(OLD_KEYS);
+                            for (const key of accountKeys) {
+                                const data = localStorage.getItem(key);
+                                if (data) {
+                                    try {
+                                        const parsed = JSON.parse(data);
+                                        const count = Array.isArray(parsed) ? parsed.length :
+                                            Object.keys(parsed).reduce((sum, k) => sum + (Array.isArray(parsed[
+                                            k]) ?
+                                                parsed[k].length : 0), 0);
+                                        details.push({ key, count, status: '✅ مهاجرت شده' });
+                                    } catch (e) { /* ignore */ }
+                                }
+                            }
+                            if (details.length > 0) {
+                                showMigrationResult(details, accounts.length, trash.length);
+                            } else {
+                                showToast('همه اطلاعات با موفقیت مهاجرت شده‌اند ✅', 'success');
+                                migrationBadge.classList.remove('visible');
+                            }
+                        });
+                    }
+
+                } catch (e) {
+                    console.error('Error loading data:', e);
+                    accounts = [];
+                    trash = [];
+                    repos = JSON.parse(JSON.stringify(DEFAULT_REPOS));
+                }
+            }
+
+            function saveData() {
+                try {
+                    localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(accounts));
+                    localStorage.setItem(STORAGE_KEYS.TRASH, JSON.stringify(trash));
+                    localStorage.setItem(STORAGE_KEYS.REPOS, JSON.stringify(repos));
+                } catch (e) {
+                    console.error('Error saving data:', e);
+                    showModal('خطا', 'خطا در ذخیره اطلاعات. ممکن است حافظه پر باشد.');
+                }
+            }
+
+            // ---------- THEME ----------
+            function setTheme(theme) {
+                currentTheme = theme;
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem(STORAGE_KEYS.THEME, theme);
+                const icon = themeToggle.querySelector('i');
+                icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+
+            function toggleTheme() {
+                setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+            }
+
+            // ---------- MODAL ----------
+            function showModal(title, content) {
+                modalTitle.innerHTML = title;
+                modalBody.innerHTML = typeof content === 'string' ? `<div>${content}</div>` : content;
+                modalOverlay.classList.add('visible');
+            }
+
+            function closeModal() {
+                modalOverlay.classList.remove('visible');
+            }
+
+            // ---------- TOAST ----------
+            function showToast(message, type = 'success') {
+                const existing = document.querySelector('.toast-notification');
+                if (existing) existing.remove();
+
+                const toast = document.createElement('div');
+                toast.className = `toast-notification ${type}`;
+                toast.innerHTML = message;
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(20px)';
+                    toast.style.transition = 'all 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
+            // ---------- RENDER ACCOUNTS ----------
+            function renderAccounts() {
+                const search = searchInput.value.trim().toLowerCase();
+                const filter = typeFilter.value;
+                const sort = sortSelect.value;
+
+                let filtered = accounts.filter(acc => {
+                    const matchSearch = acc.username.toLowerCase().includes(search) ||
+                        acc.type.toLowerCase().includes(search) ||
+                        (acc.notes || '').toLowerCase().includes(search) ||
+                        (acc.email || '').toLowerCase().includes(search);
+                    const matchFilter = !filter || acc.type === filter;
+                    return matchSearch && matchFilter;
+                });
+
+                switch (sort) {
+                    case 'newest':
+                        filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                        break;
+                    case 'oldest':
+                        filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                        break;
+                    case 'az':
+                        filtered.sort((a, b) => a.username.localeCompare(b.username));
+                        break;
+                    case 'za':
+                        filtered.sort((a, b) => b.username.localeCompare(a.username));
+                        break;
+                }
+
+                accountCount.textContent = accounts.length;
+                totalAccounts.textContent = `${accounts.length} حساب ذخیره شده`;
+                trashCount.textContent = `(${trash.length})`;
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>هیچ حسابی یافت نشد</h3>
+                            <p>${accounts.length === 0 ? 'هنوز حسابی اضافه نکرده‌اید. از فرم بالا شروع کنید!' : 'با جستجوی خود مطابقت ندارد.'}</p>
+                        </div>
+                    `;
+                } else {
+                    const gridClass = currentView === 'list' ? 'list-view' : '';
+                    container.innerHTML =
+                        `<div class="accounts-grid ${gridClass}">${filtered.map(acc => renderCard(acc)).join('')}</div>`;
+                }
+
+                // Attach card events
+                container.querySelectorAll('.account-card').forEach(card => {
+                    const id = card.dataset.id;
+                    const editBtn = card.querySelector('.edit-btn');
+                    const deleteBtn = card.querySelector('.delete-btn');
+                    const togglePwd = card.querySelectorAll('.toggle-pwd');
+
+                    if (editBtn) editBtn.addEventListener('click', () => editAccount(id));
+                    if (deleteBtn) deleteBtn.addEventListener('click', () => moveToTrash(id));
+                    togglePwd.forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const field = this.closest('.field');
+                            const input = field.querySelector('.password-value');
+                            if (input) {
+                                const isHidden = input.getAttribute('data-hidden') === 'true';
+                                if (isHidden) {
+                                    input.textContent = input.dataset.realValue || '••••••••';
+                                    input.setAttribute('data-hidden', 'false');
+                                    this.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                                } else {
+                                    input.textContent = '••••••••';
+                                    input.setAttribute('data-hidden', 'true');
+                                    this.innerHTML = '<i class="fas fa-eye"></i>';
+                                }
+                            }
+                        });
+                    });
+                });
+
+                // Render trash
+                renderTrash();
+            }
+
+            // ---------- RENDER CARD ----------
+            function renderCard(acc) {
+                const icon = getPlatformIcon(acc.type);
+                const color = getPlatformColor(acc.type);
+                const tagClass = getTagClass(acc.type);
+                const created = formatDate(acc.createdAt);
+                const displayName = acc.username.length > 20 ? acc.username.substring(0, 18) + '…' : acc.username;
+                const pwdReal = escapeHTML(acc.password);
+
+                const notesHtml = acc.notes && acc.notes.trim() ?
+                    `<div class="notes-field">${escapeHTML(acc.notes)}</div>` :
+                    '';
+
+                const websiteHtml = acc.websiteUrl ?
+                    `<div class="field"><i class="fas fa-link"></i><span class="value"><a href="${escapeHTML(acc.websiteUrl)}" target="_blank" rel="noopener">${escapeHTML(acc.websiteUrl.replace(/^https?:\/\//, '').substring(0, 25))}</a></span></div>` :
+                    '';
+
+                const emailHtml = acc.email ?
+                    `<div class="field"><i class="fas fa-envelope"></i><span class="value">${escapeHTML(acc.email)}</span></div>` :
+                    '';
+
+                const phoneHtml = acc.phone ?
+                    `<div class="field"><i class="fas fa-phone"></i><span class="value">${escapeHTML(acc.phone)}</span></div>` :
+                    '';
+
+                return `
+                    <div class="account-card" data-id="${acc.id}">
+                        <div class="card-header">
+                            <div class="type-badge" style="background:${color}22; color:${color};">
+                                <i class="${icon}"></i>
+                                <span>${acc.type}</span>
+                            </div>
+                            <div class="card-actions">
+                                <button class="edit-btn" title="ویرایش"><i class="fas fa-edit"></i></button>
+                                <button class="delete-btn danger" title="انتقال به سطل"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="field"><i class="fas fa-user"></i><span class="value" title="${escapeHTML(acc.username)}">${escapeHTML(displayName)}</span></div>
+                            ${emailHtml}
+                            ${phoneHtml}
+                            ${websiteHtml}
+                            <div class="field">
+                                <i class="fas fa-key"></i>
+                                <span class="value password-value" data-hidden="true" data-real-value="${pwdReal}">••••••••</span>
+                                <button class="toggle-pwd"><i class="fas fa-eye"></i></button>
+                            </div>
+                            ${notesHtml}
+                        </div>
+                        <div class="card-footer">
+                            <span>${created}</span>
+                            <div class="tags">
+                                <span class="tag ${tagClass}">${acc.type}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // ---------- RENDER TRASH ----------
+            function renderTrash() {
+                if (trash.length === 0) {
+                    trashContainer.innerHTML = `
+                        <div class="empty-state" style="padding:20px;">
+                            <i class="fas fa-recycle"></i>
+                            <p>سطل آشغال خالی است</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                trashContainer.innerHTML = trash.map(item => {
+                    const icon = getPlatformIcon(item.type);
+                    const color = getPlatformColor(item.type);
+                    return `
+                        <div class="trash-item" data-id="${item.id}">
+                            <div class="item-info">
+                                <i class="${icon}" style="font-size:20px; color:${color};"></i>
+                                <span class="item-type">${item.type}</span>
+                                <span class="item-detail">${escapeHTML(item.username)}</span>
+                                <span class="item-detail">${formatDate(item.deletedAt)}</span>
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn btn-success btn-xs restore-btn"><i class="fas fa-undo"></i> بازیابی</button>
+                                <button class="btn btn-danger btn-xs delete-permanent-btn"><i class="fas fa-eraser"></i></button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Attach trash events
+                trashContainer.querySelectorAll('.trash-item').forEach(item => {
+                    const id = item.dataset.id;
+                    const restoreBtn = item.querySelector('.restore-btn');
+                    const deleteBtn = item.querySelector('.delete-permanent-btn');
+                    if (restoreBtn) restoreBtn.addEventListener('click', () => restoreFromTrash(id));
+                    if (deleteBtn) deleteBtn.addEventListener('click', () => deletePermanent(id));
+                });
+            }
+
+            // ---------- RENDER REPOS ----------
+            function renderRepos() {
+                if (repos.length === 0) {
+                    reposContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-code-branch"></i>
+                            <h3>هیچ مخزنی ثبت نشده</h3>
+                            <p>از پنل برنامه‌نویس می‌توانید مخازن را مدیریت کنید.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                reposContainer.innerHTML = `<div class="repo-grid">${repos.map(repo => renderRepoCard(repo)).join('')}</div>`;
+
+                // Attach edit events to repository buttons
+                reposContainer.querySelectorAll('.edit-repo-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        editRepo(btn.dataset.id);
+                    });
+                });
+            }
+
+            function renderRepoCard(repo) {
+                const branchesHtml = repo.branches.map(b => `
+                    <div class="branch-item" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px; background: var(--bg-primary); border-radius: 8px; border-right: 3px solid var(--primary-light); margin-bottom: 6px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; gap: 8px;">
+                            <span class="branch-name" style="font-weight: 700; font-size: 13px;">🌿 ${escapeHTML(b.name)}</span>
+                            <span class="branch-commit" style="font-family: monospace; font-size: 11px; background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary);">🧬 ${b.lastCommit || '---'}</span>
+                        </div>
+                        ${b.persianName ? `<span class="branch-persian" style="font-size: 12px; color: var(--primary); font-weight: 600;">🏷️ ${escapeHTML(b.persianName)}</span>` : ''}
+                        ${b.description ? `<span class="branch-desc" style="font-size: 11px; color: var(--text-secondary); white-space: normal; word-break: break-all;">📝 ${escapeHTML(b.description)}</span>` : ''}
+                        <div class="branch-date" style="align-self: flex-end; font-size: 10px; color: var(--text-secondary); margin-top: 2px;">${formatDateShort(b.lastUpdate)}</div>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="repo-card" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                        <div>
+                            <div class="repo-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                <div class="repo-name" style="display: flex; flex-direction: column; gap: 2px;">
+                                    <span class="en" style="font-size: 16px; font-weight: 700; color: var(--text-primary); word-break: break-all;">${escapeHTML(repo.name)}</span>
+                                    <span class="fa" style="font-size: 13px; color: var(--primary); font-weight: 600;">${escapeHTML(repo.persianName)}</span>
+                                </div>
+                                <span class="repo-badge" style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: var(--success); color: white; font-weight: 600; white-space: nowrap;">${repo.branches.length} شاخه</span>
+                            </div>
+                            <div class="repo-description" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; padding: 8px 12px; background: var(--bg-primary); border-radius: 6px; word-break: break-word;">${escapeHTML(repo.description)}</div>
+                            <div class="repo-branches" style="display: flex; flex-direction: column; gap: 4px; margin-top: 8px;">${branchesHtml}</div>
+                        </div>
+                        <div class="repo-actions" style="display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); flex-wrap: wrap;">
+                            <button class="btn btn-primary btn-sm edit-repo-btn" data-id="${repo.id}" style="padding: 6px 12px; font-size: 12px;">
+                                <i class="fas fa-edit"></i> ویرایش اسم‌ها
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="showToast('در حال توسعه...', 'warning')" style="padding: 6px 12px; font-size: 12px;">
+                                <i class="fas fa-download"></i> دانلود ZIP
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="showToast('در حال توسعه...', 'warning')" style="padding: 6px 12px; font-size: 12px;">
+                                <i class="fas fa-history"></i> نسخه‌ها
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function editRepo(repoId) {
+                const repo = repos.find(r => r.id === repoId);
+                if (!repo) return;
+
+                let branchesFormHtml = '';
+                repo.branches.forEach((b, bIdx) => {
+                    branchesFormHtml += `
+                        <div style="background: var(--bg-primary); padding: 12px; border-radius: var(--radius-sm); border-right: 4px solid var(--primary-light); display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border-color); margin-bottom: 8px;">
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 4px;">
+                                    <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">نام انگلیسی شاخه</label>
+                                    <input type="text" class="edit-branch-name" data-index="${bIdx}" value="${escapeHTML(b.name)}" style="width: 100%; padding: 8px; font-size: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-secondary); color: var(--text-primary);" required />
+                                </div>
+                                <div style="flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 4px;">
+                                    <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">نام فارسی شاخه</label>
+                                    <input type="text" class="edit-branch-persian" data-index="${bIdx}" value="${escapeHTML(b.persianName || '')}" style="width: 100%; padding: 8px; font-size: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-secondary); color: var(--text-primary);" />
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">توضیحات شاخه</label>
+                                <input type="text" class="edit-branch-desc" data-index="${bIdx}" value="${escapeHTML(b.description || '')}" style="width: 100%; padding: 8px; font-size: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-secondary); color: var(--text-primary);" />
+                            </div>
+                        </div>
+                    `;
+                });
+
+                const formHtml = `
+                    <form id="editRepoForm" style="direction: rtl; text-align: right; display: flex; flex-direction: column; gap: 14px; max-height: 70vh; overflow-y: auto; padding: 4px;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-weight: 600; font-size: 13px; color: var(--text-secondary);"><i class="fas fa-code"></i> نام انگلیسی مخزن <span style="color: var(--danger);">*</span></label>
+                            <input type="text" id="editRepoName" value="${escapeHTML(repo.name)}" style="width: 100%; padding: 10px; border: 2px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font-size: 14px;" required />
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-weight: 600; font-size: 13px; color: var(--text-secondary);"><i class="fas fa-font"></i> نام فارسی مخزن <span style="color: var(--danger);">*</span></label>
+                            <input type="text" id="editRepoPersian" value="${escapeHTML(repo.persianName)}" style="width: 100%; padding: 10px; border: 2px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font-size: 14px;" required />
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-weight: 600; font-size: 13px; color: var(--text-secondary);"><i class="fas fa-info-circle"></i> توضیحات مخزن</label>
+                            <textarea id="editRepoDesc" rows="2" style="width: 100%; padding: 10px; border: 2px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font-size: 14px; font-family: inherit;">${escapeHTML(repo.description)}</textarea>
+                        </div>
+
+                        <div style="margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 8px;">
+                            <h4 style="font-size: 14px; color: var(--primary); margin-bottom: 10px;"><i class="fas fa-code-branch"></i> ویرایش شاخه‌ها</h4>
+                            <div style="display: flex; flex-direction: column; gap: 4px;" id="editBranchesContainer">
+                                ${branchesFormHtml}
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 12px; position: sticky; bottom: 0; background: var(--bg-secondary); padding: 8px 0; z-index: 10;">
+                            <button type="submit" class="btn btn-primary" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px;"><i class="fas fa-check"></i> ذخیره تغییرات</button>
+                            <button type="button" class="btn btn-secondary" onclick="closeModal()" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px;"><i class="fas fa-times"></i> انصراف</button>
+                        </div>
+                    </form>
+                `;
+
+                showModal('✏️ ویرایش مشخصات مخزن', formHtml);
+
+                // Handle submit inside modal
+                const form = document.getElementById('editRepoForm');
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    repo.name = document.getElementById('editRepoName').value.trim();
+                    repo.persianName = document.getElementById('editRepoPersian').value.trim();
+                    repo.description = document.getElementById('editRepoDesc').value.trim();
+
+                    const branchNames = form.querySelectorAll('.edit-branch-name');
+                    const branchPersians = form.querySelectorAll('.edit-branch-persian');
+                    const branchDescs = form.querySelectorAll('.edit-branch-desc');
+
+                    branchNames.forEach(input => {
+                        const idx = parseInt(input.dataset.index);
+                        if (repo.branches[idx]) {
+                            repo.branches[idx].name = input.value.trim();
+                        }
+                    });
+
+                    branchPersians.forEach(input => {
+                        const idx = parseInt(input.dataset.index);
+                        if (repo.branches[idx]) {
+                            repo.branches[idx].persianName = input.value.trim();
+                        }
+                    });
+
+                    branchDescs.forEach(input => {
+                        const idx = parseInt(input.dataset.index);
+                        if (repo.branches[idx]) {
+                            repo.branches[idx].description = input.value.trim();
+                        }
+                    });
+
+                    saveData();
+                    renderRepos();
+
+                    // Update dev panel info if visible
+                    const devRepoCount = document.getElementById('devRepoCount');
+                    if (devRepoCount) devRepoCount.textContent = repos.length;
+
+                    closeModal();
+                    showToast('مشخصات مخزن و شاخه‌ها با موفقیت بروزرسانی شد! 🎉', 'success');
+                });
+            }
+
+            // ---------- CRUD OPERATIONS ----------
+            function addAccount(data) {
+                const account = {
+                    id: generateId(),
+                    ...data,
+                    createdAt: new Date().toISOString()
+                };
+                accounts.unshift(account);
+                saveData();
+                renderAccounts();
+                clearForm();
+                showToast('حساب با موفقیت اضافه شد! ✅');
+            }
+
+            function updateAccount(id, data) {
+                const index = accounts.findIndex(a => a.id === id);
+                if (index === -1) return;
+                accounts[index] = { ...accounts[index], ...data, updatedAt: new Date().toISOString() };
+                saveData();
+                renderAccounts();
+                clearForm();
+                cancelEdit();
+                showToast('حساب با موفقیت به‌روزرسانی شد! ✅');
+            }
+
+            function editAccount(id) {
+                const acc = accounts.find(a => a.id === id);
+                if (!acc) return;
+                editingId = id;
+                socialType.value = acc.type;
+                username.value = acc.username;
+                email.value = acc.email || '';
+                phone.value = acc.phone || '';
+                websiteUrl.value = acc.websiteUrl || '';
+                password.value = acc.password;
+                notes.value = acc.notes || '';
+
+                formTitle.innerHTML = `<i class="fas fa-edit"></i> ویرایش حساب`;
+                submitBtn.innerHTML = `<i class="fas fa-save"></i> به‌روزرسانی`;
+                cancelBtn.style.display = 'inline-flex';
+                formSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                socialType.disabled = true;
+            }
+
+            function cancelEdit() {
+                editingId = null;
+                clearForm();
+                formTitle.innerHTML = `<i class="fas fa-plus-circle"></i> افزودن حساب جدید`;
+                submitBtn.innerHTML = `<i class="fas fa-save"></i> ذخیره حساب`;
+                cancelBtn.style.display = 'none';
+                socialType.disabled = false;
+            }
+
+            function moveToTrash(id) {
+                const index = accounts.findIndex(a => a.id === id);
+                if (index === -1) return;
+                const item = accounts[index];
+                item.deletedAt = new Date().toISOString();
+                trash.push(item);
+                accounts.splice(index, 1);
+                saveData();
+                renderAccounts();
+                showToast('حساب به سطل آشغال منتقل شد 🗑️');
+            }
+
+            function restoreFromTrash(id) {
+                const index = trash.findIndex(a => a.id === id);
+                if (index === -1) return;
+                const item = trash[index];
+                delete item.deletedAt;
+                accounts.push(item);
+                trash.splice(index, 1);
+                saveData();
+                renderAccounts();
+                showToast('حساب بازیابی شد ↩️');
+            }
+
+            function deletePermanent(id) {
+                if (!confirm('آیا مطمئنید که می‌خواهید این حساب را به طور دائمی حذف کنید؟ این عمل قابل بازگشت نیست.')) return;
+                const index = trash.findIndex(a => a.id === id);
+                if (index === -1) return;
+                trash.splice(index, 1);
+                saveData();
+                renderAccounts();
+                showToast('حساب به طور دائمی حذف شد 💀');
+            }
+
+            function emptyTrash() {
+                if (trash.length === 0) return;
+                if (!confirm('آیا مطمئنید که می‌خواهید تمام موارد سطل آشغال را به طور دائمی حذف کنید؟')) return;
+                trash = [];
+                saveData();
+                renderAccounts();
+                trashSection.classList.remove('visible');
+                showToast('سطل آشغال خالی شد 🧹');
+            }
+
+            // ---------- FORM ----------
+            function clearForm() {
+                socialType.value = '';
+                username.value = '';
+                email.value = '';
+                phone.value = '';
+                websiteUrl.value = '';
+                password.value = '';
+                notes.value = '';
+            }
+
+            function getFormData() {
+                return {
+                    type: socialType.value,
+                    username: username.value.trim(),
+                    email: email.value.trim(),
+                    phone: phone.value.trim(),
+                    websiteUrl: websiteUrl.value.trim(),
+                    password: password.value.trim(),
+                    notes: notes.value.trim()
+                };
+            }
+
+            function validateForm(data) {
+                if (!data.type) { showToast('لطفاً نوع پلتفرم را انتخاب کنید ⚠️', 'warning'); return false; }
+                if (!data.username) { showToast('لطفاً نام کاربری را وارد کنید ⚠️', 'warning'); return false; }
+                if (!data.password) { showToast('لطفاً گذرواژه را وارد کنید ⚠️', 'warning'); return false; }
+                return true;
+            }
+
+            function handleSubmit() {
+                const data = getFormData();
+                if (!validateForm(data)) return;
+
+                if (editingId) {
+                    updateAccount(editingId, data);
+                } else {
+                    addAccount(data);
+                }
+            }
+
+            // ============================================
+            // IMPORT DATA - پشتیبانی از همه فرمت‌ها
+            // ============================================
+            function importData() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        try {
+                            const data = JSON.parse(ev.target.result);
+
+                            let importedAccounts = [];
+                            let importedTrash = [];
+
+                            // =============================================
+                            // حالت 1: فرمت v5.6 (activeAccountsData)
+                            // =============================================
+                            if (data.activeAccountsData) {
+                                for (const [type, items] of Object.entries(data.activeAccountsData)) {
+                                    if (Array.isArray(items)) {
+                                        items.forEach(item => {
+                                            importedAccounts.push({
+                                                id: item.id || generateId(),
+                                                type: type,
+                                                username: item.username || 'نامشخص',
+                                                email: item.email || '',
+                                                phone: item.phone || '',
+                                                websiteUrl: item.websiteUrl || '',
+                                                password: item.password || '',
+                                                notes: item.notes || '',
+                                                createdAt: item.createdAt || new Date().toISOString(),
+                                                deletedAt: null
+                                            });
+                                        });
+                                    }
+                                }
+
+                                if (data.trashedAccountsData) {
+                                    for (const [type, items] of Object.entries(data.trashedAccountsData)) {
+                                        if (Array.isArray(items)) {
+                                            items.forEach(item => {
+                                                importedTrash.push({
+                                                    id: item.id || generateId(),
+                                                    type: type,
+                                                    username: item.username || 'نامشخص',
+                                                    email: item.email || '',
+                                                    phone: item.phone || '',
+                                                    websiteUrl: item.websiteUrl || '',
+                                                    password: item.password || '',
+                                                    notes: item.notes || '',
+                                                    createdAt: item.createdAt || new Date().toISOString(),
+                                                    deletedAt: item.deletedAt || new Date().toISOString()
+                                                });
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                            // =============================================
+                            // حالت 2: فرمت جدید (accounts)
+                            // =============================================
+                            else if (data.accounts && Array.isArray(data.accounts)) {
+                                importedAccounts = data.accounts;
+                                importedTrash = data.trash || [];
+                            }
+                            // =============================================
+                            // حالت 3: آرایه ساده
+                            // =============================================
+                            else if (Array.isArray(data)) {
+                                importedAccounts = data;
+                            }
+                            // =============================================
+                            // حالت 4: فرمت گروهی ساده
+                            // =============================================
+                            else if (typeof data === 'object') {
+                                const keys = Object.keys(data);
+                                const isGrouped = keys.some(key => Array.isArray(data[key]));
+                                if (isGrouped) {
+                                    for (const [type, items] of Object.entries(data)) {
+                                        if (Array.isArray(items)) {
+                                            items.forEach(item => {
+                                                importedAccounts.push({
+                                                    id: item.id || generateId(),
+                                                    type: type,
+                                                    username: item.username || 'نامشخص',
+                                                    email: item.email || '',
+                                                    phone: item.phone || '',
+                                                    websiteUrl: item.websiteUrl || '',
+                                                    password: item.password || '',
+                                                    notes: item.notes || '',
+                                                    createdAt: item.createdAt || new Date().toISOString(),
+                                                    deletedAt: item.deletedAt || null
+                                                });
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+
+                            // =============================================
+                            // بررسی نهایی
+                            // =============================================
+                            if (importedAccounts.length === 0) {
+                                showToast('فرمت فایل نامعتبر است یا اطلاعاتی ندارد ⚠️', 'error');
+                                return;
+                            }
+
+                            if (!confirm(`آیا مطمئنید که می‌خواهید ${importedAccounts.length} حساب را وارد کنید؟`)) return;
+
+                            accounts = importedAccounts;
+                            trash = importedTrash;
+                            saveData();
+                            renderAccounts();
+                            renderRepos();
+                            showToast(`${importedAccounts.length} حساب با موفقیت وارد شدند 📥`);
+
+                        } catch (err) {
+                            showToast('خطا در خواندن فایل ⚠️', 'error');
+                            console.error(err);
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
+
+            // ---------- EXPORT DATA ----------
+            function exportData() {
+                if (accounts.length === 0 && trash.length === 0) {
+                    showToast('هیچ داده‌ای برای خروجی وجود ندارد ⚠️', 'warning');
+                    return;
+                }
+                const data = {
+                    version: APP_VERSION,
+                    exportedAt: new Date().toISOString(),
+                    accounts: accounts,
+                    trash: trash,
+                    repos: repos
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `گاوصندوق_${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('داده‌ها با موفقیت خروجی گرفته شد 📤');
+            }
+
+            // ---------- TOGGLE FUNCTIONS ----------
+            let formCollapsed = false;
+
+            function toggleForm() {
+                formCollapsed = !formCollapsed;
+                formGrid.style.display = formCollapsed ? 'none' : 'grid';
+                toggleFormBtn.innerHTML = formCollapsed ?
+                    '<i class="fas fa-chevron-down"></i>' :
+                    '<i class="fas fa-chevron-up"></i>';
+            }
+
+            function toggleTrash() {
+                if (trash.length === 0) {
+                    showToast('سطل آشغال خالی است 🗑️', 'warning');
+                    return;
+                }
+                trashSection.classList.toggle('visible');
+                if (trashSection.classList.contains('visible')) {
+                    trashSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+
+            function setView(view) {
+                currentView = view;
+                document.querySelectorAll('.view-toggle button').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.view === view);
+                });
+                renderAccounts();
+            }
+
+            // ---------- TAB SYSTEM ----------
+            function switchTab(tabId) {
+                currentTab = tabId;
+                tabs.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.tab === tabId);
+                });
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.toggle('active', content.id ===
+                        `tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
+                });
+
+                if (tabId === 'repos') {
+                    renderRepos();
+                }
+            }
+
+            // ---------- INIT ----------
+            function init() {
+                // Load theme
+                const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+                setTheme(savedTheme);
+
+                // Load data (با مهاجرت خودکار)
+                loadData();
+
+                // Render
+                renderAccounts();
+                renderRepos();
+
+                // Update dev panel info
+                const devRepoCount = $('#devRepoCount');
+                if (devRepoCount) devRepoCount.textContent = repos.length;
+
+                // Event listeners
+                submitBtn.addEventListener('click', handleSubmit);
+                cancelBtn.addEventListener('click', cancelEdit);
+                toggleFormBtn.addEventListener('click', toggleForm);
+                themeToggle.addEventListener('click', toggleTheme);
+                exportBtn.addEventListener('click', exportData);
+                importBtn.addEventListener('click', importData);
+                toggleTrashBtn.addEventListener('click', toggleTrash);
+                closeTrashBtn.addEventListener('click', () => trashSection.classList.remove('visible'));
+                emptyTrashBtn.addEventListener('click', emptyTrash);
+                closeModalBtn.addEventListener('click', closeModal);
+                modalOverlay.addEventListener('click', (e) => {
+                    if (e.target === modalOverlay) closeModal();
+                });
+
+                // Search & Filter
+                searchInput.addEventListener('input', renderAccounts);
+                typeFilter.addEventListener('change', renderAccounts);
+                sortSelect.addEventListener('change', renderAccounts);
+
+                // View toggle
+                document.querySelectorAll('.view-toggle button').forEach(btn => {
+                    btn.addEventListener('click', () => setView(btn.dataset.view));
+                });
+
+                // Tabs
+                tabs.forEach(btn => {
+                    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        closeModal();
+                        cancelEdit();
+                    }
+                    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                        e.preventDefault();
+                        handleSubmit();
+                    }
+                });
+
+                // Autofocus first field
+                socialType.focus();
+
+                console.log(`🚀 گاوصندوق هوشمند v${APP_VERSION} راه‌اندازی شد!`);
+                console.log(`📊 ${accounts.length} حساب، ${trash.length} مورد در سطل آشغال`);
+                console.log(`📦 ${repos.length} مخزن بارگذاری شد`);
+                console.log(`🔄 مهاجرت: ${hasMigrated ? 'انجام شده' : 'نیاز نیست'}`);
+            }
+
+            // Run on DOM ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+            // Make functions globally accessible
+            window.showToast = showToast;
+            window.closeModal = closeModal;
+
+        })();
+    </script>
+
+</body>
+</html>
