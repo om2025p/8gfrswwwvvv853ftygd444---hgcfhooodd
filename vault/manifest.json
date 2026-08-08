@@ -1,7 +1,7 @@
 {
   "id": "com.emarat.mysteryvault",
-  "name": "کتابخانه رمز و راز",
-  "short_name": "رمز و راز",
+  "name": "رمز راز",
+  "short_name": "رمز راز",
   "description": "گاوصندوق هوشمند و مدرن جهت نگهداری امن حساب‌ها و ویرایش اطلاعات مخازن",
   "start_url": "index.html",
   "scope": "./",
