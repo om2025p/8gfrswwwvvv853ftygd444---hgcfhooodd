@@ -644,7 +644,6 @@
             <div id="analysis-total-container" style="margin-top: 10px; margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; text-align: center; display: none;">
                 <div style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); font-weight: 600; margin-bottom: 5px;">📊 مجموع میانگین‌های روزانه سود</div>
                 <div id="analysis-total-value" style="font-size: 1.8rem; font-weight: 800; direction: ltr;">0.000%</div>
-                <div id="analysis-total-toman-value" style="font-size: 1.25rem; font-weight: 700; margin-top: 5px; direction: rtl;">💰 ۰ تومان</div>
             </div>
             <div class="avg-grid" id="avg-analysis-container">
                 <!-- آنالیز سودها به صورت پویا ساخته میشن -->
@@ -1143,11 +1142,15 @@
                     const tomanValueSign = isTomanPositive ? '+' : '';
                     const tomanDisplay = `${tomanValueSign}${Math.round(tomanVal).toLocaleString('en-US')} تومان`;
 
+                    const tomanSpan = isTabAnalysis ? '' : `
+                        <span style="font-size: 0.8rem; font-weight: bold;" class="${isTomanPositive ? 'positive' : 'negative'}">💰 ${tomanDisplay}</span>
+                    `;
+
                     return `
                         <div class="history-item">
                             <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
                                 <span class="history-item-date">📅 ${dateText}</span>
-                                <span style="font-size: 0.8rem; font-weight: bold;" class="${isTomanPositive ? 'positive' : 'negative'}">💰 ${tomanDisplay}</span>
+                                ${tomanSpan}
                             </div>
                             <span class="history-item-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${val.toFixed(precision)}%</span>
                         </div>
@@ -1558,8 +1561,6 @@
             let analysisSum = 0;
             let hasAnalysisRecords = false;
 
-            let analysisTomanSum = 0;
-
             appsInfo.forEach(app => {
                 const avgDaily = calculateDailyAverage(app.data);
                 const hasData = app.data && app.data.length > 0;
@@ -1567,28 +1568,16 @@
                 const itemCard = document.createElement('div');
                 itemCard.className = 'avg-item-card';
 
-                const avgTomanDaily = calculateDailyAverageTomanProfit(app.id);
-                const hasTomanData = avgTomanDaily !== 0;
-
-                if (hasData || hasTomanData) {
-                    if (hasData) {
-                        analysisSum += avgDaily;
-                        hasAnalysisRecords = true;
-                    }
+                if (hasData) {
+                    analysisSum += avgDaily;
+                    hasAnalysisRecords = true;
 
                     const isPositive = avgDaily >= 0;
                     const valueSign = isPositive ? '+' : '';
 
-                    analysisTomanSum += avgTomanDaily;
-
-                    const isTomanPositive = avgTomanDaily >= 0;
-                    const tomanValueSign = isTomanPositive ? '+' : '';
-                    const tomanDisplay = `${tomanValueSign}${Math.round(avgTomanDaily).toLocaleString('en-US')} تومان`;
-
                     itemCard.innerHTML = `
                         <span class="avg-item-title">${app.title}</span>
-                        <span class="avg-item-value ${isPositive ? 'positive' : 'negative'}">${hasData ? valueSign + avgDaily.toFixed(3) + '%' : '—%'}</span>
-                        <span style="font-size: 0.8rem; font-weight: bold; margin-top: 4px;" class="${isTomanPositive ? 'positive' : 'negative'}">${tomanDisplay}</span>
+                        <span class="avg-item-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${avgDaily.toFixed(3)}%</span>
                     `;
                 } else {
                     itemCard.innerHTML = `
@@ -1641,8 +1630,7 @@
             // به‌روزرسانی کارت مجموع میانگین‌های روزانه سود
             const analysisTotalContainer = document.getElementById('analysis-total-container');
             const analysisTotalValue = document.getElementById('analysis-total-value');
-            const analysisTotalTomanValue = document.getElementById('analysis-total-toman-value');
-            if (hasAnalysisRecords || analysisTomanSum !== 0) {
+            if (hasAnalysisRecords) {
                 analysisTotalContainer.style.display = 'block';
                 const isPositive = analysisSum >= 0;
                 const valueSign = isPositive ? '+' : '';
@@ -1652,12 +1640,6 @@
                 } else {
                     analysisTotalValue.style.color = 'var(--negative-color)';
                 }
-
-                // به‌روزرسانی مجموع میانگین تومانی روزانه
-                const isAnalysisTomanPositive = analysisTomanSum >= 0;
-                const analysisTomanValueSign = isAnalysisTomanPositive ? '+' : '';
-                analysisTotalTomanValue.innerText = `💰 ${analysisTomanValueSign}${Math.round(analysisTomanSum).toLocaleString('en-US')} تومان`;
-                analysisTotalTomanValue.className = isAnalysisTomanPositive ? 'positive' : 'negative';
             } else {
                 analysisTotalContainer.style.display = 'none';
             }
