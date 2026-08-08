@@ -366,6 +366,56 @@
             border-bottom: 1px solid #555;
         }
 
+        /* Styles for the Group Dropdown */
+        #group-dropdown-btn {
+            color: #333 !important;
+        }
+        body.dark #group-dropdown-btn {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+            color: #fff !important;
+        }
+        #group-dropdown-menu {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: #333;
+        }
+        body.dark #group-dropdown-menu {
+            background: rgba(30, 30, 30, 0.95);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        .group-menu-category {
+            font-weight: bold;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            color: #007bff;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            background: rgba(0,0,0,0.02);
+            text-align: right;
+        }
+        body.dark .group-menu-category {
+            color: #bb86fc;
+            border-bottom-color: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.02);
+        }
+        .group-menu-item {
+            padding: 10px 24px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-align: right;
+        }
+        .group-menu-item:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        body.dark .group-menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
         /* ریسپانسیو */
         @media (max-width: 600px) {
             .container {
@@ -418,6 +468,16 @@
     <template id="calculator-template">
         <div class="container calculator-instance">
             <h2>📈 ماشین حساب سود مرکب</h2>
+
+            <label>🔗 اتصال به ثبت درصد دیدبان:</label>
+            <select class="watchSource" style="margin-bottom: 12px; border: 1.5px dashed #007bff;">
+                <option value="none">❌ بدون اتصال (ورود دستی)</option>
+                <option value="percents">ثبت درصد 1 (صندوق طلا)</option>
+                <option value="kian_percents">ثبت درصد 2</option>
+                <option value="stock____________tas9yl_new_unified">ثبت درصد 3</option>
+                <option value="mofid_atie_percents">ثبت درصد 4</option>
+                <option value="energy_fund_synergy">ثبت درصد 5</option>
+            </select>
 
             <label>💰 مبلغ اولیه (تومان):</label>
             <input type="text" class="initialAmount" placeholder="مثال: 1,000,000">
@@ -480,6 +540,17 @@
         </div>
     </template>
 
+    <!-- منوی شیشه‌ای دسته‌بندی کشویی تب‌ها -->
+    <div id="group-dropdown-container" style="max-width: 400px; width: 90%; margin: 15px auto 5px; position: relative; text-align: right; box-sizing: border-box; z-index: 1002;">
+        <button id="group-dropdown-btn" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.15); border-radius: 12px; padding: 12px 16px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%; transition: all 0.3s;">
+            <span>📁 منوی دسته‌بندی تب‌ها</span>
+            <span style="font-size: 0.8rem; margin-right: 8px;">▼</span>
+        </button>
+        <div id="group-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; right: 0; background: rgba(255, 255, 255, 0.98); border: 1px solid rgba(0,0,0,0.15); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 300px; overflow-y: auto; z-index: 1003;">
+            <!-- دسته‌ها به صورت پویا پر می‌شوند -->
+        </div>
+    </div>
+
     <div id="calculator-app">
         <!-- Calculator instances will be dynamically added here -->
     </div>
@@ -507,6 +578,7 @@
         // تابع کمکی برای دریافت عناصر
         function getCalculatorElements(instanceElement) {
             return {
+                watchSource: instanceElement.querySelector('.watchSource'),
                 initialAmount: instanceElement.querySelector('.initialAmount'),
                 years: instanceElement.querySelector('.years'),
                 rate: instanceElement.querySelector('.rate'),
@@ -611,10 +683,43 @@
             return parseInt(elements.compoundFrequency.value);
         }
 
+        // تابع کمکی جهت محاسبه سود میانگین روزانه از کلیدهای دیدبان درصدها
+        function calculateWatchDailyAverage(watchKey) {
+            let percentsList = [];
+            try {
+                if (watchKey === 'percents' || watchKey === 'kian_percents' || watchKey === 'mofid_atie_percents') {
+                    percentsList = JSON.parse(localStorage.getItem(watchKey)) || [];
+                } else if (watchKey === 'stock____________tas9yl_new_unified' || watchKey === 'energy_fund_synergy') {
+                    let raw = localStorage.getItem(watchKey);
+                    if (raw) {
+                        let parsed = JSON.parse(raw);
+                        percentsList = parsed.percents || [];
+                    } else if (watchKey === 'stock____________tas9yl_new_unified') {
+                        let legacy = localStorage.getItem("stock____________tas9ylpercents");
+                        if (legacy) percentsList = JSON.parse(legacy) || [];
+                    }
+                }
+            } catch (e) {
+                console.error("Error parsing watch source:", e);
+            }
+
+            if (!percentsList || percentsList.length === 0) return 0;
+
+            let totalProfit = percentsList.reduce((s, p) => s + p.value, 0);
+            let firstDate = new Date(percentsList[0].timestamp);
+            let lastDate = new Date(percentsList[percentsList.length - 1].timestamp);
+
+            let daysDiff = Math.max(1, Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24)));
+
+            // تقسیم سود میانگین روزانه بر ۵ (مطابق تب دوم دیدبان درصدها)
+            return (totalProfit / daysDiff) / 5;
+        }
+
         // ذخیره ورودی‌ها
         function saveInputs(instanceElement, tabId) {
             const elements = getCalculatorElements(instanceElement);
             const data = {
+                watchSource: elements.watchSource.value,
                 initialAmount: elements.initialAmount.value,
                 years: elements.years.value,
                 rate: elements.rate.value,
@@ -633,6 +738,7 @@
             const elements = getCalculatorElements(instanceElement);
             const data = JSON.parse(localStorage.getItem(`calculatorTab_${tabId}`)) || {};
 
+            elements.watchSource.value = data.watchSource || "none";
             elements.initialAmount.value = data.initialAmount || "";
             elements.years.value = data.years || "";
             elements.rate.value = data.rate || "";
@@ -652,6 +758,41 @@
             formatNumber(elements.monthlyDeposit);
             formatNumber(elements.annualIncreaseMonthlyDeposit);
             formatNumber(elements.biMonthlyDeposit);
+
+            // به روز رسانی قفل بودن فیلد سود و نوع نرخ سود در صورت اتصال به دیدبان
+            handleWatchSync(instanceElement, tabId, false);
+        }
+
+        // اعمال پویای سود دیدبان بر ماشین‌حساب و قفل/باز کردن فیلدها
+        function handleWatchSync(instanceElement, tabId, recalculate = true) {
+            const elements = getCalculatorElements(instanceElement);
+            const source = elements.watchSource.value;
+
+            if (source && source !== 'none') {
+                const avgDaily = calculateWatchDailyAverage(source);
+                elements.rate.value = avgDaily.toFixed(3);
+                if (elements.rateType) {
+                    elements.rateType.value = 'daily';
+                    elements.rateType.disabled = true;
+                }
+                elements.rate.disabled = true;
+                elements.rate.style.backgroundColor = 'rgba(0, 123, 255, 0.08)';
+                elements.rate.style.fontWeight = 'bold';
+            } else {
+                elements.rate.disabled = false;
+                if (elements.rateType) {
+                    elements.rateType.disabled = false;
+                }
+                elements.rate.style.backgroundColor = '';
+                elements.rate.style.fontWeight = '';
+            }
+
+            if (recalculate) {
+                saveInputs(instanceElement, tabId);
+                updateCumulativeTotal();
+                updateTabName(tabId, instanceElement);
+                updateGroupDropdown();
+            }
         }
 
         // قالب‌بندی عدد
@@ -854,6 +995,7 @@
         function resetForm(instanceElement, tabId) {
             const elements = getCalculatorElements(instanceElement);
 
+            elements.watchSource.value = "none";
             elements.initialAmount.value = "";
             elements.years.value = "";
             elements.rate.value = "";
@@ -872,6 +1014,14 @@
             elements.totalDeposits.innerText = "💵 کل واریزی در مدت سرمایه‌گذاری: -- تومان";
             elements.effectiveRate.innerText = "📈 سود مرکب واقعی: --%";
             elements.monthlyIncome.innerText = "💰 درآمد ماهیانه (با نرخ مؤثر): -- تومان";
+
+            // ریست کردن قفل‌بودن
+            elements.rate.disabled = false;
+            if (elements.rateType) {
+                elements.rateType.disabled = false;
+            }
+            elements.rate.style.backgroundColor = '';
+            elements.rate.style.fontWeight = '';
 
             localStorage.removeItem(`calculatorTab_${tabId}`);
             localStorage.removeItem(`tabCustomName_${tabId}`);
@@ -1134,6 +1284,101 @@
             }, false);
         }
 
+        // تولید یا به‌روزرسانی منوی کشویی دسته‌بندی تب‌ها
+        function updateGroupDropdown() {
+            const menu = document.getElementById('group-dropdown-menu');
+            if (!menu) return;
+
+            // تعریف عناوین گروه‌ها بر اساس منبع ثبت درصد
+            const groupTitles = {
+                'none': '💼 تب‌های عمومی (ورود دستی)',
+                'percents': '📈 ثبت درصد 1 (صندوق طلا)',
+                'kian_percents': '📈 ثبت درصد 2',
+                'stock____________tas9yl_new_unified': '📈 ثبت درصد 3',
+                'mofid_atie_percents': '📈 ثبت درصد 4',
+                'energy_fund_synergy': '📈 ثبت درصد 5'
+            };
+
+            // دسته‌بندی تب‌های فعال
+            const groups = {
+                'none': [],
+                'percents': [],
+                'kian_percents': [],
+                'stock____________tas9yl_new_unified': [],
+                'mofid_atie_percents': [],
+                'energy_fund_synergy': []
+            };
+
+            calculatorInstances.forEach((instanceData, tabId) => {
+                const elements = getCalculatorElements(instanceData.element);
+                const source = elements.watchSource.value || 'none';
+
+                // بازیابی نام تب (دلخواه یا پیش‌فرض)
+                const customName = localStorage.getItem(`tabCustomName_${tabId}`);
+                let tabName = customName || `تب ${tabId}`;
+
+                if (!customName) {
+                    const initialAmountValue = elements.initialAmount.value.replace(/,/g, "");
+                    const yearsValue = elements.years.value;
+                    const rateValue = elements.rate.value;
+                    let nameParts = [];
+
+                    if (initialAmountValue && parseFloat(initialAmountValue) > 0) {
+                        nameParts.push(`مبلغ: ${parseFloat(initialAmountValue).toLocaleString('fa-IR').split(',')[0]}`);
+                    }
+                    if (yearsValue && parseFloat(yearsValue) > 0) {
+                        nameParts.push(`سال: ${yearsValue}`);
+                    }
+                    if (rateValue && parseFloat(rateValue) > 0) {
+                        const isDaily = elements.rateType && elements.rateType.value === 'daily';
+                        nameParts.push(`سود: ${rateValue}%${isDaily ? ' روزانه' : ''}`);
+                    }
+                    if (nameParts.length > 0) {
+                        tabName = nameParts.join(' | ');
+                    }
+                }
+
+                if (groups[source]) {
+                    groups[source].push({ tabId, name: tabName });
+                } else {
+                    groups['none'].push({ tabId, name: tabName });
+                }
+            });
+
+            // رندر دسته‌ها در منو
+            let html = '';
+            for (const [key, list] of Object.entries(groups)) {
+                if (list.length > 0) {
+                    const groupTitle = groupTitles[key] || 'سایر گروه‌ها';
+                    html += `<div class="group-menu-category">${groupTitle} (${list.length} تب)</div>`;
+                    list.forEach(item => {
+                        const isCurrentActive = item.tabId === activeTabId;
+                        const activeStyle = isCurrentActive ? 'font-weight: bold; color: #007bff; background: rgba(0,123,255,0.08);' : '';
+                        html += `
+                            <div class="group-menu-item" style="${activeStyle}" onclick="switchTab('${item.tabId}'); toggleGroupDropdown(false);">
+                                <span>🔹 ${item.name}</span>
+                                <span style="font-size: 0.8rem; color: #888;">#${item.tabId}</span>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            menu.innerHTML = html || '<div style="padding: 15px; text-align: center; color: #888;">هیچ تبی یافت نشد.</div>';
+        }
+
+        // باز و بسته کردن منوی کشویی دسته‌بندی
+        function toggleGroupDropdown(forceState = null) {
+            const menu = document.getElementById('group-dropdown-menu');
+            if (!menu) return;
+
+            if (forceState !== null) {
+                menu.style.display = forceState ? 'block' : 'none';
+            } else {
+                menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
         // ایجاد نمونه ماشین حساب
         function createCalculatorInstance(initialTabId = null) {
             tabCounter++;
@@ -1153,9 +1398,12 @@
 
             const elements = getCalculatorElements(newInstance);
 
-            elements.initialAmount.addEventListener('input', () => { formatNumber(elements.initialAmount); saveInputs(newInstance, tabId); updateCumulativeTotal(); });
-            elements.years.addEventListener('input', () => { saveInputs(newInstance, tabId); updateCumulativeTotal(); });
-            elements.rate.addEventListener('input', () => { saveInputs(newInstance, tabId); updateCumulativeTotal(); });
+            elements.watchSource.addEventListener('change', () => {
+                handleWatchSync(newInstance, tabId, true);
+            });
+            elements.initialAmount.addEventListener('input', () => { formatNumber(elements.initialAmount); saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
+            elements.years.addEventListener('input', () => { saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
+            elements.rate.addEventListener('input', () => { saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
             elements.compoundFrequency.addEventListener('change', () => {
                 saveInputs(newInstance, tabId);
                 updateTabName(tabId, newInstance);
@@ -1163,21 +1411,23 @@
                     setupFrequencyField(newInstance);
                 }
                 updateCumulativeTotal();
+                updateGroupDropdown();
             });
             if (elements.customFrequency) {
-                elements.customFrequency.addEventListener('input', () => { saveInputs(newInstance, tabId); updateCumulativeTotal(); });
+                elements.customFrequency.addEventListener('input', () => { saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
             }
-            elements.monthlyDeposit.addEventListener('input', () => { formatNumber(elements.monthlyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); });
-            elements.annualIncreaseMonthlyDeposit.addEventListener('input', () => { formatNumber(elements.annualIncreaseMonthlyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); });
-            elements.biMonthlyDeposit.addEventListener('input', () => { formatNumber(elements.biMonthlyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); });
+            elements.monthlyDeposit.addEventListener('input', () => { formatNumber(elements.monthlyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
+            elements.annualIncreaseMonthlyDeposit.addEventListener('input', () => { formatNumber(elements.annualIncreaseMonthlyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
+            elements.biMonthlyDeposit.addEventListener('input', () => { formatNumber(elements.biMonthlyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
 
             elements.rateType.addEventListener('change', () => {
                 saveInputs(newInstance, tabId);
                 updateTabName(tabId, newInstance);
                 updateCumulativeTotal();
+                updateGroupDropdown();
             });
-            elements.calculateButton.addEventListener('click', () => { calculateCompoundInterest(newInstance, tabId); updateTabName(tabId, newInstance); });
-            elements.resetButton.addEventListener('click', () => resetForm(newInstance, tabId));
+            elements.calculateButton.addEventListener('click', () => { calculateCompoundInterest(newInstance, tabId); updateTabName(tabId, newInstance); updateGroupDropdown(); });
+            elements.resetButton.addEventListener('click', () => { resetForm(newInstance, tabId); updateGroupDropdown(); });
             elements.historyButton.addEventListener('click', showHistory);
 
             showHiddenFeatures(newInstance);
@@ -1255,7 +1505,11 @@
             activeTabId = tabId;
             localStorage.setItem('activeTabId', tabId);
 
-            newActiveTabButton.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            if (newActiveTabButton) {
+                newActiveTabButton.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            }
+
+            updateGroupDropdown();
         }
 
         function closeTab(tabId) {
@@ -1291,6 +1545,7 @@
             }
             localStorage.setItem('tabCounter', tabCounter);
             saveTabsState();
+            updateGroupDropdown();
         }
 
         function updateTabName(tabId, instanceElement) {
@@ -1345,6 +1600,24 @@
                 }
             });
 
+            // مدیریت کلیک خارج از منوی کشویی دسته‌بندی برای بستن آن
+            window.addEventListener('click', (event) => {
+                const dropdownBtn = document.getElementById('group-dropdown-btn');
+                const dropdownMenu = document.getElementById('group-dropdown-menu');
+                if (dropdownBtn && dropdownMenu && !dropdownBtn.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                    toggleGroupDropdown(false);
+                }
+            });
+
+            // لیسنر دکمه منوی کشویی دسته‌بندی
+            const groupDropdownBtn = document.getElementById('group-dropdown-btn');
+            if (groupDropdownBtn) {
+                groupDropdownBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleGroupDropdown();
+                });
+            }
+
             if (window.matchMedia) {
                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
             }
@@ -1392,6 +1665,7 @@
             // فراخوانی بروزرسانی نهایی مجموع کل پس از بارگذاری تمامی تب‌ها
             setTimeout(() => {
                 updateCumulativeTotal();
+                updateGroupDropdown();
             }, 100);
         });
     </script>
