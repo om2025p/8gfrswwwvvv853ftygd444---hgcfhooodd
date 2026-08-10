@@ -1325,6 +1325,15 @@
                 </div>
             </div>
 
+            <!-- تنظیمات کلید اختصاصی جمنای -->
+            <div class="setting-section" style="border-top: 1px solid var(--border-color); padding-top: 14px;">
+                <label class="setting-label">🔑 کلید اختصاصی جمنای (حل دایمی قطعی هوش مصنوعی)</label>
+                <input type="password" class="setting-input" id="customApiKeyInput" placeholder="AIzaSy...">
+                <div class="setting-info">
+                    در صورتی که با خطای قطعی یا سهمیه مواجه شدید، یک کلید رایگان از <a href="https://aistudio.google.com/" target="_blank" style="color: var(--accent-color); text-decoration: underline;">Google AI Studio</a> بگیرید و در این بخش وارد کنید.
+                </div>
+            </div>
+
             <!-- پشتیبان‌گیری دوگانه -->
             <div class="setting-section" style="border-top: 1px solid var(--border-color); padding-top: 14px;">
                 <label class="setting-label">💾 سیستم پشتیبان‌گیری دوگانه (بیمه چت‌ها)</label>
@@ -1377,6 +1386,10 @@
         const API_KEY = chunk1 + chunk2 + chunk3;
 
         function getApiKey() {
+            const customKey = localStorage.getItem("custom_gemini_api_key");
+            if (customKey && customKey.trim().length > 10) {
+                return customKey.trim();
+            }
             return API_KEY;
         }
 
@@ -1601,6 +1614,7 @@
         const closeSettingsBtn = document.getElementById("closeSettingsBtn");
         const saveSettingsBtn = document.getElementById("saveSettingsBtn");
         const proxyUrlInput = document.getElementById("proxyUrlInput");
+        const customApiKeyInput = document.getElementById("customApiKeyInput");
         const downloadBackupBtn = document.getElementById("downloadBackupBtn");
         const uploadGithubBackupBtn = document.getElementById("uploadGithubBackupBtn");
         const clearHistoryBtn = document.getElementById("clearHistoryBtn");
@@ -1786,6 +1800,7 @@
                 localStorage.setItem("cf_proxy_url", "https://emarat-ai-chat-worker.qqqggggcc.workers.dev");
             }
             proxyUrlInput.value = localStorage.getItem("cf_proxy_url") || "";
+            customApiKeyInput.value = localStorage.getItem("custom_gemini_api_key") || "";
 
             await initIndexedDB();
 
@@ -2169,6 +2184,7 @@
 
         saveSettingsBtn.onclick = () => {
             localStorage.setItem("cf_proxy_url", proxyUrlInput.value.trim());
+            localStorage.setItem("custom_gemini_api_key", customApiKeyInput.value.trim());
             settingsModal.classList.remove("active");
         };
 
