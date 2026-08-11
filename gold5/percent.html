@@ -661,19 +661,119 @@
                     });
                 }
 
-                // --- 5. Update Base Numbers and History Metadata ---
-                if (cloudData.baseNumber) {
-                    localStorage.setItem("sinergy_baseNumber", Number(cloudData.baseNumber).toLocaleString('en-US'));
-                }
-                if (cloudData.history) {
-                    localStorage.setItem("sinergy_history", JSON.stringify(cloudData.history));
+                // --- 5. Resilient Two-Way Merge for sinergy_history ---
+                let localHistory = [];
+                try {
+                    const rawLocalHistory = localStorage.getItem("sinergy_history");
+                    if (rawLocalHistory) {
+                        localHistory = JSON.parse(rawLocalHistory);
+                    }
+                } catch (e) {
+                    console.warn("Failed to parse local sinergy_history", e);
                 }
 
+                if (!Array.isArray(localHistory)) {
+                    localHistory = [];
+                }
+
+                let historyChanges = false;
+
+                if (cloudData.history && Array.isArray(cloudData.history)) {
+                    cloudData.history.forEach(ch => {
+                        let exists = false;
+                        for (let lh of localHistory) {
+                            if (lh.id === ch.id || Math.abs((lh.id || 0) - (ch.id || 0)) < 2000) {
+                                exists = true;
+                                break;
+                            }
+                            if (lh.timestamp && ch.timestamp) {
+                                let tLh = new Date(lh.timestamp).getTime();
+                                let tCh = new Date(ch.timestamp).getTime();
+                                if (Math.abs(tLh - tCh) < 2000) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!exists) {
+                            localHistory.push(ch);
+                            historyChanges = true;
+                        }
+                    });
+                }
+
+                if (historyChanges) {
+                    localHistory.sort((a, b) => {
+                        const tA = a.id || (a.timestamp ? new Date(a.timestamp).getTime() : 0);
+                        const tB = b.id || (b.timestamp ? new Date(b.timestamp).getTime() : 0);
+                        return tB - tA; // descending
+                    });
+                    if (localHistory.length > 60) {
+                        localHistory = localHistory.slice(0, 60);
+                    }
+                    localStorage.setItem("sinergy_history", JSON.stringify(localHistory));
+                    hasChanges = true;
+                    console.log("⚡ Resilient two-way merge for sinergy_history completed!");
+                }
+
+                // --- 6. Resilient Two-Way Merge for sinergy_baseNumber ---
+                let localBaseStr = localStorage.getItem("sinergy_baseNumber");
+                let localBaseNum = 0;
+                if (localBaseStr) {
+                    localBaseNum = parseFloat(localBaseStr.replace(/,/g, '')) || 0;
+                }
+
+                let finalBaseNum = localBaseNum;
+
+                if (localHistory.length > 0) {
+                    const newestRecord = localHistory[0];
+                    let newestRecordVal = 0;
+                    if (newestRecord.rawNew !== undefined && newestRecord.rawNew !== null) {
+                        newestRecordVal = parseFloat(newestRecord.rawNew) || 0;
+                    } else if (newestRecord.new) {
+                        newestRecordVal = parseFloat(newestRecord.new.replace(/,/g, '')) || 0;
+                    }
+
+                    let cloudBaseNum = 0;
+                    if (cloudData.baseNumber) {
+                        cloudBaseNum = parseFloat(String(cloudData.baseNumber).replace(/,/g, '')) || 0;
+                    }
+
+                    if (newestRecordVal > 0) {
+                        finalBaseNum = newestRecordVal;
+                    } else if (cloudBaseNum > 0 && cloudBaseNum > finalBaseNum) {
+                        finalBaseNum = cloudBaseNum;
+                    }
+                } else {
+                    let cloudBaseNum = 0;
+                    if (cloudData.baseNumber) {
+                        cloudBaseNum = parseFloat(String(cloudData.baseNumber).replace(/,/g, '')) || 0;
+                    }
+                    if (cloudBaseNum > 0 && cloudBaseNum > finalBaseNum) {
+                        finalBaseNum = cloudBaseNum;
+                    }
+                }
+
+                if (finalBaseNum > 0 && finalBaseNum !== localBaseNum) {
+                    localStorage.setItem("sinergy_baseNumber", Number(finalBaseNum).toLocaleString('en-US'));
+                    hasChanges = true;
+                    console.log(`⚡ Updated sinergy_baseNumber to ${finalBaseNum.toLocaleString('en-US')} based on two-way merge.`);
+                }
+
+                // If changes occurred, update UI, save PWA state, and push to cloud sync
                 if (hasChanges) {
                     checkPeriodAchievement();
                     updateUI();
                     saveData();
                     console.log("⚡ Resilient two-way auto-merge with gold5_backup.json completed successfully!");
+
+                    // Sync the merged result to MantleDB so that other devices receive the merged data
+                    if (window.parent && window.parent.EmaratCloudSync) {
+                        window.parent.EmaratCloudSync.push();
+                    } else if (window.EmaratCloudSync) {
+                        window.EmaratCloudSync.push();
+                    }
                 }
             } catch (err) {
                 console.warn("Auto-sync from gold5_backup.json failed:", err);
