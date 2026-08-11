@@ -4,12 +4,7 @@ on:
   schedule:
     # 22:00 Tehran Time is exactly 18:30 UTC (Tehran is permanently UTC+3:30)
     - cron: '30 18 * * *'
-  workflow_dispatch:
-    inputs:
-      otp_code:
-        description: 'OTP Verification Code (کد پیامک شده از مفید)'
-        required: false
-        default: ''
+  workflow_dispatch: # Allows 1-click manual trigger
 
 permissions:
   contents: write # Allows committing back updated backup and session states to branch 50
@@ -43,7 +38,6 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           MANTLE_FINGERPRINT: ${{ secrets.MANTLE_FINGERPRINT }}
-          OTP_CODE: ${{ github.event.inputs.otp_code }}
         run: |
           python easytrader_automation.py
 
