@@ -411,19 +411,22 @@ def run_automation():
             ]
         )
 
+        # Modern Chrome Mobile User Agent to bypass blocking modals warning about old Safari/iOS versions
+        chrome_mobile_ua = "Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+
         # Use mobile view and restore state if it exists
         if session_exists:
             print(f"[+] Restoring existing browser session state from: {session_file_path}")
             context = browser.new_context(
                 viewport={"width": 390, "height": 844},
-                user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
+                user_agent=chrome_mobile_ua,
                 storage_state=session_file_path
             )
         else:
             print("[i] No browser session state found. Starting a fresh context...")
             context = browser.new_context(
                 viewport={"width": 390, "height": 844},
-                user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1"
+                user_agent=chrome_mobile_ua
             )
 
         page = context.new_page()
@@ -675,6 +678,28 @@ def run_automation():
                 page.goto(portfolio_url, wait_until="networkidle")
                 time.sleep(5)
 
+                # Active dialog / modal overlay dismissal check
+                try:
+                    print("[+] Checking for any block overlays, system update modals, or alerts to dismiss...")
+                    modal_dismiss_selectors = [
+                        "button:has-text('✕')",
+                        "span:has-text('✕')",
+                        "div[class*='close']",
+                        "button[class*='close']",
+                        "i[class*='close']",
+                        "svg[class*='close']",
+                        "button:has-text('بستن')",
+                        "button:has-text('انصراف')"
+                    ]
+                    for sel in modal_dismiss_selectors:
+                        closer = page.locator(sel).first
+                        if closer.is_visible():
+                            closer.click(force=True)
+                            print(f"[+] Dismissed popup overlay using selector: {sel}")
+                            time.sleep(2)
+                except Exception as ex_dismiss:
+                    print(f"[i] Non-blocking: Modal dismiss scanner had an exception: {ex_dismiss}")
+
                 page.screenshot(path="portfolio_loaded.png")
                 print("[+] Portfolio page screenshot saved to portfolio_loaded.png")
 
@@ -690,6 +715,25 @@ def run_automation():
 
             # 4. Extract "سینرژی" value
             print("[+] Extracting total asset value for 'سینرژی'...")
+
+            # Additional modal dismissal sweep before scanning portfolio numbers
+            try:
+                modal_dismiss_selectors = [
+                    "button:has-text('✕')",
+                    "span:has-text('✕')",
+                    "div[class*='close']",
+                    "button[class*='close']",
+                    "button:has-text('بستن')",
+                    "button:has-text('انصراف')"
+                ]
+                for sel in modal_dismiss_selectors:
+                    closer = page.locator(sel).first
+                    if closer.is_visible():
+                        closer.click(force=True)
+                        print(f"[+] Late-stage sweep: Dismissed popup overlay using selector: {sel}")
+                        time.sleep(2)
+            except Exception:
+                pass
 
             body_text = page.locator("body").inner_text()
             synergy_element = page.locator("text='سینرژی'").first
