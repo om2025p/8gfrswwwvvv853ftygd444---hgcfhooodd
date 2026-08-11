@@ -562,24 +562,12 @@
             color: rgba(255, 255, 255, 0.4);
         }
 
-        /* افکت نبض‌زن طلایی-سبز شیک برای گروه‌بندی روزهای طلایی و صندوق‌های صعودی */
-        @keyframes goldGreenGlowPulse {
-            0%, 100% {
-                box-shadow: 0 0 10px rgba(52, 211, 153, 0.25), 0 0 5px rgba(251, 191, 36, 0.15);
-                border-color: rgba(52, 211, 153, 0.35);
-                background: rgba(52, 211, 153, 0.12);
-            }
-            50% {
-                box-shadow: 0 0 20px rgba(52, 211, 153, 0.55), 0 0 12px rgba(251, 191, 36, 0.35);
-                border-color: rgba(251, 191, 36, 0.6);
-                background: rgba(52, 211, 153, 0.18);
-            }
-        }
-
+        /* پس‌زمینه کادر طلایی-سبز شیک و ثابت بدون نبض یا هاله نوری برای روزهای طلایی و صندوق‌های صعودی */
         .gold-pulse-card {
-            animation: goldGreenGlowPulse 2.5s infinite ease-in-out;
+            border-color: rgba(251, 191, 36, 0.45) !important;
+            background: rgba(52, 211, 153, 0.12) !important;
             border-radius: 16px;
-            border: 1px solid rgba(52, 211, 153, 0.3);
+            border: 1px solid rgba(52, 211, 153, 0.35);
             transition: all 0.3s ease;
         }
 
@@ -784,6 +772,7 @@
         let cachedAppsPercentData = null;
         let cachedDailyHistory = null;
         let dailyTomanProfitMap = {};
+        let dailyTomanProfitAppMap = {};
 
         function getGregorianDayString(ts) {
             const date = new Date(ts);
@@ -883,6 +872,7 @@
 
         function initializeTomanProfitCache() {
             dailyTomanProfitMap = {};
+            dailyTomanProfitAppMap = {};
             const historyKeys = {
                 1: "gold_history",
                 2: "fixedIncome_history",
@@ -932,29 +922,25 @@
                                 dailyTomanProfitMap[dayStr] = 0;
                             }
                             dailyTomanProfitMap[dayStr] += tomanProfit;
+
+                            if (dailyTomanProfitAppMap[dayStr] === undefined) {
+                                dailyTomanProfitAppMap[dayStr] = {};
+                            }
+                            if (dailyTomanProfitAppMap[dayStr][appId] === undefined) {
+                                dailyTomanProfitAppMap[dayStr][appId] = 0;
+                            }
+                            dailyTomanProfitAppMap[dayStr][appId] += tomanProfit;
                         }
                     }
                 }
             }
         }
 
-        // تولید ستاره‌ها برای پس‌زمینه ستاره‌ای شب
+        // تولید ستاره‌ها غیرفعال شد تا پس‌زمینه ساده، شیک و ثابت باقی بماند
         function generateStars() {
-            const container = document.getElementById('skyElements');
-            for (let i = 0; i < 40; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                const size = Math.random() * 2.5 + 1;
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                star.style.top = `${Math.random() * 100}%`;
-                star.style.left = `${Math.random() * 100}%`;
-                star.style.setProperty('--duration', `${Math.random() * 3 + 2}s`);
-                star.style.animationDelay = `${Math.random() * 5}s`;
-                container.appendChild(star);
-            }
+            // ستاره‌ای تولید نمی‌شود
         }
-        generateStars();
+        // generateStars();
 
         // تابع تغییر تب
         function switchTab(tabId, btn) {
@@ -1298,22 +1284,12 @@
 
                 // اگر در حالت «فقط مثبت‌ها» باشیم (فقط برای تب لایو)
                 if (isOnlyPositivesMode && tabName === 'live') {
-                    // فیلتر کردن روزهایی که حداقل یک اپلیکیشن مقدار مثبت داشته است
+                    // فیلتر کردن روزهایی که حداقل یک اپلیکیشن مقدار سود تومانی مثبت داشته است
                     const filteredHistory = history.filter(dayItem => {
-                        const dayEndTs = dayItem.timestamp + (24 * 60 * 60 * 1000) - 1;
                         let hasPositiveApp = false;
-
                         appsInfo.forEach(app => {
-                            let lastVal = null;
-                            if (app.data) {
-                                for (let i = app.data.length - 1; i >= 0; i--) {
-                                    if (app.data[i].timestamp <= dayEndTs) {
-                                        lastVal = app.data[i].value;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (lastVal !== null && lastVal > 0) {
+                            const appTomanProfit = (dailyTomanProfitAppMap[dayItem.dayString] && dailyTomanProfitAppMap[dayItem.dayString][app.id]) || 0;
+                            if (appTomanProfit > 0) {
                                 hasPositiveApp = true;
                             }
                         });
@@ -1321,35 +1297,39 @@
                     });
 
                     if (filteredHistory.length === 0) {
-                        listEl.innerHTML = `<div class="no-data-hint" style="padding: 15px 0;">📭 هیچ روز طلایی با بازدهی مثبت یافت نشد!</div>`;
+                        listEl.innerHTML = `<div class="no-data-hint" style="padding: 15px 0;">📭 هیچ روز طلایی با بازدهی تومانی مثبت یافت نشد!</div>`;
                         if (statsEl) statsEl.style.display = 'none';
                         return;
                     }
 
                     listEl.innerHTML = filteredHistory.map(dayItem => {
                         const dateText = formatHistoryDate(dayItem.dayString);
-                        const dayEndTs = dayItem.timestamp + (24 * 60 * 60 * 1000) - 1;
 
                         let appsHtml = '';
                         let hasAnyPositive = false;
+                        let dayPositiveTomanSum = 0;
 
                         appsInfo.forEach(app => {
-                            let lastVal = null;
+                            const appTomanProfit = (dailyTomanProfitAppMap[dayItem.dayString] && dailyTomanProfitAppMap[dayItem.dayString][app.id]) || 0;
+
+                            // بررسی می‌کنیم آیا کاربر ثبتی برای این اپلیکیشن در این روز دارد
+                            let hasRegistration = false;
                             if (app.data) {
-                                for (let i = app.data.length - 1; i >= 0; i--) {
-                                    if (app.data[i].timestamp <= dayEndTs) {
-                                        lastVal = app.data[i].value;
+                                for (let i = 0; i < app.data.length; i++) {
+                                    const dStr = getGregorianDayString(app.data[i].timestamp);
+                                    if (dStr === dayItem.dayString) {
+                                        hasRegistration = true;
                                         break;
                                     }
                                 }
                             }
 
-                            if (lastVal !== null) {
-                                const isPositive = lastVal > 0;
-                                const isNegative = lastVal < 0;
-                                const valueSign = lastVal >= 0 ? '+' : '';
+                            if (appTomanProfit !== 0 || hasRegistration) {
+                                const isPositive = appTomanProfit > 0;
+                                const isNegative = appTomanProfit < 0;
+                                const valueSign = appTomanProfit >= 0 ? '+' : '';
 
-                                // کلاس و استایل انیمیشن پالس برای مثبت‌ها
+                                // کلاس و استایل بدون نبض و ثابت
                                 const pulseClass = isPositive ? 'gold-pulse-card' : '';
                                 const colorClass = isPositive ? 'positive' : (isNegative ? 'negative' : '');
                                 const extraStyle = isPositive ? 'padding: 8px 12px; font-weight: bold; color: #34d399;' : '';
@@ -1357,21 +1337,23 @@
                                 appsHtml += `
                                     <div class="history-sub-item ${pulseClass}" style="${extraStyle}">
                                         <span>${app.title}</span>
-                                        <span class="${colorClass}" style="direction: ltr; font-weight: 800;">${valueSign}${lastVal.toFixed(2)}%</span>
+                                        <span class="${colorClass}" style="direction: ltr; font-weight: 800;">${valueSign}${appTomanProfit.toLocaleString('en-US')} تومان</span>
                                     </div>
                                 `;
-                                if (isPositive) hasAnyPositive = true;
+                                if (isPositive) {
+                                    hasAnyPositive = true;
+                                    dayPositiveTomanSum += appTomanProfit;
+                                }
                             }
                         });
 
-                        // گروه‌بندی روزانه با نبض‌زدن کل باکس در صورتی که حداقل یک صندوق مثبت داشته باشیم
                         const dayPulseClass = hasAnyPositive ? 'gold-pulse-card' : '';
 
                         return `
                             <div class="history-day-group ${dayPulseClass}" style="padding: 14px; margin-bottom: 12px;">
                                 <div class="history-day-group-header">
                                     <span style="font-size: 0.95rem; font-weight: bold; color: #fbbf24;">📅 ${dateText}</span>
-                                    <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 8px; color: #fff;">روز طلایی</span>
+                                    <span style="font-size: 0.85rem; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 8px; color: #34d399; font-weight: bold;">سود مثبت: +${dayPositiveTomanSum.toLocaleString('en-US')} تومان</span>
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
                                     ${appsHtml}
@@ -1380,13 +1362,23 @@
                         `;
                     }).join('');
 
-                    // در حالت فقط مثبت‌ها، آمار روزهای سبز و قرمز نیازی نیست یا نمایش متناسب دارد
+                    // در حالت فقط مثبت‌ها، آمار مجموع کل سودهای مثبت را در آمار پایین نشان می‌دهیم
                     if (statsEl) {
+                        let totalGoldenProfit = 0;
+                        filteredHistory.forEach(dayItem => {
+                            appsInfo.forEach(app => {
+                                const appTomanProfit = (dailyTomanProfitAppMap[dayItem.dayString] && dailyTomanProfitAppMap[dayItem.dayString][app.id]) || 0;
+                                if (appTomanProfit > 0) {
+                                    totalGoldenProfit += appTomanProfit;
+                                }
+                            });
+                        });
+
                         statsEl.style.display = 'flex';
                         statsEl.innerHTML = `
                             <div class="stats-badge" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border-color: rgba(251, 191, 36, 0.2); flex: 1; width: 100%;">
-                                <span>تعداد روزهای با سودهای درخشان و طلایی:</span>
-                                <span class="stats-badge-val">🌟 ${filteredHistory.length} روز رویایی</span>
+                                <span>🏆 مجموع کل سودهای مثبت این تاریخچه:</span>
+                                <span class="stats-badge-val" style="color: #34d399; font-size: 1.35rem; font-weight: bold; margin-top: 4px;">+${totalGoldenProfit.toLocaleString('en-US')} تومان</span>
                             </div>
                         `;
                     }
