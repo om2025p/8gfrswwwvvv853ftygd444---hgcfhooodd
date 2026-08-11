@@ -313,6 +313,9 @@ def run_automation():
     base_val = local_state.get("baseNumber", 100983803)
     history_list = local_state.get("history", [])
 
+    session_file_path = "gold5/easytrader_session.json"
+    session_exists = os.path.exists(session_file_path)
+
     print("[+] Launching Playwright browser...")
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -326,69 +329,139 @@ def run_automation():
             ]
         )
 
-        # Use mobile view to match m.easytrader.ir
-        context = browser.new_context(
-            viewport={"width": 390, "height": 844},
-            user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1"
-        )
+        # Use mobile view and restore state if it exists
+        if session_exists:
+            print(f"[+] Restoring existing browser session state from: {session_file_path}")
+            context = browser.new_context(
+                viewport={"width": 390, "height": 844},
+                user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
+                storage_state=session_file_path
+            )
+        else:
+            print("[i] No browser session state found. Starting a fresh context...")
+            context = browser.new_context(
+                viewport={"width": 390, "height": 844},
+                user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1"
+            )
 
         page = context.new_page()
         page.set_default_timeout(45000)
 
         try:
-            # 1. Open EasyTrader Main/Login redirects
-            print("[+] Navigating to EasyTrader login sequence...")
-            page.goto("https://m.easytrader.ir/", wait_until="networkidle")
-            time.sleep(3)
+            is_logged_in = False
 
-            # Check if we are redirected to login.emofid.com
-            current_url = page.url
-            print(f"[+] Current URL: {current_url}")
+            # Try direct navigation to portfolio if session exists
+            if session_exists:
+                print("[+] Navigating directly to portfolio with active session...")
+                try:
+                    page.goto("https://m.easytrader.ir/portfolio-fill", wait_until="networkidle", timeout=30000)
+                    time.sleep(5)
+                    current_url = page.url
+                    body_text = page.locator("body").inner_text()
 
-            # If not already on login, try directly navigating to emofid login
-            if "login.emofid.com" not in current_url:
-                print("[i] Directing browser to emofid SSO login page...")
-                page.goto("https://login.emofid.com/Login", wait_until="networkidle")
+                    if "login.emofid.com" not in current_url and "ورود" not in body_text:
+                        print("[+] Active session resumed successfully!")
+                        page.screenshot(path="portfolio_loaded.png")
+                        is_logged_in = True
+                    else:
+                        print("[i] Session state expired or logged out. Re-authentication required.")
+                except Exception as e:
+                    print(f"[i] Direct portfolio navigation failed/timed out: {e}. Falling back to normal login...")
+
+            if not is_logged_in:
+                # 1. Open EasyTrader Main/Login redirects
+                print("[+] Navigating to EasyTrader login sequence...")
+                page.goto("https://m.easytrader.ir/", wait_until="networkidle")
                 time.sleep(3)
 
-            # Take screenshot of login page for debug
-            page.screenshot(path="login_page.png")
-            print("[+] Saved login page screenshot to login_page.png")
+                # Check if we are redirected to login.emofid.com
+                current_url = page.url
+                print(f"[+] Current URL: {current_url}")
 
-            # 2. Fill login credentials
-            print("[+] Filling credentials...")
+                # If not already on login, try directly navigating to emofid login
+                if "login.emofid.com" not in current_url:
+                    print("[i] Directing browser to emofid SSO login page...")
+                    page.goto("https://login.emofid.com/Login", wait_until="networkidle")
+                    time.sleep(3)
 
-            # Locate input fields (username and password)
-            username_selector = "input[name='Username'], input#Username, input[type='text']"
-            password_selector = "input[name='Password'], input#Password, input[type='password']"
-            submit_selector = "button[type='submit'], button#loginBtn"
+                # Take screenshot of login page for debug
+                page.screenshot(path="login_page.png")
+                print("[+] Saved login page screenshot to login_page.png")
 
-            # Wait for fields
-            page.wait_for_selector(username_selector, timeout=15000)
-            page.fill(username_selector, EASYTRADER_USER)
+                # 2. Fill login credentials
+                print("[+] Filling credentials...")
 
-            page.wait_for_selector(password_selector, timeout=15000)
-            page.fill(password_selector, EASYTRADER_PASS)
+                # Locate input fields (username and password)
+                username_selector = "input[name='Username'], input#Username, input[type='text']"
+                password_selector = "input[name='Password'], input#Password, input[type='password']"
+                submit_selector = "button[type='submit'], button#loginBtn"
 
-            # Screenshot before submit
-            page.screenshot(path="credentials_filled.png")
+                # Wait for fields
+                page.wait_for_selector(username_selector, timeout=15000)
+                page.fill(username_selector, EASYTRADER_USER)
 
-            print("[+] Submitting login form...")
-            page.click(submit_selector)
-            time.sleep(5)
+                page.wait_for_selector(password_selector, timeout=15000)
+                page.fill(password_selector, EASYTRADER_PASS)
 
-            # Check URL and handle possible security or redirect states
-            print(f"[+] Current URL after login: {page.url}")
-            page.screenshot(path="after_login.png")
+                # Screenshot before submit
+                page.screenshot(path="credentials_filled.png")
 
-            # 3. Direct navigation to portfolio
-            portfolio_url = "https://m.easytrader.ir/portfolio-fill"
-            print(f"[+] Navigating directly to portfolio page: {portfolio_url}")
-            page.goto(portfolio_url, wait_until="networkidle")
-            time.sleep(5)
+                print("[+] Submitting login form...")
+                page.click(submit_selector)
+                time.sleep(5)
 
-            page.screenshot(path="portfolio_loaded.png")
-            print("[+] Portfolio page screenshot saved to portfolio_loaded.png")
+                # Check URL and handle possible security or redirect states
+                current_url = page.url
+                print(f"[+] Current URL after login: {current_url}")
+                page.screenshot(path="after_login.png")
+
+                # Handle verification/OTP screen
+                if "Verify" in current_url or "verify" in current_url.lower():
+                    print("[!] OTP Verification screen detected!")
+                    otp_code = os.environ.get("OTP_CODE")
+                    if otp_code:
+                        print(f"[+] Attempting to fill manual OTP code: {otp_code}")
+                        otp_input_selector = "input[name='Token'], input#Token, input[type='text'], input[placeholder*='کد']"
+                        page.wait_for_selector(otp_input_selector, timeout=15000)
+                        page.fill(otp_input_selector, otp_code)
+                        page.screenshot(path="otp_filled.png")
+
+                        verify_submit_btn = "button[type='submit'], button#verifyBtn, button.btn-primary"
+                        page.click(verify_submit_btn)
+                        time.sleep(6)
+                        print(f"[+] URL after OTP submission: {page.url}")
+                    else:
+                        print("[-] No OTP_CODE found in environment variables! Notifying user on Telegram...")
+                        otp_instructions = (
+                            f"<b>⚠️ نیاز به تأیید هویت دو مرحله‌ای (OTP) برای صندوق سینرژی</b>\n\n"
+                            f"رئیس عزیز! کارت دعوت طلایی منقضی شده یا اولین ورود شماست.\n"
+                            f"لطفاً مراحل زیر را برای ورود انجام دهید:\n\n"
+                            f"1️⃣ به تب <b>Actions</b> در گیت‌هاب بروید.\n"
+                            f"2️⃣ جریان کار <b>Daily EasyTrader 5 Sync (Synergy)</b> را انتخاب کنید.\n"
+                            f"3️⃣ روی دکمه <b>Run workflow</b> کلیک کرده و کد پیامک‌شده را در کادر بنویسید.\n"
+                            f"4️⃣ دکمه سبز رنگ را بزنید تا کار تمام شود و کارت دعوت دائمی برای بارهای بعدی ساخته شود! 🚀"
+                        )
+                        send_telegram_message(otp_instructions)
+                        raise Exception("OTP verification required but no OTP_CODE environment variable was provided.")
+
+                # 3. Direct navigation to portfolio
+                portfolio_url = "https://m.easytrader.ir/portfolio-fill"
+                print(f"[+] Navigating directly to portfolio page: {portfolio_url}")
+                page.goto(portfolio_url, wait_until="networkidle")
+                time.sleep(5)
+
+                page.screenshot(path="portfolio_loaded.png")
+                print("[+] Portfolio page screenshot saved to portfolio_loaded.png")
+
+                # Validate we are not still prompted to login
+                body_text = page.locator("body").inner_text()
+                if "ورود" in body_text or "رمز" in body_text or "login.emofid.com" in page.url:
+                    raise Exception("Still on login/verification page or authentication failed.")
+
+                # Save the new storage state/session cookie file
+                os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
+                context.storage_state(path=session_file_path)
+                print(f"[+] Successfully logged in and saved browser storage state to: {session_file_path}")
 
             # 4. Extract "سینرژی" value
             print("[+] Extracting total asset value for 'سینرژی'...")
