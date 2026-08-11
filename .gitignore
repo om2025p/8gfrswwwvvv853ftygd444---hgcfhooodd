@@ -1,0 +1,18 @@
+# Python build and cache artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Playwright & automation screenshots / debug logs
+*.png
+*.log
+login_page.png
+credentials_filled.png
+after_login.png
+portfolio_loaded.png
+error_emergency.png
+easytrader_failed.png

@@ -583,6 +583,51 @@
             } catch(e) { console.warn(e); }
         }
 
+        async function autoSyncFromBackup() {
+            try {
+                const response = await fetch("gold5_backup.json");
+                if (!response.ok) return;
+                const cloudData = await response.json();
+                if (!cloudData || !cloudData.percents) return;
+
+                let hasChanges = false;
+                const cloudPercents = cloudData.percents;
+                cloudPercents.sort((a, b) => a.timestamp - b.timestamp);
+
+                if (cloudPercents.length > percents.length) {
+                    percents = cloudPercents;
+                    hasChanges = true;
+                } else if (cloudPercents.length > 0 && percents.length > 0) {
+                    const lastCloudTime = cloudPercents[cloudPercents.length - 1].timestamp;
+                    const lastLocalTime = percents[percents.length - 1].timestamp;
+                    if (lastCloudTime > lastLocalTime) {
+                        percents = cloudPercents;
+                        hasChanges = true;
+                    }
+                }
+
+                if (hasChanges) {
+                    if (cloudData.trash) trash = cloudData.trash;
+                    if (cloudData.goal) goal = cloudData.goal;
+                    if (cloudData.highlightedStates) highlightedStates = cloudData.highlightedStates;
+                    if (cloudData.periodTarget) periodTarget = cloudData.periodTarget;
+                    if (cloudData.achievedPeriods) achievedPeriods = cloudData.achievedPeriods;
+                    if (cloudData.notes) notes = cloudData.notes;
+
+                    if (cloudData.baseNumber) {
+                        localStorage.setItem("sinergy_baseNumber", Number(cloudData.baseNumber).toLocaleString('en-US'));
+                    }
+
+                    checkPeriodAchievement();
+                    updateUI();
+                    saveData();
+                    console.log("⚡ Auto-sync with gold5_backup.json completed successfully!");
+                }
+            } catch (err) {
+                console.warn("Auto-sync from gold5_backup.json failed:", err);
+            }
+        }
+
         function updateUI() {
             renderPercentList();
             updateGoalProgress();
@@ -1177,6 +1222,9 @@
         initStatsMenu();
         updateUI();
         saveData();
+
+        // Trigger auto-sync asynchronously on page load
+        autoSyncFromBackup();
     })();
 </script>
 </body>
