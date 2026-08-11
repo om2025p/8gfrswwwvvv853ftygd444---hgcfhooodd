@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v19';
+const CACHE_NAME = 'emarat-portal-v20';
 const ASSETS = [
   './',
   './index.html',
@@ -155,7 +155,16 @@ const ASSETS = [
   './vault/icon-192-maskable.png',
   './vault/icon-512-maskable.png',
   './vault/apple-touch-icon.png',
-  './vault/favicon.ico'
+  './vault/favicon.ico',
+  // Restricted Bot PWA
+  './restricted/index.html',
+  './restricted/manifest.json',
+  './restricted/icon-192.png',
+  './restricted/icon-512.png',
+  './restricted/icon-192-maskable.png',
+  './restricted/icon-512-maskable.png',
+  './restricted/apple-touch-icon.png',
+  './restricted/favicon.ico'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
