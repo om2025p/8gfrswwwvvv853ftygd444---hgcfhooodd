@@ -583,6 +583,103 @@
             } catch(e) { console.warn(e); }
         }
 
+        async function autoSyncFromBackup() {
+            try {
+                const response = await fetch("gold5_backup.json");
+                if (!response.ok) return;
+                const cloudData = await response.json();
+                if (!cloudData) return;
+
+                let hasChanges = false;
+
+                // --- 1. Resilient Two-Way Merge for Percents ---
+                if (cloudData.percents && Array.isArray(cloudData.percents)) {
+                    // Map existing local percents by timestamp to avoid duplicates
+                    const localMap = new Map();
+                    percents.forEach(p => localMap.set(p.timestamp, p.value));
+
+                    let mergedCount = 0;
+                    cloudData.percents.forEach(cp => {
+                        // If this timestamp or close timestamp (within 2 seconds) doesn't exist, insert it!
+                        let exists = false;
+                        for (let t of localMap.keys()) {
+                            if (Math.abs(t - cp.timestamp) < 2000) {
+                                exists = true;
+                                break;
+                            }
+                        }
+                        if (!exists) {
+                            percents.push(cp);
+                            localMap.set(cp.timestamp, cp.value);
+                            mergedCount++;
+                        }
+                    });
+
+                    if (mergedCount > 0) {
+                        percents.sort((a, b) => a.timestamp - b.timestamp);
+                        hasChanges = true;
+                        console.log(`[i] Merged ${mergedCount} new percent record(s) from GitHub backup without losing local data.`);
+                    }
+                }
+
+                // --- 2. Resilient Two-Way Merge for Trash ---
+                if (cloudData.trash && Array.isArray(cloudData.trash)) {
+                    const localTrashTimes = new Set(trash.map(t => t.timestamp));
+                    cloudData.trash.forEach(ct => {
+                        if (!localTrashTimes.has(ct.timestamp)) {
+                            trash.push(ct);
+                            localTrashTimes.add(ct.timestamp);
+                            hasChanges = true;
+                        }
+                    });
+                }
+
+                // --- 3. Synchronize Goal, Highlights, Periods, Notes ---
+                if (cloudData.goal && !goal) {
+                    goal = cloudData.goal;
+                    hasChanges = true;
+                }
+
+                if (cloudData.highlightedStates) {
+                    highlightedStates = { ...cloudData.highlightedStates, ...highlightedStates };
+                }
+
+                if (cloudData.periodTarget && !periodTarget) {
+                    periodTarget = cloudData.periodTarget;
+                    hasChanges = true;
+                }
+
+                // --- 4. Synchronize Notes ---
+                if (cloudData.notes && Array.isArray(cloudData.notes)) {
+                    const localNoteIds = new Set(notes.map(n => n.id));
+                    cloudData.notes.forEach(cn => {
+                        if (cn && cn.id && !localNoteIds.has(cn.id)) {
+                            notes.push(cn);
+                            localNoteIds.add(cn.id);
+                            hasChanges = true;
+                        }
+                    });
+                }
+
+                // --- 5. Update Base Numbers and History Metadata ---
+                if (cloudData.baseNumber) {
+                    localStorage.setItem("sinergy_baseNumber", Number(cloudData.baseNumber).toLocaleString('en-US'));
+                }
+                if (cloudData.history) {
+                    localStorage.setItem("sinergy_history", JSON.stringify(cloudData.history));
+                }
+
+                if (hasChanges) {
+                    checkPeriodAchievement();
+                    updateUI();
+                    saveData();
+                    console.log("⚡ Resilient two-way auto-merge with gold5_backup.json completed successfully!");
+                }
+            } catch (err) {
+                console.warn("Auto-sync from gold5_backup.json failed:", err);
+            }
+        }
+
         function updateUI() {
             renderPercentList();
             updateGoalProgress();
@@ -1177,6 +1274,9 @@
         initStatsMenu();
         updateUI();
         saveData();
+
+        // Trigger auto-sync asynchronously on page load
+        autoSyncFromBackup();
     })();
 </script>
 </body>
