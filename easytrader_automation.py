@@ -747,14 +747,37 @@ def run_automation():
                     raise Exception("Still on login/verification page or authentication failed.")
                 raise Exception("Synergy ('سینرژی') row not found in portfolio view.")
 
-            print("[+] Found 'سینرژی' row. Traversing up to card container...")
+            print("[+] Found 'سینرژی' row. Dynamically traversing up to locate the exact Synergy card container...")
 
-            # Traverse up 4 levels to get the full card containing both label and numerical values
-            card_container = synergy_element
-            for _ in range(4):
-                card_container = card_container.locator("xpath=..")
+            card_container = None
+            parent = synergy_element
 
-            print("[+] Polling Synergy row card for asset numbers to load completely...")
+            # Dynamically traverse up to 10 levels of parents to locate the correct card
+            for level in range(1, 11):
+                parent = parent.locator("xpath=..")
+                parent_text = parent.inner_text()
+
+                # Check if we have the word 'سینرژی', but haven't climbed so high that we include 'همسنگ' (the next card)
+                if "سینرژی" in parent_text and "همسنگ" not in parent_text:
+                    normalized_parent_text = convert_persian_to_english_numbers(parent_text)
+                    numbers = re.findall(r'[\d,]+', normalized_parent_text)
+                    clean_digits = [num.replace(",", "") for num in numbers if num.replace(",", "").isdigit()]
+                    large_numbers = [digit for digit in clean_digits if len(digit) >= 6]
+
+                    # If this level contains the 'سینرژی' label and at least one 6+ digit asset number, it's our optimal card container!
+                    if large_numbers:
+                        card_container = parent
+                        print(f"[+] Successfully detected optimal Synergy card container at parent level {level}!")
+                        break
+
+            # Safe fallback if dynamic traversal did not resolve a perfect match
+            if not card_container:
+                print("[w] Warning: Dynamic parent search did not resolve a perfect match. Falling back to fixed 4-level parent traversal.")
+                card_container = synergy_element
+                for _ in range(4):
+                    card_container = card_container.locator("xpath=..")
+
+            print("[+] Polling Synergy card container for numbers to load completely...")
             clean_numbers = []
             row_text = ""
 
