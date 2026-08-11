@@ -4,10 +4,15 @@ on:
   schedule:
     # 22:00 Tehran Time is exactly 18:30 UTC (Tehran is permanently UTC+3:30)
     - cron: '30 18 * * *'
-  workflow_dispatch: # Allows manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      otp_code:
+        description: 'OTP Verification Code (کد پیامک شده از مفید)'
+        required: false
+        default: ''
 
 permissions:
-  contents: write # Allows committing back updated gold5_backup.json to branch 50
+  contents: write # Allows committing back updated backup and session states to branch 50
 
 jobs:
   run-automation:
@@ -38,6 +43,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           MANTLE_FINGERPRINT: ${{ secrets.MANTLE_FINGERPRINT }}
+          OTP_CODE: ${{ github.event.inputs.otp_code }}
         run: |
           python easytrader_automation.py
 
@@ -46,13 +52,16 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Check if there are changes in gold5_backup.json to avoid empty commit errors
+          # Check if there are changes in backup or session files to commit
           git add gold5/gold5_backup.json
+          if [ -f "gold5/easytrader_session.json" ]; then
+            git add gold5/easytrader_session.json
+          fi
 
           if git diff-index --quiet HEAD --; then
-            echo "No changes in backup file. Skipping commit."
+            echo "No changes in files. Skipping commit."
           else
-            git commit -m "chore(sync): automated update of daily percent and base number"
+            git commit -m "chore(sync): automated update of daily percent, history and session cookies"
             git push origin HEAD
-            echo "Successfully pushed updated backup to GitHub repository."
+            echo "Successfully pushed updated files to GitHub repository."
           fi
