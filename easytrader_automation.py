@@ -439,7 +439,7 @@ def run_automation():
             if session_exists:
                 print("[+] Navigating directly to portfolio with active session...")
                 try:
-                    page.goto("https://m.easytrader.ir/portfolio-fill", wait_until="networkidle", timeout=30000)
+                    page.goto("https://m.easytrader.ir/portfolio-fill", wait_until="load", timeout=30000)
                     time.sleep(5)
                     current_url = page.url
                     body_text = page.locator("body").inner_text()
@@ -456,7 +456,7 @@ def run_automation():
             if not is_logged_in:
                 # 1. Open EasyTrader Main/Login redirects
                 print("[+] Navigating to EasyTrader login sequence...")
-                page.goto("https://m.easytrader.ir/", wait_until="networkidle")
+                page.goto("https://m.easytrader.ir/", wait_until="load")
                 time.sleep(3)
 
                 # Check if we are redirected to login.emofid.com
@@ -466,7 +466,7 @@ def run_automation():
                 # If not already on login, try directly navigating to emofid login
                 if "login.emofid.com" not in current_url:
                     print("[i] Directing browser to emofid SSO login page...")
-                    page.goto("https://login.emofid.com/Login", wait_until="networkidle")
+                    page.goto("https://login.emofid.com/Login", wait_until="load")
                     time.sleep(3)
 
                 # Take screenshot of login page for debug
@@ -675,7 +675,7 @@ def run_automation():
                 # 3. Direct navigation to portfolio
                 portfolio_url = "https://m.easytrader.ir/portfolio-fill"
                 print(f"[+] Navigating directly to portfolio page: {portfolio_url}")
-                page.goto(portfolio_url, wait_until="networkidle")
+                page.goto(portfolio_url, wait_until="load")
                 time.sleep(5)
 
                 # Active dialog / modal overlay dismissal check
