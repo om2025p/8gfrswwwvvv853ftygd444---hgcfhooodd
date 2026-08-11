@@ -735,68 +735,86 @@ def run_automation():
             except Exception:
                 pass
 
-            body_text = page.locator("body").inner_text()
-            synergy_element = page.locator("text='سینرژی'").first
-            if not synergy_element.is_visible():
-                print("[-] Could not find element with text 'سینرژی' via direct locator.")
-                print("--- Visible Text ---")
-                print(body_text[:1000])
-                print("--------------------")
+            # Wait 8 seconds to allow portfolio data and numbers to hydrate fully
+            print("[+] Waiting 8 seconds for portfolio numbers to hydrate fully...")
+            time.sleep(8)
 
+            # --- STRATEGY 1: Dynamic Text Stream Parser of the Full Page Body ---
+            # This is the most resilient parsing method because it extracts text straight from the page viewport,
+            # avoiding any DOM traversal bugs or duplicate hidden elements containing 'سینرژی'.
+            body_text = page.locator("body").inner_text()
+            normalized_body = convert_persian_to_english_numbers(body_text)
+
+            extracted_value = None
+
+            print("[+] Strategy 1: Parsing full body text stream...")
+            lines = [line.strip() for line in normalized_body.split("\n") if line.strip()]
+            for idx, line in enumerate(lines):
+                if "سینرژی" in line:
+                    print(f"[+] Found 'سینرژی' in body text at line {idx}: '{line}'")
+                    # Look at the next 12 lines for large numeric patterns (assets are typically millions of Rials, i.e., 6+ digits)
+                    candidate_numbers = []
+                    for offset in range(1, 13):
+                        if idx + offset < len(lines):
+                            target_line = lines[idx + offset]
+                            # If we hit another fund symbol, stop scanning to avoid crossover data
+                            if "همسنگ" in target_line:
+                                print(f"[i] Hit next symbol 'همسنگ' at offset {offset}, stopping scan window.")
+                                break
+
+                            # Find all numbers in this line
+                            found_nums = re.findall(r'[\d,]+', target_line)
+                            for num_str in found_nums:
+                                clean_num = num_str.replace(",", "")
+                                if clean_num.isdigit() and len(clean_num) >= 6:
+                                    candidate_numbers.append(int(clean_num))
+                                    print(f"    -> Found candidate asset value at offset {offset}: {int(clean_num):,}")
+
+                    if candidate_numbers:
+                        # Total asset value is always the maximum number in the card (e.g. 102,666,552 vs 54,300 price)
+                        extracted_value = max(candidate_numbers)
+                        print(f"[+] Strategy 1 successfully extracted total asset value: {extracted_value:,} Rials")
+                        break
+
+            # --- STRATEGY 2: Resilient DOM Traversal & Child Scanner ---
+            # Used as a double-check or fallback if Strategy 1 did not resolve.
+            if not extracted_value:
+                print("[i] Strategy 1 resolved no numbers. Falling back to Strategy 2 (Visible DOM elements scanner)...")
+
+                synergy_elements = page.locator("text='سینرژی'").all()
+                print(f"[+] Found {len(synergy_elements)} element(s) with text 'سینرژی'. Scanning for active card container...")
+
+                for el_idx, synergy_element in enumerate(synergy_elements):
+                    if not synergy_element.is_visible():
+                        continue
+
+                    print(f"  [*] Scanning element index {el_idx}...")
+                    parent = synergy_element
+                    for level in range(1, 11):
+                        parent = parent.locator("xpath=..")
+                        parent_text = parent.inner_text()
+
+                        if "سینرژی" in parent_text and "همسنگ" not in parent_text:
+                            normalized_parent = convert_persian_to_english_numbers(parent_text)
+                            numbers = re.findall(r'[\d,]+', normalized_parent)
+                            clean_digits = [num.replace(",", "") for num in numbers if num.replace(",", "").isdigit()]
+                            large_numbers = [int(digit) for digit in clean_digits if len(digit) >= 6]
+
+                            if large_numbers:
+                                extracted_value = max(large_numbers)
+                                print(f"[+] Strategy 2 successfully detected asset card and extracted: {extracted_value:,} Rials")
+                                break
+                    if extracted_value:
+                        break
+
+            # Check for security screen block
+            if not extracted_value:
                 if "ورود" in body_text or "رمز" in body_text:
                     raise Exception("Still on login/verification page or authentication failed.")
-                raise Exception("Synergy ('سینرژی') row not found in portfolio view.")
+                raise Exception(f"Could not extract any valid numerical values from Synergy row container. Raw text: {body_text[:1000]}")
 
-            print("[+] Found 'سینرژی' row. Traversing up to card container...")
-
-            # Traverse up 4 levels to get the full card containing both label and numerical values
-            card_container = synergy_element
-            for _ in range(4):
-                card_container = card_container.locator("xpath=..")
-
-            print("[+] Polling Synergy row card for asset numbers to load completely...")
-            clean_numbers = []
-            row_text = ""
-
-            # Poll up to 20 seconds for the numbers to load/hydrate on the page
-            for attempt in range(20):
-                row_text = card_container.inner_text()
-                normalized_row = convert_persian_to_english_numbers(row_text)
-
-                # Extract all digit sequences with commas
-                numbers_with_commas = re.findall(r'[\d,]+', normalized_row)
-                candidates = []
-                for num_str in numbers_with_commas:
-                    clean_str = num_str.replace(",", "")
-                    if clean_str.isdigit() and len(clean_str) >= 6:  # Large numbers (e.g., total asset value >= 100,000 Rials)
-                        candidates.append(int(clean_str))
-
-                if candidates:
-                    clean_numbers = candidates
-                    print(f"[+] Synergy row numbers loaded successfully on attempt {attempt+1}!")
-                    break
-
-                print(f"[i] Waiting for numbers to hydrate (attempt {attempt+1}/20)... Row text: {row_text.replace(chr(10), ' | ')}")
-                time.sleep(1)
-
-            # Fallback if no large numbers loaded: look for any valid numbers at all
-            if not clean_numbers:
-                print("[w] Warning: No large numbers loaded. Scanning for any numbers as fallback...")
-                normalized_row = convert_persian_to_english_numbers(row_text)
-                numbers_with_commas = re.findall(r'[\d,]+', normalized_row)
-                for num_str in numbers_with_commas:
-                    clean_str = num_str.replace(",", "")
-                    if clean_str.isdigit():
-                        clean_numbers.append(int(clean_str))
-
-            print(f"[+] Extracted candidate numbers: {clean_numbers}")
-
-            if not clean_numbers:
-                raise Exception(f"Could not extract any valid numerical values from Synergy row container. Raw text: {row_text}")
-
-            # The total asset value is always the maximum number in the row (e.g. 100,983,803 vs 1,893 or 53,410)
-            new_val = max(clean_numbers)
-            print(f"[+] Identified Synergy total asset value: {new_val:,} Rials")
+            new_val = extracted_value
+            print(f"[+] Confirmed Synergy total asset value: {new_val:,} Rials")
 
             # 5. Calculation
             diff = new_val - base_val
