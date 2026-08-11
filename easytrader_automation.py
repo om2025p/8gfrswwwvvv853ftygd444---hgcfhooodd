@@ -282,6 +282,88 @@ def sync_with_mantledb(new_val, percent_val, base_val):
     return False
 
 
+def wait_for_telegram_otp(start_time_epoch):
+    """
+    Polls Telegram getUpdates API for up to 3 minutes (180 seconds) for a message
+    from the target TELEGRAM_CHAT_ID containing a 5-6 digit verification code.
+    Only messages sent AFTER start_time_epoch are considered.
+    """
+    print("[+] Starting live Telegram polling for OTP verification code...")
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates"
+
+    timeout_seconds = 180
+    poll_interval = 5
+    elapsed = 0
+    offset = 0
+
+    while elapsed < timeout_seconds:
+        try:
+            query_url = url
+            if offset > 0:
+                query_url += f"?offset={offset}"
+
+            req = urllib.request.Request(query_url)
+            with urllib.request.urlopen(req, timeout=10) as res:
+                data = json.loads(res.read().decode('utf-8'))
+                if data.get("ok") and "result" in data:
+                    updates = data["result"]
+                    for upd in updates:
+                        upd_id = upd.get("update_id")
+                        if upd_id >= offset:
+                            offset = upd_id + 1
+
+                        # Extract message object from channel or user message
+                        msg_obj = None
+                        if "message" in upd:
+                            msg_obj = upd["message"]
+                        elif "channel_post" in upd:
+                            msg_obj = upd["channel_post"]
+                        elif "edited_message" in upd:
+                            msg_obj = upd["edited_message"]
+                        elif "edited_channel_post" in upd:
+                            msg_obj = upd["edited_channel_post"]
+
+                        if not msg_obj:
+                            continue
+
+                        chat_obj = msg_obj.get("chat", {})
+                        chat_id = str(chat_obj.get("id", ""))
+
+                        # Match destination chat ID
+                        if chat_id != str(TELEGRAM_CHAT_ID):
+                            continue
+
+                        # Verify message date is fresh
+                        msg_date = msg_obj.get("date", 0)
+                        if msg_date < start_time_epoch - 15:  # Allow small leeway
+                            continue
+
+                        text = msg_obj.get("text", "")
+                        if not text:
+                            continue
+
+                        # Normalize Persian digits to English digits
+                        norm_text = convert_persian_to_english_numbers(text)
+
+                        # Find 5 or 6 digit verification code patterns
+                        codes = re.findall(r'\b\d{5,6}\b', norm_text)
+                        if codes:
+                            detected_code = codes[0]
+                            print(f"[+] Successfully intercepted live OTP code: {detected_code} from chat {chat_id}!")
+                            return detected_code
+
+        except Exception as e:
+            print(f"[i] Warning during live Telegram polling: {e}")
+
+        time.sleep(poll_interval)
+        elapsed += poll_interval
+        if elapsed % 30 == 0:
+            print(f"[+] Still waiting for live Telegram OTP... ({elapsed}/{timeout_seconds}s elapsed)")
+
+    print("[-] Timeout: Did not receive any valid OTP code from Telegram in 3 minutes.")
+    return None
+
+
 def run_automation():
     if not HAS_PLAYWRIGHT:
         print("[-] Playwright library is not installed. Cannot run browser automation.")
@@ -418,31 +500,76 @@ def run_automation():
                 # Handle verification/OTP screen
                 if "Verify" in current_url or "verify" in current_url.lower():
                     print("[!] OTP Verification screen detected!")
+
+                    # 1. Check if we already have it in environment variables (for testing/bypass)
                     otp_code = os.environ.get("OTP_CODE")
+
+                    # 2. If not, trigger interactive live Telegram Polling
+                    if not otp_code or otp_code.strip() == "":
+                        print("[+] Triggering interactive live Telegram polling...")
+                        start_time = int(time.time())
+
+                        otp_prompt = (
+                            f"<b>🔑 درخواست کد تأیید ورود (OTP)</b>\n\n"
+                            f"رئیس عزیز! من پشت در ورودی مفید ایستاده‌ام و منتظر زنگ پیامک هستم.\n"
+                            f"لطفاً کد ۵ یا ۶ رقمی پیامک شده را <b>به صورت معمولی یا ریپلای</b> در همین چت برای من ارسال کنید تا سریعاً وارد شوم! 📱⏱️\n\n"
+                            f"⏳ <b>مهلت زمان ارسال شما:</b> ۳ دقیقه (۱۸۰ ثانیه)"
+                        )
+                        send_telegram_message(otp_prompt)
+
+                        otp_code = wait_for_telegram_otp(start_time)
+
                     if otp_code:
-                        print(f"[+] Attempting to fill manual OTP code: {otp_code}")
+                        print(f"[+] Attempting to fill OTP code: {otp_code}")
                         otp_input_selector = "input[name='Token'], input#Token, input[type='text'], input[placeholder*='کد']"
                         page.wait_for_selector(otp_input_selector, timeout=15000)
                         page.fill(otp_input_selector, otp_code)
+
+                        # Try to click the "تایید دو مرحله برای این سیستم لازم نیست." (Trust this device) checkbox
+                        try:
+                            print("[+] Checking for 'Trust Device' checkbox on OTP page...")
+                            checkbox_selectors = [
+                                "input[type='checkbox']",
+                                "input#TrustDevice",
+                                "input[name*='TrustDevice']",
+                                "input[name*='trust']",
+                                "text='تایید دو مرحله برای این سیستم لازم نیست.'",
+                                "label:has-text('تایید دو مرحله')",
+                                ".custom-checkbox",
+                                "span:has-text('تایید دو مرحله')"
+                            ]
+
+                            ticked = False
+                            for sel in checkbox_selectors:
+                                checkbox = page.locator(sel).first
+                                if checkbox.is_visible():
+                                    if sel.startswith("input[type='checkbox']"):
+                                        checkbox.check(force=True)
+                                    else:
+                                        checkbox.click(force=True)
+                                    print(f"[+] Successfully ticked 'Trust Device' checkbox using selector: {sel}")
+                                    ticked = True
+                                    break
+                            if not ticked:
+                                print("[i] Non-blocking: Could not find any visible 'Trust Device' checkbox.")
+                        except Exception as cb_err:
+                            print(f"[i] Non-blocking warning: Failed to check 'Trust Device' checkbox: {cb_err}")
+
                         page.screenshot(path="otp_filled.png")
 
-                        verify_submit_btn = "button[type='submit'], button#verifyBtn, button.btn-primary"
+                        verify_submit_btn = "button[type='submit'], button#verifyBtn, button.btn-primary, button:has-text('ادامه')"
                         page.click(verify_submit_btn)
                         time.sleep(6)
-                        print(f"[+] URL after OTP submission: {page.url}")
+                        current_url = page.url
+                        print(f"[+] URL after OTP submission: {current_url}")
                     else:
-                        print("[-] No OTP_CODE found in environment variables! Notifying user on Telegram...")
-                        otp_instructions = (
-                            f"<b>⚠️ نیاز به تأیید هویت دو مرحله‌ای (OTP) برای صندوق سینرژی</b>\n\n"
-                            f"رئیس عزیز! کارت دعوت طلایی منقضی شده یا اولین ورود شماست.\n"
-                            f"لطفاً مراحل زیر را برای ورود انجام دهید:\n\n"
-                            f"1️⃣ به تب <b>Actions</b> در گیت‌هاب بروید.\n"
-                            f"2️⃣ جریان کار <b>Daily EasyTrader 5 Sync (Synergy)</b> را انتخاب کنید.\n"
-                            f"3️⃣ روی دکمه <b>Run workflow</b> کلیک کرده و کد پیامک‌شده را در کادر بنویسید.\n"
-                            f"4️⃣ دکمه سبز رنگ را بزنید تا کار تمام شود و کارت دعوت دائمی برای بارهای بعدی ساخته شود! 🚀"
+                        failure_instructions = (
+                            f"<b>❌ مهلت ارسال کد تایید به پایان رسید</b>\n\n"
+                            f"رئیس جان! متاسفانه بعد از ۳ دقیقه کدی از شما دریافت نکردم و عملیات متوقف شد.\n"
+                            f"هر زمان مایل بودید می‌توانید مجدداً جریان کار را در گیت‌هاب اکشنز اجرا کنید."
                         )
-                        send_telegram_message(otp_instructions)
-                        raise Exception("OTP verification required but no OTP_CODE environment variable was provided.")
+                        send_telegram_message(failure_instructions)
+                        raise Exception("OTP verification required but no valid code was provided via Telegram in 3 minutes.")
 
                 # 3. Direct navigation to portfolio
                 portfolio_url = "https://m.easytrader.ir/portfolio-fill"
