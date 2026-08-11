@@ -747,33 +747,54 @@ def run_automation():
                     raise Exception("Still on login/verification page or authentication failed.")
                 raise Exception("Synergy ('سینرژی') row not found in portfolio view.")
 
-            print("[+] Found 'سینرژی' row. Attempting to traverse and find value...")
+            print("[+] Found 'سینرژی' row. Traversing up to card container...")
 
-            # Traverse up and locate row container with numbers
-            parent = synergy_element
+            # Traverse up 4 levels to get the full card containing both label and numerical values
+            card_container = synergy_element
+            for _ in range(4):
+                card_container = card_container.locator("xpath=..")
+
+            print("[+] Polling Synergy row card for asset numbers to load completely...")
+            clean_numbers = []
             row_text = ""
-            for i in range(5):
-                parent = parent.locator("xpath=..")
-                row_text = parent.inner_text()
-                if any(char.isdigit() or char in "۰۱۲۳۴۵۶۷۸۹" for char in row_text):
-                    print(f"[+] Found row container at level {i+1} with text: {row_text.replace(chr(10), ' | ')}")
+
+            # Poll up to 20 seconds for the numbers to load/hydrate on the page
+            for attempt in range(20):
+                row_text = card_container.inner_text()
+                normalized_row = convert_persian_to_english_numbers(row_text)
+
+                # Extract all digit sequences with commas
+                numbers_with_commas = re.findall(r'[\d,]+', normalized_row)
+                candidates = []
+                for num_str in numbers_with_commas:
+                    clean_str = num_str.replace(",", "")
+                    if clean_str.isdigit() and len(clean_str) >= 6:  # Large numbers (e.g., total asset value >= 100,000 Rials)
+                        candidates.append(int(clean_str))
+
+                if candidates:
+                    clean_numbers = candidates
+                    print(f"[+] Synergy row numbers loaded successfully on attempt {attempt+1}!")
                     break
 
-            normalized_row = convert_persian_to_english_numbers(row_text)
-            print(f"[+] Normalized row text: {normalized_row.replace(chr(10), ' | ')}")
+                print(f"[i] Waiting for numbers to hydrate (attempt {attempt+1}/20)... Row text: {row_text.replace(chr(10), ' | ')}")
+                time.sleep(1)
 
-            numbers_with_commas = re.findall(r'[\d,]+', row_text)
-            clean_numbers = []
-            for num_str in numbers_with_commas:
-                english_num_str = convert_persian_to_english_numbers(num_str).replace(",", "")
-                if english_num_str.isdigit():
-                    clean_numbers.append(int(english_num_str))
+            # Fallback if no large numbers loaded: look for any valid numbers at all
+            if not clean_numbers:
+                print("[w] Warning: No large numbers loaded. Scanning for any numbers as fallback...")
+                normalized_row = convert_persian_to_english_numbers(row_text)
+                numbers_with_commas = re.findall(r'[\d,]+', normalized_row)
+                for num_str in numbers_with_commas:
+                    clean_str = num_str.replace(",", "")
+                    if clean_str.isdigit():
+                        clean_numbers.append(int(clean_str))
 
             print(f"[+] Extracted candidate numbers: {clean_numbers}")
 
             if not clean_numbers:
-                raise Exception("Could not extract any valid numerical values from Synergy row container.")
+                raise Exception(f"Could not extract any valid numerical values from Synergy row container. Raw text: {row_text}")
 
+            # The total asset value is always the maximum number in the row (e.g. 100,983,803 vs 1,893 or 53,410)
             new_val = max(clean_numbers)
             print(f"[+] Identified Synergy total asset value: {new_val:,} Rials")
 
