@@ -524,9 +524,40 @@ def run_automation():
                         otp_input_selector = "input[name='Token'], input#Token, input[type='text'], input[placeholder*='کد']"
                         page.wait_for_selector(otp_input_selector, timeout=15000)
                         page.fill(otp_input_selector, otp_code)
+
+                        # Try to click the "تایید دو مرحله برای این سیستم لازم نیست." (Trust this device) checkbox
+                        try:
+                            print("[+] Checking for 'Trust Device' checkbox on OTP page...")
+                            checkbox_selectors = [
+                                "input[type='checkbox']",
+                                "input#TrustDevice",
+                                "input[name*='TrustDevice']",
+                                "input[name*='trust']",
+                                "text='تایید دو مرحله برای این سیستم لازم نیست.'",
+                                "label:has-text('تایید دو مرحله')",
+                                ".custom-checkbox",
+                                "span:has-text('تایید دو مرحله')"
+                            ]
+
+                            ticked = False
+                            for sel in checkbox_selectors:
+                                checkbox = page.locator(sel).first
+                                if checkbox.is_visible():
+                                    if sel.startswith("input[type='checkbox']"):
+                                        checkbox.check(force=True)
+                                    else:
+                                        checkbox.click(force=True)
+                                    print(f"[+] Successfully ticked 'Trust Device' checkbox using selector: {sel}")
+                                    ticked = True
+                                    break
+                            if not ticked:
+                                print("[i] Non-blocking: Could not find any visible 'Trust Device' checkbox.")
+                        except Exception as cb_err:
+                            print(f"[i] Non-blocking warning: Failed to check 'Trust Device' checkbox: {cb_err}")
+
                         page.screenshot(path="otp_filled.png")
 
-                        verify_submit_btn = "button[type='submit'], button#verifyBtn, button.btn-primary"
+                        verify_submit_btn = "button[type='submit'], button#verifyBtn, button.btn-primary, button:has-text('ادامه')"
                         page.click(verify_submit_btn)
                         time.sleep(6)
                         current_url = page.url
