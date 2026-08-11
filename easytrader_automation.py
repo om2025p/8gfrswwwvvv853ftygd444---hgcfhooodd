@@ -298,7 +298,8 @@ def run_automation():
         "periodTarget": None,
         "achievedPeriods": [],
         "notes": [],
-        "baseNumber": 100983803 # Fallback initial base
+        "baseNumber": 100983803, # Fallback initial base
+        "history": []
     }
 
     if os.path.exists(BACKUP_FILE_PATH):
@@ -310,6 +311,7 @@ def run_automation():
             print(f"[-] Warning: Failed to parse backup file, using defaults: {e}")
 
     base_val = local_state.get("baseNumber", 100983803)
+    history_list = local_state.get("history", [])
 
     print("[+] Launching Playwright browser...")
     with sync_playwright() as p:
@@ -449,6 +451,31 @@ def run_automation():
                 "timestamp": timestamp_ms
             })
             local_state["percents"].sort(key=lambda x: x["timestamp"])
+
+            # Update history list in local state as well
+            persian_date_str = get_current_persian_datetime()
+            diff_type = "neutral"
+            if percent_change > 0:
+                diff_type = "increase"
+            elif percent_change < 0:
+                diff_type = "decrease"
+
+            formatted_new_val = f"{new_val:,}"
+            history_list.insert(0, {
+                "id": timestamp_ms,
+                "base": f"{base_val:,}",
+                "new": formatted_new_val,
+                "percent": f"{percent_change:.2f}",
+                "type": diff_type,
+                "rawBase": float(base_val),
+                "rawNew": float(new_val),
+                "timestamp": datetime.now().isoformat() + "Z",
+                "persianDate": persian_date_str
+            })
+            if len(history_list) > 60:
+                history_list = history_list[:60]
+
+            local_state["history"] = history_list
 
             # Update base number for tomorrow
             local_state["baseNumber"] = new_val

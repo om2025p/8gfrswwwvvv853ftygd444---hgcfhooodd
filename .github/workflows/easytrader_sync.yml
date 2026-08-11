@@ -16,8 +16,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          ref: '50' # Force checkout branch 50 to pull/push correct branch state
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -56,6 +54,6 @@ jobs:
             echo "No changes in backup file. Skipping commit."
           else
             git commit -m "chore(sync): automated update of daily percent and base number"
-            git push origin 50
+            git push origin HEAD
             echo "Successfully pushed updated backup to GitHub repository."
           fi

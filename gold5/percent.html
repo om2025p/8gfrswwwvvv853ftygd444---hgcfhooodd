@@ -617,6 +617,9 @@
                     if (cloudData.baseNumber) {
                         localStorage.setItem("sinergy_baseNumber", Number(cloudData.baseNumber).toLocaleString('en-US'));
                     }
+                    if (cloudData.history) {
+                        localStorage.setItem("sinergy_history", JSON.stringify(cloudData.history));
+                    }
 
                     checkPeriodAchievement();
                     updateUI();
