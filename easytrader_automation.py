@@ -521,9 +521,77 @@ def run_automation():
 
                     if otp_code:
                         print(f"[+] Attempting to fill OTP code: {otp_code}")
-                        otp_input_selector = "input[name='Token'], input#Token, input[type='text'], input[placeholder*='کد']"
-                        page.wait_for_selector(otp_input_selector, timeout=15000)
-                        page.fill(otp_input_selector, otp_code)
+
+                        # Dynamic / Self-healing OTP input selector
+                        otp_input = None
+
+                        # 1. Try standard/probable selectors first
+                        standard_selectors = [
+                            "input[name='Token']",
+                            "input#Token",
+                            "input[name='token']",
+                            "input#token",
+                            "input[type='tel']",
+                            "input[type='number']",
+                            "input[inputmode='numeric']",
+                            "input[placeholder*='کد']",
+                            "input[placeholder*='code']",
+                            "input[name*='code']",
+                            "input[name*='Code']",
+                            "input[type='text']"
+                        ]
+
+                        print("[+] Searching for OTP input element...")
+                        for sel in standard_selectors:
+                            try:
+                                element = page.locator(sel).first
+                                if element.is_visible():
+                                    otp_input = element
+                                    print(f"[+] Found OTP input using selector: {sel}")
+                                    break
+                            except Exception:
+                                continue
+
+                        # 2. Self-healing fallback: scan all visible inputs
+                        if not otp_input:
+                            print("[i] Standard OTP selectors failed or not visible yet. Waiting 5s then running self-healing scan...")
+                            time.sleep(5)
+                            try:
+                                all_inputs = page.locator("input").all()
+                                visible_inputs = [inp for inp in all_inputs if inp.is_visible()]
+
+                                print(f"[i] Found {len(visible_inputs)} visible input(s) on the page.")
+
+                                if len(visible_inputs) == 1:
+                                    otp_input = visible_inputs[0]
+                                    print("[+] Self-healing: Found exactly one visible input, assuming it is the OTP field.")
+                                else:
+                                    # Filter by likely attributes
+                                    for inp in visible_inputs:
+                                        html = inp.evaluate("el => el.outerHTML").lower()
+                                        if any(k in html for k in ["token", "code", "otp", "tel", "numeric", "کد", "تایید"]):
+                                            otp_input = inp
+                                            print(f"[+] Self-healing: Found likely OTP input matching attributes in HTML: {html}")
+                                            break
+
+                                    # Last resort: use the first visible input
+                                    if not otp_input and visible_inputs:
+                                        otp_input = visible_inputs[0]
+                                        print("[+] Self-healing last resort: Using the first visible input field on the page.")
+                            except Exception as scan_err:
+                                print(f"[-] Self-healing input scan failed: {scan_err}")
+
+                        if not otp_input:
+                            print("[!] Could not locate visible OTP input element. Attempting fallback wait for general input...")
+                            try:
+                                page.wait_for_selector("input", timeout=5000)
+                                otp_input = page.locator("input").first
+                            except Exception as final_wait_err:
+                                raise Exception(f"Failed to find any visible OTP input field: {final_wait_err}")
+
+                        # Fill the OTP code
+                        otp_input.fill(otp_code)
+                        print("[+] OTP code filled successfully.")
 
                         # Try to click the "تایید دو مرحله برای این سیستم لازم نیست." (Trust this device) checkbox
                         try:
@@ -557,8 +625,38 @@ def run_automation():
 
                         page.screenshot(path="otp_filled.png")
 
-                        verify_submit_btn = "button[type='submit'], button#verifyBtn, button.btn-primary, button:has-text('ادامه')"
-                        page.click(verify_submit_btn)
+                        # Try to click the submit button with self-healing fallback
+                        clicked_submit = False
+                        submit_selectors = [
+                            "button[type='submit']",
+                            "button#verifyBtn",
+                            "button.btn-primary",
+                            "button:has-text('ادامه')",
+                            "button:has-text('ورود')",
+                            "button:has-text('تایید')",
+                            "input[type='submit']",
+                            "button"
+                        ]
+
+                        for sel in submit_selectors:
+                            try:
+                                btn = page.locator(sel).first
+                                if btn.is_visible():
+                                    btn.click()
+                                    print(f"[+] Successfully clicked OTP submit button using: {sel}")
+                                    clicked_submit = True
+                                    break
+                            except Exception:
+                                continue
+
+                        if not clicked_submit:
+                            print("[i] Self-healing button click failed via locator. Attempting keyboard Enter key...")
+                            try:
+                                page.keyboard.press("Enter")
+                                print("[+] Pressed Enter key as fallback.")
+                            except Exception as key_err:
+                                print(f"[-] Keyboard fallback failed: {key_err}")
+
                         time.sleep(6)
                         current_url = page.url
                         print(f"[+] URL after OTP submission: {current_url}")
