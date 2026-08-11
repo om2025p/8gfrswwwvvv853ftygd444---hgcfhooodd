@@ -561,6 +561,87 @@
             font-size: 0.8rem;
             color: rgba(255, 255, 255, 0.4);
         }
+
+        /* افکت نبض‌زن طلایی-سبز شیک برای گروه‌بندی روزهای طلایی و صندوق‌های صعودی */
+        @keyframes goldGreenGlowPulse {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(52, 211, 153, 0.25), 0 0 5px rgba(251, 191, 36, 0.15);
+                border-color: rgba(52, 211, 153, 0.35);
+                background: rgba(52, 211, 153, 0.12);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(52, 211, 153, 0.55), 0 0 12px rgba(251, 191, 36, 0.35);
+                border-color: rgba(251, 191, 36, 0.6);
+                background: rgba(52, 211, 153, 0.18);
+            }
+        }
+
+        .gold-pulse-card {
+            animation: goldGreenGlowPulse 2.5s infinite ease-in-out;
+            border-radius: 16px;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        /* استایل دکمه جادویی سوئیچ تاریخچه */
+        .history-switch-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .history-switch-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .history-switch-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* کارت مجزای گروه بندی مثبت‌ها */
+        .history-day-group {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-day-group-header {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.85);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 6px;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-sub-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            background: rgba(0, 0, 0, 0.15);
+        }
     </style>
 </head>
 <body>
@@ -593,8 +674,11 @@
 
         <!-- منوی کشویی تاریخچه در تب زنده -->
         <div class="history-dropdown" id="live-history-dropdown">
-            <div class="history-header" onclick="toggleHistoryMenu('live')">
-                <span>📜 تاریخچه کامل سودها</span>
+            <div class="history-header" style="display: flex; justify-content: space-between; align-items: center;" onclick="handleHistoryHeaderClick(event, 'live')">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span id="live-history-title">📜 تاریخچه کامل سودها</span>
+                    <button class="history-switch-btn" id="live-history-switch-btn" title="سوئیچ تاریخچه مثبت‌ها">🔁</button>
+                </div>
                 <span class="history-arrow" id="live-history-arrow">▼</span>
             </div>
             <div class="history-content" id="live-history-content">
@@ -619,6 +703,12 @@
             <div style="font-size: 0.95rem; color: var(--primary-light); font-weight: 700; margin-bottom: 8px;">📊 مجموع آخرین درصدهای ثبت‌شده</div>
             <div id="live-total-value" style="font-size: 2.2rem; font-weight: 800; direction: ltr; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">0.00%</div>
             <div id="live-total-toman-value" style="font-size: 1.3rem; font-weight: 700; margin-top: 6px; direction: rtl;">💰 ۰ تومان</div>
+
+            <!-- مجموع درصدهای مثبت امروز به صورت مجزا در بخش مجموع اخرین درصدهای ثبت شده -->
+            <div id="live-positive-total-section" style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <span style="font-size: 0.85rem; color: var(--positive-color); font-weight: bold;">🟢 مجموع درصدهای مثبت ثبت‌شده امروز</span>
+                <span id="live-positive-total-value" class="positive" style="font-size: 1.6rem; font-weight: 800; direction: ltr; text-shadow: 0 0 10px rgba(52, 211, 153, 0.4);">0.00%</span>
+            </div>
         </div>
 
         <!-- کادر شیشه‌ای هوش مصنوعی جمنای کاملا ایزوله (بخش دیدبان زنده) -->
@@ -1101,6 +1191,57 @@
             return cachedDailyHistory;
         }
 
+        // متغیر نگهدارنده حالت نمایش تاریخچه (عادی یا مثبت‌های طلا-سبز)
+        let isOnlyPositivesMode = false;
+
+        // تابع کلیک روی هدر تاریخچه برای مدیریت دکمه سوئیچ بدون باز/بسته شدن آکاردئون
+        function handleHistoryHeaderClick(event, tabName) {
+            // اگر کاربر دکمه سوئیچ 🔁 را کلیک کرد، فقط حالت نمایش را تغییر بده و منو را باز/بسته نکن
+            if (event.target.closest('.history-switch-btn')) {
+                event.stopPropagation();
+                toggleOnlyPositivesMode(tabName);
+                return;
+            }
+            toggleHistoryMenu(tabName);
+        }
+
+        // سوئیچ بین حالت تاریخچه عادی و تاریخچه مثبت‌های طلا-سبز
+        function toggleOnlyPositivesMode(tabName) {
+            isOnlyPositivesMode = !isOnlyPositivesMode;
+
+            const liveTitle = document.getElementById('live-history-title');
+            const switchBtn = document.getElementById('live-history-switch-btn');
+
+            if (isOnlyPositivesMode) {
+                if (liveTitle) liveTitle.innerText = "🌟 تاریخچه زرین سودهای مثبت";
+                if (switchBtn) {
+                    switchBtn.style.background = 'rgba(52, 211, 153, 0.25)';
+                    switchBtn.style.borderColor = 'rgba(52, 211, 153, 0.4)';
+                }
+            } else {
+                if (liveTitle) liveTitle.innerText = "📜 تاریخچه کامل سودها";
+                if (switchBtn) {
+                    switchBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+                    switchBtn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                }
+            }
+
+            // تضمین می‌کنیم که آکاردئون باز بماند یا باز شود
+            const content = document.getElementById(`${tabName}-history-content`);
+            const arrow = document.getElementById(`${tabName}-history-arrow`);
+            if (content && !content.classList.contains('open')) {
+                content.classList.add('open');
+                arrow.classList.add('open');
+                historyOpenState[tabName] = true;
+            }
+
+            // رندر مجدد منو و بازطراحی چارت
+            renderHistoryMenus();
+            setTimeout(() => {
+                renderGrowthChart(tabName);
+            }, 50);
+        }
+
         // مدیریت باز و بسته کردن آکاردئونی تاریخچه سودها در هر دو تب
         const historyOpenState = {
             live: false,
@@ -1139,9 +1280,10 @@
             }
         }
 
-        // رندر کردن منوی کشویی تاریخچه
+        // رندر کردن منوی کشویی تاریخچه با پشتیبانی از سیستم گروه‌بندی طلایی سودهای مثبت
         function renderHistoryMenus() {
             const history = calculateDailyHistory();
+            const appsInfo = getAppPercentData();
 
             ['live', 'analysis'].forEach(tabName => {
                 const listEl = document.getElementById(`${tabName}-history-list`);
@@ -1154,71 +1296,169 @@
                     return;
                 }
 
-                listEl.innerHTML = history.map(item => {
-                    const isTabAnalysis = tabName === 'analysis';
-                    const val = isTabAnalysis ? (item.value / 6) : item.value;
-                    const precision = isTabAnalysis ? 3 : 2;
-                    const isPositive = val >= 0;
-                    const valueSign = isPositive ? '+' : '';
-                    const dateText = formatHistoryDate(item.dayString);
+                // اگر در حالت «فقط مثبت‌ها» باشیم (فقط برای تب لایو)
+                if (isOnlyPositivesMode && tabName === 'live') {
+                    // فیلتر کردن روزهایی که حداقل یک اپلیکیشن مقدار مثبت داشته است
+                    const filteredHistory = history.filter(dayItem => {
+                        const dayEndTs = dayItem.timestamp + (24 * 60 * 60 * 1000) - 1;
+                        let hasPositiveApp = false;
 
-                    const tomanVal = isTabAnalysis ? (item.tomanValue / 6) : item.tomanValue;
-                    const isTomanPositive = tomanVal >= 0;
-                    const tomanValueSign = isTomanPositive ? '+' : '';
-                    const tomanDisplay = `${tomanValueSign}${Math.round(tomanVal).toLocaleString('en-US')} تومان`;
-
-                    const tomanSpan = isTabAnalysis ? '' : `
-                        <span style="font-size: 0.8rem; font-weight: bold;" class="${isTomanPositive ? 'positive' : 'negative'}">💰 ${tomanDisplay}</span>
-                    `;
-
-                    return `
-                        <div class="history-item">
-                            <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
-                                <span class="history-item-date">📅 ${dateText}</span>
-                                ${tomanSpan}
-                            </div>
-                            <span class="history-item-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${val.toFixed(precision)}%</span>
-                        </div>
-                    `;
-                }).join('');
-
-                // پیاده‌سازی شمارشگر عددی روزهای سبز و قرمز به شکل پویا
-                if (statsEl) {
-                    statsEl.style.display = 'flex';
-                    let positiveCount = 0;
-                    let negativeCount = 0;
-
-                    history.forEach(item => {
-                        const val = tabName === 'analysis' ? (item.value / 6) : item.value;
-                        if (val > 0) positiveCount++;
-                        else if (val < 0) negativeCount++;
+                        appsInfo.forEach(app => {
+                            let lastVal = null;
+                            if (app.data) {
+                                for (let i = app.data.length - 1; i >= 0; i--) {
+                                    if (app.data[i].timestamp <= dayEndTs) {
+                                        lastVal = app.data[i].value;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (lastVal !== null && lastVal > 0) {
+                                hasPositiveApp = true;
+                            }
+                        });
+                        return hasPositiveApp;
                     });
 
-                    const diff = positiveCount - negativeCount;
-                    let statsWittyText = '';
-                    if (positiveCount > negativeCount) {
-                        statsWittyText = `ارتش سبزپوش صعودی با اختلاف ${diff} روز جلوتره! خرس‌های قرمز بیچاره دارن زار زار گریه می‌کنن! 🟢🥳🚀`;
-                    } else if (negativeCount > positiveCount) {
-                        statsWittyText = `ای دل غافل! لشکر قرمزهای خرس‌نما با اختلاف ${Math.abs(diff)} روز جلو زدن. یه دمنوش بابونه بنوشید تا ان‌شاءالله فردا سبز بشیم! 🔴🐻☕`;
-                    } else {
-                        statsWittyText = `تساوی مقتدرانه! گاوهای سبز و خرس‌های سرخ شانه به شانه هم ایستادن. بازار کاملاً صلح‌آمیزه! 🕊️🤝`;
+                    if (filteredHistory.length === 0) {
+                        listEl.innerHTML = `<div class="no-data-hint" style="padding: 15px 0;">📭 هیچ روز طلایی با بازدهی مثبت یافت نشد!</div>`;
+                        if (statsEl) statsEl.style.display = 'none';
+                        return;
                     }
 
-                    statsEl.innerHTML = `
-                        <div class="stats-badge-container">
-                            <div class="stats-badge green-badge">
-                                <span>روزهای سبز (مثبت)</span>
-                                <span class="stats-badge-val">🟢 ${positiveCount}</span>
+                    listEl.innerHTML = filteredHistory.map(dayItem => {
+                        const dateText = formatHistoryDate(dayItem.dayString);
+                        const dayEndTs = dayItem.timestamp + (24 * 60 * 60 * 1000) - 1;
+
+                        let appsHtml = '';
+                        let hasAnyPositive = false;
+
+                        appsInfo.forEach(app => {
+                            let lastVal = null;
+                            if (app.data) {
+                                for (let i = app.data.length - 1; i >= 0; i--) {
+                                    if (app.data[i].timestamp <= dayEndTs) {
+                                        lastVal = app.data[i].value;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (lastVal !== null) {
+                                const isPositive = lastVal > 0;
+                                const isNegative = lastVal < 0;
+                                const valueSign = lastVal >= 0 ? '+' : '';
+
+                                // کلاس و استایل انیمیشن پالس برای مثبت‌ها
+                                const pulseClass = isPositive ? 'gold-pulse-card' : '';
+                                const colorClass = isPositive ? 'positive' : (isNegative ? 'negative' : '');
+                                const extraStyle = isPositive ? 'padding: 8px 12px; font-weight: bold; color: #34d399;' : '';
+
+                                appsHtml += `
+                                    <div class="history-sub-item ${pulseClass}" style="${extraStyle}">
+                                        <span>${app.title}</span>
+                                        <span class="${colorClass}" style="direction: ltr; font-weight: 800;">${valueSign}${lastVal.toFixed(2)}%</span>
+                                    </div>
+                                `;
+                                if (isPositive) hasAnyPositive = true;
+                            }
+                        });
+
+                        // گروه‌بندی روزانه با نبض‌زدن کل باکس در صورتی که حداقل یک صندوق مثبت داشته باشیم
+                        const dayPulseClass = hasAnyPositive ? 'gold-pulse-card' : '';
+
+                        return `
+                            <div class="history-day-group ${dayPulseClass}" style="padding: 14px; margin-bottom: 12px;">
+                                <div class="history-day-group-header">
+                                    <span style="font-size: 0.95rem; font-weight: bold; color: #fbbf24;">📅 ${dateText}</span>
+                                    <span style="font-size: 0.75rem; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 8px; color: #fff;">روز طلایی</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+                                    ${appsHtml}
+                                </div>
                             </div>
-                            <div class="stats-badge red-badge">
-                                <span>روزهای قرمز (منفی)</span>
-                                <span class="stats-badge-val">🔴 ${negativeCount}</span>
+                        `;
+                    }).join('');
+
+                    // در حالت فقط مثبت‌ها، آمار روزهای سبز و قرمز نیازی نیست یا نمایش متناسب دارد
+                    if (statsEl) {
+                        statsEl.style.display = 'flex';
+                        statsEl.innerHTML = `
+                            <div class="stats-badge" style="background: rgba(251, 191, 36, 0.1); color: #fbbf24; border-color: rgba(251, 191, 36, 0.2); flex: 1; width: 100%;">
+                                <span>تعداد روزهای با سودهای درخشان و طلایی:</span>
+                                <span class="stats-badge-val">🌟 ${filteredHistory.length} روز رویایی</span>
                             </div>
-                        </div>
-                        <div class="stats-witty-text">
-                            ${statsWittyText}
-                        </div>
-                    `;
+                        `;
+                    }
+
+                } else {
+                    // حالت عادی (پیش‌فرض)
+                    listEl.innerHTML = history.map(item => {
+                        const isTabAnalysis = tabName === 'analysis';
+                        const val = isTabAnalysis ? (item.value / 6) : item.value;
+                        const precision = isTabAnalysis ? 3 : 2;
+                        const isPositive = val >= 0;
+                        const valueSign = isPositive ? '+' : '';
+                        const dateText = formatHistoryDate(item.dayString);
+
+                        const tomanVal = isTabAnalysis ? (item.tomanValue / 6) : item.tomanValue;
+                        const isTomanPositive = tomanVal >= 0;
+                        const tomanValueSign = isTomanPositive ? '+' : '';
+                        const tomanDisplay = `${tomanValueSign}${Math.round(tomanVal).toLocaleString('en-US')} تومان`;
+
+                        const tomanSpan = isTabAnalysis ? '' : `
+                            <span style="font-size: 0.8rem; font-weight: bold;" class="${isTomanPositive ? 'positive' : 'negative'}">💰 ${tomanDisplay}</span>
+                        `;
+
+                        return `
+                            <div class="history-item">
+                                <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+                                    <span class="history-item-date">📅 ${dateText}</span>
+                                    ${tomanSpan}
+                                </div>
+                                <span class="history-item-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${val.toFixed(precision)}%</span>
+                            </div>
+                        `;
+                    }).join('');
+
+                    // پیاده‌سازی شمارشگر عددی روزهای سبز و قرمز به شکل پویا
+                    if (statsEl) {
+                        statsEl.style.display = 'flex';
+                        let positiveCount = 0;
+                        let negativeCount = 0;
+
+                        history.forEach(item => {
+                            const val = tabName === 'analysis' ? (item.value / 6) : item.value;
+                            if (val > 0) positiveCount++;
+                            else if (val < 0) negativeCount++;
+                        });
+
+                        const diff = positiveCount - negativeCount;
+                        let statsWittyText = '';
+                        if (positiveCount > negativeCount) {
+                            statsWittyText = `ارتش سبزپوش صعودی با اختلاف ${diff} روز جلوتره! خرس‌های قرمز بیچاره دارن زار زار گریه می‌کنن! 🟢🥳🚀`;
+                        } else if (negativeCount > positiveCount) {
+                            statsWittyText = `ای دل غافل! لشکر قرمزهای خرس‌نما با اختلاف ${Math.abs(diff)} روز جلو زدن. یه دمنوش بابونه بنوشید تا ان‌شاءالله فردا سبز بشیم! 🔴🐻☕`;
+                        } else {
+                            statsWittyText = `تساوی مقتدرانه! گاوهای سبز و خرس‌های سرخ شانه به شانه هم ایستادن. بازار کاملاً صلح‌آمیزه! 🕊️🤝`;
+                        }
+
+                        statsEl.innerHTML = `
+                            <div class="stats-badge-container">
+                                <div class="stats-badge green-badge">
+                                    <span>روزهای سبز (مثبت)</span>
+                                    <span class="stats-badge-val">🟢 ${positiveCount}</span>
+                                </div>
+                                <div class="stats-badge red-badge">
+                                    <span>روزهای قرمز (منفی)</span>
+                                    <span class="stats-badge-val">🔴 ${negativeCount}</span>
+                                </div>
+                            </div>
+                            <div class="stats-witty-text">
+                                ${statsWittyText}
+                            </div>
+                        `;
+                    }
                 }
             });
         }
@@ -1564,6 +1804,8 @@
             const liveTotalContainer = document.getElementById('live-total-container');
             const liveTotalValue = document.getElementById('live-total-value');
             const liveTotalTomanValue = document.getElementById('live-total-toman-value');
+            const livePositiveTotalValue = document.getElementById('live-positive-total-value');
+
             if (hasLiveRecords || liveTomanSum !== 0) {
                 liveTotalContainer.style.display = 'block';
                 const isPositive = liveSum >= 0;
@@ -1581,6 +1823,19 @@
                 const liveTomanValueSign = isLiveTomanPositive ? '+' : '';
                 liveTotalTomanValue.innerText = `💰 ${liveTomanValueSign}${liveTomanSum.toLocaleString('en-US')} تومان`;
                 liveTotalTomanValue.className = isLiveTomanPositive ? 'positive' : 'negative';
+
+                // محاسبه مجموع درصدهای مثبت امروز (فقط صندوق‌های با مقدار بزرگتر از صفر)
+                let todayPositiveSum = 0;
+                appsInfo.forEach(app => {
+                    const lastItem = app.data && app.data.length > 0 ? app.data[app.data.length - 1] : null;
+                    if (lastItem && lastItem.value > 0) {
+                        todayPositiveSum += lastItem.value;
+                    }
+                });
+
+                if (livePositiveTotalValue) {
+                    livePositiveTotalValue.innerText = `+${todayPositiveSum.toFixed(2)}%`;
+                }
             } else {
                 liveTotalContainer.style.display = 'none';
             }
