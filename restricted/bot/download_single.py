@@ -73,7 +73,7 @@ async def main_download():
                 # REVOLUTIONARY FIX: Also search globally in public messages to find even more relevant channels!
                 try:
                     print("Running global public message search to extract more relevant channels...")
-                    async for message in userbot.search_global_messages(query=query, limit=250):
+                    async for message in userbot.search_global_messages(query=query, limit=1000):
                         if message.chat and getattr(message.chat, 'username', None):
                             title = getattr(message.chat, 'title', "بدون عنوان")
                             username = getattr(message.chat, 'username')
