@@ -1118,15 +1118,14 @@
             const container = document.getElementById('canvasContainer');
             const canvas = document.getElementById('canvas');
 
-            const cardRect = card.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
+            const relativeBox = getRelativeCoords(card, canvas);
 
-            // Calculate offset to bring target exactly to center
+            // محاسبه مرکز کارت بر اساس مقیاس فعلی برای تنظیم دوربین به صورت روان
             const currentScale = scale;
 
-            // Core coordinate formulas to reposition canvas correctly
-            panX = (containerRect.width / 2) - (cardRect.width / 2) - (card.offsetLeft * currentScale);
-            panY = (containerRect.height / 2) - (cardRect.height / 2) - (card.offsetTop * currentScale);
+            panX = (containerRect.width / 2) - (relativeBox.centerX * currentScale);
+            panY = (containerRect.height / 2) - (relativeBox.centerY * currentScale);
 
             updateTransform();
         }
@@ -1243,7 +1242,7 @@
             if (renderedPatGrands < 2) {
                 const missing = 2 - renderedPatGrands;
                 for (let i = 0; i < missing; i++) {
-                    grandparentsRow.appendChild(createPlaceholderCard('paternal_grand', i === 0 && renderedPatGrands === 0 ? 'پدربزرگ پدری' : 'مادربزرگ پدری', active.id));
+                    grandparentsRow.appendChild(createPlaceholderCard('paternal_grand', i === 0 && renderedPatGrands === 0 ? '➕ پدربزرگ پدری' : '➕ مادربزرگ پدری', active.id));
                 }
             }
 
@@ -1259,7 +1258,7 @@
             if (renderedMatGrands < 2) {
                 const missing = 2 - renderedMatGrands;
                 for (let i = 0; i < missing; i++) {
-                    grandparentsRow.appendChild(createPlaceholderCard('maternal_grand', i === 0 && renderedMatGrands === 0 ? 'پدربزرگ مادری' : 'مادربزرگ مادری', active.id));
+                    grandparentsRow.appendChild(createPlaceholderCard('maternal_grand', i === 0 && renderedMatGrands === 0 ? '➕ پدربزرگ مادری' : '➕ مادربزرگ مادری', active.id));
                 }
             }
 
@@ -1282,7 +1281,7 @@
             const targetSpousesCount = active.isMarried ? parseInt(active.spousesCount || 1) : 0;
             if (targetSpousesCount > currentSpousesCount) {
                 for (let i = 0; i < (targetSpousesCount - currentSpousesCount); i++) {
-                    const spousePlaceholder = createPlaceholderCard('spouse', `همسر جدید ${i + 1}`, active.id);
+                    const spousePlaceholder = createPlaceholderCard('spouse', `➕ همسر ${i + 1}`, active.id);
                     // Add attention class if this is the target spotlight
                     if (highlightChainNodeId === 'spouse_' + i) {
                         spousePlaceholder.querySelector('.member-card').classList.add('chain-attention');
@@ -1306,7 +1305,7 @@
             if (renderedParents < 2) {
                 const missing = 2 - renderedParents;
                 for (let i = 0; i < missing; i++) {
-                    parentsRow.appendChild(createPlaceholderCard('parent', i === 0 && renderedParents === 0 ? 'پدر' : 'مادر', active.id));
+                    parentsRow.appendChild(createPlaceholderCard('parent', i === 0 && renderedParents === 0 ? '➕ پدر' : '➕ مادر', active.id));
                 }
             }
 
@@ -1326,7 +1325,7 @@
             if (targetChildrenCount > renderedChildren) {
                 const missing = targetChildrenCount - renderedChildren;
                 for (let i = 0; i < missing; i++) {
-                    const childPlaceholder = createPlaceholderCard('child', `فرزند ${renderedChildren + i + 1}`, active.id);
+                    const childPlaceholder = createPlaceholderCard('child', `➕ فرزند ${renderedChildren + i + 1}`, active.id);
                     if (highlightChainNodeId === 'child_' + i) {
                         childPlaceholder.querySelector('.member-card').classList.add('chain-attention');
                     }
@@ -1340,6 +1339,10 @@
                 // If there's a newly highlighted placeholder, smoothly center camera on it!
                 if (highlightChainNodeId) {
                     centerCameraOnCard('.chain-attention');
+                    showToast('💡 کادر درخشانِ متصل بعدی را پر کنید!');
+                } else {
+                    // زوم بک خودکار بعد از اتمام ثبت برای نمایش کامل درخت
+                    centerCameraOnCard('.active-focus');
                 }
             }, 50);
         }
@@ -2033,18 +2036,41 @@
                 }
 
                 members[newId] = newMember;
-                focusedId = newId;
+                // در اینجا فوکوس اصلی را روی جد بزرگ/والد متصل قبلی (focusedId فعلی) نگه می‌داریم تا بقیه کادرها و اتصالات غیب نشوند!
+                // اگر عضو اول بود که والدی نداشت، طبیعتا خودش فوکوس می‌گیرد.
+                let oldFocusedId = focusedId;
+                if (!oldFocusedId) {
+                    focusedId = newId;
+                }
+
                 showToast(`عضو جدید "${name}" با موفقیت ثبت شد.`);
 
-                // Determine Chain Focus: Spotlight next empty placeholder
-                // If married with children, automatically prompt focus chain spotlight
-                if (newMember.isMarried && newMember.childrenCount > 0) {
-                    highlightChainNodeId = 'child_0'; // Highlight first child placeholder
-                } else if (newMember.isMarried && newMember.spousesCount > 0) {
-                    highlightChainNodeId = 'spouse_0';
+                // تعیین کادر خالیِ بعدی برای افکت درخشش هوشمند و راهنمایی کاربر
+                if (relationType === 'child') {
+                    // اگر فرزند اضافه شد، بررسی می‌کنیم فرزند بعدی وجود دارد یا خیر
+                    const activeNode = members[oldFocusedId];
+                    const targetChildrenCount = activeNode.isMarried ? parseInt(activeNode.childrenCount || 0) : 0;
+                    const renderedChildren = activeNode.children ? activeNode.children.length : 0;
+                    if (targetChildrenCount > renderedChildren) {
+                        highlightChainNodeId = 'child_' + (renderedChildren - 1);
+                    } else {
+                        highlightChainNodeId = null;
+                    }
+                } else if (relationType === 'spouse') {
+                    const activeNode = members[oldFocusedId];
+                    const targetSpousesCount = activeNode.isMarried ? parseInt(activeNode.spousesCount || 1) : 0;
+                    const renderedSpouses = activeNode.spouses ? activeNode.spouses.length : 0;
+                    if (targetSpousesCount > renderedSpouses) {
+                        highlightChainNodeId = 'spouse_' + (renderedSpouses - 1);
+                    } else {
+                        highlightChainNodeId = null;
+                    }
                 } else {
                     highlightChainNodeId = null;
                 }
+
+                // کوچک‌نمایی دوربین به مقدار ۰.۷۵ برای ارائه نمای کلی شیک از دور (Zoom out)
+                scale = 0.75;
 
             } else if (formMode === 'edit' && editingMemberId) {
                 const em = members[editingMemberId];
