@@ -534,6 +534,13 @@
             'tgApiId', 'tgApiHash', 'tgBotToken', 'tgSession', 'tgOwner'
         ];
 
+        // تابع ضدعفونی‌کننده کاراکترهای مخفی و جهت‌دهی نامرئی یونیکد
+        function sanitizeString(str) {
+            if (typeof str !== 'string') return str;
+            // حذف تمام کاراکترهای نامرئی، فواصل صفر، نشانگرهای یونیکد جهت متن و کاراکترهای کنترلی مخفی
+            return str.replace(/[\u200b-\u200d\u200e\u200f\u202a-\u202e\ufeff\u2000-\u200f\u2028-\u202f\u205f-\u206f]/g, '').trim();
+        }
+
         // لاگین دیباگ
         function logDebug(message, type = 'info') {
             const consoleEl = document.getElementById('debugConsole');
@@ -546,31 +553,42 @@
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
 
-        // لود مقادیر ذخیره شده
+        // لود مقادیر ذخیره شده همراه با ضدعفونی خودکار
         logDebug("در حال راه‌اندازی و بارگذاری متغیرهای ذخیره شده...");
         inputs.forEach(id => {
-            const val = localStorage.getItem('restricted_bot_' + id);
+            let val = localStorage.getItem('restricted_bot_' + id);
             if (val) {
+                val = sanitizeString(val);
                 document.getElementById(id).value = val;
+                localStorage.setItem('restricted_bot_' + id, val);
             } else if (id === 'ghBranch') {
                 document.getElementById(id).value = '56'; // مقدار پیش‌فرض ۵۶
             }
 
-            // ذخیره خودکار هنگام تایپ
+            // ذخیره خودکار و ضدعفونی همزمان هنگام کپی/پیست یا تایپ
             document.getElementById(id).addEventListener('input', (e) => {
-                localStorage.setItem('restricted_bot_' + id, e.target.value);
+                const cleaned = sanitizeString(e.target.value);
+                if (cleaned !== e.target.value) {
+                    const start = e.target.selectionStart;
+                    const end = e.target.selectionEnd;
+                    e.target.value = cleaned;
+                    try {
+                        e.target.setSelectionRange(start, end);
+                    } catch (err) {}
+                }
+                localStorage.setItem('restricted_bot_' + id, cleaned);
                 updateEnvPreview();
             });
         });
-        logDebug("متغیرهای محلی با موفقیت بازیابی شدند.");
+        logDebug("متغیرهای محلی با موفقیت بازیابی و ضدعفونی شدند.");
 
         // تولید پیش‌نمایش فایل تنظیمات
         function updateEnvPreview() {
-            const apiId = document.getElementById('tgApiId').value || '123456';
-            const apiHash = document.getElementById('tgApiHash').value || 'abcdef0123456789';
-            const botToken = document.getElementById('tgBotToken').value || '7684123895:AAFv...';
-            const session = document.getElementById('tgSession').value || 'BQB...';
-            const ownerId = document.getElementById('tgOwner').value || '987654321';
+            const apiId = sanitizeString(document.getElementById('tgApiId').value) || '123456';
+            const apiHash = sanitizeString(document.getElementById('tgApiHash').value) || 'abcdef0123456789';
+            const botToken = sanitizeString(document.getElementById('tgBotToken').value) || '7684123895:AAFv...';
+            const session = sanitizeString(document.getElementById('tgSession').value) || 'BQB...';
+            const ownerId = sanitizeString(document.getElementById('tgOwner').value) || '987654321';
 
             const previewText = `API_ID=${apiId}\nAPI_HASH=${apiHash}\nBOT_TOKEN=${botToken}\nSESSION_STRING=${session}\nOWNER_ID=${ownerId}`;
             document.getElementById('envPreview').innerText = previewText;
@@ -598,9 +616,9 @@
 
         // دریافت وضعیت گیت هاب به صورت داینامیک
         async function fetchGitHubStatus() {
-            const owner = document.getElementById('ghOwner').value;
-            const repo = document.getElementById('ghRepo').value;
-            const pat = document.getElementById('ghPat').value;
+            const owner = sanitizeString(document.getElementById('ghOwner').value);
+            const repo = sanitizeString(document.getElementById('ghRepo').value);
+            const pat = sanitizeString(document.getElementById('ghPat').value);
             const dot = document.querySelector('.status-dot');
             const txt = document.getElementById('statusText');
 
@@ -663,16 +681,16 @@
 
         // صدور دستور شروع سرور یا دانلود یا سرچ
         async function triggerWorkflow(downloadLink = null) {
-            const owner = document.getElementById('ghOwner').value;
-            const repo = document.getElementById('ghRepo').value;
-            const pat = document.getElementById('ghPat').value;
-            const branch = document.getElementById('ghBranch').value || '56';
+            const owner = sanitizeString(document.getElementById('ghOwner').value);
+            const repo = sanitizeString(document.getElementById('ghRepo').value);
+            const pat = sanitizeString(document.getElementById('ghPat').value);
+            const branch = sanitizeString(document.getElementById('ghBranch').value) || '56';
 
-            const tgApiId = document.getElementById('tgApiId').value;
-            const tgApiHash = document.getElementById('tgApiHash').value;
-            const tgBotToken = document.getElementById('tgBotToken').value;
-            const tgSession = document.getElementById('tgSession').value;
-            const tgOwner = document.getElementById('tgOwner').value;
+            const tgApiId = sanitizeString(document.getElementById('tgApiId').value);
+            const tgApiHash = sanitizeString(document.getElementById('tgApiHash').value);
+            const tgBotToken = sanitizeString(document.getElementById('tgBotToken').value);
+            const tgSession = sanitizeString(document.getElementById('tgSession').value);
+            const tgOwner = sanitizeString(document.getElementById('tgOwner').value);
 
             if (!owner || !repo || !pat) {
                 showToast("⚠️ لطفاً اطلاعات دسترسی گیت‌هاب را ابتدا وارد کنید!");
