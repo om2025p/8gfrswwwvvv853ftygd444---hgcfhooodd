@@ -44,7 +44,9 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
         msg_link = msg_link.split("?single")[0]
     msg_id = int(msg_link.split("/")[-1]) + int(i)
     height, width, duration, thumb_path = 90, 90, 0, None
-    if 't.me/c/' or 't.me/b/' in msg_link:
+
+    # CRITICAL BUG FIX: Use exact string presence check instead of 't.me/c/' or 't.me/b/' in msg_link
+    if 't.me/c/' in msg_link or 't.me/b/' in msg_link:
         if 't.me/b/' in msg_link:
             chat = str(msg_link.split("/")[-2])
         else:
@@ -209,19 +211,113 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
             pass
         await edit.delete()
     else:
-        edit = await client.edit_message_text(sender, edit_id, "Cloning.")
-        chat =  msg_link.split("t.me")[1].split("/")[1]
+        # Public Channel Link
+        edit = await client.edit_message_text(sender, edit_id, "Cloning public link...")
+        chat = msg_link.split("t.me")[1].split("/")[1]
         try:
             msg = await client.get_messages(chat, msg_id)
             if msg.empty:
                 new_link = f't.me/b/{chat}/{int(msg_id)}'
-                #recurrsion
+                # recursion
                 return await get_msg(userbot, client, bot, sender, edit_id, new_link, i)
+
+            # Try to copy message directly
             await client.copy_message(sender, chat, msg_id)
+            await edit.delete()
         except Exception as e:
-            print(e)
-            return await client.edit_message_text(sender, edit_id, f'Failed to save: `{msg_link}`\n\nError: {str(e)}')
-        await edit.delete()
+            print(f"Direct copy of public message failed: {e}. Falling back to download/upload...")
+            try:
+                # Get message via userbot instead (handles restricted/protected public channels)
+                msg = await userbot.get_messages(chat, msg_id)
+                if msg.empty:
+                    await client.edit_message_text(sender, edit_id, f'Failed to save public link: Message is empty or unavailable.')
+                    return
+
+                if msg.media:
+                    await edit.edit("Downloading public restricted media...")
+                    file = await userbot.download_media(
+                        msg,
+                        progress=progress_for_pyrogram,
+                        progress_args=(
+                            client,
+                            "**DOWNLOADING (FALLBACK):**\n",
+                            edit,
+                            time.time()
+                        )
+                    )
+                    await edit.edit('Preparing to Upload!')
+                    caption = msg.caption if msg.caption is not None else None
+
+                    if msg.media==MessageMediaType.VIDEO_NOTE:
+                        data = video_metadata(file)
+                        height, width, duration = data["height"], data["width"], data["duration"]
+                        try:
+                            thumb_path = await screenshot(file, duration, sender)
+                        except Exception:
+                            thumb_path = None
+                        await client.send_video_note(
+                            chat_id=sender,
+                            video_note=file,
+                            length=height, duration=duration,
+                            thumb=thumb_path,
+                            progress=progress_for_pyrogram,
+                            progress_args=(
+                                client,
+                                '**UPLOADING:**\n',
+                                edit,
+                                time.time()
+                            )
+                        )
+                    elif msg.media==MessageMediaType.VIDEO and msg.video.mime_type in ["video/mp4", "video/x-matroska"]:
+                        data = video_metadata(file)
+                        height, width, duration = data["height"], data["width"], data["duration"]
+                        try:
+                            thumb_path = await screenshot(file, duration, sender)
+                        except Exception:
+                            thumb_path = None
+                        await client.send_video(
+                            chat_id=sender,
+                            video=file,
+                            caption=caption,
+                            supports_streaming=True,
+                            height=height, width=width, duration=duration,
+                            thumb=thumb_path,
+                            progress=progress_for_pyrogram,
+                            progress_args=(
+                                client,
+                                '**UPLOADING:**\n',
+                                edit,
+                                time.time()
+                            )
+                        )
+                    elif msg.media==MessageMediaType.PHOTO:
+                        await edit.edit("Uploading photo.")
+                        await bot.send_file(sender, file, caption=caption)
+                    else:
+                        thumb_path=thumbnail(sender)
+                        await client.send_document(
+                            sender,
+                            file,
+                            caption=caption,
+                            thumb=thumb_path,
+                            progress=progress_for_pyrogram,
+                            progress_args=(
+                                client,
+                                '**UPLOADING:**\n',
+                                edit,
+                                time.time()
+                    )
+                )
+                    try:
+                        os.remove(file)
+                    except:
+                        pass
+                elif msg.text:
+                    await client.send_message(sender, msg.text.markdown)
+                await edit.delete()
+            except Exception as ex:
+                print(ex)
+                await client.edit_message_text(sender, edit_id, f'Failed to save public link: `{msg_link}`\n\nError: {str(ex)}')
 
 async def get_bulk_msg(userbot, client, sender, msg_link, i):
     x = await client.send_message(sender, "Processing!")
