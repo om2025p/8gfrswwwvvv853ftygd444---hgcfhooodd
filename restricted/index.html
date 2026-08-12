@@ -383,6 +383,9 @@
                 <button class="action-btn" id="btnLaunchServer">
                     🚀 روشن کردن ربات برای دانلودهای مداوم (۶ ساعته)
                 </button>
+                <button class="action-btn" id="btnStopServer" style="background: linear-gradient(135deg, rgba(255, 30, 100, 0.25), rgba(157, 78, 221, 0.15)); border-color: #ff3366; box-shadow: 0 0 15px rgba(255, 51, 102, 0.35);">
+                    🛑 خاموش کردن موتور ابری (توقف فوری ربات)
+                </button>
             </div>
         </div>
 
@@ -534,6 +537,8 @@
             'tgApiId', 'tgApiHash', 'tgBotToken', 'tgSession', 'tgOwner'
         ];
 
+        let activeRunId = null; // ذخیره شناسه آخرین ورک‌فلو جهت توقف فوری
+
         // تابع ضدعفونی‌کننده کاراکترهای مخفی و جهت‌دهی نامرئی یونیکد
         function sanitizeString(str) {
             if (typeof str !== 'string') return str;
@@ -643,6 +648,7 @@
                     const data = await response.json();
                     if (data.workflow_runs && data.workflow_runs.length > 0) {
                         const run = data.workflow_runs[0];
+                        activeRunId = run.id; // ذخیره شناسه جهت توقف اضطراری
                         const status = run.status; // queued, in_progress, completed
                         const conclusion = run.conclusion; // success, failure, cancelled
 
@@ -795,6 +801,51 @@
 
         // رویداد دکمه‌ها
         document.getElementById('btnLaunchServer').onclick = () => triggerWorkflow();
+
+        document.getElementById('btnStopServer').onclick = async () => {
+            const owner = sanitizeString(document.getElementById('ghOwner').value);
+            const repo = sanitizeString(document.getElementById('ghRepo').value);
+            const pat = sanitizeString(document.getElementById('ghPat').value);
+
+            if (!owner || !repo || !pat) {
+                showToast("⚠️ تنظیمات دسترسی گیت‌هاب را وارد کنید!");
+                logDebug("خطای لغو: تنظیمات گیت‌هاب تکمیل نیست.", "error");
+                return;
+            }
+
+            if (!activeRunId) {
+                showToast("⚠️ ورک‌فلو در حال اجرایی یافت نشد!");
+                logDebug("خطای لغو: شناسه فعال ورک‌فلو (activeRunId) تهی است.", "error");
+                return;
+            }
+
+            showToast("🛑 در حال ارسال دستور خاموشی به سرور...");
+            logDebug(`ارسال دستور لغو برای ورک‌فلو با شناسه: ${activeRunId}`);
+
+            try {
+                const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${activeRunId}/cancel`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${pat}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (response.status === 202 || response.ok) {
+                    showToast("🛑 موتور ابری گیت‌هاب با موفقیت خاموش شد!");
+                    logDebug("سیگنال لغو ورک‌فلو با موفقیت صادر شد (HTTP 202).", "success");
+                    setTimeout(fetchGitHubStatus, 3000);
+                } else {
+                    const errText = await response.text().catch(() => '');
+                    logDebug(`پاسخ خطا در متوقف کردن ورک‌فلو: کد ${response.status}. متن: ${errText}`, 'error');
+                    showToast("❌ خطا در متوقف کردن سرور!");
+                }
+            } catch (err) {
+                logDebug(`خطا در ارتباط شبکه با گیت‌هاب: ${err.message}`, 'error');
+                showToast("❌ عدم ارتباط شبکه با سرور گیت‌هاب!");
+            }
+        };
 
         document.getElementById('btnDownload').onclick = () => {
             const link = document.getElementById('dlLink').value;

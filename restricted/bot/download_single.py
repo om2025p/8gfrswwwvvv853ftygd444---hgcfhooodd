@@ -58,6 +58,21 @@ async def main_download():
                             members = getattr(chat, 'participants_count', None)
                             channels.append((title, username, members))
 
+                # REVOLUTIONARY FIX: Also search globally in public messages to find even more relevant channels!
+                try:
+                    print("Running global public message search to extract more relevant channels...")
+                    async for message in userbot.search_global_messages(query=query, limit=250):
+                        if message.chat and getattr(message.chat, 'username', None):
+                            title = getattr(message.chat, 'title', "بدون عنوان")
+                            username = getattr(message.chat, 'username')
+                            members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
+
+                            # Add if not already in channels list
+                            if not any(username.lower() == c[1].lower() for c in channels):
+                                channels.append((title, username, members))
+                except Exception as ex:
+                    print(f"Global message search failed or ignored: {ex}")
+
                 if not channels:
                     await Bot.edit_message_text(owner_id, msg.id, f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
                     return
