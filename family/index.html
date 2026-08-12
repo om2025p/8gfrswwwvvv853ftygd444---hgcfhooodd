@@ -766,10 +766,15 @@
     <!-- Empty State -->
     <div class="empty-state" id="emptyState">
         <div class="empty-icon">🌸</div>
-        <div class="empty-text">از اینجا شروع کنید:<br>اطلاعات قدیمی‌ترین جدی که به یاد دارید (جد بزرگ) را وارد کنید</div>
-        <button class="btn-primary" onclick="openAddDialog(null, 'ancestor')" style="border-radius: 30px; padding: 12px 25px; font-weight: bold; margin-top: 10px;">
-            🌱 ثبت اولین جد
-        </button>
+        <div class="empty-text">بازمانده گرامی، ابتدا مایلید اطلاعات کدام جد بزرگ خود را ثبت و کامل کنید؟</div>
+        <div style="display: flex; gap: 10px; margin-top: 12px;">
+            <button class="btn-primary" onclick="openAddDialog(null, 'ancestor'); setGender('male'); document.getElementById('member-relation').value = 'جد بزرگ پدری';" style="border-radius: 30px; padding: 10px 18px; font-weight: bold; font-size: 0.85rem;">
+                🌱 ثبت اولین جد پدری
+            </button>
+            <button class="btn-primary" onclick="openAddDialog(null, 'ancestor'); setGender('female'); document.getElementById('member-relation').value = 'جد بزرگ مادری';" style="border-radius: 30px; padding: 10px 18px; font-weight: bold; font-size: 0.85rem; background: #689F38 !important;">
+                🌸 ثبت اولین جد مادری
+            </button>
+        </div>
     </div>
 
     <!-- Focus Mode Overlay and Form Dialog -->

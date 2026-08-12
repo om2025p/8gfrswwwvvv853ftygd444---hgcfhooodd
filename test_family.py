@@ -16,13 +16,13 @@ def run_automated_family_tree_tests():
 
         # 1. Verify Empty State is visible
         print("🔍 تایید وجود صفحه خالی شروع کار (Empty State)...")
-        assert page.locator("text=از اینجا شروع کنید").is_visible()
+        assert page.locator("text=بازمانده گرامی").is_visible()
         page.screenshot(path="family_test_empty_state.png")
         print("✅ صفحه خالی با موفقیت ثبت و تایید شد.")
 
         # 2. Click Add First Ancestor
-        print("🌱 کلیک روی دکمه ثبت اولین جد و شروع فازهای ثبت...")
-        page.click("text=ثبت اولین جد")
+        print("🌱 کلیک روی دکمه ثبت اولین جد پدری و شروع فازهای ثبت...")
+        page.click("text=ثبت اولین جد پدری")
         page.wait_for_timeout(300)
 
         # Phase 1: Set male
