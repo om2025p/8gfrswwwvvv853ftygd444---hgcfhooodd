@@ -1,0 +1,2071 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2E7D32">
+    <link rel="manifest" href="manifest.json">
+    <title>شجره‌نامه عمارت</title>
+    <style>
+        :root {
+            --bg-color: #FDFBF7;
+            --card-bg: #FFFFFF;
+            --primary-green: #2E7D32;
+            --secondary-green: #388E3C;
+            --light-green: #E8F5E9;
+            --text-dark: #3E2723;
+            --text-muted: #795548;
+            --border-radius: 16px;
+            --box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100dvh;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-dark);
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        /* Ambient subtle flower decorative pattern in background */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            opacity: 0.04;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><path d='M50 20 C55 35, 65 35, 50 50 C35 35, 45 35, 50 20 Z M50 50 C65 50, 65 60, 50 80 C35 60, 35 50, 50 50 Z' fill='%232E7D32'/></svg>");
+        }
+
+        /* SVG Vine connections layer */
+        #connections-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Interactive Canvas container */
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .canvas {
+            position: absolute;
+            width: 2000px;
+            height: 2000px;
+            transform-origin: 0 0;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .canvas:active {
+            cursor: grabbing;
+        }
+
+        /* UI overlay buttons */
+        .ui-overlay {
+            position: fixed;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .ui-overlay button, .ui-overlay .btn-link {
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(46, 125, 50, 0.2);
+            color: var(--primary-green);
+            padding: 12px 18px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .ui-overlay button:active {
+            transform: scale(0.95);
+            background: var(--light-green);
+        }
+
+        .top-right {
+            top: 15px;
+            right: 15px;
+            align-items: flex-start;
+        }
+
+        .top-left {
+            top: 15px;
+            left: 15px;
+            align-items: flex-end;
+        }
+
+        .bottom-controls {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            flex-direction: row;
+            justify-content: center;
+            width: 90%;
+            max-width: 450px;
+        }
+
+        .bottom-controls button {
+            flex: 1;
+            padding: 14px;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.15);
+        }
+
+        .btn-primary {
+            background: var(--primary-green) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+        }
+
+        .btn-primary:active {
+            background: #1B5E20 !important;
+        }
+
+        /* Tree structure placement inside canvas */
+        .tree-layout {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 70px;
+            width: 1000px;
+            height: 1000px;
+            transform: translate(500px, 500px); /* Centering inside 2000x2000 canvas */
+        }
+
+        /* Sub-rows for parents, spouses, children */
+        .parents-row {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            align-items: center;
+            min-height: 120px;
+        }
+
+        .center-group {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .children-row {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            min-height: 120px;
+            flex-wrap: wrap;
+            max-width: 800px;
+        }
+
+        /* Glassmorphic/Milk White Card Designs */
+        .card-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .member-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border: 2px solid transparent;
+            width: 150px;
+            padding: 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            transition: all var(--transition-speed) ease;
+            cursor: pointer;
+            position: relative;
+            z-index: 5;
+        }
+
+        .member-card.active-focus {
+            border: 2px solid var(--primary-green);
+            transform: scale(1.08);
+            box-shadow: 0 8px 24px rgba(46, 125, 50, 0.15);
+            z-index: 10;
+        }
+
+        .member-card.placeholder {
+            border: 2px dashed rgba(46, 125, 50, 0.3);
+            background-color: rgba(253, 251, 247, 0.6);
+            color: var(--text-muted);
+            opacity: 0.85;
+        }
+
+        .member-card.placeholder:hover, .member-card.placeholder:active {
+            border-color: var(--primary-green);
+            background-color: var(--light-green);
+            opacity: 1;
+        }
+
+        .member-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background-color: var(--light-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            border: 2px solid var(--light-green);
+        }
+
+        .member-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .member-name {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        .member-relation {
+            font-size: 0.75rem;
+            background: var(--light-green);
+            color: var(--primary-green);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .member-status {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Dimming effect for non-focused cards */
+        .dimmed {
+            opacity: 0.35 !important;
+            filter: blur(1.5px);
+        }
+
+        /* Modal/Focus Mode Dialog overlay */
+        .focus-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(62, 39, 35, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .focus-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .focus-dialog {
+            background: #FFFFFF;
+            width: 90%;
+            max-width: 440px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            max-height: 85vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(40px);
+            transition: transform var(--transition-speed) cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(46, 125, 50, 0.1);
+        }
+
+        .focus-overlay.active .focus-dialog {
+            transform: translateY(0);
+        }
+
+        .dialog-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid #F1ECE4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: #FFFFFF;
+            z-index: 10;
+        }
+
+        .dialog-title {
+            font-weight: bold;
+            font-size: 1.15rem;
+            color: var(--primary-green);
+        }
+
+        .dialog-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .dialog-body {
+            padding: 20px;
+            flex: 1;
+        }
+
+        /* Multiphase Steps indicator */
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #F1ECE4;
+            z-index: 1;
+            transform: translateY(-50%);
+        }
+
+        .step-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            border: 2px solid #F1ECE4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            z-index: 2;
+            color: var(--text-muted);
+            transition: all var(--transition-speed);
+        }
+
+        .step-dot.active {
+            border-color: var(--primary-green);
+            background: var(--primary-green);
+            color: #FFFFFF;
+        }
+
+        .step-dot.passed {
+            border-color: var(--primary-green);
+            background: var(--light-green);
+            color: var(--primary-green);
+        }
+
+        /* Form elements */
+        .form-phase {
+            display: none;
+        }
+
+        .form-phase.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .btn-toggle-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-toggle {
+            flex: 1;
+            background: #FFFFFF;
+            border: 2px solid #F1ECE4;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            text-align: center;
+        }
+
+        .btn-toggle.active {
+            border-color: var(--primary-green);
+            background-color: var(--light-green);
+            color: var(--primary-green);
+        }
+
+        .input-text {
+            width: 100%;
+            border: 2px solid #F1ECE4;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            outline: none;
+            transition: border-color var(--transition-speed);
+            background: #FFFFFF;
+        }
+
+        .input-text:focus {
+            border-color: var(--primary-green);
+        }
+
+        /* Image Picker Styling */
+        .image-picker-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .avatar-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: var(--light-green);
+            border: 2px dashed var(--primary-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-hidden {
+            display: none;
+        }
+
+        /* Custom Shp/Persian Date Wheel Picker style */
+        .jalali-picker-container {
+            display: flex;
+            gap: 8px;
+            direction: ltr; /* To order Year, Month, Day correctly */
+        }
+
+        .jalali-picker-container select {
+            flex: 1;
+            border: 2px solid #F1ECE4;
+            padding: 10px;
+            border-radius: 12px;
+            background: #FFFFFF;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .jalali-picker-container select:focus {
+            border-color: var(--primary-green);
+        }
+
+        /* Dialog Footer Navigation */
+        .dialog-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #F1ECE4;
+            display: flex;
+            gap: 10px;
+            position: sticky;
+            bottom: 0;
+            background: #FFFFFF;
+        }
+
+        .dialog-footer button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            border: none;
+        }
+
+        .btn-secondary {
+            background: #F1ECE4;
+            color: var(--text-dark);
+        }
+
+        .btn-secondary:active {
+            background: #E5DDD3;
+        }
+
+        /* Autocomplete Suggestions */
+        .suggestions-box {
+            position: absolute;
+            background: #FFFFFF;
+            border: 1px solid #F1ECE4;
+            border-radius: 12px;
+            width: calc(100% - 40px);
+            max-height: 120px;
+            overflow-y: auto;
+            z-index: 1050;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #FAF7F2;
+            font-size: 0.85rem;
+            transition: background var(--transition-speed);
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover, .suggestion-item:active {
+            background-color: var(--light-green);
+            color: var(--primary-green);
+        }
+
+        /* Empty State */
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 85%;
+            max-width: 320px;
+            z-index: 20;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            animation: pulse-flower 3s infinite ease-in-out;
+        }
+
+        @keyframes pulse-flower {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .empty-text {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: var(--primary-green);
+            line-height: 1.6;
+        }
+
+        /* Notification Toast */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(62, 39, 35, 0.9);
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Mobile Optimization tweaks */
+        @media (max-width: 480px) {
+            .member-card {
+                width: 130px;
+                padding: 10px;
+            }
+            .member-avatar {
+                width: 54px;
+                height: 54px;
+                font-size: 1.5rem;
+            }
+            .tree-layout {
+                gap: 50px;
+            }
+            .ui-overlay button {
+                padding: 10px 14px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-bg"></div>
+
+    <!-- UI Overlay Controls -->
+    <div class="ui-overlay top-right">
+        <button id="btn-back-portal" onclick="window.location.href='../index.html'">
+            🚪 بازگشت به پرتال
+        </button>
+    </div>
+
+    <div class="ui-overlay top-left">
+        <button id="btn-reset-data" onclick="confirmReset()">
+            🧹 پاکسازی کلی
+        </button>
+    </div>
+
+    <div class="ui-overlay bottom-controls">
+        <button class="btn-primary" onclick="exportMentalMap()">
+            🌳 دانلود نقشه درختی تعاملی
+        </button>
+        <button onclick="exportBackupData()" style="margin-right: 10px;">
+            📥 ذخیره فایل شجره‌نامه
+        </button>
+        <button onclick="triggerImport()" style="margin-right: 10px; padding: 12px 14px; width: auto; flex: 0;">
+            📤 بارگذاری
+        </button>
+        <input type="file" id="import-file" class="upload-hidden" accept=".json" onchange="importBackupData(event)">
+    </div>
+
+    <!-- Canvas Container for zoom/pan interaction -->
+    <div class="canvas-container" id="canvasContainer">
+        <div class="canvas" id="canvas">
+            <!-- Connection vines drawing layer -->
+            <svg id="connections-svg"></svg>
+
+            <!-- Tree placement -->
+            <div class="tree-layout" id="treeLayout">
+                <!-- Row 1: Parents -->
+                <div class="parents-row" id="parentsRow"></div>
+
+                <!-- Row 2: Central focused node & spouse(s) -->
+                <div class="center-group" id="centerGroup"></div>
+
+                <!-- Row 3: Children -->
+                <div class="children-row" id="childrenRow"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🌸</div>
+        <div class="empty-text">از اینجا شروع کنید:<br>اطلاعات قدیمی‌ترین جدی که به یاد دارید (جد بزرگ) را وارد کنید</div>
+        <button class="btn-primary" onclick="openAddDialog(null, 'ancestor')" style="border-radius: 30px; padding: 12px 25px; font-weight: bold; margin-top: 10px;">
+            🌱 ثبت اولین جد
+        </button>
+    </div>
+
+    <!-- Focus Mode Overlay and Form Dialog -->
+    <div class="focus-overlay" id="focusOverlay">
+        <div class="focus-dialog">
+            <div class="dialog-header">
+                <span class="dialog-title" id="dialogTitle">ثبت مشخصات فرد</span>
+                <button class="dialog-close" onclick="closeFocusDialog()">×</button>
+            </div>
+
+            <!-- Steps Indicator -->
+            <div class="step-indicator" style="padding: 0 20px; margin-top: 10px;">
+                <div class="step-dot active" data-step="1">۱</div>
+                <div class="step-dot" data-step="2">۲</div>
+                <div class="step-dot" data-step="3">۳</div>
+                <div class="step-dot" data-step="4">۴</div>
+                <div class="step-dot" data-step="5">۵</div>
+            </div>
+
+            <div class="dialog-body">
+                <!-- PHASE 1: Gender and Avatar -->
+                <div class="form-phase active" data-step="1">
+                    <div class="form-group">
+                        <label class="form-label">تعیین جنسیت</label>
+                        <div class="btn-toggle-group">
+                            <button type="button" class="btn-toggle active" id="gender-male" onclick="setGender('male')">👨 آقا</button>
+                            <button type="button" class="btn-toggle" id="gender-female" onclick="setGender('female')">👩 خانم</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">آیا این فرد عکس دارد؟</label>
+                        <div class="btn-toggle-group">
+                            <button type="button" class="btn-toggle" id="has-photo-yes" onclick="setHasPhoto(true)">بله</button>
+                            <button type="button" class="btn-toggle active" id="has-photo-no" onclick="setHasPhoto(false)">خیر</button>
+                        </div>
+                    </div>
+                    <div class="form-group" id="photo-upload-group" style="display: none;">
+                        <label class="form-label">انتخاب عکس از گالری گوشی</label>
+                        <div class="image-picker-container">
+                            <div class="avatar-preview" id="avatarPreview" onclick="triggerPhotoUpload()">
+                                <span id="preview-placeholder">📸</span>
+                                <img id="preview-image" style="display: none;" src="" alt="پیش‌نمایش">
+                            </div>
+                            <input type="file" id="photo-input" class="upload-hidden" accept="image/*" onchange="handlePhotoSelected(event)">
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">برای فشرده‌سازی حداکثری و حفظ حافظه کلیک کنید</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PHASE 2: Core Details -->
+                <div class="form-phase" data-step="2">
+                    <div class="form-group" style="position: relative;">
+                        <label class="form-label">نام و نام خانوادگی</label>
+                        <input type="text" id="member-name" class="input-text" placeholder="مثلاً: مظفر رضایی" oninput="handleNameInput(this.value)">
+                        <div class="suggestions-box" id="suggestionsBox"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">شغل</label>
+                        <input type="text" id="member-job" class="input-text" placeholder="مثلاً: کشاورز، مهندس، خانه دار">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">نسبت خانوادگی</label>
+                        <input type="text" id="member-relation" class="input-text" placeholder="مثلاً: جد بزرگ، پدر، عمو">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">محل تولد</label>
+                        <input type="text" id="member-birthplace" class="input-text" placeholder="شهر یا روستای محل تولد">
+                    </div>
+                </div>
+
+                <!-- PHASE 3: Lifespan (Conditional Logic) -->
+                <div class="form-phase" data-step="3">
+                    <div class="form-group">
+                        <label class="form-label">وضعیت حیات</label>
+                        <div class="btn-toggle-group">
+                            <button type="button" class="btn-toggle active" id="life-alive" onclick="setAlive(true)">در قید حیات</button>
+                            <button type="button" class="btn-toggle" id="life-deceased" onclick="setAlive(false)">فوت شده</button>
+                        </div>
+                    </div>
+
+                    <!-- Alive Conditional Form Fields -->
+                    <div id="alive-fields">
+                        <div class="form-group">
+                            <label class="form-label">تاریخ تولد (شمسی)</label>
+                            <div class="jalali-picker-container" data-prefix="birth">
+                                <select id="birth-year"></select>
+                                <select id="birth-month"></select>
+                                <select id="birth-day"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">محل سکونت فعلی</label>
+                            <input type="text" id="member-location" class="input-text" placeholder="شهر یا روستای محل سکونت">
+                        </div>
+                    </div>
+
+                    <!-- Deceased Conditional Form Fields -->
+                    <div id="deceased-fields" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">تاریخ تولد (شمسی)</label>
+                            <div class="jalali-picker-container" data-prefix="birth-dec">
+                                <select id="birth-dec-year"></select>
+                                <select id="birth-dec-month"></select>
+                                <select id="birth-dec-day"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">تاریخ فوت (شمسی)</label>
+                            <div class="jalali-picker-container" data-prefix="death">
+                                <select id="death-year"></select>
+                                <select id="death-month"></select>
+                                <select id="death-day"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">محل فوت یا آرامگاه</label>
+                            <input type="text" id="member-grave" class="input-text" placeholder="محل خاکسپاری یا فوت">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PHASE 4: Marriage & Children UI placeholders generation -->
+                <div class="form-phase" data-step="4">
+                    <div class="form-group">
+                        <label class="form-label">وضعیت تأهل</label>
+                        <div class="btn-toggle-group">
+                            <button type="button" class="btn-toggle active" id="marital-single" onclick="setMarital(false)">مجرد</button>
+                            <button type="button" class="btn-toggle" id="marital-married" onclick="setMarital(true)">متأهل</button>
+                        </div>
+                    </div>
+
+                    <!-- Married Conditional Fields -->
+                    <div id="married-fields" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">تعداد همسران؟</label>
+                            <input type="number" id="member-spouses-count" class="input-text" value="1" min="1" max="5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">تعداد کل فرزندان؟</label>
+                            <input type="number" id="member-children-count" class="input-text" value="0" min="0" max="20">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PHASE 5: Biography -->
+                <div class="form-phase" data-step="5">
+                    <div class="form-group">
+                        <label class="form-label">توضیحات کوتاه / بیوگرافی</label>
+                        <textarea id="member-bio" class="input-text" rows="4" placeholder="خاطرات کوتاه، سرگذشت، ویژگی‌های بارز یا نکات خاص فرد..." style="resize: vertical; font-family: inherit;"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dialog-footer">
+                <button class="btn-secondary" id="btn-dialog-prev" onclick="prevPhase()">قبلی</button>
+                <button class="btn-primary" id="btn-dialog-next" onclick="nextPhase()">بعدی</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Element -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // State Management variables
+        let members = {}; // Format: { id: { id, name, gender, hasPhoto, photoData, job, relation, birthplace, isAlive, birthDate, location, deathDate, grave, isMarried, spousesCount, childrenCount, bio, parents: [], spouses: [], children: [], clanColor } }
+        let focusedId = null;
+
+        // Form Temp State
+        let formMode = 'add'; // 'add' or 'edit'
+        let currentPhase = 1;
+        let formGender = 'male';
+        let formHasPhoto = false;
+        let formPhotoData = null;
+        let formIsAlive = true;
+        let formIsMarried = false;
+        let relatedMemberId = null;
+        let relationType = null; // 'parent', 'spouse', 'child', 'ancestor'
+        let editingMemberId = null;
+
+        // Auto-generated placeholders queue for chain-focus fill protocol
+        let chainQueue = [];
+
+        // Touch Interaction & Canvas State
+        let scale = 1;
+        let panX = 0;
+        let panY = 0;
+        let isDragging = false;
+        let startX, startY;
+        let initialDistance = null;
+
+        // Initialize Jalali Picker dropdown elements
+        function populateJalaliDropdowns(prefix) {
+            const yearSelect = document.getElementById(prefix + '-year');
+            const monthSelect = document.getElementById(prefix + '-month');
+            const daySelect = document.getElementById(prefix + '-day');
+
+            if (!yearSelect || !monthSelect || !daySelect) return;
+
+            // Clear previous
+            yearSelect.innerHTML = '<option value="">سال</option>';
+            monthSelect.innerHTML = '<option value="">ماه</option>';
+            daySelect.innerHTML = '<option value="">روز</option>';
+
+            // Year from 1300 to 1403
+            for (let y = 1403; y >= 1300; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.innerText = y;
+                yearSelect.appendChild(opt);
+            }
+
+            // Month
+            const months = [
+                'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+                'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+            ];
+            months.forEach((m, index) => {
+                const opt = document.createElement('option');
+                opt.value = index + 1;
+                opt.innerText = m;
+                monthSelect.appendChild(opt);
+            });
+
+            // Day
+            for (let d = 1; d <= 31; d++) {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.innerText = d;
+                daySelect.appendChild(opt);
+            }
+        }
+
+        // Initialize all date select fields
+        function initAllDatePickers() {
+            populateJalaliDropdowns('birth');
+            populateJalaliDropdowns('birth-dec');
+            populateJalaliDropdowns('death');
+        }
+
+        // Toast Helper
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // On document ready
+        window.addEventListener('DOMContentLoaded', () => {
+            initAllDatePickers();
+            loadFromLocalStorage();
+            setupTouchEvents();
+            renderTree();
+        });
+
+        // Touch Zoom & Pan logic (Pinch-to-zoom & Double tap & Drag)
+        function setupTouchEvents() {
+            const container = document.getElementById('canvasContainer');
+            const canvas = document.getElementById('canvas');
+
+            // Reset positioning
+            updateTransform();
+
+            container.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('button') || e.target.closest('.member-card') || e.target.closest('.focus-dialog')) return;
+                isDragging = true;
+                startX = e.clientX - panX;
+                startY = e.clientY - panY;
+                canvas.style.cursor = 'grabbing';
+            });
+
+            container.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                panX = e.clientX - startX;
+                panY = e.clientY - startY;
+                updateTransform();
+            });
+
+            window.addEventListener('pointerup', () => {
+                isDragging = false;
+                canvas.style.cursor = 'grab';
+            });
+
+            // Double Tap Zooming
+            let lastTap = 0;
+            container.addEventListener('touchend', (e) => {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTap;
+                if (tapLength < 300 && tapLength > 0) {
+                    e.preventDefault();
+                    if (scale > 1.2) {
+                        scale = 1;
+                        panX = 0;
+                        panY = 0;
+                    } else {
+                        scale = 1.5;
+                    }
+                    updateTransform();
+                }
+                lastTap = currentTime;
+            });
+
+            // Touch gesture zooming (Pinch)
+            container.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2) {
+                    const dist = Math.hypot(
+                        e.touches[0].pageX - e.touches[1].pageX,
+                        e.touches[0].pageY - e.touches[1].pageY
+                    );
+                    if (initialDistance === null) {
+                        initialDistance = dist;
+                    } else {
+                        const factor = dist / initialDistance;
+                        scale = Math.min(Math.max(scale * factor, 0.5), 3);
+                        initialDistance = dist;
+                        updateTransform();
+                    }
+                }
+            });
+
+            container.addEventListener('touchend', (e) => {
+                if (e.touches.length < 2) {
+                    initialDistance = null;
+                }
+            });
+        }
+
+        function updateTransform() {
+            const canvas = document.getElementById('canvas');
+            canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        }
+
+        // LocalStorage logic
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem('emarat_family_tree');
+            if (stored) {
+                try {
+                    members = JSON.parse(stored);
+                    // Find some focused node
+                    const keys = Object.keys(members);
+                    if (keys.length > 0) {
+                        focusedId = localStorage.getItem('emarat_family_focused') || keys[0];
+                        if (!members[focusedId]) {
+                            focusedId = keys[0];
+                        }
+                    }
+                } catch (e) {
+                    members = {};
+                    focusedId = null;
+                }
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('emarat_family_tree', JSON.stringify(members));
+            if (focusedId) {
+                localStorage.setItem('emarat_family_focused', focusedId);
+            } else {
+                localStorage.removeItem('emarat_family_focused');
+            }
+        }
+
+        function confirmReset() {
+            if (confirm('آیا از پاکسازی کامل تمام اطلاعات شجره‌نامه اطمینان دارید؟ این عملیات غیرقابل بازگشت است.')) {
+                members = {};
+                focusedId = null;
+                saveToLocalStorage();
+                renderTree();
+                showToast('کل اطلاعات شجره‌نامه پاکسازی شد.');
+            }
+        }
+
+        // Auto-generate colors for Clans based on Hash of last name
+        function getClanColor(fullName) {
+            if (!fullName) return 'transparent';
+            const parts = fullName.trim().split(' ');
+            if (parts.length < 2) return 'transparent';
+            const lastName = parts[parts.length - 1]; // Use last name
+
+            let hash = 0;
+            for (let i = 0; i < lastName.length; i++) {
+                hash = lastName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            // Generate light pastel colors
+            const h = Math.abs(hash % 360);
+            return `hsla(${h}, 70%, 85%, 0.85)`;
+        }
+
+        // Build the Tree Structure Visualization
+        function renderTree() {
+            const emptyState = document.getElementById('emptyState');
+            const canvasContainer = document.getElementById('canvasContainer');
+            const parentsRow = document.getElementById('parentsRow');
+            const centerGroup = document.getElementById('centerGroup');
+            const childrenRow = document.getElementById('childrenRow');
+
+            if (Object.keys(members).length === 0) {
+                emptyState.style.display = 'flex';
+                canvasContainer.style.display = 'none';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            canvasContainer.style.display = 'block';
+
+            // Clear rows
+            parentsRow.innerHTML = '';
+            centerGroup.innerHTML = '';
+            childrenRow.innerHTML = '';
+
+            // Ensure we have a valid focusedId
+            if (!focusedId || !members[focusedId]) {
+                focusedId = Object.keys(members)[0];
+            }
+
+            const active = members[focusedId];
+            const clanColor = getClanColor(active.name);
+
+            // ---- 1. RENDER FOCUSED AND SPOUSES ----
+            // Render focused node card
+            const activeContainer = createCardElement(active, 'active');
+            centerGroup.appendChild(activeContainer);
+
+            // Render spouses or placeholder spouses
+            if (active.spouses && active.spouses.length > 0) {
+                active.spouses.forEach(spId => {
+                    if (members[spId]) {
+                        centerGroup.appendChild(createCardElement(members[spId], 'spouse'));
+                    }
+                });
+            }
+
+            // Spouses placeholders if count exceeds active list
+            const currentSpousesCount = active.spouses ? active.spouses.length : 0;
+            const targetSpousesCount = active.isMarried ? parseInt(active.spousesCount || 1) : 0;
+            if (targetSpousesCount > currentSpousesCount) {
+                for (let i = 0; i < (targetSpousesCount - currentSpousesCount); i++) {
+                    centerGroup.appendChild(createPlaceholderCard('spouse', 'همسر جدید', active.id));
+                }
+            }
+
+            // ---- 2. RENDER PARENTS ----
+            // Render parents or placeholders
+            const pList = active.parents || [];
+            let renderedParents = 0;
+            pList.forEach(pId => {
+                if (members[pId]) {
+                    parentsRow.appendChild(createCardElement(members[pId], 'parent'));
+                    renderedParents++;
+                }
+            });
+
+            // Placeholder for parents up to 2 (father & mother)
+            if (renderedParents < 2) {
+                const missing = 2 - renderedParents;
+                for (let i = 0; i < missing; i++) {
+                    parentsRow.appendChild(createPlaceholderCard('parent', i === 0 && renderedParents === 0 ? 'پدر' : 'مادر', active.id));
+                }
+            }
+
+            // ---- 3. RENDER CHILDREN ----
+            // Render children or placeholders
+            const chList = active.children || [];
+            let renderedChildren = 0;
+            chList.forEach(chId => {
+                if (members[chId]) {
+                    childrenRow.appendChild(createCardElement(members[chId], 'child'));
+                    renderedChildren++;
+                }
+            });
+
+            // Placeholders for children
+            const targetChildrenCount = active.isMarried ? parseInt(active.childrenCount || 0) : 0;
+            if (targetChildrenCount > renderedChildren) {
+                const missing = targetChildrenCount - renderedChildren;
+                for (let i = 0; i < missing; i++) {
+                    childrenRow.appendChild(createPlaceholderCard('child', `فرزند ${renderedChildren + i + 1}`, active.id));
+                }
+            }
+
+            // Trigger line connections rendering
+            setTimeout(drawConnections, 50);
+        }
+
+        // Card rendering Helper
+        function createCardElement(member, relationStyle) {
+            const container = document.createElement('div');
+            container.className = 'card-container';
+            container.dataset.id = member.id;
+
+            const card = document.createElement('div');
+            card.className = `member-card ${relationStyle === 'active' ? 'active-focus' : ''}`;
+
+            // Set clan coloring if available
+            const borderCol = getClanColor(member.name);
+            if (borderCol !== 'transparent') {
+                card.style.borderColor = borderCol;
+            }
+
+            // Avatar setup
+            const avatar = document.createElement('div');
+            avatar.className = 'member-avatar';
+            if (member.hasPhoto && member.photoData) {
+                const img = document.createElement('img');
+                img.src = member.photoData;
+                avatar.appendChild(img);
+            } else {
+                avatar.innerText = member.gender === 'male' ? '👨' : '👩';
+            }
+
+            const name = document.createElement('div');
+            name.className = 'member-name';
+            name.innerText = member.name || 'نامشخص';
+
+            const rel = document.createElement('div');
+            rel.className = 'member-relation';
+            rel.innerText = member.relation || (relationStyle === 'parent' ? 'والد' : relationStyle === 'spouse' ? 'همسر' : relationStyle === 'child' ? 'فرزند' : 'شخص');
+
+            const status = document.createElement('div');
+            status.className = 'member-status';
+            if (member.isAlive) {
+                status.innerText = 'در قید حیات';
+                status.style.color = 'var(--primary-green)';
+            } else {
+                status.innerText = 'فوت شده';
+                status.style.color = '#777';
+            }
+
+            card.appendChild(avatar);
+            card.appendChild(name);
+            card.appendChild(rel);
+            card.appendChild(status);
+
+            // Click to refocus or double tap to edit
+            let tapCount = 0;
+            card.addEventListener('click', (e) => {
+                e.stopPropagation();
+                tapCount++;
+                if (tapCount === 1) {
+                    setTimeout(() => {
+                        if (tapCount === 1) {
+                            // Single tap: refocus
+                            if (focusedId !== member.id) {
+                                focusedId = member.id;
+                                saveToLocalStorage();
+                                renderTree();
+                            }
+                        } else {
+                            // Double tap: edit
+                            openEditDialog(member.id);
+                        }
+                        tapCount = 0;
+                    }, 250);
+                }
+            });
+
+            // Edit button on top of card
+            const editBtn = document.createElement('span');
+            editBtn.innerHTML = '✏️';
+            editBtn.style.position = 'absolute';
+            editBtn.style.top = '5px';
+            editBtn.style.left = '5px';
+            editBtn.style.fontSize = '0.75rem';
+            editBtn.style.cursor = 'pointer';
+            editBtn.onclick = (e) => {
+                e.stopPropagation();
+                openEditDialog(member.id);
+            };
+            card.appendChild(editBtn);
+
+            container.appendChild(card);
+            return container;
+        }
+
+        // Placeholder creation Helper
+        function createPlaceholderCard(type, labelText, relId) {
+            const container = document.createElement('div');
+            container.className = 'card-container';
+
+            const card = document.createElement('div');
+            card.className = 'member-card placeholder';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'member-avatar';
+            avatar.innerText = '➕';
+
+            const name = document.createElement('div');
+            name.className = 'member-name';
+            name.innerText = labelText;
+
+            const rel = document.createElement('div');
+            rel.className = 'member-relation';
+            rel.innerText = 'ثبت نشده';
+
+            card.appendChild(avatar);
+            card.appendChild(name);
+            card.appendChild(rel);
+
+            card.onclick = (e) => {
+                e.stopPropagation();
+                openAddDialog(relId, type);
+            };
+
+            container.appendChild(card);
+            return container;
+        }
+
+        // SVG Vine connector drawing logic
+        function drawConnections() {
+            const svg = document.getElementById('connections-svg');
+            svg.innerHTML = ''; // Clear lines
+
+            const canvas = document.getElementById('canvas');
+            const svgRect = svg.getBoundingClientRect();
+
+            // Locate elements to connect
+            const activeCard = document.querySelector('.active-focus');
+            if (!activeCard) return;
+
+            const activeBox = getRelativeCoords(activeCard, canvas);
+
+            // Connect parents (above)
+            const parentCards = document.querySelectorAll('#parentsRow .member-card');
+            parentCards.forEach(pCard => {
+                const pBox = getRelativeCoords(pCard, canvas);
+                drawVinePath(svg, pBox.centerX, pBox.bottom, activeBox.centerX, activeBox.top);
+            });
+
+            // Connect spouses (sides)
+            const spouseCards = document.querySelectorAll('#centerGroup .member-card:not(.active-focus)');
+            spouseCards.forEach(spCard => {
+                const spBox = getRelativeCoords(spCard, canvas);
+                // Draw horizontal curve between them
+                drawVinePath(svg, activeBox.centerX, activeBox.centerY, spBox.centerX, spBox.centerY, true);
+            });
+
+            // Connect children (below)
+            const childCards = document.querySelectorAll('#childrenRow .member-card');
+            childCards.forEach(chCard => {
+                const chBox = getRelativeCoords(chCard, canvas);
+                drawVinePath(svg, activeBox.centerX, activeBox.bottom, chBox.centerX, chBox.top);
+            });
+        }
+
+        function getRelativeCoords(elem, parent) {
+            const elemRect = elem.getBoundingClientRect();
+            const parentRect = parent.getBoundingClientRect();
+
+            // Scaled coords
+            const left = (elemRect.left - parentRect.left) / scale;
+            const top = (elemRect.top - parentRect.top) / scale;
+            const width = elemRect.width / scale;
+            const height = elemRect.height / scale;
+
+            return {
+                left: left,
+                top: top,
+                width: width,
+                height: height,
+                centerX: left + width / 2,
+                centerY: top + height / 2,
+                bottom: top + height
+            };
+        }
+
+        // Vine connection renderer with organic leaf elements
+        function drawVinePath(svg, x1, y1, x2, y2, isHorizontal = false) {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = '';
+
+            if (isHorizontal) {
+                // Horizontal vine for spouse
+                const controlX = (x1 + x2) / 2;
+                d = `M ${x1} ${y1} Q ${controlX} ${y1 - 25}, ${x2} ${y2}`;
+            } else {
+                // Vertical curve for parents/children
+                const controlY = (y1 + y2) / 2;
+                d = `M ${x1} ${y1} C ${x1} ${controlY}, ${x2} ${controlY}, ${x2} ${y2}`;
+            }
+
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', '#388E3C');
+            path.setAttribute('stroke-width', '3.5');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(path);
+
+            // Add leafy decoration along path
+            addLeavesAlongPath(svg, x1, y1, x2, y2, isHorizontal);
+        }
+
+        function addLeavesAlongPath(svg, x1, y1, x2, y2, isHorizontal) {
+            // Put 1-2 small organic leaf symbols on the mid point of connections
+            const midX = (x1 + x2) / 2;
+            const midY = (y1 + y2) / 2;
+
+            // Leaf 1
+            const leaf1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            leaf1.setAttribute('d', 'M0,0 C5,-10 15,-10 15,-5 C15,5 5,10 0,0');
+            leaf1.setAttribute('fill', '#81C784');
+            leaf1.setAttribute('transform', `translate(${midX + 5}, ${midY - 10}) rotate(45) scale(0.8)`);
+            svg.appendChild(leaf1);
+
+            // Leaf 2
+            const leaf2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            leaf2.setAttribute('d', 'M0,0 C-5,-10 -15,-10 -15,-5 C-15,5 -5,10 0,0');
+            leaf2.setAttribute('fill', '#4CAF50');
+            leaf2.setAttribute('transform', `translate(${midX - 5}, ${midY + 5}) rotate(-30) scale(0.7)`);
+            svg.appendChild(leaf2);
+        }
+
+        // --- FOCUS MODE FORM PROTOCOL ---
+        function openAddDialog(relId, type) {
+            formMode = 'add';
+            relatedMemberId = relId;
+            relationType = type;
+            editingMemberId = null;
+
+            document.getElementById('dialogTitle').innerText = 'ثبت عضو جدید در شجره‌نامه';
+            resetFormInputs();
+            setPhase(1);
+
+            // Pre-fill some default logic based on connection relation
+            if (type === 'parent') {
+                document.getElementById('member-relation').value = 'والد';
+            } else if (type === 'spouse') {
+                document.getElementById('member-relation').value = 'همسر';
+                setMarital(true);
+            } else if (type === 'child') {
+                document.getElementById('member-relation').value = 'فرزند';
+            }
+
+            openFocusOverlay();
+        }
+
+        function openEditDialog(memberId) {
+            formMode = 'edit';
+            editingMemberId = memberId;
+            relatedMemberId = null;
+            relationType = null;
+
+            const m = members[memberId];
+            if (!m) return;
+
+            document.getElementById('dialogTitle').innerText = `ویرایش مشخصات ${m.name}`;
+
+            // Populating Form with existing state
+            setGender(m.gender);
+            setHasPhoto(m.hasPhoto || false);
+            if (m.hasPhoto && m.photoData) {
+                formPhotoData = m.photoData;
+                document.getElementById('preview-image').src = m.photoData;
+                document.getElementById('preview-image').style.display = 'block';
+                document.getElementById('preview-placeholder').style.display = 'none';
+            } else {
+                formPhotoData = null;
+                document.getElementById('preview-image').style.display = 'none';
+                document.getElementById('preview-placeholder').style.display = 'block';
+            }
+
+            document.getElementById('member-name').value = m.name || '';
+            document.getElementById('member-job').value = m.job || '';
+            document.getElementById('member-relation').value = m.relation || '';
+            document.getElementById('member-birthplace').value = m.birthplace || '';
+
+            setAlive(m.isAlive);
+            setMarital(m.isMarried || false);
+
+            if (m.isAlive) {
+                document.getElementById('member-location').value = m.location || '';
+                // Set birth date
+                if (m.birthDate) {
+                    const parts = m.birthDate.split('/');
+                    if (parts.length === 3) {
+                        document.getElementById('birth-year').value = parts[0];
+                        document.getElementById('birth-month').value = parseInt(parts[1]);
+                        document.getElementById('birth-day').value = parseInt(parts[2]);
+                    }
+                }
+            } else {
+                document.getElementById('member-grave').value = m.grave || '';
+                // Set birth dec and death date
+                if (m.birthDate) {
+                    const parts = m.birthDate.split('/');
+                    if (parts.length === 3) {
+                        document.getElementById('birth-dec-year').value = parts[0];
+                        document.getElementById('birth-dec-month').value = parseInt(parts[1]);
+                        document.getElementById('birth-dec-day').value = parseInt(parts[2]);
+                    }
+                }
+                if (m.deathDate) {
+                    const parts = m.deathDate.split('/');
+                    if (parts.length === 3) {
+                        document.getElementById('death-year').value = parts[0];
+                        document.getElementById('death-month').value = parseInt(parts[1]);
+                        document.getElementById('death-day').value = parseInt(parts[2]);
+                    }
+                }
+            }
+
+            if (m.isMarried) {
+                document.getElementById('member-spouses-count').value = m.spousesCount || 1;
+                document.getElementById('member-children-count').value = m.childrenCount || 0;
+            }
+
+            document.getElementById('member-bio').value = m.bio || '';
+
+            setPhase(1);
+            openFocusOverlay();
+        }
+
+        function openFocusOverlay() {
+            document.getElementById('focusOverlay').classList.add('active');
+            // Dim other elements on mobile
+            document.querySelectorAll('.member-card').forEach(c => {
+                c.classList.add('dimmed');
+            });
+        }
+
+        function closeFocusDialog() {
+            document.getElementById('focusOverlay').classList.remove('active');
+            document.querySelectorAll('.member-card').forEach(c => {
+                c.classList.remove('dimmed');
+            });
+        }
+
+        function resetFormInputs() {
+            setGender('male');
+            setHasPhoto(false);
+            formPhotoData = null;
+            document.getElementById('preview-image').style.display = 'none';
+            document.getElementById('preview-placeholder').style.display = 'block';
+            document.getElementById('photo-input').value = '';
+
+            document.getElementById('member-name').value = '';
+            document.getElementById('member-job').value = '';
+            document.getElementById('member-relation').value = '';
+            document.getElementById('member-birthplace').value = '';
+
+            setAlive(true);
+            setMarital(false);
+
+            document.getElementById('member-location').value = '';
+            document.getElementById('member-grave').value = '';
+            document.getElementById('member-spouses-count').value = 1;
+            document.getElementById('member-children-count').value = 0;
+            document.getElementById('member-bio').value = '';
+
+            // Reset pickers to default
+            document.getElementById('birth-year').value = '';
+            document.getElementById('birth-month').value = '';
+            document.getElementById('birth-day').value = '';
+            document.getElementById('birth-dec-year').value = '';
+            document.getElementById('birth-dec-month').value = '';
+            document.getElementById('birth-dec-day').value = '';
+            document.getElementById('death-year').value = '';
+            document.getElementById('death-month').value = '';
+            document.getElementById('death-day').value = '';
+        }
+
+        function setPhase(phase) {
+            currentPhase = phase;
+            // Update dots
+            document.querySelectorAll('.step-dot').forEach(dot => {
+                const stepNum = parseInt(dot.dataset.step);
+                dot.classList.remove('active', 'passed');
+                if (stepNum === phase) {
+                    dot.classList.add('active');
+                } else if (stepNum < phase) {
+                    dot.classList.add('passed');
+                }
+            });
+
+            // Update visible phases
+            document.querySelectorAll('.form-phase').forEach(fp => {
+                if (parseInt(fp.dataset.step) === phase) {
+                    fp.classList.add('active');
+                } else {
+                    fp.classList.remove('active');
+                }
+            });
+
+            // Update footer buttons
+            const prevBtn = document.getElementById('btn-dialog-prev');
+            const nextBtn = document.getElementById('btn-dialog-next');
+
+            if (phase === 1) {
+                prevBtn.style.visibility = 'hidden';
+            } else {
+                prevBtn.style.visibility = 'visible';
+            }
+
+            if (phase === 5) {
+                nextBtn.innerText = '💾 ثبت نهایی';
+            } else {
+                nextBtn.innerText = 'بعدی';
+            }
+        }
+
+        function nextPhase() {
+            if (currentPhase < 5) {
+                // Validations on phase 2
+                if (currentPhase === 2) {
+                    const name = document.getElementById('member-name').value.trim();
+                    if (!name) {
+                        showToast('نام و نام خانوادگی الزامی است.');
+                        return;
+                    }
+                }
+                setPhase(currentPhase + 1);
+            } else {
+                // Save and complete
+                saveFormAndRegister();
+            }
+        }
+
+        function prevPhase() {
+            if (currentPhase > 1) {
+                setPhase(currentPhase - 1);
+            }
+        }
+
+        function setGender(gender) {
+            formGender = gender;
+            const maleBtn = document.getElementById('gender-male');
+            const femaleBtn = document.getElementById('gender-female');
+            if (gender === 'male') {
+                maleBtn.classList.add('active');
+                femaleBtn.classList.remove('active');
+            } else {
+                femaleBtn.classList.add('active');
+                maleBtn.classList.remove('active');
+            }
+        }
+
+        function setHasPhoto(has) {
+            formHasPhoto = has;
+            const yesBtn = document.getElementById('has-photo-yes');
+            const noBtn = document.getElementById('has-photo-no');
+            const uploadGroup = document.getElementById('photo-upload-group');
+
+            if (has) {
+                yesBtn.classList.add('active');
+                noBtn.classList.remove('active');
+                uploadGroup.style.display = 'block';
+            } else {
+                noBtn.classList.add('active');
+                yesBtn.classList.remove('active');
+                uploadGroup.style.display = 'none';
+            }
+        }
+
+        function setAlive(alive) {
+            formIsAlive = alive;
+            const aliveBtn = document.getElementById('life-alive');
+            const deceasedBtn = document.getElementById('life-deceased');
+            const aliveFields = document.getElementById('alive-fields');
+            const deceasedFields = document.getElementById('deceased-fields');
+
+            if (alive) {
+                aliveBtn.classList.add('active');
+                deceasedBtn.classList.remove('active');
+                aliveFields.style.display = 'block';
+                deceasedFields.style.display = 'none';
+            } else {
+                deceasedBtn.classList.add('active');
+                aliveBtn.classList.remove('active');
+                deceasedFields.style.display = 'block';
+                aliveFields.style.display = 'none';
+            }
+        }
+
+        function setMarital(married) {
+            formIsMarried = married;
+            const singleBtn = document.getElementById('marital-single');
+            const marriedBtn = document.getElementById('marital-married');
+            const marriedFields = document.getElementById('married-fields');
+
+            if (married) {
+                marriedBtn.classList.add('active');
+                singleBtn.classList.remove('active');
+                marriedFields.style.display = 'block';
+            } else {
+                singleBtn.classList.add('active');
+                marriedBtn.classList.remove('active');
+                marriedFields.style.display = 'none';
+            }
+        }
+
+        // Photo Upload & Highly efficient canvas compression
+        function triggerPhotoUpload() {
+            document.getElementById('photo-input').click();
+        }
+
+        function handlePhotoSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Compress image to 90x90 thumbnail
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 90;
+                    canvas.height = 90;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 90, 90);
+
+                    // Output highly compressed Base64
+                    formPhotoData = canvas.toDataURL('image/jpeg', 0.65);
+
+                    // Show preview
+                    const previewImg = document.getElementById('preview-image');
+                    previewImg.src = formPhotoData;
+                    previewImg.style.display = 'block';
+                    document.getElementById('preview-placeholder').style.display = 'none';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Auto-Linking: Typing name shows matching family trees or connections
+        function handleNameInput(val) {
+            const box = document.getElementById('suggestionsBox');
+            if (!val.trim()) {
+                box.style.display = 'none';
+                return;
+            }
+
+            const cleanVal = val.trim().toLowerCase();
+            const matches = Object.values(members).filter(m => m.name.toLowerCase().includes(cleanVal));
+
+            if (matches.length === 0) {
+                box.style.display = 'none';
+                return;
+            }
+
+            box.innerHTML = '';
+            matches.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.innerText = `🔗 اتصال سریع به: ${m.name} (${m.relation || 'عضو'})`;
+                item.onclick = () => {
+                    // Connect automatically
+                    document.getElementById('member-name').value = m.name;
+                    box.style.display = 'none';
+                    showToast(`نام به "${m.name}" متصل شد.`);
+                };
+                box.appendChild(item);
+            });
+            box.style.display = 'block';
+        }
+
+        // Final registration & database storage
+        function saveFormAndRegister() {
+            const name = document.getElementById('member-name').value.trim();
+            const job = document.getElementById('member-job').value.trim();
+            const relation = document.getElementById('member-relation').value.trim();
+            const birthplace = document.getElementById('member-birthplace').value.trim();
+            const bio = document.getElementById('member-bio').value.trim();
+
+            let birthDate = '';
+            let deathDate = '';
+            let location = '';
+            let grave = '';
+
+            if (formIsAlive) {
+                const y = document.getElementById('birth-year').value;
+                const m = document.getElementById('birth-month').value;
+                const d = document.getElementById('birth-day').value;
+                if (y && m && d) birthDate = `${y}/${m}/${d}`;
+                location = document.getElementById('member-location').value.trim();
+            } else {
+                const y1 = document.getElementById('birth-dec-year').value;
+                const m1 = document.getElementById('birth-dec-month').value;
+                const d1 = document.getElementById('birth-dec-day').value;
+                if (y1 && m1 && d1) birthDate = `${y1}/${m1}/${d1}`;
+
+                const y2 = document.getElementById('death-year').value;
+                const m2 = document.getElementById('death-month').value;
+                const d2 = document.getElementById('death-day').value;
+                if (y2 && m2 && d2) deathDate = `${y2}/${m2}/${d2}`;
+
+                grave = document.getElementById('member-grave').value.trim();
+            }
+
+            const spousesCount = parseInt(document.getElementById('member-spouses-count').value) || 1;
+            const childrenCount = parseInt(document.getElementById('member-children-count').value) || 0;
+
+            if (formMode === 'add') {
+                // Generate secure id
+                const newId = 'mem_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+                const newMember = {
+                    id: newId,
+                    name: name,
+                    gender: formGender,
+                    hasPhoto: formHasPhoto,
+                    photoData: formPhotoData,
+                    job: job,
+                    relation: relation,
+                    birthplace: birthplace,
+                    isAlive: formIsAlive,
+                    birthDate: birthDate,
+                    deathDate: deathDate,
+                    location: location,
+                    grave: grave,
+                    isMarried: formIsMarried,
+                    spousesCount: spousesCount,
+                    childrenCount: childrenCount,
+                    bio: bio,
+                    parents: [],
+                    spouses: [],
+                    children: []
+                };
+
+                // Link based on relationType and relatedMemberId
+                if (relatedMemberId && members[relatedMemberId]) {
+                    const relNode = members[relatedMemberId];
+                    if (relationType === 'parent') {
+                        // This new member is a parent of relatedMemberId
+                        newMember.children.push(relatedMemberId);
+                        relNode.parents.push(newId);
+                    } else if (relationType === 'spouse') {
+                        // Spouses
+                        newMember.spouses.push(relatedMemberId);
+                        relNode.spouses.push(newId);
+                    } else if (relationType === 'child') {
+                        // Child
+                        newMember.parents.push(relatedMemberId);
+                        relNode.children.push(newId);
+                    }
+                }
+
+                members[newId] = newMember;
+                focusedId = newId; // Bring to focus
+                showToast(`عضو جدید "${name}" با موفقیت ثبت شد.`);
+
+            } else if (formMode === 'edit' && editingMemberId) {
+                // Update existing
+                const em = members[editingMemberId];
+                em.name = name;
+                em.gender = formGender;
+                em.hasPhoto = formHasPhoto;
+                em.photoData = formPhotoData;
+                em.job = job;
+                em.relation = relation;
+                em.birthplace = birthplace;
+                em.isAlive = formIsAlive;
+                em.birthDate = birthDate;
+                em.deathDate = deathDate;
+                em.location = location;
+                em.grave = grave;
+                em.isMarried = formIsMarried;
+                em.spousesCount = spousesCount;
+                em.childrenCount = childrenCount;
+                em.bio = bio;
+
+                showToast(`مشخصات "${name}" با موفقیت بروزرسانی شد.`);
+            }
+
+            saveToLocalStorage();
+            closeFocusDialog();
+            renderTree();
+        }
+
+        // --- BACKUP FILE EXPORTS / IMPORTS ---
+        function triggerImport() {
+            document.getElementById('import-file').click();
+        }
+
+        function exportBackupData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(members, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href",     dataStr     );
+            dlAnchorElem.setAttribute("download", `shajareh_emarat_backup_${Date.now()}.json`);
+            dlAnchorElem.click();
+            showToast('فایل پشتیبان شجره‌نامه با موفقیت دانلود شد.');
+        }
+
+        function importBackupData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && typeof parsed === 'object') {
+                        members = parsed;
+                        const keys = Object.keys(members);
+                        if (keys.length > 0) {
+                            focusedId = keys[0];
+                        }
+                        saveToLocalStorage();
+                        renderTree();
+                        showToast('شجره‌نامه با موفقیت بازیابی شد.');
+                    }
+                } catch (err) {
+                    showToast('خطا در بارگذاری فایل پشتیبان!');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- EXPORT COMPACT MENTAL MAP / VISUAL TREE HTML ---
+        function exportMentalMap() {
+            // Generate fully-fledged standalone, interactive mind map view for shared use
+            const keys = Object.keys(members);
+            if (keys.length === 0) {
+                showToast('درختی برای دانلود وجود ندارد!');
+                return;
+            }
+
+            // Create interactive HTML
+            const standaloneHtml = `<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نقشه ذهنی شجره‌نامه خانوادگی عمارت</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #FDFBF7;
+            color: #3E2723;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #2E7D32;
+            margin-bottom: 5px;
+        }
+        .desc {
+            color: #795548;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+        .tree-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: auto;
+            padding: 20px;
+        }
+        .node {
+            background-color: #FFFFFF;
+            border: 2px solid #388E3C;
+            border-radius: 12px;
+            padding: 15px;
+            width: 160px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            margin: 10px;
+            display: inline-block;
+            vertical-align: top;
+            text-align: center;
+        }
+        .node-avatar {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        .node-name {
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+        .node-rel {
+            font-size: 0.75rem;
+            background: #E8F5E9;
+            color: #2E7D32;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 5px;
+            display: inline-block;
+        }
+        .node-bio {
+            font-size: 0.7rem;
+            color: #795548;
+            margin-top: 8px;
+            border-top: 1px dashed #F1ECE4;
+            padding-top: 5px;
+        }
+        .wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌳 نقشه ذهنی شجره‌نامه خانوادگی عمارت</h1>
+    <p class="desc">لیست شجره‌نامه کامل ثبت شده با آخرین جزئیات به صورت آفلاین</p>
+    <div class="wrapper">
+        ${Object.values(members).map(m => `
+            <div class="node">
+                <div class="node-avatar">${m.photoData ? `<img src="${m.photoData}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">` : (m.gender === 'male' ? '👨' : '👩')}</div>
+                <div class="node-name">${m.name}</div>
+                <div class="node-rel">${m.relation || 'شخص'}</div>
+                <div style="font-size: 0.75rem; color: #555; margin-top:5px;">شغل: ${m.job || 'نامشخص'}</div>
+                <div style="font-size: 0.75rem; color: #555;">زادگاه: ${m.birthplace || 'نامشخص'}</div>
+                ${m.bio ? `<div class="node-bio">${m.bio}</div>` : ''}
+            </div>
+        `).join('')}
+    </div>
+</body>
+</html>`;
+
+            const blob = new Blob([standaloneHtml], {type: "text/html;charset=utf-8"});
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", URL.createObjectURL(blob));
+            dlAnchorElem.setAttribute("download", `shajareh_emarat_mental_map_${Date.now()}.html`);
+            dlAnchorElem.click();
+            showToast('نقشه ذهنی تعاملی با موفقیت صادر شد.');
+        }
+    </script>
+</body>
+</html>
