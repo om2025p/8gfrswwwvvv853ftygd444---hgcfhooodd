@@ -16,14 +16,26 @@ async def main_download():
 
     print("Connecting to Telegram clients...")
     # On import, main/__init__.py starts bot, userbot and Bot!
-    from main import bot, userbot, Bot, AUTH
+    from main import bot, userbot, Bot, AUTH, BOT_TOKEN
 
-    # Ensure Pyrogram clients are started (crucial for Pyrogram v2+ in async contexts)
+    # Ensure Telethon and Pyrogram clients are started (crucial for Pyrogram v2+ and async event loop contexts)
     import inspect
+
+    # Start Telethon Bot
+    try:
+        if not bot.is_connected():
+            print("Starting Telethon bot dynamically...")
+            res = bot.start(bot_token=BOT_TOKEN)
+            if inspect.iscoroutine(res):
+                await res
+    except Exception as e:
+        print(f"Error starting Telethon bot dynamically: {e}")
+
+    # Start Pyrogram clients
     for client_obj in [userbot, Bot]:
-        if not client_obj.is_connected:
+        if not getattr(client_obj, 'is_connected', False):
             try:
-                print(f"Starting client dynamically: {client_obj.name if hasattr(client_obj, 'name') else 'Client'}")
+                print(f"Starting client dynamically: {getattr(client_obj, 'name', 'Client')}")
                 res = client_obj.start()
                 if inspect.iscoroutine(res):
                     await res
@@ -61,7 +73,7 @@ async def main_download():
                 # REVOLUTIONARY FIX: Also search globally in public messages to find even more relevant channels!
                 try:
                     print("Running global public message search to extract more relevant channels...")
-                    async for message in userbot.search_global_messages(query=query, limit=250):
+                    async for message in userbot.search_global_messages(query=query, limit=1000):
                         if message.chat and getattr(message.chat, 'username', None):
                             title = getattr(message.chat, 'title', "بدون عنوان")
                             username = getattr(message.chat, 'username')

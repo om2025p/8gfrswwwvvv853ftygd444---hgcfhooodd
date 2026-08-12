@@ -34,7 +34,7 @@ async def clone(event):
     edit = await event.reply("Processing!")
     try:
         # Ensure userbot is connected dynamically
-        if not userbot.is_connected:
+        if not getattr(userbot, 'is_connected', False):
             try:
                 print("Starting userbot inside frontend clone...")
                 res = userbot.start()
