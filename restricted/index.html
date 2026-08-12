@@ -410,6 +410,10 @@
                             <label class="input-label">توکن دسترسی گیت‌هاب (Personal Access Token):</label>
                             <input type="password" id="ghPat" class="input-field" placeholder="github_pat_..." style="direction: ltr;">
                         </div>
+                        <div class="input-group">
+                            <label class="input-label">نام شاخه گیت‌هاب (Branch Name):</label>
+                            <input type="text" id="ghBranch" class="input-field" placeholder="مثلا 56" style="direction: ltr;">
+                        </div>
                     </div>
                 </div>
 
@@ -486,14 +490,18 @@
     <script>
         // دکمه‌ها و المان‌ها
         const inputs = [
-            'ghOwner', 'ghRepo', 'ghPat',
+            'ghOwner', 'ghRepo', 'ghPat', 'ghBranch',
             'tgApiId', 'tgApiHash', 'tgBotToken', 'tgSession', 'tgOwner'
         ];
 
         // لود مقادیر ذخیره شده
         inputs.forEach(id => {
             const val = localStorage.getItem('restricted_bot_' + id);
-            if (val) document.getElementById(id).value = val;
+            if (val) {
+                document.getElementById(id).value = val;
+            } else if (id === 'ghBranch') {
+                document.getElementById(id).value = '56'; // مقدار پیش‌فرض ۵۶
+            }
 
             // ذخیره خودکار هنگام تایپ
             document.getElementById(id).addEventListener('input', (e) => {
@@ -595,6 +603,7 @@
             const owner = document.getElementById('ghOwner').value;
             const repo = document.getElementById('ghRepo').value;
             const pat = document.getElementById('ghPat').value;
+            const branch = document.getElementById('ghBranch').value || '56';
 
             const tgApiId = document.getElementById('tgApiId').value;
             const tgApiHash = document.getElementById('tgApiHash').value;
@@ -626,7 +635,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        ref: '51', // اجرای دقیق روی شاخه ۵۱
+                        ref: branch, // اجرای دقیق روی شاخه مشخص‌شده توسط کاربر
                         inputs: {
                             TELEGRAM_LINK: downloadLink || '',
                             API_ID: tgApiId,
