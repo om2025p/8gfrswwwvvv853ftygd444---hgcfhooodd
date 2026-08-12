@@ -19,15 +19,20 @@ SESSION = config("SESSION", default=None)
 FORCESUB = config("FORCESUB", default=None)
 AUTH = config("AUTH", default=None, cast=int)
 
-bot = TelegramClient('bot', API_ID, API_HASH).start(bot_token=BOT_TOKEN)
+# Create the Telethon Client instance (do not chain .start() to avoid storing the coroutine object)
+bot = TelegramClient('bot', API_ID, API_HASH)
+
+try:
+    bot.start(bot_token=BOT_TOKEN)
+except BaseException as e:
+    print(f"Telethon Bot Start Warning: {e}")
 
 userbot = Client("saverestricted", session_string=SESSION, api_hash=API_HASH, api_id=API_ID)
 
 try:
     userbot.start()
-except BaseException:
-    print("Userbot Error ! Have you added SESSION while deploying??")
-    sys.exit(1)
+except BaseException as e:
+    print(f"Userbot Start Warning: {e}")
 
 Bot = Client(
     "SaveRestricted",
@@ -39,5 +44,4 @@ Bot = Client(
 try:
     Bot.start()
 except Exception as e:
-    print(e)
-    sys.exit(1)
+    print(f"Bot Start Warning: {e}")
