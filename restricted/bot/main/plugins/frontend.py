@@ -1,6 +1,6 @@
 #Github.com/Vasusen-code
 
-import time, os
+import time, os, inspect
 
 from .. import bot as Drone
 from .. import userbot, Bot
@@ -10,8 +10,6 @@ from main.plugins.helpers import get_link, join
 
 from telethon import events
 from pyrogram.errors import FloodWait
-
-from ethon.telefunc import force_sub
 
 ft = f"To use this bot you've to join @{fs}."
 
@@ -35,6 +33,16 @@ async def clone(event):
         return
     edit = await event.reply("Processing!")
     try:
+        # Ensure userbot is connected dynamically
+        if not userbot.is_connected:
+            try:
+                print("Starting userbot inside frontend clone...")
+                res = userbot.start()
+                if inspect.iscoroutine(res):
+                    await res
+            except Exception as e:
+                print(f"Error starting userbot in frontend clone: {e}")
+
         if 't.me/+' in link:
             q = await join(userbot, link)
             await edit.edit(q)

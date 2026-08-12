@@ -1,6 +1,6 @@
 #Github.com-Vasusen-code
 
-import asyncio, time, os
+import asyncio, time, os, inspect
 
 from .. import bot as Drone
 from main.plugins.progress import progress_for_pyrogram
@@ -25,6 +25,17 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
     """ userbot: PyrogramUserBot
     client: PyrogramBotClient
     bot: TelethonBotClient """
+
+    # Ensure Pyrogram clients are started dynamically if not connected
+    for c_obj in [userbot, client]:
+        if c_obj and not c_obj.is_connected:
+            try:
+                print(f"Starting client inside get_msg: {c_obj.name if hasattr(c_obj, 'name') else 'Client'}")
+                res = c_obj.start()
+                if inspect.iscoroutine(res):
+                    await res
+            except Exception as e:
+                print(f"Error starting client in get_msg: {e}")
 
     edit = ""
     chat = ""
