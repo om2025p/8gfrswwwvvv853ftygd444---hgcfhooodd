@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0a14">
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link class="apple-touch-icon" href="apple-touch-icon.png">
     <title>سپر دانلود عمارت 🛡📥</title>
     <style>
         :root {
@@ -386,6 +386,23 @@
             </div>
         </div>
 
+        <!-- کارت جستجوی رسمی و عمیق تلگرام -->
+        <div class="glass-card">
+            <h2 class="card-title">🔎 موتور جستجوی رسمی و سراسری تلگرام</h2>
+            <p style="font-size: 0.8rem; line-height: 1.5; color: rgba(255,255,255,0.6); margin-top: -10px; margin-bottom: 15px;">
+                عبارت موردنظر را بنویسید تا اکانت تلگرام شما کل فضای عمومی تلگرام را بدون واسطه و مستقیماً از دیتابیس مرکزی آن جستجو کرده و نتایج را همراه با لینک ورود فوری به پی‌وی شما بفرستد!
+            </p>
+
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label class="input-label">🔑 کلمه کلیدی یا کلمه مورد نظر:</label>
+                <input type="text" id="searchQuery" class="input-field" placeholder="مثلاً: بورس، آشپزی، موسیقی، آموزش زبان">
+            </div>
+
+            <button class="action-btn" id="btnSearchTelegram" style="border-color: var(--accent-purple); background: linear-gradient(135deg, rgba(157, 78, 221, 0.2), rgba(0, 229, 255, 0.15)); box-shadow: var(--glow-purple);">
+                🔎 شروع جستجوی عمیق و زنده در سرورهای تلگرام
+            </button>
+        </div>
+
         <!-- کارت تنظیمات اختصاصی -->
         <div class="glass-card">
             <h2 class="card-title">⚙️ تنظیمات و متغیرهای محرمانه (پرونده ربات)</h2>
@@ -482,6 +499,29 @@
             </div>
         </div>
 
+        <!-- پنل دیاگ و عیب‌یابی کشویی -->
+        <div class="glass-card" style="margin-top: 10px;">
+            <div id="debugHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
+                <h2 class="card-title" style="margin: 0; border: none; padding: 0;">🩺📟 پنل دیاگ و عیب‌یابی خطاهای گیت‌هاب</h2>
+                <span id="debugToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: var(--accent-cyan);">🔽</span>
+            </div>
+
+            <div id="debugContent" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 0;">
+                <p style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-top: 12px; margin-bottom: 12px; line-height: 1.5;">
+                    تمامی کوئری‌ها، پاسخ‌ها، وضعیت‌های HTTP و متن خطاهای ارتباطی با API گیت‌هاب در اینجا به صورت زنده ثبت می‌شوند تا متوجه کوچک‌ترین ناهماهنگی در تنظیمات شوید.
+                </p>
+                <textarea id="debugConsole" readonly class="input-field" style="height: 180px; font-family: 'Courier New', Courier, monospace; font-size: 0.78rem; color: #ff2d55; background: rgba(0,0,0,0.7); line-height: 1.4; resize: none; border-color: rgba(255, 30, 100, 0.35); direction: ltr; text-align: left;"></textarea>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+                    <button class="action-btn" id="btnCopyDebug" style="font-size: 0.85rem; padding: 10px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); box-shadow: none;">
+                        📋 کپی کردن لاگ‌های عیب‌یابی
+                    </button>
+                    <button class="action-btn" id="btnClearDebug" style="font-size: 0.85rem; padding: 10px; background: rgba(255,0,0,0.08); border-color: rgba(255,0,0,0.25); box-shadow: none; color: #ff8888;">
+                        🗑️ پاک کردن لاگ‌ها
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- توست اطلاع‌رسانی -->
@@ -494,7 +534,20 @@
             'tgApiId', 'tgApiHash', 'tgBotToken', 'tgSession', 'tgOwner'
         ];
 
+        // لاگین دیباگ
+        function logDebug(message, type = 'info') {
+            const consoleEl = document.getElementById('debugConsole');
+            if (!consoleEl) return;
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+            const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : 'ℹ️');
+
+            consoleEl.value += `[${timeStr}] ${prefix} ${message}\n`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
         // لود مقادیر ذخیره شده
+        logDebug("در حال راه‌اندازی و بارگذاری متغیرهای ذخیره شده...");
         inputs.forEach(id => {
             const val = localStorage.getItem('restricted_bot_' + id);
             if (val) {
@@ -509,6 +562,7 @@
                 updateEnvPreview();
             });
         });
+        logDebug("متغیرهای محلی با موفقیت بازیابی شدند.");
 
         // تولید پیش‌نمایش فایل تنظیمات
         function updateEnvPreview() {
@@ -528,6 +582,7 @@
             const content = document.getElementById('envPreview').innerText;
             navigator.clipboard.writeText(content).then(() => {
                 showToast("📋 محتوای config.env در حافظه کپی شد!");
+                logDebug("محتوای config.env کپی شد.");
             });
         };
 
@@ -555,8 +610,11 @@
                 return;
             }
 
+            const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs?per_page=1`;
+            logDebug(`استعلام وضعیت زنده ورک‌فلوها از آدرس: ${url}`);
+
             try {
-                const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/runs?per_page=1`, {
+                const response = await fetch(url, {
                     headers: {
                         'Authorization': `Bearer ${pat}`,
                         'Accept': 'application/vnd.github.v3+json'
@@ -580,17 +638,22 @@
                         }
 
                         txt.innerText = persianStatus;
+                        logDebug(`وضعیت استعلام موفق: ${status} | نتیجه: ${conclusion || 'در حال اجرا'}`, 'success');
                     } else {
                         dot.className = "status-dot idle";
                         txt.innerText = "بدون اجرای قبلی";
+                        logDebug("هیچ اجرای قبلی برای ورک‌فلو یافت نشد.");
                     }
                 } else {
+                    const errText = await response.text().catch(() => '');
                     dot.className = "status-dot failed";
                     txt.innerText = "خطا در اتصال به گیت‌هاب";
+                    logDebug(`خطا در استعلام وضعیت گیت‌هاب: کد وضعیت HTTP ${response.status} (${response.statusText}). پاسخ: ${errText}`, 'error');
                 }
             } catch (err) {
                 dot.className = "status-dot failed";
                 txt.innerText = "عدم اتصال به شبکه";
+                logDebug(`خطای عدم اتصال شبکه در استعلام وضعیت: ${err.message}`, 'error');
             }
         }
 
@@ -598,7 +661,7 @@
         setInterval(fetchGitHubStatus, 15000);
         fetchGitHubStatus();
 
-        // صدور دستور شروع سرور یا دانلود
+        // صدور دستور شروع سرور یا دانلود یا سرچ
         async function triggerWorkflow(downloadLink = null) {
             const owner = document.getElementById('ghOwner').value;
             const repo = document.getElementById('ghRepo').value;
@@ -613,21 +676,31 @@
 
             if (!owner || !repo || !pat) {
                 showToast("⚠️ لطفاً اطلاعات دسترسی گیت‌هاب را ابتدا وارد کنید!");
+                logDebug("خطای اعتبارسنجی: اطلاعات دسترسی گیت‌هاب خالی است.", "error");
                 return;
             }
 
             if (!tgApiId || !tgApiHash || !tgBotToken || !tgSession || !tgOwner) {
                 showToast("⚠️ لطفا تمام شناسه‌های تلگرام ربات را پر کنید!");
+                logDebug("خطای اعتبارسنجی: شناسه‌های تلگرام تکمیل نیستند.", "error");
                 return;
             }
 
-            showToast("🚀 در حال فرستادن سیگنال روشن‌باش به گیت‌هاب...");
+            const isSearch = downloadLink && downloadLink.startsWith("search:");
+            const actionMsg = isSearch
+                ? "ارسال سیگنال درخواست جستجوی عمیق تلگرام..."
+                : (downloadLink ? "در حال فرستادن سیگنال دانلود پیوند به گیت‌هاب..." : "🚀 در حال فرستادن سیگنال روشن‌باش به گیت‌هاب...");
+
+            showToast(actionMsg);
+            logDebug(`${actionMsg} (شاخه: ${branch})`);
 
             try {
-                // نام فایل ورک‌فلو را به صورت فرضی یا دقیق تنظیم می‌کنیم
                 const workflowId = "restricted_bot.yml";
+                const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
 
-                const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`, {
+                logDebug(`در حال ارسال درخواست POST به آدرس: ${url}`);
+
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${pat}`,
@@ -635,7 +708,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        ref: branch, // اجرای دقیق روی شاخه مشخص‌شده توسط کاربر
+                        ref: branch,
                         inputs: {
                             TELEGRAM_LINK: downloadLink || '',
                             API_ID: tgApiId,
@@ -648,16 +721,59 @@
                 });
 
                 if (response.status === 204) {
-                    showToast(downloadLink ? "📥 دانلود درخواست شد! تلگرامتان را چک کنید." : "🚀 سرور گیت‌هاب با موفقیت روشن شد!");
+                    const successToast = isSearch
+                        ? "🔎 درخواست جستجو صادر شد! نتایج تا دقایقی دیگر به پی‌وی تلگرام شما فرستاده می‌شود."
+                        : (downloadLink ? "📥 دانلود درخواست شد! تلگرامتان را چک کنید." : "🚀 سرور گیت‌هاب با موفقیت روشن شد!");
+                    showToast(successToast);
+                    logDebug(`ورک‌فلو گیت‌هاب با موفقیت فعال شد. کد وضعیت HTTP 204.`, 'success');
                     setTimeout(fetchGitHubStatus, 3000);
                 } else {
-                    const errData = await response.json().catch(() => ({}));
+                    const errText = await response.text().catch(() => '');
+                    logDebug(`پاسخ خطا از سمت گیت‌هاب دریافت شد. وضعیت: ${response.status} (${response.statusText}). متن خطا: ${errText}`, 'error');
+                    let errData = {};
+                    try { errData = JSON.parse(errText); } catch(e){}
                     showToast("❌ خطا در اجرای ورک‌فلو: " + (errData.message || response.statusText));
                 }
             } catch (err) {
+                logDebug(`خطای مهلک در حین ارسال درخواست دیسپچ: ${err.message}`, 'error');
                 showToast("❌ خطای ارتباطی با سرور گیت‌هاب!");
             }
         }
+
+        // تاشو کردن پنل دیباگ
+        const debugHeader = document.getElementById('debugHeader');
+        const debugContent = document.getElementById('debugContent');
+        const debugToggleIcon = document.getElementById('debugToggleIcon');
+
+        debugHeader.onclick = () => {
+            if (debugContent.style.maxHeight === '0px' || !debugContent.style.maxHeight) {
+                debugContent.style.maxHeight = '300px';
+                debugToggleIcon.style.transform = 'rotate(180deg)';
+                logDebug("پنل عیب‌یابی و مانیتورینگ زنده باز شد.");
+            } else {
+                debugContent.style.maxHeight = '0px';
+                debugToggleIcon.style.transform = 'rotate(0deg)';
+            }
+        };
+
+        // کپی لاگ‌ها
+        document.getElementById('btnCopyDebug').onclick = () => {
+            const logs = document.getElementById('debugConsole').value;
+            if (!logs) {
+                showToast("⚠️ لاگی برای کپی وجود ندارد!");
+                return;
+            }
+            navigator.clipboard.writeText(logs).then(() => {
+                showToast("📋 لاگ‌های عیب‌یابی با موفقیت کپی شد!");
+                logDebug("لاگ‌های پنل عیب‌یابی کپی شدند.");
+            });
+        };
+
+        // پاک کردن لاگ‌ها
+        document.getElementById('btnClearDebug').onclick = () => {
+            document.getElementById('debugConsole').value = '';
+            showToast("🗑️ لاگ‌های پنل عیب‌یابی پاکسازی شدند.");
+        };
 
         // رویداد دکمه‌ها
         document.getElementById('btnLaunchServer').onclick = () => triggerWorkflow();
@@ -669,6 +785,15 @@
                 return;
             }
             triggerWorkflow(link);
+        };
+
+        document.getElementById('btnSearchTelegram').onclick = () => {
+            const query = document.getElementById('searchQuery').value.trim();
+            if (!query) {
+                showToast("⚠️ لطفا کلمه کلیدی یا عبارت موردنظر برای جستجو را وارد کنید!");
+                return;
+            }
+            triggerWorkflow("search:" + query);
         };
     </script>
 </body>

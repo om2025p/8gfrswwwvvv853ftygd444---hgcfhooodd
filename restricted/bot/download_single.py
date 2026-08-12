@@ -23,6 +23,59 @@ async def main_download():
         print("Error: OWNER_ID is not configured. Cannot send to owner.")
         return
 
+    # Check if this is a deep Telegram search request
+    if isinstance(link, str) and link.startswith("search:"):
+        query = link[7:].strip()
+        print(f"Starting deep Telegram search for: {query} for owner: {owner_id}")
+
+        # Send starting message to owner
+        msg = await Bot.send_message(owner_id, f"🔎 *در حال جستجوی عمیق کلمه «{query}» در سرورهای رسمی تلگرام...*\n\n🕒 لطفا صبور باشید...")
+
+        try:
+            from pyrogram.raw.functions.contacts import Search
+            # Invoke raw global search
+            found = await userbot.invoke(Search(q=query, limit=50))
+
+            channels = []
+            if found and hasattr(found, 'chats'):
+                for chat in found.chats:
+                    username = getattr(chat, 'username', None)
+                    if username:
+                        title = getattr(chat, 'title', "بدون عنوان")
+                        members = getattr(chat, 'participants_count', None)
+                        channels.append((title, username, members))
+
+            if not channels:
+                await Bot.edit_message_text(owner_id, msg.id, f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
+                return
+
+            # Format and send results in chunks if text gets too long
+            response_text = f"🎯 *نتایج جستجوی رسمی تلگرام برای «{query}»:*\n\n"
+            for i, (title, username, members) in enumerate(channels, 1):
+                members_str = f" ({members:,} عضو)" if members is not None else ""
+                line = f"{i}. 📣 *{title}*\n   🔗 شناسه: @{username}{members_str}\n   👉 [ورود به کانال](https://t.me/{username})\n\n"
+
+                # Check if adding this exceeds Telegram's 4096 character limit
+                if len(response_text) + len(line) > 3900:
+                    await Bot.send_message(owner_id, response_text, disable_web_page_preview=True)
+                    response_text = ""
+                response_text += line
+
+            if response_text:
+                await Bot.edit_message_text(owner_id, msg.id, response_text, disable_web_page_preview=True)
+            else:
+                await Bot.delete_messages(owner_id, msg.id)
+
+            await Bot.send_message(owner_id, "✅ *جستجوی عمیق تلگرام با موفقیت کامل شد!*")
+
+        except Exception as e:
+            print(f"Error during execution of search: {e}")
+            try:
+                await Bot.edit_message_text(owner_id, msg.id, f"❌ *خطا در اجرای جستجوی عمیق تلگرام:*\n`{str(e)}`")
+            except:
+                pass
+        return
+
     print(f"Starting single download for link: {link} to owner: {owner_id}")
 
     # Send starting message to owner
