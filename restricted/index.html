@@ -429,7 +429,7 @@
                         </div>
                         <div class="input-group">
                             <label class="input-label">نام شاخه گیت‌هاب (Branch Name):</label>
-                            <input type="text" id="ghBranch" class="input-field" placeholder="مثلا 56" style="direction: ltr;">
+                            <input type="text" id="ghBranch" class="input-field" placeholder="مثلا main" style="direction: ltr;">
                         </div>
                     </div>
                 </div>
@@ -562,7 +562,7 @@
                 document.getElementById(id).value = val;
                 localStorage.setItem('restricted_bot_' + id, val);
             } else if (id === 'ghBranch') {
-                document.getElementById(id).value = '56'; // مقدار پیش‌فرض ۵۶
+                document.getElementById(id).value = 'main'; // مقدار پیش‌فرض main
             }
 
             // ذخیره خودکار و ضدعفونی همزمان هنگام کپی/پیست یا تایپ
@@ -684,7 +684,7 @@
             const owner = sanitizeString(document.getElementById('ghOwner').value);
             const repo = sanitizeString(document.getElementById('ghRepo').value);
             const pat = sanitizeString(document.getElementById('ghPat').value);
-            const branch = sanitizeString(document.getElementById('ghBranch').value) || '56';
+            const branch = sanitizeString(document.getElementById('ghBranch').value) || 'main';
 
             const tgApiId = sanitizeString(document.getElementById('tgApiId').value);
             const tgApiHash = sanitizeString(document.getElementById('tgApiHash').value);
