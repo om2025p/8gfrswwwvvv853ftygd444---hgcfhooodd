@@ -1,0 +1,36 @@
+{
+  "name": "شجره‌نامه خانوادگی عمارت",
+  "short_name": "شجره‌نامه عمارت",
+  "description": "اپلیکیشن اندروید‌-فرست و لوکس ثبت و پیگیری شجره‌نامه خانوادگی عمارت دیجیتال",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FDFBF7",
+  "theme-color": "#2E7D32",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "fa-IR",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

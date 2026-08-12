@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v23';
+const CACHE_NAME = 'emarat-portal-v24';
 const ASSETS = [
   './',
   './index.html',
@@ -164,7 +164,14 @@ const ASSETS = [
   './restricted/icon-192-maskable.png',
   './restricted/icon-512-maskable.png',
   './restricted/apple-touch-icon.png',
-  './restricted/favicon.ico'
+  './restricted/favicon.ico',
+  // Family Tree App
+  './family/index.html',
+  './family/manifest.json',
+  './family/icon-192.png',
+  './family/icon-512.png',
+  './family/icon-192-maskable.png',
+  './family/icon-512-maskable.png'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
