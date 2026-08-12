@@ -882,6 +882,8 @@
                 6: "cement_history"
             };
 
+            const processedAppsPerDay = {}; // { 'YYYY-MM-DD': Set([appId1, appId2, ...]) }
+
             for (let appId = 1; appId <= 6; appId++) {
                 const historyKey = historyKeys[appId];
                 let historyRaw = localStorage.getItem(historyKey);
@@ -918,6 +920,15 @@
                     if (ts && !isNaN(ts)) {
                         const dayStr = getGregorianDayString(ts);
                         if (dayStr) {
+                            if (!processedAppsPerDay[dayStr]) {
+                                processedAppsPerDay[dayStr] = new Set();
+                            }
+                            // اگر قبلاً در این روز سودی برای این اپ ثبت شده (که جدیدترین بوده چون i از 0 شروع می‌شود)، قدیمی‌ترها را جمع نمی‌بندیم!
+                            if (processedAppsPerDay[dayStr].has(appId)) {
+                                continue;
+                            }
+                            processedAppsPerDay[dayStr].add(appId);
+
                             if (dailyTomanProfitMap[dayStr] === undefined) {
                                 dailyTomanProfitMap[dayStr] = 0;
                             }
@@ -926,10 +937,7 @@
                             if (dailyTomanProfitAppMap[dayStr] === undefined) {
                                 dailyTomanProfitAppMap[dayStr] = {};
                             }
-                            if (dailyTomanProfitAppMap[dayStr][appId] === undefined) {
-                                dailyTomanProfitAppMap[dayStr][appId] = 0;
-                            }
-                            dailyTomanProfitAppMap[dayStr][appId] += tomanProfit;
+                            dailyTomanProfitAppMap[dayStr][appId] = tomanProfit;
                         }
                     }
                 }
@@ -1282,27 +1290,10 @@
                     return;
                 }
 
-                // اگر در حالت «فقط مثبت‌ها» باشیم (فقط برای تب لایو)
+                // اگر در حالت «تاریخچه زرین سودهای مثبت» باشیم (فقط برای تب لایو)
                 if (isOnlyPositivesMode && tabName === 'live') {
-                    // فیلتر کردن روزهایی که حداقل یک اپلیکیشن مقدار سود تومانی مثبت داشته است
-                    const filteredHistory = history.filter(dayItem => {
-                        let hasPositiveApp = false;
-                        appsInfo.forEach(app => {
-                            const appTomanProfit = (dailyTomanProfitAppMap[dayItem.dayString] && dailyTomanProfitAppMap[dayItem.dayString][app.id]) || 0;
-                            if (appTomanProfit > 0) {
-                                hasPositiveApp = true;
-                            }
-                        });
-                        return hasPositiveApp;
-                    });
-
-                    if (filteredHistory.length === 0) {
-                        listEl.innerHTML = `<div class="no-data-hint" style="padding: 15px 0;">📭 هیچ روز طلایی با بازدهی تومانی مثبت یافت نشد!</div>`;
-                        if (statsEl) statsEl.style.display = 'none';
-                        return;
-                    }
-
-                    listEl.innerHTML = filteredHistory.map(dayItem => {
+                    // در این حالت، روزها فیلتر نمی‌شوند (تمام روزها نمایش داده می‌شوند تا منفی‌ها هم باشند)
+                    listEl.innerHTML = history.map(dayItem => {
                         const dateText = formatHistoryDate(dayItem.dayString);
 
                         let appsHtml = '';
@@ -1332,7 +1323,7 @@
                                 // کلاس و استایل بدون نبض و ثابت
                                 const pulseClass = isPositive ? 'gold-pulse-card' : '';
                                 const colorClass = isPositive ? 'positive' : (isNegative ? 'negative' : '');
-                                const extraStyle = isPositive ? 'padding: 8px 12px; font-weight: bold; color: #34d399;' : '';
+                                const extraStyle = isPositive ? 'padding: 8px 12px; font-weight: bold; color: #34d399;' : 'padding: 8px 12px;';
 
                                 appsHtml += `
                                     <div class="history-sub-item ${pulseClass}" style="${extraStyle}">
@@ -1365,7 +1356,7 @@
                     // در حالت فقط مثبت‌ها، آمار مجموع کل سودهای مثبت را در آمار پایین نشان می‌دهیم
                     if (statsEl) {
                         let totalGoldenProfit = 0;
-                        filteredHistory.forEach(dayItem => {
+                        history.forEach(dayItem => {
                             appsInfo.forEach(app => {
                                 const appTomanProfit = (dailyTomanProfitAppMap[dayItem.dayString] && dailyTomanProfitAppMap[dayItem.dayString][app.id]) || 0;
                                 if (appTomanProfit > 0) {
@@ -1462,10 +1453,28 @@
 
             const ctx = canvas.getContext('2d');
             const isTabAnalysis = tabName === 'analysis';
-            const history = [...calculateDailyHistory()].reverse().map(item => {
+            const appsInfo = getAppPercentData();
+
+            // در حالت تاریخچه زرین سودهای مثبت (فقط تب لایو)، نمودار مجموع سودهای تومانی مثبت را نشان می‌دهد
+            const isGoldenTomanMode = isOnlyPositivesMode && tabName === 'live';
+
+            const rawHistory = [...calculateDailyHistory()].reverse();
+            const history = rawHistory.map(item => {
+                let valueToUse = 0;
+                if (isGoldenTomanMode) {
+                    // محاسبه مجموع سودهای مثبت تومانی برای این روز خاص
+                    appsInfo.forEach(app => {
+                        const appTomanProfit = (dailyTomanProfitAppMap[item.dayString] && dailyTomanProfitAppMap[item.dayString][app.id]) || 0;
+                        if (appTomanProfit > 0) {
+                            valueToUse += appTomanProfit;
+                        }
+                    });
+                } else {
+                    valueToUse = isTabAnalysis ? (item.value / 6) : item.value;
+                }
                 return {
                     ...item,
-                    value: isTabAnalysis ? (item.value / 6) : item.value
+                    value: valueToUse
                 };
             });
 
@@ -1487,7 +1496,7 @@
                 return;
             }
 
-            const padding = { top: 15, bottom: 20, left: 35, right: 15 };
+            const padding = { top: 15, bottom: 20, left: 45, right: 15 };
             const chartW = width - padding.left - padding.right;
             const chartH = height - padding.top - padding.bottom;
 
@@ -1496,7 +1505,7 @@
             const minVal = Math.min(...values, -0.1);
             const yRange = maxVal - minVal || 1;
 
-            if (minVal < 0 && maxVal > 0) {
+            if (minVal < 0 && maxVal > 0 && !isGoldenTomanMode) {
                 const zeroY = padding.top + chartH - ((0 - minVal) / yRange) * chartH;
                 ctx.beginPath();
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
@@ -1514,9 +1523,15 @@
                 return { x, y, value: item.value };
             });
 
+            // تنظیم رنگ گرادینت برای سودهای طلایی
             const grad = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-            grad.addColorStop(0, 'rgba(96, 165, 250, 0.3)');
-            grad.addColorStop(1, 'rgba(96, 165, 250, 0.0)');
+            if (isGoldenTomanMode) {
+                grad.addColorStop(0, 'rgba(52, 211, 153, 0.35)');
+                grad.addColorStop(1, 'rgba(52, 211, 153, 0.0)');
+            } else {
+                grad.addColorStop(0, 'rgba(96, 165, 250, 0.3)');
+                grad.addColorStop(1, 'rgba(96, 165, 250, 0.0)');
+            }
 
             ctx.beginPath();
             ctx.moveTo(points[0].x, height - padding.bottom);
@@ -1527,7 +1542,7 @@
             ctx.fill();
 
             ctx.beginPath();
-            ctx.strokeStyle = '#60a5fa';
+            ctx.strokeStyle = isGoldenTomanMode ? '#34d399' : '#60a5fa';
             ctx.lineWidth = 2.5;
             ctx.lineJoin = 'round';
             points.forEach((p, i) => {
@@ -1539,7 +1554,7 @@
             points.forEach((p, i) => {
                 if (i === 0 || i === points.length - 1 || p.value === maxVal || p.value === minVal) {
                     ctx.beginPath();
-                    ctx.fillStyle = '#60a5fa';
+                    ctx.fillStyle = isGoldenTomanMode ? '#34d399' : '#60a5fa';
                     ctx.arc(p.x, p.y, 4, 0, 2 * Math.PI);
                     ctx.fill();
 
@@ -1554,8 +1569,19 @@
             ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
             ctx.font = '10px Segoe UI, Tahoma';
             ctx.textAlign = 'right';
-            ctx.fillText(`${maxVal.toFixed(isTabAnalysis ? 3 : 1)}%`, padding.left - 6, padding.top + 8);
-            ctx.fillText(`${minVal.toFixed(isTabAnalysis ? 3 : 1)}%`, padding.left - 6, height - padding.bottom);
+
+            if (isGoldenTomanMode) {
+                // نمایش برچسب‌های تومانی به شکل مختصر
+                const formatLabel = (v) => {
+                    if (v >= 1000) return `${Math.round(v/1000)}k`;
+                    return Math.round(v);
+                };
+                ctx.fillText(formatLabel(maxVal), padding.left - 6, padding.top + 8);
+                ctx.fillText(formatLabel(minVal), padding.left - 6, height - padding.bottom);
+            } else {
+                ctx.fillText(`${maxVal.toFixed(isTabAnalysis ? 3 : 1)}%`, padding.left - 6, padding.top + 8);
+                ctx.fillText(`${minVal.toFixed(isTabAnalysis ? 3 : 1)}%`, padding.left - 6, height - padding.bottom);
+            }
 
             ctx.textAlign = 'left';
             ctx.fillText(formatHistoryDate(history[0].dayString), padding.left, height - 4);
