@@ -29,12 +29,12 @@ async def main_download():
         print(f"Starting deep Telegram search for: {query} for owner: {owner_id}")
 
         # Send starting message to owner
-        msg = await Bot.send_message(owner_id, f"🔎 *در حال جستجوی عمیق کلمه «{query}» در سرورهای رسمی تلگرام...*\n\n🕒 لطفا صبور باشید...")
+        msg = await Bot.send_message(owner_id, f"🔎 *در حال جستجوی عمیق کلمه «{query}» در سرورهای رسمی تلگرام (تا سقف ۱۰۰۰ نتیجه)...*\n\n🕒 لطفا صبور باشید...")
 
         try:
             from pyrogram.raw.functions.contacts import Search
-            # Invoke raw global search
-            found = await userbot.invoke(Search(q=query, limit=50))
+            # Invoke raw global search with a limit of 1000
+            found = await userbot.invoke(Search(q=query, limit=1000))
 
             channels = []
             if found and hasattr(found, 'chats'):
@@ -50,21 +50,32 @@ async def main_download():
                 return
 
             # Format and send results in chunks if text gets too long
-            response_text = f"🎯 *نتایج جستجوی رسمی تلگرام برای «{query}»:*\n\n"
+            response_text = f"🎯 *نتایج جستجوی رسمی تلگرام برای «{query}» (یافت شده: {len(channels)} کانال):*\n\n"
+            chunk_num = 1
             for i, (title, username, members) in enumerate(channels, 1):
                 members_str = f" ({members:,} عضو)" if members is not None else ""
                 line = f"{i}. 📣 *{title}*\n   🔗 شناسه: @{username}{members_str}\n   👉 [ورود به کانال](https://t.me/{username})\n\n"
 
                 # Check if adding this exceeds Telegram's 4096 character limit
                 if len(response_text) + len(line) > 3900:
-                    await Bot.send_message(owner_id, response_text, disable_web_page_preview=True)
-                    response_text = ""
+                    if chunk_num == 1:
+                        await Bot.edit_message_text(owner_id, msg.id, response_text, disable_web_page_preview=True)
+                    else:
+                        await Bot.send_message(owner_id, response_text, disable_web_page_preview=True)
+                    response_text = f"🎯 *ادامه نتایج جستجو برای «{query}» (بخش {chunk_num + 1}):*\n\n"
+                    chunk_num += 1
                 response_text += line
 
             if response_text:
-                await Bot.edit_message_text(owner_id, msg.id, response_text, disable_web_page_preview=True)
+                if chunk_num == 1:
+                    await Bot.edit_message_text(owner_id, msg.id, response_text, disable_web_page_preview=True)
+                else:
+                    await Bot.send_message(owner_id, response_text, disable_web_page_preview=True)
             else:
-                await Bot.delete_messages(owner_id, msg.id)
+                if chunk_num > 1:
+                    pass
+                else:
+                    await Bot.delete_messages(owner_id, msg.id)
 
             await Bot.send_message(owner_id, "✅ *جستجوی عمیق تلگرام با موفقیت کامل شد!*")
 
