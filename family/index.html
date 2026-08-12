@@ -80,8 +80,8 @@
 
         .canvas {
             position: absolute;
-            width: 2000px;
-            height: 2000px;
+            width: 2400px;
+            height: 2400px;
             transform-origin: 0 0;
             cursor: grab;
             display: flex;
@@ -145,7 +145,7 @@
             flex-direction: row;
             justify-content: center;
             width: 90%;
-            max-width: 450px;
+            max-width: 480px;
         }
 
         .bottom-controls button {
@@ -172,19 +172,27 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 70px;
-            width: 1000px;
-            height: 1000px;
-            transform: translate(500px, 500px); /* Centering inside 2000x2000 canvas */
+            gap: 60px;
+            width: 1400px;
+            height: 1400px;
+            transform: translate(500px, 500px); /* Centering inside 2400x2400 canvas */
         }
 
-        /* Sub-rows for parents, spouses, children */
-        .parents-row {
+        /* Sub-rows for Grandparents, Parents, Spouses, Children */
+        .grandparents-row {
             display: flex;
-            gap: 40px;
+            gap: 80px;
             justify-content: center;
             align-items: center;
-            min-height: 120px;
+            min-height: 110px;
+        }
+
+        .parents-row {
+            display: flex;
+            gap: 50px;
+            justify-content: center;
+            align-items: center;
+            min-height: 110px;
         }
 
         .center-group {
@@ -199,9 +207,9 @@
             gap: 20px;
             justify-content: center;
             align-items: center;
-            min-height: 120px;
+            min-height: 110px;
             flex-wrap: wrap;
-            max-width: 800px;
+            max-width: 900px;
         }
 
         /* Glassmorphic/Milk White Card Designs */
@@ -248,6 +256,17 @@
             border-color: var(--primary-green);
             background-color: var(--light-green);
             opacity: 1;
+        }
+
+        /* Pulsing/Glow visual hint for newly created chain-focus nodes */
+        @keyframes placeholder-pulse {
+            0%, 100% { box-shadow: 0 0 4px rgba(46, 125, 50, 0.2); transform: scale(1); }
+            50% { box-shadow: 0 0 16px rgba(46, 125, 50, 0.6); transform: scale(1.05); }
+        }
+
+        .member-card.chain-attention {
+            animation: placeholder-pulse 1.8s infinite ease-in-out;
+            border-color: var(--secondary-green);
         }
 
         .member-avatar {
@@ -577,13 +596,13 @@
             background: #E5DDD3;
         }
 
-        /* Autocomplete Suggestions */
+        /* Autocomplete Suggestions & Family Smart selection lists */
         .suggestions-box {
             position: absolute;
             background: #FFFFFF;
             border: 1px solid #F1ECE4;
             border-radius: 12px;
-            width: calc(100% - 40px);
+            width: 100%;
             max-height: 120px;
             overflow-y: auto;
             z-index: 1050;
@@ -597,6 +616,9 @@
             border-bottom: 1px solid #FAF7F2;
             font-size: 0.85rem;
             transition: background var(--transition-speed);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .suggestion-item:last-child {
@@ -679,7 +701,7 @@
                 font-size: 1.5rem;
             }
             .tree-layout {
-                gap: 50px;
+                gap: 40px;
             }
             .ui-overlay button {
                 padding: 10px 14px;
@@ -726,6 +748,9 @@
 
             <!-- Tree placement -->
             <div class="tree-layout" id="treeLayout">
+                <!-- Row 0: Grandparents (Maternal and Paternal) -->
+                <div class="grandparents-row" id="grandparentsRow"></div>
+
                 <!-- Row 1: Parents -->
                 <div class="parents-row" id="parentsRow"></div>
 
@@ -910,7 +935,7 @@
 
     <script>
         // State Management variables
-        let members = {}; // Format: { id: { id, name, gender, hasPhoto, photoData, job, relation, birthplace, isAlive, birthDate, location, deathDate, grave, isMarried, spousesCount, childrenCount, bio, parents: [], spouses: [], children: [], clanColor } }
+        let members = {}; // Format: { id: { id, name, gender, hasPhoto, photoData, job, relation, birthplace, isAlive, birthDate, location, deathDate, grave, isMarried, spousesCount, childrenCount, bio, parents: [], spouses: [], children: [], maternalGrandparents: [], paternalGrandparents: [], clanColor } }
         let focusedId = null;
 
         // Form Temp State
@@ -922,11 +947,11 @@
         let formIsAlive = true;
         let formIsMarried = false;
         let relatedMemberId = null;
-        let relationType = null; // 'parent', 'spouse', 'child', 'ancestor'
+        let relationType = null; // 'parent', 'spouse', 'child', 'ancestor', 'maternal_grand', 'paternal_grand'
         let editingMemberId = null;
 
-        // Auto-generated placeholders queue for chain-focus fill protocol
-        let chainQueue = [];
+        // For focus chain spotlight helper
+        let highlightChainNodeId = null;
 
         // Touch Interaction & Canvas State
         let scale = 1;
@@ -1043,7 +1068,7 @@
                         panX = 0;
                         panY = 0;
                     } else {
-                        scale = 1.5;
+                        scale = 1.4;
                     }
                     updateTransform();
                 }
@@ -1078,6 +1103,27 @@
         function updateTransform() {
             const canvas = document.getElementById('canvas');
             canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        }
+
+        // Zoom & Focus camera helper to spotlight a specific element coordinate
+        function centerCameraOnCard(selector) {
+            const card = document.querySelector(selector);
+            if (!card) return;
+
+            const container = document.getElementById('canvasContainer');
+            const canvas = document.getElementById('canvas');
+
+            const cardRect = card.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            // Calculate offset to bring target exactly to center
+            const currentScale = scale;
+
+            // Core coordinate formulas to reposition canvas correctly
+            panX = (containerRect.width / 2) - (cardRect.width / 2) - (card.offsetLeft * currentScale);
+            panY = (containerRect.height / 2) - (cardRect.height / 2) - (card.offsetTop * currentScale);
+
+            updateTransform();
         }
 
         // LocalStorage logic
@@ -1136,10 +1182,22 @@
             return `hsla(${h}, 70%, 85%, 0.85)`;
         }
 
+        // Helper to extract last name
+        function extractLastName(fullName) {
+            if (!fullName) return '';
+            const parts = fullName.trim().split(' ');
+            if (parts.length > 1) {
+                return parts.slice(1).join(' '); // returns everything except first name
+            }
+            return '';
+        }
+
         // Build the Tree Structure Visualization
         function renderTree() {
             const emptyState = document.getElementById('emptyState');
             const canvasContainer = document.getElementById('canvasContainer');
+
+            const grandparentsRow = document.getElementById('grandparentsRow');
             const parentsRow = document.getElementById('parentsRow');
             const centerGroup = document.getElementById('centerGroup');
             const childrenRow = document.getElementById('childrenRow');
@@ -1154,6 +1212,7 @@
             canvasContainer.style.display = 'block';
 
             // Clear rows
+            grandparentsRow.innerHTML = '';
             parentsRow.innerHTML = '';
             centerGroup.innerHTML = '';
             childrenRow.innerHTML = '';
@@ -1164,7 +1223,40 @@
             }
 
             const active = members[focusedId];
-            const clanColor = getClanColor(active.name);
+
+            // ---- 0. RENDER GRANDPARENTS (Maternal and Paternal) ----
+            // We follow the requested custom focus buttons based on society's general norm (Paternal = Father's Father & Mother, Maternal = Mother's Father & Mother)
+            const paternalList = active.paternalGrandparents || [];
+            let renderedPatGrands = 0;
+            paternalList.forEach(gId => {
+                if (members[gId]) {
+                    grandparentsRow.appendChild(createCardElement(members[gId], 'grandparent', 'جد پدری'));
+                    renderedPatGrands++;
+                }
+            });
+            // Placeholder for paternal grandparents (up to 2: Grandfather & Grandmother)
+            if (renderedPatGrands < 2) {
+                const missing = 2 - renderedPatGrands;
+                for (let i = 0; i < missing; i++) {
+                    grandparentsRow.appendChild(createPlaceholderCard('paternal_grand', i === 0 && renderedPatGrands === 0 ? 'پدربزرگ پدری' : 'مادربزرگ پدری', active.id));
+                }
+            }
+
+            const maternalList = active.maternalGrandparents || [];
+            let renderedMatGrands = 0;
+            maternalList.forEach(gId => {
+                if (members[gId]) {
+                    grandparentsRow.appendChild(createCardElement(members[gId], 'grandparent', 'جد مادری'));
+                    renderedMatGrands++;
+                }
+            });
+            // Placeholder for maternal grandparents (up to 2)
+            if (renderedMatGrands < 2) {
+                const missing = 2 - renderedMatGrands;
+                for (let i = 0; i < missing; i++) {
+                    grandparentsRow.appendChild(createPlaceholderCard('maternal_grand', i === 0 && renderedMatGrands === 0 ? 'پدربزرگ مادری' : 'مادربزرگ مادری', active.id));
+                }
+            }
 
             // ---- 1. RENDER FOCUSED AND SPOUSES ----
             // Render focused node card
@@ -1185,7 +1277,12 @@
             const targetSpousesCount = active.isMarried ? parseInt(active.spousesCount || 1) : 0;
             if (targetSpousesCount > currentSpousesCount) {
                 for (let i = 0; i < (targetSpousesCount - currentSpousesCount); i++) {
-                    centerGroup.appendChild(createPlaceholderCard('spouse', 'همسر جدید', active.id));
+                    const spousePlaceholder = createPlaceholderCard('spouse', `همسر جدید ${i + 1}`, active.id);
+                    // Add attention class if this is the target spotlight
+                    if (highlightChainNodeId === 'spouse_' + i) {
+                        spousePlaceholder.querySelector('.member-card').classList.add('chain-attention');
+                    }
+                    centerGroup.appendChild(spousePlaceholder);
                 }
             }
 
@@ -1224,16 +1321,26 @@
             if (targetChildrenCount > renderedChildren) {
                 const missing = targetChildrenCount - renderedChildren;
                 for (let i = 0; i < missing; i++) {
-                    childrenRow.appendChild(createPlaceholderCard('child', `فرزند ${renderedChildren + i + 1}`, active.id));
+                    const childPlaceholder = createPlaceholderCard('child', `فرزند ${renderedChildren + i + 1}`, active.id);
+                    if (highlightChainNodeId === 'child_' + i) {
+                        childPlaceholder.querySelector('.member-card').classList.add('chain-attention');
+                    }
+                    childrenRow.appendChild(childPlaceholder);
                 }
             }
 
             // Trigger line connections rendering
-            setTimeout(drawConnections, 50);
+            setTimeout(() => {
+                drawConnections();
+                // If there's a newly highlighted placeholder, smoothly center camera on it!
+                if (highlightChainNodeId) {
+                    centerCameraOnCard('.chain-attention');
+                }
+            }, 50);
         }
 
         // Card rendering Helper
-        function createCardElement(member, relationStyle) {
+        function createCardElement(member, relationStyle, customRelLabel = null) {
             const container = document.createElement('div');
             container.className = 'card-container';
             container.dataset.id = member.id;
@@ -1264,7 +1371,7 @@
 
             const rel = document.createElement('div');
             rel.className = 'member-relation';
-            rel.innerText = member.relation || (relationStyle === 'parent' ? 'والد' : relationStyle === 'spouse' ? 'همسر' : relationStyle === 'child' ? 'فرزند' : 'شخص');
+            rel.innerText = customRelLabel || member.relation || (relationStyle === 'parent' ? 'والد' : relationStyle === 'spouse' ? 'همسر' : relationStyle === 'child' ? 'فرزند' : 'شخص');
 
             const status = document.createElement('div');
             status.className = 'member-status';
@@ -1291,6 +1398,7 @@
                         if (tapCount === 1) {
                             // Single tap: refocus
                             if (focusedId !== member.id) {
+                                highlightChainNodeId = null; // Clear focus spotlight helper
                                 focusedId = member.id;
                                 saveToLocalStorage();
                                 renderTree();
@@ -1361,7 +1469,6 @@
             svg.innerHTML = ''; // Clear lines
 
             const canvas = document.getElementById('canvas');
-            const svgRect = svg.getBoundingClientRect();
 
             // Locate elements to connect
             const activeCard = document.querySelector('.active-focus');
@@ -1369,22 +1476,44 @@
 
             const activeBox = getRelativeCoords(activeCard, canvas);
 
-            // Connect parents (above)
+            // 1. Connect grandparents (Row 0 -> Row 1)
+            // Society Norm: Maternal grands connect to mother, Paternal grands connect to father
             const parentCards = document.querySelectorAll('#parentsRow .member-card');
+            const maternalGrandCards = document.querySelectorAll('#grandparentsRow .member-card:nth-child(n+3)'); // maternal ones listed last
+            const paternalGrandCards = document.querySelectorAll('#grandparentsRow .member-card:nth-child(-n+2)'); // paternal ones first
+
+            // Draw connections from paternal grandparents to paternal father (first parent card)
+            if (parentCards.length > 0) {
+                const fatherBox = getRelativeCoords(parentCards[0], canvas);
+                paternalGrandCards.forEach(gCard => {
+                    const gBox = getRelativeCoords(gCard, canvas);
+                    drawVinePath(svg, gBox.centerX, gBox.bottom, fatherBox.centerX, fatherBox.top);
+                });
+            }
+
+            // Draw connections from maternal grandparents to maternal mother (second parent card)
+            if (parentCards.length > 1) {
+                const motherBox = getRelativeCoords(parentCards[1], canvas);
+                maternalGrandCards.forEach(gCard => {
+                    const gBox = getRelativeCoords(gCard, canvas);
+                    drawVinePath(svg, gBox.centerX, gBox.bottom, motherBox.centerX, motherBox.top);
+                });
+            }
+
+            // 2. Connect parents to active (Row 1 -> Row 2)
             parentCards.forEach(pCard => {
                 const pBox = getRelativeCoords(pCard, canvas);
                 drawVinePath(svg, pBox.centerX, pBox.bottom, activeBox.centerX, activeBox.top);
             });
 
-            // Connect spouses (sides)
+            // 3. Connect spouses (sides of Row 2)
             const spouseCards = document.querySelectorAll('#centerGroup .member-card:not(.active-focus)');
             spouseCards.forEach(spCard => {
                 const spBox = getRelativeCoords(spCard, canvas);
-                // Draw horizontal curve between them
                 drawVinePath(svg, activeBox.centerX, activeBox.centerY, spBox.centerX, spBox.centerY, true);
             });
 
-            // Connect children (below)
+            // 4. Connect children (Row 2 -> Row 3)
             const childCards = document.querySelectorAll('#childrenRow .member-card');
             childCards.forEach(chCard => {
                 const chBox = getRelativeCoords(chCard, canvas);
@@ -1419,11 +1548,9 @@
             let d = '';
 
             if (isHorizontal) {
-                // Horizontal vine for spouse
                 const controlX = (x1 + x2) / 2;
                 d = `M ${x1} ${y1} Q ${controlX} ${y1 - 25}, ${x2} ${y2}`;
             } else {
-                // Vertical curve for parents/children
                 const controlY = (y1 + y2) / 2;
                 d = `M ${x1} ${y1} C ${x1} ${controlY}, ${x2} ${controlY}, ${x2} ${y2}`;
             }
@@ -1440,18 +1567,15 @@
         }
 
         function addLeavesAlongPath(svg, x1, y1, x2, y2, isHorizontal) {
-            // Put 1-2 small organic leaf symbols on the mid point of connections
             const midX = (x1 + x2) / 2;
             const midY = (y1 + y2) / 2;
 
-            // Leaf 1
             const leaf1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             leaf1.setAttribute('d', 'M0,0 C5,-10 15,-10 15,-5 C15,5 5,10 0,0');
             leaf1.setAttribute('fill', '#81C784');
             leaf1.setAttribute('transform', `translate(${midX + 5}, ${midY - 10}) rotate(45) scale(0.8)`);
             svg.appendChild(leaf1);
 
-            // Leaf 2
             const leaf2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             leaf2.setAttribute('d', 'M0,0 C-5,-10 -15,-10 -15,-5 C-15,5 -5,10 0,0');
             leaf2.setAttribute('fill', '#4CAF50');
@@ -1470,14 +1594,33 @@
             resetFormInputs();
             setPhase(1);
 
-            // Pre-fill some default logic based on connection relation
-            if (type === 'parent') {
-                document.getElementById('member-relation').value = 'والد';
-            } else if (type === 'spouse') {
-                document.getElementById('member-relation').value = 'همسر';
-                setMarital(true);
-            } else if (type === 'child') {
-                document.getElementById('member-relation').value = 'فرزند';
+            // Smart inheritance of family last names
+            if (relatedMemberId && members[relatedMemberId]) {
+                const parentNode = members[relatedMemberId];
+                if (type === 'parent') {
+                    document.getElementById('member-relation').value = 'والد';
+                    setGender('male');
+                } else if (type === 'spouse') {
+                    document.getElementById('member-relation').value = 'همسر';
+                    setGender(parentNode.gender === 'male' ? 'female' : 'male');
+                    setMarital(true);
+                } else if (type === 'child') {
+                    document.getElementById('member-relation').value = 'فرزند';
+                    // Auto-inherit father's family name if father exists in active relations
+                    const activeNode = members[focusedId];
+                    if (activeNode) {
+                        const fatherFamily = extractLastName(activeNode.name);
+                        if (fatherFamily) {
+                            document.getElementById('member-name').value = ' ' + fatherFamily;
+                        }
+                    }
+                } else if (type === 'paternal_grand') {
+                    document.getElementById('member-relation').value = 'جد پدری';
+                    setGender('male');
+                } else if (type === 'maternal_grand') {
+                    document.getElementById('member-relation').value = 'جد مادری';
+                    setGender('male');
+                }
             }
 
             openFocusOverlay();
@@ -1518,7 +1661,6 @@
 
             if (m.isAlive) {
                 document.getElementById('member-location').value = m.location || '';
-                // Set birth date
                 if (m.birthDate) {
                     const parts = m.birthDate.split('/');
                     if (parts.length === 3) {
@@ -1529,7 +1671,6 @@
                 }
             } else {
                 document.getElementById('member-grave').value = m.grave || '';
-                // Set birth dec and death date
                 if (m.birthDate) {
                     const parts = m.birthDate.split('/');
                     if (parts.length === 3) {
@@ -1750,17 +1891,14 @@
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
-                    // Compress image to 90x90 thumbnail
                     const canvas = document.createElement('canvas');
                     canvas.width = 90;
                     canvas.height = 90;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, 90, 90);
 
-                    // Output highly compressed Base64
                     formPhotoData = canvas.toDataURL('image/jpeg', 0.65);
 
-                    // Show preview
                     const previewImg = document.getElementById('preview-image');
                     previewImg.src = formPhotoData;
                     previewImg.style.display = 'block';
@@ -1771,7 +1909,7 @@
             reader.readAsDataURL(file);
         }
 
-        // Auto-Linking: Typing name shows matching family trees or connections
+        // Auto-Linking & Intelligent Family Name directory suggestions
         function handleNameInput(val) {
             const box = document.getElementById('suggestionsBox');
             if (!val.trim()) {
@@ -1780,7 +1918,9 @@
             }
 
             const cleanVal = val.trim().toLowerCase();
-            const matches = Object.values(members).filter(m => m.name.toLowerCase().includes(cleanVal));
+            // Get all unique family/last names existing in members
+            const existingNames = Object.values(members);
+            const matches = existingNames.filter(m => m.name.toLowerCase().includes(cleanVal));
 
             if (matches.length === 0) {
                 box.style.display = 'none';
@@ -1788,15 +1928,14 @@
             }
 
             box.innerHTML = '';
-            matches.forEach(m => {
+            matches.slice(0, 4).forEach(m => {
                 const item = document.createElement('div');
                 item.className = 'suggestion-item';
-                item.innerText = `🔗 اتصال سریع به: ${m.name} (${m.relation || 'عضو'})`;
+                item.innerHTML = `<span>🔗 استفاده از فامیل: <b>${m.name}</b></span> <small style="color: var(--primary-green)">[تپ برای تکمیل]</small>`;
                 item.onclick = () => {
-                    // Connect automatically
                     document.getElementById('member-name').value = m.name;
                     box.style.display = 'none';
-                    showToast(`نام به "${m.name}" متصل شد.`);
+                    showToast(`نام به "${m.name}" تکمیل شد.`);
                 };
                 box.appendChild(item);
             });
@@ -1840,7 +1979,6 @@
             const childrenCount = parseInt(document.getElementById('member-children-count').value) || 0;
 
             if (formMode === 'add') {
-                // Generate secure id
                 const newId = 'mem_' + Date.now() + '_' + Math.floor(Math.random()*1000);
                 const newMember = {
                     id: newId,
@@ -1862,33 +2000,48 @@
                     bio: bio,
                     parents: [],
                     spouses: [],
-                    children: []
+                    children: [],
+                    maternalGrandparents: [],
+                    paternalGrandparents: []
                 };
 
                 // Link based on relationType and relatedMemberId
                 if (relatedMemberId && members[relatedMemberId]) {
                     const relNode = members[relatedMemberId];
                     if (relationType === 'parent') {
-                        // This new member is a parent of relatedMemberId
                         newMember.children.push(relatedMemberId);
                         relNode.parents.push(newId);
                     } else if (relationType === 'spouse') {
-                        // Spouses
                         newMember.spouses.push(relatedMemberId);
                         relNode.spouses.push(newId);
                     } else if (relationType === 'child') {
-                        // Child
                         newMember.parents.push(relatedMemberId);
                         relNode.children.push(newId);
+                    } else if (relationType === 'paternal_grand') {
+                        // Grandparent of related node
+                        relNode.paternalGrandparents = relNode.paternalGrandparents || [];
+                        relNode.paternalGrandparents.push(newId);
+                    } else if (relationType === 'maternal_grand') {
+                        relNode.maternalGrandparents = relNode.maternalGrandparents || [];
+                        relNode.maternalGrandparents.push(newId);
                     }
                 }
 
                 members[newId] = newMember;
-                focusedId = newId; // Bring to focus
+                focusedId = newId;
                 showToast(`عضو جدید "${name}" با موفقیت ثبت شد.`);
 
+                // Determine Chain Focus: Spotlight next empty placeholder
+                // If married with children, automatically prompt focus chain spotlight
+                if (newMember.isMarried && newMember.childrenCount > 0) {
+                    highlightChainNodeId = 'child_0'; // Highlight first child placeholder
+                } else if (newMember.isMarried && newMember.spousesCount > 0) {
+                    highlightChainNodeId = 'spouse_0';
+                } else {
+                    highlightChainNodeId = null;
+                }
+
             } else if (formMode === 'edit' && editingMemberId) {
-                // Update existing
                 const em = members[editingMemberId];
                 em.name = name;
                 em.gender = formGender;
@@ -1956,14 +2109,12 @@
 
         // --- EXPORT COMPACT MENTAL MAP / VISUAL TREE HTML ---
         function exportMentalMap() {
-            // Generate fully-fledged standalone, interactive mind map view for shared use
             const keys = Object.keys(members);
             if (keys.length === 0) {
                 showToast('درختی برای دانلود وجود ندارد!');
                 return;
             }
 
-            // Create interactive HTML
             const standaloneHtml = `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -1987,13 +2138,6 @@
             color: #795548;
             font-size: 0.9rem;
             margin-bottom: 30px;
-        }
-        .tree-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow-x: auto;
-            padding: 20px;
         }
         .node {
             background-color: #FFFFFF;
@@ -2045,16 +2189,16 @@
     <h1>🌳 نقشه ذهنی شجره‌نامه خانوادگی عمارت</h1>
     <p class="desc">لیست شجره‌نامه کامل ثبت شده با آخرین جزئیات به صورت آفلاین</p>
     <div class="wrapper">
-        ${Object.values(members).map(m => `
+        \${Object.values(members).map(m => \`
             <div class="node">
-                <div class="node-avatar">${m.photoData ? `<img src="${m.photoData}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">` : (m.gender === 'male' ? '👨' : '👩')}</div>
-                <div class="node-name">${m.name}</div>
-                <div class="node-rel">${m.relation || 'شخص'}</div>
-                <div style="font-size: 0.75rem; color: #555; margin-top:5px;">شغل: ${m.job || 'نامشخص'}</div>
-                <div style="font-size: 0.75rem; color: #555;">زادگاه: ${m.birthplace || 'نامشخص'}</div>
-                ${m.bio ? `<div class="node-bio">${m.bio}</div>` : ''}
+                <div class="node-avatar">\${m.photoData ? \`<img src="\${m.photoData}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">\` : (m.gender === 'male' ? '👨' : '👩')}</div>
+                <div class="node-name">\${m.name}</div>
+                <div class="node-rel">\${m.relation || 'شخص'}</div>
+                <div style="font-size: 0.75rem; color: #555; margin-top:5px;">شغل: \${m.job || 'نامشخص'}</div>
+                <div style="font-size: 0.75rem; color: #555;">زادگاه: \${m.birthplace || 'نامشخص'}</div>
+                \${m.bio ? \`<div class="node-bio">\${m.bio}</div>\` : ''}
             </div>
-        `).join('')}
+        \`).join('')}
     </div>
 </body>
 </html>`;
