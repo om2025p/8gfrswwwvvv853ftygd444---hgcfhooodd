@@ -26,16 +26,24 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
     client: PyrogramBotClient
     bot: TelethonBotClient """
 
-    # Ensure Pyrogram and Telethon clients are started dynamically if not connected
+    # Ensure Pyrogram and Telethon clients are started dynamically (attempt unconditionally to bypass stale states)
     for c_obj in [userbot, client]:
-        if c_obj and not getattr(c_obj, 'is_connected', False):
+        if c_obj:
             try:
                 print(f"Starting client inside get_msg: {getattr(c_obj, 'name', 'Client')}")
                 res = c_obj.start()
                 if inspect.iscoroutine(res):
                     await res
+            except (ConnectionError, OSError) as e:
+                if "already" in str(e).lower():
+                    print(f"Client {getattr(c_obj, 'name', 'Client')} is already started in get_msg.")
+                else:
+                    print(f"Warning starting client in get_msg: {e}")
             except Exception as e:
-                print(f"Error starting client in get_msg: {e}")
+                if "already started" in str(e).lower() or "active" in str(e).lower():
+                    pass
+                else:
+                    print(f"Error starting client dynamically in get_msg: {e}")
 
     try:
         if bot and not bot.is_connected():
