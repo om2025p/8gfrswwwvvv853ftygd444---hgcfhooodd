@@ -10,6 +10,7 @@ from main.plugins.helpers import get_link, join
 
 from telethon import events
 from pyrogram.errors import FloodWait
+from ethon.telefunc import force_sub
 
 ft = f"To use this bot you've to join @{fs}."
 
@@ -27,10 +28,11 @@ async def clone(event):
             return
     except TypeError:
         return
-    s, r = await force_sub(event.client, fs, event.sender_id, ft)
-    if s == True:
-        await event.reply(r)
-        return
+    if fs and fs != "None" and fs.strip() != "":
+        s, r = await force_sub(event.client, fs, event.sender_id, ft)
+        if s == True:
+            await event.reply(r)
+            return
     edit = await event.reply("Processing!")
     try:
         # Ensure userbot is connected dynamically
