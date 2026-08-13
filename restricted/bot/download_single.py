@@ -8,6 +8,46 @@ from decouple import config
 # Add current directory to path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
+async def safe_send_message(owner_id, text, disable_web_page_preview=False):
+    from main import Bot, bot, userbot
+    try:
+        # Try Pyrogram Bot first
+        return await Bot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
+    except Exception as e:
+        print(f"DEBUG: Bot.send_message failed ({e}). Trying Telethon bot...")
+        try:
+            return await bot.send_message(owner_id, text, link_preview=not disable_web_page_preview)
+        except Exception as e2:
+            print(f"DEBUG: Telethon bot.send_message failed ({e2}). Trying userbot...")
+            try:
+                return await userbot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
+            except Exception as e3:
+                print(f"DEBUG: All message sending fallbacks failed: {e3}")
+                raise e3
+
+async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=False):
+    from main import Bot, bot, userbot
+    if not msg_obj:
+        return await safe_send_message(owner_id, text, disable_web_page_preview)
+
+    is_telethon = hasattr(msg_obj, 'client') or hasattr(msg_obj, 'respond')
+    if is_telethon:
+        try:
+            return await msg_obj.edit(text, link_preview=not disable_web_page_preview)
+        except Exception as e:
+            print(f"DEBUG: Telethon edit failed ({e}). Sending new message...")
+            return await safe_send_message(owner_id, text, disable_web_page_preview)
+    else:
+        try:
+            return await msg_obj.edit_text(text, disable_web_page_preview=disable_web_page_preview)
+        except Exception as e:
+            print(f"DEBUG: Pyrogram edit_text failed ({e}). Trying Bot.edit_message_text...")
+            try:
+                return await Bot.edit_message_text(owner_id, msg_obj.id, text, disable_web_page_preview=disable_web_page_preview)
+            except Exception as e2:
+                print(f"DEBUG: Pyrogram Bot.edit_message_text failed ({e2}). Sending new message...")
+                return await safe_send_message(owner_id, text, disable_web_page_preview)
+
 async def main_download():
     # Load inputs
     link = os.environ.get("TELEGRAM_LINK") or (sys.argv[1] if len(sys.argv) > 1 else None)
@@ -78,13 +118,21 @@ async def main_download():
             print("Error: OWNER_ID is not configured. Cannot send to owner.")
             return
 
+        # Force resolve owner_id with userbot to populate internal cache
+        try:
+            print(f"DEBUG: Resolving owner_id ({owner_id}) using userbot...")
+            await userbot.get_users(owner_id)
+            print("DEBUG: Successfully resolved owner_id using userbot.")
+        except Exception as ex:
+            print(f"DEBUG: Warning resolving owner_id with userbot: {ex}")
+
         # Check if this is a deep Telegram search request
         if isinstance(link, str) and link.startswith("search:"):
             query = link[7:].strip()
             print(f"Starting deep Telegram search for: {query} for owner: {owner_id}")
 
             # Send starting message to owner
-            msg = await Bot.send_message(owner_id, f"🔎 *در حال جستجوی عمیق کلمه «{query}» در سرورهای رسمی تلگرام (تا سقف ۱۰۰۰ نتیجه)...*\n\n🕒 لطفا صبور باشید...")
+            msg = await safe_send_message(owner_id, f"🔎 *در حال جستجوی عمیق کلمه «{query}» در سرورهای رسمی تلگرام (تا سقف ۱۰۰۰ نتیجه)...*\n\n🕒 لطفا صبور باشید...")
 
             try:
                 from pyrogram.raw.functions.contacts import Search
@@ -116,7 +164,7 @@ async def main_download():
                     print(f"Global message search failed or ignored: {ex}")
 
                 if not channels:
-                    await Bot.edit_message_text(owner_id, msg.id, f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
+                    await safe_edit_message(owner_id, msg, f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
                     return
 
                 # Format and send results in chunks if text gets too long
@@ -129,30 +177,36 @@ async def main_download():
                     # Check if adding this exceeds Telegram's 4096 character limit
                     if len(response_text) + len(line) > 3900:
                         if chunk_num == 1:
-                            await Bot.edit_message_text(owner_id, msg.id, response_text, disable_web_page_preview=True)
+                            await safe_edit_message(owner_id, msg, response_text, disable_web_page_preview=True)
                         else:
-                            await Bot.send_message(owner_id, response_text, disable_web_page_preview=True)
+                            await safe_send_message(owner_id, response_text, disable_web_page_preview=True)
                         response_text = f"🎯 *ادامه نتایج جستجو برای «{query}» (بخش {chunk_num + 1}):*\n\n"
                         chunk_num += 1
                     response_text += line
 
                 if response_text:
                     if chunk_num == 1:
-                        await Bot.edit_message_text(owner_id, msg.id, response_text, disable_web_page_preview=True)
+                        await safe_edit_message(owner_id, msg, response_text, disable_web_page_preview=True)
                     else:
-                        await Bot.send_message(owner_id, response_text, disable_web_page_preview=True)
+                        await safe_send_message(owner_id, response_text, disable_web_page_preview=True)
                 else:
                     if chunk_num > 1:
                         pass
                     else:
-                        await Bot.delete_messages(owner_id, msg.id)
+                        try:
+                            if hasattr(msg, 'delete'):
+                                await msg.delete()
+                            else:
+                                await Bot.delete_messages(owner_id, msg.id)
+                        except:
+                            pass
 
-                await Bot.send_message(owner_id, "✅ *جستجوی عمیق تلگرام با موفقیت کامل شد!*")
+                await safe_send_message(owner_id, "✅ *جستجوی عمیق تلگرام با موفقیت کامل شد!*")
 
             except Exception as e:
                 print(f"Error during execution of search: {e}")
                 try:
-                    await Bot.edit_message_text(owner_id, msg.id, f"❌ *خطا در اجرای جستجوی عمیق تلگرام:*\n`{str(e)}`")
+                    await safe_edit_message(owner_id, msg, f"❌ *خطا در اجرای جستجوی عمیق تلگرام:*\n`{str(e)}`")
                 except:
                     pass
             return
@@ -160,7 +214,7 @@ async def main_download():
         print(f"Starting single download for link: {link} to owner: {owner_id}")
 
         # Send starting message to owner
-        msg = await Bot.send_message(owner_id, f"📥 *شروع دانلود لینک درخواستی:*\n`{link}`\n\n🕒 لطفا صبور باشید...")
+        msg = await safe_send_message(owner_id, f"📥 *شروع دانلود لینک درخواستی:*\n`{link}`\n\n🕒 لطفا صبور باشید...")
 
         from main.plugins.pyroplug import get_msg
         from main.plugins.helpers import get_link, join
@@ -169,15 +223,15 @@ async def main_download():
             if 't.me/+' in link or 't.me/joinchat/' in link:
                 # Join channel
                 res = await join(userbot, link)
-                await Bot.edit_message_text(owner_id, msg.id, f"🔑 *نتیجه ورود به کانال خصوصی:*\n{res}")
+                await safe_edit_message(owner_id, msg, f"🔑 *نتیجه ورود به کانال خصوصی:*\n{res}")
             else:
                 # Download and send
                 await get_msg(userbot, Bot, bot, owner_id, msg.id, link, 0)
-                await Bot.send_message(owner_id, "✅ *دانلود و ارسال با موفقیت پایان یافت!*")
+                await safe_send_message(owner_id, "✅ *دانلود و ارسال با موفقیت پایان یافت!*")
         except Exception as e:
             print(f"Error during execution: {e}")
             try:
-                await Bot.send_message(owner_id, f"❌ *خطا در پردازش لینک تلگرام:*\n`{str(e)}`")
+                await safe_send_message(owner_id, f"❌ *خطا در پردازش لینک تلگرام:*\n`{str(e)}`")
             except:
                 pass
     finally:
