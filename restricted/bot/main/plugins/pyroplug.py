@@ -357,7 +357,7 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                             print(f"DEBUG: Pyrogram public send_video_note failed ({p_err}). Fallback to Telethon...")
                             UT = time.time()
                             uploader = await fast_upload(f'{file}', f'{file}', UT, bot, edit, '**UPLOADING:**')
-                            attributes = [DocumentAttributeVideo(duration=duration, w=width, h=height, round_message=round_message, supports_streaming=True)]
+                            attributes = [DocumentAttributeVideo(duration=duration, w=width, h=height, round_message=True, supports_streaming=True)]
                             await bot.send_file(sender, uploader, caption=caption, thumb=thumb_path, attributes=attributes, force_document=False)
                     elif msg.media==MessageMediaType.VIDEO and msg.video.mime_type in ["video/mp4", "video/x-matroska"]:
                         data = video_metadata(file)
@@ -386,7 +386,7 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                             print(f"DEBUG: Pyrogram public send_video failed ({p_err}). Fallback to Telethon...")
                             UT = time.time()
                             uploader = await fast_upload(f'{file}', f'{file}', UT, bot, edit, '**UPLOADING:**')
-                            attributes = [DocumentAttributeVideo(duration=duration, w=width, h=height, round_message=round_message, supports_streaming=True)]
+                            attributes = [DocumentAttributeVideo(duration=duration, w=width, h=height, round_message=False, supports_streaming=True)]
                             await bot.send_file(sender, uploader, caption=caption, thumb=thumb_path, attributes=attributes, force_document=False)
                     elif msg.media==MessageMediaType.PHOTO:
                         await safe_edit_object(edit, "Uploading photo.")

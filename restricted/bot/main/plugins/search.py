@@ -71,6 +71,61 @@ def expand_persian_query(query):
             f"{base} ام"
         ])
 
+    # Finglish / Transliteration mapping for extremely deep search results
+    finglish_map = {
+        "عکس": ["aks", "ax"],
+        "عکسام": ["aksam", "axam"],
+        "عکسهام": ["aksham", "axham", "akshaye", "axaye"],
+        "عکس هام": ["aks ham", "ax ham"],
+        "عکسهایم": ["akshaye", "axaye"],
+        "عکس هایم": ["aks haye", "ax haye"],
+        "عکس های من": ["aks haye man", "ax haye man"],
+        "فیلم": ["film"],
+        "فیلمام": ["filmam"],
+        "فیلمهام": ["filmham"],
+        "آهنگ": ["ahang"],
+        "آهنگام": ["ahangam"],
+        "آهنگهام": ["ahangham"],
+        "موزیک": ["music", "muzik"]
+    }
+
+    # Synonym mapping for "spider" deep synonym matching
+    synonym_map = {
+        "خاطرات": ["خاطره", "خاطرات من", "دفتر خاطرات", "khaterat", "khatereh", "khatere"],
+        "خاطره": ["خاطرات", "خاطرات من", "دفتر خاطرات", "khaterat", "khatereh", "khatere"],
+        "فیلم": ["فیلم‌ها", "سینما", "سریال", "film", "serial", "cinema"],
+        "سریال": ["فیلم", "سینما", "سریال‌ها", "film", "serial", "cinema"],
+        "آهنگ": ["موزیک", "موسیقی", "ترانه", "music", "muzik", "ahang", "taraneh"],
+        "موزیک": ["آهنگ", "موسیقی", "ترانه", "music", "muzik", "ahang", "taraneh"],
+        "موسیقی": ["آهنگ", "موزیک", "ترانه", "music", "muzik", "ahang", "taraneh"],
+        "کتاب": ["رمان", "داستان", "ketab", "roman", "dastan", "book"],
+        "رمان": ["کتاب", "داستان", "ketab", "roman", "dastan", "book"],
+        "بورس": ["سهام", "ارز دیجیتال", "کریپتو", "bourse", "sahm", "crypto"],
+        "ارز دیجیتال": ["بورس", "سهام", "ارزدیجیتال", "کریپتو", "crypto", "bitcoin"]
+    }
+
+    # Match substrings for query and its expanded variants
+    matched_finglish = []
+    for persian_word, f_list in finglish_map.items():
+        if persian_word in query or query in persian_word:
+            matched_finglish.extend(f_list)
+        for q_var in list(queries):
+            if persian_word in q_var or q_var in persian_word:
+                matched_finglish.extend(f_list)
+
+    # Match synonyms
+    matched_synonyms = []
+    for p_word, s_list in synonym_map.items():
+        if p_word in query or query in p_word:
+            matched_synonyms.extend(s_list)
+        for q_var in list(queries):
+            if p_word in q_var or q_var in p_word:
+                matched_synonyms.extend(s_list)
+
+    queries.extend(matched_finglish)
+    queries.extend(matched_synonyms)
+
+    # Clean up duplicates and keep original order
     seen = set()
     unique_queries = []
     for q in queries:
@@ -137,6 +192,31 @@ async def telegram_search(event):
                 print(f"Search variation '{q_term}' search_global_messages failed: {e_msg_search}")
 
             await asyncio.sleep(0.5)
+
+        # SPIDER CRAWL: Get similar channels for the top 10 largest found channels to expand exponentially!
+        channels_to_crawl = sorted([c for c in channels if c[2] is not None], key=lambda x: x[2], reverse=True)[:10]
+        print(f"DEBUG: Starting spider crawl of similar channels for: {[c[1] for c in channels_to_crawl]}")
+        for title, username, members in channels_to_crawl:
+            similar = None
+            try:
+                similar = await userbot.get_chat_recommendations(username)
+            except Exception:
+                try:
+                    similar = await userbot.get_similar_channels(username)
+                except Exception:
+                    pass
+
+            try:
+                if similar:
+                    for sim_channel in similar:
+                        sim_username = getattr(sim_channel, 'username', None)
+                        if sim_username and sim_username.lower() not in seen_usernames:
+                            seen_usernames.add(sim_username.lower())
+                            sim_title = getattr(sim_channel, 'title', "بدون عنوان")
+                            sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
+                            channels.append((sim_title, sim_username, sim_members))
+            except Exception as sim_err:
+                print(f"DEBUG: Processing similar channels failed for {username}: {sim_err}")
 
         if not channels:
             await msg.edit(f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
