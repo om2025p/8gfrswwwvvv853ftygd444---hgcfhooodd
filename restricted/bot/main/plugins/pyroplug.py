@@ -26,33 +26,45 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
     client: PyrogramBotClient
     bot: TelethonBotClient """
 
+    print(f"DEBUG: Entering get_msg with msg_link: {msg_link}")
+
     # Ensure Pyrogram and Telethon clients are started dynamically (attempt unconditionally to bypass stale states)
     for c_obj in [userbot, client]:
         if c_obj:
+            name = getattr(c_obj, 'name', 'Client')
             try:
-                print(f"Starting client inside get_msg: {getattr(c_obj, 'name', 'Client')}")
-                res = c_obj.start()
-                if inspect.iscoroutine(res):
-                    await res
+                # Use await on is_connected to support all environments securely
+                is_conn = c_obj.is_connected
+                if inspect.iscoroutine(is_conn):
+                    is_conn = await is_conn
+
+                print(f"DEBUG: Client {name} is_connected status: {is_conn}")
+                if not is_conn:
+                    print(f"DEBUG: Starting client {name} inside get_msg...")
+                    res = c_obj.start()
+                    if inspect.iscoroutine(res):
+                        await res
+                    print(f"DEBUG: Client {name} successfully started.")
             except (ConnectionError, OSError) as e:
                 if "already" in str(e).lower():
-                    print(f"Client {getattr(c_obj, 'name', 'Client')} is already started in get_msg.")
+                    print(f"DEBUG: Client {name} is already started in get_msg.")
                 else:
-                    print(f"Warning starting client in get_msg: {e}")
+                    print(f"DEBUG: Warning starting client {name} in get_msg: {e}")
             except Exception as e:
                 if "already started" in str(e).lower() or "active" in str(e).lower():
                     pass
                 else:
-                    print(f"Error starting client dynamically in get_msg: {e}")
+                    print(f"DEBUG: Error starting client {name} dynamically in get_msg: {e}")
 
     try:
         if bot and not bot.is_connected():
-            print("Starting Telethon bot dynamically in get_msg...")
+            print("DEBUG: Starting Telethon bot dynamically in get_msg...")
             res = bot.start()
             if inspect.iscoroutine(res):
                 await res
+            print("DEBUG: Telethon bot successfully started.")
     except Exception as e:
-        print(f"Error starting Telethon bot in get_msg: {e}")
+        print(f"DEBUG: Error starting Telethon bot in get_msg: {e}")
 
     edit = ""
     chat = ""
@@ -62,15 +74,22 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
     msg_id = int(msg_link.split("/")[-1]) + int(i)
     height, width, duration, thumb_path = 90, 90, 0, None
 
+    print(f"DEBUG: Sanitized msg_id: {msg_id}")
+
     # CRITICAL BUG FIX: Use exact string presence check instead of 't.me/c/' or 't.me/b/' in msg_link
     if 't.me/c/' in msg_link or 't.me/b/' in msg_link:
         if 't.me/b/' in msg_link:
             chat = str(msg_link.split("/")[-2])
         else:
             chat = int('-100' + str(msg_link.split("/")[-2]))
+
+        print(f"DEBUG: Link classified as PRIVATE/RESTRICTED. Chat extracted: {chat}")
         file = ""
         try:
+            print(f"DEBUG: Getting message with ID {msg_id} from private chat {chat}...")
             msg = await userbot.get_messages(chat, msg_id)
+            print(f"DEBUG: Message retrieved. Media type: {getattr(msg, 'media', None)}")
+
             if msg.media:
                 if msg.media==MessageMediaType.WEB_PAGE:
                     edit = await client.edit_message_text(sender, edit_id, "Cloning.")
@@ -94,17 +113,17 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                     time.time()
                 )
             )
-            print(file)
+            print(f"DEBUG: Download completed. File path: {file}")
             await edit.edit('Preparing to Upload!')
             caption = None
             if msg.caption is not None:
                 caption = msg.caption
             if msg.media==MessageMediaType.VIDEO_NOTE:
                 round_message = True
-                print("Trying to get metadata")
+                print("DEBUG: Processing video note metadata...")
                 data = video_metadata(file)
                 height, width, duration = data["height"], data["width"], data["duration"]
-                print(f'd: {duration}, w: {width}, h:{height}')
+                print(f'DEBUG: d: {duration}, w: {width}, h:{height}')
                 try:
                     thumb_path = await screenshot(file, duration, sender)
                 except Exception:
@@ -123,10 +142,10 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                     )
                 )
             elif msg.media==MessageMediaType.VIDEO and msg.video.mime_type in ["video/mp4", "video/x-matroska"]:
-                print("Trying to get metadata")
+                print("DEBUG: Processing video metadata...")
                 data = video_metadata(file)
                 height, width, duration = data["height"], data["width"], data["duration"]
-                print(f'd: {duration}, w: {width}, h:{height}')
+                print(f'DEBUG: d: {duration}, w: {width}, h:{height}')
                 try:
                     thumb_path = await screenshot(file, duration, sender)
                 except Exception:
@@ -172,10 +191,12 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
             except Exception:
                 pass
             await edit.delete()
-        except (ChannelBanned, ChannelInvalid, ChannelPrivate, ChatIdInvalid, ChatInvalid):
+        except (ChannelBanned, ChannelInvalid, ChannelPrivate, ChatIdInvalid, ChatInvalid) as ce:
+            print(f"DEBUG: Channel joining/permission error: {ce}")
             await client.edit_message_text(sender, edit_id, "Have you joined the channel?")
             return
-        except PeerIdInvalid:
+        except PeerIdInvalid as pie:
+            print(f"DEBUG: PeerIdInvalid error: {pie}")
             chat = msg_link.split("/")[-3]
             try:
                 int(chat)
@@ -184,7 +205,7 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                 new_link = f"t.me/b/{chat}/{msg_id}"
             return await get_msg(userbot, client, bot, sender, edit_id, msg_link, i)
         except Exception as e:
-            print(e)
+            print(f"DEBUG: Unhandled error in private downloader: {e}")
             if "messages.SendMedia" in str(e) \
             or "SaveBigFilePartRequest" in str(e) \
             or "SendMediaRequest" in str(e) \
@@ -229,24 +250,28 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
         await edit.delete()
     else:
         # Public Channel Link
+        print(f"DEBUG: Link classified as PUBLIC. Chat extracted: {msg_link}")
         edit = await client.edit_message_text(sender, edit_id, "Cloning public link...")
         chat = msg_link.split("t.me")[1].split("/")[1]
         try:
+            print(f"DEBUG: Attempting direct copy of public message {msg_id} from public channel {chat}...")
             msg = await client.get_messages(chat, msg_id)
             if msg.empty:
+                print("DEBUG: Message was empty. Trying fallback recursion route...")
                 new_link = f't.me/b/{chat}/{int(msg_id)}'
-                # recursion
                 return await get_msg(userbot, client, bot, sender, edit_id, new_link, i)
 
             # Try to copy message directly
             await client.copy_message(sender, chat, msg_id)
+            print("DEBUG: Direct copy succeeded.")
             await edit.delete()
         except Exception as e:
-            print(f"Direct copy of public message failed: {e}. Falling back to download/upload...")
+            print(f"DEBUG: Direct copy of public message failed: {e}. Falling back to download/upload using userbot...")
             try:
                 # Get message via userbot instead (handles restricted/protected public channels)
                 msg = await userbot.get_messages(chat, msg_id)
                 if msg.empty:
+                    print("DEBUG: Fallback userbot message is empty.")
                     await client.edit_message_text(sender, edit_id, f'Failed to save public link: Message is empty or unavailable.')
                     return
 
@@ -333,7 +358,7 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                     await client.send_message(sender, msg.text.markdown)
                 await edit.delete()
             except Exception as ex:
-                print(ex)
+                print(f"DEBUG: Fallback routine completely failed: {ex}")
                 await client.edit_message_text(sender, edit_id, f'Failed to save public link: `{msg_link}`\n\nError: {str(ex)}')
 
 async def get_bulk_msg(userbot, client, sender, msg_link, i):
