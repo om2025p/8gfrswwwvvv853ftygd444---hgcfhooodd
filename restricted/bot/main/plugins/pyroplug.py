@@ -20,39 +20,85 @@ def thumbnail(sender):
     else:
          return None
 
+async def safe_edit_msg_pyroplug(client, bot, sender, edit_id, text):
+    try:
+        return await client.edit_message_text(sender, edit_id, text)
+    except Exception as e:
+        print(f"DEBUG: Pyroplug client.edit_message_text failed: {e}. Trying Telethon bot...")
+        try:
+            return await bot.edit_message(sender, edit_id, text)
+        except Exception as e2:
+            print(f"DEBUG: Pyroplug bot.edit_message failed: {e2}. Sending new message...")
+            try:
+                return await bot.send_message(sender, text)
+            except Exception as e3:
+                print(f"DEBUG: All pyroplug fallback edit methods failed: {e3}")
+                return None
+
+async def safe_edit_object(msg_obj, text):
+    if not msg_obj:
+        return
+    try:
+        if hasattr(msg_obj, 'edit'):
+            await msg_obj.edit(text)
+        elif hasattr(msg_obj, 'edit_text'):
+            await msg_obj.edit_text(text)
+    except Exception as e:
+        print(f"DEBUG: safe_edit_object failed: {e}")
+
+async def safe_delete_object(msg_obj):
+    if not msg_obj:
+        return
+    try:
+        await msg_obj.delete()
+    except Exception as e:
+        print(f"DEBUG: safe_delete_object failed: {e}")
+
 async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
 
     """ userbot: PyrogramUserBot
     client: PyrogramBotClient
     bot: TelethonBotClient """
 
+    print(f"DEBUG: Entering get_msg with msg_link: {msg_link}")
+
     # Ensure Pyrogram and Telethon clients are started dynamically (attempt unconditionally to bypass stale states)
     for c_obj in [userbot, client]:
         if c_obj:
+            name = getattr(c_obj, 'name', 'Client')
             try:
-                print(f"Starting client inside get_msg: {getattr(c_obj, 'name', 'Client')}")
-                res = c_obj.start()
-                if inspect.iscoroutine(res):
-                    await res
+                # Use await on is_connected to support all environments securely
+                is_conn = c_obj.is_connected
+                if inspect.iscoroutine(is_conn):
+                    is_conn = await is_conn
+
+                print(f"DEBUG: Client {name} is_connected status: {is_conn}")
+                if not is_conn:
+                    print(f"DEBUG: Starting client {name} inside get_msg...")
+                    res = c_obj.start()
+                    if inspect.iscoroutine(res):
+                        await res
+                    print(f"DEBUG: Client {name} successfully started.")
             except (ConnectionError, OSError) as e:
                 if "already" in str(e).lower():
-                    print(f"Client {getattr(c_obj, 'name', 'Client')} is already started in get_msg.")
+                    print(f"DEBUG: Client {name} is already started in get_msg.")
                 else:
-                    print(f"Warning starting client in get_msg: {e}")
+                    print(f"DEBUG: Warning starting client {name} in get_msg: {e}")
             except Exception as e:
                 if "already started" in str(e).lower() or "active" in str(e).lower():
                     pass
                 else:
-                    print(f"Error starting client dynamically in get_msg: {e}")
+                    print(f"DEBUG: Error starting client {name} dynamically in get_msg: {e}")
 
     try:
         if bot and not bot.is_connected():
-            print("Starting Telethon bot dynamically in get_msg...")
+            print("DEBUG: Starting Telethon bot dynamically in get_msg...")
             res = bot.start()
             if inspect.iscoroutine(res):
                 await res
+            print("DEBUG: Telethon bot successfully started.")
     except Exception as e:
-        print(f"Error starting Telethon bot in get_msg: {e}")
+        print(f"DEBUG: Error starting Telethon bot in get_msg: {e}")
 
     edit = ""
     chat = ""
@@ -62,28 +108,41 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
     msg_id = int(msg_link.split("/")[-1]) + int(i)
     height, width, duration, thumb_path = 90, 90, 0, None
 
+    print(f"DEBUG: Sanitized msg_id: {msg_id}")
+
     # CRITICAL BUG FIX: Use exact string presence check instead of 't.me/c/' or 't.me/b/' in msg_link
     if 't.me/c/' in msg_link or 't.me/b/' in msg_link:
         if 't.me/b/' in msg_link:
             chat = str(msg_link.split("/")[-2])
         else:
             chat = int('-100' + str(msg_link.split("/")[-2]))
+
+        print(f"DEBUG: Link classified as PRIVATE/RESTRICTED. Chat extracted: {chat}")
         file = ""
         try:
+            print(f"DEBUG: Getting message with ID {msg_id} from private chat {chat}...")
             msg = await userbot.get_messages(chat, msg_id)
+            print(f"DEBUG: Message retrieved. Media type: {getattr(msg, 'media', None)}")
+
             if msg.media:
                 if msg.media==MessageMediaType.WEB_PAGE:
-                    edit = await client.edit_message_text(sender, edit_id, "Cloning.")
-                    await client.send_message(sender, msg.text.markdown)
-                    await edit.delete()
+                    edit = await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "Cloning.")
+                    try:
+                        await client.send_message(sender, msg.text.markdown)
+                    except Exception:
+                        await bot.send_message(sender, msg.text.markdown)
+                    await safe_delete_object(edit)
                     return
             if not msg.media:
                 if msg.text:
-                    edit = await client.edit_message_text(sender, edit_id, "Cloning.")
-                    await client.send_message(sender, msg.text.markdown)
-                    await edit.delete()
+                    edit = await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "Cloning.")
+                    try:
+                        await client.send_message(sender, msg.text.markdown)
+                    except Exception:
+                        await bot.send_message(sender, msg.text.markdown)
+                    await safe_delete_object(edit)
                     return
-            edit = await client.edit_message_text(sender, edit_id, "Trying to Download.")
+            edit = await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "Trying to Download.")
             file = await userbot.download_media(
                 msg,
                 progress=progress_for_pyrogram,
@@ -94,17 +153,17 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                     time.time()
                 )
             )
-            print(file)
-            await edit.edit('Preparing to Upload!')
+            print(f"DEBUG: Download completed. File path: {file}")
+            await safe_edit_object(edit, 'Preparing to Upload!')
             caption = None
             if msg.caption is not None:
                 caption = msg.caption
             if msg.media==MessageMediaType.VIDEO_NOTE:
                 round_message = True
-                print("Trying to get metadata")
+                print("DEBUG: Processing video note metadata...")
                 data = video_metadata(file)
                 height, width, duration = data["height"], data["width"], data["duration"]
-                print(f'd: {duration}, w: {width}, h:{height}')
+                print(f'DEBUG: d: {duration}, w: {width}, h:{height}')
                 try:
                     thumb_path = await screenshot(file, duration, sender)
                 except Exception:
@@ -123,10 +182,10 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                     )
                 )
             elif msg.media==MessageMediaType.VIDEO and msg.video.mime_type in ["video/mp4", "video/x-matroska"]:
-                print("Trying to get metadata")
+                print("DEBUG: Processing video metadata...")
                 data = video_metadata(file)
                 height, width, duration = data["height"], data["width"], data["duration"]
-                print(f'd: {duration}, w: {width}, h:{height}')
+                print(f'DEBUG: d: {duration}, w: {width}, h:{height}')
                 try:
                     thumb_path = await screenshot(file, duration, sender)
                 except Exception:
@@ -148,7 +207,7 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                 )
 
             elif msg.media==MessageMediaType.PHOTO:
-                await edit.edit("Uploading photo.")
+                await safe_edit_object(edit, "Uploading photo.")
                 await bot.send_file(sender, file, caption=caption)
             else:
                 thumb_path=thumbnail(sender)
@@ -171,11 +230,13 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                     os.remove(file)
             except Exception:
                 pass
-            await edit.delete()
-        except (ChannelBanned, ChannelInvalid, ChannelPrivate, ChatIdInvalid, ChatInvalid):
-            await client.edit_message_text(sender, edit_id, "Have you joined the channel?")
+            await safe_delete_object(edit)
+        except (ChannelBanned, ChannelInvalid, ChannelPrivate, ChatIdInvalid, ChatInvalid) as ce:
+            print(f"DEBUG: Channel joining/permission error: {ce}")
+            await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "Have you joined the channel?")
             return
-        except PeerIdInvalid:
+        except PeerIdInvalid as pie:
+            print(f"DEBUG: PeerIdInvalid error: {pie}")
             chat = msg_link.split("/")[-3]
             try:
                 int(chat)
@@ -184,10 +245,12 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                 new_link = f"t.me/b/{chat}/{msg_id}"
             return await get_msg(userbot, client, bot, sender, edit_id, msg_link, i)
         except Exception as e:
-            print(e)
+            print(f"DEBUG: Unhandled error in private downloader: {e}")
             if "messages.SendMedia" in str(e) \
             or "SaveBigFilePartRequest" in str(e) \
             or "SendMediaRequest" in str(e) \
+            or "PeerIdInvalid" in str(type(e)) \
+            or "peer" in str(e).lower() \
             or str(e) == "File size equals to 0 B":
                 try:
                     if msg.media==MessageMediaType.VIDEO and msg.video.mime_type in ["video/mp4", "video/x-matroska"]:
@@ -207,14 +270,14 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                         os.remove(file)
                 except Exception as e:
                     print(e)
-                    await client.edit_message_text(sender, edit_id, f'Failed to save: `{msg_link}`\n\nError: {str(e)}')
+                    await safe_edit_msg_pyroplug(client, bot, sender, edit_id, f'Failed to save: `{msg_link}`\n\nError: {str(e)}')
                     try:
                         os.remove(file)
                     except Exception:
                         return
                     return
             else:
-                await client.edit_message_text(sender, edit_id, f'Failed to save: `{msg_link}`\n\nError: {str(e)}')
+                await safe_edit_msg_pyroplug(client, bot, sender, edit_id, f'Failed to save: `{msg_link}`\n\nError: {str(e)}')
                 try:
                     os.remove(file)
                 except Exception:
@@ -226,32 +289,36 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                 os.remove(file)
         except Exception:
             pass
-        await edit.delete()
+        await safe_delete_object(edit)
     else:
         # Public Channel Link
-        edit = await client.edit_message_text(sender, edit_id, "Cloning public link...")
+        print(f"DEBUG: Link classified as PUBLIC. Chat extracted: {msg_link}")
+        edit = await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "Cloning public link...")
         chat = msg_link.split("t.me")[1].split("/")[1]
         try:
+            print(f"DEBUG: Attempting direct copy of public message {msg_id} from public channel {chat}...")
             msg = await client.get_messages(chat, msg_id)
             if msg.empty:
+                print("DEBUG: Message was empty. Trying fallback recursion route...")
                 new_link = f't.me/b/{chat}/{int(msg_id)}'
-                # recursion
                 return await get_msg(userbot, client, bot, sender, edit_id, new_link, i)
 
             # Try to copy message directly
             await client.copy_message(sender, chat, msg_id)
-            await edit.delete()
+            print("DEBUG: Direct copy succeeded.")
+            await safe_delete_object(edit)
         except Exception as e:
-            print(f"Direct copy of public message failed: {e}. Falling back to download/upload...")
+            print(f"DEBUG: Direct copy of public message failed: {e}. Falling back to download/upload using userbot...")
             try:
                 # Get message via userbot instead (handles restricted/protected public channels)
                 msg = await userbot.get_messages(chat, msg_id)
                 if msg.empty:
-                    await client.edit_message_text(sender, edit_id, f'Failed to save public link: Message is empty or unavailable.')
+                    print("DEBUG: Fallback userbot message is empty.")
+                    await safe_edit_msg_pyroplug(client, bot, sender, edit_id, f'Failed to save public link: Message is empty or unavailable.')
                     return
 
                 if msg.media:
-                    await edit.edit("Downloading public restricted media...")
+                    await safe_edit_object(edit, "Downloading public restricted media...")
                     file = await userbot.download_media(
                         msg,
                         progress=progress_for_pyrogram,
@@ -262,7 +329,7 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                             time.time()
                         )
                     )
-                    await edit.edit('Preparing to Upload!')
+                    await safe_edit_object(edit, 'Preparing to Upload!')
                     caption = msg.caption if msg.caption is not None else None
 
                     if msg.media==MessageMediaType.VIDEO_NOTE:
@@ -272,19 +339,26 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                             thumb_path = await screenshot(file, duration, sender)
                         except Exception:
                             thumb_path = None
-                        await client.send_video_note(
-                            chat_id=sender,
-                            video_note=file,
-                            length=height, duration=duration,
-                            thumb=thumb_path,
-                            progress=progress_for_pyrogram,
-                            progress_args=(
-                                client,
-                                '**UPLOADING:**\n',
-                                edit,
-                                time.time()
+                        try:
+                            await client.send_video_note(
+                                chat_id=sender,
+                                video_note=file,
+                                length=height, duration=duration,
+                                thumb=thumb_path,
+                                progress=progress_for_pyrogram,
+                                progress_args=(
+                                    client,
+                                    '**UPLOADING:**\n',
+                                    edit,
+                                    time.time()
+                                )
                             )
-                        )
+                        except Exception as p_err:
+                            print(f"DEBUG: Pyrogram public send_video_note failed ({p_err}). Fallback to Telethon...")
+                            UT = time.time()
+                            uploader = await fast_upload(f'{file}', f'{file}', UT, bot, edit, '**UPLOADING:**')
+                            attributes = [DocumentAttributeVideo(duration=duration, w=width, h=height, round_message=round_message, supports_streaming=True)]
+                            await bot.send_file(sender, uploader, caption=caption, thumb=thumb_path, attributes=attributes, force_document=False)
                     elif msg.media==MessageMediaType.VIDEO and msg.video.mime_type in ["video/mp4", "video/x-matroska"]:
                         data = video_metadata(file)
                         height, width, duration = data["height"], data["width"], data["duration"]
@@ -292,49 +366,65 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                             thumb_path = await screenshot(file, duration, sender)
                         except Exception:
                             thumb_path = None
-                        await client.send_video(
-                            chat_id=sender,
-                            video=file,
-                            caption=caption,
-                            supports_streaming=True,
-                            height=height, width=width, duration=duration,
-                            thumb=thumb_path,
-                            progress=progress_for_pyrogram,
-                            progress_args=(
-                                client,
-                                '**UPLOADING:**\n',
-                                edit,
-                                time.time()
+                        try:
+                            await client.send_video(
+                                chat_id=sender,
+                                video=file,
+                                caption=caption,
+                                supports_streaming=True,
+                                height=height, width=width, duration=duration,
+                                thumb=thumb_path,
+                                progress=progress_for_pyrogram,
+                                progress_args=(
+                                    client,
+                                    '**UPLOADING:**\n',
+                                    edit,
+                                    time.time()
+                                )
                             )
-                        )
+                        except Exception as p_err:
+                            print(f"DEBUG: Pyrogram public send_video failed ({p_err}). Fallback to Telethon...")
+                            UT = time.time()
+                            uploader = await fast_upload(f'{file}', f'{file}', UT, bot, edit, '**UPLOADING:**')
+                            attributes = [DocumentAttributeVideo(duration=duration, w=width, h=height, round_message=round_message, supports_streaming=True)]
+                            await bot.send_file(sender, uploader, caption=caption, thumb=thumb_path, attributes=attributes, force_document=False)
                     elif msg.media==MessageMediaType.PHOTO:
-                        await edit.edit("Uploading photo.")
+                        await safe_edit_object(edit, "Uploading photo.")
                         await bot.send_file(sender, file, caption=caption)
                     else:
                         thumb_path=thumbnail(sender)
-                        await client.send_document(
-                            sender,
-                            file,
-                            caption=caption,
-                            thumb=thumb_path,
-                            progress=progress_for_pyrogram,
-                            progress_args=(
-                                client,
-                                '**UPLOADING:**\n',
-                                edit,
-                                time.time()
-                    )
-                )
+                        try:
+                            await client.send_document(
+                                sender,
+                                file,
+                                caption=caption,
+                                thumb=thumb_path,
+                                progress=progress_for_pyrogram,
+                                progress_args=(
+                                    client,
+                                    '**UPLOADING:**\n',
+                                    edit,
+                                    time.time()
+                                )
+                            )
+                        except Exception as p_err:
+                            print(f"DEBUG: Pyrogram public send_document failed ({p_err}). Fallback to Telethon...")
+                            UT = time.time()
+                            uploader = await fast_upload(f'{file}', f'{file}', UT, bot, edit, '**UPLOADING:**')
+                            await bot.send_file(sender, uploader, caption=caption, thumb=thumb_path, force_document=True)
                     try:
                         os.remove(file)
                     except:
                         pass
                 elif msg.text:
-                    await client.send_message(sender, msg.text.markdown)
-                await edit.delete()
+                    try:
+                        await client.send_message(sender, msg.text.markdown)
+                    except Exception:
+                        await bot.send_message(sender, msg.text.markdown)
+                await safe_delete_object(edit)
             except Exception as ex:
-                print(ex)
-                await client.edit_message_text(sender, edit_id, f'Failed to save public link: `{msg_link}`\n\nError: {str(ex)}')
+                print(f"DEBUG: Fallback routine completely failed: {ex}")
+                await safe_edit_msg_pyroplug(client, bot, sender, edit_id, f'Failed to save public link: `{msg_link}`\n\nError: {str(ex)}')
 
 async def get_bulk_msg(userbot, client, sender, msg_link, i):
     x = await client.send_message(sender, "Processing!")

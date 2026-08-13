@@ -37,10 +37,12 @@ async def cancel(event):
 async def _batch(event):
     if not event.is_private:
         return
-    s, r = await force_sub(event.client, fs, event.sender_id, ft)
-    if s == True:
-        await event.reply(r)
-        return
+    s = False
+    if fs and fs != "None" and fs.strip() != "":
+        s, r = await force_sub(event.client, fs, event.sender_id, ft)
+        if s == True:
+            await event.reply(r)
+            return
     if event.sender_id in batch:
         return await event.reply("You've already started one batch, wait for it to complete you dumbfuck owner!")
     async with Drone.conversation(event.chat_id) as conv:

@@ -1,5 +1,9 @@
 name: Run Restricted Bot Server
 
+concurrency:
+  group: restricted-bot-server
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
     inputs:
