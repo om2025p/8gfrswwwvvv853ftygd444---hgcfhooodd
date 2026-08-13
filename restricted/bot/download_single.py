@@ -31,15 +31,22 @@ async def main_download():
     except Exception as e:
         print(f"Error starting Telethon bot dynamically: {e}")
 
-    # Start Pyrogram clients
+    # Start Pyrogram clients (attempt unconditionally to bypass stale is_connected states)
     for client_obj in [userbot, Bot]:
-        if not getattr(client_obj, 'is_connected', False):
-            try:
-                print(f"Starting client dynamically: {getattr(client_obj, 'name', 'Client')}")
-                res = client_obj.start()
-                if inspect.iscoroutine(res):
-                    await res
-            except Exception as e:
+        try:
+            print(f"Starting client dynamically: {getattr(client_obj, 'name', 'Client')}")
+            res = client_obj.start()
+            if inspect.iscoroutine(res):
+                await res
+        except (ConnectionError, OSError) as e:
+            if "already" in str(e).lower():
+                print(f"Client {getattr(client_obj, 'name', 'Client')} is already started.")
+            else:
+                print(f"Warning starting client: {e}")
+        except Exception as e:
+            if "already started" in str(e).lower() or "active" in str(e).lower():
+                pass
+            else:
                 print(f"Error starting client dynamically: {e}")
 
     try:
