@@ -48,6 +48,81 @@ async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=Fa
                 print(f"DEBUG: Pyrogram Bot.edit_message_text failed ({e2}). Sending new message...")
                 return await safe_send_message(owner_id, text, disable_web_page_preview)
 
+def expand_persian_query(query):
+    queries = [query]
+
+    # 1. Handle "هام" suffix (e.g., عکسهام -> عکس, عکس هام, عکسهایم, عکس های من)
+    if query.endswith("هام") and len(query) > 3:
+        base = query[:-3]
+        queries.extend([
+            f"{base} هام",
+            f"{base}هایم",
+            f"{base} هایم",
+            f"{base}های من",
+            f"{base} های من",
+            f"{base}ام",
+            f"{base} ام"
+        ])
+    # 2. Handle "ام" suffix (e.g., عکسام -> عکس, عکسهام, عکس های من)
+    elif query.endswith("ام") and len(query) > 2 and not query.endswith("هام"):
+        base = query[:-2]
+        queries.extend([
+            f"{base} ام",
+            f"{base}هام",
+            f"{base} هام",
+            f"{base}هایم",
+            f"{base} هایم",
+            f"{base}های من",
+            f"{base} های من"
+        ])
+    # 3. Handle "هایم" suffix (e.g., عکسهایم -> عکس, عکسهام, عکس های من)
+    elif query.endswith("هایم") and len(query) > 4:
+        base = query[:-4]
+        queries.extend([
+            f"{base} هایم",
+            f"{base}هام",
+            f"{base} هام",
+            f"{base}های من",
+            f"{base} های من",
+            f"{base}ام",
+            f"{base} ام"
+        ])
+    # 4. Handle "های من" suffix (e.g., عکس های من -> عکسهام)
+    elif "های من" in query:
+        base = query.replace("های من", "").strip()
+        queries.extend([
+            f"{base}های من",
+            f"{base}هام",
+            f"{base} هام",
+            f"{base}هایم",
+            f"{base} هایم",
+            f"{base}ام",
+            f"{base} ام"
+        ])
+    # 5. Handle "هایم" with space "هایم"
+    elif " هایم" in query:
+        base = query.replace(" هایم", "").strip()
+        queries.extend([
+            f"{base}هایم",
+            f"{base}هام",
+            f"{base} هام",
+            f"{base}های من",
+            f"{base} های من",
+            f"{base}ام",
+            f"{base} ام"
+        ])
+
+    # Clean up duplicates and keep original order
+    seen = set()
+    unique_queries = []
+    for q in queries:
+        q_clean = q.strip()
+        if q_clean and q_clean.lower() not in seen:
+            seen.add(q_clean.lower())
+            unique_queries.append(q_clean)
+
+    return unique_queries
+
 async def main_download():
     # Load inputs
     link = os.environ.get("TELEGRAM_LINK") or (sys.argv[1] if len(sys.argv) > 1 else None)
@@ -132,36 +207,49 @@ async def main_download():
             print(f"Starting deep Telegram search for: {query} for owner: {owner_id}")
 
             # Send starting message to owner
-            msg = await safe_send_message(owner_id, f"🔎 *در حال جستجوی عمیق کلمه «{query}» در سرورهای رسمی تلگرام (تا سقف ۱۰۰۰ نتیجه)...*\n\n🕒 لطفا صبور باشید...")
+            msg = await safe_send_message(owner_id, f"🔎 *در حال جستجوی عمیق و ترکیبی کلمه «{query}» در سرورهای رسمی تلگرام...*\n\n🕒 لطفا صبور باشید...")
 
             try:
                 from pyrogram.raw.functions.contacts import Search
-                # Invoke raw global search with a limit of 1000
-                found = await userbot.invoke(Search(q=query, limit=1000))
+
+                # Get expanded queries
+                expanded_queries = expand_persian_query(query)
+                print(f"DEBUG: Expanded search queries for execution: {expanded_queries}")
 
                 channels = []
-                if found and hasattr(found, 'chats'):
-                    for chat in found.chats:
-                        username = getattr(chat, 'username', None)
-                        if username:
-                            title = getattr(chat, 'title', "بدون عنوان")
-                            members = getattr(chat, 'participants_count', None)
-                            channels.append((title, username, members))
+                seen_usernames = set()
 
-                # REVOLUTIONARY FIX: Also search globally in public messages to find even more relevant channels!
-                try:
-                    print("Running global public message search to extract more relevant channels...")
-                    async for message in userbot.search_global_messages(query=query, limit=1000):
-                        if message.chat and getattr(message.chat, 'username', None):
-                            title = getattr(message.chat, 'title', "بدون عنوان")
-                            username = getattr(message.chat, 'username')
-                            members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
+                for q_term in expanded_queries:
+                    print(f"DEBUG: Executing search for term variation: {q_term}")
+                    try:
+                        # Invoke raw global search with a limit of 1000
+                        found = await userbot.invoke(Search(q=q_term, limit=1000))
+                        if found and hasattr(found, 'chats'):
+                            for chat in found.chats:
+                                username = getattr(chat, 'username', None)
+                                if username and username.lower() not in seen_usernames:
+                                    seen_usernames.add(username.lower())
+                                    title = getattr(chat, 'title', "بدون عنوان")
+                                    members = getattr(chat, 'participants_count', None)
+                                    channels.append((title, username, members))
+                    except Exception as e_search:
+                        print(f"DEBUG: Search variation '{q_term}' contacts.Search failed: {e_search}")
 
-                            # Add if not already in channels list
-                            if not any(username.lower() == c[1].lower() for c in channels):
-                                channels.append((title, username, members))
-                except Exception as ex:
-                    print(f"Global message search failed or ignored: {ex}")
+                    try:
+                        # Global message search for variation
+                        async for message in userbot.search_global_messages(query=q_term, limit=300):
+                            if message.chat and getattr(message.chat, 'username', None):
+                                username = getattr(message.chat, 'username')
+                                if username and username.lower() not in seen_usernames:
+                                    seen_usernames.add(username.lower())
+                                    title = getattr(message.chat, 'title', "بدون عنوان")
+                                    members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
+                                    channels.append((title, username, members))
+                    except Exception as e_msg_search:
+                        print(f"DEBUG: Search variation '{q_term}' search_global_messages failed: {e_msg_search}")
+
+                    # Small sleep to prevent rate limiting
+                    await asyncio.sleep(0.5)
 
                 if not channels:
                     await safe_edit_message(owner_id, msg, f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
