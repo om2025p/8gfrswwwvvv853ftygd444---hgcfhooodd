@@ -71,6 +71,36 @@ def expand_persian_query(query):
             f"{base} ام"
         ])
 
+    # Finglish / Transliteration mapping for extremely deep search results
+    finglish_map = {
+        "عکس": ["aks", "ax"],
+        "عکسام": ["aksam", "axam"],
+        "عکسهام": ["aksham", "axham", "akshaye", "axaye"],
+        "عکس هام": ["aks ham", "ax ham"],
+        "عکسهایم": ["akshaye", "axaye"],
+        "عکس هایم": ["aks haye", "ax haye"],
+        "عکس های من": ["aks haye man", "ax haye man"],
+        "فیلم": ["film"],
+        "فیلمام": ["filmam"],
+        "فیلمهام": ["filmham"],
+        "آهنگ": ["ahang"],
+        "آهنگام": ["ahangam"],
+        "آهنگهام": ["ahangham"],
+        "موزیک": ["music", "muzik"]
+    }
+
+    # Match substrings for query and its expanded variants
+    matched_finglish = []
+    for persian_word, f_list in finglish_map.items():
+        if persian_word in query or query in persian_word:
+            matched_finglish.extend(f_list)
+        for q_var in list(queries):
+            if persian_word in q_var or q_var in persian_word:
+                matched_finglish.extend(f_list)
+
+    queries.extend(matched_finglish)
+
+    # Clean up duplicates and keep original order
     seen = set()
     unique_queries = []
     for q in queries:
