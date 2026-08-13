@@ -2,6 +2,7 @@
 import sys
 import os
 import asyncio
+import time
 from decouple import config
 
 # Add current directory to path
@@ -24,7 +25,6 @@ async def main_download():
     try:
         if not bot.is_connected():
             print("Starting Telethon bot dynamically...")
-            # We must use start method in a safe awaitable way
             await bot.connect()
             if not await bot.is_user_authorized():
                 await bot.sign_in(bot_token=BOT_TOKEN)
@@ -33,22 +33,44 @@ async def main_download():
 
     # Start Pyrogram clients (attempt unconditionally to bypass stale is_connected states)
     for client_obj in [userbot, Bot]:
+        name = getattr(client_obj, 'name', 'Client')
         try:
-            print(f"Starting client dynamically: {getattr(client_obj, 'name', 'Client')}")
-            # Under modern Pyrogram, we should await client_obj.start() if inside an active async loop
+            print(f"Starting client dynamically: {name}")
             res = client_obj.start()
             if inspect.iscoroutine(res):
                 await res
-        except (ConnectionError, OSError) as e:
-            if "already" in str(e).lower():
-                print(f"Client {getattr(client_obj, 'name', 'Client')} is already started.")
-            else:
-                print(f"Warning starting client: {e}")
         except Exception as e:
-            if "already started" in str(e).lower() or "active" in str(e).lower():
+            err_msg = str(e)
+            print(f"Error starting client dynamically: {err_msg}")
+
+            # Format and present friendly diagnostic errors instead of failing silently or throwing obscure tracebacks
+            if "AUTH_KEY_DUPLICATED" in err_msg:
+                friendly_err = (
+                    f"\n❌ خطای امنیتی تلگرام [406 AUTH_KEY_DUPLICATED]:\n"
+                    f"رئیس بزرگ، سشن تلگرام شما (SESSION_STRING) همزمان در جای دیگری فعال است یا باطل شده است!\n"
+                    f"لطفاً ربات‌ها یا اسکریپت‌های دیگر خود را خاموش کنید و یا با استفاده از @TgDevToolBot یک سشن جدید بسازید و جایگزین کنید.\n"
+                )
+                print(friendly_err)
+                sys.exit(1)
+            elif "FLOOD_WAIT" in err_msg or "FLOOD_WAIT_" in err_msg:
+                friendly_err = (
+                    f"\n❌ خطای محدودیت تلگرام [420 FLOOD_WAIT]:\n"
+                    f"تلگرام اکانت شما را به دلیل درخواست‌های مکرر و فلو لیمیت به طور موقت محدود کرده است.\n"
+                    f"لطفاً چند دقیقه صبر کنید و سپس دوباره تلاش نمایید.\n"
+                )
+                print(friendly_err)
+                sys.exit(1)
+            elif "already started" in err_msg.lower() or "active" in err_msg.lower():
+                # Ignore harmless already started warnings
                 pass
             else:
-                print(f"Error starting client dynamically: {e}")
+                friendly_err = (
+                    f"\n❌ خطا در راه‌اندازی کلاینت {name}:\n"
+                    f"متن خطا: {err_msg}\n"
+                    f"لطفاً مطمئن شوید API_ID، API_HASH و سشن معتبر هستند.\n"
+                )
+                print(friendly_err)
+                sys.exit(1)
 
     try:
         owner_id = AUTH or config("OWNER_ID", default=None, cast=int)
