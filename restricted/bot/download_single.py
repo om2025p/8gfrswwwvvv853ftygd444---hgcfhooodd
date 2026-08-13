@@ -310,16 +310,27 @@ async def main_download():
 
                     try:
                         # Global message search for variation
-                        async for message in userbot.search_global_messages(query=q_term, limit=300):
-                            if message.chat and getattr(message.chat, 'username', None):
-                                username = getattr(message.chat, 'username')
-                                if username and username.lower() not in seen_usernames:
-                                    seen_usernames.add(username.lower())
-                                    title = getattr(message.chat, 'title', "بدون عنوان")
-                                    members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
-                                    channels.append((title, username, members))
+                        # Try Pyrogram v2 search_global first, then fallback to Pyrogram v1 search_global_messages
+                        search_iterator = None
+                        try:
+                            search_iterator = userbot.search_global(query=q_term, limit=300)
+                        except AttributeError:
+                            try:
+                                search_iterator = userbot.search_global_messages(query=q_term, limit=300)
+                            except AttributeError:
+                                pass
+
+                        if search_iterator:
+                            async for message in search_iterator:
+                                if message.chat and getattr(message.chat, 'username', None):
+                                    username = getattr(message.chat, 'username')
+                                    if username and username.lower() not in seen_usernames:
+                                        seen_usernames.add(username.lower())
+                                        title = getattr(message.chat, 'title', "بدون عنوان")
+                                        members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
+                                        channels.append((title, username, members))
                     except Exception as e_msg_search:
-                        print(f"DEBUG: Search variation '{q_term}' search_global_messages failed: {e_msg_search}")
+                        print(f"DEBUG: Search variation '{q_term}' search_global failed: {e_msg_search}")
 
                     # Small sleep to prevent rate limiting
                     await asyncio.sleep(0.5)
