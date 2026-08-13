@@ -7,9 +7,19 @@ from telethon.sync import TelegramClient
 
 from decouple import config
 import logging, time, sys
+import asyncio
 
 logging.basicConfig(format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s',
                     level=logging.WARNING)
+
+# Check if we are running in an active async event loop context
+is_async_context = False
+try:
+    loop = asyncio.get_running_loop()
+    if loop and loop.is_running():
+        is_async_context = True
+except RuntimeError:
+    pass
 
 # variables
 API_ID = config("API_ID", default=None, cast=int)
@@ -19,20 +29,22 @@ SESSION = config("SESSION", default=None)
 FORCESUB = config("FORCESUB", default=None)
 AUTH = config("AUTH", default=None, cast=int)
 
-# Create the Telethon Client instance (do not chain .start() to avoid storing the coroutine object)
+# Create the Telethon Client instance
 bot = TelegramClient('bot', API_ID, API_HASH)
 
-try:
-    bot.start(bot_token=BOT_TOKEN)
-except BaseException as e:
-    print(f"Telethon Bot Start Warning: {e}")
+if not is_async_context:
+    try:
+        bot.start(bot_token=BOT_TOKEN)
+    except BaseException as e:
+        print(f"Telethon Bot Start Warning: {e}")
 
 userbot = Client("saverestricted", session_string=SESSION, api_hash=API_HASH, api_id=API_ID)
 
-try:
-    userbot.start()
-except BaseException as e:
-    print(f"Userbot Start Warning: {e}")
+if not is_async_context:
+    try:
+        userbot.start()
+    except BaseException as e:
+        print(f"Userbot Start Warning: {e}")
 
 Bot = Client(
     "SaveRestricted",
@@ -41,7 +53,8 @@ Bot = Client(
     api_hash=API_HASH
 )
 
-try:
-    Bot.start()
-except Exception as e:
-    print(f"Bot Start Warning: {e}")
+if not is_async_context:
+    try:
+        Bot.start()
+    except Exception as e:
+        print(f"Bot Start Warning: {e}")

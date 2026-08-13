@@ -15,19 +15,19 @@ async def main_download():
         return
 
     print("Connecting to Telegram clients...")
-    # On import, main/__init__.py starts bot, userbot and Bot!
+    # On import, main/__init__.py creates client instances without auto-starting if in async context
     from main import bot, userbot, Bot, AUTH, BOT_TOKEN
 
-    # Ensure Telethon and Pyrogram clients are started (crucial for Pyrogram v2+ and async event loop contexts)
     import inspect
 
-    # Start Telethon Bot
+    # Start Telethon Bot safely under async context
     try:
         if not bot.is_connected():
             print("Starting Telethon bot dynamically...")
-            res = bot.start(bot_token=BOT_TOKEN)
-            if inspect.iscoroutine(res):
-                await res
+            # We must use start method in a safe awaitable way
+            await bot.connect()
+            if not await bot.is_user_authorized():
+                await bot.sign_in(bot_token=BOT_TOKEN)
     except Exception as e:
         print(f"Error starting Telethon bot dynamically: {e}")
 
@@ -35,6 +35,7 @@ async def main_download():
     for client_obj in [userbot, Bot]:
         try:
             print(f"Starting client dynamically: {getattr(client_obj, 'name', 'Client')}")
+            # Under modern Pyrogram, we should await client_obj.start() if inside an active async loop
             res = client_obj.start()
             if inspect.iscoroutine(res):
                 await res
@@ -160,14 +161,28 @@ async def main_download():
     finally:
         print("Stopping Pyrogram clients before exit...")
         for client_obj in [userbot, Bot]:
-            if client_obj.is_connected:
-                try:
+            try:
+                # Use is_connected property method
+                is_conn = client_obj.is_connected
+                if inspect.iscoroutine(is_conn):
+                    is_conn = await is_conn
+
+                if is_conn:
                     print(f"Stopping client dynamically: {client_obj.name if hasattr(client_obj, 'name') else 'Client'}")
                     res = client_obj.stop()
                     if inspect.iscoroutine(res):
                         await res
-                except Exception as e:
-                    print(f"Error stopping client: {e}")
+            except Exception as e:
+                print(f"Error stopping client: {e}")
+
+        try:
+            if bot.is_connected():
+                print("Stopping Telethon bot...")
+                res = bot.disconnect()
+                if inspect.iscoroutine(res):
+                    await res
+        except Exception as e:
+            print(f"Error disconnecting Telethon: {e}")
 
 if __name__ == "__main__":
     try:
