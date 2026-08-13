@@ -10,16 +10,26 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 async def safe_send_message(owner_id, text, disable_web_page_preview=False):
     from main import Bot, bot, userbot
+
+    # 1. Try Pyrogram Userbot first since it has NO auth limits and is guaranteed to be running
     try:
-        # Try Pyrogram Bot first
+        if getattr(userbot, 'is_connected', False):
+            return await userbot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
+    except Exception as e:
+        print(f"DEBUG: safe_send_message userbot fallback failed: {e}")
+
+    # 2. Try Pyrogram Bot
+    try:
         return await Bot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
     except Exception as e:
         print(f"DEBUG: Bot.send_message failed ({e}). Trying Telethon bot...")
         try:
             return await bot.send_message(owner_id, text, link_preview=not disable_web_page_preview)
         except Exception as e2:
-            print(f"DEBUG: Telethon bot.send_message failed ({e2}). Trying userbot...")
+            print(f"DEBUG: Telethon bot.send_message failed ({e2}). Doing final fallback to userbot force...")
             try:
+                if not getattr(userbot, 'is_connected', False):
+                    await userbot.start()
                 return await userbot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
             except Exception as e3:
                 print(f"DEBUG: All message sending fallbacks failed: {e3}")
@@ -45,8 +55,12 @@ async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=Fa
             try:
                 return await Bot.edit_message_text(owner_id, msg_obj.id, text, disable_web_page_preview=disable_web_page_preview)
             except Exception as e2:
-                print(f"DEBUG: Pyrogram Bot.edit_message_text failed ({e2}). Sending new message...")
-                return await safe_send_message(owner_id, text, disable_web_page_preview)
+                print(f"DEBUG: Pyrogram Bot.edit_message_text failed ({e2}). Trying userbot edit...")
+                try:
+                    return await userbot.edit_message_text(owner_id, msg_obj.id, text, disable_web_page_preview=disable_web_page_preview)
+                except Exception as e3:
+                    print(f"DEBUG: All edits failed. Sending new message...")
+                    return await safe_send_message(owner_id, text, disable_web_page_preview)
 
 def expand_persian_query(query):
     queries = [query]
@@ -190,56 +204,61 @@ async def main_download():
 
     import inspect
 
-    # Start Telethon Bot safely under async context
+    # Start Userbot (the actual user session) - critical blocking start
+    try:
+        print("Starting Userbot (SESSION_STRING) dynamically...")
+        res = userbot.start()
+        if inspect.iscoroutine(res):
+            await res
+        print("Userbot started successfully.")
+    except Exception as e:
+        err_msg = str(e)
+        print(f"Fatal error starting Userbot: {err_msg}")
+        if "AUTH_KEY_DUPLICATED" in err_msg:
+            friendly_err = (
+                f"\n❌ خطای امنیتی تلگرام [406 AUTH_KEY_DUPLICATED]:\n"
+                f"رئیس بزرگ، سشن تلگرام شما (SESSION_STRING) همزمان در جای دیگری فعال است یا باطل شده است!\n"
+                f"لطفاً ربات‌ها یا اسکریپت‌های دیگر خود را خاموش کنید و یا با استفاده از @TgDevToolBot یک سشن جدید بسازید و جایگزین کنید.\n"
+            )
+            print(friendly_err)
+            sys.exit(1)
+        elif "FLOOD_WAIT" in err_msg or "FLOOD_WAIT_" in err_msg:
+            friendly_err = (
+                f"\n❌ خطای محدودیت تلگرام [420 FLOOD_WAIT]:\n"
+                f"تلگرام اکانت کاربری شما را به دلیل درخواست‌های مکرر به طور موقت محدود کرده است.\n"
+                f"لطفاً چند دقیقه صبر کنید و سپس دوباره تلاش نمایید.\n"
+            )
+            print(friendly_err)
+            sys.exit(1)
+        else:
+            friendly_err = (
+                f"\n❌ خطا در راه‌اندازی اکانت کاربری (Userbot):\n"
+                f"متن خطا: {err_msg}\n"
+                f"لطفاً مطمئن شوید SESSION_STRING معتبر است.\n"
+            )
+            print(friendly_err)
+            sys.exit(1)
+
+    # Start Pyrogram Bot - Soft, non-blocking fallback start (won't crash on FLOOD_WAIT or Auth errors)
+    try:
+        print("Starting Pyrogram Bot dynamically...")
+        res = Bot.start()
+        if inspect.iscoroutine(res):
+            await res
+        print("Pyrogram Bot started successfully.")
+    except Exception as e:
+        print(f"Warning: Soft-start failed for Pyrogram Bot: {e}. We will safely fall back to Userbot for sending messages.")
+
+    # Start Telethon Bot safely under async context - Soft, non-blocking fallback start
     try:
         if not bot.is_connected():
             print("Starting Telethon bot dynamically...")
             await bot.connect()
             if not await bot.is_user_authorized():
                 await bot.sign_in(bot_token=BOT_TOKEN)
+            print("Telethon Bot started successfully.")
     except Exception as e:
-        print(f"Error starting Telethon bot dynamically: {e}")
-
-    # Start Pyrogram clients (attempt unconditionally to bypass stale is_connected states)
-    for client_obj in [userbot, Bot]:
-        name = getattr(client_obj, 'name', 'Client')
-        try:
-            print(f"Starting client dynamically: {name}")
-            res = client_obj.start()
-            if inspect.iscoroutine(res):
-                await res
-        except Exception as e:
-            err_msg = str(e)
-            print(f"Error starting client dynamically: {err_msg}")
-
-            # Format and present friendly diagnostic errors instead of failing silently or throwing obscure tracebacks
-            if "AUTH_KEY_DUPLICATED" in err_msg:
-                friendly_err = (
-                    f"\n❌ خطای امنیتی تلگرام [406 AUTH_KEY_DUPLICATED]:\n"
-                    f"رئیس بزرگ، سشن تلگرام شما (SESSION_STRING) همزمان در جای دیگری فعال است یا باطل شده است!\n"
-                    f"لطفاً ربات‌ها یا اسکریپت‌های دیگر خود را خاموش کنید و یا با استفاده از @TgDevToolBot یک سشن جدید بسازید و جایگزین کنید.\n"
-                )
-                print(friendly_err)
-                sys.exit(1)
-            elif "FLOOD_WAIT" in err_msg or "FLOOD_WAIT_" in err_msg:
-                friendly_err = (
-                    f"\n❌ خطای محدودیت تلگرام [420 FLOOD_WAIT]:\n"
-                    f"تلگرام اکانت شما را به دلیل درخواست‌های مکرر و فلو لیمیت به طور موقت محدود کرده است.\n"
-                    f"لطفاً چند دقیقه صبر کنید و سپس دوباره تلاش نمایید.\n"
-                )
-                print(friendly_err)
-                sys.exit(1)
-            elif "already started" in err_msg.lower() or "active" in err_msg.lower():
-                # Ignore harmless already started warnings
-                pass
-            else:
-                friendly_err = (
-                    f"\n❌ خطا در راه‌اندازی کلاینت {name}:\n"
-                    f"متن خطا: {err_msg}\n"
-                    f"لطفاً مطمئن شوید API_ID، API_HASH و سشن معتبر هستند.\n"
-                )
-                print(friendly_err)
-                sys.exit(1)
+        print(f"Warning: Soft-start failed for Telethon bot dynamically: {e}. We will safely fall back to Userbot.")
 
     try:
         owner_id = AUTH or config("OWNER_ID", default=None, cast=int)
