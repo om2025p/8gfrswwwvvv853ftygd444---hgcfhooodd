@@ -57,122 +57,60 @@ def get_search_buttons(search_id, current_page, total_pages):
 def expand_persian_query(query):
     queries = [query]
 
-    # 1. Handle "هام" suffix (e.g., عکسهام -> عکس, عکس هام, عکسهایم, عکس های من)
+    # Character normalization variations (ی/ي, ک/ك)
+    q_norm1 = query.replace("ی", "ي").replace("ک", "ك")
+    q_norm2 = query.replace("ي", "ی").replace("ك", "ک")
+    queries.extend([q_norm1, q_norm2])
+
+    # Common Persian prefixes/suffixes for deep channel discovery
+    prefixes = ["کانال ", "دانلود ", "مرجع ", "پست ", "گروه "]
+    suffixes = [" ", " رسمى", " رسمی", " جدید", " بروز"]
+
+    for p in prefixes:
+        queries.append(f"{p}{query}")
+    for s in suffixes:
+        queries.append(f"{query}{s}")
+
+    # Standard Persian suffix handling (هام, ام, هایم, های من)
     if query.endswith("هام") and len(query) > 3:
         base = query[:-3]
-        queries.extend([
-            f"{base} هام",
-            f"{base}هایم",
-            f"{base} هایم",
-            f"{base}های من",
-            f"{base} های من",
-            f"{base}ام",
-            f"{base} ام"
-        ])
-    # 2. Handle "ام" suffix (e.g., عکسام -> عکس, عکسهام, عکس های من)
+        queries.extend([f"{base} هام", f"{base}هایم", f"{base} هایم", f"{base}های من", f"{base}ام"])
     elif query.endswith("ام") and len(query) > 2 and not query.endswith("هام"):
         base = query[:-2]
-        queries.extend([
-            f"{base} ام",
-            f"{base}هام",
-            f"{base} هام",
-            f"{base}هایم",
-            f"{base} هایم",
-            f"{base}های من",
-            f"{base} های من"
-        ])
-    # 3. Handle "هایم" suffix (e.g., عکسهایم -> عکس, عکسهام, عکس های من)
+        queries.extend([f"{base} ام", f"{base}هام", f"{base} هام", f"{base}هایم", f"{base}های من"])
     elif query.endswith("هایم") and len(query) > 4:
         base = query[:-4]
-        queries.extend([
-            f"{base} هایم",
-            f"{base}هام",
-            f"{base} هام",
-            f"{base}های من",
-            f"{base} های من",
-            f"{base}ام",
-            f"{base} ام"
-        ])
-    # 4. Handle "های من" suffix (e.g., عکس های من -> عکسهام)
-    elif "های من" in query:
-        base = query.replace("های من", "").strip()
-        queries.extend([
-            f"{base}های من",
-            f"{base}هام",
-            f"{base} هام",
-            f"{base}هایم",
-            f"{base} هایم",
-            f"{base}ام",
-            f"{base} ام"
-        ])
-    # 5. Handle "هایم" with space "هایم"
-    elif " هایم" in query:
-        base = query.replace(" هایم", "").strip()
-        queries.extend([
-            f"{base}هایم",
-            f"{base}هام",
-            f"{base} هام",
-            f"{base}های من",
-            f"{base} های من",
-            f"{base}ام",
-            f"{base} ام"
-        ])
+        queries.extend([f"{base} هایم", f"{base}هام", f"{base} هام", f"{base}های من", f"{base}ام"])
 
-    # Finglish / Transliteration mapping for extremely deep search results
+    # Transliterations and synonyms
     finglish_map = {
         "عکس": ["aks", "ax"],
         "عکسام": ["aksam", "axam"],
-        "عکسهام": ["aksham", "axham", "akshaye", "axaye"],
-        "عکس هام": ["aks ham", "ax ham"],
-        "عکسهایم": ["akshaye", "axaye"],
-        "عکس هایم": ["aks haye", "ax haye"],
-        "عکس های من": ["aks haye man", "ax haye man"],
+        "عکسهام": ["aksham", "axham"],
         "فیلم": ["film"],
-        "فیلمام": ["filmam"],
-        "فیلمهام": ["filmham"],
-        "آهنگ": ["ahang"],
-        "آهنگام": ["ahangam"],
-        "آهنگهام": ["ahangham"],
-        "موزیک": ["music", "muzik"]
+        "آهنگ": ["ahang", "music"],
+        "موزیک": ["music", "muzik"],
+        "مدارک": ["madarek", "madarekam"],
+        "مدارکم": ["madarekam", "madarek"]
     }
 
-    # Synonym mapping for "spider" deep synonym matching
     synonym_map = {
-        "خاطرات": ["خاطره", "خاطرات من", "دفتر خاطرات", "khaterat", "khatereh", "khatere"],
-        "خاطره": ["خاطرات", "خاطرات من", "دفتر خاطرات", "khaterat", "khatereh", "khatere"],
-        "فیلم": ["فیلم‌ها", "سینما", "سریال", "film", "serial", "cinema"],
-        "سریال": ["فیلم", "سینما", "سریال‌ها", "film", "serial", "cinema"],
-        "آهنگ": ["موزیک", "موسیقی", "ترانه", "music", "muzik", "ahang", "taraneh"],
-        "موزیک": ["آهنگ", "موسیقی", "ترانه", "music", "muzik", "ahang", "taraneh"],
-        "موسیقی": ["آهنگ", "موزیک", "ترانه", "music", "muzik", "ahang", "taraneh"],
-        "کتاب": ["رمان", "داستان", "ketab", "roman", "dastan", "book"],
-        "رمان": ["کتاب", "داستان", "ketab", "roman", "dastan", "book"],
-        "بورس": ["سهام", "ارز دیجیتال", "کریپتو", "bourse", "sahm", "crypto"],
-        "ارز دیجیتال": ["بورس", "سهام", "ارزدیجیتال", "کریپتو", "crypto", "bitcoin"]
+        "خاطرات": ["خاطره", "خاطرات من"],
+        "فیلم": ["سینما", "سریال"],
+        "آهنگ": ["موزیک", "ترانه"],
+        "کتاب": ["رمان", "داستان"],
+        "بورس": ["سهام", "ارز دیجیتال"]
     }
 
-    # Match substrings for query and its expanded variants
-    matched_finglish = []
-    for persian_word, f_list in finglish_map.items():
-        if persian_word in query or query in persian_word:
-            matched_finglish.extend(f_list)
-        for q_var in list(queries):
-            if persian_word in q_var or q_var in persian_word:
-                matched_finglish.extend(f_list)
+    for k, v in finglish_map.items():
+        if k in query or query in k:
+            queries.extend(v)
 
-    # Match synonyms
-    matched_synonyms = []
-    for p_word, s_list in synonym_map.items():
-        if p_word in query or query in p_word:
-            matched_synonyms.extend(s_list)
-        for q_var in list(queries):
-            if p_word in q_var or q_var in p_word:
-                matched_synonyms.extend(s_list)
+    for k, v in synonym_map.items():
+        if k in query or query in k:
+            queries.extend(v)
 
-    queries.extend(matched_finglish)
-    queries.extend(matched_synonyms)
-
-    # Clean up duplicates and keep original order
+    # Clean up duplicates
     seen = set()
     unique_queries = []
     for q in queries:
@@ -181,8 +119,7 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    # Focused search query expansion (top 4 variations)
-    return unique_queries[:4]
+    return unique_queries[:15]
 
 @Drone.on(events.NewMessage(incoming=True, pattern=r'/search(?:\s+(.+))?'))
 async def telegram_search(event):
@@ -251,10 +188,10 @@ async def telegram_search(event):
 
             await asyncio.sleep(0.5)
 
-        # SPIDER CRAWL: Get similar channels for the top 10 largest found channels to expand exponentially!
-        channels_to_crawl = sorted([c for c in channels if c[2] is not None], key=lambda x: x[2], reverse=True)[:10]
-        print(f"DEBUG: Starting spider crawl of similar channels for: {[c[1] for c in channels_to_crawl]}")
-        for title, username, members in channels_to_crawl:
+        # RECURSIVE SPIDER CRAWL (2 Levels deep): Expand Telegram's similar channel graph!
+        level1_crawl = sorted([c for c in channels if c[2] is not None], key=lambda x: x[2], reverse=True)[:10]
+        new_discovered = []
+        for title, username, members in level1_crawl:
             similar = None
             try:
                 similar = await userbot.get_chat_recommendations(username)
@@ -264,17 +201,35 @@ async def telegram_search(event):
                 except Exception:
                     pass
 
+            if similar:
+                for sim_channel in similar:
+                    sim_username = getattr(sim_channel, 'username', None)
+                    if sim_username and sim_username.lower() not in seen_usernames:
+                        seen_usernames.add(sim_username.lower())
+                        sim_title = getattr(sim_channel, 'title', "بدون عنوان")
+                        sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
+                        item = (sim_title, sim_username, sim_members)
+                        channels.append(item)
+                        new_discovered.append(item)
+
+        # LEVEL 2 SPIDER CRAWL for newly discovered channels
+        level2_crawl = sorted([c for c in new_discovered if c[2] is not None], key=lambda x: x[2], reverse=True)[:5]
+        for title, username, members in level2_crawl:
             try:
-                if similar:
-                    for sim_channel in similar:
+                similar2 = await userbot.get_chat_recommendations(username)
+                if similar2:
+                    for sim_channel in similar2:
                         sim_username = getattr(sim_channel, 'username', None)
                         if sim_username and sim_username.lower() not in seen_usernames:
                             seen_usernames.add(sim_username.lower())
                             sim_title = getattr(sim_channel, 'title', "بدون عنوان")
                             sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
                             channels.append((sim_title, sim_username, sim_members))
-            except Exception as sim_err:
-                print(f"DEBUG: Processing similar channels failed for {username}: {sim_err}")
+            except Exception:
+                pass
+
+        # Sort all discovered channels by member count in descending order
+        channels.sort(key=lambda x: (x[2] if x[2] is not None else 0), reverse=True)
 
         if not channels:
             await msg.edit(f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
