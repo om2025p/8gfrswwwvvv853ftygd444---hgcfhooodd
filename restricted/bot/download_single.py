@@ -182,8 +182,8 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    # Limit to top 4 variations for lightning fast speed
-    return unique_queries[:4]
+    # Comprehensive deep search expansion (up to 12 variations)
+    return unique_queries[:12]
 
 async def main_download():
     # Load inputs
@@ -365,8 +365,9 @@ async def main_download():
                 total_pages = max(1, math.ceil(total_items / page_size))
                 page_channels = channels[:page_size]
 
-                page_text = f"🎯 *نتایج جستجوی رسمی تلگرام برای «{query}»*\n"
-                page_text += f"📊 *صفحه ۱ از {total_pages} (نمایش ۱ تا {len(page_channels)} از مجموع {total_items:,} کانال):*\n\n"
+                page_text = f"🎯 *نتایج جستجوی عمیق تلگرام برای «{query}»*\n"
+                page_text += f"📊 *شمارش کل دیتابیس: {total_items:,} کانال عمومی یافت شد (در قالب {total_pages} صفحه ۵۰تایی)*\n"
+                page_text += f"📍 *نمایش صفحه ۱ از {total_pages} (کانال‌های ۱ تا {len(page_channels)}):*\n\n"
 
                 for i, (title, username, members) in enumerate(page_channels, 1):
                     members_str = f" ({members:,} عضو)" if members is not None else ""

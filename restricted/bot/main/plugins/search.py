@@ -21,8 +21,9 @@ def format_search_page(query, channels, page=1, page_size=50):
     end_idx = min(start_idx + page_size, total_items)
     page_channels = channels[start_idx:end_idx]
 
-    text = f"🎯 *نتایج جستجوی رسمی تلگرام برای «{query}»*\n"
-    text += f"📊 *صفحه {page} از {total_pages} (نمایش {start_idx + 1} تا {end_idx} از مجموع {total_items:,} کانال):*\n\n"
+    text = f"🎯 *نتایج جستجوی عمیق تلگرام برای «{query}»*\n"
+    text += f"📊 *شمارش کل دیتابیس: {total_items:,} کانال عمومی یافت شد (در قالب {total_pages} صفحه ۵۰تایی)*\n"
+    text += f"📍 *نمایش صفحه {page} از {total_pages} (کانال‌های {start_idx + 1} تا {end_idx}):*\n\n"
 
     for i, (title, username, members) in enumerate(page_channels, start_idx + 1):
         members_str = f" ({members:,} عضو)" if members is not None else ""
@@ -172,8 +173,8 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    # Limit to top 4 variations for lightning fast speed
-    return unique_queries[:4]
+    # Comprehensive deep search expansion (up to 12 variations)
+    return unique_queries[:12]
 
 @Drone.on(events.NewMessage(incoming=True, pattern=r'/search(?:\s+(.+))?'))
 async def telegram_search(event):
