@@ -11,14 +11,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 async def safe_send_message(owner_id, text, disable_web_page_preview=False):
     from main import Bot, bot, userbot
 
-    # 1. Try Pyrogram Userbot first since it has NO auth limits and is guaranteed to be running
-    try:
-        if getattr(userbot, 'is_connected', False):
-            return await userbot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
-    except Exception as e:
-        print(f"DEBUG: safe_send_message userbot fallback failed: {e}")
-
-    # 2. Try Pyrogram Bot
+    # 1. Try Pyrogram Bot FIRST so messages land directly in the Bot Chat with the user!
     try:
         return await Bot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
     except Exception as e:
@@ -26,7 +19,7 @@ async def safe_send_message(owner_id, text, disable_web_page_preview=False):
         try:
             return await bot.send_message(owner_id, text, link_preview=not disable_web_page_preview)
         except Exception as e2:
-            print(f"DEBUG: Telethon bot.send_message failed ({e2}). Doing final fallback to userbot force...")
+            print(f"DEBUG: Telethon bot.send_message failed ({e2}). Fallback to userbot (Saved Messages)...")
             try:
                 if not getattr(userbot, 'is_connected', False):
                     await userbot.start()
