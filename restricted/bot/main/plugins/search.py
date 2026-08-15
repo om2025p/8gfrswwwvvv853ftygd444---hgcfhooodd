@@ -18,7 +18,7 @@ def clean_expired_search_cache(max_age_seconds=3600):
     for k in expired_keys:
         SEARCH_CACHE.pop(k, None)
 
-def format_search_page(query, channels, page=1, page_size=50):
+def format_search_page(query, channels, page=1, page_size=20):
     total_items = len(channels)
     total_pages = max(1, math.ceil(total_items / page_size))
     page = max(1, min(page, total_pages))
@@ -27,13 +27,15 @@ def format_search_page(query, channels, page=1, page_size=50):
     end_idx = min(start_idx + page_size, total_items)
     page_channels = channels[start_idx:end_idx]
 
-    text = f"🎯 *نتایج جستجوی عمیق تلگرام برای «{query}»*\n"
-    text += f"📊 *شمارش کل دیتابیس: {total_items:,} کانال عمومی یافت شد (در قالب {total_pages} صفحه ۵۰تایی)*\n"
-    text += f"📍 *نمایش صفحه {page} از {total_pages} (کانال‌های {start_idx + 1} تا {end_idx}):*\n\n"
+    text = f"🎯 *نتایج جستجوی تلگرام برای «{query}»*\n"
+    text += f"📊 *شمارش کل دیتابیس: {total_items:,} کانال عمومی (صفحه {page} از {total_pages}):*\n\n"
 
     for i, (title, username, members) in enumerate(page_channels, start_idx + 1):
         members_str = f" ({members:,} عضو)" if members is not None else ""
-        text += f"{i}. 📣 *{title}*\n   🔗 شناسه: @{username}{members_str}\n   👉 [ورود به کانال](https://t.me/{username})\n\n"
+        line = f"{i}. 📣 *{title}*\n   🔗 شناسه: @{username}{members_str}\n   👉 [ورود به کانال](https://t.me/{username})\n\n"
+        if len(text) + len(line) > 3800:
+            break
+        text += line
 
     return text, total_pages, page
 
@@ -179,8 +181,8 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    # Comprehensive deep search expansion (up to 12 variations)
-    return unique_queries[:12]
+    # Focused search query expansion (top 4 variations)
+    return unique_queries[:4]
 
 @Drone.on(events.NewMessage(incoming=True, pattern=r'/search(?:\s+(.+))?'))
 async def telegram_search(event):
@@ -289,7 +291,7 @@ async def telegram_search(event):
             'time': time.time()
         }
 
-        page_text, total_pages, current_page = format_search_page(query, channels, page=1, page_size=50)
+        page_text, total_pages, current_page = format_search_page(query, channels, page=1, page_size=20)
         buttons = get_search_buttons(search_id, current_page, total_pages)
 
         await msg.edit(page_text, buttons=buttons, link_preview=False)
@@ -318,7 +320,7 @@ async def on_search_page_callback(event):
     query = cache['query']
     channels = cache['channels']
 
-    page_text, total_pages, current_page = format_search_page(query, channels, page=target_page, page_size=50)
+    page_text, total_pages, current_page = format_search_page(query, channels, page=target_page, page_size=20)
     buttons = get_search_buttons(search_id, current_page, total_pages)
 
     try:

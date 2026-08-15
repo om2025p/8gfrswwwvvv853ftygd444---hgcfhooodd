@@ -224,8 +224,8 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    # Comprehensive deep search expansion (up to 12 variations)
-    return unique_queries[:12]
+    # Focused search query expansion (top 4 variations)
+    return unique_queries[:4]
 
 async def main_download():
     # Load inputs
@@ -400,20 +400,22 @@ async def main_download():
                     await safe_edit_message(owner_id, msg, f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
                     return
 
-                # Format page 1 results (50 items per page)
+                # Format page 1 results (20 items per page with max 3800 chars guard)
                 import math
-                page_size = 50
+                page_size = 20
                 total_items = len(channels)
                 total_pages = max(1, math.ceil(total_items / page_size))
                 page_channels = channels[:page_size]
 
-                page_text = f"🎯 *نتایج جستجوی عمیق تلگرام برای «{query}»*\n"
-                page_text += f"📊 *شمارش کل دیتابیس: {total_items:,} کانال عمومی یافت شد (در قالب {total_pages} صفحه ۵۰تایی)*\n"
-                page_text += f"📍 *نمایش صفحه ۱ از {total_pages} (کانال‌های ۱ تا {len(page_channels)}):*\n\n"
+                page_text = f"🎯 *نتایج جستجوی تلگرام برای «{query}»*\n"
+                page_text += f"📊 *شمارش کل دیتابیس: {total_items:,} کانال عمومی (صفحه ۱ از {total_pages}):*\n\n"
 
                 for i, (title, username, members) in enumerate(page_channels, 1):
                     members_str = f" ({members:,} عضو)" if members is not None else ""
-                    page_text += f"{i}. 📣 *{title}*\n   🔗 شناسه: @{username}{members_str}\n   👉 [ورود به کانال](https://t.me/{username})\n\n"
+                    line = f"{i}. 📣 *{title}*\n   🔗 شناسه: @{username}{members_str}\n   👉 [ورود به کانال](https://t.me/{username})\n\n"
+                    if len(page_text) + len(line) > 3800:
+                        break
+                    page_text += line
 
                 await safe_edit_message(owner_id, msg, page_text, disable_web_page_preview=True)
 
