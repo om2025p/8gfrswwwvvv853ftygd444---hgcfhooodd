@@ -39,6 +39,50 @@ def format_search_page(query, channels, page=1, page_size=20):
 
     return text, total_pages, page
 
+def is_valid_channel(username, chat=None):
+    if not username or not isinstance(username, str):
+        return False
+    u_lower = username.lower().strip()
+    if u_lower.endswith('bot') or u_lower.endswith('_bot') or u_lower.startswith('bot_'):
+        return False
+    if chat and getattr(chat, 'is_bot', False):
+        return False
+    return True
+
+def clean_channel_title(chat, username):
+    title = getattr(chat, 'title', None)
+    if not title:
+        first_name = getattr(chat, 'first_name', '') or ''
+        last_name = getattr(chat, 'last_name', '') or ''
+        title = f"{first_name} {last_name}".strip()
+    if not title or str(title).strip().lower() in ["none", "null", ""]:
+        title = f"@{username}"
+    return str(title).strip()
+
+def calculate_relevance_score(title, username, members, query):
+    score = 0
+    q_clean = query.lower().strip()
+    t_clean = str(title).lower().strip()
+    u_clean = str(username).lower().strip()
+
+    # Exact full query match in title or username -> HUGE BOOST
+    if q_clean in t_clean or q_clean in u_clean:
+        score += 10000
+
+    # Sub-word matches in title or username
+    words = [w.strip() for w in q_clean.split() if len(w.strip()) > 1]
+    for w in words:
+        if w in t_clean or w in u_clean:
+            score += 2000
+
+    # Member count boost (logarithmic scale)
+    m_val = members if members is not None else 0
+    import math
+    if m_val > 0:
+        score += math.log10(m_val) * 100
+
+    return score
+
 def get_search_buttons(search_id, current_page, total_pages):
     if total_pages <= 1:
         return None
@@ -156,10 +200,10 @@ async def telegram_search(event):
                 if found and hasattr(found, 'chats'):
                     for chat in found.chats:
                         username = getattr(chat, 'username', None)
-                        if username and username.lower() not in seen_usernames:
+                        if username and is_valid_channel(username, chat) and username.lower() not in seen_usernames:
                             seen_usernames.add(username.lower())
-                            title = getattr(chat, 'title', "بدون عنوان")
-                            members = getattr(chat, 'participants_count', None)
+                            title = clean_channel_title(chat, username)
+                            members = getattr(chat, 'participants_count', None) or getattr(chat, 'members_count', None)
                             channels.append((title, username, members))
             except Exception as e_search:
                 print(f"Search variation '{q_term}' contacts.Search failed: {e_search}")
@@ -178,9 +222,9 @@ async def telegram_search(event):
                     async for message in search_iterator:
                         if message.chat and getattr(message.chat, 'username', None):
                             username = getattr(message.chat, 'username')
-                            if username and username.lower() not in seen_usernames:
+                            if username and is_valid_channel(username, message.chat) and username.lower() not in seen_usernames:
                                 seen_usernames.add(username.lower())
-                                title = getattr(message.chat, 'title', "بدون عنوان")
+                                title = clean_channel_title(message.chat, username)
                                 members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
                                 channels.append((title, username, members))
             except Exception as e_msg_search:
@@ -204,9 +248,9 @@ async def telegram_search(event):
             if similar:
                 for sim_channel in similar:
                     sim_username = getattr(sim_channel, 'username', None)
-                    if sim_username and sim_username.lower() not in seen_usernames:
+                    if sim_username and is_valid_channel(sim_username, sim_channel) and sim_username.lower() not in seen_usernames:
                         seen_usernames.add(sim_username.lower())
-                        sim_title = getattr(sim_channel, 'title', "بدون عنوان")
+                        sim_title = clean_channel_title(sim_channel, sim_username)
                         sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
                         item = (sim_title, sim_username, sim_members)
                         channels.append(item)
@@ -220,16 +264,16 @@ async def telegram_search(event):
                 if similar2:
                     for sim_channel in similar2:
                         sim_username = getattr(sim_channel, 'username', None)
-                        if sim_username and sim_username.lower() not in seen_usernames:
+                        if sim_username and is_valid_channel(sim_username, sim_channel) and sim_username.lower() not in seen_usernames:
                             seen_usernames.add(sim_username.lower())
-                            sim_title = getattr(sim_channel, 'title', "بدون عنوان")
+                            sim_title = clean_channel_title(sim_channel, sim_username)
                             sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
                             channels.append((sim_title, sim_username, sim_members))
             except Exception:
                 pass
 
-        # Sort all discovered channels by member count in descending order
-        channels.sort(key=lambda x: (x[2] if x[2] is not None else 0), reverse=True)
+        # Sort all discovered channels by Relevance Score in descending order
+        channels.sort(key=lambda c: calculate_relevance_score(c[0], c[1], c[2], query), reverse=True)
 
         if not channels:
             await msg.edit(f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")

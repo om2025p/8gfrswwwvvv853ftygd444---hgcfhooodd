@@ -97,7 +97,52 @@ async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=Fa
                     print(f"DEBUG: All edits failed. Sending new message...")
                     return await safe_send_message(owner_id, text, disable_web_page_preview)
 
+def is_valid_channel(username, chat=None):
+    if not username or not isinstance(username, str):
+        return False
+    u_lower = username.lower().strip()
+    if u_lower.endswith('bot') or u_lower.endswith('_bot') or u_lower.startswith('bot_'):
+        return False
+    if chat and getattr(chat, 'is_bot', False):
+        return False
+    return True
+
+def clean_channel_title(chat, username):
+    title = getattr(chat, 'title', None)
+    if not title:
+        first_name = getattr(chat, 'first_name', '') or ''
+        last_name = getattr(chat, 'last_name', '') or ''
+        title = f"{first_name} {last_name}".strip()
+    if not title or str(title).strip().lower() in ["none", "null", ""]:
+        title = f"@{username}"
+    return str(title).strip()
+
+def calculate_relevance_score(title, username, members, query):
+    score = 0
+    q_clean = query.lower().strip()
+    t_clean = str(title).lower().strip()
+    u_clean = str(username).lower().strip()
+
+    # Exact full query match in title or username -> HUGE BOOST
+    if q_clean in t_clean or q_clean in u_clean:
+        score += 10000
+
+    # Sub-word matches in title or username
+    words = [w.strip() for w in q_clean.split() if len(w.strip()) > 1]
+    for w in words:
+        if w in t_clean or w in u_clean:
+            score += 2000
+
+    # Member count boost (logarithmic scale)
+    m_val = members if members is not None else 0
+    import math
+    if m_val > 0:
+        score += math.log10(m_val) * 100
+
+    return score
+
 def expand_persian_query(query):
+    query = query.strip()
     queries = [query]
 
     # Character normalization variations (ی/ي, ک/ك)
@@ -105,53 +150,28 @@ def expand_persian_query(query):
     q_norm2 = query.replace("ي", "ی").replace("ك", "ک")
     queries.extend([q_norm1, q_norm2])
 
-    # Common Persian prefixes/suffixes for deep channel discovery
-    prefixes = ["کانال ", "دانلود ", "مرجع ", "پست ", "گروه "]
-    suffixes = [" ", " رسمى", " رسمی", " جدید", " بروز"]
+    # Decompose multi-word query into constituent words and root variations
+    words = [w.strip() for w in query.split() if len(w.strip()) > 1]
+    if len(words) > 1:
+        queries.extend(words)
+        queries.append(" ".join(words))
 
+    # Common Persian prefixes/suffixes for deep channel discovery
+    prefixes = ["کانال ", "دانلود ", "مرجع ", "پست "]
     for p in prefixes:
         queries.append(f"{p}{query}")
-    for s in suffixes:
-        queries.append(f"{query}{s}")
 
     # Standard Persian suffix handling (هام, ام, هایم, های من)
-    if query.endswith("هام") and len(query) > 3:
-        base = query[:-3]
-        queries.extend([f"{base} هام", f"{base}هایم", f"{base} هایم", f"{base}های من", f"{base}ام"])
-    elif query.endswith("ام") and len(query) > 2 and not query.endswith("هام"):
-        base = query[:-2]
-        queries.extend([f"{base} ام", f"{base}هام", f"{base} هام", f"{base}هایم", f"{base}های من"])
-    elif query.endswith("هایم") and len(query) > 4:
-        base = query[:-4]
-        queries.extend([f"{base} هایم", f"{base}هام", f"{base} هام", f"{base}های من", f"{base}ام"])
-
-    # Transliterations and synonyms
-    finglish_map = {
-        "عکس": ["aks", "ax"],
-        "عکسام": ["aksam", "axam"],
-        "عکسهام": ["aksham", "axham"],
-        "فیلم": ["film"],
-        "آهنگ": ["ahang", "music"],
-        "موزیک": ["music", "muzik"],
-        "مدارک": ["madarek", "madarekam"],
-        "مدارکم": ["madarekam", "madarek"]
-    }
-
-    synonym_map = {
-        "خاطرات": ["خاطره", "خاطرات من"],
-        "فیلم": ["سینما", "سریال"],
-        "آهنگ": ["موزیک", "ترانه"],
-        "کتاب": ["رمان", "داستان"],
-        "بورس": ["سهام", "ارز دیجیتال"]
-    }
-
-    for k, v in finglish_map.items():
-        if k in query or query in k:
-            queries.extend(v)
-
-    for k, v in synonym_map.items():
-        if k in query or query in k:
-            queries.extend(v)
+    for w in list(queries):
+        if w.endswith("هام") and len(w) > 3:
+            base = w[:-3]
+            queries.extend([f"{base} هام", f"{base}هایم", f"{base} هایم", f"{base}ام"])
+        elif w.endswith("ام") and len(w) > 2 and not w.endswith("هام"):
+            base = w[:-2]
+            queries.extend([f"{base} ام", f"{base}هام", f"{base} هایم"])
+        elif w.endswith("هایم") and len(w) > 4:
+            base = w[:-4]
+            queries.extend([f"{base} هایم", f"{base}هام", f"{base}ام"])
 
     # Clean up duplicates
     seen = set()
@@ -162,7 +182,7 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    return unique_queries[:15]
+    return unique_queries[:20]
 
 async def main_download():
     # Load inputs
@@ -273,10 +293,10 @@ async def main_download():
                         if found and hasattr(found, 'chats'):
                             for chat in found.chats:
                                 username = getattr(chat, 'username', None)
-                                if username and username.lower() not in seen_usernames:
+                                if username and is_valid_channel(username, chat) and username.lower() not in seen_usernames:
                                     seen_usernames.add(username.lower())
-                                    title = getattr(chat, 'title', "بدون عنوان")
-                                    members = getattr(chat, 'participants_count', None)
+                                    title = clean_channel_title(chat, username)
+                                    members = getattr(chat, 'participants_count', None) or getattr(chat, 'members_count', None)
                                     channels.append((title, username, members))
                     except Exception as e_search:
                         print(f"DEBUG: Search variation '{q_term}' contacts.Search failed: {e_search}")
@@ -297,9 +317,9 @@ async def main_download():
                             async for message in search_iterator:
                                 if message.chat and getattr(message.chat, 'username', None):
                                     username = getattr(message.chat, 'username')
-                                    if username and username.lower() not in seen_usernames:
+                                    if username and is_valid_channel(username, message.chat) and username.lower() not in seen_usernames:
                                         seen_usernames.add(username.lower())
-                                        title = getattr(message.chat, 'title', "بدون عنوان")
+                                        title = clean_channel_title(message.chat, username)
                                         members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
                                         channels.append((title, username, members))
                     except Exception as e_msg_search:
@@ -324,9 +344,9 @@ async def main_download():
                     if similar:
                         for sim_channel in similar:
                             sim_username = getattr(sim_channel, 'username', None)
-                            if sim_username and sim_username.lower() not in seen_usernames:
+                            if sim_username and is_valid_channel(sim_username, sim_channel) and sim_username.lower() not in seen_usernames:
                                 seen_usernames.add(sim_username.lower())
-                                sim_title = getattr(sim_channel, 'title', "بدون عنوان")
+                                sim_title = clean_channel_title(sim_channel, sim_username)
                                 sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
                                 item = (sim_title, sim_username, sim_members)
                                 channels.append(item)
@@ -340,16 +360,16 @@ async def main_download():
                         if similar2:
                             for sim_channel in similar2:
                                 sim_username = getattr(sim_channel, 'username', None)
-                                if sim_username and sim_username.lower() not in seen_usernames:
+                                if sim_username and is_valid_channel(sim_username, sim_channel) and sim_username.lower() not in seen_usernames:
                                     seen_usernames.add(sim_username.lower())
-                                    sim_title = getattr(sim_channel, 'title', "بدون عنوان")
+                                    sim_title = clean_channel_title(sim_channel, sim_username)
                                     sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
                                     channels.append((sim_title, sim_username, sim_members))
                     except Exception:
                         pass
 
-                # Sort all discovered channels by member count in descending order
-                channels.sort(key=lambda x: (x[2] if x[2] is not None else 0), reverse=True)
+                # Sort all discovered channels by Relevance Score in descending order
+                channels.sort(key=lambda c: calculate_relevance_score(c[0], c[1], c[2], query), reverse=True)
 
                 if not channels:
                     await safe_edit_message(owner_id, msg, f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
