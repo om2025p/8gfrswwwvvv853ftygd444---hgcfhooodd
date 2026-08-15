@@ -8,25 +8,67 @@ from decouple import config
 # Add current directory to path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
+def send_channel_notice(text):
+    token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
+    chat_id = os.environ.get("NOTIF_CHAT_ID") or config("NOTIF_CHAT_ID", default=None)
+    if not token or not chat_id:
+        return
+    import urllib.request, json
+    url = f'https://api.telegram.org/bot{token}/sendMessage'
+    payload = {'chat_id': chat_id, 'text': text}
+    data = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req) as resp:
+            pass
+    except Exception as e:
+        print(f"DEBUG: send_channel_notice error: {e}")
+
 async def safe_send_message(owner_id, text, disable_web_page_preview=False):
-    from main import Bot, bot, userbot
+    from main import Bot, bot, userbot, BOT_TOKEN
 
     # 1. Try Pyrogram Bot FIRST so messages land directly in the Bot Chat with the user!
     try:
-        return await Bot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
+        if getattr(Bot, 'is_connected', False):
+            return await Bot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
     except Exception as e:
-        print(f"DEBUG: Bot.send_message failed ({e}). Trying Telethon bot...")
-        try:
+        print(f"DEBUG: Bot.send_message failed: {e}")
+
+    # 2. Try Direct Telegram Bot API HTTP Request
+    try:
+        if BOT_TOKEN:
+            import urllib.request, json
+            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+            payload = {
+                'chat_id': owner_id,
+                'text': text,
+                'parse_mode': 'Markdown',
+                'disable_web_page_preview': disable_web_page_preview
+            }
+            data = json.dumps(payload).encode('utf-8')
+            req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+            with urllib.request.urlopen(req) as resp:
+                print("DEBUG: Direct Telegram Bot API sendMessage succeeded.")
+                return True
+    except Exception as e_api:
+        print(f"DEBUG: Direct Telegram Bot API failed: {e_api}")
+
+    # 3. Try Telethon Bot
+    try:
+        if bot.is_connected():
             return await bot.send_message(owner_id, text, link_preview=not disable_web_page_preview)
-        except Exception as e2:
-            print(f"DEBUG: Telethon bot.send_message failed ({e2}). Fallback to userbot (Saved Messages)...")
-            try:
-                if not getattr(userbot, 'is_connected', False):
-                    await userbot.start()
-                return await userbot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
-            except Exception as e3:
-                print(f"DEBUG: All message sending fallbacks failed: {e3}")
-                raise e3
+    except Exception as e2:
+        print(f"DEBUG: Telethon bot.send_message failed: {e2}")
+
+    # 4. Fallback to userbot (User Account -> Saved Messages)
+    try:
+        if getattr(userbot, 'is_connected', False):
+            res = await userbot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
+            send_channel_notice("📢 رئیس بزرگ! به دلیل محدودیت موقت چند دقیقه‌ای تلگرام روی ربات اصلی، نتیجه جدید به پیام‌های ذخیره‌شده (Saved Messages) شما فرستاده شد. 💎")
+            return res
+    except Exception as e3:
+        print(f"DEBUG: userbot fallback failed: {e3}")
+        raise e3
 
 async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=False):
     from main import Bot, bot, userbot

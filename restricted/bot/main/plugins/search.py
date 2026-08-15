@@ -12,6 +12,12 @@ from pyrogram.tl.types import InputPeerUser
 # Global search cache for pagination
 SEARCH_CACHE = {}
 
+def clean_expired_search_cache(max_age_seconds=3600):
+    now = time.time()
+    expired_keys = [k for k, v in SEARCH_CACHE.items() if now - v.get('time', now) > max_age_seconds]
+    for k in expired_keys:
+        SEARCH_CACHE.pop(k, None)
+
 def format_search_page(query, channels, page=1, page_size=50):
     total_items = len(channels)
     total_pages = max(1, math.ceil(total_items / page_size))
@@ -273,12 +279,14 @@ async def telegram_search(event):
             return
 
         # Store in search cache for live pagination
+        clean_expired_search_cache()
         search_id = str(int(time.time()))
         cache_key = f"{event.sender_id}_{search_id}"
         SEARCH_CACHE[cache_key] = {
             'query': query,
             'channels': channels,
-            'id': search_id
+            'id': search_id,
+            'time': time.time()
         }
 
         page_text, total_pages, current_page = format_search_page(query, channels, page=1, page_size=50)
