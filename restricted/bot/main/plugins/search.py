@@ -1,11 +1,49 @@
 # Search plugin for Telegram deep search directly from bot chat
 import os
 import asyncio
+import time
+import math
 from .. import bot as Drone
 from .. import userbot, Bot, AUTH
-from telethon import events
+from telethon import events, Button
 from pyrogram.raw.functions.contacts import Search
 from pyrogram.tl.types import InputPeerUser
+
+# Global search cache for pagination
+SEARCH_CACHE = {}
+
+def format_search_page(query, channels, page=1, page_size=50):
+    total_items = len(channels)
+    total_pages = max(1, math.ceil(total_items / page_size))
+    page = max(1, min(page, total_pages))
+
+    start_idx = (page - 1) * page_size
+    end_idx = min(start_idx + page_size, total_items)
+    page_channels = channels[start_idx:end_idx]
+
+    text = f"🎯 *نتایج جستجوی رسمی تلگرام برای «{query}»*\n"
+    text += f"📊 *صفحه {page} از {total_pages} (نمایش {start_idx + 1} تا {end_idx} از مجموع {total_items:,} کانال):*\n\n"
+
+    for i, (title, username, members) in enumerate(page_channels, start_idx + 1):
+        members_str = f" ({members:,} عضو)" if members is not None else ""
+        text += f"{i}. 📣 *{title}*\n   🔗 شناسه: @{username}{members_str}\n   👉 [ورود به کانال](https://t.me/{username})\n\n"
+
+    return text, total_pages, page
+
+def get_search_buttons(search_id, current_page, total_pages):
+    if total_pages <= 1:
+        return None
+
+    buttons = []
+    if current_page > 1:
+        buttons.append(Button.inline("⏪ صفحه قبلی", data=f"sp:{search_id}:{current_page - 1}".encode()))
+
+    buttons.append(Button.inline(f"📄 {current_page}/{total_pages}", data=b"noop"))
+
+    if current_page < total_pages:
+        buttons.append(Button.inline("صفحه بعدی ⏩", data=f"sp:{search_id}:{current_page + 1}".encode()))
+
+    return [buttons]
 
 def expand_persian_query(query):
     queries = [query]
@@ -134,7 +172,8 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    return unique_queries
+    # Limit to top 4 variations for lightning fast speed
+    return unique_queries[:4]
 
 @Drone.on(events.NewMessage(incoming=True, pattern=r'/search(?:\s+(.+))?'))
 async def telegram_search(event):
@@ -232,28 +271,19 @@ async def telegram_search(event):
             await msg.edit(f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
             return
 
-        # Format and send results in chunks
-        response_text = f"🎯 *نتایج جستجوی رسمی تلگرام برای «{query}» (یافت شده: {len(channels)} کانال):*\n\n"
-        chunk_num = 1
-        for i, (title, username, members) in enumerate(channels, 1):
-            members_str = f" ({members:,} عضو)" if members is not None else ""
-            line = f"{i}. 📣 *{title}*\n   🔗 شناسه: @{username}{members_str}\n   👉 [ورود به کانال](https://t.me/{username})\n\n"
+        # Store in search cache for live pagination
+        search_id = str(int(time.time()))
+        cache_key = f"{event.sender_id}_{search_id}"
+        SEARCH_CACHE[cache_key] = {
+            'query': query,
+            'channels': channels,
+            'id': search_id
+        }
 
-            if len(response_text) + len(line) > 3900:
-                if chunk_num == 1:
-                    await msg.edit(response_text, link_preview=False)
-                else:
-                    await event.reply(response_text, link_preview=False)
-                response_text = f"🎯 *ادامه نتایج جستجو برای «{query}» (بخش {chunk_num + 1}):*\n\n"
-                chunk_num += 1
-            response_text += line
+        page_text, total_pages, current_page = format_search_page(query, channels, page=1, page_size=50)
+        buttons = get_search_buttons(search_id, current_page, total_pages)
 
-        if response_text:
-            if chunk_num == 1:
-                await msg.edit(response_text, link_preview=False)
-            else:
-                await event.reply(response_text, link_preview=False)
-
+        await msg.edit(page_text, buttons=buttons, link_preview=False)
         await event.reply("✅ *جستجوی عمیق تلگرام با موفقیت کامل شد!*")
 
     except Exception as e:
@@ -262,3 +292,29 @@ async def telegram_search(event):
             await msg.edit(f"❌ *خطا در اجرای جستجوی عمیق تلگرام:*\n`{str(e)}`")
         except:
             pass
+
+@Drone.on(events.CallbackQuery(pattern=r'^sp:(.+):(\d+)$'))
+async def on_search_page_callback(event):
+    sender_id = event.sender_id
+    search_id_raw = event.pattern_match.group(1)
+    search_id = search_id_raw.decode('utf-8') if isinstance(search_id_raw, bytes) else str(search_id_raw)
+    target_page = int(event.pattern_match.group(2))
+
+    cache_key = f"{sender_id}_{search_id}"
+    cache = SEARCH_CACHE.get(cache_key)
+
+    if not cache:
+        return await event.answer("⚠️ اطلاعات این جستجو منقضی شده است. لطفاً مجدداً جستجو فرمایید.", alert=True)
+
+    query = cache['query']
+    channels = cache['channels']
+
+    page_text, total_pages, current_page = format_search_page(query, channels, page=target_page, page_size=50)
+    buttons = get_search_buttons(search_id, current_page, total_pages)
+
+    try:
+        await event.edit(page_text, buttons=buttons, link_preview=False)
+    except Exception as e:
+        print(f"DEBUG: Callback edit error: {e}")
+
+    await event.answer()

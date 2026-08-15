@@ -189,7 +189,8 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    return unique_queries
+    # Limit to top 4 variations for lightning fast speed
+    return unique_queries[:4]
 
 async def main_download():
     # Load inputs
@@ -364,39 +365,28 @@ async def main_download():
                     await safe_edit_message(owner_id, msg, f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
                     return
 
-                # Format and send results in chunks if text gets too long
-                response_text = f"🎯 *نتایج جستجوی رسمی تلگرام برای «{query}» (یافت شده: {len(channels)} کانال):*\n\n"
-                chunk_num = 1
-                for i, (title, username, members) in enumerate(channels, 1):
+                # Format page 1 results (50 items per page)
+                import math
+                page_size = 50
+                total_items = len(channels)
+                total_pages = max(1, math.ceil(total_items / page_size))
+                page_channels = channels[:page_size]
+
+                page_text = f"🎯 *نتایج جستجوی رسمی تلگرام برای «{query}»*\n"
+                page_text += f"📊 *صفحه ۱ از {total_pages} (نمایش ۱ تا {len(page_channels)} از مجموع {total_items:,} کانال):*\n\n"
+
+                for i, (title, username, members) in enumerate(page_channels, 1):
                     members_str = f" ({members:,} عضو)" if members is not None else ""
-                    line = f"{i}. 📣 *{title}*\n   🔗 شناسه: @{username}{members_str}\n   👉 [ورود به کانال](https://t.me/{username})\n\n"
+                    page_text += f"{i}. 📣 *{title}*\n   🔗 شناسه: @{username}{members_str}\n   👉 [ورود به کانال](https://t.me/{username})\n\n"
 
-                    # Check if adding this exceeds Telegram's 4096 character limit
-                    if len(response_text) + len(line) > 3900:
-                        if chunk_num == 1:
-                            await safe_edit_message(owner_id, msg, response_text, disable_web_page_preview=True)
-                        else:
-                            await safe_send_message(owner_id, response_text, disable_web_page_preview=True)
-                        response_text = f"🎯 *ادامه نتایج جستجو برای «{query}» (بخش {chunk_num + 1}):*\n\n"
-                        chunk_num += 1
-                    response_text += line
+                await safe_edit_message(owner_id, msg, page_text, disable_web_page_preview=True)
 
-                if response_text:
-                    if chunk_num == 1:
-                        await safe_edit_message(owner_id, msg, response_text, disable_web_page_preview=True)
-                    else:
-                        await safe_send_message(owner_id, response_text, disable_web_page_preview=True)
-                else:
-                    if chunk_num > 1:
-                        pass
-                    else:
-                        try:
-                            if hasattr(msg, 'delete'):
-                                await msg.delete()
-                            else:
-                                await Bot.delete_messages(owner_id, msg.id)
-                        except:
-                            pass
+                if total_pages > 1:
+                    info_msg = (
+                        f"💡 *رئیس بزرگ، تعداد کل کانال‌های یافت‌شده {total_items:,} عدد در {total_pages} صفحه ۵۰تایی است.*\n"
+                        f"برای مرور زنده و استفاده از دکمه‌های شیشه‌ای «صفحه بعدی ⏩»، می‌توانید سرور ربات را روشن نگه داشته یا دستور `/search {query}` را مستقیم در چت ربات بزنید! 💎"
+                    )
+                    await safe_send_message(owner_id, info_msg)
 
                 await safe_send_message(owner_id, "✅ *جستجوی عمیق تلگرام با موفقیت کامل شد!*")
 
