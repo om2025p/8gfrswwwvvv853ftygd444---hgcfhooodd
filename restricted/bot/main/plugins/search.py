@@ -3,11 +3,28 @@ import os
 import asyncio
 import time
 import math
+from decouple import config
 from .. import bot as Drone
 from .. import userbot, Bot, AUTH
 from telethon import events, Button
 from pyrogram.raw.functions.contacts import Search
 from pyrogram.tl.types import InputPeerUser
+
+def send_channel_notice(text):
+    token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
+    chat_id = os.environ.get("NOTIF_CHAT_ID") or config("NOTIF_CHAT_ID", default=None)
+    if not token or not chat_id:
+        return
+    import urllib.request, json
+    url = f'https://api.telegram.org/bot{token}/sendMessage'
+    payload = {'chat_id': chat_id, 'text': text, 'disable_web_page_preview': True}
+    data = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req) as resp:
+            pass
+    except Exception as e:
+        print(f"DEBUG: send_channel_notice error: {e}")
 
 # Global search cache for pagination
 SEARCH_CACHE = {}
@@ -18,7 +35,7 @@ def clean_expired_search_cache(max_age_seconds=3600):
     for k in expired_keys:
         SEARCH_CACHE.pop(k, None)
 
-def format_search_page(query, channels, page=1, page_size=20):
+def format_search_page(query, channels, page=1, page_size=50):
     total_items = len(channels)
     total_pages = max(1, math.ceil(total_items / page_size))
     page = max(1, min(page, total_pages))
@@ -158,10 +175,12 @@ async def telegram_search(event):
                 await res
 
         expanded_queries = expand_persian_query(query)
+        send_channel_notice(f"🔎 *شروع لاگ زنده جستجوی عمیق تلگرام برای:* «{query}»\n📌 تعداد انشعاب‌های الفبایی و کلمه‌ای: {len(expanded_queries)} عبارت")
+
         channels = []
         seen_usernames = set()
 
-        for q_term in expanded_queries:
+        for idx, q_term in enumerate(expanded_queries, 1):
             try:
                 found = await userbot.invoke(Search(q=q_term, limit=1000))
                 if found and hasattr(found, 'chats'):
@@ -197,9 +216,13 @@ async def telegram_search(event):
             except Exception as e_msg_search:
                 print(f"Search variation '{q_term}' search_global failed: {e_msg_search}")
 
-            await asyncio.sleep(0.5)
+            if idx % 5 == 0 or idx == len(expanded_queries):
+                send_channel_notice(f"⚡ [گام {idx}/{len(expanded_queries)}] عبارت «{q_term}» -> تاکنون مجموعاً {len(channels):,} کانال عمومی کشف شد.")
+
+            await asyncio.sleep(0.3)
 
         # RECURSIVE SPIDER CRAWL (2 Levels deep): Expand Telegram's similar channel graph!
+        send_channel_notice(f"🕷️ *شروع خزش عنکبوتی لایه اول و دوم روی شبکه پیشنهادهای تلگرام...*")
         level1_crawl = sorted([c for c in channels if c[2] is not None], key=lambda x: x[2], reverse=True)[:10]
         new_discovered = []
         for title, username, members in level1_crawl:
@@ -241,6 +264,7 @@ async def telegram_search(event):
 
         # Sort all discovered channels by Relevance Score in descending order
         channels.sort(key=lambda c: calculate_relevance_score(c[0], c[1], c[2], query), reverse=True)
+        send_channel_notice(f"📊 *پایان لاگ زنده جستجو!*\n🎯 کل کانال‌های عمومی یافت‌شده: {len(channels):,} کانال\n⭐ الگوریتم رتبه‌بندی بر اساس ارتباط کلمه‌ای و اعضا اعمال گردید.")
 
         if not channels:
             await msg.edit(f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
@@ -257,7 +281,7 @@ async def telegram_search(event):
             'time': time.time()
         }
 
-        page_text, total_pages, current_page = format_search_page(query, channels, page=1, page_size=20)
+        page_text, total_pages, current_page = format_search_page(query, channels, page=1, page_size=50)
         buttons = get_search_buttons(search_id, current_page, total_pages)
 
         await msg.edit(page_text, buttons=buttons, link_preview=False)
@@ -286,7 +310,7 @@ async def on_search_page_callback(event):
     query = cache['query']
     channels = cache['channels']
 
-    page_text, total_pages, current_page = format_search_page(query, channels, page=target_page, page_size=20)
+    page_text, total_pages, current_page = format_search_page(query, channels, page=target_page, page_size=50)
     buttons = get_search_buttons(search_id, current_page, total_pages)
 
     try:

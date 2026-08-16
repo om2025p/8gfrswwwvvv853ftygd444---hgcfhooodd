@@ -15,7 +15,7 @@ def send_channel_notice(text):
         return
     import urllib.request, json
     url = f'https://api.telegram.org/bot{token}/sendMessage'
-    payload = {'chat_id': chat_id, 'text': text}
+    payload = {'chat_id': chat_id, 'text': text, 'disable_web_page_preview': True}
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
     try:
@@ -273,10 +273,12 @@ async def main_download():
                 expanded_queries = expand_persian_query(query)
                 print(f"DEBUG: Expanded search queries for execution: {expanded_queries}")
 
+                send_channel_notice(f"🔎 *شروع لاگ زنده جستجوی عمیق تلگرام برای:* «{query}»\n📌 تعداد انشعاب‌های الفبایی و کلمه‌ای: {len(expanded_queries)} عبارت")
+
                 channels = []
                 seen_usernames = set()
 
-                for q_term in expanded_queries:
+                for idx, q_term in enumerate(expanded_queries, 1):
                     print(f"DEBUG: Executing search for term variation: {q_term}")
                     try:
                         # Invoke raw global search with a limit of 1000
@@ -294,7 +296,6 @@ async def main_download():
 
                     try:
                         # Global message search for variation
-                        # Try Pyrogram v2 search_global first, then fallback to Pyrogram v1 search_global_messages
                         search_iterator = None
                         try:
                             search_iterator = userbot.search_global(query=q_term, limit=300)
@@ -316,10 +317,14 @@ async def main_download():
                     except Exception as e_msg_search:
                         print(f"DEBUG: Search variation '{q_term}' search_global failed: {e_msg_search}")
 
-                    # Small sleep to prevent rate limiting
-                    await asyncio.sleep(0.5)
+                    # Real-time log every 5 terms
+                    if idx % 5 == 0 or idx == len(expanded_queries):
+                        send_channel_notice(f"⚡ [گام {idx}/{len(expanded_queries)}] عبارت «{q_term}» -> تاکنون مجموعاً {len(channels):,} کانال عمومی کشف شد.")
+
+                    await asyncio.sleep(0.3)
 
                 # RECURSIVE SPIDER CRAWL (2 Levels deep): Expand Telegram's similar channel graph!
+                send_channel_notice(f"🕷️ *شروع خزش عنکبوتی لایه اول و دوم روی شبکه پیشنهادهای تلگرام...*")
                 level1_crawl = sorted([c for c in channels if c[2] is not None], key=lambda x: x[2], reverse=True)[:10]
                 new_discovered = []
                 for title, username, members in level1_crawl:
@@ -361,14 +366,15 @@ async def main_download():
 
                 # Sort all discovered channels by Relevance Score in descending order
                 channels.sort(key=lambda c: calculate_relevance_score(c[0], c[1], c[2], query), reverse=True)
+                send_channel_notice(f"📊 *پایان لاگ زنده جستجو!*\n🎯 کل کانال‌های عمومی یافت‌شده: {len(channels):,} کانال\n⭐ الگوریتم رتبه‌بندی بر اساس ارتباط کلمه‌ای و اعضا اعمال گردید.")
 
                 if not channels:
                     await safe_edit_message(owner_id, msg, f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
                     return
 
-                # Format page 1 results (20 items per page with max 3800 chars guard)
+                # Format page 1 results (50 items per page with max 3800 chars guard)
                 import math
-                page_size = 20
+                page_size = 50
                 total_items = len(channels)
                 total_pages = max(1, math.ceil(total_items / page_size))
                 page_channels = channels[:page_size]
