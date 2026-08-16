@@ -393,17 +393,45 @@
         <div class="glass-card">
             <h2 class="card-title">🔎 موتور جستجوی رسمی و سراسری تلگرام</h2>
             <p style="font-size: 0.8rem; line-height: 1.5; color: rgba(255,255,255,0.6); margin-top: -10px; margin-bottom: 15px;">
-                عبارت موردنظر را بنویسید تا اکانت تلگرام شما کل فضای عمومی تلگرام را بدون واسطه و مستقیماً از دیتابیس مرکزی آن جستجو کرده و نتایج را همراه با لینک ورود فوری به پی‌وی شما بفرستد!
+                عبارت موردنظر را بنویسید تا اکانت تلگرام شما کل فضای عمومی تلگرام را بدون واسطه و مستقیماً از دیتابیس مرکزی آن جستجو کرده و تمام کانال‌ها را مستقیماً در همین صفحه وب ردیف کند!
             </p>
 
             <div class="input-group" style="margin-bottom: 15px;">
                 <label class="input-label">🔑 کلمه کلیدی یا کلمه مورد نظر:</label>
-                <input type="text" id="searchQuery" class="input-field" placeholder="مثلاً: بورس، آشپزی، موسیقی، آموزش زبان">
+                <input type="text" id="searchQuery" class="input-field" placeholder="مثلاً: بورس، آشپزی، عکس، موسیقی">
             </div>
 
             <button class="action-btn" id="btnSearchTelegram" style="border-color: var(--accent-purple); background: linear-gradient(135deg, rgba(157, 78, 221, 0.2), rgba(0, 229, 255, 0.15)); box-shadow: var(--glow-purple);">
                 🔎 شروع جستجوی عمیق و زنده در سرورهای تلگرام
             </button>
+        </div>
+
+        <!-- کارت نمایش زنده و کامل تمام کانال‌های کشف‌شده در وب -->
+        <div class="glass-card" id="searchResultsCard">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 class="card-title" style="margin: 0; border: none; padding: 0;">📋 لیست کامل کانال‌های کشف‌شده دیتابیس</h2>
+                <span id="resultsCountBadge" style="background: rgba(0,229,255,0.2); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">۰ کانال</span>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 15px;">
+                <input type="text" id="filterWebChannels" class="input-field" placeholder="🔍 فیلتر و جستجوی زنده بین کانال‌های لیست پایین...">
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button class="action-btn" id="btnFetchResults" style="font-size: 0.85rem; padding: 10px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); box-shadow: none;">
+                    🔄 بروزرسانی لیست از سرور
+                </button>
+                <button class="action-btn" id="btnImportJson" style="font-size: 0.85rem; padding: 10px; background: rgba(157, 78, 221, 0.15); border-color: var(--accent-purple); box-shadow: none;">
+                    📁 بارگذاری فایل JSON
+                </button>
+                <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
+            </div>
+
+            <div id="webChannelsContainer" style="max-height: 450px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-left: 5px;">
+                <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 30px 0; font-size: 0.85rem;">
+                    هیچ نتایجی هنوز ذخیره نشده است. عبارت موردنظر خود را بالا جستجو کنید یا فایل JSON نتایج را بارگذاری فرمایید. 💎
+                </div>
+            </div>
         </div>
 
         <!-- کارت تنظیمات اختصاصی -->
@@ -863,6 +891,138 @@
                 return;
             }
             triggerWorkflow("search:" + query);
+        };
+
+        // مدیریت لیست زنده کانال‌ها در وب‌اپ
+        let currentSearchChannels = [];
+
+        function renderWebChannels(channels) {
+            const container = document.getElementById('webChannelsContainer');
+            const badge = document.getElementById('resultsCountBadge');
+            const filterTerm = sanitizeString(document.getElementById('filterWebChannels').value.toLowerCase());
+
+            let filtered = channels.filter(c => {
+                const t = (c.title || '').toLowerCase();
+                const u = (c.username || '').toLowerCase();
+                return t.includes(filterTerm) || u.includes(filterTerm);
+            });
+
+            badge.innerText = `${filtered.length.toLocaleString()} از ${channels.length.toLocaleString()} کانال`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 30px 0; font-size: 0.85rem;">
+                    هیچ کانالی با عبارت فیلتر «${filterTerm}» مطابقت ندارد.
+                </div>`;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach((c, idx) => {
+                const membersStr = c.members ? `👥 ${Number(c.members).toLocaleString()} عضو` : '';
+                html += `
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <strong style="color: #ffffff; font-size: 0.9rem;">${idx + 1}. 📣 ${c.title || 'بدون عنوان'}</strong>
+                        <span style="font-size: 0.75rem; color: var(--accent-cyan); background: rgba(0,229,255,0.1); padding: 2px 8px; border-radius: 10px;">${membersStr}</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); direction: ltr; text-align: left;">
+                        🔗 @${c.username}
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;">
+                        <a href="${c.link || 'https://t.me/' + c.username}" target="_blank" class="action-btn" style="padding: 6px; font-size: 0.78rem; background: rgba(0,229,255,0.1); border-color: rgba(0,229,255,0.3); box-shadow: none;">
+                            👉 ورود به کانال
+                        </a>
+                        <button onclick="setDownloadLink('https://t.me/${c.username}')" class="action-btn green" style="padding: 6px; font-size: 0.78rem; box-shadow: none;">
+                            📥 تنظیم برای دانلود
+                        </button>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function setDownloadLink(link) {
+            document.getElementById('dlLink').value = link;
+            showToast("📥 لینک کانال در کادر دانلود قرار گرفت!");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // بارگذاری هوشمند نتایج ذخیره شده
+        function loadSavedSearchResults() {
+            try {
+                const saved = localStorage.getItem('restricted_search_results');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    if (data && data.channels) {
+                        currentSearchChannels = data.channels;
+                        renderWebChannels(currentSearchChannels);
+                        logDebug(`بارگذاری ${currentSearchChannels.length} کانال ذخیره‌شده از حافظه مرورگر.`, 'success');
+                    }
+                }
+            } catch (e) {
+                logDebug("خطا در بازیابی نتایج ذخیره‌شده جستجو: " + e.message, 'error');
+            }
+        }
+        loadSavedSearchResults();
+
+        // فیلتر زنده هنگام تایپ
+        document.getElementById('filterWebChannels').addEventListener('input', () => {
+            renderWebChannels(currentSearchChannels);
+        });
+
+        // استعلام زنده search_results.json از سرور
+        document.getElementById('btnFetchResults').onclick = async () => {
+            logDebug("در حال استعلام فایل search_results.json از سرور...");
+            try {
+                const resp = await fetch('search_results.json?t=' + Date.now());
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.channels) {
+                        currentSearchChannels = data.channels;
+                        localStorage.setItem('restricted_search_results', JSON.stringify(data));
+                        renderWebChannels(currentSearchChannels);
+                        showToast(`✅ ${data.channels.length.toLocaleString()} کانال جدید بروزرسانی شد!`);
+                        logDebug(`استعلام موفق: ${data.channels.length} کانال دریافت شد.`, 'success');
+                    }
+                } else {
+                    showToast("⚠️ نتایج جدیدی روی سرور یافت نشد.");
+                    logDebug("فایل search_results.json در آدرس نسبی یافت نشد (کد " + resp.status + ")", 'error');
+                }
+            } catch (err) {
+                showToast("❌ خطا در بروزرسانی نتایج از سرور!");
+                logDebug("خطای استعلام نتایج: " + err.message, 'error');
+            }
+        };
+
+        // بارگذاری دستی فایل JSON
+        document.getElementById('btnImportJson').onclick = () => {
+            document.getElementById('jsonFileInput').click();
+        };
+
+        document.getElementById('jsonFileInput').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    const channels = data.channels || (Array.isArray(data) ? data : []);
+                    if (channels.length > 0) {
+                        currentSearchChannels = channels;
+                        localStorage.setItem('restricted_search_results', JSON.stringify({ channels }));
+                        renderWebChannels(currentSearchChannels);
+                        showToast(`✅ ${channels.length.toLocaleString()} کانال با موفقیت بارگذاری شد!`);
+                        logDebug(`فایل JSON با موفقیت خوانده شد. ${channels.length} کانال نمایش داده شد.`, 'success');
+                    } else {
+                        showToast("⚠️ هیچ کانالی در فایل یافت نشد!");
+                    }
+                } catch (err) {
+                    showToast("❌ خطا در خواندن فایل JSON!");
+                    logDebug("خطا در پارس فایل JSON: " + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
         };
     </script>
 </body>

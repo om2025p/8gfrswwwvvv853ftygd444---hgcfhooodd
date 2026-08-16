@@ -372,6 +372,29 @@ async def main_download():
                     await safe_edit_message(owner_id, msg, f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
                     return
 
+                # Save search results to search_results.json for web platform display
+                import json
+                search_results_payload = {
+                    'query': query,
+                    'total_count': len(channels),
+                    'timestamp': time.time(),
+                    'channels': [
+                        {
+                            'title': title,
+                            'username': username,
+                            'members': members if members is not None else 0,
+                            'link': f"https://t.me/{username}"
+                        }
+                        for title, username, members in channels
+                    ]
+                }
+                for json_path in ['search_results.json', '../search_results.json', 'restricted/search_results.json']:
+                    try:
+                        with open(json_path, 'w', encoding='utf-8') as f_json:
+                            json.dump(search_results_payload, f_json, ensure_ascii=False, indent=2)
+                    except Exception:
+                        pass
+
                 # Format page 1 results (50 items per page with max 3800 chars guard)
                 import math
                 page_size = 50
