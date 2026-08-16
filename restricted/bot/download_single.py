@@ -145,33 +145,24 @@ def expand_persian_query(query):
     query = query.strip()
     queries = [query]
 
+    # Persian & English Alphabetical Sub-Query Expansion for Deep Discovery
+    alphabet = ['ا', 'ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's']
+    for char in alphabet:
+        queries.append(f"{query} {char}")
+
     # Character normalization variations (ی/ي, ک/ك)
     q_norm1 = query.replace("ی", "ي").replace("ک", "ك")
-    q_norm2 = query.replace("ي", "ی").replace("ك", "ک")
-    queries.extend([q_norm1, q_norm2])
+    queries.append(q_norm1)
 
-    # Decompose multi-word query into constituent words and root variations
+    # Decompose multi-word query into constituent words
     words = [w.strip() for w in query.split() if len(w.strip()) > 1]
     if len(words) > 1:
         queries.extend(words)
-        queries.append(" ".join(words))
 
-    # Common Persian prefixes/suffixes for deep channel discovery
-    prefixes = ["کانال ", "دانلود ", "مرجع ", "پست "]
+    # Common Persian prefixes
+    prefixes = ["کانال ", "دانلود ", "مرجع "]
     for p in prefixes:
         queries.append(f"{p}{query}")
-
-    # Standard Persian suffix handling (هام, ام, هایم, های من)
-    for w in list(queries):
-        if w.endswith("هام") and len(w) > 3:
-            base = w[:-3]
-            queries.extend([f"{base} هام", f"{base}هایم", f"{base} هایم", f"{base}ام"])
-        elif w.endswith("ام") and len(w) > 2 and not w.endswith("هام"):
-            base = w[:-2]
-            queries.extend([f"{base} ام", f"{base}هام", f"{base} هایم"])
-        elif w.endswith("هایم") and len(w) > 4:
-            base = w[:-4]
-            queries.extend([f"{base} هایم", f"{base}هام", f"{base}ام"])
 
     # Clean up duplicates
     seen = set()
@@ -182,7 +173,7 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    return unique_queries[:20]
+    return unique_queries[:50]
 
 async def main_download():
     # Load inputs

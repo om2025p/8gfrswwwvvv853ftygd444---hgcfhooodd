@@ -99,60 +99,27 @@ def get_search_buttons(search_id, current_page, total_pages):
     return [buttons]
 
 def expand_persian_query(query):
+    query = query.strip()
     queries = [query]
+
+    # Persian & English Alphabetical Sub-Query Expansion for Deep Discovery
+    alphabet = ['ا', 'ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's']
+    for char in alphabet:
+        queries.append(f"{query} {char}")
 
     # Character normalization variations (ی/ي, ک/ك)
     q_norm1 = query.replace("ی", "ي").replace("ک", "ك")
-    q_norm2 = query.replace("ي", "ی").replace("ك", "ک")
-    queries.extend([q_norm1, q_norm2])
+    queries.append(q_norm1)
 
-    # Common Persian prefixes/suffixes for deep channel discovery
-    prefixes = ["کانال ", "دانلود ", "مرجع ", "پست ", "گروه "]
-    suffixes = [" ", " رسمى", " رسمی", " جدید", " بروز"]
+    # Decompose multi-word query into constituent words
+    words = [w.strip() for w in query.split() if len(w.strip()) > 1]
+    if len(words) > 1:
+        queries.extend(words)
 
+    # Common Persian prefixes
+    prefixes = ["کانال ", "دانلود ", "مرجع "]
     for p in prefixes:
         queries.append(f"{p}{query}")
-    for s in suffixes:
-        queries.append(f"{query}{s}")
-
-    # Standard Persian suffix handling (هام, ام, هایم, های من)
-    if query.endswith("هام") and len(query) > 3:
-        base = query[:-3]
-        queries.extend([f"{base} هام", f"{base}هایم", f"{base} هایم", f"{base}های من", f"{base}ام"])
-    elif query.endswith("ام") and len(query) > 2 and not query.endswith("هام"):
-        base = query[:-2]
-        queries.extend([f"{base} ام", f"{base}هام", f"{base} هام", f"{base}هایم", f"{base}های من"])
-    elif query.endswith("هایم") and len(query) > 4:
-        base = query[:-4]
-        queries.extend([f"{base} هایم", f"{base}هام", f"{base} هام", f"{base}های من", f"{base}ام"])
-
-    # Transliterations and synonyms
-    finglish_map = {
-        "عکس": ["aks", "ax"],
-        "عکسام": ["aksam", "axam"],
-        "عکسهام": ["aksham", "axham"],
-        "فیلم": ["film"],
-        "آهنگ": ["ahang", "music"],
-        "موزیک": ["music", "muzik"],
-        "مدارک": ["madarek", "madarekam"],
-        "مدارکم": ["madarekam", "madarek"]
-    }
-
-    synonym_map = {
-        "خاطرات": ["خاطره", "خاطرات من"],
-        "فیلم": ["سینما", "سریال"],
-        "آهنگ": ["موزیک", "ترانه"],
-        "کتاب": ["رمان", "داستان"],
-        "بورس": ["سهام", "ارز دیجیتال"]
-    }
-
-    for k, v in finglish_map.items():
-        if k in query or query in k:
-            queries.extend(v)
-
-    for k, v in synonym_map.items():
-        if k in query or query in k:
-            queries.extend(v)
 
     # Clean up duplicates
     seen = set()
@@ -163,7 +130,7 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    return unique_queries[:15]
+    return unique_queries[:50]
 
 @Drone.on(events.NewMessage(incoming=True, pattern=r'/search(?:\s+(.+))?'))
 async def telegram_search(event):
