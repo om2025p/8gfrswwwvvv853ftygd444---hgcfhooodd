@@ -206,9 +206,28 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                     )
                 )
 
-            elif msg.media==MessageMediaType.PHOTO:
-                await safe_edit_object(edit, "Uploading photo.")
-                await bot.send_file(sender, file, caption=caption)
+            elif msg.media==MessageMediaType.PHOTO or (hasattr(msg, 'photo') and msg.photo):
+                await safe_edit_object(edit, "Uploading photo...")
+                try:
+                    await client.send_photo(
+                        chat_id=sender,
+                        photo=file,
+                        caption=caption,
+                        progress=progress_for_pyrogram,
+                        progress_args=(
+                            client,
+                            '**UPLOADING:**\n',
+                            edit,
+                            time.time()
+                        )
+                    )
+                except Exception as p_err:
+                    print(f"DEBUG: Pyrogram private send_photo failed ({p_err}). Fallback to Telethon...")
+                    try:
+                        await bot.send_file(sender, file, caption=caption)
+                    except Exception as t_err:
+                        print(f"DEBUG: Telethon bot.send_file also failed ({t_err}). Final fallback to userbot...")
+                        await userbot.send_photo(chat_id=sender, photo=file, caption=caption)
             else:
                 thumb_path=thumbnail(sender)
                 await client.send_document(
@@ -388,9 +407,28 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                             uploader = await fast_upload(f'{file}', f'{file}', UT, bot, edit, '**UPLOADING:**')
                             attributes = [DocumentAttributeVideo(duration=duration, w=width, h=height, round_message=False, supports_streaming=True)]
                             await bot.send_file(sender, uploader, caption=caption, thumb=thumb_path, attributes=attributes, force_document=False)
-                    elif msg.media==MessageMediaType.PHOTO:
-                        await safe_edit_object(edit, "Uploading photo.")
-                        await bot.send_file(sender, file, caption=caption)
+                    elif msg.media==MessageMediaType.PHOTO or (hasattr(msg, 'photo') and msg.photo):
+                        await safe_edit_object(edit, "Uploading photo...")
+                        try:
+                            await client.send_photo(
+                                chat_id=sender,
+                                photo=file,
+                                caption=caption,
+                                progress=progress_for_pyrogram,
+                                progress_args=(
+                                    client,
+                                    '**UPLOADING:**\n',
+                                    edit,
+                                    time.time()
+                                )
+                            )
+                        except Exception as p_err:
+                            print(f"DEBUG: Pyrogram public fallback send_photo failed ({p_err}). Fallback to Telethon...")
+                            try:
+                                await bot.send_file(sender, file, caption=caption)
+                            except Exception as t_err:
+                                print(f"DEBUG: Telethon bot.send_file also failed ({t_err}). Final fallback to userbot...")
+                                await userbot.send_photo(chat_id=sender, photo=file, caption=caption)
                     else:
                         thumb_path=thumbnail(sender)
                         try:
