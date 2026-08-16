@@ -427,11 +427,17 @@
                 <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
             </div>
 
-            <div id="webChannelsContainer" style="max-height: 450px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-left: 5px;">
+            <!-- پنل کنترل صفحه‌بندی بالا -->
+            <div id="paginationTop" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);"></div>
+
+            <div id="webChannelsContainer" style="max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-left: 5px;">
                 <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 30px 0; font-size: 0.85rem;">
                     هیچ نتایجی هنوز ذخیره نشده است. عبارت موردنظر خود را بالا جستجو کنید یا فایل JSON نتایج را بارگذاری فرمایید. 💎
                 </div>
             </div>
+
+            <!-- پنل کنترل صفحه‌بندی پایین -->
+            <div id="paginationBottom" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);"></div>
         </div>
 
         <!-- کارت تنظیمات اختصاصی -->
@@ -893,8 +899,53 @@
             triggerWorkflow("search:" + query);
         };
 
-        // مدیریت لیست زنده کانال‌ها در وب‌اپ
+        // مدیریت لیست زنده کانال‌ها در وب‌اپ همراه با صفحه‌بندی ۵۰تایی
         let currentSearchChannels = [];
+        let currentPage = 1;
+        const pageSize = 50;
+
+        function changePage(newPage, scrollToTop = true) {
+            currentPage = newPage;
+            renderWebChannels(currentSearchChannels);
+            if (scrollToTop) {
+                const resultsCard = document.getElementById('searchResultsCard');
+                if (resultsCard) {
+                    resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        }
+
+        function renderPaginationControls(totalFilteredItems, totalPages) {
+            const topEl = document.getElementById('paginationTop');
+            const bottomEl = document.getElementById('paginationBottom');
+
+            if (totalFilteredItems <= pageSize || totalPages <= 1) {
+                topEl.style.display = 'none';
+                bottomEl.style.display = 'none';
+                return;
+            }
+
+            topEl.style.display = 'flex';
+            bottomEl.style.display = 'flex';
+
+            const prevDisabled = currentPage <= 1 ? 'disabled style="opacity: 0.4; cursor: not-allowed;"' : '';
+            const nextDisabled = currentPage >= totalPages ? 'disabled style="opacity: 0.4; cursor: not-allowed;"' : '';
+
+            const paginationHtml = `
+                <button onclick="if(${currentPage > 1}) changePage(${currentPage - 1})" ${prevDisabled} class="action-btn" style="width: auto; padding: 6px 14px; font-size: 0.8rem; background: rgba(0,229,255,0.1); border-color: rgba(0,229,255,0.3); box-shadow: none;">
+                    ⏪ صفحه قبلی
+                </button>
+                <span style="font-size: 0.82rem; color: var(--accent-cyan); font-weight: 600;">
+                    📄 صفحه ${currentPage.toLocaleString()} از ${totalPages.toLocaleString()}
+                </span>
+                <button onclick="if(${currentPage < totalPages}) changePage(${currentPage + 1})" ${nextDisabled} class="action-btn" style="width: auto; padding: 6px 14px; font-size: 0.8rem; background: rgba(0,229,255,0.1); border-color: rgba(0,229,255,0.3); box-shadow: none;">
+                    صفحه بعدی ⏩
+                </button>
+            `;
+
+            topEl.innerHTML = paginationHtml;
+            bottomEl.innerHTML = paginationHtml;
+        }
 
         function renderWebChannels(channels) {
             const container = document.getElementById('webChannelsContainer');
@@ -907,9 +958,26 @@
                 return t.includes(filterTerm) || u.includes(filterTerm);
             });
 
-            badge.innerText = `${filtered.length.toLocaleString()} از ${channels.length.toLocaleString()} کانال`;
+            const totalFiltered = filtered.length;
+            const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
 
-            if (filtered.length === 0) {
+            // تنظیم شماره صفحه در محدوده مجاز
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, totalFiltered);
+            const pageItems = filtered.slice(startIndex, endIndex);
+
+            if (totalFiltered > 0) {
+                badge.innerText = `نمایش ${(startIndex + 1).toLocaleString()} تا ${endIndex.toLocaleString()} از ${totalFiltered.toLocaleString()} کانال`;
+            } else {
+                badge.innerText = `۰ از ${channels.length.toLocaleString()} کانال`;
+            }
+
+            renderPaginationControls(totalFiltered, totalPages);
+
+            if (totalFiltered === 0) {
                 container.innerHTML = `<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 30px 0; font-size: 0.85rem;">
                     هیچ کانالی با عبارت فیلتر «${filterTerm}» مطابقت ندارد.
                 </div>`;
@@ -917,12 +985,13 @@
             }
 
             let html = '';
-            filtered.forEach((c, idx) => {
+            pageItems.forEach((c, idx) => {
+                const globalIndex = startIndex + idx + 1;
                 const membersStr = c.members ? `👥 ${Number(c.members).toLocaleString()} عضو` : '';
                 html += `
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <strong style="color: #ffffff; font-size: 0.9rem;">${idx + 1}. 📣 ${c.title || 'بدون عنوان'}</strong>
+                        <strong style="color: #ffffff; font-size: 0.9rem;">${globalIndex}. 📣 ${c.title || 'بدون عنوان'}</strong>
                         <span style="font-size: 0.75rem; color: var(--accent-cyan); background: rgba(0,229,255,0.1); padding: 2px 8px; border-radius: 10px;">${membersStr}</span>
                     </div>
                     <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6); direction: ltr; text-align: left;">
@@ -966,8 +1035,9 @@
         }
         loadSavedSearchResults();
 
-        // فیلتر زنده هنگام تایپ
+        // فیلتر زنده هنگام تایپ همراه با بازگشت به صفحه ۱
         document.getElementById('filterWebChannels').addEventListener('input', () => {
+            currentPage = 1;
             renderWebChannels(currentSearchChannels);
         });
 
