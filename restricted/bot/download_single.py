@@ -117,6 +117,12 @@ def clean_channel_title(chat, username):
         title = f"@{username}"
     return str(title).strip()
 
+def is_query_in_channel(title, username, query):
+    q_clean = query.lower().strip()
+    t_clean = str(title or '').lower().strip()
+    u_clean = str(username or '').lower().strip()
+    return q_clean in t_clean or q_clean in u_clean
+
 def calculate_relevance_score(title, username, members, query):
     score = 0
     q_clean = query.lower().strip()
@@ -126,12 +132,6 @@ def calculate_relevance_score(title, username, members, query):
     # Exact full query match in title or username -> HUGE BOOST
     if q_clean in t_clean or q_clean in u_clean:
         score += 10000
-
-    # Sub-word matches in title or username
-    words = [w.strip() for w in q_clean.split() if len(w.strip()) > 1]
-    for w in words:
-        if w in t_clean or w in u_clean:
-            score += 2000
 
     # Member count boost (logarithmic scale)
     m_val = members if members is not None else 0
@@ -145,24 +145,10 @@ def expand_persian_query(query):
     query = query.strip()
     queries = [query]
 
-    # Persian & English Alphabetical Sub-Query Expansion for Deep Discovery
+    # Persian & English Alphabetical Sub-Query Expansion using EXACT base query
     alphabet = ['ا', 'ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's']
     for char in alphabet:
         queries.append(f"{query} {char}")
-
-    # Character normalization variations (ی/ي, ک/ك)
-    q_norm1 = query.replace("ی", "ي").replace("ک", "ك")
-    queries.append(q_norm1)
-
-    # Decompose multi-word query into constituent words
-    words = [w.strip() for w in query.split() if len(w.strip()) > 1]
-    if len(words) > 1:
-        queries.extend(words)
-
-    # Common Persian prefixes
-    prefixes = ["کانال ", "دانلود ", "مرجع "]
-    for p in prefixes:
-        queries.append(f"{p}{query}")
 
     # Clean up duplicates
     seen = set()
@@ -173,7 +159,7 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    return unique_queries[:50]
+    return unique_queries[:40]
 
 async def main_download():
     # Load inputs
@@ -287,10 +273,12 @@ async def main_download():
                             for chat in found.chats:
                                 username = getattr(chat, 'username', None)
                                 if username and is_valid_channel(username, chat) and username.lower() not in seen_usernames:
-                                    seen_usernames.add(username.lower())
                                     title = clean_channel_title(chat, username)
-                                    members = getattr(chat, 'participants_count', None) or getattr(chat, 'members_count', None)
-                                    channels.append((title, username, members))
+                                    # Strict filtering: Title or Username MUST contain the exact base search query
+                                    if is_query_in_channel(title, username, query):
+                                        seen_usernames.add(username.lower())
+                                        members = getattr(chat, 'participants_count', None) or getattr(chat, 'members_count', None)
+                                        channels.append((title, username, members))
                     except Exception as e_search:
                         print(f"DEBUG: Search variation '{q_term}' contacts.Search failed: {e_search}")
 
@@ -310,23 +298,24 @@ async def main_download():
                                 if message.chat and getattr(message.chat, 'username', None):
                                     username = getattr(message.chat, 'username')
                                     if username and is_valid_channel(username, message.chat) and username.lower() not in seen_usernames:
-                                        seen_usernames.add(username.lower())
                                         title = clean_channel_title(message.chat, username)
-                                        members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
-                                        channels.append((title, username, members))
+                                        # Strict filtering: Title or Username MUST contain the exact base search query
+                                        if is_query_in_channel(title, username, query):
+                                            seen_usernames.add(username.lower())
+                                            members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
+                                            channels.append((title, username, members))
                     except Exception as e_msg_search:
                         print(f"DEBUG: Search variation '{q_term}' search_global failed: {e_msg_search}")
 
                     # Real-time log every 5 terms
                     if idx % 5 == 0 or idx == len(expanded_queries):
-                        send_channel_notice(f"⚡ [گام {idx}/{len(expanded_queries)}] عبارت «{q_term}» -> تاکنون مجموعاً {len(channels):,} کانال عمومی کشف شد.")
+                        send_channel_notice(f"⚡ [گام {idx}/{len(expanded_queries)}] عبارت «{q_term}» -> تاکنون مجموعاً {len(channels):,} کانال عمومی مطابقت‌دار کشف شد.")
 
                     await asyncio.sleep(0.3)
 
-                # RECURSIVE SPIDER CRAWL (2 Levels deep): Expand Telegram's similar channel graph!
-                send_channel_notice(f"🕷️ *شروع خزش عنکبوتی لایه اول و دوم روی شبکه پیشنهادهای تلگرام...*")
+                # RECURSIVE SPIDER CRAWL with Strict Matching
+                send_channel_notice(f"🕷️ *شروع خزش عنکبوتی برای کشف کانال‌های مشابه با نام دقیق...*")
                 level1_crawl = sorted([c for c in channels if c[2] is not None], key=lambda x: x[2], reverse=True)[:10]
-                new_discovered = []
                 for title, username, members in level1_crawl:
                     similar = None
                     try:
@@ -341,30 +330,14 @@ async def main_download():
                         for sim_channel in similar:
                             sim_username = getattr(sim_channel, 'username', None)
                             if sim_username and is_valid_channel(sim_username, sim_channel) and sim_username.lower() not in seen_usernames:
-                                seen_usernames.add(sim_username.lower())
                                 sim_title = clean_channel_title(sim_channel, sim_username)
-                                sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
-                                item = (sim_title, sim_username, sim_members)
-                                channels.append(item)
-                                new_discovered.append(item)
-
-                # LEVEL 2 SPIDER CRAWL for newly discovered channels
-                level2_crawl = sorted([c for c in new_discovered if c[2] is not None], key=lambda x: x[2], reverse=True)[:5]
-                for title, username, members in level2_crawl:
-                    try:
-                        similar2 = await userbot.get_chat_recommendations(username)
-                        if similar2:
-                            for sim_channel in similar2:
-                                sim_username = getattr(sim_channel, 'username', None)
-                                if sim_username and is_valid_channel(sim_username, sim_channel) and sim_username.lower() not in seen_usernames:
+                                if is_query_in_channel(sim_title, sim_username, query):
                                     seen_usernames.add(sim_username.lower())
-                                    sim_title = clean_channel_title(sim_channel, sim_username)
                                     sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
                                     channels.append((sim_title, sim_username, sim_members))
-                    except Exception:
-                        pass
 
-                # Sort all discovered channels by Relevance Score in descending order
+                # Filter strictly again and sort by Relevance Score
+                channels = [c for c in channels if is_query_in_channel(c[0], c[1], query)]
                 channels.sort(key=lambda c: calculate_relevance_score(c[0], c[1], c[2], query), reverse=True)
                 send_channel_notice(f"📊 *پایان لاگ زنده جستجو!*\n🎯 کل کانال‌های عمومی یافت‌شده: {len(channels):,} کانال\n⭐ الگوریتم رتبه‌بندی بر اساس ارتباط کلمه‌ای و اعضا اعمال گردید.")
 
