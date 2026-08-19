@@ -136,7 +136,7 @@ def normalize_persian(text):
 def is_query_in_channel(title, username, query):
     q_norm = normalize_persian(query)
     if not q_norm:
-        return False
+        return True
     t_norm = normalize_persian(title)
     u_norm = normalize_persian(username)
 
@@ -144,7 +144,12 @@ def is_query_in_channel(title, username, query):
         return True
 
     q_words = [w.replace('ها', '').replace('های', '') for w in q_norm.split() if len(w) > 1]
-    if q_words and all(w in t_norm or w in u_norm for w in q_words):
+    if not q_words:
+        return True
+
+    # High recall matching: if any primary query word matches in title or username, keep channel
+    matched_count = sum(1 for w in q_words if w in t_norm or w in u_norm)
+    if matched_count >= 1:
         return True
 
     return False
