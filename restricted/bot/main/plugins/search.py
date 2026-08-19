@@ -255,6 +255,14 @@ async def telegram_search(event):
                             sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
                             channels.append((sim_title, sim_username, sim_members))
 
+        # Deduplicate strictly by lowercase username
+        unique_dict = {}
+        for title, username, members in channels:
+            u_key = str(username or '').lower().strip()
+            if u_key and u_key not in unique_dict:
+                unique_dict[u_key] = (title, username, members)
+        channels = list(unique_dict.values())
+
         # Filter strictly again and sort by Relevance Score
         channels = [c for c in channels if is_query_in_channel(c[0], c[1], query)]
         channels.sort(key=lambda c: calculate_relevance_score(c[0], c[1], c[2], query), reverse=True)
