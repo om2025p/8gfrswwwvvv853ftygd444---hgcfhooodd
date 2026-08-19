@@ -84,16 +84,20 @@ def clean_channel_title(chat, username):
         title = f"@{username}"
     return str(title).strip()
 
+import re
+
 def normalize_persian(text):
     if not text or not isinstance(text, str):
         return ""
     text = text.lower().strip()
     replacements = {
         'ي': 'ی', 'ك': 'ک', 'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ۀ': 'ه',
-        '‌': '', ' ': '', '_': '', '-': ''
+        '\u200c': ' '
     }
     for old, new in replacements.items():
         text = text.replace(old, new)
+    text = re.sub(r'[\-_.:;!?,()\[\]{\}\'\"]+', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
     return text
 
 def is_query_in_channel(title, username, query):
@@ -102,7 +106,15 @@ def is_query_in_channel(title, username, query):
         return False
     t_norm = normalize_persian(title)
     u_norm = normalize_persian(username)
-    return q_norm in t_norm or q_norm in u_norm
+
+    if q_norm in t_norm or q_norm in u_norm:
+        return True
+
+    q_words = [w.replace('ها', '').replace('های', '') for w in q_norm.split() if len(w) > 1]
+    if q_words and all(w in t_norm or w in u_norm for w in q_words):
+        return True
+
+    return False
 
 def calculate_relevance_score(title, username, members, query):
     score = 0
@@ -141,6 +153,15 @@ def expand_persian_query(query):
     query = query.strip()
     queries = [query]
 
+    # Add individual words of query (e.g. 'عکسها خودمون' -> 'عکسها', 'خودمون', 'عکس')
+    words = query.split()
+    for w in words:
+        if len(w) > 1:
+            queries.append(w)
+            w_stem = w.replace('ها', '').replace('های', '')
+            if len(w_stem) > 1 and w_stem != w:
+                queries.append(w_stem)
+
     # Persian/English suffixes & common Telegram prefixes
     keywords = [
         'کانال', 'گروه', 'رسمی', 'اصلی', 'جدید', 'بزرگ', 'ایران', 'آنلاین',
@@ -165,7 +186,7 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    return unique_queries[:100]
+    return unique_queries[:120]
 
 @Drone.on(events.NewMessage(incoming=True, pattern=r'/search(?:\s+(.+))?'))
 async def telegram_search(event):
