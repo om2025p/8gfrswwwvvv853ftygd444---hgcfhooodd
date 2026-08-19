@@ -84,11 +84,25 @@ def clean_channel_title(chat, username):
         title = f"@{username}"
     return str(title).strip()
 
+def normalize_persian(text):
+    if not text or not isinstance(text, str):
+        return ""
+    text = text.lower().strip()
+    replacements = {
+        'ي': 'ی', 'ك': 'ک', 'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ۀ': 'ه',
+        '‌': '', ' ': '', '_': '', '-': ''
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    return text
+
 def is_query_in_channel(title, username, query):
-    q_clean = query.lower().strip()
-    t_clean = str(title or '').lower().strip()
-    u_clean = str(username or '').lower().strip()
-    return q_clean in t_clean or q_clean in u_clean
+    q_norm = normalize_persian(query)
+    if not q_norm:
+        return False
+    t_norm = normalize_persian(title)
+    u_norm = normalize_persian(username)
+    return q_norm in t_norm or q_norm in u_norm
 
 def calculate_relevance_score(title, username, members, query):
     score = 0
@@ -127,10 +141,20 @@ def expand_persian_query(query):
     query = query.strip()
     queries = [query]
 
-    # Persian & English Alphabetical Sub-Query Expansion using EXACT base query
-    alphabet = ['ا', 'ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's']
+    # Persian/English suffixes & common Telegram prefixes
+    keywords = [
+        'کانال', 'گروه', 'رسمی', 'اصلی', 'جدید', 'بزرگ', 'ایران', 'آنلاین',
+        'channel', 'official', 'group', 'iran', 'plus', 'vip', '1', '2', '01'
+    ]
+    for kw in keywords:
+        queries.append(f"{query} {kw}")
+        queries.append(f"{kw} {query}")
+
+    # Persian & English Alphabetical Sub-Query Expansion
+    alphabet = ['ا', 'ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's', '1', '2']
     for char in alphabet:
         queries.append(f"{query} {char}")
+        queries.append(f"{query}_{char}")
 
     # Clean up duplicates
     seen = set()
@@ -141,7 +165,7 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    return unique_queries[:40]
+    return unique_queries[:100]
 
 @Drone.on(events.NewMessage(incoming=True, pattern=r'/search(?:\s+(.+))?'))
 async def telegram_search(event):
@@ -321,6 +345,11 @@ async def telegram_search(event):
 
 @Drone.on(events.CallbackQuery(pattern=r'^sp:(.+):(\d+)$'))
 async def on_search_page_callback(event):
+    try:
+        await event.answer()
+    except Exception:
+        pass
+
     sender_id = event.sender_id
     search_id_raw = event.pattern_match.group(1)
     search_id = search_id_raw.decode('utf-8') if isinstance(search_id_raw, bytes) else str(search_id_raw)
@@ -330,10 +359,29 @@ async def on_search_page_callback(event):
     cache = SEARCH_CACHE.get(cache_key)
 
     if not cache:
-        return await event.answer("⚠️ اطلاعات این جستجو منقضی شده است. لطفاً مجدداً جستجو فرمایید.", alert=True)
-
-    query = cache['query']
-    channels = cache['channels']
+        # Fallback to search_results.json if SEARCH_CACHE is empty
+        channels = []
+        query = ""
+        for json_path in ['search_results.json', '../search_results.json', 'restricted/search_results.json']:
+            if os.path.exists(json_path):
+                try:
+                    import json
+                    with open(json_path, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        query = data.get('query', '')
+                        for c in data.get('channels', []):
+                            channels.append((c.get('title', ''), c.get('username', ''), c.get('members', 0)))
+                    break
+                except Exception:
+                    pass
+        if not channels:
+            try:
+                return await event.answer("⚠️ اطلاعات این جستجو منقضی شده است. لطفاً مجدداً دستور /search را وارد فرمایید.", alert=True)
+            except Exception:
+                return
+    else:
+        query = cache['query']
+        channels = cache['channels']
 
     page_text, total_pages, current_page = format_search_page(query, channels, page=target_page, page_size=10)
     buttons = get_search_buttons(search_id, current_page, total_pages)
@@ -342,5 +390,3 @@ async def on_search_page_callback(event):
         await event.edit(page_text, buttons=buttons, link_preview=False)
     except Exception as e:
         print(f"DEBUG: Callback edit error: {e}")
-
-    await event.answer()

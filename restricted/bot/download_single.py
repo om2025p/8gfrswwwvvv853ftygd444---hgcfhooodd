@@ -117,11 +117,25 @@ def clean_channel_title(chat, username):
         title = f"@{username}"
     return str(title).strip()
 
+def normalize_persian(text):
+    if not text or not isinstance(text, str):
+        return ""
+    text = text.lower().strip()
+    replacements = {
+        'ي': 'ی', 'ك': 'ک', 'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ۀ': 'ه',
+        '‌': '', ' ': '', '_': '', '-': ''
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    return text
+
 def is_query_in_channel(title, username, query):
-    q_clean = query.lower().strip()
-    t_clean = str(title or '').lower().strip()
-    u_clean = str(username or '').lower().strip()
-    return q_clean in t_clean or q_clean in u_clean
+    q_norm = normalize_persian(query)
+    if not q_norm:
+        return False
+    t_norm = normalize_persian(title)
+    u_norm = normalize_persian(username)
+    return q_norm in t_norm or q_norm in u_norm
 
 def calculate_relevance_score(title, username, members, query):
     score = 0
@@ -154,10 +168,20 @@ def expand_persian_query(query):
     query = query.strip()
     queries = [query]
 
-    # Persian & English Alphabetical Sub-Query Expansion using EXACT base query
-    alphabet = ['ا', 'ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's']
+    # Persian/English suffixes & common Telegram prefixes
+    keywords = [
+        'کانال', 'گروه', 'رسمی', 'اصلی', 'جدید', 'بزرگ', 'ایران', 'آنلاین',
+        'channel', 'official', 'group', 'iran', 'plus', 'vip', '1', '2', '01'
+    ]
+    for kw in keywords:
+        queries.append(f"{query} {kw}")
+        queries.append(f"{kw} {query}")
+
+    # Persian & English Alphabetical Sub-Query Expansion
+    alphabet = ['ا', 'ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's', '1', '2']
     for char in alphabet:
         queries.append(f"{query} {char}")
+        queries.append(f"{query}_{char}")
 
     # Clean up duplicates
     seen = set()
@@ -168,7 +192,7 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    return unique_queries[:40]
+    return unique_queries[:100]
 
 async def main_download():
     # Load inputs
