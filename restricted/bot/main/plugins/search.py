@@ -8,7 +8,6 @@ from .. import bot as Drone
 from .. import userbot, Bot, AUTH
 from telethon import events, Button
 from pyrogram.raw.functions.contacts import Search
-from pyrogram.tl.types import InputPeerUser
 
 def send_channel_notice(text):
     token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
