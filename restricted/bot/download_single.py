@@ -141,6 +141,15 @@ def calculate_relevance_score(title, username, members, query):
 
     return score
 
+def generate_green_progress_bar(current, total, length=10):
+    if total <= 0:
+        percent = 0.0
+    else:
+        percent = min(1.0, max(0.0, current / total))
+    filled = int(round(length * percent))
+    bar = "█" * filled + "░" * (length - filled)
+    return f"🟢 `[{bar}] {int(percent * 100)}%`"
+
 def expand_persian_query(query):
     query = query.strip()
     queries = [query]
@@ -264,6 +273,7 @@ async def main_download():
                 channels = []
                 seen_usernames = set()
 
+                total_steps = len(expanded_queries)
                 for idx, q_term in enumerate(expanded_queries, 1):
                     print(f"DEBUG: Executing search for term variation: {q_term}")
                     try:
@@ -307,9 +317,17 @@ async def main_download():
                     except Exception as e_msg_search:
                         print(f"DEBUG: Search variation '{q_term}' search_global failed: {e_msg_search}")
 
-                    # Real-time log every 5 terms
-                    if idx % 5 == 0 or idx == len(expanded_queries):
-                        send_channel_notice(f"⚡ [گام {idx}/{len(expanded_queries)}] عبارت «{q_term}» -> تاکنون مجموعاً {len(channels):,} کانال عمومی مطابقت‌دار کشف شد.")
+                    # Real-time update in Telegram chat with green progress bar
+                    if idx % 5 == 0 or idx == total_steps:
+                        progress_bar = generate_green_progress_bar(idx, total_steps)
+                        progress_msg = (
+                            f"🔎 *در حال جستجوی عمیق و ترکیبی کلمه «{query}» در سرورهای تلگرام...*\n\n"
+                            f"{progress_bar}\n"
+                            f"⚡ گام {idx} از {total_steps} (عبارت: `{q_term}`)\n"
+                            f"🟢 مجموع کانال‌های کشف‌شده تا این لحظه: *{len(channels):,} کانال*"
+                        )
+                        await safe_edit_message(owner_id, msg, progress_msg)
+                        send_channel_notice(f"⚡ [گام {idx}/{total_steps}] عبارت «{q_term}» -> تاکنون مجموعاً {len(channels):,} کانال عمومی مطابقت‌دار کشف شد.")
 
                     await asyncio.sleep(0.3)
 
@@ -368,33 +386,47 @@ async def main_download():
                     except Exception:
                         pass
 
-                # Format page 1 results (50 items per page with max 3800 chars guard)
+                # Populate SEARCH_CACHE and format page 1 using 10 items per page for Telegram
+                from main.plugins.search import SEARCH_CACHE, format_search_page, get_search_buttons
                 import math
-                page_size = 50
-                total_items = len(channels)
-                total_pages = max(1, math.ceil(total_items / page_size))
-                page_channels = channels[:page_size]
 
-                page_text = f"🎯 *نتایج جستجوی تلگرام برای «{query}»*\n"
-                page_text += f"📊 *شمارش کل دیتابیس: {total_items:,} کانال عمومی (صفحه ۱ از {total_pages}):*\n\n"
+                search_id = str(int(time.time()))
+                cache_key = f"{owner_id}_{search_id}"
+                SEARCH_CACHE[cache_key] = {
+                    'query': query,
+                    'channels': channels,
+                    'id': search_id,
+                    'time': time.time()
+                }
 
-                for i, (title, username, members) in enumerate(page_channels, 1):
-                    members_str = f" ({members:,} عضو)" if members is not None else ""
-                    line = f"{i}. 📣 *{title}*\n   🔗 شناسه: @{username}{members_str}\n   👉 [ورود به کانال](https://t.me/{username})\n\n"
-                    if len(page_text) + len(line) > 3800:
-                        break
-                    page_text += line
+                page_text, total_pages, current_page = format_search_page(query, channels, page=1, page_size=10)
+                buttons = get_search_buttons(search_id, current_page, total_pages)
 
-                await safe_edit_message(owner_id, msg, page_text, disable_web_page_preview=True)
+                # Send using telethon bot directly if connected to retain inline glass buttons
+                sent_with_buttons = False
+                try:
+                    if bot.is_connected():
+                        await bot.send_message(owner_id, page_text, buttons=buttons, link_preview=False)
+                        sent_with_buttons = True
+                except Exception as e_btn:
+                    print(f"DEBUG: Sending message with inline buttons via Telethon failed: {e_btn}")
+
+                if not sent_with_buttons:
+                    await safe_edit_message(owner_id, msg, page_text, disable_web_page_preview=True)
 
                 if total_pages > 1:
                     info_msg = (
-                        f"💡 *رئیس بزرگ، تعداد کل کانال‌های یافت‌شده {total_items:,} عدد در {total_pages} صفحه ۵۰تایی است.*\n"
-                        f"برای مرور زنده و استفاده از دکمه‌های شیشه‌ای «صفحه بعدی ⏩»، می‌توانید سرور ربات را روشن نگه داشته یا دستور `/search {query}` را مستقیم در چت ربات بزنید! 💎"
+                        f"💡 *رئیس بزرگ، تعداد کل کانال‌های یافت‌شده {len(channels):,} عدد در {total_pages} صفحه ۱۰تایی است.*\n"
+                        f"برای مرور زنده و استفاده از دکمه‌های شیشه‌ای «صفحه بعدی ⏩»، سرور ربات تا چند دقیقه آینده شنود می‌کند یا می‌توانید دستور `/search {query}` را مستقیم در چت ربات بزنید! 💎"
                     )
                     await safe_send_message(owner_id, info_msg)
 
                 await safe_send_message(owner_id, "✅ *جستجوی عمیق تلگرام با موفقیت کامل شد!*")
+
+                # Keep listening for 5 minutes (300 seconds) so inline callback buttons work seamlessly
+                if total_pages > 1 and bot.is_connected():
+                    print("DEBUG: Keeping bot listener active for 300s to serve inline pagination callbacks...")
+                    await asyncio.sleep(300)
 
             except Exception as e:
                 print(f"Error during execution of search: {e}")

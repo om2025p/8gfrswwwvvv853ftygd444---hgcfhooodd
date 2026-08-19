@@ -35,7 +35,16 @@ def clean_expired_search_cache(max_age_seconds=3600):
     for k in expired_keys:
         SEARCH_CACHE.pop(k, None)
 
-def format_search_page(query, channels, page=1, page_size=50):
+def generate_green_progress_bar(current, total, length=10):
+    if total <= 0:
+        percent = 0.0
+    else:
+        percent = min(1.0, max(0.0, current / total))
+    filled = int(round(length * percent))
+    bar = "█" * filled + "░" * (length - filled)
+    return f"🟢 `[{bar}] {int(percent * 100)}%`"
+
+def format_search_page(query, channels, page=1, page_size=10):
     total_items = len(channels)
     total_pages = max(1, math.ceil(total_items / page_size))
     page = max(1, min(page, total_pages))
@@ -166,6 +175,7 @@ async def telegram_search(event):
         channels = []
         seen_usernames = set()
 
+        total_steps = len(expanded_queries)
         for idx, q_term in enumerate(expanded_queries, 1):
             try:
                 found = await userbot.invoke(Search(q=q_term, limit=1000))
@@ -207,8 +217,19 @@ async def telegram_search(event):
             except Exception as e_msg_search:
                 print(f"Search variation '{q_term}' search_global failed: {e_msg_search}")
 
-            if idx % 5 == 0 or idx == len(expanded_queries):
-                send_channel_notice(f"⚡ [گام {idx}/{len(expanded_queries)}] عبارت «{q_term}» -> تاکنون مجموعاً {len(channels):,} کانال عمومی مطابقت‌دار کشف شد.")
+            if idx % 5 == 0 or idx == total_steps:
+                progress_bar = generate_green_progress_bar(idx, total_steps)
+                progress_msg = (
+                    f"🔎 *در حال جستجوی عمیق و ترکیبی کلمه «{query}» در سرورهای تلگرام...*\n\n"
+                    f"{progress_bar}\n"
+                    f"⚡ گام {idx} از {total_steps} (عبارت: `{q_term}`)\n"
+                    f"🟢 مجموع کانال‌های کشف‌شده تا این لحظه: *{len(channels):,} کانال*"
+                )
+                try:
+                    await msg.edit(progress_msg)
+                except Exception:
+                    pass
+                send_channel_notice(f"⚡ [گام {idx}/{total_steps}] عبارت «{q_term}» -> تاکنون مجموعاً {len(channels):,} کانال عمومی مطابقت‌دار کشف شد.")
 
             await asyncio.sleep(0.3)
 
@@ -278,7 +299,7 @@ async def telegram_search(event):
             'time': time.time()
         }
 
-        page_text, total_pages, current_page = format_search_page(query, channels, page=1, page_size=50)
+        page_text, total_pages, current_page = format_search_page(query, channels, page=1, page_size=10)
         buttons = get_search_buttons(search_id, current_page, total_pages)
 
         await msg.edit(page_text, buttons=buttons, link_preview=False)
@@ -307,7 +328,7 @@ async def on_search_page_callback(event):
     query = cache['query']
     channels = cache['channels']
 
-    page_text, total_pages, current_page = format_search_page(query, channels, page=target_page, page_size=50)
+    page_text, total_pages, current_page = format_search_page(query, channels, page=target_page, page_size=10)
     buttons = get_search_buttons(search_id, current_page, total_pages)
 
     try:
