@@ -313,6 +313,7 @@ async def main_download():
 
             try:
                 from pyrogram.raw.functions.contacts import Search
+                from main.plugins.seen_db import mark_channels_as_seen, get_all_seen_usernames
 
                 # Get expanded queries
                 expanded_queries = expand_persian_query(query)
@@ -320,6 +321,7 @@ async def main_download():
 
                 send_channel_notice(f"🔎 *شروع لاگ زنده جستجوی عمیق تلگرام برای:* «{query}»\n📌 تعداد انشعاب‌های الفبایی و کلمه‌ای: {len(expanded_queries)} عبارت")
 
+                db_seen_usernames = get_all_seen_usernames()
                 channels = []
                 seen_usernames = set()
 
@@ -332,13 +334,14 @@ async def main_download():
                         if found and hasattr(found, 'chats'):
                             for chat in found.chats:
                                 username = getattr(chat, 'username', None)
-                                if username and is_valid_channel(username, chat) and username.lower() not in seen_usernames:
-                                    title = clean_channel_title(chat, username)
-                                    # Strict filtering: Title or Username MUST contain the exact base search query
-                                    if is_query_in_channel(title, username, query):
-                                        seen_usernames.add(username.lower())
-                                        members = getattr(chat, 'participants_count', None) or getattr(chat, 'members_count', None)
-                                        channels.append((title, username, members))
+                                if username and is_valid_channel(username, chat):
+                                    u_lower = username.lower().strip()
+                                    if u_lower not in seen_usernames and u_lower not in db_seen_usernames:
+                                        title = clean_channel_title(chat, username)
+                                        if is_query_in_channel(title, username, query):
+                                            seen_usernames.add(u_lower)
+                                            members = getattr(chat, 'participants_count', None) or getattr(chat, 'members_count', None)
+                                            channels.append((title, username, members))
                     except Exception as e_search:
                         print(f"DEBUG: Search variation '{q_term}' contacts.Search failed: {e_search}")
 
@@ -357,13 +360,14 @@ async def main_download():
                             async for message in search_iterator:
                                 if message.chat and getattr(message.chat, 'username', None):
                                     username = getattr(message.chat, 'username')
-                                    if username and is_valid_channel(username, message.chat) and username.lower() not in seen_usernames:
-                                        title = clean_channel_title(message.chat, username)
-                                        # Strict filtering: Title or Username MUST contain the exact base search query
-                                        if is_query_in_channel(title, username, query):
-                                            seen_usernames.add(username.lower())
-                                            members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
-                                            channels.append((title, username, members))
+                                    if username and is_valid_channel(username, message.chat):
+                                        u_lower = username.lower().strip()
+                                        if u_lower not in seen_usernames and u_lower not in db_seen_usernames:
+                                            title = clean_channel_title(message.chat, username)
+                                            if is_query_in_channel(title, username, query):
+                                                seen_usernames.add(u_lower)
+                                                members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
+                                                channels.append((title, username, members))
                     except Exception as e_msg_search:
                         print(f"DEBUG: Search variation '{q_term}' search_global failed: {e_msg_search}")
 
@@ -397,12 +401,14 @@ async def main_download():
                     if similar:
                         for sim_channel in similar:
                             sim_username = getattr(sim_channel, 'username', None)
-                            if sim_username and is_valid_channel(sim_username, sim_channel) and sim_username.lower() not in seen_usernames:
-                                sim_title = clean_channel_title(sim_channel, sim_username)
-                                if is_query_in_channel(sim_title, sim_username, query):
-                                    seen_usernames.add(sim_username.lower())
-                                    sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
-                                    channels.append((sim_title, sim_username, sim_members))
+                            if sim_username and is_valid_channel(sim_username, sim_channel):
+                                u_lower = sim_username.lower().strip()
+                                if u_lower not in seen_usernames and u_lower not in db_seen_usernames:
+                                    sim_title = clean_channel_title(sim_channel, sim_username)
+                                    if is_query_in_channel(sim_title, sim_username, query):
+                                        seen_usernames.add(u_lower)
+                                        sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
+                                        channels.append((sim_title, sim_username, sim_members))
 
                 # Deduplicate strictly by lowercase username
                 unique_dict = {}
@@ -418,8 +424,11 @@ async def main_download():
                 send_channel_notice(f"📊 *پایان لاگ زنده جستجو!*\n🎯 کل کانال‌های عمومی یافت‌شده: {len(channels):,} کانال\n⭐ الگوریتم رتبه‌بندی بر اساس ارتباط کلمه‌ای و اعضا اعمال گردید.")
 
                 if not channels:
-                    await safe_edit_message(owner_id, msg, f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
+                    await safe_edit_message(owner_id, msg, f"❌ *رئیس بزرگ، هیچ کانال عمومی *جدیدی* برای عبارت «{query}» در تلگرام یافت نشد! (تمامی موارد قبلاً دیده‌شده‌اند)*")
                     return
+
+                # Mark all new channels as seen in SQLite database
+                mark_channels_as_seen(channels)
 
                 # Save search results to search_results.json for web platform display
                 import json
