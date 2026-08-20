@@ -510,10 +510,38 @@ async def main_download():
 
                 await safe_send_message(owner_id, "✅ *جستجوی عمیق تلگرام با موفقیت کامل شد!*")
 
-                # Keep listening for 5 minutes (300 seconds) so inline callback buttons work seamlessly
+                # Keep listening for 5 minutes (300 seconds) with registered Telethon callback handler so inline pagination works
                 if total_pages > 1 and bot.is_connected():
-                    print("DEBUG: Keeping bot listener active for 300s to serve inline pagination callbacks...")
-                    await asyncio.sleep(300)
+                    print("DEBUG: Registering inline pagination handler and serving callbacks for 300s...")
+                    from telethon import events
+                    from main.plugins.search import format_search_page, get_search_buttons
+
+                    async def on_single_download_callback(event):
+                        try:
+                            await event.answer()
+                        except Exception:
+                            pass
+                        s_id_raw = event.pattern_match.group(1)
+                        s_id = s_id_raw.decode('utf-8') if isinstance(s_id_raw, bytes) else str(s_id_raw)
+                        if s_id != search_id:
+                            return
+
+                        target_page = int(event.pattern_match.group(2))
+                        p_text, t_pages, c_page = format_search_page(query, channels, page=target_page, page_size=10)
+                        btns = get_search_buttons(s_id, c_page, t_pages)
+                        try:
+                            await event.edit(p_text, buttons=btns, link_preview=False)
+                        except Exception as e_edit:
+                            print(f"DEBUG: Single download callback edit error: {e_edit}")
+
+                    callback_handler = bot.add_event_handler(on_single_download_callback, events.CallbackQuery(pattern=r'^sp:(.+):(\d+)$'))
+                    try:
+                        await asyncio.sleep(300)
+                    finally:
+                        try:
+                            bot.remove_event_handler(callback_handler)
+                        except Exception:
+                            pass
 
             except Exception as e:
                 print(f"Error during execution of search: {e}")

@@ -170,12 +170,12 @@ def expand_persian_query(query):
 
     # Finglish / Transliteration dictionary
     finglish_map = {
-        'عکس': ['aks', 'aksam', 'pic', 'photo', 'picture'],
-        'عکسهام': ['aks', 'aksam', 'pic', 'photo'],
-        'عکسها': ['aks', 'aksam', 'pic', 'photo'],
-        'فیلم': ['film', 'movie', 'video'],
-        'آهنگ': ['ahang', 'music', 'mp3', 'song'],
-        'موزیک': ['music', 'ahang', 'mp3'],
+        'عکس': ['aks', 'pic', 'photo'],
+        'عکسهام': ['aks', 'aksam', 'pic'],
+        'عکسها': ['aks', 'pic'],
+        'فیلم': ['film', 'movie'],
+        'آهنگ': ['ahang', 'music'],
+        'موزیک': ['music', 'mp3'],
         'خبر': ['khabar', 'news'],
         'بورس': ['bourse', 'stock']
     }
@@ -185,21 +185,19 @@ def expand_persian_query(query):
 
     # Suffixes & Prefixes
     keywords = [
-        'کانال', 'گروه', 'رسمی', 'اصلی', 'جدید', 'بزرگ', 'ایران', 'آنلاین',
-        'دانلود', 'منبع', 'خاص', 'channel', 'official', 'group', 'iran', 'plus', 'vip', '1', '2'
+        'کانال', 'گروه', 'رسمی', 'اصلی', 'جدید', 'بزرگ', 'ایران',
+        'channel', 'official', 'group', 'iran', 'plus', 'vip'
     ]
     base_terms = list(queries)
-    for term in base_terms:
+    for term in base_terms[:3]:
         for kw in keywords:
             queries.append(f"{term} {kw}")
-            queries.append(f"{kw} {term}")
 
     # Alphabet expansion for deep sub-queries
-    alphabet = ['ا', 'ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's', '1', '2']
-    for term in base_terms[:5]:
+    alphabet = ['ا', 'ب', 'پ', 'ت', 'ج', 'چ', 'ح', 'خ', 'د', 'ر', 'ز', 'س', 'ش', 'ص', 'ع', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's']
+    for term in base_terms[:2]:
         for char in alphabet:
             queries.append(f"{term} {char}")
-            queries.append(f"{term}_{char}")
 
     seen = set()
     unique_queries = []
@@ -209,7 +207,7 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    return unique_queries[:250]
+    return unique_queries[:50]
 
 @Drone.on(events.NewMessage(incoming=True, pattern=r'/search(?:\s+(.+))?'))
 async def telegram_search(event):
@@ -414,7 +412,14 @@ async def on_search_page_callback(event):
     cache = SEARCH_CACHE.get(cache_key)
 
     if not cache:
-        # Fallback to search_results.json if SEARCH_CACHE is empty
+        # Check SEARCH_CACHE for matching search_id
+        for k, v in SEARCH_CACHE.items():
+            if v.get('id') == search_id or k.endswith(f"_{search_id}"):
+                cache = v
+                break
+
+    if not cache:
+        # Check search_results.json ONLY if search_id matches timestamp approximately or query matches
         channels = []
         query = ""
         for json_path in ['search_results.json', '../search_results.json', 'restricted/search_results.json']:
@@ -423,15 +428,19 @@ async def on_search_page_callback(event):
                     import json
                     with open(json_path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
-                        query = data.get('query', '')
-                        for c in data.get('channels', []):
-                            channels.append((c.get('title', ''), c.get('username', ''), c.get('members', 0)))
+                        f_time = str(int(data.get('timestamp', 0)))
+                        # Allow fallback if file timestamp matches search_id within 3600 seconds
+                        if abs(int(f_time) - int(search_id)) < 3600:
+                            query = data.get('query', '')
+                            for c in data.get('channels', []):
+                                channels.append((c.get('title', ''), c.get('username', ''), c.get('members', 0)))
                     break
                 except Exception:
                     pass
+
         if not channels:
             try:
-                return await event.answer("⚠️ اطلاعات این جستجو منقضی شده است. لطفاً مجدداً دستور /search را وارد فرمایید.", alert=True)
+                return await event.answer("⚠️ این جستجو قدیمی شده است. لطفاً کلمه مورد نظرتان را مجدداً جستجو فرمایید.", alert=True)
             except Exception:
                 return
     else:
