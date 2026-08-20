@@ -185,31 +185,48 @@ def expand_persian_query(query):
     query = query.strip()
     queries = [query]
 
-    # Add individual words of query (e.g. 'عکسها خودمون' -> 'عکسها', 'خودمون', 'عکس')
+    # Stemming suffixes
     words = query.split()
     for w in words:
         if len(w) > 1:
             queries.append(w)
-            w_stem = w.replace('ها', '').replace('های', '')
+            w_stem = re.sub(r'(های|هامون|هاتون|هاشون|هام|هات|هاش|ها|ام|ات|اش)$', '', w)
             if len(w_stem) > 1 and w_stem != w:
                 queries.append(w_stem)
 
-    # Persian/English suffixes & common Telegram prefixes
+    # Finglish / Transliteration dictionary
+    finglish_map = {
+        'عکس': ['aks', 'aksam', 'pic', 'photo', 'picture'],
+        'عکسهام': ['aks', 'aksam', 'pic', 'photo'],
+        'عکسها': ['aks', 'aksam', 'pic', 'photo'],
+        'فیلم': ['film', 'movie', 'video'],
+        'آهنگ': ['ahang', 'music', 'mp3', 'song'],
+        'موزیک': ['music', 'ahang', 'mp3'],
+        'خبر': ['khabar', 'news'],
+        'بورس': ['bourse', 'stock']
+    }
+    for q_word in list(queries):
+        if q_word in finglish_map:
+            queries.extend(finglish_map[q_word])
+
+    # Suffixes & Prefixes
     keywords = [
         'کانال', 'گروه', 'رسمی', 'اصلی', 'جدید', 'بزرگ', 'ایران', 'آنلاین',
-        'channel', 'official', 'group', 'iran', 'plus', 'vip', '1', '2', '01'
+        'دانلود', 'منبع', 'خاص', 'channel', 'official', 'group', 'iran', 'plus', 'vip', '1', '2'
     ]
-    for kw in keywords:
-        queries.append(f"{query} {kw}")
-        queries.append(f"{kw} {query}")
+    base_terms = list(queries)
+    for term in base_terms:
+        for kw in keywords:
+            queries.append(f"{term} {kw}")
+            queries.append(f"{kw} {term}")
 
-    # Persian & English Alphabetical Sub-Query Expansion
+    # Alphabet expansion for deep sub-queries
     alphabet = ['ا', 'ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's', '1', '2']
-    for char in alphabet:
-        queries.append(f"{query} {char}")
-        queries.append(f"{query}_{char}")
+    for term in base_terms[:5]:
+        for char in alphabet:
+            queries.append(f"{term} {char}")
+            queries.append(f"{term}_{char}")
 
-    # Clean up duplicates
     seen = set()
     unique_queries = []
     for q in queries:
@@ -218,7 +235,7 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    return unique_queries[:120]
+    return unique_queries[:250]
 
 async def main_download():
     # Load inputs
@@ -385,10 +402,13 @@ async def main_download():
 
                     await asyncio.sleep(0.3)
 
-                # RECURSIVE SPIDER CRAWL with Strict Matching
-                send_channel_notice(f"🕷️ *شروع خزش عنکبوتی برای کشف کانال‌های مشابه با نام دقیق...*")
-                level1_crawl = sorted([c for c in channels if c[2] is not None], key=lambda x: x[2], reverse=True)[:10]
-                for title, username, members in level1_crawl:
+                # RECURSIVE SPIDER CRAWL with Extended Depth (Top 30 channels)
+                send_channel_notice(f"🕷️ *شروع خزش عنکبوتی عمیق و خسته‌ناپذیر برای کشف شبکه‌های مشابه...*")
+                crawl_targets = sorted([c for c in channels if c[2] is not None], key=lambda x: x[2], reverse=True)[:30]
+                if not crawl_targets:
+                    crawl_targets = channels[:30]
+
+                for title, username, members in crawl_targets:
                     similar = None
                     try:
                         similar = await userbot.get_chat_recommendations(username)
