@@ -117,11 +117,42 @@ def clean_channel_title(chat, username):
         title = f"@{username}"
     return str(title).strip()
 
+import re
+
+def normalize_persian(text):
+    if not text or not isinstance(text, str):
+        return ""
+    text = text.lower().strip()
+    replacements = {
+        'ي': 'ی', 'ك': 'ک', 'أ': 'ا', 'إ': 'ا', 'آ': 'ا', 'ۀ': 'ه',
+        '\u200c': ' '
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    text = re.sub(r'[\-_.:;!?,()\[\]{\}\'\"]+', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
 def is_query_in_channel(title, username, query):
-    q_clean = query.lower().strip()
-    t_clean = str(title or '').lower().strip()
-    u_clean = str(username or '').lower().strip()
-    return q_clean in t_clean or q_clean in u_clean
+    q_norm = normalize_persian(query)
+    if not q_norm:
+        return True
+    t_norm = normalize_persian(title)
+    u_norm = normalize_persian(username)
+
+    if q_norm in t_norm or q_norm in u_norm:
+        return True
+
+    q_words = [w.replace('ها', '').replace('های', '') for w in q_norm.split() if len(w) > 1]
+    if not q_words:
+        return True
+
+    # High recall matching: if any primary query word matches in title or username, keep channel
+    matched_count = sum(1 for w in q_words if w in t_norm or w in u_norm)
+    if matched_count >= 1:
+        return True
+
+    return False
 
 def calculate_relevance_score(title, username, members, query):
     score = 0
@@ -141,16 +172,61 @@ def calculate_relevance_score(title, username, members, query):
 
     return score
 
+def generate_green_progress_bar(current, total, length=10):
+    if total <= 0:
+        percent = 0.0
+    else:
+        percent = min(1.0, max(0.0, current / total))
+    filled = int(round(length * percent))
+    bar = "█" * filled + "░" * (length - filled)
+    return f"🟢 `[{bar}] {int(percent * 100)}%`"
+
 def expand_persian_query(query):
     query = query.strip()
     queries = [query]
 
-    # Persian & English Alphabetical Sub-Query Expansion using EXACT base query
-    alphabet = ['ا', 'ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's']
-    for char in alphabet:
-        queries.append(f"{query} {char}")
+    # Stemming suffixes
+    words = query.split()
+    for w in words:
+        if len(w) > 1:
+            queries.append(w)
+            w_stem = re.sub(r'(های|هامون|هاتون|هاشون|هام|هات|هاش|ها|ام|ات|اش)$', '', w)
+            if len(w_stem) > 1 and w_stem != w:
+                queries.append(w_stem)
 
-    # Clean up duplicates
+    # Finglish / Transliteration dictionary
+    finglish_map = {
+        'عکس': ['aks', 'aksam', 'pic', 'photo', 'picture'],
+        'عکسهام': ['aks', 'aksam', 'pic', 'photo'],
+        'عکسها': ['aks', 'aksam', 'pic', 'photo'],
+        'فیلم': ['film', 'movie', 'video'],
+        'آهنگ': ['ahang', 'music', 'mp3', 'song'],
+        'موزیک': ['music', 'ahang', 'mp3'],
+        'خبر': ['khabar', 'news'],
+        'بورس': ['bourse', 'stock']
+    }
+    for q_word in list(queries):
+        if q_word in finglish_map:
+            queries.extend(finglish_map[q_word])
+
+    # Suffixes & Prefixes
+    keywords = [
+        'کانال', 'گروه', 'رسمی', 'اصلی', 'جدید', 'بزرگ', 'ایران', 'آنلاین',
+        'دانلود', 'منبع', 'خاص', 'channel', 'official', 'group', 'iran', 'plus', 'vip', '1', '2'
+    ]
+    base_terms = list(queries)
+    for term in base_terms:
+        for kw in keywords:
+            queries.append(f"{term} {kw}")
+            queries.append(f"{kw} {term}")
+
+    # Alphabet expansion for deep sub-queries
+    alphabet = ['ا', 'ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's', '1', '2']
+    for term in base_terms[:5]:
+        for char in alphabet:
+            queries.append(f"{term} {char}")
+            queries.append(f"{term}_{char}")
+
     seen = set()
     unique_queries = []
     for q in queries:
@@ -159,7 +235,7 @@ def expand_persian_query(query):
             seen.add(q_clean.lower())
             unique_queries.append(q_clean)
 
-    return unique_queries[:40]
+    return unique_queries[:250]
 
 async def main_download():
     # Load inputs
@@ -254,6 +330,7 @@ async def main_download():
 
             try:
                 from pyrogram.raw.functions.contacts import Search
+                from main.plugins.seen_db import mark_channels_as_seen, get_all_seen_usernames
 
                 # Get expanded queries
                 expanded_queries = expand_persian_query(query)
@@ -261,9 +338,11 @@ async def main_download():
 
                 send_channel_notice(f"🔎 *شروع لاگ زنده جستجوی عمیق تلگرام برای:* «{query}»\n📌 تعداد انشعاب‌های الفبایی و کلمه‌ای: {len(expanded_queries)} عبارت")
 
+                db_seen_usernames = get_all_seen_usernames()
                 channels = []
                 seen_usernames = set()
 
+                total_steps = len(expanded_queries)
                 for idx, q_term in enumerate(expanded_queries, 1):
                     print(f"DEBUG: Executing search for term variation: {q_term}")
                     try:
@@ -272,13 +351,14 @@ async def main_download():
                         if found and hasattr(found, 'chats'):
                             for chat in found.chats:
                                 username = getattr(chat, 'username', None)
-                                if username and is_valid_channel(username, chat) and username.lower() not in seen_usernames:
-                                    title = clean_channel_title(chat, username)
-                                    # Strict filtering: Title or Username MUST contain the exact base search query
-                                    if is_query_in_channel(title, username, query):
-                                        seen_usernames.add(username.lower())
-                                        members = getattr(chat, 'participants_count', None) or getattr(chat, 'members_count', None)
-                                        channels.append((title, username, members))
+                                if username and is_valid_channel(username, chat):
+                                    u_lower = username.lower().strip()
+                                    if u_lower not in seen_usernames and u_lower not in db_seen_usernames:
+                                        title = clean_channel_title(chat, username)
+                                        if is_query_in_channel(title, username, query):
+                                            seen_usernames.add(u_lower)
+                                            members = getattr(chat, 'participants_count', None) or getattr(chat, 'members_count', None)
+                                            channels.append((title, username, members))
                     except Exception as e_search:
                         print(f"DEBUG: Search variation '{q_term}' contacts.Search failed: {e_search}")
 
@@ -297,26 +377,38 @@ async def main_download():
                             async for message in search_iterator:
                                 if message.chat and getattr(message.chat, 'username', None):
                                     username = getattr(message.chat, 'username')
-                                    if username and is_valid_channel(username, message.chat) and username.lower() not in seen_usernames:
-                                        title = clean_channel_title(message.chat, username)
-                                        # Strict filtering: Title or Username MUST contain the exact base search query
-                                        if is_query_in_channel(title, username, query):
-                                            seen_usernames.add(username.lower())
-                                            members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
-                                            channels.append((title, username, members))
+                                    if username and is_valid_channel(username, message.chat):
+                                        u_lower = username.lower().strip()
+                                        if u_lower not in seen_usernames and u_lower not in db_seen_usernames:
+                                            title = clean_channel_title(message.chat, username)
+                                            if is_query_in_channel(title, username, query):
+                                                seen_usernames.add(u_lower)
+                                                members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
+                                                channels.append((title, username, members))
                     except Exception as e_msg_search:
                         print(f"DEBUG: Search variation '{q_term}' search_global failed: {e_msg_search}")
 
-                    # Real-time log every 5 terms
-                    if idx % 5 == 0 or idx == len(expanded_queries):
-                        send_channel_notice(f"⚡ [گام {idx}/{len(expanded_queries)}] عبارت «{q_term}» -> تاکنون مجموعاً {len(channels):,} کانال عمومی مطابقت‌دار کشف شد.")
+                    # Real-time update in Telegram chat with green progress bar
+                    if idx % 5 == 0 or idx == total_steps:
+                        progress_bar = generate_green_progress_bar(idx, total_steps)
+                        progress_msg = (
+                            f"🔎 *در حال جستجوی عمیق و ترکیبی کلمه «{query}» در سرورهای تلگرام...*\n\n"
+                            f"{progress_bar}\n"
+                            f"⚡ گام {idx} از {total_steps} (عبارت: `{q_term}`)\n"
+                            f"🟢 مجموع کانال‌های کشف‌شده تا این لحظه: *{len(channels):,} کانال*"
+                        )
+                        await safe_edit_message(owner_id, msg, progress_msg)
+                        send_channel_notice(f"⚡ [گام {idx}/{total_steps}] عبارت «{q_term}» -> تاکنون مجموعاً {len(channels):,} کانال عمومی مطابقت‌دار کشف شد.")
 
                     await asyncio.sleep(0.3)
 
-                # RECURSIVE SPIDER CRAWL with Strict Matching
-                send_channel_notice(f"🕷️ *شروع خزش عنکبوتی برای کشف کانال‌های مشابه با نام دقیق...*")
-                level1_crawl = sorted([c for c in channels if c[2] is not None], key=lambda x: x[2], reverse=True)[:10]
-                for title, username, members in level1_crawl:
+                # RECURSIVE SPIDER CRAWL with Extended Depth (Top 30 channels)
+                send_channel_notice(f"🕷️ *شروع خزش عنکبوتی عمیق و خسته‌ناپذیر برای کشف شبکه‌های مشابه...*")
+                crawl_targets = sorted([c for c in channels if c[2] is not None], key=lambda x: x[2], reverse=True)[:30]
+                if not crawl_targets:
+                    crawl_targets = channels[:30]
+
+                for title, username, members in crawl_targets:
                     similar = None
                     try:
                         similar = await userbot.get_chat_recommendations(username)
@@ -329,12 +421,22 @@ async def main_download():
                     if similar:
                         for sim_channel in similar:
                             sim_username = getattr(sim_channel, 'username', None)
-                            if sim_username and is_valid_channel(sim_username, sim_channel) and sim_username.lower() not in seen_usernames:
-                                sim_title = clean_channel_title(sim_channel, sim_username)
-                                if is_query_in_channel(sim_title, sim_username, query):
-                                    seen_usernames.add(sim_username.lower())
-                                    sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
-                                    channels.append((sim_title, sim_username, sim_members))
+                            if sim_username and is_valid_channel(sim_username, sim_channel):
+                                u_lower = sim_username.lower().strip()
+                                if u_lower not in seen_usernames and u_lower not in db_seen_usernames:
+                                    sim_title = clean_channel_title(sim_channel, sim_username)
+                                    if is_query_in_channel(sim_title, sim_username, query):
+                                        seen_usernames.add(u_lower)
+                                        sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
+                                        channels.append((sim_title, sim_username, sim_members))
+
+                # Deduplicate strictly by lowercase username
+                unique_dict = {}
+                for title, username, members in channels:
+                    u_key = str(username or '').lower().strip()
+                    if u_key and u_key not in unique_dict:
+                        unique_dict[u_key] = (title, username, members)
+                channels = list(unique_dict.values())
 
                 # Filter strictly again and sort by Relevance Score
                 channels = [c for c in channels if is_query_in_channel(c[0], c[1], query)]
@@ -342,8 +444,11 @@ async def main_download():
                 send_channel_notice(f"📊 *پایان لاگ زنده جستجو!*\n🎯 کل کانال‌های عمومی یافت‌شده: {len(channels):,} کانال\n⭐ الگوریتم رتبه‌بندی بر اساس ارتباط کلمه‌ای و اعضا اعمال گردید.")
 
                 if not channels:
-                    await safe_edit_message(owner_id, msg, f"❌ *رئیس بزرگ، هیچ کانال عمومی برای عبارت «{query}» در تلگرام یافت نشد!*")
+                    await safe_edit_message(owner_id, msg, f"❌ *رئیس بزرگ، هیچ کانال عمومی *جدیدی* برای عبارت «{query}» در تلگرام یافت نشد! (تمامی موارد قبلاً دیده‌شده‌اند)*")
                     return
+
+                # Mark all new channels as seen in SQLite database
+                mark_channels_as_seen(channels)
 
                 # Save search results to search_results.json for web platform display
                 import json
@@ -368,33 +473,75 @@ async def main_download():
                     except Exception:
                         pass
 
-                # Format page 1 results (50 items per page with max 3800 chars guard)
+                # Populate SEARCH_CACHE and format page 1 using 10 items per page for Telegram
+                from main.plugins.search import SEARCH_CACHE, format_search_page, get_search_buttons
                 import math
-                page_size = 50
-                total_items = len(channels)
-                total_pages = max(1, math.ceil(total_items / page_size))
-                page_channels = channels[:page_size]
 
-                page_text = f"🎯 *نتایج جستجوی تلگرام برای «{query}»*\n"
-                page_text += f"📊 *شمارش کل دیتابیس: {total_items:,} کانال عمومی (صفحه ۱ از {total_pages}):*\n\n"
+                search_id = str(int(time.time()))
+                cache_key = f"{owner_id}_{search_id}"
+                SEARCH_CACHE[cache_key] = {
+                    'query': query,
+                    'channels': channels,
+                    'id': search_id,
+                    'time': time.time()
+                }
 
-                for i, (title, username, members) in enumerate(page_channels, 1):
-                    members_str = f" ({members:,} عضو)" if members is not None else ""
-                    line = f"{i}. 📣 *{title}*\n   🔗 شناسه: @{username}{members_str}\n   👉 [ورود به کانال](https://t.me/{username})\n\n"
-                    if len(page_text) + len(line) > 3800:
-                        break
-                    page_text += line
+                page_text, total_pages, current_page = format_search_page(query, channels, page=1, page_size=10)
+                buttons = get_search_buttons(search_id, current_page, total_pages)
 
-                await safe_edit_message(owner_id, msg, page_text, disable_web_page_preview=True)
+                # Send using telethon bot directly if connected to retain inline glass buttons
+                sent_with_buttons = False
+                try:
+                    if bot.is_connected():
+                        await bot.send_message(owner_id, page_text, buttons=buttons, link_preview=False)
+                        sent_with_buttons = True
+                except Exception as e_btn:
+                    print(f"DEBUG: Sending message with inline buttons via Telethon failed: {e_btn}")
+
+                if not sent_with_buttons:
+                    await safe_edit_message(owner_id, msg, page_text, disable_web_page_preview=True)
 
                 if total_pages > 1:
                     info_msg = (
-                        f"💡 *رئیس بزرگ، تعداد کل کانال‌های یافت‌شده {total_items:,} عدد در {total_pages} صفحه ۵۰تایی است.*\n"
-                        f"برای مرور زنده و استفاده از دکمه‌های شیشه‌ای «صفحه بعدی ⏩»، می‌توانید سرور ربات را روشن نگه داشته یا دستور `/search {query}` را مستقیم در چت ربات بزنید! 💎"
+                        f"💡 *رئیس بزرگ، تعداد کل کانال‌های یافت‌شده {len(channels):,} عدد در {total_pages} صفحه ۱۰تایی است.*\n"
+                        f"برای مرور زنده و استفاده از دکمه‌های شیشه‌ای «صفحه بعدی ⏩»، سرور ربات تا چند دقیقه آینده شنود می‌کند یا می‌توانید دستور `/search {query}` را مستقیم در چت ربات بزنید! 💎"
                     )
                     await safe_send_message(owner_id, info_msg)
 
                 await safe_send_message(owner_id, "✅ *جستجوی عمیق تلگرام با موفقیت کامل شد!*")
+
+                # Keep listening for 5 minutes (300 seconds) with registered Telethon callback handler so inline pagination works
+                if total_pages > 1 and bot.is_connected():
+                    print("DEBUG: Registering inline pagination handler and serving callbacks for 300s...")
+                    from telethon import events
+                    from main.plugins.search import format_search_page, get_search_buttons
+
+                    async def on_single_download_callback(event):
+                        try:
+                            await event.answer()
+                        except Exception:
+                            pass
+                        s_id_raw = event.pattern_match.group(1)
+                        s_id = s_id_raw.decode('utf-8') if isinstance(s_id_raw, bytes) else str(s_id_raw)
+                        if s_id != search_id:
+                            return
+
+                        target_page = int(event.pattern_match.group(2))
+                        p_text, t_pages, c_page = format_search_page(query, channels, page=target_page, page_size=10)
+                        btns = get_search_buttons(s_id, c_page, t_pages)
+                        try:
+                            await event.edit(p_text, buttons=btns, link_preview=False)
+                        except Exception as e_edit:
+                            print(f"DEBUG: Single download callback edit error: {e_edit}")
+
+                    callback_handler = bot.add_event_handler(on_single_download_callback, events.CallbackQuery(pattern=r'^sp:(.+):(\d+)$'))
+                    try:
+                        await asyncio.sleep(300)
+                    finally:
+                        try:
+                            bot.remove_event_handler(callback_handler)
+                        except Exception:
+                            pass
 
             except Exception as e:
                 print(f"Error during execution of search: {e}")
