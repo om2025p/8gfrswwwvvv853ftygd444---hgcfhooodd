@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>واریز ماهیانه</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: #f2f6fb;
+      padding: 12px 8px;
+      direction: rtl;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app-container {
+      max-width: 480px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.03);
+      padding: 18px 12px 16px;
+      border: 1px solid #e0e9f2;
+    }
+
+    /* حباب معمولی (لحظه‌ای) - در صورت نیاز */
+    .date-popup {
+      position: fixed;
+      background: #ffffff;
+      color: #d32f2f;
+      font-size: 20px;
+      font-weight: 700;
+      padding: 14px 20px;
+      border-radius: 48px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.2);
+      border: 2px solid #d32f2f;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+      backdrop-filter: blur(4px);
+      background: rgba(255, 255, 255, 0.95);
+    }
+    .date-popup.show { opacity: 1; }
+
+    /* پنجره تاریخچه - وسط صفحه */
+    .history-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #ffffff;
+      color: #1e3a5f;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 16px 20px;
+      border-radius: 28px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      border: 1px solid #cbdae9;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      direction: rtl;
+      max-width: 320px;
+      width: 85%;
+      backdrop-filter: blur(8px);
+      background: rgba(255,255,255,0.98);
+      text-align: center;
+    }
+    .history-popup.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .history-popup ul {
+      margin: 12px 0;
+      padding-right: 0;
+      list-style: none;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+    .history-popup li {
+      font-size: 13px;
+      padding: 8px 12px;
+      border-bottom: 1px solid #eef3f9;
+      font-family: monospace;
+      direction: ltr;
+      text-align: center;
+    }
+    .close-history {
+      background: #edf3fa;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 12px;
+      width: auto;
+      display: inline-block;
+    }
+
+    .balance-box {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .balance-title {
+      font-size: 15px;
+      color: #1e3a5f;
+      font-weight: 500;
+    }
+    .balance-value {
+      font-size: 38px;
+      font-weight: 700;
+      color: #0b1f33;
+      direction: ltr;
+      display: inline-block;
+      background: #f3f9ff;
+      padding: 6px 28px;
+      border-radius: 40px;
+      border: 1px solid #dbe5f0;
+      margin-top: 4px;
+    }
+    .balance-value small {
+      font-size: 17px;
+      font-weight: 400;
+      margin-left: 6px;
+      color: #3d6184;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .btn {
+      background: #edf3fa;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e3a5f;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 0.5px solid #cbdae9;
+      transition: 0.15s;
+    }
+    .btn:active { background: #d3e0ef; transform: scale(0.97); }
+
+    .months-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .month-card {
+      background: #ffffff;
+      border-radius: 20px;
+      border: 1px solid #d7e3ef;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.02);
+      overflow: hidden;
+    }
+    .month-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f4f9ff;
+      padding: 10px 14px;
+      border-bottom: 1px solid #d7e3ef;
+    }
+    .month-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e3a5f;
+    }
+    .toggle-all-btn {
+      background: none;
+      border: 1.5px solid #b8cee4;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e3a5f;
+      cursor: pointer;
+      background: white;
+    }
+    .funds-list {
+      padding: 6px 0;
+    }
+    .fund-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 14px;
+      border-bottom: 1px solid #eef3f9;
+      gap: 8px;
+    }
+    .fund-name {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+      color: #1e3a5f;
+      cursor: pointer;
+      padding: 4px 0;
+      transition: 0.1s;
+    }
+    .fund-name:active { background: #eef3f9; border-radius: 8px; }
+    .fund-amount {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f3a5e;
+      direction: ltr;
+      min-width: 90px;
+      text-align: left;
+      cursor: pointer;
+      background: #fafcff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 0.5px solid #e0e9f2;
+    }
+    .tap-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #eef3f9;
+      border: 1.8px solid #b8cee4;
+      color: #2a4b6e;
+      font-size: 22px;
+      cursor: pointer;
+      transition: 0.15s;
+      user-select: none;
+    }
+    .tap-badge.checked {
+      background: #1b8c5e;
+      border-color: #1b8c5e;
+      color: white;
+    }
+    .tap-badge.checked::before { content: "✔"; font-weight: bold; }
+    .tap-badge:not(.checked)::before { content: "○"; font-size: 25px; opacity: 0.7; }
+    .history-icon {
+      width: 28px;
+      height: 28px;
+      background: #eef3f9;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      color: #2a577b;
+      border: 0.5px solid #cbdae9;
+    }
+    .add-fund-btn {
+      display: flex;
+      justify-content: center;
+      margin: 8px 14px 12px;
+    }
+    .btn-add {
+      background: #f0f6ff;
+      border: 1px dashed #b8cee4;
+      color: #5a7d9e;
+      padding: 6px 12px;
+      border-radius: 30px;
+      font-size: 13px;
+      cursor: pointer;
+      opacity: 0.65;
+      transition: 0.1s;
+      width: 100%;
+      max-width: 100px;
+      justify-content: center;
+    }
+    .btn-add:active { opacity: 1; background: #e0e9f2; }
+    .month-total {
+      background: #f0f6ff;
+      padding: 8px 14px;
+      border-top: 1px dashed #cbdae9;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .footer-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1.5px dashed #cfdce9;
+      font-size: 14px;
+      color: #2a577b;
+    }
+    .note {
+      font-size: 12px;
+      color: #4f6f8f;
+      margin-top: 10px;
+      background: #f0f6fe;
+      padding: 6px 14px;
+      border-radius: 26px;
+      text-align: center;
+    }
+    .ltr { direction: ltr; display: inline-block; }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div id="datePopup" class="date-popup"></div>
+  <div id="historyPopup" class="history-popup"></div>
+
+  <div class="balance-box">
+    <div class="balance-title">کل واریزی‌ها</div>
+    <div class="balance-value"><span class="ltr" id="totalDisplay">۰</span> <small>تومان</small></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn" id="backupBtn">💾 پشتیبان</button>
+    <button class="btn" id="restoreBtn">📂 بازیابی</button>
+    <input type="file" id="restoreFileInput" accept=".json" style="display:none;">
+  </div>
+
+  <div class="months-list" id="monthsList"></div>
+
+  <div class="footer-meta"><div>📅 مدیریت هوشمند</div><div>🕒 نسخه پیشرفته</div></div>
+  <div class="note">➕ دکمه + پایین هر ماه برای صندوق جدید | نگه دار روی نام صندوق برای حذف | دابل کلیک روی نام برای ویرایش | 📋 نمایش تاریخ وسط صفحه</div>
+</div>
+
+<script>
+  (function(){
+    // ======================== تاریخ شمسی ========================
+    function gregorianToJalali(gy, gm, gd) {
+      var g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
+      var gy2 = (gm > 2) ? (gy + 1) : gy;
+      var days = 355666 + (365 * gy) + Math.floor((gy2 + 3)/4) - Math.floor((gy2 + 99)/100) + Math.floor((gy2 + 399)/400) + gd + g_d_m[gm-1];
+      var jy = -1595 + (33 * Math.floor(days/12053));
+      days %= 12053;
+      jy += 4 * Math.floor(days/1461);
+      days %= 1461;
+      if (days > 365) { jy += Math.floor((days-1)/365); days = (days-1)%365; }
+      var jm = (days < 186) ? 1 + Math.floor(days/31) : 7 + Math.floor((days-186)/30);
+      var jd = 1 + ((days < 186) ? (days%31) : ((days-186)%30));
+      return { year: jy, month: jm, day: jd };
+    }
+    function getCurrentJalaliDateTime() {
+      const now = new Date();
+      const j = gregorianToJalali(now.getFullYear(), now.getMonth()+1, now.getDate());
+      const h = String(now.getHours()).padStart(2,'0');
+      const m = String(now.getMinutes()).padStart(2,'0');
+      const s = String(now.getSeconds()).padStart(2,'0');
+      return `${j.year}/${String(j.month).padStart(2,'0')}/${String(j.day).padStart(2,'0')} ${h}:${m}:${s}`;
+    }
+
+    // popup ساده (حباب علامت)
+    const popup = document.getElementById('datePopup');
+    let popupTimer;
+    function showDatePopup(text) {
+      popup.innerHTML = text || getCurrentJalaliDateTime();
+      popup.style.left = '50%';
+      popup.style.top = '40%';
+      popup.style.transform = 'translate(-50%, -50%)';
+      popup.style.whiteSpace = 'nowrap';
+      popup.classList.add('show');
+      clearTimeout(popupTimer);
+      popupTimer = setTimeout(() => popup.classList.remove('show'), 2000);
+    }
+
+    // پنجره تاریخچه (وسط صفحه)
+    const historyPopupDiv = document.getElementById('historyPopup');
+    function showHistoryPopup(historyArray) {
+      if(!historyArray || historyArray.length===0){
+        showDatePopup("📭 هیچ تاریخ ثبت نشده");
+        return;
+      }
+      let html = `<div><strong>📜 تاریخ واریزها</strong><ul>`;
+      historyArray.forEach(t => { html += `<li>🕘 ${t}</li>`; });
+      html += `</ul><button class="close-history" id="closeHistoryBtn">🔒 بستن</button></div>`;
+      historyPopupDiv.innerHTML = html;
+      historyPopupDiv.classList.add('show');
+      const closeBtn = document.getElementById('closeHistoryBtn');
+      if(closeBtn) closeBtn.onclick = () => historyPopupDiv.classList.remove('show');
+      // با کلیک بیرون هم بسته شود
+      setTimeout(() => {
+        document.addEventListener('click', function onOutside(e) {
+          if(!historyPopupDiv.contains(e.target)) {
+            historyPopupDiv.classList.remove('show');
+            document.removeEventListener('click', onOutside);
+          }
+        });
+      }, 50);
+    }
+
+    // ======================== داده‌های اصلی ========================
+    let monthlyAmounts = [];     // [month][fund]
+    let paymentState = [];       // [fund][month] boolean
+    let historyData = [];        // [month][fund] array of timestamps
+    let fundNames = [];
+
+    const MONTH_NAMES = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+    const DEFAULT_FUND_NAMES = ["درآمد ثابت","آتیه مفید","صندوق گوهر","صندوق طلا دیجیتال","صندوق سهام نفت گاز برق"];
+    const DEFAULT_AMOUNTS = [3000000, 2100000, 1000000, 500000, 1000000];
+
+    // مهاجرت از نسخه قبلی
+    function migrateFromOld() {
+      const old = localStorage.getItem('fundManagerV9');
+      if(!old) return false;
+      try{
+        const data = JSON.parse(old);
+        if(data.monthlyAmounts && data.monthlyAmounts.length===12 && data.payments){
+          monthlyAmounts = data.monthlyAmounts;
+          const oldPayments = data.payments;
+          const oldFundCount = oldPayments.length;
+          fundNames = DEFAULT_FUND_NAMES.slice(0, oldFundCount);
+          paymentState = oldPayments.map(row => row.map(v=> v===1));
+          historyData = [];
+          for(let mi=0; mi<12; mi++){
+            historyData[mi] = [];
+            for(let fi=0; fi<fundNames.length; fi++) historyData[mi][fi] = [];
+          }
+          saveToStorage();
+          localStorage.removeItem('fundManagerV9');
+          return true;
+        }
+      }catch(e){}
+      return false;
+    }
+
+    function initNewDataStructure(){
+      fundNames = [...DEFAULT_FUND_NAMES];
+      monthlyAmounts = [];
+      paymentState = [];
+      historyData = [];
+      for(let mi=0; mi<12; mi++){
+        monthlyAmounts[mi] = [...DEFAULT_AMOUNTS];
+        historyData[mi] = [];
+        for(let fi=0; fi<fundNames.length; fi++) historyData[mi][fi] = [];
+      }
+      paymentState = fundNames.map(() => new Array(12).fill(false));
+    }
+
+    function saveToStorage(){
+      const toStore = {
+        version: 2,
+        fundNames: fundNames,
+        monthlyAmounts: monthlyAmounts,
+        payments: paymentState.map(row => row.map(v=> v?1:0)),
+        history: historyData
+      };
+      localStorage.setItem('fundManagerV10', JSON.stringify(toStore));
+    }
+
+
+    const EMBEDDED_BACKUP = {
+  "version": 2,
+  "fundNames": [
+    "درآمد ثابت",
+    "آتیه مفید",
+    "صندوق گوهر",
+    "صندوق طلا دیجیتال",
+    "صندوق سهام نفت گاز برق",
+    "دوایکس اهرمی شاخصی",
+    "صندوق  ارزش سیمان",
+    "ارز دیجیتال گرام"
+  ],
+  "monthlyAmounts": [
+    [
+      1000,
+      0,
+      0,
+      1000,
+      3120,
+      0,
+      0,
+      0
+    ],
+    [
+      2500,
+      0,
+      500,
+      0,
+      2000,
+      1000,
+      0,
+      0
+    ],
+    [
+      1400,
+      500,
+      0,
+      500,
+      2000,
+      0,
+      100,
+      0
+    ],
+    [
+      1400,
+      500,
+      500,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      1500,
+      1500,
+      1500,
+      500,
+      1990,
+      0,
+      5000,
+      1000
+    ],
+    [
+      1500,
+      1500,
+      1500,
+      500,
+      1500,
+      0,
+      500,
+      0
+    ],
+    [
+      3000000,
+      2100000,
+      1000000,
+      500000,
+      1000000,
+      0,
+      0,
+      0
+    ],
+    [
+      3000000,
+      2100000,
+      1000000,
+      500000,
+      1000000,
+      0,
+      0,
+      0
+    ],
+    [
+      3000000,
+      2100000,
+      1000000,
+      500000,
+      1000000,
+      0,
+      0,
+      0
+    ],
+    [
+      3000000,
+      2100000,
+      1000000,
+      500000,
+      1000000,
+      0,
+      0,
+      0
+    ],
+    [
+      3000000,
+      2100000,
+      1000000,
+      500000,
+      1000000,
+      0,
+      0,
+      0
+    ],
+    [
+      3000000,
+      2100000,
+      1000000,
+      500000,
+      1000000,
+      0,
+      0,
+      0
+    ]
+  ],
+  "payments": [
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  ],
+  "history": [
+    [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    [
+      [
+        "1405/02/10 05:17:15"
+      ],
+      [],
+      [
+        "1405/02/10 05:17:04",
+        "1405/02/30 21:46:59"
+      ],
+      [],
+      [
+        "1405/02/15 06:08:31",
+        "1405/02/15 06:08:35",
+        "1405/02/20 14:56:40"
+      ],
+      [
+        "1405/02/29 12:12:14"
+      ],
+      [],
+      []
+    ],
+    [
+      [
+        "1405/02/15 23:13:18",
+        "1405/02/15 23:13:31",
+        "1405/02/17 00:19:53",
+        "1405/02/22 07:20:32",
+        "1405/02/22 07:20:41",
+        "1405/02/22 07:20:43",
+        "1405/02/29 12:42:14",
+        "1405/03/20 20:48:59"
+      ],
+      [
+        "1405/02/17 00:19:54",
+        "1405/02/22 07:20:33",
+        "1405/02/22 07:20:41",
+        "1405/03/05 12:23:37",
+        "1405/03/20 20:49:01"
+      ],
+      [
+        "1405/02/15 23:13:19",
+        "1405/02/15 23:13:31",
+        "1405/02/17 00:19:56",
+        "1405/02/17 00:20:04",
+        "1405/02/22 07:20:33",
+        "1405/02/29 12:42:15",
+        "1405/03/05 12:25:03"
+      ],
+      [
+        "1405/02/15 23:13:19",
+        "1405/02/15 23:13:32",
+        "1405/02/17 00:19:56",
+        "1405/02/22 07:20:33",
+        "1405/02/29 12:42:15",
+        "1405/03/03 13:34:34",
+        "1405/03/05 12:25:04"
+      ],
+      [
+        "1405/02/15 23:13:20",
+        "1405/02/15 23:13:32",
+        "1405/02/17 00:19:56",
+        "1405/02/22 07:20:34",
+        "1405/02/29 12:42:16",
+        "1405/03/03 13:29:59",
+        "1405/03/05 12:24:34"
+      ],
+      [],
+      [
+        "1405/03/19 04:19:04"
+      ],
+      []
+    ],
+    [
+      [
+        "1405/04/20 16:35:00"
+      ],
+      [
+        "1405/04/20 16:35:00"
+      ],
+      [
+        "1405/04/30 12:32:44"
+      ],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    [
+      [
+        "1405/04/22 22:33:59",
+        "1405/04/22 22:36:09",
+        "1405/05/11 13:31:39"
+      ],
+      [
+        "1405/04/22 22:33:59",
+        "1405/04/22 22:36:10",
+        "1405/05/11 22:16:22",
+        "1405/05/20 17:54:03"
+      ],
+      [
+        "1405/04/22 22:34:00",
+        "1405/04/22 22:36:10",
+        "1405/05/11 22:16:22",
+        "1405/05/30 22:06:07"
+      ],
+      [
+        "1405/04/22 22:34:01",
+        "1405/05/20 17:57:59"
+      ],
+      [
+        "1405/04/22 22:34:01",
+        "1405/05/01 03:52:53",
+        "1405/05/03 12:00:38"
+      ],
+      [
+        "1405/04/22 22:35:22",
+        "1405/04/22 22:35:24",
+        "1405/04/22 22:35:29",
+        "1405/04/22 22:35:37",
+        "1405/05/11 22:16:23"
+      ],
+      [
+        "1405/04/22 22:35:49",
+        "1405/05/11 22:16:24",
+        "1405/05/18 22:17:14",
+        "1405/05/20 17:58:05"
+      ],
+      [
+        "1405/05/30 22:11:55"
+      ]
+    ],
+    [
+      [
+        "1405/05/11 22:18:57",
+        "1405/05/30 23:39:16"
+      ],
+      [
+        "1405/05/11 22:18:57"
+      ],
+      [
+        "1405/05/11 22:18:58"
+      ],
+      [
+        "1405/05/11 22:18:58"
+      ],
+      [
+        "1405/05/11 22:18:59",
+        "1405/05/30 23:39:13"
+      ],
+      [
+        "1405/05/11 22:18:59"
+      ],
+      [],
+      []
+    ],
+    [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    [
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ]
+  ]
+};
+
+    function initFromEmbeddedBackup() {
+      try {
+        const data = EMBEDDED_BACKUP;
+        if(data.fundNames && data.monthlyAmounts && data.payments && data.history){
+          fundNames = data.fundNames;
+          monthlyAmounts = data.monthlyAmounts;
+          paymentState = data.payments.map(row => row.map(v => v === 1));
+          historyData = data.history;
+          for(let mi=0; mi<12; mi++){
+            if(!monthlyAmounts[mi]) monthlyAmounts[mi]=[];
+            for(let fi=0; fi<fundNames.length; fi++){
+              if(monthlyAmounts[mi][fi]===undefined) monthlyAmounts[mi][fi]=0;
+              if(!historyData[mi]) historyData[mi]=[];
+              if(!historyData[mi][fi]) historyData[mi][fi]=[];
+            }
+          }
+          saveToStorage();
+          return true;
+        }
+      } catch(e) { console.error('Error loading embedded backup:', e); }
+      return false;
+    }
+
+    function loadFromStorage(){
+      const saved = localStorage.getItem('fundManagerV10');
+      if(saved){
+        try{
+          const data = JSON.parse(saved);
+          if(data.fundNames && data.monthlyAmounts && data.payments && data.history){
+            fundNames = data.fundNames;
+            monthlyAmounts = data.monthlyAmounts;
+            paymentState = data.payments.map(row => row.map(v=> v===1));
+            historyData = data.history;
+            // همسان‌سازی ابعاد
+            for(let mi=0; mi<12; mi++){
+              if(!monthlyAmounts[mi]) monthlyAmounts[mi]=[];
+              for(let fi=0; fi<fundNames.length; fi++){
+                if(monthlyAmounts[mi][fi]===undefined) monthlyAmounts[mi][fi]=0;
+                if(!historyData[mi]) historyData[mi]=[];
+                if(!historyData[mi][fi]) historyData[mi][fi]=[];
+              }
+            }
+            return true;
+          }
+        }catch(e){}
+      }
+      if(migrateFromOld()) return true;
+      if(initFromEmbeddedBackup()) return true;
+      initNewDataStructure();
+      return false;
+    }
+
+    function formatToman(num){
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function computeTotalDeposits(){
+      let total=0;
+      for(let mi=0; mi<12; mi++){
+        for(let fi=0; fi<fundNames.length; fi++){
+          if(paymentState[fi] && paymentState[fi][mi]) total += monthlyAmounts[mi][fi];
+        }
+      }
+      return total;
+    }
+
+    function getMonthTotal(mi){
+      let sum=0;
+      for(let fi=0; fi<fundNames.length; fi++){
+        if(paymentState[fi][mi]) sum += monthlyAmounts[mi][fi];
+      }
+      return sum;
+    }
+
+    function updateTotalDisplay(){
+      document.getElementById('totalDisplay').textContent = formatToman(computeTotalDeposits());
+    }
+
+    // به روز رسانی جمع ماه بدون رندر کامل
+    function updateMonthTotalDisplay(mi){
+      const monthCard = document.querySelectorAll('.month-card')[mi];
+      if(monthCard){
+        const totalDiv = monthCard.querySelector('.month-total');
+        if(totalDiv){
+          const totalVal = getMonthTotal(mi);
+          totalDiv.innerHTML = `💳 پرداختی این ماه: <span class="ltr">${formatToman(totalVal)}</span> تومان`;
+        }
+      }
+    }
+
+    // عملیات صندوق
+    function addNewFund(){
+      const newName = `صندوق جدید ${fundNames.length+1}`;
+      fundNames.push(newName);
+      for(let mi=0; mi<12; mi++){
+        monthlyAmounts[mi].push(0);
+        if(!historyData[mi]) historyData[mi]=[];
+        historyData[mi].push([]);
+      }
+      paymentState.push(new Array(12).fill(false));
+      saveToStorage();
+      renderAll(); // برای اضافه شدن صندوق نیاز به رندر کامل داریم
+    }
+
+    function deleteFund(fundIndex){
+      if(fundNames.length <= 1){ alert("حداقل یک صندوق باید باقی بماند"); return false; }
+      if(confirm(`آیا از حذف صندوق "${fundNames[fundIndex]}" مطمئن هستید؟`)){
+        fundNames.splice(fundIndex,1);
+        for(let mi=0; mi<12; mi++){
+          monthlyAmounts[mi].splice(fundIndex,1);
+          historyData[mi].splice(fundIndex,1);
+        }
+        paymentState.splice(fundIndex,1);
+        saveToStorage();
+        renderAll();
+        return true;
+      }
+      return false;
+    }
+
+    function renameFund(fundIndex, newName){
+      if(!newName.trim()) newName = "بدون نام";
+      fundNames[fundIndex] = newName;
+      saveToStorage();
+      renderAll(); // برای به روزرسانی نام در همه جا
+    }
+
+    // تابع بهینه تیک زدن (بدون رندر کامل)
+    function togglePaymentOptimized(fundIndex, monthIndex, isCurrentlyChecked, badgeElement, monthIdxForTotal){
+      if(!isCurrentlyChecked){
+        const nowStr = getCurrentJalaliDateTime();
+        if(!historyData[monthIndex]) historyData[monthIndex]=[];
+        if(!historyData[monthIndex][fundIndex]) historyData[monthIndex][fundIndex]=[];
+        historyData[monthIndex][fundIndex].push(nowStr);
+        paymentState[fundIndex][monthIndex] = true;
+        // تغییر ظاهر دایره
+        if(badgeElement){
+          badgeElement.classList.add('checked');
+        }
+      } else {
+        paymentState[fundIndex][monthIndex] = false;
+        if(badgeElement){
+          badgeElement.classList.remove('checked');
+        }
+      }
+      // ذخیره و به روز رسانی مجموع
+      saveToStorage();
+      updateTotalDisplay();
+      updateMonthTotalDisplay(monthIndex);
+    }
+
+    // ======================== رندر اولیه (با قابلیت به روزرسانی بعدی بدون رندر) ========================
+    let longPressTimer = null;
+    function attachLongPress(element, fundIndex) {
+      const clearTimer = () => { if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer=null; } };
+      element.addEventListener('mousedown', () => { longPressTimer = setTimeout(() => { deleteFund(fundIndex); }, 500); });
+      element.addEventListener('mouseup', clearTimer);
+      element.addEventListener('mouseleave', clearTimer);
+      element.addEventListener('touchstart', (e) => { longPressTimer = setTimeout(() => { deleteFund(fundIndex); }, 500); });
+      element.addEventListener('touchend', clearTimer);
+      element.addEventListener('touchcancel', clearTimer);
+    }
+
+    function renderAll(){
+      const container = document.getElementById('monthsList');
+      container.innerHTML = '';
+      for(let mi=0; mi<12; mi++){
+        const card = document.createElement('div');
+        card.className = 'month-card';
+        // header
+        const header = document.createElement('div');
+        header.className = 'month-header';
+        header.innerHTML = `<span class="month-name">${MONTH_NAMES[mi]}</span>`;
+        const toggleAll = document.createElement('button');
+        toggleAll.className = 'toggle-all-btn';
+        toggleAll.textContent = '✔️ همه';
+        toggleAll.onclick = () => {
+          const allChecked = fundNames.every((_,fi) => paymentState[fi][mi]);
+          for(let fi=0; fi<fundNames.length; fi++){
+            if(!allChecked && !paymentState[fi][mi]) {
+              if(!historyData[mi]) historyData[mi]=[];
+              if(!historyData[mi][fi]) historyData[mi][fi]=[];
+              historyData[mi][fi].push(getCurrentJalaliDateTime());
+              paymentState[fi][mi] = true;
+            } else if(allChecked) {
+              paymentState[fi][mi] = false;
+            }
+          }
+          saveToStorage();
+          renderAll(); // دکمه همه نیاز به رندر کامل دارد برای به روز رسانی ظاهر دایره‌ها
+        };
+        header.appendChild(toggleAll);
+        card.appendChild(header);
+
+        const fundsDiv = document.createElement('div');
+        fundsDiv.className = 'funds-list';
+        for(let fi=0; fi<fundNames.length; fi++){
+          const item = document.createElement('div');
+          item.className = 'fund-item';
+
+          const nameSpan = document.createElement('span');
+          nameSpan.className = 'fund-name';
+          nameSpan.textContent = fundNames[fi];
+          nameSpan.title = "دابل کلیک برای ویرایش نام | نگه دار برای حذف";
+          nameSpan.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            const newName = prompt("نام جدید صندوق:", fundNames[fi]);
+            if(newName && newName.trim()) renameFund(fi, newName.trim());
+          });
+          attachLongPress(nameSpan, fi);
+
+          const amountSpan = document.createElement('span');
+          amountSpan.className = 'fund-amount ltr';
+          amountSpan.textContent = formatToman(monthlyAmounts[mi][fi]);
+          amountSpan.style.cursor = 'pointer';
+          amountSpan.onclick = (e) => {
+            e.stopPropagation();
+            const newAmount = prompt("مبلغ جدید (تومان):", monthlyAmounts[mi][fi]);
+            if(newAmount !== null){
+              let val = parseInt(newAmount.replace(/,/g,''),10);
+              if(isNaN(val)) val=0;
+              monthlyAmounts[mi][fi] = val;
+              saveToStorage();
+              renderAll(); // برای به روزرسانی مبلغ نیاز به رندر کامل
+            }
+          };
+
+          const badgeDiv = document.createElement('div');
+          badgeDiv.className = `tap-badge ${paymentState[fi][mi] ? 'checked' : ''}`;
+          // استفاده از رویداد با ارجاع به عنصر جاری برای بهینه بودن
+          badgeDiv.onclick = (e) => {
+            e.stopPropagation();
+            const isChecked = paymentState[fi][mi];
+            togglePaymentOptimized(fi, mi, isChecked, badgeDiv, mi);
+          };
+
+          const historyIcon = document.createElement('span');
+          historyIcon.className = 'history-icon';
+          historyIcon.textContent = '📋';
+          historyIcon.title = 'نمایش تاریخ واریزها (وسط صفحه)';
+          historyIcon.onclick = (e) => {
+            e.stopPropagation();
+            const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : [];
+            showHistoryPopup(hist);
+          };
+          // دابل کلیک روی دایره هم تاریخچه را نشان دهد
+          badgeDiv.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : [];
+            showHistoryPopup(hist);
+          });
+
+          item.appendChild(nameSpan);
+          item.appendChild(amountSpan);
+          item.appendChild(badgeDiv);
+          item.appendChild(historyIcon);
+          fundsDiv.appendChild(item);
+        }
+        card.appendChild(fundsDiv);
+
+        // دکمه +
+        const addDiv = document.createElement('div');
+        addDiv.className = 'add-fund-btn';
+        const addBtn = document.createElement('button');
+        addBtn.textContent = '+ صندوق جدید';
+        addBtn.className = 'btn-add';
+        addBtn.onclick = () => addNewFund();
+        addDiv.appendChild(addBtn);
+        card.appendChild(addDiv);
+
+        const totalMonth = getMonthTotal(mi);
+        const totalDiv = document.createElement('div');
+        totalDiv.className = 'month-total';
+        totalDiv.innerHTML = `💳 پرداختی این ماه: <span class="ltr">${formatToman(totalMonth)}</span> تومان`;
+        card.appendChild(totalDiv);
+        container.appendChild(card);
+      }
+      updateTotalDisplay();
+    }
+
+    // پشتیبان و بازیابی (بدون تغییر)
+    function exportBackup(){
+      const backup = { version:2, fundNames, monthlyAmounts, payments: paymentState.map(row=>row.map(v=>v?1:0)), history:historyData };
+      const blob = new Blob([JSON.stringify(backup,null,2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `fund_backup_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    }
+    function importBackup(file){
+      const reader = new FileReader();
+      reader.onload = e => {
+        try{
+          const data = JSON.parse(e.target.result);
+          if(data.fundNames && data.monthlyAmounts && data.payments && data.history){
+            fundNames = data.fundNames;
+            monthlyAmounts = data.monthlyAmounts;
+            paymentState = data.payments.map(row=>row.map(v=>v===1));
+            historyData = data.history;
+            saveToStorage();
+            renderAll();
+            alert("بازیابی شد");
+          } else alert("فرمت نامعتبر");
+        }catch(ex){ alert("خطا"); }
+        document.getElementById('restoreFileInput').value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    // راه‌اندازی
+    loadFromStorage();
+    renderAll();
+
+    document.getElementById('backupBtn').onclick = exportBackup;
+    document.getElementById('restoreBtn').onclick = () => document.getElementById('restoreFileInput').click();
+    document.getElementById('restoreFileInput').onchange = (e) => { if(e.target.files.length) importBackup(e.target.files[0]); };
+    document.addEventListener('click', (e) => {
+      if(!historyPopupDiv.contains(e.target)) historyPopupDiv.classList.remove('show');
+    });
+  })();
+</script>
+</body>
+</html>
