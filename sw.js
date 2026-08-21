@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v27';
+const CACHE_NAME = 'emarat-portal-v28';
 const ASSETS = [
   './',
   './index.html',
@@ -171,7 +171,16 @@ const ASSETS = [
   './family/icon-192.png',
   './family/icon-512.png',
   './family/icon-192-maskable.png',
-  './family/icon-512-maskable.png'
+  './family/icon-512-maskable.png',
+  // Monthly Deposit App
+  './monthly-deposit/index.html',
+  './monthly-deposit/manifest.json',
+  './monthly-deposit/icon-192.png',
+  './monthly-deposit/icon-512.png',
+  './monthly-deposit/icon-192-maskable.png',
+  './monthly-deposit/icon-512-maskable.png',
+  './monthly-deposit/apple-touch-icon.png',
+  './monthly-deposit/favicon.ico'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
