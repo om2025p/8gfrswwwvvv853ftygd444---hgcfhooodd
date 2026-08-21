@@ -409,7 +409,7 @@
                 </div>
                 <div style="margin-bottom:12px;">
                     <label style="display:block; font-size:13px; margin-bottom:5px; font-weight:bold;">مسیر ذخیره فایل در مخزن:</label>
-                    <input type="text" id="gh_filepath" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="backups/synergy_percent_backup.json">
+                    <input type="text" id="gh_filepath" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="gold5/gold5_backup.json">
                 </div>
                 <div style="display:flex; gap:10px; margin-top:15px;">
                     <button onclick="saveGithubSettings()" style="flex:1; background-color:#2e7d32; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;">ذخیره</button>
@@ -555,10 +555,54 @@
             return (factor - 1) * 100;
         }
 
+        function getFullBackupPayload() {
+            let history = [];
+            try {
+                const rawHistory = localStorage.getItem("sinergy_history");
+                if (rawHistory) history = JSON.parse(rawHistory);
+            } catch (e) {}
+
+            let baseNumber = 0;
+            const rawBase = localStorage.getItem("sinergy_baseNumber");
+            if (rawBase) baseNumber = parseFloat(String(rawBase).replace(/,/g, '')) || 0;
+
+            return {
+                percents,
+                trash,
+                goal,
+                highlightedStates,
+                periodTarget,
+                achievedPeriods,
+                notes,
+                baseNumber,
+                history
+            };
+        }
+
+        let githubSyncDebounceTimer = null;
+        function triggerAutoGithubSync() {
+            const token = localStorage.getItem("github_backup_token");
+            if (!token) return;
+
+            if (githubSyncDebounceTimer) clearTimeout(githubSyncDebounceTimer);
+
+            githubSyncDebounceTimer = setTimeout(async () => {
+                try {
+                    const fullPayload = getFullBackupPayload();
+                    const dataStr = JSON.stringify(fullPayload, null, 2);
+                    const defaultFileName = "gold5_backup.json";
+                    await uploadToGitHub(dataStr, defaultFileName);
+                } catch (e) {
+                    console.warn("Background GitHub Auto-Sync failed:", e);
+                }
+            }, 1000);
+        }
+
         function saveData() {
             const toStore = { percents, trash, goal, highlightedStates, periodTarget, achievedPeriods, notes };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
             localStorage.setItem(STORAGE_KEY + "_statsOpen", statsMenuOpen);
+            triggerAutoGithubSync();
         }
 
         function loadData() {
@@ -1226,7 +1270,7 @@
             if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست." };
 
             if (!filePath) {
-                filePath = `backups/${fileName}`;
+                filePath = `gold5/${fileName}`;
             } else if (filePath.endsWith("/")) {
                 filePath += fileName;
             }
@@ -1272,7 +1316,7 @@
             document.getElementById("gh_token").value = localStorage.getItem("github_backup_token") || "";
             document.getElementById("gh_repo").value = localStorage.getItem("github_backup_repo") || "";
             document.getElementById("gh_branch").value = localStorage.getItem("github_backup_branch") || "";
-            document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "backups/synergy_percent_backup.json";
+            document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "gold5/gold5_backup.json";
         };
 
         window.closeGithubSettings = function() {
@@ -1288,7 +1332,7 @@
             localStorage.setItem("github_backup_token", token);
             localStorage.setItem("github_backup_repo", repo);
             localStorage.setItem("github_backup_branch", branch || "main");
-            localStorage.setItem("github_backup_filepath", filepath || "backups/synergy_percent_backup.json");
+            localStorage.setItem("github_backup_filepath", filepath || "gold5/gold5_backup.json");
 
             alert("✅ تنظیمات گیت‌هاب ذخیره شد");
             closeGithubSettings();
