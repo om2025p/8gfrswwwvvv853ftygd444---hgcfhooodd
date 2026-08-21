@@ -447,6 +447,62 @@
       paymentState = fundNames.map(() => new Array(12).fill(false));
     }
 
+
+    function syncToMonitor() {
+      try {
+        const mapping = {
+          1: ['صندوق طلا دیجیتال', 3],
+          2: ['درآمد ثابت', 0],
+          3: ['دوایکس اهرمی شاخصی', 5],
+          4: ['آتیه مفید', 1],
+          5: ['صندوق سهام نفت گاز برق', 4],
+          6: ['صندوق  ارزش سیمان', 6]
+        };
+        const syncData = {};
+        for (let appId = 1; appId <= 6; appId++) {
+          const [targetName, defaultIdx] = mapping[appId];
+          let fi = fundNames.findIndex(f => f && f.trim() === targetName.trim());
+          if (fi === -1) {
+            if (defaultIdx < fundNames.length) fi = defaultIdx;
+            else fi = (appId - 1) < fundNames.length ? (appId - 1) : -1;
+          }
+          if (fi !== -1 && fi < fundNames.length) {
+            let latestPayment = null;
+            for (let mi = 0; mi < 12; mi++) {
+              if (paymentState[fi] && paymentState[fi][mi]) {
+                const amt = (monthlyAmounts[mi] && monthlyAmounts[mi][fi] !== undefined) ? monthlyAmounts[mi][fi] : 0;
+                const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : [];
+                const lastTsStr = hist.length > 0 ? hist[hist.length - 1] : null;
+                if (!latestPayment || (lastTsStr && (!latestPayment.timestampStr || lastTsStr > latestPayment.timestampStr))) {
+                  latestPayment = {
+                    amount: amt,
+                    timestampStr: lastTsStr,
+                    monthIndex: mi
+                  };
+                }
+              }
+            }
+            if (latestPayment) {
+              syncData[appId] = {
+                fundName: fundNames[fi],
+                amount: latestPayment.amount,
+                timestampStr: latestPayment.timestampStr,
+                hasPayment: true
+              };
+            } else {
+              syncData[appId] = {
+                fundName: fundNames[fi],
+                amount: 0,
+                timestampStr: null,
+                hasPayment: false
+              };
+            }
+          }
+        }
+        localStorage.setItem('monthly_deposit_sync', JSON.stringify(syncData));
+      } catch(e) { console.error('Error syncing to monitor:', e); }
+    }
+
     function saveToStorage(){
       const toStore = {
         version: 2,
@@ -456,6 +512,7 @@
         history: historyData
       };
       localStorage.setItem('fundManagerV10', JSON.stringify(toStore));
+      syncToMonitor();
     }
 
 
