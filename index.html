@@ -292,7 +292,8 @@
             { id: 'simple-chat', title: 'چت فرمان‌بردار', icon: 'simple-chat/icon-192.png', url: 'simple-chat/index.html' },
             { id: 'vault', title: 'رمز راز', icon: 'vault/icon-192.png', url: 'vault/index.html' },
             { id: 'restricted', title: 'سپر دانلود', icon: 'restricted/icon-192.png', url: 'restricted/index.html' },
-            { id: 'family', title: 'شجره‌نامه', icon: 'family/icon-192.png', url: 'family/index.html' }
+            { id: 'family', title: 'شجره‌نامه', icon: 'family/icon-192.png', url: 'family/index.html' },
+            { id: 'monthly-deposit', title: 'واریز ماهیانه', icon: 'monthly-deposit/icon-192.png', url: 'monthly-deposit/index.html' }
         ];
 
         let savedApps = JSON.parse(localStorage.getItem('portal_app_order'));
@@ -500,7 +501,7 @@
                 navigator.serviceWorker.getRegistrations().then(registrations => {
                     for (let registration of registrations) {
                         const path = new URL(registration.scope).pathname;
-                        if (path.includes('/gym/') || path.includes('/gold/') || path.includes('/gold2/') || path.includes('/gold3/') || path.includes('/gold4/') || path.includes('/gold5/') || path.includes('/gold6/') || path.includes('/monitor/') || path.includes('/skincare/') || path.includes('/profit-calculator/') || path.includes('/ai-chat/') || path.includes('/tabdeal/') || path.includes('/family/')) {
+                        if (path.includes('/gym/') || path.includes('/gold/') || path.includes('/gold2/') || path.includes('/gold3/') || path.includes('/gold4/') || path.includes('/gold5/') || path.includes('/gold6/') || path.includes('/monitor/') || path.includes('/skincare/') || path.includes('/profit-calculator/') || path.includes('/ai-chat/') || path.includes('/tabdeal/') || path.includes('/family/') || path.includes('/monthly-deposit/')) {
                             registration.unregister().then(success => {
                                 if (success) console.log(`Legacy SW at ${path} unregistered.`);
                             });
