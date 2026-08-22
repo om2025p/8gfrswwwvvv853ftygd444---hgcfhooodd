@@ -221,13 +221,33 @@
       font-weight: 600;
       color: #0f3a5e;
       direction: ltr;
-      min-width: 90px;
+      min-width: 75px;
       text-align: left;
       cursor: pointer;
       background: #fafcff;
       padding: 4px 10px;
       border-radius: 12px;
       border: 0.5px solid #e0e9f2;
+    }
+    .elapsed-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 12px;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .elapsed-badge.live {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 0.5px solid #bae6fd;
+    }
+    .elapsed-badge.frozen {
+      background: #f1f5f9;
+      color: #475569;
+      border: 0.5px solid #cbd5e1;
     }
     .tap-badge {
       width: 44px;
@@ -446,6 +466,81 @@
       var jm = (days < 186) ? 1 + Math.floor(days/31) : 7 + Math.floor((days-186)/30);
       var jd = 1 + ((days < 186) ? (days%31) : ((days-186)%30));
       return { year: jy, month: jm, day: jd };
+    }
+    function jalaliToGregorian(jy, jm, jd) {
+      jy = parseInt(jy); jm = parseInt(jm); jd = parseInt(jd);
+      var sal_a, gy, gm, gd, days;
+      jy += 1595;
+      days = -355668 + (365 * jy) + (Math.floor(jy / 33) * 8) + Math.floor(((jy % 33) + 3) / 4) + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+      gy = 400 * Math.floor(days / 146097);
+      days %= 146097;
+      if (days > 36524) {
+        gy += 100 * Math.floor(--days / 36524);
+        days %= 36524;
+        if (days >= 365) days++;
+      }
+      gy += 4 * Math.floor(days / 1461);
+      days %= 1461;
+      if (days > 365) {
+        gy += Math.floor((days - 1) / 365);
+        days = (days - 1) % 365;
+      }
+      sal_a = [0, 31, ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      for (gm = 0; gm < 13 && days >= sal_a[gm]; gm++) days -= sal_a[gm];
+      gd = days + 1;
+      return new Date(gy, gm - 1, gd);
+    }
+    function parseJalaliDateTimeStr(str) {
+      if (!str) return null;
+      const parts = str.trim().split(' ');
+      if (parts.length < 2) return null;
+      const dateParts = parts[0].split('/');
+      const timeParts = parts[1].split(':');
+      if (dateParts.length < 3 || timeParts.length < 3) return null;
+      const g = jalaliToGregorian(dateParts[0], dateParts[1], dateParts[2]);
+      return new Date(g.getFullYear(), g.getMonth(), g.getDate(), parseInt(timeParts[0]), parseInt(timeParts[1]), parseInt(timeParts[2]));
+    }
+    function calculateFundMonthsElapsed(fi) {
+      const paidMonths = [];
+      for (let mi = 0; mi < 12; mi++) {
+        if (paymentState[fi] && paymentState[fi][mi]) {
+          const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : [];
+          const tsStr = hist.length > 0 ? hist[hist.length - 1] : null;
+          paidMonths.push({ monthIndex: mi, tsStr: tsStr });
+        }
+      }
+      const result = {};
+      for (let k = 0; k < paidMonths.length; k++) {
+        const current = paidMonths[k];
+        const mi = current.monthIndex;
+        const dateObjCurrent = parseJalaliDateTimeStr(current.tsStr);
+        if (k < paidMonths.length - 1) {
+          const next = paidMonths[k + 1];
+          const dateObjNext = parseJalaliDateTimeStr(next.tsStr);
+          if (dateObjCurrent && dateObjNext) {
+            const diffMs = dateObjNext.getTime() - dateObjCurrent.getTime();
+            let frozenDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            if (frozenDays === 0) frozenDays = 1;
+            result[mi] = { text: `${frozenDays} روز (فریز شد ❄️)`, isFrozen: true };
+          } else {
+            result[mi] = { text: `فریز شد ❄️`, isFrozen: true };
+          }
+        } else {
+          if (dateObjCurrent) {
+            const diffMs = Date.now() - dateObjCurrent.getTime();
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            if (diffHours < 24) {
+              result[mi] = { text: `اکنون ⏳`, isFrozen: false };
+            } else {
+              const days = Math.floor(diffHours / 24);
+              result[mi] = { text: `${days} روز گذشت ⏳`, isFrozen: false };
+            }
+          } else {
+            result[mi] = { text: `اکنون ⏳`, isFrozen: false };
+          }
+        }
+      }
+      return result;
     }
     function getCurrentJalaliDateTime() {
       const now = new Date();
@@ -1313,7 +1408,7 @@
       renderAll(); // برای به روزرسانی نام در همه جا
     }
 
-    // تابع بهینه تیک زدن (بدون رندر کامل)
+    // تابع تیک زدن
     function togglePaymentOptimized(fundIndex, monthIndex, isCurrentlyChecked, badgeElement, monthIdxForTotal){
       if(!isCurrentlyChecked){
         const nowStr = getCurrentJalaliDateTime();
@@ -1321,20 +1416,11 @@
         if(!historyData[monthIndex][fundIndex]) historyData[monthIndex][fundIndex]=[];
         historyData[monthIndex][fundIndex].push(nowStr);
         paymentState[fundIndex][monthIndex] = true;
-        // تغییر ظاهر دایره
-        if(badgeElement){
-          badgeElement.classList.add('checked');
-        }
       } else {
         paymentState[fundIndex][monthIndex] = false;
-        if(badgeElement){
-          badgeElement.classList.remove('checked');
-        }
       }
-      // ذخیره و به روز رسانی مجموع
       saveToStorage();
-      updateTotalDisplay();
-      updateMonthTotalDisplay(monthIndex);
+      renderAll();
     }
 
     // ======================== رندر اولیه (با قابلیت به روزرسانی بعدی بدون رندر) ========================
@@ -1413,6 +1499,15 @@
             }
           };
 
+          // برچسب زمان گذشته / فریز شده
+          const elapsedInfo = calculateFundMonthsElapsed(fi);
+          let elapsedBadge = null;
+          if (paymentState[fi] && paymentState[fi][mi] && elapsedInfo[mi]) {
+            elapsedBadge = document.createElement('span');
+            elapsedBadge.className = `elapsed-badge ${elapsedInfo[mi].isFrozen ? 'frozen' : 'live'}`;
+            elapsedBadge.textContent = elapsedInfo[mi].text;
+          }
+
           const badgeDiv = document.createElement('div');
           badgeDiv.className = `tap-badge ${paymentState[fi][mi] ? 'checked' : ''}`;
           // استفاده از رویداد با ارجاع به عنصر جاری برای بهینه بودن
@@ -1440,6 +1535,7 @@
 
           item.appendChild(nameSpan);
           item.appendChild(amountSpan);
+          if (elapsedBadge) item.appendChild(elapsedBadge);
           item.appendChild(badgeDiv);
           item.appendChild(historyIcon);
           fundsDiv.appendChild(item);
