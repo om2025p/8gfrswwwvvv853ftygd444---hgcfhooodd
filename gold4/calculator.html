@@ -988,14 +988,26 @@
 
     num1Input.addEventListener('input', (e) => {
         handleNumberInput(e);
-        const savedPeak = localStorage.getItem(STORAGE_PEAK);
-        if (!savedPeak) {
-            peakInput.value = e.target.value;
-        }
     });
     num2Input.addEventListener('input', handleNumberInput);
 
     resetPeakBtn.addEventListener('click', () => {
+        const password = prompt("🔑 لطفاً رمز عبور را وارد کنید:");
+        if (password !== "123456789") {
+            alert("❌ رمز عبور اشتباه است!");
+            return;
+        }
+
+        if (!confirm("تأیید ۱ از ۳: آیا از ریست کردن قله اطمینان دارید؟")) {
+            return;
+        }
+        if (!confirm("تأیید ۲ از ۳: با این کار قله به عدد پایه فعلی تغییر می‌کند، آیا مطمئن هستید؟")) {
+            return;
+        }
+        if (!confirm("تأیید ۳ از ۳: تأیید نهایی جهت تغییر قله؟")) {
+            return;
+        }
+
         const baseVal = num1Input.value;
         if (baseVal) {
             localStorage.setItem(STORAGE_PEAK, baseVal);
@@ -1024,8 +1036,6 @@
             if (!isNaN(num)) {
                 peakInput.value = formatNumberWithCommas(num);
             }
-        } else if (num1Input.value) {
-            peakInput.value = num1Input.value;
         }
 
         renderHistory();

@@ -1853,8 +1853,6 @@
                     statusBadgeHtml = `<span class="app-badge" style="background: rgba(248, 113, 113, 0.2); color: #f87171; border-color: rgba(248, 113, 113, 0.4); margin-right: 6px;">🔴 کاهش قیمت</span>`;
                 }
 
-                let peakBadgeHtml = calcDetails.peak > 0 ? `<div style="font-size: 0.75rem; color: #fbbf24; margin-top: 2px;">🏔️ قله: ${calcDetails.peak.toLocaleString('en-US')} تومان</div>` : '';
-
                 if (lastItem) {
                     liveSum += lastItem.value;
                     hasLiveRecords = true;
@@ -1884,7 +1882,6 @@
                                 <div style="font-size: 0.85rem; font-weight: bold; margin-top: 4px; ${profitColorStyle}">
                                     💰 ${tomanDisplay}
                                 </div>
-                                ${peakBadgeHtml}
                             </div>
                             <span class="percent-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${lastItem.value}%</span>
                         </div>
@@ -1905,7 +1902,6 @@
                                 <div style="font-size: 0.85rem; font-weight: bold; margin-top: 4px;" class="${isTomanPositive ? 'positive' : 'negative'}">
                                     💰 ${tomanDisplay}
                                 </div>
-                                ${peakBadgeHtml}
                             </div>
                             <span class="percent-value none">—%</span>
                         </div>
