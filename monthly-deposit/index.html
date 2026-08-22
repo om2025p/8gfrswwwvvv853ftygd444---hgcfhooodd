@@ -311,12 +311,107 @@
       text-align: center;
     }
     .ltr { direction: ltr; display: inline-block; }
-  </style>
+
+    /* استایل‌های منوی تنظیمات نگاشت */
+    .settings-btn {
+      background: #eef2ff;
+      color: #3b82f6;
+      border: 1px solid #c7d2fe;
+    }
+    .settings-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      width: 90%;
+      max-width: 420px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+      border: 1px solid #cbd5e1;
+      z-index: 10000;
+      padding: 18px;
+      display: none;
+      opacity: 0;
+      transition: all 0.2s ease;
+      direction: rtl;
+    }
+    .settings-popup.show {
+      display: block;
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .settings-overlay {
+      position: fixed;
+      top:0; left:0; right:0; bottom:0;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: none;
+    }
+    .settings-overlay.show { display: block; }
+    .settings-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+    .settings-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #334155;
+    }
+    .settings-select {
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 0.82rem;
+      background: #f8fafc;
+      color: #0f172a;
+      outline: none;
+      max-width: 200px;
+    }
+    .settings-save-btn {
+      width: 100%;
+      padding: 10px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+</style>
 </head>
 <body>
 <div class="app-container">
   <div id="datePopup" class="date-popup"></div>
   <div id="historyPopup" class="history-popup"></div>
+
+
+  <div id="settingsOverlay" class="settings-overlay"></div>
+  <div id="settingsPopup" class="settings-popup">
+    <div class="settings-title">
+      <span>⚙️ تنظیمات نگاشت به دیده‌بان</span>
+      <span id="closeSettingsBtn" style="cursor:pointer; font-size:1.2rem;">✖️</span>
+    </div>
+    <div style="font-size:0.75rem; color:#64748b; margin-bottom:12px;">تغییر دهید کدام صندوق در این برنامه مربوط به کدام «ثبت درصد» در دیده‌بان است:</div>
+    <div id="settingsRows"></div>
+    <button class="settings-save-btn" id="saveSettingsBtn">💾 ذخیره و همگام‌سازی</button>
+  </div>
 
   <div class="balance-box">
     <div class="balance-title">کل واریزی‌ها</div>
@@ -326,6 +421,7 @@
   <div class="toolbar">
     <button class="btn" id="backupBtn">💾 پشتیبان</button>
     <button class="btn" id="restoreBtn">📂 بازیابی</button>
+    <button class="btn settings-btn" id="settingsBtn">⚙️ تنظیمات نگاشت</button>
     <input type="file" id="restoreFileInput" accept=".json" style="display:none;">
   </div>
 
@@ -448,45 +544,69 @@
     }
 
 
+
+    const APP_PERCENT_LABELS = {
+      1: 'ثبت درصد 1 (طلا)',
+      2: 'ثبت درصد 2 (درآمد ثابت)',
+      3: 'ثبت درصد 3 (اهرمی ممتازی)',
+      4: 'ثبت درصد 4 (آتیه مفید)',
+      5: 'ثبت درصد 5 (نفت و انرژی)',
+      6: 'ثبت درصد 6 (سیمان کیان)'
+    };
+
+    const DEFAULT_FUND_MAPPING = {
+      1: 'صندوق طلا دیجیتال',
+      2: 'درآمد ثابت',
+      3: 'دوایکس اهرمی شاخصی',
+      4: 'آتیه مفید',
+      5: 'صندوق سهام نفت گاز برق',
+      6: 'صندوق  ارزش سیمان'
+    };
+
+    function getFundMapping() {
+      try {
+        const saved = localStorage.getItem('monthly_deposit_fund_mapping');
+        if (saved) return JSON.parse(saved);
+      } catch(e) {}
+      return { ...DEFAULT_FUND_MAPPING };
+    }
+
     function syncToMonitor() {
       try {
-        const mapping = {
-          1: ['صندوق طلا دیجیتال', 3],
-          2: ['درآمد ثابت', 0],
-          3: ['دوایکس اهرمی شاخصی', 5],
-          4: ['آتیه مفید', 1],
-          5: ['صندوق سهام نفت گاز برق', 4],
-          6: ['صندوق  ارزش سیمان', 6]
-        };
+        const mapping = getFundMapping();
         const syncData = {};
+
         for (let appId = 1; appId <= 6; appId++) {
-          const [targetName, defaultIdx] = mapping[appId];
-          let fi = fundNames.findIndex(f => f && f.trim() === targetName.trim());
-          if (fi === -1) {
-            if (defaultIdx < fundNames.length) fi = defaultIdx;
-            else fi = (appId - 1) < fundNames.length ? (appId - 1) : -1;
+          const targetFundName = mapping[appId];
+          let fi = fundNames.findIndex(f => f && f.trim() === (targetFundName || '').trim());
+          if (fi === -1 && targetFundName) {
+            fi = fundNames.findIndex(f => f && f.trim().includes(targetFundName.trim()));
           }
+
           if (fi !== -1 && fi < fundNames.length) {
             let latestPayment = null;
-            for (let mi = 0; mi < 12; mi++) {
+            // بررسی دقیق تمامی ۱۲ ماه از آخر به اول برای یافتن آخرین واریز
+            for (let mi = 11; mi >= 0; mi--) {
               if (paymentState[fi] && paymentState[fi][mi]) {
                 const amt = (monthlyAmounts[mi] && monthlyAmounts[mi][fi] !== undefined) ? monthlyAmounts[mi][fi] : 0;
                 const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : [];
                 const lastTsStr = hist.length > 0 ? hist[hist.length - 1] : null;
-                if (!latestPayment || (lastTsStr && (!latestPayment.timestampStr || lastTsStr > latestPayment.timestampStr))) {
-                  latestPayment = {
-                    amount: amt,
-                    timestampStr: lastTsStr,
-                    monthIndex: mi
-                  };
-                }
+
+                latestPayment = {
+                  amount: amt,
+                  timestampStr: lastTsStr,
+                  monthIndex: mi
+                };
+                break; // آخرین ماه پرداختی پیدا شد
               }
             }
+
             if (latestPayment) {
               syncData[appId] = {
                 fundName: fundNames[fi],
                 amount: latestPayment.amount,
                 timestampStr: latestPayment.timestampStr,
+                monthIndex: latestPayment.monthIndex,
                 hasPayment: true
               };
             } else {
@@ -497,11 +617,83 @@
                 hasPayment: false
               };
             }
+          } else {
+            syncData[appId] = {
+              fundName: null,
+              amount: 0,
+              timestampStr: null,
+              hasPayment: false
+            };
           }
         }
         localStorage.setItem('monthly_deposit_sync', JSON.stringify(syncData));
       } catch(e) { console.error('Error syncing to monitor:', e); }
     }
+
+    // مدیریت منوی تنظیمات
+    function renderSettingsUI() {
+      const container = document.getElementById('settingsRows');
+      if (!container) return;
+      container.innerHTML = '';
+      const currentMapping = getFundMapping();
+
+      for (let appId = 1; appId <= 6; appId++) {
+        const row = document.createElement('div');
+        row.className = 'settings-row';
+
+        const label = document.createElement('span');
+        label.className = 'settings-label';
+        label.textContent = APP_PERCENT_LABELS[appId];
+
+        const select = document.createElement('select');
+        select.className = 'settings-select';
+        select.dataset.appId = appId;
+
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = '-- عدم اتصال --';
+        select.appendChild(defaultOpt);
+
+        fundNames.forEach(fn => {
+          const opt = document.createElement('option');
+          opt.value = fn;
+          opt.textContent = fn;
+          if (currentMapping[appId] && currentMapping[appId].trim() === fn.trim()) {
+            opt.selected = true;
+          }
+          select.appendChild(opt);
+        });
+
+        row.appendChild(label);
+        row.appendChild(select);
+        container.appendChild(row);
+      }
+    }
+
+    function openSettings() {
+      renderSettingsUI();
+      document.getElementById('settingsOverlay').classList.add('show');
+      document.getElementById('settingsPopup').classList.add('show');
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsOverlay').classList.remove('show');
+      document.getElementById('settingsPopup').classList.remove('show');
+    }
+
+    function saveSettings() {
+      const newMapping = {};
+      const selects = document.querySelectorAll('.settings-select');
+      selects.forEach(sel => {
+        const appId = sel.dataset.appId;
+        newMapping[appId] = sel.value;
+      });
+      localStorage.setItem('monthly_deposit_fund_mapping', JSON.stringify(newMapping));
+      syncToMonitor();
+      closeSettings();
+      alert('تنظیمات نگاشت صندوق‌ها ذخیره شد! 🎉');
+    }
+
 
     function saveToStorage(){
       const toStore = {
@@ -1306,6 +1498,12 @@
     // راه‌اندازی
     loadFromStorage();
     renderAll();
+
+
+    document.getElementById('settingsBtn').onclick = openSettings;
+    document.getElementById('closeSettingsBtn').onclick = closeSettings;
+    document.getElementById('settingsOverlay').onclick = closeSettings;
+    document.getElementById('saveSettingsBtn').onclick = saveSettings;
 
     document.getElementById('backupBtn').onclick = exportBackup;
     document.getElementById('restoreBtn').onclick = () => document.getElementById('restoreFileInput').click();
