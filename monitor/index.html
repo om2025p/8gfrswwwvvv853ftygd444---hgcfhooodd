@@ -780,7 +780,7 @@
             return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         }
 
-        function getLatestTomanProfit(appId) {
+        function getLatestAppCalcDetails(appId) {
             const historyKeys = {
                 1: "gold_history",
                 2: "fixedIncome_history",
@@ -789,16 +789,29 @@
                 5: "sinergy_history",
                 6: "cement_history"
             };
+            const peakKeys = {
+                1: "gold_peakNumber",
+                2: "fixedIncome_peakNumber",
+                3: "kian_peakNumber",
+                4: "pension_peakNumber",
+                5: "sinergy_peakNumber",
+                6: "cement_peakNumber"
+            };
             const historyKey = historyKeys[appId];
             let historyRaw = localStorage.getItem(historyKey);
             let history = [];
             try { history = JSON.parse(historyRaw) || []; } catch(e) {}
 
-            if (history.length === 0) return 0;
+            let peakStored = parseFloat(localStorage.getItem(peakKeys[appId])) || 0;
+
+            if (history.length === 0) {
+                return { profit: 0, status: 'none', peak: peakStored };
+            }
 
             const calc = history[0];
             let rawBase = 0;
             let rawNew = 0;
+            let rawPeak = peakStored || 0;
 
             if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
                 rawBase = calc.rawBase;
@@ -812,8 +825,35 @@
                 rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
             }
 
+            if (calc.rawPeak !== undefined && calc.rawPeak !== null && !isNaN(calc.rawPeak)) {
+                rawPeak = Math.max(rawPeak, calc.rawPeak);
+            } else if (calc.peak) {
+                rawPeak = Math.max(rawPeak, parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0);
+            }
+
             const diff = rawNew - rawBase;
-            return Math.round(diff / 10000);
+            const tomanProfit = Math.round(diff / 10000);
+
+            let status = calc.type || 'increase';
+            if (rawNew > rawPeak && rawPeak > 0) {
+                status = 'increase';
+            } else if (rawNew > rawBase && rawNew <= rawPeak) {
+                status = 'recovering';
+            } else if (rawNew < rawBase) {
+                status = 'decrease';
+            }
+
+            return {
+                profit: tomanProfit,
+                status: status,
+                peak: rawPeak,
+                base: rawBase,
+                newVal: rawNew
+            };
+        }
+
+        function getLatestTomanProfit(appId) {
+            return getLatestAppCalcDetails(appId).profit;
         }
 
         function calculateDailyAverageTomanProfit(appId) {
@@ -1796,12 +1836,24 @@
                 const card = document.createElement('div');
                 card.className = 'monitor-card';
 
-                const appTomanProfit = getLatestTomanProfit(app.id);
+                const calcDetails = getLatestAppCalcDetails(app.id);
+                const appTomanProfit = calcDetails.profit;
                 liveTomanSum += appTomanProfit;
 
                 const isTomanPositive = appTomanProfit >= 0;
                 const tomanValueSign = isTomanPositive ? '+' : '';
                 const tomanDisplay = `${tomanValueSign}${appTomanProfit.toLocaleString('en-US')} تومان`;
+
+                let statusBadgeHtml = '';
+                if (calcDetails.status === 'recovering') {
+                    statusBadgeHtml = `<span class="app-badge" style="background: rgba(255, 152, 0, 0.2); color: #ff9800; border-color: rgba(255, 152, 0, 0.4); margin-right: 6px;">🟠 جبران ضرر</span>`;
+                } else if (calcDetails.status === 'increase' && appTomanProfit > 0) {
+                    statusBadgeHtml = `<span class="app-badge" style="background: rgba(52, 211, 153, 0.2); color: #34d399; border-color: rgba(52, 211, 153, 0.4); margin-right: 6px;">🟢 سود فوق قله</span>`;
+                } else if (calcDetails.status === 'decrease') {
+                    statusBadgeHtml = `<span class="app-badge" style="background: rgba(248, 113, 113, 0.2); color: #f87171; border-color: rgba(248, 113, 113, 0.4); margin-right: 6px;">🔴 کاهش قیمت</span>`;
+                }
+
+                let peakBadgeHtml = calcDetails.peak > 0 ? `<div style="font-size: 0.75rem; color: #fbbf24; margin-top: 2px;">🏔️ قله: ${calcDetails.peak.toLocaleString('en-US')} تومان</div>` : '';
 
                 if (lastItem) {
                     liveSum += lastItem.value;
@@ -1812,18 +1864,27 @@
                     const isPositive = lastItem.value >= 0;
                     const valueSign = isPositive ? '+' : '';
 
+                    let profitColorStyle = isPositive ? 'color: var(--positive-color);' : 'color: var(--negative-color);';
+                    if (calcDetails.status === 'recovering') {
+                        profitColorStyle = 'color: #ff9800;';
+                    }
+
                     card.innerHTML = `
                         <div class="card-header">
-                            <span class="app-badge">${app.title}</span>
+                            <div>
+                                <span class="app-badge">${app.title}</span>
+                                ${statusBadgeHtml}
+                            </div>
                             <span class="time-ago">${timeAgoText}</span>
                         </div>
                         <div class="card-body">
                             <div class="date-details">
                                 <span class="solar-date">📅 ${dt.date}</span>
                                 <span class="solar-time">⏰ ${dt.time}</span>
-                                <div style="font-size: 0.85rem; font-weight: bold; margin-top: 4px;" class="${isTomanPositive ? 'positive' : 'negative'}">
+                                <div style="font-size: 0.85rem; font-weight: bold; margin-top: 4px; ${profitColorStyle}">
                                     💰 ${tomanDisplay}
                                 </div>
+                                ${peakBadgeHtml}
                             </div>
                             <span class="percent-value ${isPositive ? 'positive' : 'negative'}">${valueSign}${lastItem.value}%</span>
                         </div>
@@ -1832,7 +1893,10 @@
                 } else {
                     card.innerHTML = `
                         <div class="card-header">
-                            <span class="app-badge">${app.title}</span>
+                            <div>
+                                <span class="app-badge">${app.title}</span>
+                                ${statusBadgeHtml}
+                            </div>
                             <span class="time-ago">بدون ثبت درصد</span>
                         </div>
                         <div class="card-body">
@@ -1841,6 +1905,7 @@
                                 <div style="font-size: 0.85rem; font-weight: bold; margin-top: 4px;" class="${isTomanPositive ? 'positive' : 'negative'}">
                                     💰 ${tomanDisplay}
                                 </div>
+                                ${peakBadgeHtml}
                             </div>
                             <span class="percent-value none">—%</span>
                         </div>
