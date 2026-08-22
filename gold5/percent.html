@@ -603,6 +603,13 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
             localStorage.setItem(STORAGE_KEY + "_statsOpen", statsMenuOpen);
             triggerAutoGithubSync();
+
+            // Trigger immediate cloud sync push so MantleDB cloud backup receives deletions & additions instantly
+            if (window.parent && window.parent.EmaratCloudSync) {
+                window.parent.EmaratCloudSync.push();
+            } else if (window.EmaratCloudSync) {
+                window.EmaratCloudSync.push();
+            }
         }
 
         function loadData() {
@@ -636,14 +643,27 @@
 
                 let hasChanges = false;
 
-                // --- 1. Resilient Two-Way Merge for Percents ---
+                // --- 1. Resilient Two-Way Merge for Percents (Respecting local Trash) ---
                 if (cloudData.percents && Array.isArray(cloudData.percents)) {
                     // Map existing local percents by timestamp to avoid duplicates
                     const localMap = new Map();
                     percents.forEach(p => localMap.set(p.timestamp, p.value));
 
+                    // Build a list of deleted timestamps in local trash so deleted items are NOT resurrected
+                    const localTrashTimestamps = new Set(trash.map(t => t.timestamp));
+
                     let mergedCount = 0;
                     cloudData.percents.forEach(cp => {
+                        // Check if item was deleted locally
+                        let wasDeletedLocally = false;
+                        for (let t of localTrashTimestamps) {
+                            if (Math.abs(t - cp.timestamp) < 2000) {
+                                wasDeletedLocally = true;
+                                break;
+                            }
+                        }
+                        if (wasDeletedLocally) return;
+
                         // If this timestamp or close timestamp (within 2 seconds) doesn't exist, insert it!
                         let exists = false;
                         for (let t of localMap.keys()) {
@@ -662,7 +682,7 @@
                     if (mergedCount > 0) {
                         percents.sort((a, b) => a.timestamp - b.timestamp);
                         hasChanges = true;
-                        console.log(`[i] Merged ${mergedCount} new percent record(s) from GitHub backup without losing local data.`);
+                        console.log(`[i] Merged ${mergedCount} new percent record(s) from GitHub backup without losing local data or restoring deleted items.`);
                     }
                 }
 

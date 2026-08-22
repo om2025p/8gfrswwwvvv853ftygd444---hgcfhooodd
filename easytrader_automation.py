@@ -160,7 +160,47 @@ def send_telegram_message(message, photo_path=None):
         return None
 
 
-def sync_with_mantledb(new_val, percent_val, base_val):
+def fetch_cloud_state():
+    """Fetches the latest state from MantleDB cloud backup if MANTLE_FINGERPRINT is set."""
+    if not MANTLE_FINGERPRINT:
+        print("[i] MANTLE_FINGERPRINT not provided, skipping cloud fetch.")
+        return None
+
+    namespace = "emarat-pwa-backup-v2"
+    url = f"https://mantledb.sh/v2/{namespace}/{MANTLE_FINGERPRINT}"
+    print(f"[+] Fetching latest cloud state from MantleDB: {url}")
+    try:
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req) as res:
+            if res.status == 200:
+                cloud_resp = json.loads(res.read().decode('utf-8'))
+                data = cloud_resp.get("data", {})
+                synergy_str = data.get("energy_fund_synergy", "{}")
+                synergy_obj = json.loads(synergy_str) if synergy_str else {}
+
+                history_str = data.get("sinergy_history", "[]")
+                history_list = json.loads(history_str) if history_str else []
+
+                base_str = data.get("sinergy_baseNumber", "")
+                base_num = 0
+                if base_str:
+                    try:
+                        base_num = float(str(base_str).replace(',', ''))
+                    except ValueError:
+                        pass
+
+                return {
+                    "synergy": synergy_obj,
+                    "history": history_list,
+                    "baseNumber": base_num,
+                    "cloud_data_raw": data
+                }
+    except Exception as e:
+        print(f"[i] Could not fetch cloud state from MantleDB: {e}")
+    return None
+
+
+def sync_with_mantledb(new_val, percent_val, base_val, local_state_payload):
     """Syncs the new records to MantleDB to automatically sync user's PWAs."""
     if not MANTLE_FINGERPRINT:
         print("[i] MANTLE_FINGERPRINT not provided, skipping cloud synchronization.")
@@ -171,7 +211,6 @@ def sync_with_mantledb(new_val, percent_val, base_val):
 
     print(f"[+] Syncing with MantleDB at URL: {url}")
     try:
-        # 1. Fetch current data from MantleDB
         req = urllib.request.Request(url)
         current_cloud = {}
         try:
@@ -179,42 +218,19 @@ def sync_with_mantledb(new_val, percent_val, base_val):
                 if res.status == 200:
                     current_cloud = json.loads(res.read().decode('utf-8'))
         except Exception as e:
-            print(f"[i] No existing cloud record or unable to fetch. Will start fresh. Error: {e}")
+            print(f"[i] No existing cloud record or unable to fetch. Error: {e}")
 
         cloud_data = current_cloud.get("data", {})
 
-        # Parse energy_fund_synergy
-        synergy_str = cloud_data.get("energy_fund_synergy", "{}")
-        try:
-            synergy_obj = json.loads(synergy_str)
-        except Exception:
-            synergy_obj = {}
-
-        percents = synergy_obj.get("percents", [])
-        trash = synergy_obj.get("trash", [])
-        goal = synergy_obj.get("goal", None)
-        highlightedStates = synergy_obj.get("highlightedStates", {})
-        periodTarget = synergy_obj.get("periodTarget", None)
-        achievedPeriods = synergy_obj.get("achievedPeriods", [])
-        notes = synergy_obj.get("notes", [])
-
-        # Append new percent record
-        timestamp_ms = int(time.time() * 1000)
-        percents.append({
-            "value": float(percent_val),
-            "timestamp": timestamp_ms
-        })
-        percents.sort(key=lambda x: x["timestamp"])
-
-        # Re-save energy_fund_synergy object
+        # Re-save energy_fund_synergy object using the updated local_state payload
         updated_synergy_obj = {
-            "percents": percents,
-            "trash": trash,
-            "goal": goal,
-            "highlightedStates": highlightedStates,
-            "periodTarget": periodTarget,
-            "achievedPeriods": achievedPeriods,
-            "notes": notes
+            "percents": local_state_payload.get("percents", []),
+            "trash": local_state_payload.get("trash", []),
+            "goal": local_state_payload.get("goal", None),
+            "highlightedStates": local_state_payload.get("highlightedStates", {}),
+            "periodTarget": local_state_payload.get("periodTarget", None),
+            "achievedPeriods": local_state_payload.get("achievedPeriods", []),
+            "notes": local_state_payload.get("notes", [])
         }
         cloud_data["energy_fund_synergy"] = json.dumps(updated_synergy_obj)
 
@@ -223,38 +239,10 @@ def sync_with_mantledb(new_val, percent_val, base_val):
         cloud_data["sinergy_baseNumber"] = formatted_new_val
 
         # Update sinergy_history
-        history_str = cloud_data.get("sinergy_history", "[]")
-        try:
-            history_list = json.loads(history_str)
-        except Exception:
-            history_list = []
-
-        # Get true Persian date string for history
-        persian_date_str = get_current_persian_datetime()
-
-        diff_type = "neutral"
-        if percent_val > 0:
-            diff_type = "increase"
-        elif percent_val < 0:
-            diff_type = "decrease"
-
-        history_list.insert(0, {
-            "id": timestamp_ms,
-            "base": f"{base_val:,}",
-            "new": formatted_new_val,
-            "percent": f"{percent_val:.2f}",
-            "type": diff_type,
-            "rawBase": float(base_val),
-            "rawNew": float(new_val),
-            "timestamp": datetime.now().isoformat() + "Z",
-            "persianDate": persian_date_str
-        })
-        if len(history_list) > 60:
-            history_list = history_list[:60]
-
-        cloud_data["sinergy_history"] = json.dumps(history_list)
+        cloud_data["sinergy_history"] = json.dumps(local_state_payload.get("history", []))
 
         # Set last modified
+        timestamp_ms = int(time.time() * 1000)
         cloud_data["emarat_last_modified"] = str(timestamp_ms)
 
         # Construct payload
@@ -391,6 +379,34 @@ def run_automation():
                 print(f"[+] Loaded existing backup file. Current base value: {local_state.get('baseNumber')}")
         except Exception as e:
             print(f"[-] Warning: Failed to parse backup file, using defaults: {e}")
+
+    # Fetch fresh cloud state if available to merge cloud deletions & additions
+    cloud_state = fetch_cloud_state()
+    if cloud_state:
+        synergy_cloud = cloud_state.get("synergy", {})
+        if synergy_cloud:
+            if "percents" in synergy_cloud:
+                local_state["percents"] = synergy_cloud.get("percents", [])
+            if "trash" in synergy_cloud:
+                local_state["trash"] = synergy_cloud.get("trash", [])
+            if "goal" in synergy_cloud:
+                local_state["goal"] = synergy_cloud.get("goal")
+            if "highlightedStates" in synergy_cloud:
+                local_state["highlightedStates"] = synergy_cloud.get("highlightedStates", {})
+            if "periodTarget" in synergy_cloud:
+                local_state["periodTarget"] = synergy_cloud.get("periodTarget")
+            if "achievedPeriods" in synergy_cloud:
+                local_state["achievedPeriods"] = synergy_cloud.get("achievedPeriods", [])
+            if "notes" in synergy_cloud:
+                local_state["notes"] = synergy_cloud.get("notes", [])
+
+        if cloud_state.get("history"):
+            local_state["history"] = cloud_state.get("history")
+
+        if cloud_state.get("baseNumber") and cloud_state.get("baseNumber") > 0:
+            local_state["baseNumber"] = cloud_state.get("baseNumber")
+
+        print("[+] Merged live cloud state from MantleDB into local automation state.")
 
     base_val = local_state.get("baseNumber", 100983803)
     history_list = local_state.get("history", [])
@@ -868,7 +884,7 @@ def run_automation():
             print(f"[+] Successfully wrote updated local backup to {BACKUP_FILE_PATH}")
 
             # 6. Synchronization with MantleDB (Cloud sync)
-            sync_ok = sync_with_mantledb(new_val, round(percent_change, 2), base_val)
+            sync_ok = sync_with_mantledb(new_val, round(percent_change, 2), base_val, local_state)
 
             # 7. Send Telegram Notification
             emoji = "📈" if percent_change > 0 else ("📉" if percent_change < 0 else "⚖️")
