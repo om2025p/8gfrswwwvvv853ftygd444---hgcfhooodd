@@ -260,6 +260,12 @@
             border-color: var(--positive-color);
         }
 
+        .recovering {
+            color: #ef6c00;
+            background-color: rgba(255, 152, 0, 0.1);
+            border-color: #ff9800;
+        }
+
         .negative {
             color: var(--negative-color);
             background-color: rgba(198, 40, 40, 0.1);
@@ -268,6 +274,14 @@
 
         .neutral {
             color: var(--neutral-color);
+        }
+
+        .readonly-input {
+            background-color: var(--btn-copy-bg) !important;
+            color: var(--primary-color) !important;
+            border-color: var(--border-color) !important;
+            cursor: not-allowed;
+            font-weight: bold;
         }
 
         /* استایل تاریخچه */
@@ -491,6 +505,14 @@
         </div>
 
         <div class="input-group">
+            <label for="cement_peakNumber">🏔️ بالاترین عدد ثبت‌شده / قله (غیرقابل ویرایش):</label>
+            <div class="input-wrapper">
+                <input type="text" id="cement_peakNumber" class="readonly-input" readonly placeholder="هنوز قله‌ای ثبت نشده">
+                <button id="cement_resetPeak" class="copy-btn" style="background-color: #ff9800; color: #fff; border-color: #ff9800; font-weight: bold; min-width: 80px;" title="ریست قله به عدد پایه">🔄 ریست</button>
+            </div>
+        </div>
+
+        <div class="input-group">
             <label for="cement_number2">عدد جدید (با کاما):</label>
             <div class="input-wrapper">
                 <input type="text" id="cement_number2" placeholder="مثال: 500,000">
@@ -571,11 +593,14 @@
 
     // ========== کلیدهای ذخیره‌سازی ==========
     const STORAGE_BASE = 'cement_baseNumber';
+    const STORAGE_PEAK = 'cement_peakNumber';
     const STORAGE_HISTORY = 'cement_history';
 
     // ========== المان‌ها ==========
     const num1Input = document.getElementById('cement_number1');
+    const peakInput = document.getElementById('cement_peakNumber');
     const num2Input = document.getElementById('cement_number2');
+    const resetPeakBtn = document.getElementById('cement_resetPeak');
     const resultDiv = document.getElementById('cement_differenceResult');
     const calcBtn = document.getElementById('cement_calculateDifference');
     const historyToggleBtn = document.getElementById('historyToggleBtn');
@@ -877,31 +902,44 @@
             return false;
         }
 
+        let currentPeak = parseNumberWithCommas(normalizeNumberString(localStorage.getItem(STORAGE_PEAK)));
+        if (isNaN(currentPeak)) {
+            currentPeak = baseNum;
+        }
+
         const diff = newNum - baseNum;
         const percent = (diff / baseNum) * 100;
         let percentFixed = percent.toFixed(2);
         let type = 'neutral';
         let resultText = `📊 تغییرات درصد (سیمان کیان): ${percentFixed}%`;
 
-        if (percent > 0) {
-            resultText += ' 📈 (افزایش ارزش صندوق)';
+        const changeAmount = Math.abs((percent/100) * baseNum);
+
+        if (newNum > currentPeak) {
+            // سود خالص واقعی - عبور از قله
+            currentPeak = newNum;
+            localStorage.setItem(STORAGE_PEAK, formatNumberWithCommas(currentPeak));
+            peakInput.value = formatNumberWithCommas(currentPeak);
+
+            resultText += ' 🚀 🟢 (سود خالص واقعی - عبور از قله)';
+            resultText += ` — 🎉 یعنی ${formatNumberWithCommas(Math.round(changeAmount))} تومان افزایش سرمایه واقعی و قله جدید ثبت شد!`;
             type = 'increase';
             resultDiv.classList.add('positive');
-        } else if (percent < 0) {
-            resultText += ' 📉 (کاهش ارزش صندوق)';
+        } else if (newNum > baseNum && newNum <= currentPeak) {
+            // جبران ضرر - رنگ نارنجی
+            resultText += ' 🟠 (جبران ضرر / اصلاح قیمت)';
+            resultText += ` — ⚡ یعنی ${formatNumberWithCommas(Math.round(changeAmount))} تومان رشد از پایه، اما هنوز زیر قله قبلی (${formatNumberWithCommas(currentPeak)}) هستید!`;
+            type = 'recovering';
+            resultDiv.classList.add('recovering');
+        } else if (newNum < baseNum) {
+            resultText += ' 📉 🔴 (کاهش ارزش صندوق)';
+            resultText += ` — 😢 یعنی ${formatNumberWithCommas(Math.round(changeAmount))} تومان کاهش سرمایه!`;
             type = 'decrease';
             resultDiv.classList.add('negative');
         } else {
             resultText += ' ⚖️ (بدون تغییر)';
             type = 'neutral';
             resultDiv.classList.add('neutral');
-        }
-
-        const changeAmount = Math.abs((percent/100) * baseNum);
-        if (percent > 0) {
-            resultText += ` — 🎉 یعنی ${formatNumberWithCommas(Math.round(changeAmount))} تومان افزایش سرمایه!`;
-        } else if (percent < 0) {
-            resultText += ` — 😢 یعنی ${formatNumberWithCommas(Math.round(changeAmount))} تومان کاهش سرمایه!`;
         }
 
         resultDiv.textContent = resultText;
@@ -944,8 +982,27 @@
         }
     }
 
-    num1Input.addEventListener('input', handleNumberInput);
+    num1Input.addEventListener('input', (e) => {
+        handleNumberInput(e);
+        const savedPeak = localStorage.getItem(STORAGE_PEAK);
+        if (!savedPeak) {
+            peakInput.value = e.target.value;
+        }
+    });
     num2Input.addEventListener('input', handleNumberInput);
+
+    resetPeakBtn.addEventListener('click', () => {
+        const baseVal = num1Input.value;
+        if (baseVal) {
+            localStorage.setItem(STORAGE_PEAK, baseVal);
+            peakInput.value = baseVal;
+            showToast('🔄 قله به عدد پایه ریست شد!');
+        } else {
+            localStorage.removeItem(STORAGE_PEAK);
+            peakInput.value = '';
+            showToast('🔄 قله ریست شد!');
+        }
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
         const savedBase = localStorage.getItem(STORAGE_BASE);
@@ -956,6 +1013,17 @@
                 num1Input.value = formatNumberWithCommas(num);
             }
         }
+        const savedPeak = localStorage.getItem(STORAGE_PEAK);
+        if (savedPeak) {
+            const converted = normalizeNumberString(savedPeak);
+            const num = parseNumberWithCommas(converted);
+            if (!isNaN(num)) {
+                peakInput.value = formatNumberWithCommas(num);
+            }
+        } else if (num1Input.value) {
+            peakInput.value = num1Input.value;
+        }
+
         renderHistory();
         num1Input.focus();
     });
