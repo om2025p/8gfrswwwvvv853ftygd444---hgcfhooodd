@@ -3,9 +3,9 @@
 name: Deploy static content to Pages
 
 on:
-  # Runs on pushes targeting any branch
+  # Runs on pushes targeting main branch only to satisfy environment protection rules
   push:
-    branches: ['**']
+    branches: ['main']
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:

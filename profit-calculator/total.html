@@ -127,9 +127,107 @@
         }
 
         .result-value {
-            font-size: 1.4rem;
+            font-size: clamp(1rem, 3.5vw, 1.35rem);
             font-weight: bold;
             font-family: 'Roboto Mono', monospace;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            white-space: normal;
+            line-height: 1.4;
+            direction: ltr;
+            text-align: right;
+        }
+
+        /* Accordion Collapsible Styles */
+        .accordion-toggle-btn {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            margin-top: 15px;
+        }
+
+        .accordion-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #00c853;
+        }
+
+        .accordion-content {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 380px;
+            overflow-y: auto;
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+
+        .accordion-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .accordion-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+        }
+
+        .fund-card {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-right: 4px solid #00e676;
+            text-align: right;
+            box-sizing: border-box;
+        }
+
+        .fund-header {
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: #64ffda;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .fund-row {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-top: 8px;
+        }
+
+        .fund-label {
+            opacity: 0.8;
+            font-size: 0.82rem;
+        }
+
+        .fund-value {
+            font-size: clamp(0.95rem, 3.2vw, 1.15rem);
+            font-weight: bold;
+            color: #ffffff;
+            font-family: 'Roboto Mono', monospace;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            white-space: normal;
+            line-height: 1.3;
+            direction: ltr;
+            text-align: right;
+        }
+
+        .fund-value.profit {
+            color: #e040fb;
         }
 
         .warning-box {
@@ -306,12 +404,61 @@
                         <div class="result-value" id="total-profit-val">-- تومان</div>
                     </div>
                 </div>
+
+                <div class="fund-accordion-wrapper" style="margin-top: 15px;">
+                    <button id="toggle-accordion-btn" class="accordion-toggle-btn">
+                        <span>📂 تفکیک دارایی و سود صندوق‌ها</span>
+                        <span id="accordion-arrow">▼</span>
+                    </button>
+                    <div id="fund-accordion-content" class="accordion-content" style="display: none;">
+                        <!-- لیست کارت‌های صندوق‌ها -->
+                    </div>
+                </div>
+
                 <button class="btn-back" onclick="window.close()">🔙 بستن صفحه گزارش</button>
             `;
 
             const yearsInput = document.getElementById('target-years');
             const amountValDiv = document.getElementById('total-amount-val');
             const profitValDiv = document.getElementById('total-profit-val');
+            const toggleAccordionBtn = document.getElementById('toggle-accordion-btn');
+            const accordionContent = document.getElementById('fund-accordion-content');
+            const accordionArrow = document.getElementById('accordion-arrow');
+
+            // تابع باز/بسته کردن منوی کشویی
+            toggleAccordionBtn.addEventListener('click', () => {
+                const isHidden = accordionContent.style.display === 'none';
+                accordionContent.style.display = isHidden ? 'flex' : 'none';
+                accordionArrow.innerText = isHidden ? '▲' : '▼';
+            });
+
+            function getFundName(tabId, data) {
+                const customName = localStorage.getItem(`tabCustomName_${tabId}`);
+                if (customName && customName.trim()) {
+                    return customName.trim();
+                }
+                const watchTitles = {
+                    'percents': 'ثبت درصد 1 (صندوق طلا)',
+                    'kian_percents': 'ثبت درصد 2',
+                    'stock____________tas9yl_new_unified': 'ثبت درصد 3',
+                    'mofid_atie_percents': 'ثبت درصد 4',
+                    'energy_fund_synergy': 'ثبت درصد 5',
+                    'cement_factory_percents': 'ثبت درصد 6'
+                };
+                if (data.watchSource && watchTitles[data.watchSource]) {
+                    return watchTitles[data.watchSource];
+                }
+                return `تب ${tabId}`;
+            }
+
+            function formatLargeNumber(numDecimal) {
+                let str = numDecimal.toFixed(0);
+                if (str.length > 25 || str.includes('e')) {
+                    // برای اعداد بسیار بزرگ از حالت توصیفی یا علمی استفاده می‌شود
+                    return numDecimal.toNumber().toExponential(4) + ' تومان';
+                }
+                return `${str.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            }
 
             function performSum() {
                 let targetYears = parseFloat(yearsInput.value);
@@ -322,15 +469,38 @@
 
                 let sumAmount = new Decimal(0);
                 let sumProfit = new Decimal(0);
+                let fundHtml = '';
 
                 markedTabs.forEach(tab => {
                     const res = runCompoundingCalculation(tab.data, targetYears);
                     sumAmount = sumAmount.plus(res.finalAmount);
                     sumProfit = sumProfit.plus(res.profitEarned);
+
+                    const fundTitle = getFundName(tab.id, tab.data);
+                    const formattedFinal = formatLargeNumber(res.finalAmount);
+                    const formattedProfit = formatLargeNumber(res.profitEarned);
+
+                    fundHtml += `
+                        <div class="fund-card">
+                            <div class="fund-header">
+                                <span>💎 ${fundTitle}</span>
+                                <span style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">#${tab.id}</span>
+                            </div>
+                            <div class="fund-row">
+                                <span class="fund-label">کل دارایی (مبلغ نهایی):</span>
+                                <span class="fund-value">${formattedFinal}</span>
+                            </div>
+                            <div class="fund-row">
+                                <span class="fund-label">سود مرکب کسب‌شده:</span>
+                                <span class="fund-value profit">${formattedProfit}</span>
+                            </div>
+                        </div>
+                    `;
                 });
 
-                amountValDiv.innerText = `${sumAmount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
-                profitValDiv.innerText = `${sumProfit.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+                amountValDiv.innerText = formatLargeNumber(sumAmount);
+                profitValDiv.innerText = formatLargeNumber(sumProfit);
+                accordionContent.innerHTML = fundHtml;
             }
 
             yearsInput.addEventListener('input', performSum);
