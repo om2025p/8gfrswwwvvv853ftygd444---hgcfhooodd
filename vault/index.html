@@ -1085,6 +1085,15 @@
         TAB: REPOS
         ======================================== -->
         <div class="tab-content" id="tabRepos">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--bg-secondary); padding: 16px 20px; border-radius: var(--radius); box-shadow: var(--shadow); flex-wrap: wrap; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-code-branch" style="font-size: 24px; color: var(--primary);"></i>
+                    <h2 style="font-size: 18px; font-weight: 700;">مدیریت مخازن (Repositories)</h2>
+                </div>
+                <button class="btn btn-primary" id="addRepoBtn">
+                    <i class="fas fa-plus"></i> افزودن مخزن جدید
+                </button>
+            </div>
             <div id="reposContainer">
                 <!-- Repos will be rendered here -->
             </div>
@@ -1288,6 +1297,7 @@
             const closeTrashBtn = $('#closeTrashBtn');
             const emptyTrashBtn = $('#emptyTrashBtn');
             const migrationBadge = $('#migrationBadge');
+            const addRepoBtn = $('#addRepoBtn');
 
             const modalOverlay = $('#modalOverlay');
             const modalTitle = $('#modalTitle');
@@ -1978,10 +1988,16 @@
 
                 reposContainer.innerHTML = `<div class="repo-grid">${repos.map(repo => renderRepoCard(repo)).join('')}</div>`;
 
-                // Attach edit events to repository buttons
+                // Attach edit & delete events to repository buttons
                 reposContainer.querySelectorAll('.edit-repo-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         editRepo(btn.dataset.id);
+                    });
+                });
+
+                reposContainer.querySelectorAll('.delete-repo-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        deleteRepo(btn.dataset.id);
                     });
                 });
             }
@@ -2014,17 +2030,122 @@
                         </div>
                         <div class="repo-actions" style="display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); flex-wrap: wrap;">
                             <button class="btn btn-primary btn-sm edit-repo-btn" data-id="${repo.id}" style="padding: 6px 12px; font-size: 12px;">
-                                <i class="fas fa-edit"></i> ویرایش اسم‌ها
+                                <i class="fas fa-edit"></i> ویرایش مشخصات
                             </button>
-                            <button class="btn btn-secondary btn-sm" onclick="showToast('در حال توسعه...', 'warning')" style="padding: 6px 12px; font-size: 12px;">
-                                <i class="fas fa-download"></i> دانلود ZIP
-                            </button>
-                            <button class="btn btn-secondary btn-sm" onclick="showToast('در حال توسعه...', 'warning')" style="padding: 6px 12px; font-size: 12px;">
-                                <i class="fas fa-history"></i> نسخه‌ها
+                            <button class="btn btn-danger btn-sm delete-repo-btn" data-id="${repo.id}" style="padding: 6px 12px; font-size: 12px;">
+                                <i class="fas fa-trash-alt"></i> حذف مخزن
                             </button>
                         </div>
                     </div>
                 `;
+            }
+
+            function addNewRepo() {
+                const formHtml = `
+                    <form id="addRepoForm" style="direction: rtl; text-align: right; display: flex; flex-direction: column; gap: 14px; max-height: 70vh; overflow-y: auto; padding: 4px;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-weight: 600; font-size: 13px; color: var(--text-secondary);"><i class="fas fa-code"></i> نام انگلیسی مخزن <span style="color: var(--danger);">*</span></label>
+                            <input type="text" id="addRepoName" placeholder="مثلاً: my-awesome-app" style="width: 100%; padding: 10px; border: 2px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font-size: 14px;" required />
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-weight: 600; font-size: 13px; color: var(--text-secondary);"><i class="fas fa-font"></i> نام فارسی مخزن <span style="color: var(--danger);">*</span></label>
+                            <input type="text" id="addRepoPersian" placeholder="مثلاً: اپلیکیشن مدیریت پروژه" style="width: 100%; padding: 10px; border: 2px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font-size: 14px;" required />
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-weight: 600; font-size: 13px; color: var(--text-secondary);"><i class="fas fa-info-circle"></i> توضیحات مخزن</label>
+                            <textarea id="addRepoDesc" rows="2" placeholder="توضیحات کوتاه درباره هدف مخزن..." style="width: 100%; padding: 10px; border: 2px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font-size: 14px; font-family: inherit;"></textarea>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-weight: 600; font-size: 13px; color: var(--text-secondary);"><i class="fas fa-user"></i> نام نام‌کاربری گیت‌هاب</label>
+                            <input type="text" id="addRepoGithubUser" value="om2025p" style="width: 100%; padding: 10px; border: 2px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font-size: 14px;" />
+                        </div>
+
+                        <div style="margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 8px;">
+                            <h4 style="font-size: 14px; color: var(--primary); margin-bottom: 10px;"><i class="fas fa-code-branch"></i> مشخصات شاخه اصلی (Branch)</h4>
+                            <div style="background: var(--bg-primary); padding: 12px; border-radius: var(--radius-sm); border-right: 4px solid var(--primary-light); display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border-color);">
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <div style="flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 4px;">
+                                        <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">نام انگلیسی شاخه <span style="color: var(--danger);">*</span></label>
+                                        <input type="text" id="addBranchName" value="main" style="width: 100%; padding: 8px; font-size: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-secondary); color: var(--text-primary);" required />
+                                    </div>
+                                    <div style="flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 4px;">
+                                        <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">نام فارسی شاخه</label>
+                                        <input type="text" id="addBranchPersian" placeholder="مثلاً: شاخه اصلی" style="width: 100%; padding: 8px; font-size: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-secondary); color: var(--text-primary);" />
+                                    </div>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">توضیحات شاخه</label>
+                                    <input type="text" id="addBranchDesc" placeholder="مثلاً: نسخه نهایی پایداری" style="width: 100%; padding: 8px; font-size: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-secondary); color: var(--text-primary);" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 12px; position: sticky; bottom: 0; background: var(--bg-secondary); padding: 8px 0; z-index: 10;">
+                            <button type="submit" class="btn btn-primary" style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px;"><i class="fas fa-plus-circle"></i> ثبت مخزن</button>
+                            <button type="button" class="btn btn-secondary" onclick="closeModal()" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px;"><i class="fas fa-times"></i> انصراف</button>
+                        </div>
+                    </form>
+                `;
+
+                showModal('➕ افزودن مخزن جدید', formHtml);
+
+                const form = document.getElementById('addRepoForm');
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+
+                    const name = document.getElementById('addRepoName').value.trim();
+                    const persianName = document.getElementById('addRepoPersian').value.trim();
+                    const description = document.getElementById('addRepoDesc').value.trim();
+                    const githubUsername = document.getElementById('addRepoGithubUser').value.trim() || 'om2025p';
+
+                    const branchName = document.getElementById('addBranchName').value.trim() || 'main';
+                    const branchPersian = document.getElementById('addBranchPersian').value.trim() || 'شاخه اصلی';
+                    const branchDesc = document.getElementById('addBranchDesc').value.trim() || '';
+
+                    const newRepo = {
+                        id: 'repo_' + generateId(),
+                        name: name,
+                        persianName: persianName,
+                        description: description,
+                        githubUsername: githubUsername,
+                        defaultBranch: branchName,
+                        branches: [{
+                            name: branchName,
+                            persianName: branchPersian,
+                            description: branchDesc,
+                            lastCommit: Math.random().toString(16).substring(2, 9),
+                            lastUpdate: new Date().toISOString()
+                        }],
+                        createdAt: new Date().toISOString()
+                    };
+
+                    repos.unshift(newRepo);
+                    saveData();
+                    renderRepos();
+
+                    const devRepoCount = document.getElementById('devRepoCount');
+                    if (devRepoCount) devRepoCount.textContent = repos.length;
+
+                    closeModal();
+                    showToast('مخزن جدید با موفقیت اضافه شد! 🎉', 'success');
+                });
+            }
+
+            function deleteRepo(repoId) {
+                const repoIndex = repos.findIndex(r => r.id === repoId);
+                if (repoIndex === -1) return;
+
+                const repo = repos[repoIndex];
+                if (!confirm(`آیا مطمئن هستید که می‌خواهید مخزن «${repo.persianName || repo.name}» را حذف کنید؟`)) return;
+
+                repos.splice(repoIndex, 1);
+                saveData();
+                renderRepos();
+
+                const devRepoCount = document.getElementById('devRepoCount');
+                if (devRepoCount) devRepoCount.textContent = repos.length;
+
+                showToast('مخزن با موفقیت حذف شد 🗑️', 'warning');
             }
 
             function editRepo(repoId) {
@@ -2484,6 +2605,7 @@
                 if (devRepoCount) devRepoCount.textContent = repos.length;
 
                 // Event listeners
+                if (addRepoBtn) addRepoBtn.addEventListener('click', addNewRepo);
                 submitBtn.addEventListener('click', handleSubmit);
                 cancelBtn.addEventListener('click', cancelEdit);
                 toggleFormBtn.addEventListener('click', toggleForm);
