@@ -48,6 +48,8 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            padding-bottom: 65px;
+            box-sizing: border-box;
         }
 
         .header-inputs {
@@ -608,6 +610,190 @@
             transform: translateY(-1px);
         }
 
+        /* نوار تب حباب‌گونه پایین صفحه */
+        .bubble-tabs-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 8px;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .bubble-tabs-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            flex: 1;
+            padding: 5px 0;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .bubble-tabs-container::-webkit-scrollbar {
+            height: 3px;
+        }
+        .bubble-tabs-container::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .bubble-tab {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            border-radius: 30px;
+            background: var(--glass-bg);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            user-select: none;
+            flex-shrink: 0;
+            max-width: 250px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .bubble-tab.active {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 200, 83, 0.4);
+            transform: scale(1.03);
+        }
+
+        .bubble-tab:active {
+            transform: scale(0.95);
+        }
+
+        .add-bubble-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #000;
+            border: none;
+            font-size: 22px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3);
+            transition: all 0.2s;
+        }
+
+        .add-bubble-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* مدال اختصاصی مدیریت حباب */
+        .bubble-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 20000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .bubble-modal-overlay.show {
+            display: flex;
+        }
+
+        .bubble-modal-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 320px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            direction: rtl;
+        }
+
+        .bubble-modal-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--text);
+        }
+
+        .bubble-modal-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+            direction: rtl;
+            user-select: text;
+        }
+
+        .bubble-modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bubble-modal-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.15s;
+        }
+
+        .bubble-modal-btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-rename-save {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .btn-bubble-delete {
+            background: #ff5252;
+            color: #fff;
+        }
+
+        .btn-modal-cancel {
+            background: rgba(128, 128, 128, 0.2);
+            color: var(--text);
+        }
+
         @media (max-width: 640px) {
             .table-wrapper th,
             .table-wrapper td {
@@ -685,6 +871,25 @@
             </div>
             <div id="pane2" class="pane">
                 <div id="historyList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نوار تب حباب‌گونه در پایین صفحه -->
+    <div class="bubble-tabs-bar">
+        <button id="addBubbleBtn" class="add-bubble-btn" title="افزودن حباب جدید">+</button>
+        <div id="bubbleTabsContainer" class="bubble-tabs-container"></div>
+    </div>
+
+    <!-- مدال دو ضربه مدیریت حباب -->
+    <div id="bubbleModalOverlay" class="bubble-modal-overlay">
+        <div class="bubble-modal-card">
+            <div class="bubble-modal-title">⚙️ تنظیمات حباب</div>
+            <input type="text" id="bubbleNameInput" class="bubble-modal-input" placeholder="نام حباب را وارد کنید">
+            <div class="bubble-modal-actions">
+                <button id="saveBubbleNameBtn" class="bubble-modal-btn btn-rename-save">✏️ ذخیره نام جدید</button>
+                <button id="deleteBubbleBtn" class="bubble-modal-btn btn-bubble-delete">🗑️ حذف این حباب</button>
+                <button id="cancelBubbleModalBtn" class="bubble-modal-btn btn-modal-cancel">انصراف</button>
             </div>
         </div>
     </div>
@@ -878,23 +1083,233 @@
                 return s.replace(/[۰-۹٠-٩]/g, ch => map[ch] || ch);
             }
 
+            // ========== سیستم مدیریت حباب‌ها (Bubble Tabs System) ==========
+            let bubbles = [];
+            let activeBubbleId = null;
+            let editingBubbleId = null;
+
+            const bubbleTabsContainer = document.getElementById('bubbleTabsContainer');
+            const addBubbleBtn = document.getElementById('addBubbleBtn');
+            const bubbleModalOverlay = document.getElementById('bubbleModalOverlay');
+            const bubbleNameInput = document.getElementById('bubbleNameInput');
+            const saveBubbleNameBtn = document.getElementById('saveBubbleNameBtn');
+            const deleteBubbleBtn = document.getElementById('deleteBubbleBtn');
+            const cancelBubbleModalBtn = document.getElementById('cancelBubbleModalBtn');
+
+            function saveCurrentBubbleState() {
+                if (!activeBubbleId) return;
+                const idx = bubbles.findIndex(b => b.id === activeBubbleId);
+                if (idx !== -1) {
+                    bubbles[idx].inv = inpInv.value;
+                    bubbles[idx].rate = inpRate.value;
+                    bubbles[idx].cycle = inpCycle.value;
+                    bubbles[idx].isToman = isToman;
+                    localStorage.setItem('calc1_bubbles_v1', JSON.stringify(bubbles));
+                    localStorage.setItem('calc1_active_bubble_id', String(activeBubbleId));
+                }
+            }
+
+            function loadBubbleSystem() {
+                const savedBubbles = localStorage.getItem('calc1_bubbles_v1');
+                const savedActiveId = localStorage.getItem('calc1_active_bubble_id');
+
+                if (savedBubbles) {
+                    try {
+                        bubbles = JSON.parse(savedBubbles);
+                    } catch(e) { bubbles = []; }
+                }
+
+                if (!bubbles || bubbles.length === 0) {
+                    const oldInputs = localStorage.getItem('compound_inputs');
+                    let initInv = "", initRate = "", initCycle = "", initIsToman = false;
+                    if (oldInputs) {
+                        try {
+                            const o = JSON.parse(oldInputs);
+                            initInv = o.inv || "";
+                            initRate = o.rate || "";
+                            initCycle = o.cycle || "";
+                            initIsToman = !!o.isToman;
+                        } catch(e){}
+                    }
+                    bubbles = [{
+                        id: 1,
+                        name: "تپ ۱",
+                        inv: initInv,
+                        rate: initRate,
+                        cycle: initCycle,
+                        isToman: initIsToman
+                    }];
+                    activeBubbleId = 1;
+                } else {
+                    activeBubbleId = savedActiveId ? (isNaN(savedActiveId) ? savedActiveId : Number(savedActiveId)) : bubbles[0].id;
+                    if (!bubbles.some(b => b.id === activeBubbleId)) {
+                        activeBubbleId = bubbles[0].id;
+                    }
+                }
+
+                applyActiveBubbleData();
+                renderBubbleTabs();
+            }
+
+            function applyActiveBubbleData() {
+                const bubble = bubbles.find(b => b.id === activeBubbleId) || bubbles[0];
+                if (!bubble) return;
+                activeBubbleId = bubble.id;
+                inpInv.value = bubble.inv || "";
+                inpRate.value = bubble.rate || "";
+                inpCycle.value = bubble.cycle || "";
+                isToman = !!bubble.isToman;
+                unitBtn.innerText = isToman ? "واحد: تومان" : "واحد: دلار ($)";
+
+                if (inpInv.value && inpRate.value && inpCycle.value) {
+                    calculate(true);
+                } else {
+                    resultArea.innerHTML = `<p class="empty-msg">اعداد را وارد کنید و دکمه محاسبه را بزنید.</p>`;
+                    tableBody.innerHTML = `<tr><td colspan="4">هنوز محاسبه‌ای نشده</td></tr>`;
+                }
+            }
+
+            function getNextDefaultBubbleName() {
+                let count = 1;
+                while (bubbles.some(b => b.name === `تپ ${count}`)) {
+                    count++;
+                }
+                return `تپ ${count}`;
+            }
+
+            function renderBubbleTabs() {
+                if (!bubbleTabsContainer) return;
+                bubbleTabsContainer.innerHTML = '';
+
+                bubbles.forEach(bubble => {
+                    const tabEl = document.createElement('div');
+                    tabEl.className = `bubble-tab ${bubble.id === activeBubbleId ? 'active' : ''}`;
+                    tabEl.innerText = bubble.name;
+
+                    let lastTap = 0;
+                    let tapTimer = null;
+
+                    function handleTap(e) {
+                        const now = Date.now();
+                        const tapLength = now - lastTap;
+
+                        if (tapLength < 300 && tapLength > 0) {
+                            if (tapTimer) clearTimeout(tapTimer);
+                            openBubbleModal(bubble.id);
+                        } else {
+                            tapTimer = setTimeout(() => {
+                                if (activeBubbleId !== bubble.id) {
+                                    saveCurrentBubbleState();
+                                    activeBubbleId = bubble.id;
+                                    applyActiveBubbleData();
+                                    renderBubbleTabs();
+                                    saveCurrentBubbleState();
+                                }
+                            }, 300);
+                        }
+                        lastTap = now;
+                    }
+
+                    tabEl.addEventListener('click', (e) => {
+                        handleTap(e);
+                    });
+
+                    bubbleTabsContainer.appendChild(tabEl);
+                });
+            }
+
+            function openBubbleModal(id) {
+                const bubble = bubbles.find(b => b.id === id);
+                if (!bubble) return;
+                editingBubbleId = id;
+                bubbleNameInput.value = bubble.name;
+                bubbleModalOverlay.classList.add('show');
+                setTimeout(() => bubbleNameInput.select(), 100);
+            }
+
+            function closeBubbleModal() {
+                bubbleModalOverlay.classList.remove('show');
+                editingBubbleId = null;
+            }
+
+            if (addBubbleBtn) {
+                addBubbleBtn.onclick = () => {
+                    saveCurrentBubbleState();
+                    const newBubble = {
+                        id: Date.now(),
+                        name: getNextDefaultBubbleName(),
+                        inv: "",
+                        rate: "",
+                        cycle: "",
+                        isToman: isToman
+                    };
+                    bubbles.push(newBubble);
+                    activeBubbleId = newBubble.id;
+                    applyActiveBubbleData();
+                    renderBubbleTabs();
+                    saveCurrentBubbleState();
+
+                    setTimeout(() => {
+                        bubbleTabsContainer.scrollLeft = bubbleTabsContainer.scrollWidth;
+                    }, 100);
+                };
+            }
+
+            if (saveBubbleNameBtn) {
+                saveBubbleNameBtn.onclick = () => {
+                    if (!editingBubbleId) return;
+                    const newName = bubbleNameInput.value.trim();
+                    if (!newName) {
+                        showToast("⚠️ لطفاً نام معتبری وارد کنید", false);
+                        return;
+                    }
+                    const bubble = bubbles.find(b => b.id === editingBubbleId);
+                    if (bubble) {
+                        bubble.name = newName;
+                        saveCurrentBubbleState();
+                        renderBubbleTabs();
+                        showToast(`✏️ نام حباب به «${newName}» تغییر یافت`, true);
+                    }
+                    closeBubbleModal();
+                };
+            }
+
+            if (deleteBubbleBtn) {
+                deleteBubbleBtn.onclick = () => {
+                    if (!editingBubbleId) return;
+                    if (bubbles.length <= 1) {
+                        showToast("⚠️ حداقل یک حباب باید باقی بماند!", false);
+                        return;
+                    }
+                    const deletedName = bubbles.find(b => b.id === editingBubbleId)?.name || "";
+                    bubbles = bubbles.filter(b => b.id !== editingBubbleId);
+                    if (activeBubbleId === editingBubbleId) {
+                        activeBubbleId = bubbles[0].id;
+                        applyActiveBubbleData();
+                    }
+                    saveCurrentBubbleState();
+                    renderBubbleTabs();
+                    closeBubbleModal();
+                    showToast(`🗑️ حباب «${deletedName}» حذف شد`, true);
+                };
+            }
+
+            if (cancelBubbleModalBtn) cancelBubbleModalBtn.onclick = closeBubbleModal;
+            if (bubbleModalOverlay) {
+                bubbleModalOverlay.onclick = (e) => {
+                    if (e.target === bubbleModalOverlay) closeBubbleModal();
+                };
+            }
+
             function saveInputs() {
                 localStorage.setItem('compound_inputs', JSON.stringify({
                     inv: inpInv.value, rate: inpRate.value, cycle: inpCycle.value, isToman: isToman
                 }));
+                saveCurrentBubbleState();
             }
 
             function loadInputs() {
-                const d = localStorage.getItem('compound_inputs');
-                if (d) {
-                    const o = JSON.parse(d);
-                    inpInv.value = o.inv || "";
-                    inpRate.value = o.rate || "";
-                    inpCycle.value = o.cycle || "";
-                    isToman = !!o.isToman;
-                    unitBtn.innerText = isToman ? "واحد: تومان" : "واحد: دلار ($)";
-                    if (inpInv.value && inpRate.value && inpCycle.value) calculate(true);
-                }
+                loadBubbleSystem();
             }
 
             function formatNumberForDisplay(n) {
