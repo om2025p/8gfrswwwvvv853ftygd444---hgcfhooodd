@@ -45,11 +45,15 @@ async def clone(event):
             except Exception as e:
                 print(f"Error starting userbot in frontend clone: {e}")
 
-        if 't.me/+' in link:
+        from urllib.parse import urlparse
+        parsed_domain = urlparse(link.lower()).netloc
+        is_tg_domain = 't.me' in parsed_domain or 'telegram.me' in parsed_domain
+
+        if 't.me/+' in link or 't.me/joinchat/' in link:
             q = await join(userbot, link)
             await edit.edit(q)
             return
-        if 't.me/' in link:
+        if is_tg_domain:
             await get_msg(userbot, Bot, Drone, event.sender_id, edit.id, link, 0)
         else:
             from download_single import process_social_media_download

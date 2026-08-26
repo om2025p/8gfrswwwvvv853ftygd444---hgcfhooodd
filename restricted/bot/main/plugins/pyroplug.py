@@ -63,7 +63,9 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
     print(f"DEBUG: Entering get_msg with msg_link: {msg_link}")
 
     # Redirect social media links (TikTok, Instagram, WhatsApp, etc.) directly to process_social_media_download
-    if 't.me' not in msg_link:
+    from urllib.parse import urlparse
+    parsed_domain = urlparse(msg_link.lower()).netloc
+    if 't.me' not in parsed_domain and 'telegram.me' not in parsed_domain:
         from download_single import process_social_media_download
         return await process_social_media_download(msg_link, sender, edit_id)
 

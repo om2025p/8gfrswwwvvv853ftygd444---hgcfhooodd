@@ -440,10 +440,14 @@ async def main_download():
         # Check if link is social media / web link (Instagram, TikTok, WhatsApp, YouTube, Twitter, etc.)
         link_str = str(link).strip()
         link_lower = link_str.lower()
+        from urllib.parse import urlparse
+        parsed_domain = urlparse(link_lower).netloc
+        is_telegram_link = 't.me' in parsed_domain or 'telegram.me' in parsed_domain
+
         is_social = any(domain in link_lower for domain in [
             'instagram.com', 'instagr.am', 'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
             'whatsapp.com', 'chat.whatsapp.com', 'wa.me', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com'
-        ]) or (link_lower.startswith(('http://', 'https://')) and 't.me' not in link_lower)
+        ]) or (link_lower.startswith(('http://', 'https://')) and not is_telegram_link)
 
         if is_social and not link_lower.startswith("search:"):
             print(f"Starting social media download for: {link_str} to owner: {owner_id}")
@@ -696,7 +700,7 @@ async def main_download():
                 # Join channel
                 res = await join(userbot, link)
                 await safe_edit_message(owner_id, msg, f"🔑 *نتیجه ورود به کانال خصوصی:*\n{res}")
-            elif 't.me/' not in link:
+            elif not is_telegram_link:
                 # Direct social media download
                 await process_social_media_download(link, owner_id, msg)
             else:
