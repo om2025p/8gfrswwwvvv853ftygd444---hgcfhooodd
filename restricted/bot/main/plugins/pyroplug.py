@@ -62,6 +62,11 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
 
     print(f"DEBUG: Entering get_msg with msg_link: {msg_link}")
 
+    # Redirect social media links (TikTok, Instagram, WhatsApp, etc.) directly to process_social_media_download
+    if 't.me' not in msg_link:
+        from download_single import process_social_media_download
+        return await process_social_media_download(msg_link, sender, edit_id)
+
     # Ensure Pyrogram and Telethon clients are started dynamically (attempt unconditionally to bypass stale states)
     for c_obj in [userbot, client]:
         if c_obj:
@@ -103,9 +108,11 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
     edit = ""
     chat = ""
     round_message = False
-    if "?single" in msg_link:
-        msg_link = msg_link.split("?single")[0]
-    msg_id = int(msg_link.split("/")[-1]) + int(i)
+    clean_link = msg_link.split("?")[0].rstrip("/")
+    try:
+        msg_id = int(clean_link.split("/")[-1]) + int(i)
+    except Exception:
+        msg_id = 0
     height, width, duration, thumb_path = 90, 90, 0, None
 
     print(f"DEBUG: Sanitized msg_id: {msg_id}")
@@ -113,9 +120,9 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
     # CRITICAL BUG FIX: Use exact string presence check instead of 't.me/c/' or 't.me/b/' in msg_link
     if 't.me/c/' in msg_link or 't.me/b/' in msg_link:
         if 't.me/b/' in msg_link:
-            chat = str(msg_link.split("/")[-2])
+            chat = str(clean_link.split("/")[-2])
         else:
-            chat = int('-100' + str(msg_link.split("/")[-2]))
+            chat = int('-100' + str(clean_link.split("/")[-2]))
 
         print(f"DEBUG: Link classified as PRIVATE/RESTRICTED. Chat extracted: {chat}")
         file = ""
@@ -256,7 +263,7 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
             return
         except PeerIdInvalid as pie:
             print(f"DEBUG: PeerIdInvalid error: {pie}")
-            chat = msg_link.split("/")[-3]
+            chat = clean_link.split("/")[-3]
             try:
                 int(chat)
                 new_link = f"t.me/c/{chat}/{msg_id}"
@@ -313,7 +320,7 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
         # Public Channel Link
         print(f"DEBUG: Link classified as PUBLIC. Chat extracted: {msg_link}")
         edit = await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "Cloning public link...")
-        chat = msg_link.split("t.me")[1].split("/")[1]
+        chat = clean_link.split("t.me")[1].split("/")[1]
         try:
             print(f"DEBUG: Attempting direct copy of public message {msg_id} from public channel {chat}...")
             msg = await client.get_messages(chat, msg_id)
