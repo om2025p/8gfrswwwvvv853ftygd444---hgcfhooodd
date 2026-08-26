@@ -82,10 +82,11 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 2400px;
-            height: 2400px;
+            width: 3200px;
+            height: 3200px;
             transform-origin: 0 0;
             cursor: grab;
+            transition: transform 0.08s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .canvas:active {
@@ -165,51 +166,51 @@
             background: #1B5E20 !important;
         }
 
-        /* Tree structure placement inside canvas */
+        /* Tree structure placement inside canvas with ample spacing */
         .tree-layout {
             position: absolute;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 60px;
-            width: 1400px;
-            height: 1400px;
-            left: 500px;
-            top: 500px;
+            gap: 80px;
+            width: 2000px;
+            height: 2000px;
+            left: 600px;
+            top: 600px;
         }
 
-        /* Sub-rows for Grandparents, Parents, Spouses, Children */
+        /* Sub-rows for Grandparents, Parents, Spouses, Children with widened gaps */
         .grandparents-row {
             display: flex;
-            gap: 80px;
+            gap: 120px;
             justify-content: center;
             align-items: center;
-            min-height: 110px;
+            min-height: 120px;
         }
 
         .parents-row {
             display: flex;
-            gap: 50px;
+            gap: 90px;
             justify-content: center;
             align-items: center;
-            min-height: 110px;
+            min-height: 120px;
         }
 
         .center-group {
             display: flex;
-            gap: 30px;
+            gap: 60px;
             justify-content: center;
             align-items: center;
         }
 
         .children-row {
             display: flex;
-            gap: 20px;
+            gap: 45px;
             justify-content: center;
             align-items: center;
-            min-height: 110px;
+            min-height: 120px;
             flex-wrap: wrap;
-            max-width: 900px;
+            max-width: 1300px;
         }
 
         /* Glassmorphic/Milk White Card Designs */
