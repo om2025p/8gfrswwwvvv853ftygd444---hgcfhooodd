@@ -839,13 +839,11 @@
             if (!status) {
                 if (rawNew < rawBase) {
                     status = 'decrease';
-                } else if (rawPeak > 0 && rawNew <= rawPeak) {
+                } else if (rawPeak > 0 && rawNew < rawPeak) {
                     status = 'recovering';
                 } else {
                     status = 'increase';
                 }
-            } else if (status === 'increase' && rawPeak > 0 && rawNew <= rawPeak && rawNew > rawBase) {
-                status = 'recovering';
             }
 
             return {
@@ -979,13 +977,11 @@
                     if (!status) {
                         if (rawNew < rawBase) {
                             status = 'decrease';
-                        } else if (rawPeak > 0 && rawNew <= rawPeak) {
+                        } else if (rawPeak > 0 && rawNew < rawPeak) {
                             status = 'recovering';
                         } else {
                             status = 'increase';
                         }
-                    } else if (status === 'increase' && rawPeak > 0 && rawNew <= rawPeak && rawNew > rawBase) {
-                        status = 'recovering';
                     }
 
                     let ts = null;
