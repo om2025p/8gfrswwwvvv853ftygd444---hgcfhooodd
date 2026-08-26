@@ -1116,7 +1116,7 @@
             canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
         }
 
-        // Zoom & Focus camera helper to spotlight a specific element coordinate or entire active row
+        // Focus camera helper without forced auto-zoom scale changes
         function centerCameraOnCard(selector) {
             const card = document.querySelector(selector);
             if (!card) return;
@@ -1127,13 +1127,7 @@
             const containerRect = container.getBoundingClientRect();
             const relativeBox = getRelativeCoords(card, canvas);
 
-            // در صفحه نمایش موبایل (کمتر از 600 پیکسل)، مقیاس را روی 0.82 قرار می‌دهیم تا تمامی کارت‌های پدر، همسر و فرزندان همزمان دیده شوند
-            if (window.innerWidth <= 600) {
-                scale = 0.82;
-            } else {
-                scale = 1.0;
-            }
-
+            // حفظ زوم و مقیاس کاربر بدون تغییر ناگهانی مقیاس (scale ثابت می‌ماند)
             const currentScale = scale;
 
             panX = (containerRect.width / 2) - (relativeBox.centerX * currentScale);
@@ -1518,7 +1512,7 @@
             return container;
         }
 
-        // Clean Fork/Junction Hub SVG connector drawing logic
+        // Standard Global Pedigree Chart SVG connector drawing logic
         function drawConnections() {
             const svg = document.getElementById('connections-svg');
             svg.innerHTML = ''; // Clear SVG canvas
@@ -1530,37 +1524,113 @@
 
             const activeBox = getRelativeCoords(activeCard, canvas);
 
-            // 1. Connect grandparents (Row 0) to parents (Row 1) via fork junction
+            // 1. Connect grandparents (Row 0) to parents (Row 1) via standard pedigree marriage bar
             const parentCards = document.querySelectorAll('#parentsRow .member-card');
             const paternalGrandCards = document.querySelectorAll('#grandparentsRow .member-card:nth-child(-n+2)');
             const maternalGrandCards = document.querySelectorAll('#grandparentsRow .member-card:nth-child(n+3)');
 
             if (parentCards.length > 0 && paternalGrandCards.length > 0) {
                 const fatherBox = getRelativeCoords(parentCards[0], canvas);
-                drawForkJunction(svg, Array.from(paternalGrandCards).map(c => getRelativeCoords(c, canvas)), fatherBox, true);
+                drawPedigreeParentsToChild(svg, Array.from(paternalGrandCards).map(c => getRelativeCoords(c, canvas)), fatherBox);
             }
 
             if (parentCards.length > 1 && maternalGrandCards.length > 0) {
                 const motherBox = getRelativeCoords(parentCards[1], canvas);
-                drawForkJunction(svg, Array.from(maternalGrandCards).map(c => getRelativeCoords(c, canvas)), motherBox, true);
+                drawPedigreeParentsToChild(svg, Array.from(maternalGrandCards).map(c => getRelativeCoords(c, canvas)), motherBox);
             }
 
-            // 2. Connect parents (Row 1) to active (Row 2) via fork junction
+            // 2. Connect parents (Row 1) to active node (Row 2) via standard pedigree marriage bar
             if (parentCards.length > 0) {
-                drawForkJunction(svg, Array.from(parentCards).map(c => getRelativeCoords(c, canvas)), activeBox, true);
+                drawPedigreeParentsToChild(svg, Array.from(parentCards).map(c => getRelativeCoords(c, canvas)), activeBox);
             }
 
-            // 3. Connect spouses (Row 2 side-by-side) with clean horizontal line & ring icon
+            // 3. Connect spouses (Row 2 side-by-side) with clean horizontal marriage line & ring icon
             const spouseCards = document.querySelectorAll('#centerGroup .member-card:not(.active-focus)');
+            const spouseBoxes = [];
             spouseCards.forEach(spCard => {
                 const spBox = getRelativeCoords(spCard, canvas);
+                spouseBoxes.push(spBox);
                 drawSpouseConnection(svg, activeBox, spBox);
             });
 
-            // 4. Connect active (Row 2) to children (Row 3) via fork junction
+            // 4. Connect active couple / marriage bar (Row 2) to children (Row 3) according to World Pedigree Standard
             const childCards = document.querySelectorAll('#childrenRow .member-card');
             if (childCards.length > 0) {
-                drawForkJunction(svg, [activeBox], Array.from(childCards).map(c => getRelativeCoords(c, canvas)), false);
+                const childBoxes = Array.from(childCards).map(c => getRelativeCoords(c, canvas));
+
+                // If spouse exists, branch children directly from midpoint of marriage bar between active and first spouse!
+                let marriageOriginX = activeBox.centerX;
+                let marriageOriginY = activeBox.bottom;
+
+                if (spouseBoxes.length > 0) {
+                    const spouseBox = spouseBoxes[0];
+                    marriageOriginX = (activeBox.centerX + spouseBox.centerX) / 2;
+                    marriageOriginY = (activeBox.centerY + spouseBox.centerY) / 2;
+                }
+
+                drawPedigreeMarriageToChildren(svg, marriageOriginX, marriageOriginY, childBoxes);
+            }
+        }
+
+        // Standard Pedigree Connection: Marriage Bar midpoint down to children
+        function drawPedigreeMarriageToChildren(svg, originX, originY, childBoxes) {
+            if (!childBoxes || childBoxes.length === 0) return;
+
+            const minY = originY;
+            const maxY = Math.min(...childBoxes.map(b => b.top));
+            const midY = (minY + maxY) / 2;
+
+            const minX = Math.min(...childBoxes.map(b => b.centerX));
+            const maxX = Math.max(...childBoxes.map(b => b.centerX));
+
+            // Vertical line down from marriage bar midpoint to horizontal distribution line
+            drawOrthogonalLine(svg, originX, minY, originX, midY);
+
+            // Horizontal distribution bar across children
+            if (minX !== maxX || originX !== minX) {
+                const barMinX = Math.min(minX, originX);
+                const barMaxX = Math.max(maxX, originX);
+                drawOrthogonalLine(svg, barMinX, midY, barMaxX, midY);
+            }
+
+            addLeafDecoration(svg, originX, midY);
+
+            // Vertical drops to each child card
+            childBoxes.forEach(b => {
+                drawOrthogonalLine(svg, b.centerX, midY, b.centerX, b.top);
+            });
+        }
+
+        // Standard Pedigree Connection: Two Parents Marriage Bar -> Child
+        function drawPedigreeParentsToChild(svg, parentBoxes, childBox) {
+            if (!parentBoxes || parentBoxes.length === 0) return;
+
+            if (parentBoxes.length === 1) {
+                // Single parent drop
+                const pBox = parentBoxes[0];
+                const midY = (pBox.bottom + childBox.top) / 2;
+                drawOrthogonalLine(svg, pBox.centerX, pBox.bottom, pBox.centerX, midY);
+                drawOrthogonalLine(svg, pBox.centerX, midY, childBox.centerX, midY);
+                drawOrthogonalLine(svg, childBox.centerX, midY, childBox.centerX, childBox.top);
+            } else {
+                // Two parents: Connect horizontally between parents, then drop from midpoint to child
+                const p1 = parentBoxes[0];
+                const p2 = parentBoxes[1];
+                const marriageMidX = (p1.centerX + p2.centerX) / 2;
+                const marriageMidY = (p1.centerY + p2.centerY) / 2;
+
+                const midY = (Math.max(p1.bottom, p2.bottom) + childBox.top) / 2;
+
+                // Vertical trunk from marriage midpoint down to midY
+                drawOrthogonalLine(svg, marriageMidX, marriageMidY, marriageMidX, midY);
+
+                // Horizontal alignment step to child X
+                drawOrthogonalLine(svg, marriageMidX, midY, childBox.centerX, midY);
+
+                addLeafDecoration(svg, marriageMidX, midY);
+
+                // Vertical drop to child top
+                drawOrthogonalLine(svg, childBox.centerX, midY, childBox.centerX, childBox.top);
             }
         }
 
