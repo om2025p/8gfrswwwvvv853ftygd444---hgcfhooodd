@@ -82,7 +82,7 @@ async def safe_send_message(owner_id, text, disable_web_page_preview=False):
 
 async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=False):
     from main import Bot, bot, userbot
-    if not msg_obj or not hasattr(msg_obj, 'id'):
+    if not msg_obj or isinstance(msg_obj, bool) or not hasattr(msg_obj, 'id') or getattr(msg_obj, 'id', None) is None:
         return await safe_send_message(owner_id, text, disable_web_page_preview)
 
     is_telethon = hasattr(msg_obj, 'client') or hasattr(msg_obj, 'respond')
