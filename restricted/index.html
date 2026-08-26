@@ -641,21 +641,44 @@
                 </div>
             </div>
 
-            <!-- پنل دیاگ و عیب‌یابی کشویی -->
+            <!-- پنل دیاگ و عیب‌یابی اختصاصی تب ۱ (دانلود سریع) -->
+            <div class="white-card" style="margin-top: 10px;">
+                <div id="dlDebugHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
+                    <h2 class="card-title" style="margin: 0; border: none; padding: 0; color: #16a34a;">📥🩺 پنل دیاگ و عیب‌یابی اختصاصی «دانلود سریع» (تب ۱)</h2>
+                    <span id="dlDebugToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: #16a34a;">🔽</span>
+                </div>
+
+                <div id="dlDebugContent" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 0;">
+                    <p style="font-size: 0.82rem; color: #64748b; margin-top: 12px; margin-bottom: 12px; line-height: 1.5;">
+                        تمامی لاگ‌ها، تحلیل لینک‌ها (تلگرام، اینستاگرام، تیک‌تاک، واتساپ) و خطاهای احتمالی فرآیند «دانلود سریع» (تب اول) اختصاصاً در این پنل ثبت و عیب‌یابی می‌شوند.
+                    </p>
+                    <textarea id="dlDebugConsole" readonly class="input-field" style="height: 180px; font-family: 'Courier New', Courier, monospace; font-size: 0.78rem; color: #34d399; background: #0f172a; line-height: 1.4; resize: none; border-color: #1e293b; direction: ltr; text-align: left;"></textarea>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+                        <button class="action-btn secondary" id="btnCopyDlDebug" style="font-size: 0.85rem; padding: 10px;">
+                            📋 کپی لاگ‌های دانلود تب ۱
+                        </button>
+                        <button class="action-btn secondary" id="btnClearDlDebug" style="font-size: 0.85rem; padding: 10px; color: #ef4444; border-color: #fca5a5;">
+                            🗑️ پاک کردن لاگ‌ها
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- پنل دیاگ و عیب‌یابی کلی گیت‌هاب -->
             <div class="white-card" style="margin-top: 10px;">
                 <div id="debugHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
-                    <h2 class="card-title" style="margin: 0; border: none; padding: 0;">🩺📟 پنل دیاگ و عیب‌یابی اختصاصی خطاهای دانلود</h2>
+                    <h2 class="card-title" style="margin: 0; border: none; padding: 0;">🩺📟 پنل دیاگ و عیب‌یابی عمومی سرور و گیت‌هاب</h2>
                     <span id="debugToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: var(--accent-blue);">🔽</span>
                 </div>
 
                 <div id="debugContent" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 0;">
                     <p style="font-size: 0.82rem; color: #64748b; margin-top: 12px; margin-bottom: 12px; line-height: 1.5;">
-                        تمامی لاگ‌های مربوط به استعلام لینک‌ها، وضعیت دانلود از تلگرام، اینستاگرام، تیک‌تاک، پاسخ‌های سرور گیت‌هاب و خطاهای احتمالی به صورت اختصاصی در این پنل ثبت می‌شوند.
+                        تمامی کوئری‌ها، پاسخ‌های شبکه، وضعیت‌های HTTP و متن خطاهای ارتباطی با API گیت‌هاب به صورت عمومی در اینجا ثبت می‌شوند.
                     </p>
                     <textarea id="debugConsole" readonly class="input-field" style="height: 180px; font-family: 'Courier New', Courier, monospace; font-size: 0.78rem; color: #ef4444; background: #0f172a; line-height: 1.4; resize: none; border-color: #334155; direction: ltr; text-align: left;"></textarea>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
                         <button class="action-btn secondary" id="btnCopyDebug" style="font-size: 0.85rem; padding: 10px;">
-                            📋 کپی کردن لاگ‌های عیب‌یابی
+                            📋 کپی کردن لاگ‌های عمومی
                         </button>
                         <button class="action-btn secondary" id="btnClearDebug" style="font-size: 0.85rem; padding: 10px; color: #ef4444; border-color: #fca5a5;">
                             🗑️ پاک کردن لاگ‌ها
@@ -699,13 +722,25 @@
             return str.replace(/[\u200b-\u200d\u200e\u200f\u202a-\u202e\ufeff\u2000-\u200f\u2028-\u202f\u205f-\u206f]/g, '').trim();
         }
 
-        // لاگین دیباگ
+        // لاگین دیباگ عمومی گیت‌هاب
         function logDebug(message, type = 'info') {
             const consoleEl = document.getElementById('debugConsole');
             if (!consoleEl) return;
             const now = new Date();
             const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
             const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : 'ℹ️');
+
+            consoleEl.value += `[${timeStr}] ${prefix} ${message}\n`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        // لاگین دیباگ اختصاصی دانلود سریع (تب ۱)
+        function logDlDebug(message, type = 'info') {
+            const consoleEl = document.getElementById('dlDebugConsole');
+            if (!consoleEl) return;
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+            const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : '📥');
 
             consoleEl.value += `[${timeStr}] ${prefix} ${message}\n`;
             consoleEl.scrollTop = consoleEl.scrollHeight;
@@ -883,12 +918,17 @@
 
             if (downloadLink) {
                 logDebug(`📥 دیاگ لینک دانلود: ${downloadLink}`);
+                logDlDebug(`📥 ارسال لینک جدید برای دانلود سریع (تب ۱): ${downloadLink}`);
                 if (downloadLink.includes('tiktok.com')) {
-                    logDebug(`🎵 تحلیل لینک: ویدیوی تیک‌تاک (موتور دانلود yt-dlp)`);
+                    logDlDebug(`🎵 تحلیل پلتفرم: ویدیوی تیک‌تاک (استخراج توسط yt-dlp)`);
                 } else if (downloadLink.includes('instagram.com') || downloadLink.includes('instagr.am')) {
-                    logDebug(`📸 تحلیل لینک: اینستاگرام (ریلز / پست / استوری)`);
+                    logDlDebug(`📸 تحلیل پلتفرم: اینستاگرام (ریلز / پست / استوری / آلبوم)`);
+                } else if (downloadLink.includes('whatsapp.com') || downloadLink.includes('wa.me')) {
+                    logDlDebug(`💬 تحلیل پلتفرم: لینک رسانه واتساپ`);
                 } else if (downloadLink.includes('t.me')) {
-                    logDebug(`💬 تحلیل لینک: فایل یا کانال تلگرام`);
+                    logDlDebug(`💬 تحلیل پلتفرم: فایل / پست / کانال تلگرام`);
+                } else {
+                    logDlDebug(`🌐 تحلیل پلتفرم: لینک مستقیم وب`);
                 }
             }
 
@@ -938,7 +978,42 @@
             }
         }
 
-        // تاشو کردن پنل دیباگ
+        // تاشو کردن پنل دیباگ اختصاصی دانلود سریع (تب ۱)
+        const dlDebugHeader = document.getElementById('dlDebugHeader');
+        const dlDebugContent = document.getElementById('dlDebugContent');
+        const dlDebugToggleIcon = document.getElementById('dlDebugToggleIcon');
+
+        if (dlDebugHeader) {
+            dlDebugHeader.onclick = () => {
+                if (dlDebugContent.style.maxHeight === '0px' || !dlDebugContent.style.maxHeight) {
+                    dlDebugContent.style.maxHeight = '300px';
+                    dlDebugToggleIcon.style.transform = 'rotate(180deg)';
+                    logDlDebug("پنل دیاگ اختصاصی تب ۱ (دانلود سریع) باز شد.");
+                } else {
+                    dlDebugContent.style.maxHeight = '0px';
+                    dlDebugToggleIcon.style.transform = 'rotate(0deg)';
+                }
+            };
+        }
+
+        document.getElementById('btnCopyDlDebug').onclick = () => {
+            const logs = document.getElementById('dlDebugConsole').value;
+            if (!logs) {
+                showToast("⚠️ لاگی در پنل دانلود تب ۱ وجود ندارد!");
+                return;
+            }
+            navigator.clipboard.writeText(logs).then(() => {
+                showToast("📋 لاگ‌های عیب‌یابی دانلود تب ۱ کپی شد!");
+                logDlDebug("لاگ‌های پنل عیب‌یابی دانلود کپی شدند.", "success");
+            });
+        };
+
+        document.getElementById('btnClearDlDebug').onclick = () => {
+            document.getElementById('dlDebugConsole').value = '';
+            showToast("🗑️ لاگ‌های پنل دانلود تب ۱ پاکسازی شدند.");
+        };
+
+        // تاشو کردن پنل دیباگ عمومی
         const debugHeader = document.getElementById('debugHeader');
         const debugContent = document.getElementById('debugContent');
         const debugToggleIcon = document.getElementById('debugToggleIcon');
@@ -948,7 +1023,7 @@
                 if (debugContent.style.maxHeight === '0px' || !debugContent.style.maxHeight) {
                     debugContent.style.maxHeight = '300px';
                     debugToggleIcon.style.transform = 'rotate(180deg)';
-                    logDebug("پنل عیب‌یابی و مانیتورینگ زنده باز شد.");
+                    logDebug("پنل عیب‌یابی عمومی باز شد.");
                 } else {
                     debugContent.style.maxHeight = '0px';
                     debugToggleIcon.style.transform = 'rotate(0deg)';
@@ -956,7 +1031,7 @@
             };
         }
 
-        // کپی لاگ‌ها
+        // کپی لاگ‌های عمومی
         document.getElementById('btnCopyDebug').onclick = () => {
             const logs = document.getElementById('debugConsole').value;
             if (!logs) {
@@ -964,7 +1039,7 @@
                 return;
             }
             navigator.clipboard.writeText(logs).then(() => {
-                showToast("📋 لاگ‌های عیب‌یابی با موفقیت کپی شد!");
+                showToast("📋 لاگ‌های عیب‌یابی عمومی با موفقیت کپی شد!");
                 logDebug("لاگ‌های پنل عیب‌یابی کپی شدند.");
             });
         };
