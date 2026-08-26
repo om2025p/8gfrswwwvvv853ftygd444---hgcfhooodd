@@ -773,6 +773,7 @@
         let cachedDailyHistory = null;
         let dailyTomanProfitMap = {};
         let dailyTomanProfitAppMap = {};
+        let dailyTomanProfitAppDetailsMap = {};
 
         function getGregorianDayString(ts) {
             const date = new Date(ts);
@@ -834,13 +835,17 @@
             const diff = rawNew - rawBase;
             const tomanProfit = Math.round(diff / 10000);
 
-            let status = calc.type || 'increase';
-            if (rawNew > rawPeak && rawPeak > 0) {
-                status = 'increase';
-            } else if (rawNew > rawBase && rawNew <= rawPeak) {
+            let status = calc.type;
+            if (!status) {
+                if (rawNew < rawBase) {
+                    status = 'decrease';
+                } else if (rawPeak > 0 && rawNew <= rawPeak) {
+                    status = 'recovering';
+                } else {
+                    status = 'increase';
+                }
+            } else if (status === 'increase' && rawPeak > 0 && rawNew <= rawPeak && rawNew > rawBase) {
                 status = 'recovering';
-            } else if (rawNew < rawBase) {
-                status = 'decrease';
             }
 
             return {
@@ -913,6 +918,7 @@
         function initializeTomanProfitCache() {
             dailyTomanProfitMap = {};
             dailyTomanProfitAppMap = {};
+            dailyTomanProfitAppDetailsMap = {};
             const historyKeys = {
                 1: "gold_history",
                 2: "fixedIncome_history",
@@ -920,6 +926,14 @@
                 4: "pension_history",
                 5: "sinergy_history",
                 6: "cement_history"
+            };
+            const peakKeys = {
+                1: "gold_peakNumber",
+                2: "fixedIncome_peakNumber",
+                3: "kian_peakNumber",
+                4: "pension_peakNumber",
+                5: "sinergy_peakNumber",
+                6: "cement_peakNumber"
             };
 
             const processedAppsPerDay = {}; // { 'YYYY-MM-DD': Set([appId1, appId2, ...]) }
@@ -932,10 +946,13 @@
 
                 if (history.length === 0) continue;
 
+                let peakStored = parseFloat(localStorage.getItem(peakKeys[appId])) || 0;
+
                 for (let i = 0; i < history.length; i++) {
                     const calc = history[i];
                     let rawBase = 0;
                     let rawNew = 0;
+                    let rawPeak = peakStored || 0;
 
                     if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
                         rawBase = calc.rawBase;
@@ -949,8 +966,27 @@
                         rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
                     }
 
+                    if (calc.rawPeak !== undefined && calc.rawPeak !== null && !isNaN(calc.rawPeak)) {
+                        rawPeak = Math.max(rawPeak, calc.rawPeak);
+                    } else if (calc.peak) {
+                        rawPeak = Math.max(rawPeak, parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0);
+                    }
+
                     const diff = rawNew - rawBase;
                     const tomanProfit = Math.round(diff / 10000);
+
+                    let status = calc.type;
+                    if (!status) {
+                        if (rawNew < rawBase) {
+                            status = 'decrease';
+                        } else if (rawPeak > 0 && rawNew <= rawPeak) {
+                            status = 'recovering';
+                        } else {
+                            status = 'increase';
+                        }
+                    } else if (status === 'increase' && rawPeak > 0 && rawNew <= rawPeak && rawNew > rawBase) {
+                        status = 'recovering';
+                    }
 
                     let ts = null;
                     if (calc.timestamp) {
@@ -976,8 +1012,16 @@
 
                             if (dailyTomanProfitAppMap[dayStr] === undefined) {
                                 dailyTomanProfitAppMap[dayStr] = {};
+                                dailyTomanProfitAppDetailsMap[dayStr] = {};
                             }
                             dailyTomanProfitAppMap[dayStr][appId] = tomanProfit;
+                            dailyTomanProfitAppDetailsMap[dayStr][appId] = {
+                                profit: tomanProfit,
+                                status: status,
+                                rawBase: rawBase,
+                                rawNew: rawNew,
+                                rawPeak: rawPeak
+                            };
                         }
                     }
                 }
@@ -1415,6 +1459,8 @@
 
                         appsInfo.forEach(app => {
                             const appTomanProfit = (dailyTomanProfitAppMap[dayItem.dayString] && dailyTomanProfitAppMap[dayItem.dayString][app.id]) || 0;
+                            const appDetails = (dailyTomanProfitAppDetailsMap[dayItem.dayString] && dailyTomanProfitAppDetailsMap[dayItem.dayString][app.id]) || null;
+                            const appStatus = appDetails ? appDetails.status : (appTomanProfit > 0 ? 'increase' : (appTomanProfit < 0 ? 'decrease' : 'none'));
 
                             // بررسی می‌کنیم آیا کاربر ثبتی برای این اپلیکیشن در این روز دارد
                             let hasRegistration = false;
@@ -1433,15 +1479,28 @@
                                 const isNegative = appTomanProfit < 0;
                                 const valueSign = appTomanProfit >= 0 ? '+' : '';
 
-                                // کلاس و استایل بدون نبض و ثابت
-                                const pulseClass = isPositive ? 'gold-pulse-card' : '';
-                                const colorClass = isPositive ? 'positive' : (isNegative ? 'negative' : '');
-                                const extraStyle = isPositive ? 'padding: 8px 12px; font-weight: bold; color: #34d399;' : 'padding: 8px 12px;';
+                                let colorHex = 'rgba(255,255,255,0.7)';
+                                let colorClass = '';
+                                if (isNegative || appStatus === 'decrease') {
+                                    colorHex = '#f87171';
+                                    colorClass = 'negative';
+                                } else if (isPositive) {
+                                    if (appStatus === 'recovering') {
+                                        colorHex = '#ff9800';
+                                        colorClass = 'recovering';
+                                    } else {
+                                        colorHex = '#34d399';
+                                        colorClass = 'positive';
+                                    }
+                                }
+
+                                const pulseClass = (isPositive && appStatus === 'increase') ? 'gold-pulse-card' : '';
+                                const extraStyle = `padding: 8px 12px; font-weight: bold; color: ${colorHex};`;
 
                                 appsHtml += `
                                     <div class="history-sub-item ${pulseClass}" style="${extraStyle}">
                                         <span>${app.title}</span>
-                                        <span class="${colorClass}" style="direction: ltr; font-weight: 800;">${valueSign}${appTomanProfit.toLocaleString('en-US')} تومان</span>
+                                        <span class="${colorClass}" style="direction: ltr; font-weight: 800; color: ${colorHex};">${valueSign}${appTomanProfit.toLocaleString('en-US')} تومان</span>
                                     </div>
                                 `;
                                 if (isPositive) {
@@ -1862,9 +1921,13 @@
                     const isPositive = lastItem.value >= 0;
                     const valueSign = isPositive ? '+' : '';
 
-                    let profitColorStyle = isPositive ? 'color: var(--positive-color);' : 'color: var(--negative-color);';
+                    let profitColorStyle = 'color: var(--positive-color);';
                     if (calcDetails.status === 'recovering') {
                         profitColorStyle = 'color: #ff9800;';
+                    } else if (calcDetails.status === 'decrease' || appTomanProfit < 0) {
+                        profitColorStyle = 'color: var(--negative-color);';
+                    } else if (calcDetails.status === 'increase') {
+                        profitColorStyle = 'color: var(--positive-color);';
                     }
 
                     card.innerHTML = `
@@ -1888,6 +1951,15 @@
                         ${getMonthlyDepositCardHtml(app.id)}
                     `;
                 } else {
+                    let profitColorStyle = 'color: var(--positive-color);';
+                    if (calcDetails.status === 'recovering') {
+                        profitColorStyle = 'color: #ff9800;';
+                    } else if (calcDetails.status === 'decrease' || appTomanProfit < 0) {
+                        profitColorStyle = 'color: var(--negative-color);';
+                    } else if (calcDetails.status === 'increase') {
+                        profitColorStyle = 'color: var(--positive-color);';
+                    }
+
                     card.innerHTML = `
                         <div class="card-header">
                             <div>
@@ -1899,7 +1971,7 @@
                         <div class="card-body">
                             <div class="date-details">
                                 <span class="solar-date">📅 —</span>
-                                <div style="font-size: 0.85rem; font-weight: bold; margin-top: 4px;" class="${isTomanPositive ? 'positive' : 'negative'}">
+                                <div style="font-size: 0.85rem; font-weight: bold; margin-top: 4px; ${profitColorStyle}">
                                     💰 ${tomanDisplay}
                                 </div>
                             </div>
