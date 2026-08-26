@@ -3,6 +3,9 @@ import sys
 import os
 import asyncio
 import time
+import tempfile
+import shutil
+import yt_dlp
 from decouple import config
 
 # Add current directory to path
@@ -96,6 +99,113 @@ async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=Fa
                 except Exception as e3:
                     print(f"DEBUG: All edits failed. Sending new message...")
                     return await safe_send_message(owner_id, text, disable_web_page_preview)
+
+async def process_social_media_download(link, owner_id, msg_obj=None):
+    from main import Bot, bot, userbot
+
+    status_text = f"🎬 *در حال استخراج و دانلود از اینستاگرام / تیک‌تاک / واتساپ:*\n`{link}`\n\n🕒 لطفاً کمی صبور باشید..."
+    if msg_obj:
+        msg_obj = await safe_edit_message(owner_id, msg_obj, status_text)
+    else:
+        msg_obj = await safe_send_message(owner_id, status_text)
+
+    temp_dir = tempfile.mkdtemp(prefix="emarat_social_")
+
+    try:
+        def run_ytdlp():
+            ydl_opts = {
+                'outtmpl': os.path.join(temp_dir, '%(title).30s_%(id)s.%(ext)s'),
+                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                'quiet': True,
+                'no_warnings': True,
+                'ignoreerrors': True,
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(link, download=True)
+                return info
+
+        loop = asyncio.get_running_loop()
+        info = await loop.run_in_executor(None, run_ytdlp)
+
+        # Retrieve caption / description
+        caption = ""
+        if info:
+            if isinstance(info, dict):
+                caption = info.get('description') or info.get('title') or ""
+                if not caption and 'entries' in info and info['entries']:
+                    first_entry = info['entries'][0]
+                    if isinstance(first_entry, dict):
+                        caption = first_entry.get('description') or first_entry.get('title') or ""
+
+            if len(caption) > 1000:
+                caption = caption[:995] + "..."
+
+        # Scan for downloaded media files
+        downloaded_files = []
+        for root, _, files in os.walk(temp_dir):
+            for file in files:
+                if not file.endswith(('.description', '.json', '.part', '.ytdl', '.txt', '.info')):
+                    downloaded_files.append(os.path.join(root, file))
+
+        # Sort files to maintain order
+        downloaded_files.sort()
+
+        if not downloaded_files:
+            await safe_edit_message(owner_id, msg_obj, f"❌ *خطا در دانلود از شبکه اجتماعی:*\n`هیچ فایل ویدیویی یا تصویری قابل دانلودی در این لینک یافت نشد یا محتوا خصوصی (Private) است.`")
+            return
+
+        await safe_edit_message(owner_id, msg_obj, f"⬆️ *دانلود با موفقیت انجام شد! در حال آپلود به تلگرام ({len(downloaded_files)} فایل)...*")
+
+        for idx, filepath in enumerate(downloaded_files):
+            file_caption = caption if idx == 0 else None
+            ext = os.path.splitext(filepath)[1].lower()
+
+            sent = False
+            # 1. Try Pyrogram Bot
+            try:
+                if getattr(Bot, 'is_connected', False):
+                    if ext in ['.mp4', '.mkv', '.webm', '.mov']:
+                        await Bot.send_video(chat_id=owner_id, video=filepath, caption=file_caption)
+                        sent = True
+                    elif ext in ['.jpg', '.jpeg', '.png', '.webp']:
+                        await Bot.send_photo(chat_id=owner_id, photo=filepath, caption=file_caption)
+                        sent = True
+                    else:
+                        await Bot.send_document(chat_id=owner_id, document=filepath, caption=file_caption)
+                        sent = True
+            except Exception as e_pbot:
+                print(f"DEBUG: Pyrogram Bot social send failed ({e_pbot}). Trying Telethon...")
+
+            # 2. Try Telethon Bot
+            if not sent:
+                try:
+                    if bot.is_connected():
+                        await bot.send_file(owner_id, filepath, caption=file_caption)
+                        sent = True
+                except Exception as e_tbot:
+                    print(f"DEBUG: Telethon Bot social send failed ({e_tbot}). Trying Userbot...")
+
+            # 3. Try Pyrogram Userbot
+            if not sent:
+                try:
+                    if getattr(userbot, 'is_connected', False):
+                        if ext in ['.mp4', '.mkv', '.webm', '.mov']:
+                            await userbot.send_video(chat_id=owner_id, video=filepath, caption=file_caption)
+                        elif ext in ['.jpg', '.jpeg', '.png', '.webp']:
+                            await userbot.send_photo(chat_id=owner_id, photo=filepath, caption=file_caption)
+                        else:
+                            await userbot.send_document(chat_id=owner_id, document=filepath, caption=file_caption)
+                        sent = True
+                except Exception as e_ubot:
+                    print(f"DEBUG: Pyrogram Userbot social send failed ({e_ubot})")
+
+        await safe_send_message(owner_id, "✅ *دانلود و ارسال محتوای اینستاگرام / تیک‌تاک / واتساپ با موفقیت کامل انجام شد!*")
+
+    except Exception as e:
+        print(f"DEBUG: Error in process_social_media_download: {e}")
+        await safe_edit_message(owner_id, msg_obj, f"❌ *خطا در پردازش لینک شبکه اجتماعی:*\n`{str(e)}`")
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 def is_valid_channel(username, chat=None):
     if not username or not isinstance(username, str):
@@ -319,6 +429,20 @@ async def main_download():
             print("DEBUG: Successfully resolved owner_id using userbot.")
         except Exception as ex:
             print(f"DEBUG: Warning resolving owner_id with userbot: {ex}")
+
+        # Check if link is social media / web link (Instagram, TikTok, WhatsApp, YouTube, Twitter, etc.)
+        link_str = str(link).strip()
+        link_lower = link_str.lower()
+        is_social = any(domain in link_lower for domain in [
+            'instagram.com', 'instagr.am', 'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
+            'whatsapp.com', 'chat.whatsapp.com', 'wa.me', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com'
+        ]) or (link_lower.startswith(('http://', 'https://')) and 't.me' not in link_lower)
+
+        if is_social and not link_lower.startswith("search:"):
+            print(f"Starting social media download for: {link_str} to owner: {owner_id}")
+            msg = await safe_send_message(owner_id, f"🎬 *تشخیص لینک شبکه اجتماعی (اینستاگرام / تیک‌تاک / واتساپ):*\n`{link_str}`\n\n🕒 لطفا صبور باشید...")
+            await process_social_media_download(link_str, owner_id, msg)
+            return
 
         # Check if this is a deep Telegram search request
         if isinstance(link, str) and link.startswith("search:"):

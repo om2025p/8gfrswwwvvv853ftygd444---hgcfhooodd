@@ -51,6 +51,9 @@ async def clone(event):
             return
         if 't.me/' in link:
             await get_msg(userbot, Bot, Drone, event.sender_id, edit.id, link, 0)
+        else:
+            from download_single import process_social_media_download
+            await process_social_media_download(link, event.sender_id, edit)
     except FloodWait as fw:
         return await Drone.send_message(event.sender_id, f'Try again after {fw.x} seconds due to floodwait from telegram.')
     except Exception as e:
