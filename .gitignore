@@ -9,6 +9,8 @@ htmlcov/
 
 # Playwright & automation screenshots / debug logs
 *.png
+!**/icon-*.png
+!**/apple-touch-icon.png
 *.log
 login_page.png
 credentials_filled.png
