@@ -1116,7 +1116,7 @@
             canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
         }
 
-        // Zoom & Focus camera helper to spotlight a specific element coordinate
+        // Zoom & Focus camera helper to spotlight a specific element coordinate or entire active row
         function centerCameraOnCard(selector) {
             const card = document.querySelector(selector);
             if (!card) return;
@@ -1127,7 +1127,13 @@
             const containerRect = container.getBoundingClientRect();
             const relativeBox = getRelativeCoords(card, canvas);
 
-            // محاسبه مرکز کارت بر اساس مقیاس فعلی برای تنظیم دوربین به صورت روان
+            // در صفحه نمایش موبایل (کمتر از 600 پیکسل)، مقیاس را روی 0.82 قرار می‌دهیم تا تمامی کارت‌های پدر، همسر و فرزندان همزمان دیده شوند
+            if (window.innerWidth <= 600) {
+                scale = 0.82;
+            } else {
+                scale = 1.0;
+            }
+
             const currentScale = scale;
 
             panX = (containerRect.width / 2) - (relativeBox.centerX * currentScale);
@@ -2196,9 +2202,6 @@
                 } else {
                     highlightChainNodeId = null;
                 }
-
-            // تنظیم مقیاس روی 1 برای نمایش واضح و بدون انحراف کارت فوکوس
-            scale = 1.0;
 
             } else if (formMode === 'edit' && editingMemberId) {
                 const em = members[editingMemberId];
