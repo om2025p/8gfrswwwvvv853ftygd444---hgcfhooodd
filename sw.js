@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v30';
+const CACHE_NAME = 'emarat-portal-v31';
 const ASSETS = [
   './',
   './index.html',
@@ -189,7 +189,16 @@ const ASSETS = [
   './peace/icon-192-maskable.png',
   './peace/icon-512-maskable.png',
   './peace/apple-touch-icon.png',
-  './peace/favicon.ico'
+  './peace/favicon.ico',
+  // Yandex App (جستجوگر عکس)
+  './yandex/index.html',
+  './yandex/manifest.json',
+  './yandex/icon-192.png',
+  './yandex/icon-512.png',
+  './yandex/icon-192-maskable.png',
+  './yandex/icon-512-maskable.png',
+  './yandex/apple-touch-icon.png',
+  './yandex/favicon.ico'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
