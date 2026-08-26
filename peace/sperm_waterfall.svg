@@ -1,142 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <!-- Background Solid White -->
-
-    <!-- Gold Gradient -->
-    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFD54F" />
-      <stop offset="50%" stop-color="#FFB300" />
-      <stop offset="100%" stop-color="#FF6F00" />
-    </linearGradient>
-
-    <!-- Sperm Water Glow Gradient -->
-    <linearGradient id="streamGrad" x1="50%" y1="0%" x2="50%" y2="100%">
-      <stop offset="0%" stop-color="#1B5E20" stop-opacity="0.9" />
-      <stop offset="50%" stop-color="#2E7D32" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#4CAF50" stop-opacity="0.5" />
-    </linearGradient>
-
-    <radialGradient id="headGlow" cx="35%" cy="35%" r="65%">
-      <stop offset="0%" stop-color="#2E7D32" />
-      <stop offset="70%" stop-color="#1B5E20" />
-      <stop offset="100%" stop-color="#0F3813" />
-    </radialGradient>
-
-    <!-- Shadow Filter -->
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.25"/>
-    </filter>
-  </defs>
-
-  <!-- Background rounded card - Clean Pure White -->
-  <rect width="512" height="512" rx="110" fill="#FFFFFF" />
-
-  <!-- Outer Gold Ring Border -->
-  <circle cx="256" cy="256" r="232" fill="none" stroke="url(#goldGrad)" stroke-width="8" stroke-dasharray="16 8" opacity="0.6" />
-  <circle cx="256" cy="256" r="220" fill="none" stroke="#2E7D32" stroke-width="2" opacity="0.15" />
-
-  <!-- Crown on Top for Emarat -->
-  <path d="M 226 65 L 241 82 L 256 52 L 271 82 L 286 65 L 281 92 L 231 92 Z" fill="url(#goldGrad)" filter="url(#shadow)" />
-
-  <!-- Waterfall Stream Background Lines -->
-  <g stroke="url(#streamGrad)" stroke-width="3.5" fill="none" opacity="0.4">
-    <path d="M 256 95 C 240 180 180 260 170 420" />
-    <path d="M 256 95 C 272 180 332 260 342 420" />
-    <path d="M 256 95 C 256 200 240 300 230 430" />
-    <path d="M 256 95 C 256 200 272 300 282 430" />
-    <path d="M 256 95 C 210 160 130 250 110 400" />
-    <path d="M 256 95 C 302 160 382 250 402 400" />
-  </g>
-
-  <!-- Waterfall Fountain Head Source -->
-  <circle cx="256" cy="98" r="22" fill="url(#headGlow)" filter="url(#shadow)" />
-  <circle cx="256" cy="98" r="10" fill="#FFD54F" />
-
-  <!-- Waterfall Cascade Sperms -->
-
-  <!-- Top Fountain Leader Sperm 1 (Center Top) -->
-  <g filter="url(#shadow)">
-    <path d="M 256 122 Q 252 145 258 165 T 254 195" fill="none" stroke="#1B5E20" stroke-width="5" stroke-linecap="round" />
-    <ellipse cx="256" cy="118" rx="8.5" ry="12.5" fill="url(#headGlow)" />
-  </g>
-
-  <!-- Sperm 2 (Upper Left Branch) -->
-  <g filter="url(#shadow)">
-    <path d="M 225 138 C 210 160 200 180 190 210" fill="none" stroke="#2E7D32" stroke-width="4.5" stroke-linecap="round" />
-    <ellipse cx="230" cy="132" rx="8" ry="11.5" fill="url(#headGlow)" transform="rotate(-25 230 132)" />
-  </g>
-
-  <!-- Sperm 3 (Upper Right Branch) -->
-  <g filter="url(#shadow)">
-    <path d="M 287 138 C 302 160 312 180 322 210" fill="none" stroke="#2E7D32" stroke-width="4.5" stroke-linecap="round" />
-    <ellipse cx="282" cy="132" rx="8" ry="11.5" fill="url(#headGlow)" transform="rotate(25 282 132)" />
-  </g>
-
-  <!-- Sperm 4 (Mid Stream Center Left) -->
-  <g filter="url(#shadow)">
-    <path d="M 235 210 Q 245 240 230 270 T 240 310" fill="none" stroke="#1B5E20" stroke-width="5" stroke-linecap="round" />
-    <ellipse cx="235" cy="202" rx="8.5" ry="12.5" fill="url(#headGlow)" transform="rotate(10 235 202)" />
-  </g>
-
-  <!-- Sperm 5 (Mid Stream Center Right) -->
-  <g filter="url(#shadow)">
-    <path d="M 277 210 Q 267 240 282 270 T 272 310" fill="none" stroke="#1B5E20" stroke-width="5" stroke-linecap="round" />
-    <ellipse cx="277" cy="202" rx="8.5" ry="12.5" fill="url(#headGlow)" transform="rotate(-10 277 202)" />
-  </g>
-
-  <!-- Sperm 6 (Outer Left Cascade) -->
-  <g filter="url(#shadow)">
-    <path d="M 165 230 Q 150 265 160 300 T 145 350" fill="none" stroke="#388E3C" stroke-width="4.5" stroke-linecap="round" />
-    <ellipse cx="170" cy="220" rx="7.5" ry="11" fill="url(#headGlow)" transform="rotate(-30 170 220)" />
-  </g>
-
-  <!-- Sperm 7 (Outer Right Cascade) -->
-  <g filter="url(#shadow)">
-    <path d="M 347 230 Q 362 265 352 300 T 367 350" fill="none" stroke="#388E3C" stroke-width="4.5" stroke-linecap="round" />
-    <ellipse cx="342" cy="220" rx="7.5" ry="11" fill="url(#headGlow)" transform="rotate(30 342 220)" />
-  </g>
-
-  <!-- Lower Waterfall Swarm - Sperms 8, 9, 10 -->
-  <!-- Sperm 8 (Lower Center) -->
-  <g filter="url(#shadow)">
-    <path d="M 256 315 Q 262 345 250 375 T 258 415" fill="none" stroke="#1B5E20" stroke-width="5.5" stroke-linecap="round" />
-    <ellipse cx="256" cy="305" rx="9" ry="13.5" fill="url(#headGlow)" transform="rotate(5 256 305)" />
-  </g>
-
-  <!-- Sperm 9 (Lower Left Splash) -->
-  <g filter="url(#shadow)">
-    <path d="M 195 320 Q 180 355 190 385 T 175 425" fill="none" stroke="#2E7D32" stroke-width="4.5" stroke-linecap="round" />
-    <ellipse cx="200" cy="310" rx="8" ry="12" fill="url(#headGlow)" transform="rotate(-20 200 310)" />
-  </g>
-
-  <!-- Sperm 10 (Lower Right Splash) -->
-  <g filter="url(#shadow)">
-    <path d="M 317 320 Q 332 355 322 385 T 337 425" fill="none" stroke="#2E7D32" stroke-width="4.5" stroke-linecap="round" />
-    <ellipse cx="312" cy="310" rx="8" ry="12" fill="url(#headGlow)" transform="rotate(20 312 310)" />
-  </g>
-
-  <!-- Sperm 11 & 12 (Bottom Water Drops) -->
-  <g filter="url(#shadow)">
-    <path d="M 222 390 Q 212 415 220 440" fill="none" stroke="#4CAF50" stroke-width="4" stroke-linecap="round" />
-    <ellipse cx="225" cy="382" rx="7" ry="10.5" fill="url(#headGlow)" transform="rotate(-15 225 382)" />
-
-    <path d="M 290 390 Q 300 415 292 440" fill="none" stroke="#4CAF50" stroke-width="4" stroke-linecap="round" />
-    <ellipse cx="287" cy="382" rx="7" ry="10.5" fill="url(#headGlow)" transform="rotate(15 287 382)" />
-  </g>
-
-  <!-- Water Droplets at Waterfall Base -->
-  <g fill="#2E7D32" opacity="0.8">
-    <circle cx="256" cy="445" r="5" />
-    <circle cx="210" cy="440" r="4" />
-    <circle cx="302" cy="440" r="4" />
-    <circle cx="175" cy="435" r="3.5" />
-    <circle cx="337" cy="435" r="3.5" />
-    <circle cx="235" cy="452" r="3" />
-    <circle cx="277" cy="452" r="3" />
-  </g>
-
-  <!-- Heart/Peace Symbol Overlay at Bottom Base -->
-  <g filter="url(#shadow)">
-    <path d="M 256 425 C 246 415 230 422 230 436 C 230 448 256 462 256 462 C 256 462 282 448 282 436 C 282 422 266 415 256 425 Z" fill="url(#goldGrad)" stroke="#1B5E20" stroke-width="1.5" />
-  </g>
+    <rect width="512" height="512" rx="110" fill="#FFFFFF"/>
+    <circle cx="256" cy="256" r="220" fill="#FFFFFF" stroke="#e2e8f0" stroke-width="4"/>
+    <g transform="translate(256, 120)">
+        <circle cx="0" cy="0" r="28" fill="#2E7D32"/>
+        <path d="M 0 28 Q -10 60 0 90 Q 10 120 -5 150 Q -15 170 0 200 Q 10 220 0 240" fill="none" stroke="#2E7D32" stroke-width="12" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(170, 190) scale(0.7) rotate(-25)">
+        <circle cx="0" cy="0" r="26" fill="#4CAF50"/>
+        <path d="M 0 26 Q -12 50 0 80 Q 12 110 -5 140 Q -15 160 0 190" fill="none" stroke="#4CAF50" stroke-width="10" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(342, 190) scale(0.7) rotate(25)">
+        <circle cx="0" cy="0" r="26" fill="#4CAF50"/>
+        <path d="M 0 26 Q 12 50 0 80 Q -12 110 5 140 Q 15 160 0 190" fill="none" stroke="#4CAF50" stroke-width="10" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(120, 260) scale(0.5) rotate(-40)">
+        <circle cx="0" cy="0" r="24" fill="#81C784"/>
+        <path d="M 0 24 Q -10 45 0 70 Q 10 95 0 120" fill="none" stroke="#81C784" stroke-width="8" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(392, 260) scale(0.5) rotate(40)">
+        <circle cx="0" cy="0" r="24" fill="#81C784"/>
+        <path d="M 0 24 Q 10 45 0 70 Q -10 95 0 120" fill="none" stroke="#81C784" stroke-width="8" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(210, 310) scale(0.4) rotate(-15)">
+        <circle cx="0" cy="0" r="24" fill="#A5D6A7"/>
+        <path d="M 0 24 Q -8 40 0 65 Q 8 85 0 110" fill="none" stroke="#A5D6A7" stroke-width="8" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(302, 310) scale(0.4) rotate(15)">
+        <circle cx="0" cy="0" r="24" fill="#A5D6A7"/>
+        <path d="M 0 24 Q 8 40 0 65 Q -8 85 0 110" fill="none" stroke="#A5D6A7" stroke-width="8" stroke-linecap="round"/>
+    </g>
+    <circle cx="256" cy="420" r="12" fill="#FFD700"/>
+    <circle cx="220" cy="435" r="8" fill="#FFD700" opacity="0.8"/>
+    <circle cx="292" cy="435" r="8" fill="#FFD700" opacity="0.8"/>
 </svg>

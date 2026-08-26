@@ -3,636 +3,664 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ثبت آرامش</title>
+    <title>ثبت آرامش | مینیمال و ساده</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <meta name="theme-color" content="#f8f8f8">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#e0eafc">
     <style>
-        /* استایل‌های CSS (style.css) */
-        /* Reset پایه‌ای برای سازگاری بیشتر مرورگرها */
-        body, h1, h2, h3, p, ul, li, button, input, div, section {
-            margin: 0;
-            padding: 0;
-            border: 0;
-            font-size: 100%;
-            font: inherit;
-            vertical-align: baseline;
-            list-style: none;
-            box-sizing: border-box; /* برای اینکه padding و border در اندازه عنصر لحاظ شوند */
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Vazirmatn', sans-serif; /* فونت خوانا و زیبا. فونت وزیرمتن را اضافه کنید */
-            direction: rtl; /* راست به چپ برای فارسی */
-            background-color: #f8f8f8; /* خاکستری روشن */
-            color: #333; /* متن تیره */
-            line-height: 1.6;
-            min-height: 100vh; /* حداقل ارتفاع 100% صفحه نمایش */
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            direction: rtl;
+            background: linear-gradient(145deg, #e0eafc 0%, #cfdef3 100%);
+            min-height: 100vh;
+            padding: 20px 10px;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            padding-top: 20px;
-            padding-bottom: 60px; /* فضا برای فوتر */
         }
 
         .container {
+            max-width: 750px;
             width: 100%;
-            max-width: 600px; /* حداکثر عرض برای موبایل */
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05); /* سایه ظریف */
-            display: flex;
-            flex-direction: column;
-            align-items: stretch; /* عناصر به عرض ظرف کشیده شوند */
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border-radius: 48px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255,255,255,0.5) inset;
+            padding: 24px;
+            position: relative;
         }
 
-        header {
-            text-align: center;
+        /* منوی همبرگری */
+        .menu-container {
+            position: absolute;
+            left: 24px;
+            top: 24px;
+            z-index: 20;
+        }
+        .menu-btn {
+            background: rgba(255,255,240,0.7);
+            backdrop-filter: blur(4px);
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 60px;
+            transition: 0.2s;
+        }
+        .menu-btn:hover { background: rgba(255,245,220,0.9); transform: scale(0.96);}
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: 58px;
+            background: rgba(255, 255, 245, 0.98);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            width: 190px;
+            overflow: hidden;
+            border: 1px solid rgba(255,215,180,0.6);
+        }
+        .dropdown-menu button {
+            width: 100%;
+            padding: 12px 18px;
+            text-align: right;
+            background: none;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: inherit;
+            border-bottom: 1px solid #ffe0cc;
+        }
+        .dropdown-menu button:last-child { border-bottom: none; }
+        .dropdown-menu button:hover { background: #fff2e6; }
+        .menu-container.show .dropdown-menu { display: block; }
+
+        /* شمارنده بدون پس‌زمینه */
+        .counter-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
             margin-bottom: 20px;
+        }
+        .counter-card {
+            background: transparent;
+            padding: 6px 20px;
+            border-radius: 80px;
+            display: inline-flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+        .counter-label {
+            color: #5a7a76;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .counter-number {
+            font-size: 2.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3e6b67, #c97e5a);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        .counter-number.animate { animation: bouncePop 0.3s cubic-bezier(0.34, 1.2, 0.64, 1); }
+        @keyframes bouncePop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); opacity: 0.8; }
+            100% { transform: scale(1); }
         }
 
         header h1 {
-            color: #555;
-            font-weight: bold;
-            font-size: 1.8em;
-            margin-bottom: 10px;
+            text-align: center;
+            color: #3b5c5a;
+            margin-bottom: 8px;
+            font-size: 1.7rem;
+            font-weight: 600;
         }
 
-        main {
-            display: flex;
-            flex-direction: column;
-            gap: 20px; /* فاصله بین بخش‌های اصلی */
-        }
-
+        /* ===== دکمه ثبت آرامش ساده و بی‌انیمیشن ===== */
         .record-button {
-            background-color: #a8dadc; /* آبی روشن */
-            color: #fff;
-            font-size: 1.2em;
-            padding: 15px 30px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            align-self: center; /* دکمه در مرکز افقی */
-            margin-bottom: 20px;
+            background: #7fc1c5;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 60px;
+            font-size: 1.15rem;
+            font-weight: 500;
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            gap: 12px;
+            margin: 10px auto 30px auto;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: fit-content;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
-
         .record-button:hover {
-            background-color: #457b9d; /* آبی تیره‌تر در هاور */
+            background: #5fa3a7;
+        }
+        .record-button:active {
+            transform: scale(0.97);
+        }
+        .record-button i {
+            font-size: 1.3rem;
         }
 
         .records-section, .trash-section {
-            background-color: #f0f0f0; /* خاکستری خیلی روشن برای پس‌زمینه بخش‌ها */
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.03); /* سایه داخلی ظریف */
+            background: rgba(255, 251, 245, 0.85);
+            backdrop-filter: blur(4px);
+            border-radius: 32px;
+            padding: 18px;
+            margin-bottom: 20px;
         }
-
-        .records-section h2, .trash-section h2 {
-            color: #555;
-            font-size: 1.4em;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .peace-records-list-container {
-            max-height: 300px; /* ارتفاع حداکثر برای لیست */
-            overflow-y: auto; /* اسکرول عمودی در صورت نیاز */
-            padding-right: 10px; /* برای جلوگیری از پوشیده شدن اسکرول‌بار توسط سایه داخلی */
-        }
-
         .day-box {
-            margin-bottom: 15px;
-            border: 1px solid #ddd; /* بوردر خاکستری روشن برای باکس روزانه */
-            border-radius: 10px;
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03); /* سایه ظریف برای باکس روزانه */
-            overflow: hidden; /* برای جلوگیری از بیرون زدن بوردر-ردیوس از محتوا */
+            background: #ffffffdd;
+            border-radius: 24px;
+            margin-bottom: 18px;
+            border: 1px solid #ffe4ce;
+            overflow: hidden;
         }
-
         .day-header {
-            background-color: #e0e0e0; /* پس‌زمینه روشن‌تر برای هدر روزانه */
-            color: #555;
-            padding: 10px 15px;
-            text-align: right;
-            border-bottom: 1px solid #ddd; /* بوردر پایین برای جدا کردن هدر از لیست */
+            background: #fef1e2;
+            padding: 10px 18px;
             font-weight: bold;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-            display: flex; /* برای چیدمان تاریخ و تعداد در یک خط */
-            justify-content: space-between; /* فاصله بین تاریخ و تعداد */
-            align-items: center; /* مرکز عمودی آیتم‌ها */
+            display: flex;
+            justify-content: space-between;
         }
-
-        .day-header-count {
-            font-size: 0.9em; /* اندازه فونت کوچکتر برای تعداد */
-            color: #777; /* رنگ خاکستری ملایم برای تعداد */
-        }
-
         .peace-records-list-day {
-            padding-left: 0; /* حذف تورفتگی پیش‌فرض لیست */
+            list-style: none;
+            max-height: 330px;
+            overflow-y: auto;
         }
-
+        .peace-records-list-day::-webkit-scrollbar { width: 5px; }
+        .peace-records-list-day::-webkit-scrollbar-track { background: #f1dfd0; border-radius: 10px; }
+        .peace-records-list-day::-webkit-scrollbar-thumb { background: #c09b7a; border-radius: 10px; }
         .peace-records-list-day li {
-            background-color: #fff;
-            padding: 10px 15px;
-            margin-bottom: 0; /* حذف margin-bottom از li در لیست روزانه */
-            border-radius: 0; /* حذف border-radius از li در لیست روزانه */
+            padding: 14px 18px;
+            border-bottom: 1px solid #f5e4d4;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .record-main-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: none; /* حذف box-shadow از li در لیست روزانه */
-            border-bottom: 1px solid #eee; /* خط جداکننده بین آیتم‌های لیست روزانه */
-            flex-direction: column; /* تغییر به ستونی برای تاریخ و زمان و زمان سپری شده */
-            align-items: flex-end; /* راست‌چین کردن محتوا در آیتم لیست */
         }
-
-        .peace-records-list-day li:last-child {
-            border-bottom: none; /* حذف بوردر پایین برای آخرین آیتم لیست روزانه */
-            border-bottom-left-radius: 10px; /* ردیوس پایین چپ برای آخرین آیتم لیست روزانه */
-            border-bottom-right-radius: 10px; /* ردیوس پایین راست برای آخرین آیتم لیست روزانه */
-        }
-
-        .trash-list li:last-child {
-            border-bottom-left-radius: 10px; /* ردیوس پایین چپ برای آخرین آیتم لیست روزانه */
-            border-bottom-right-radius: 10px; /* ردیوس پایین راست برای آخرین آیتم لیست روزانه */
-        }
-
-        .record-item-date-time {
-            flex-grow: 1; /* تاریخ و زمان فضای بیشتری بگیرند */
-            text-align: right; /* راست‌چین کردن متن */
-            margin-bottom: 5px; /* فاصله از زمان سپری شده */
-        }
-
-        .record-item-elapsed-time-between {
-            font-size: 0.9em; /* اندازه فونت کوچکتر برای زمان سپری شده */
-            color: #777; /* رنگ خاکستری ملایم برای زمان سپری شده */
-            text-align: left; /* چپ‌چین کردن متن زمان سپری شده */
-            direction: ltr; /* چپ به راست برای اعداد انگلیسی در زمان سپری شده */
-        }
-
-        .record-item-actions, .trash-item-actions {
-            display: flex;
-            gap: 10px;
-            align-self: flex-start; /* دکمه‌های اکشن در بالا سمت راست */
-        }
-
-        .delete-button, .restore-button, .permanent-delete-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #aaa; /* خاکستری ملایم برای آیکون‌ها */
-            font-size: 1em;
-            transition: color 0.3s ease;
-        }
-
-        .delete-button:hover {
-            color: #e63946; /* قرمز برای حذف در هاور */
-        }
-
-        .restore-button:hover {
-            color: #1d3557; /* آبی تیره برای بازیابی در هاور */
-        }
-
-        .permanent-delete-button:hover {
-            color: #c23b22; /* قرمز تیره‌تر برای حذف دائمی در هاور */
-        }
-
-        .no-data-message {
-            color: #777;
-            font-style: italic;
-            text-align: center;
-            padding: 15px;
-        }
-
-        .trash-button-main, .toggle-trash-button, .backup-button, .restore-button-main {
-            background-color: #ffedd1; /* زرد ملایم برای دکمه سطل زباله و بکاپ/بازیابی */
-            color: #555;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            align-self: center;
+        .record-left-info {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            font-size: 1em;
-            margin-bottom: 10px; /* فاصله از پایین */
+            gap: 12px;
+            flex-wrap: wrap;
         }
-
-        .trash-button-main:hover, .toggle-trash-button:hover, .backup-button:hover, .restore-button-main:hover {
-            background-color: #ffe0b2; /* زرد تیره‌تر در هاور */
+        .record-time {
+            background: #f4e8dc;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 0.85rem;
         }
-
-        .trash-section {
-            display: none; /* به صورت پیش‌فرض مخفی */
+        .note-text {
+            font-size: 0.8rem;
+            color: #7b5e4a;
+            background: #fff7ef;
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            max-width: 100%;
+            word-break: break-word;
+            margin-top: 6px;
         }
-
-        footer {
-            text-align: center;
-            padding: 20px;
-            color: #777;
-            margin-top: auto; /* فوتر به پایین صفحه بچسبد */
+        .note-preview {
+            font-size: 0.7rem;
+            color: #a07a5c;
+            margin-right: 8px;
+            font-style: italic;
         }
-
-        /* واکنش‌گرا برای صفحه‌های کوچک‌تر */
-        @media (max-width: 500px) {
-            .container {
-                border-radius: 0; /* حذف گردی لبه‌ها در صفحه‌های خیلی کوچک */
-                box-shadow: none; /* حذف سایه در صفحه‌های خیلی کوچک */
-                padding: 10px;
-            }
-
-            .record-button {
-                font-size: 1em;
-                padding: 12px 25px;
-            }
-
-            .records-section h2, .trash-section h2 {
-                font-size: 1.2em;
-            }
-
-            .peace-records-list-day li, .trash-list li {
-                padding: 8px 12px;
-                font-size: 0.95em;
-            }
-
-            .trash-button-main, .toggle-trash-button, .backup-button, .restore-button-main {
-                font-size: 0.9em;
-                padding: 8px 15px;
-            }
-        }
-
-        /* استایل‌های اضافی برای دکمه‌های بکاپ و بازیابی */
-        .backup-restore-buttons-container {
+        .action-buttons {
             display: flex;
-            justify-content: center; /* مرکز افقی دکمه‌ها */
-            gap: 10px; /* فاصله بین دکمه‌ها */
-            margin-bottom: 20px; /* فاصله از پایین */
+            gap: 12px;
+            align-items: center;
         }
+        .edit-note-btn, .delete-button {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .edit-note-btn { color: #a07652; }
+        .edit-note-btn:hover { color: #e07a5f; }
+        .delete-button { color: #bc8f7a; }
+        .delete-button:hover { color: #c54c38; }
 
-        #restore-file-input {
-            display: none; /* مخفی کردن input file پیش‌فرض */
+        .time-infos {
+            display: flex;
+            gap: 14px;
+            font-size: 0.7rem;
+            flex-wrap: wrap;
         }
-        .restore-button-main {
-            cursor: pointer; /* اطمینان از نمایش نشانگر pointer */
+        .badge-since-last, .badge-since-now {
+            padding: 3px 12px;
+            border-radius: 50px;
         }
+        .badge-since-last { background: #e2efea; color: #3f6b5e; }
+        .badge-since-now { background: #fff0e2; }
+        .fun-message { color: #b9623c; margin-right: 6px; }
+        .load-more-btn {
+            background: #ebe0d0;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 50px;
+            margin: 10px auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .trash-section { display: none; }
+        .no-data-message { text-align: center; color: #99b7ac; padding: 28px; }
+        footer { text-align: center; font-size: 0.7rem; margin-top: 25px; color: #87aca0; }
+        #restore-file-input { display: none; }
+
+        /* مودال یادداشت */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #fffef7;
+            border-radius: 36px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        .modal-content textarea {
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            font-family: inherit;
+            border-radius: 24px;
+            border: 1px solid #f0dbc8;
+            margin: 15px 0;
+            resize: vertical;
+            font-size: 0.9rem;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .modal-buttons button {
+            padding: 8px 24px;
+            border-radius: 40px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .save-note-btn { background: #e07a5f; color: white; }
+        .cancel-note-btn { background: #e0d6ca; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>ثبت آرامش</h1>
-        </header>
-
-        <main>
-            <button id="record-button" class="record-button">
-                <i class="fa-solid fa-heart-circle-plus"></i> ثبت آرامش
-            </button>
-
-            <section id="records-section" class="records-section">
-                <h2>لیست ثبت‌ها</h2>
-                <div class="peace-records-list-container">
-                    <ul id="peace-records-list" class="peace-records-list">
-                        <li id="no-records-message" style="display: none;" class="no-data-message">هنوز آرامشی ثبت نشده.</li>
-                    </ul>
-                </div>
-            </section>
-
-            <section id="trash-section" class="trash-section" style="display: none;">
-                <h2>سطل زباله</h2>
-                <ul id="trash-list" class="trash-list">
-                    <li id="no-trash-message" style="display: none;" class="no-data-message">سطل زباله خالی است.</li>
-                </ul>
-                <button id="toggle-trash-button" class="toggle-trash-button">بازگشت به لیست ثبت‌ها</button>
-            </section>
-
-            <div class="backup-restore-buttons-container">
-                <button id="backup-button" class="backup-button">
-                    <i class="fa-solid fa-download"></i> بکاپ اطلاعات
-                </button>
-                <button id="restore-button-main" class="restore-button-main">
-                    <i class="fa-solid fa-upload"></i> بازیابی اطلاعات
-                </button>
-                <input type="file" id="restore-file-input" accept=".json">
-            </div>
-
-            <button id="trash-button-main" class="trash-button-main">
-                <i class="fa-solid fa-trash-can"></i> سطل زباله
-            </button>
-        </main>
-
-        <footer>
-            <p>&copy; 1403 پلتفرم ثبت آرامش</p>
-        </footer>
+<div class="container">
+    <div class="menu-container" id="menuContainer">
+        <button class="menu-btn" id="menuBtn">☰</button>
+        <div class="dropdown-menu">
+            <button id="trash-button-main">🗑️ سطل زباله</button>
+            <button id="backup-button">📥 بکاپ گرفتن</button>
+            <button id="restore-button-main">📤 بازیابی اطلاعات</button>
+        </div>
     </div>
 
-    <script>
-        // کدهای JavaScript (script.js)
-        document.addEventListener('DOMContentLoaded', function() {
-            const recordButton = document.getElementById('record-button');
-            const peaceRecordsList = document.getElementById('peace-records-list');
-            const noRecordsMessage = document.getElementById('no-records-message');
-            const recordsSection = document.getElementById('records-section');
-            const trashSection = document.getElementById('trash-section');
-            const trashButtonMain = document.getElementById('trash-button-main');
-            const toggleTrashButton = document.getElementById('toggle-trash-button');
-            const trashList = document.getElementById('trash-list');
-            const noTrashMessage = document.getElementById('no-trash-message');
-            const backupButton = document.getElementById('backup-button');
-            const restoreButtonMain = document.getElementById('restore-button-main');
-            const restoreFileInput = document.getElementById('restore-file-input');
+    <header><h1>🌸 آرامش‌سنج</h1></header>
 
-            let peaceRecords = loadRecords('peaceRecords') || [];
-            let trashRecords = loadRecords('trashRecords') || [];
+    <div class="counter-wrapper">
+        <div class="counter-card">
+            <span class="counter-label">کل آرامش‌ها</span>
+            <span class="counter-number" id="totalCounter">0</span>
+        </div>
+    </div>
 
-            renderPeaceRecordsList();
-            renderTrashList();
+    <main>
+        <!-- دکمه ساده و بدون انیمیشن -->
+        <button id="record-button" class="record-button">
+            🌸 ثبت آرامش جدید
+        </button>
 
-            recordButton.addEventListener('click', recordPeace);
-            trashButtonMain.addEventListener('click', showTrashSection);
-            toggleTrashButton.addEventListener('click', hideTrashSection);
-            backupButton.addEventListener('click', backupData);
-            restoreButtonMain.addEventListener('click', function() {
-                restoreFileInput.click(); // باز کردن پنجره انتخاب فایل با کلیک روی دکمه "بازیابی اطلاعات"
-            });
-            restoreFileInput.addEventListener('change', restoreData);
+        <section id="records-section" class="records-section">
+            <h2 style="margin-bottom:14px;">📦 محفظه روزها</h2>
+            <div id="peace-records-container"></div>
+            <div id="no-records-message" class="no-data-message" style="display:none;">هنوز آرامشی ثبت نشده 🌱</div>
+            <button id="load-more-btn" class="load-more-btn" style="display: none;">⬇️ نمایش بیشتر (۱۰ تای بعدی)</button>
+        </section>
 
-            function recordPeace() {
-                const now = new Date();
-                const persianDate = toPersianDate(now);
-                const timeString = toPersianTime(now);
-                const dateTimeString = `${persianDate} ${timeString}`;
-                const timestamp = now.getTime(); // ذخیره timestamp
+        <section id="trash-section" class="trash-section">
+            <h2>🗑️ سطل زباله</h2>
+            <ul id="trash-list" style="list-style:none;"></ul>
+            <div id="no-trash-message" class="no-data-message" style="display:none;">خالی 🕊️</div>
+            <button id="toggle-trash-button" class="load-more-btn">↩️ برگشت</button>
+        </section>
+        <input type="file" id="restore-file-input" accept=".json">
+    </main>
+    <footer>✍️ هر ثبت قابلیت یادداشت دارد | بدون انیمیشن اضافی</footer>
+</div>
 
-                peaceRecords.unshift({ dateTime: dateTimeString, timestamp: timestamp }); // ذخیره هم dateTime و هم timestamp
-                saveRecords('peaceRecords', peaceRecords);
-                renderPeaceRecordsList();
+<div id="noteModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-bottom:10px;">✍️ یادداشت آرامش</h3>
+        <textarea id="noteInput" placeholder="مثلاً: کنار پنجره بودم، بارون می‌بارید..."></textarea>
+        <div class="modal-buttons">
+            <button class="save-note-btn" id="saveNoteBtn">ذخیره</button>
+            <button class="cancel-note-btn" id="cancelNoteBtn">انصراف</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        let peaceRecords = [], trashRecords = [];
+        let visibleCount = 10;
+        let currentEditingTimestamp = null;
+
+        function normalizeRecords(records) {
+            return records.filter(r => r && r.dateTime).map(r => ({
+                dateTime: r.dateTime,
+                timestamp: r.timestamp || new Date().getTime() - Math.floor(Math.random()*100000000),
+                note: r.note || ""
+            }));
+        }
+        function loadFromStorage() {
+            let p = localStorage.getItem('peaceRecords');
+            let t = localStorage.getItem('trashRecords');
+            peaceRecords = p ? normalizeRecords(JSON.parse(p)) : [];
+            trashRecords = t ? normalizeRecords(JSON.parse(t)) : [];
+        }
+        function saveAll() {
+            localStorage.setItem('peaceRecords', JSON.stringify(peaceRecords));
+            localStorage.setItem('trashRecords', JSON.stringify(trashRecords));
+            updateTotalCounter();
+        }
+
+        function updateTotalCounter() {
+            const counterSpan = document.getElementById('totalCounter');
+            if(!counterSpan) return;
+            const newVal = peaceRecords.length;
+            const oldVal = parseInt(counterSpan.innerText);
+            counterSpan.innerText = newVal;
+            if(newVal !== oldVal) {
+                counterSpan.classList.remove('animate');
+                void counterSpan.offsetWidth;
+                counterSpan.classList.add('animate');
+                setTimeout(() => counterSpan.classList.remove('animate'), 300);
             }
+        }
 
-            function renderPeaceRecordsList() {
-                peaceRecordsList.innerHTML = ''; // پاک کردن لیست قبلی
+        function toPersianFull(date) {
+            let persianDate = date.toLocaleDateString('fa-IR-u-ca-persian', { year:'numeric', month:'2-digit', day:'2-digit' });
+            let time = date.toLocaleTimeString('fa-IR', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+            return { full: `${persianDate} ${time}` };
+        }
+        function timeAgo(timestamp) {
+            let diff = (Date.now() - timestamp) / 1000;
+            if(diff < 0) return "همین الان";
+            if(diff < 60) return `${Math.floor(diff)} ثانیه پیش`;
+            let m = Math.floor(diff/60);
+            if(m < 60) return `${m} دقیقه پیش`;
+            let h = Math.floor(m/60);
+            if(h < 24) return `${h} ساعت پیش`;
+            let d = Math.floor(h/24);
+            if(d < 7) return `${d} روز پیش`;
+            let w = Math.floor(d/7);
+            if(w < 4) return `${w} هفته پیش`;
+            let mon = Math.floor(d/30);
+            return `${mon} ماه پیش`;
+        }
+        function funMessageBasedOnNow(timestamp) {
+            let diffDays = (Date.now() - timestamp) / (1000*3600*24);
+            if(diffDays < 0.04) return "همون الان آرامش گرفتی 😌";
+            if(diffDays < 1) return "امروز یادت بود 🌙";
+            if(diffDays < 2) return "دیروز آرامش بود 🌼";
+            if(diffDays < 7) return `${Math.floor(diffDays)} روز پیش، هنوز قشنگه 🫀`;
+            if(diffDays < 30) return `${Math.floor(diffDays)} روز گذشته... داری بهش فکر می‌کنی؟ 🤔`;
+            return "چند ماه پیش... آرامش همیشه با توست ✨";
+        }
+        function sincePrevText(prevTs, currentTs) {
+            let diffSec = Math.abs(prevTs - currentTs) / 1000;
+            if(diffSec < 60) return `${Math.floor(diffSec)} ثانیه بعد`;
+            let m = Math.floor(diffSec/60);
+            if(m < 60) return `${m} دقیقه بعد`;
+            let h = Math.floor(m/60);
+            if(h < 24) return `${h} ساعت بعد`;
+            let d = Math.floor(h/24);
+            return `${d} روز بعد`;
+        }
+        function groupByDate(records){
+            let groups = {};
+            records.forEach(r => { let date = r.dateTime.split(' ')[0]; if(!groups[date]) groups[date]=[]; groups[date].push(r); });
+            return groups;
+        }
 
-                if (peaceRecords.length === 0) {
-                    noRecordsMessage.style.display = 'block';
-                } else {
-                    noRecordsMessage.style.display = 'none';
+        function openNoteModal(timestamp, currentNote) {
+            currentEditingTimestamp = timestamp;
+            document.getElementById('noteInput').value = currentNote || "";
+            document.getElementById('noteModal').style.display = 'flex';
+        }
+        function closeNoteModal() { document.getElementById('noteModal').style.display = 'none'; currentEditingTimestamp = null; }
+        function saveCurrentNote() {
+            if(currentEditingTimestamp === null) return;
+            const newNote = document.getElementById('noteInput').value;
+            const record = peaceRecords.find(r => r.timestamp === currentEditingTimestamp);
+            if(record) { record.note = newNote; saveAll(); renderLimitedPeaceList(); }
+            closeNoteModal();
+        }
 
-                    const groupedRecords = groupByDate(peaceRecords); // گروه‌بندی رکوردها بر اساس روز
-
-                    for (const date in groupedRecords) {
-                        if (groupedRecords.hasOwnProperty(date)) {
-                            const dayRecords = groupedRecords[date];
-                            const dayBox = document.createElement('div');
-                            dayBox.classList.add('day-box');
-
-                            const dayHeader = document.createElement('div');
-                            dayHeader.classList.add('day-header');
-                            dayHeader.textContent = date; // نمایش تاریخ به عنوان هدر باکس روزانه
-
-                            const dayRecordCountSpan = document.createElement('span'); // ایجاد span برای نمایش تعداد
-                            dayRecordCountSpan.classList.add('day-header-count');
-                            dayRecordCountSpan.textContent = `(${dayRecords.length} ثبت)`; // تعداد ثبت‌ها در هدر
-                            dayHeader.appendChild(dayRecordCountSpan); // اضافه کردن span تعداد به هدر
-
-                            dayBox.appendChild(dayHeader);
-
-                            const dayRecordList = document.createElement('ul');
-                            dayRecordList.classList.add('peace-records-list-day'); // کلاس جدید برای لیست روزانه
-
-                            dayRecords.forEach((record, indexInDay) => { // استفاده از indexInDay برای پیمایش رکوردهای روزانه
-                                const listItem = document.createElement('li');
-                                let elapsedTimeBetween = '';
-
-                                // محاسبه زمان سپری شده نسبت به ثبت قبلی در کل لیست peaceRecords
-                                const recordIndexInPeaceRecords = peaceRecords.findIndex(r => r === record); // پیدا کردن اندیس رکورد جاری در آرایه اصلی peaceRecords
-                                if (recordIndexInPeaceRecords > 0) { // اگر رکورد، اولین رکورد نباشد
-                                    const previousRecord = peaceRecords[recordIndexInPeaceRecords - 1];
-                                    elapsedTimeBetween = calculateElapsedTimeBetween(record.timestamp, previousRecord.timestamp);
-                                }
-
-                                listItem.innerHTML = `
-                                    <div class="record-item-actions">
-                                        <button class="delete-button" data-index="${indexInDay}" data-date="${date}" title="حذف">
-                                            <i class="fa-solid fa-trash-can"></i>
-                                        </button>
-                                    </div>
-                                    <span class="record-item-date-time">${record.dateTime.split(' ')[1]}</span>
-                                    ${elapsedTimeBetween ? `<p class="record-item-elapsed-time-between">${elapsedTimeBetween}</p>` : ''}
-                                `;
-                                dayRecordList.appendChild(listItem);
-                            });
-                            dayBox.appendChild(dayRecordList);
-                            peaceRecordsList.appendChild(dayBox); // اضافه کردن باکس روزانه به لیست اصلی
-                        }
+        function renderLimitedPeaceList() {
+            const container = document.getElementById('peace-records-container');
+            const noMsg = document.getElementById('no-records-message');
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            if(!container) return;
+            container.innerHTML = '';
+            if(!peaceRecords.length) { noMsg.style.display='block'; loadMoreBtn.style.display='none'; return; }
+            noMsg.style.display='none';
+            const limited = peaceRecords.slice(0, visibleCount);
+            const grouped = groupByDate(limited);
+            for(let [date, items] of Object.entries(grouped)) {
+                const dayBox = document.createElement('div'); dayBox.className='day-box';
+                const header = document.createElement('div'); header.className='day-header';
+                header.innerHTML = `<span>📆 ${date}</span><span>${items.length} لحظه</span>`;
+                const ul = document.createElement('ul'); ul.className='peace-records-list-day';
+                items.forEach(item => {
+                    const globalIdx = peaceRecords.findIndex(r => r.timestamp === item.timestamp);
+                    let sincePrevHtml = '';
+                    if(globalIdx > 0 && peaceRecords[globalIdx-1]?.timestamp){
+                        sincePrevHtml = `<span class="badge-since-last">⏪ ${sincePrevText(peaceRecords[globalIdx-1].timestamp, item.timestamp)}</span>`;
                     }
-
-                    // اضافه کردن event listener برای دکمه‌های حذف بعد از ایجاد لیست روزانه
-                    document.querySelectorAll('.peace-records-list-day .delete-button').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const indexToDelete = parseInt(this.dataset.index);
-                            const dateToDelete = this.dataset.date;
-                            moveToTrash(indexToDelete, dateToDelete); // ارسال تاریخ به تابع moveToTrash
-                        });
-                    });
-                }
-            }
-
-            function groupByDate(records) {
-                const grouped = {};
-                records.forEach(record => {
-                    const date = record.dateTime.split(' ')[0]; // جدا کردن تاریخ از dateTimeString
-                    if (!grouped[date]) {
-                        grouped[date] = [];
-                    }
-                    grouped[date].push(record);
-                });
-                return grouped;
-            }
-
-            function moveToTrash(index, date) {
-                const dayRecords = peaceRecords.filter(record => record.dateTime.startsWith(date)); // فیلتر کردن رکوردهای روز مورد نظر
-                const recordIndexInDay = dayRecords.length - 1 - index; // محاسبه اندیس در آرایه فیلتر شده (چون لیست روزانه برعکس است)
-                const recordToTrash = dayRecords[recordIndexInDay]; // پیدا کردن رکورد برای حذف
-                const recordGlobalIndex = peaceRecords.indexOf(recordToTrash); // پیدا کردن اندیس رکورد در آرایه اصلی
-
-                if (recordGlobalIndex > -1) {
-                    peaceRecords.splice(recordGlobalIndex, 1); // حذف از لیست اصلی
-                    trashRecords.unshift(recordToTrash); // اضافه کردن به سطل زباله
-                    saveRecords('peaceRecords', peaceRecords);
-                    saveRecords('trashRecords', trashRecords);
-                    renderPeaceRecordsList();
-                    renderTrashList();
-                }
-            }
-
-            function showTrashSection() {
-                trashSection.style.display = 'block';
-                recordsSection.style.display = 'none';
-                trashButtonMain.style.display = 'none';
-            }
-
-            function hideTrashSection() {
-                trashSection.style.display = 'none';
-                recordsSection.style.display = 'block';
-                trashButtonMain.style.display = 'block';
-            }
-
-            function renderTrashList() {
-                trashList.innerHTML = ''; // پاک کردن لیست قبلی
-
-                if (trashRecords.length === 0) {
-                    noTrashMessage.style.display = 'block';
-                } else {
-                    noTrashMessage.style.display = 'none';
-                    trashRecords.forEach((record, index) => {
-                        const listItem = document.createElement('li');
-                        listItem.innerHTML = `
-                            <span class="record-item-date-time">${record.dateTime}</span>
-                            <div class="trash-item-actions">
-                                <button class="restore-button" data-index="${index}" title="بازیابی">
-                                    <i class="fa-solid fa-arrow-rotate-left"></i>
-                                </button>
-                                <button class="permanent-delete-button" data-index="${index}" title="حذف دائمی">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
+                    let nowAgo = timeAgo(item.timestamp);
+                    let funMsg = funMessageBasedOnNow(item.timestamp);
+                    const notePreview = item.note ? `<div class="note-text">📝 ${item.note.length > 50 ? item.note.substring(0,50)+'...' : item.note}</div>` : '';
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div class="record-main-row">
+                            <div class="record-left-info">
+                                <span class="record-time">🕊️ ${item.dateTime.split(' ')[1]}</span>
+                                ${item.note ? '<span class="note-preview">📌 یادداشت</span>' : ''}
                             </div>
-                        `;
-                        trashList.appendChild(listItem);
-                    });
-
-                    // اضافه کردن event listener برای دکمه‌های سطل زباله بعد از ایجاد لیست
-                    trashList.querySelectorAll('.restore-button').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const indexToRestore = parseInt(this.dataset.index);
-                            restoreFromTrash(indexToRestore);
-                        });
-                    });
-                    trashList.querySelectorAll('.permanent-delete-button').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const indexToDeletePermanently = parseInt(this.dataset.index);
-                            permanentlyDelete(indexToDeletePermanently);
-                        });
-                    });
-                }
+                            <div class="action-buttons">
+                                <button class="edit-note-btn" data-ts="${item.timestamp}" title="افزودن/ویرایش یادداشت">✏️</button>
+                                <button class="delete-button" data-ts="${item.timestamp}" title="حذف">🗑️</button>
+                            </div>
+                        </div>
+                        ${notePreview}
+                        <div class="time-infos">
+                            <span class="badge-since-now">📅 نسبت به الان: ${nowAgo} <span class="fun-message">${funMsg}</span></span>
+                            ${sincePrevHtml}
+                        </div>
+                    `;
+                    ul.appendChild(li);
+                });
+                dayBox.appendChild(header); dayBox.appendChild(ul);
+                container.appendChild(dayBox);
             }
+            if(peaceRecords.length > visibleCount) loadMoreBtn.style.display = 'flex';
+            else loadMoreBtn.style.display = 'none';
+            attachEvents();
+        }
 
-            function restoreFromTrash(index) {
-                const recordToRestore = trashRecords.splice(index, 1)[0]; // حذف از سطل زباله و دریافت آیتم
-                peaceRecords.unshift(recordToRestore); // اضافه کردن به لیست اصلی
-                saveRecords('peaceRecords', peaceRecords);
-                saveRecords('trashRecords', trashRecords);
-                renderPeaceRecordsList();
+        function attachEvents() {
+            document.querySelectorAll('.delete-button').forEach(btn => {
+                btn.removeEventListener('click', handleDelete);
+                btn.addEventListener('click', handleDelete);
+            });
+            document.querySelectorAll('.edit-note-btn').forEach(btn => {
+                btn.removeEventListener('click', handleEditNote);
+                btn.addEventListener('click', handleEditNote);
+            });
+        }
+        function handleDelete(e) {
+            let ts = parseInt(e.currentTarget.dataset.ts);
+            let idx = peaceRecords.findIndex(r => r.timestamp === ts);
+            if(idx !== -1){
+                let moved = peaceRecords.splice(idx,1)[0];
+                trashRecords.unshift(moved);
+                saveAll();
+                if(visibleCount > peaceRecords.length) visibleCount = peaceRecords.length;
+                renderLimitedPeaceList();
                 renderTrashList();
             }
+        }
+        function handleEditNote(e) {
+            let ts = parseInt(e.currentTarget.dataset.ts);
+            let record = peaceRecords.find(r => r.timestamp === ts);
+            if(record) openNoteModal(ts, record.note);
+        }
 
-            function permanentlyDelete(index) {
-                trashRecords.splice(index, 1); // حذف دائمی از سطل زباله
-                saveRecords('trashRecords', trashRecords);
-                renderTrashList();
-            }
+        function loadMore() {
+            if(visibleCount + 10 <= peaceRecords.length) visibleCount += 10;
+            else visibleCount = peaceRecords.length;
+            renderLimitedPeaceList();
+        }
 
-            function saveRecords(key, records) {
-                localStorage.setItem(key, JSON.stringify(records));
-            }
+        function renderTrashList() {
+            const trashUl = document.getElementById('trash-list');
+            const noTrash = document.getElementById('no-trash-message');
+            trashUl.innerHTML = '';
+            if(!trashRecords.length){ noTrash.style.display='block'; return; }
+            noTrash.style.display='none';
+            trashRecords.forEach((rec, idx) => {
+                let li = document.createElement('li');
+                li.style.padding='12px'; li.style.borderBottom='1px solid #f0e0ce';
+                li.style.display='flex'; li.style.justifyContent='space-between';
+                li.innerHTML = `<span>📌 ${rec.dateTime} ${rec.note ? `📝 ${rec.note.substring(0,30)}` : ''}</span>
+                    <div><button class="restore-btn" data-idx="${idx}">↩️</button>
+                    <button class="perm-delete-btn" data-idx="${idx}" style="margin-right:15px;">✖️</button></div>`;
+                trashUl.appendChild(li);
+            });
+            document.querySelectorAll('.restore-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    let i = parseInt(btn.dataset.idx);
+                    let restored = trashRecords.splice(i,1)[0];
+                    peaceRecords.unshift(restored);
+                    saveAll();
+                    visibleCount = Math.min(10, peaceRecords.length);
+                    renderLimitedPeaceList();
+                    renderTrashList();
+                });
+            });
+            document.querySelectorAll('.perm-delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    let i = parseInt(btn.dataset.idx);
+                    trashRecords.splice(i,1);
+                    saveAll(); renderTrashList();
+                });
+            });
+        }
 
-            function loadRecords(key) {
-                const recordsJson = localStorage.getItem(key);
-                return recordsJson ? JSON.parse(recordsJson) : null;
-            }
+        function addPeace() {
+            let now = new Date();
+            let { full } = toPersianFull(now);
+            peaceRecords.unshift({ dateTime: full, timestamp: now.getTime(), note: "" });
+            saveAll();
+            visibleCount = Math.min(10, peaceRecords.length);
+            renderLimitedPeaceList();
+        }
 
-            function toPersianDate(date) {
-                const year = date.toLocaleDateString('fa-IR-u-ca-persian', { year: 'numeric' });
-                const month = date.toLocaleDateString('fa-IR-u-ca-persian', { month: '2-digit' });
-                const day = date.toLocaleDateString('fa-IR-u-ca-persian', { day: '2-digit' });
-                return `${year}/${month}/${day}`;
-            }
+        function backup() {
+            let data = { peaceRecords, trashRecords };
+            let blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `peace_simple_${Date.now()}.json`;
+            a.click(); URL.revokeObjectURL(a.href);
+        }
+        function restore(file){
+            let reader = new FileReader();
+            reader.onload = e => {
+                try{
+                    let json = JSON.parse(e.target.result);
+                    if(json.peaceRecords && json.trashRecords){
+                        peaceRecords = normalizeRecords(json.peaceRecords);
+                        trashRecords = normalizeRecords(json.trashRecords);
+                        saveAll();
+                        visibleCount = Math.min(10, peaceRecords.length);
+                        renderLimitedPeaceList();
+                        renderTrashList();
+                        alert('🎉 بازیابی موفق');
+                    } else alert('فایل بکاپ نامعتبر');
+                }catch(e){ alert('خطا در باز کردن فایل');}
+                document.getElementById('restore-file-input').value = '';
+            };
+            reader.readAsText(file);
+        }
 
-            function toPersianTime(date) {
-                const hours = date.toLocaleTimeString('fa-IR', { hour: '2-digit', hour12: false, timeZone: 'Asia/Tehran' }); // وقت ایران
-                const minutes = date.toLocaleTimeString('fa-IR', { minute: '2-digit', timeZone: 'Asia/Tehran' });
-                return `${hours}:${minutes}`; // فرمت HH:mm
-            }
+        // منو و UI
+        const menuContainer = document.getElementById('menuContainer');
+        const menuBtn = document.getElementById('menuBtn');
+        menuBtn.addEventListener('click', (e) => { e.stopPropagation(); menuContainer.classList.toggle('show'); });
+        document.addEventListener('click', (e) => { if(!menuContainer.contains(e.target)) menuContainer.classList.remove('show'); });
+        const recordsSec = document.getElementById('records-section');
+        const trashSec = document.getElementById('trash-section');
+        const trashMain = document.getElementById('trash-button-main');
+        const toggleTrash = document.getElementById('toggle-trash-button');
+        function showTrash() { recordsSec.style.display='none'; trashSec.style.display='block'; menuContainer.classList.remove('show');}
+        function hideTrash() { recordsSec.style.display='block'; trashSec.style.display='none'; }
 
-            function backupData() {
-                const backup = {
-                    peaceRecords: peaceRecords,
-                    trashRecords: trashRecords
-                };
-                const backupJson = JSON.stringify(backup);
-                const blob = new Blob([backupJson], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const downloadLink = document.createElement('a');
-                downloadLink.href = url;
-                downloadLink.download = 'peace-records-backup.json'; // نام فایل بکاپ
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-                URL.revokeObjectURL(url); // آزادسازی منابع
-            }
+        loadFromStorage();
+        visibleCount = Math.min(10, peaceRecords.length);
+        renderLimitedPeaceList(); renderTrashList(); hideTrash();
+        updateTotalCounter();
 
-            function restoreData(event) {
-                const file = event.target.files[0];
-                if (!file) {
-                    return; // اگر فایلی انتخاب نشد
-                }
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const backupJson = e.target.result;
-                        const backup = JSON.parse(backupJson);
-                        if (backup.peaceRecords && backup.trashRecords) {
-                            peaceRecords = backup.peaceRecords;
-                            trashRecords = backup.trashRecords;
-                            saveRecords('peaceRecords', peaceRecords);
-                            saveRecords('trashRecords', trashRecords);
-                            renderPeaceRecordsList();
-                            renderTrashList();
-                            alert('بازیابی اطلاعات با موفقیت انجام شد!');
-                        } else {
-                            alert('فایل بکاپ نامعتبر است.');
-                        }
-                    } catch (error) {
-                        alert('خطا در خواندن یا پردازش فایل بکاپ.');
-                        console.error('خطا در بازیابی اطلاعات:', error);
-                    } finally {
-                        restoreFileInput.value = ''; // ریست کردن input file برای رویداد change بعدی
-                    }
-                };
-                reader.readAsText(file);
-            }
-
-            function calculateElapsedTimeBetween(currentTimestamp, nextTimestamp) {
-                const diffInSeconds = Math.floor((nextTimestamp - currentTimestamp) / 1000);
-                if (diffInSeconds < 60) {
-                    return `${diffInSeconds} ثانیه گذشت`;
-                }
-                const diffInMinutes = Math.floor(diffInSeconds / 60);
-                if (diffInMinutes < 60) {
-                    return `${diffInMinutes} دقیقه گذشت`;
-                }
-                const diffInHours = Math.floor(diffInMinutes / 60);
-                if (diffInHours < 24) {
-                    return `${diffInHours} ساعت گذشت`;
-                }
-                const diffInDays = Math.floor(diffInHours / 24);
-                return `${diffInDays} روز گذشت`;
-            }
-        });
-    </script>
+        document.getElementById('record-button').onclick = addPeace;
+        trashMain.onclick = showTrash;
+        toggleTrash.onclick = hideTrash;
+        document.getElementById('backup-button').onclick = backup;
+        document.getElementById('restore-button-main').onclick = () => document.getElementById('restore-file-input').click();
+        document.getElementById('restore-file-input').onchange = (e) => e.target.files[0] && restore(e.target.files[0]);
+        document.getElementById('load-more-btn').onclick = loadMore;
+        document.getElementById('saveNoteBtn').onclick = saveCurrentNote;
+        document.getElementById('cancelNoteBtn').onclick = closeNoteModal;
+        window.onclick = (e) => { if(e.target === document.getElementById('noteModal')) closeNoteModal(); };
+    })();
+</script>
 </body>
 </html>
