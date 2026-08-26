@@ -644,13 +644,13 @@
             <!-- پنل دیاگ و عیب‌یابی کشویی -->
             <div class="white-card" style="margin-top: 10px;">
                 <div id="debugHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
-                    <h2 class="card-title" style="margin: 0; border: none; padding: 0;">🩺📟 پنل دیاگ و عیب‌یابی خطاهای گیت‌هاب</h2>
+                    <h2 class="card-title" style="margin: 0; border: none; padding: 0;">🩺📟 پنل دیاگ و عیب‌یابی اختصاصی خطاهای دانلود</h2>
                     <span id="debugToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: var(--accent-blue);">🔽</span>
                 </div>
 
                 <div id="debugContent" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 0;">
                     <p style="font-size: 0.82rem; color: #64748b; margin-top: 12px; margin-bottom: 12px; line-height: 1.5;">
-                        تمامی کوئری‌ها، پاسخ‌ها، وضعیت‌های HTTP و متن خطاهای ارتباطی با API گیت‌هاب در اینجا به صورت زنده ثبت می‌شوند تا متوجه کوچک‌ترین ناهماهنگی در تنظیمات شوید.
+                        تمامی لاگ‌های مربوط به استعلام لینک‌ها، وضعیت دانلود از تلگرام، اینستاگرام، تیک‌تاک، پاسخ‌های سرور گیت‌هاب و خطاهای احتمالی به صورت اختصاصی در این پنل ثبت می‌شوند.
                     </p>
                     <textarea id="debugConsole" readonly class="input-field" style="height: 180px; font-family: 'Courier New', Courier, monospace; font-size: 0.78rem; color: #ef4444; background: #0f172a; line-height: 1.4; resize: none; border-color: #334155; direction: ltr; text-align: left;"></textarea>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
@@ -720,7 +720,7 @@
                 document.getElementById(id).value = val;
                 localStorage.setItem('restricted_bot_' + id, val);
             } else if (id === 'ghBranch') {
-                document.getElementById(id).value = '60'; // مقدار پیش‌فرض 60
+                document.getElementById(id).value = '72'; // مقدار پیش‌فرض 72
             }
 
             // ذخیره خودکار و ضدعفونی همزمان هنگام کپی/پیست یا تایپ
@@ -880,6 +880,17 @@
 
             showToast(actionMsg);
             logDebug(`${actionMsg} (شاخه: ${branch})`);
+
+            if (downloadLink) {
+                logDebug(`📥 دیاگ لینک دانلود: ${downloadLink}`);
+                if (downloadLink.includes('tiktok.com')) {
+                    logDebug(`🎵 تحلیل لینک: ویدیوی تیک‌تاک (موتور دانلود yt-dlp)`);
+                } else if (downloadLink.includes('instagram.com') || downloadLink.includes('instagr.am')) {
+                    logDebug(`📸 تحلیل لینک: اینستاگرام (ریلز / پست / استوری)`);
+                } else if (downloadLink.includes('t.me')) {
+                    logDebug(`💬 تحلیل لینک: فایل یا کانال تلگرام`);
+                }
+            }
 
             try {
                 const workflowId = "restricted_bot.yml";
