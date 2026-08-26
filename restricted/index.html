@@ -60,7 +60,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 20px;
+            padding: 15px 20px;
             box-sizing: border-box;
             z-index: 10;
         }
@@ -90,20 +90,57 @@
         }
 
         .app-logo {
-            width: 45px;
-            height: 45px;
+            width: 42px;
+            height: 42px;
             border-radius: 12px;
             box-shadow: var(--glow-cyan);
             border: 1px solid var(--accent-cyan);
+            object-fit: cover;
         }
 
         .app-title {
             margin: 0;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: 700;
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+
+        /* نوار ناوبری تب‌ها */
+        .tab-nav {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            padding: 0 20px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 10px;
+            background: rgba(20, 20, 35, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .tab-btn.active {
+            background: rgba(0, 229, 255, 0.15);
+            border-color: var(--accent-cyan);
+            color: #ffffff;
+            box-shadow: var(--glow-cyan);
         }
 
         .container {
@@ -114,6 +151,18 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+        }
+
+        /* محتوای تب‌ها */
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .tab-content.active {
+            display: flex;
         }
 
         /* کارت‌های شیشه‌ای */
@@ -207,7 +256,7 @@
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 12px;
-            padding: 12px;
+            padding: 14px;
             color: #ffffff;
             font-size: 16px; /* جلوگیری از زوم خودکار آیفون */
             transition: all 0.3s;
@@ -310,7 +359,7 @@
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
-            padding: 15px;
+            padding: 12px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -380,216 +429,249 @@
         </div>
     </div>
 
+    <!-- ناوبری تب‌ها -->
+    <div class="tab-nav">
+        <button class="tab-btn active" id="tabBtn1" onclick="switchTab(1)">
+            📥 دانلود سریع
+        </button>
+        <button class="tab-btn" id="tabBtn2" onclick="switchTab(2)">
+            ⚙️ امکانات و تنظیمات
+        </button>
+    </div>
+
     <div class="container">
 
-        <!-- بخش مانیتورینگ و کنترل سرور -->
-        <div class="glass-card">
-            <h2 class="card-title">🚀 کنترل از راه دور سرور گیت‌هاب</h2>
-
-            <div class="status-panel">
-                <span style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">وضعیت موتور ابری گیت‌هاب:</span>
-                <div class="status-badge" id="workflowStatus">
-                    <span class="status-dot idle"></span>
-                    <span id="statusText">در حال دریافت وضعیت...</span>
+        <!-- ==================== تب ۱: مینی‌مال و شیک (پیش‌فرض) ==================== -->
+        <div class="tab-content active" id="tabContent1">
+            <div class="glass-card" style="padding: 28px 22px;">
+                <!-- وضعیت زنده سرور -->
+                <div class="status-panel">
+                    <span style="font-size: 0.85rem; color: rgba(255,255,255,0.7);">وضعیت موتور دانلود:</span>
+                    <div class="status-badge" id="workflowStatus1">
+                        <span class="status-dot idle"></span>
+                        <span id="statusText1">در حال دریافت وضعیت...</span>
+                    </div>
                 </div>
-            </div>
 
-            <!-- دانلود مستقیم لینک -->
-            <div class="input-group" style="margin-bottom: 15px;">
-                <label class="input-label">📥 آدرس پیوند (لینک تکی پست تلگرام):</label>
-                <input type="text" id="dlLink" class="input-field" placeholder="https://t.me/c/123456789/22" style="direction: ltr;">
-            </div>
+                <!-- کادر ورودی پیوند عکس / فیلم -->
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <label class="input-label" style="font-size: 0.9rem; color: #ffffff;">
+                        🎬📸 لینک فیلم یا عکس تلگرام را وارد کنید:
+                    </label>
+                    <input type="text" id="dlLink" class="input-field" placeholder="https://t.me/c/123456789/22" style="direction: ltr; font-size: 0.95rem; padding: 15px; border-radius: 16px;">
+                </div>
 
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button class="action-btn green" id="btnDownload">
-                    📥 دانلود و ارسال مستقیم پیوند به تلگرام
-                </button>
-                <button class="action-btn" id="btnLaunchServer">
-                    🚀 روشن کردن ربات برای دانلودهای مداوم (۶ ساعته)
-                </button>
-                <button class="action-btn" id="btnStopServer" style="background: linear-gradient(135deg, rgba(255, 30, 100, 0.25), rgba(157, 78, 221, 0.15)); border-color: #ff3366; box-shadow: 0 0 15px rgba(255, 51, 102, 0.35);">
-                    🛑 خاموش کردن موتور ابری (توقف فوری ربات)
+                <!-- دکمه دانلود بزرگ -->
+                <button class="action-btn green" id="btnDownload" style="padding: 16px; font-size: 1.05rem; border-radius: 16px;">
+                    📥 دانلود و ارسال مستقیم به تلگرام
                 </button>
             </div>
         </div>
 
-        <!-- کارت جستجوی رسمی و عمیق تلگرام -->
-        <div class="glass-card">
-            <h2 class="card-title">🔎 موتور جستجوی رسمی و سراسری تلگرام</h2>
-            <p style="font-size: 0.8rem; line-height: 1.5; color: rgba(255,255,255,0.6); margin-top: -10px; margin-bottom: 15px;">
-                عبارت موردنظر را بنویسید تا اکانت تلگرام شما کل فضای عمومی تلگرام را بدون واسطه و مستقیماً از دیتابیس مرکزی آن جستجو کرده و تمام کانال‌ها را مستقیماً در همین صفحه وب ردیف کند!
-            </p>
+        <!-- ==================== تب ۲: تنظیمات و امکانات پیشرفته ==================== -->
+        <div class="tab-content" id="tabContent2">
 
-            <div class="input-group" style="margin-bottom: 15px;">
-                <label class="input-label">🔑 کلمه کلیدی یا کلمه مورد نظر:</label>
-                <input type="text" id="searchQuery" class="input-field" placeholder="مثلاً: بورس، آشپزی، عکس، موسیقی">
-            </div>
+            <!-- کنترل سرور -->
+            <div class="glass-card">
+                <h2 class="card-title">🚀 کنترل از راه دور سرور گیت‌هاب</h2>
 
-            <button class="action-btn" id="btnSearchTelegram" style="border-color: var(--accent-purple); background: linear-gradient(135deg, rgba(157, 78, 221, 0.2), rgba(0, 229, 255, 0.15)); box-shadow: var(--glow-purple);">
-                🔎 شروع جستجوی عمیق و زنده در سرورهای تلگرام
-            </button>
-        </div>
-
-        <!-- کارت نمایش زنده و کامل تمام کانال‌های کشف‌شده در وب -->
-        <div class="glass-card" id="searchResultsCard">
-            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px;">
-                <h2 class="card-title" style="margin: 0; border: none; padding: 0;">📋 لیست کامل کانال‌های کشف‌شده دیتابیس</h2>
-                <span id="resultsCountBadge" style="background: rgba(0,229,255,0.2); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">۰ کانال</span>
-            </div>
-
-            <div class="input-group" style="margin-bottom: 15px;">
-                <input type="text" id="filterWebChannels" class="input-field" placeholder="🔍 فیلتر و جستجوی زنده بین کانال‌های لیست پایین...">
-            </div>
-
-            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-                <button class="action-btn" id="btnFetchResults" style="font-size: 0.85rem; padding: 10px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); box-shadow: none;">
-                    🔄 بروزرسانی لیست از سرور
-                </button>
-                <button class="action-btn" id="btnImportJson" style="font-size: 0.85rem; padding: 10px; background: rgba(157, 78, 221, 0.15); border-color: var(--accent-purple); box-shadow: none;">
-                    📁 بارگذاری فایل JSON
-                </button>
-                <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
-            </div>
-
-            <!-- نوار پیشرفت سبز تا ۱۰۰۰ کانال -->
-            <div class="progress-bar-container" id="progressBarCard" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; font-weight: bold; padding: 0 4px;">
-                    <span style="color: var(--accent-green);" id="progressText">🟢 پیشرفت دریافت کانال‌ها: ۰ از ۱,۰۰۰</span>
-                    <span style="color: var(--accent-cyan);" id="progressPercent">۰٪</span>
-                </div>
-                <div class="progress-bar-fill" id="progressBarFill"></div>
-            </div>
-
-            <!-- پنل کنترل صفحه‌بندی بالا -->
-            <div id="paginationTop" style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 12px; background: rgba(0,0,0,0.35); padding: 10px; border-radius: 14px; border: 1px solid rgba(0,229,255,0.2); flex-wrap: wrap;"></div>
-
-            <div id="webChannelsContainer" style="max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-left: 5px;">
-                <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 30px 0; font-size: 0.85rem;">
-                    هیچ نتایجی هنوز ذخیره نشده است. عبارت موردنظر خود را بالا جستجو کنید یا فایل JSON نتایج را بارگذاری فرمایید. 💎
-                </div>
-            </div>
-
-            <!-- پنل کنترل صفحه‌بندی پایین -->
-            <div id="paginationBottom" style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 12px; background: rgba(0,0,0,0.35); padding: 10px; border-radius: 14px; border: 1px solid rgba(0,229,255,0.2); flex-wrap: wrap;"></div>
-        </div>
-
-        <!-- کارت تنظیمات اختصاصی -->
-        <div class="glass-card">
-            <h2 class="card-title">⚙️ تنظیمات و متغیرهای محرمانه (پرونده ربات)</h2>
-            <p style="font-size: 0.8rem; line-height: 1.5; color: rgba(255,255,255,0.6); margin-top: -10px; margin-bottom: 15px;">
-                این تنظیمات صرفاً در حافظه امن مرورگر شما به صورت محلی ذخیره می‌شوند تا بتوانید دستور فعال‌سازی گیت‌هاب را مستقیم صادر کنید.
-            </p>
-
-            <div class="form-grid">
-                <!-- گیت هاب -->
-                <div style="border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 14px; background: rgba(0,0,0,0.2);">
-                    <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; color: var(--accent-cyan);">🔑 دسترسی گیت‌هاب (جهت روشن کردن سرور):</h4>
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label class="input-label">شناسه کاربری گیت‌هاب (Username):</label>
-                            <input type="text" id="ghOwner" class="input-field" placeholder="مثلا Alendirani" style="direction: ltr;">
-                        </div>
-                        <div class="input-group">
-                            <label class="input-label">نام مخزن شما (Repository Name):</label>
-                            <input type="text" id="ghRepo" class="input-field" placeholder="مثلا Save-Restricted-Bot" style="direction: ltr;">
-                        </div>
-                        <div class="input-group">
-                            <label class="input-label">توکن دسترسی گیت‌هاب (Personal Access Token):</label>
-                            <input type="password" id="ghPat" class="input-field" placeholder="github_pat_..." style="direction: ltr;">
-                        </div>
-                        <div class="input-group">
-                            <label class="input-label">نام شاخه گیت‌هاب (Branch Name):</label>
-                            <input type="text" id="ghBranch" class="input-field" placeholder="مثلا main" style="direction: ltr;">
-                        </div>
+                <div class="status-panel">
+                    <span style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">وضعیت موتور ابری گیت‌هاب:</span>
+                    <div class="status-badge" id="workflowStatus2">
+                        <span class="status-dot idle"></span>
+                        <span id="statusText2">در حال دریافت وضعیت...</span>
                     </div>
                 </div>
 
-                <!-- متغیرهای ربات تلگرام -->
-                <div style="border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 14px; background: rgba(0,0,0,0.2); margin-top: 5px;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; color: var(--accent-purple);">🤖 شناسه‌های تلگرام ربات:</h4>
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label class="input-label">API_ID تلگرام:</label>
-                            <input type="text" id="tgApiId" class="input-field" placeholder="مثلا 123456" style="direction: ltr;">
-                        </div>
-                        <div class="input-group">
-                            <label class="input-label">API_HASH تلگرام:</label>
-                            <input type="password" id="tgApiHash" class="input-field" placeholder="کد ۳۲ کاراکتری" style="direction: ltr;">
-                        </div>
-                        <div class="input-group">
-                            <label class="input-label">BOT_TOKEN ربات تلگرام:</label>
-                            <input type="password" id="tgBotToken" class="input-field" placeholder="توکن بات‌فادر" style="direction: ltr;">
-                        </div>
-                        <div class="input-group">
-                            <label class="input-label">SESSION_STRING اکانت تلگرام:</label>
-                            <input type="password" id="tgSession" class="input-field" placeholder="رشته تولیدشده توسط ربات کمکی" style="direction: ltr;">
-                        </div>
-                        <div class="input-group">
-                            <label class="input-label">OWNER_ID شناسه عددی شما:</label>
-                            <input type="text" id="tgOwner" class="input-field" placeholder="مثلا 987654321" style="direction: ltr;">
-                        </div>
-                    </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="action-btn" id="btnLaunchServer">
+                        🚀 روشن کردن ربات برای دانلودهای مداوم (۶ ساعته)
+                    </button>
+                    <button class="action-btn" id="btnStopServer" style="background: linear-gradient(135deg, rgba(255, 30, 100, 0.25), rgba(157, 78, 221, 0.15)); border-color: #ff3366; box-shadow: 0 0 15px rgba(255, 51, 102, 0.35);">
+                        🛑 خاموش کردن موتور ابری (توقف فوری ربات)
+                    </button>
                 </div>
             </div>
 
-            <div class="env-preview" id="envPreview"># در حال تولید فایل config.env...</div>
-            <button class="action-btn" id="btnCopyEnv" style="margin-top: 15px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); box-shadow: none;">
-                📋 کپی کردن متن محتوای فایل config.env
-            </button>
-        </div>
-
-        <!-- کارت آموزش فارسی -->
-        <div class="glass-card">
-            <h2 class="card-title">📖 راهنمای تصویری و قدم‌به‌قدم راه‌اندازی (فارسی)</h2>
-            <div class="step-list">
-                <div class="step-item">
-                    <div class="step-num">۱</div>
-                    <div class="step-content">
-                        <strong>دریافت API_ID و API_HASH:</strong> به سایت <a href="https://my.telegram.org" target="_blank" style="color: var(--accent-cyan);">my.telegram.org</a> بروید، با شماره خود وارد شوید و در بخش "API development tools" یک برنامه جدید بسازید تا شناسه‌ها را دریافت کنید.
-                    </div>
-                </div>
-                <div class="step-item">
-                    <div class="step-num">۲</div>
-                    <div class="step-content">
-                        <strong>ساخت SESSION_STRING اکانت:</strong> وارد تلگرام شوید، به ربات <a href="https://t.me/TgDevToolBot" target="_blank" style="color: var(--accent-cyan);">@TgDevToolBot</a> پیام بدهید و با زدن دکمه <code>Pyrogram Session</code> و وارد کردن تلفن و کد تایید، رشته ارتباطی امن اکانت خود را بگیرید.
-                    </div>
-                </div>
-                <div class="step-item">
-                    <div class="step-num">۳</div>
-                    <div class="step-content">
-                        <strong>ساخت ربات تلگرام:</strong> به ربات رسمی <a href="https://t.me/BotFather" target="_blank" style="color: var(--accent-cyan);">@BotFather</a> بروید، دستور <code>/newbot</code> را بزنید، نام و آدرس ربات را تعیین کرده و توکن نهایی را ذخیره کنید.
-                    </div>
-                </div>
-                <div class="step-item">
-                    <div class="step-num">۴</div>
-                    <div class="step-content">
-                        <strong>ذخیره و دریافت توکن گیت‌هاب:</strong> به تنظیمات اکانت گیت‌هاب خود رفته و یک Personal Access Token با دسترسی نوشتن برای بخش <code>Actions</code> و <code>Repo</code> بسازید تا این پورتال بتواند موتور گیت‌هاب را از راه دور فرمان دهد!
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- پنل دیاگ و عیب‌یابی کشویی -->
-        <div class="glass-card" style="margin-top: 10px;">
-            <div id="debugHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
-                <h2 class="card-title" style="margin: 0; border: none; padding: 0;">🩺📟 پنل دیاگ و عیب‌یابی خطاهای گیت‌هاب</h2>
-                <span id="debugToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: var(--accent-cyan);">🔽</span>
-            </div>
-
-            <div id="debugContent" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 0;">
-                <p style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-top: 12px; margin-bottom: 12px; line-height: 1.5;">
-                    تمامی کوئری‌ها، پاسخ‌ها، وضعیت‌های HTTP و متن خطاهای ارتباطی با API گیت‌هاب در اینجا به صورت زنده ثبت می‌شوند تا متوجه کوچک‌ترین ناهماهنگی در تنظیمات شوید.
+            <!-- کارت جستجوی رسمی و عمیق تلگرام -->
+            <div class="glass-card">
+                <h2 class="card-title">🔎 موتور جستجوی رسمی و سراسری تلگرام</h2>
+                <p style="font-size: 0.8rem; line-height: 1.5; color: rgba(255,255,255,0.6); margin-top: -10px; margin-bottom: 15px;">
+                    عبارت موردنظر را بنویسید تا اکانت تلگرام شما کل فضای عمومی تلگرام را بدون واسطه و مستقیماً از دیتابیس مرکزی آن جستجو کرده و تمام کانال‌ها را مستقیماً در همین صفحه وب ردیف کند!
                 </p>
-                <textarea id="debugConsole" readonly class="input-field" style="height: 180px; font-family: 'Courier New', Courier, monospace; font-size: 0.78rem; color: #ff2d55; background: rgba(0,0,0,0.7); line-height: 1.4; resize: none; border-color: rgba(255, 30, 100, 0.35); direction: ltr; text-align: left;"></textarea>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
-                    <button class="action-btn" id="btnCopyDebug" style="font-size: 0.85rem; padding: 10px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); box-shadow: none;">
-                        📋 کپی کردن لاگ‌های عیب‌یابی
+
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label class="input-label">🔑 کلمه کلیدی یا کلمه مورد نظر:</label>
+                    <input type="text" id="searchQuery" class="input-field" placeholder="مثلاً: بورس، آشپزی، عکس، موسیقی">
+                </div>
+
+                <button class="action-btn" id="btnSearchTelegram" style="border-color: var(--accent-purple); background: linear-gradient(135deg, rgba(157, 78, 221, 0.2), rgba(0, 229, 255, 0.15)); box-shadow: var(--glow-purple);">
+                    🔎 شروع جستجوی عمیق و زنده در سرورهای تلگرام
+                </button>
+            </div>
+
+            <!-- کارت نمایش زنده و کامل تمام کانال‌های کشف‌شده در وب -->
+            <div class="glass-card" id="searchResultsCard">
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px;">
+                    <h2 class="card-title" style="margin: 0; border: none; padding: 0;">📋 لیست کامل کانال‌های کشف‌شده دیتابیس</h2>
+                    <span id="resultsCountBadge" style="background: rgba(0,229,255,0.2); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">۰ کانال</span>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <input type="text" id="filterWebChannels" class="input-field" placeholder="🔍 فیلتر و جستجوی زنده بین کانال‌های لیست پایین...">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                    <button class="action-btn" id="btnFetchResults" style="font-size: 0.85rem; padding: 10px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); box-shadow: none;">
+                        🔄 بروزرسانی لیست از سرور
                     </button>
-                    <button class="action-btn" id="btnClearDebug" style="font-size: 0.85rem; padding: 10px; background: rgba(255,0,0,0.08); border-color: rgba(255,0,0,0.25); box-shadow: none; color: #ff8888;">
-                        🗑️ پاک کردن لاگ‌ها
+                    <button class="action-btn" id="btnImportJson" style="font-size: 0.85rem; padding: 10px; background: rgba(157, 78, 221, 0.15); border-color: var(--accent-purple); box-shadow: none;">
+                        📁 بارگذاری فایل JSON
                     </button>
+                    <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
+                </div>
+
+                <!-- نوار پیشرفت سبز تا ۱۰۰۰ کانال -->
+                <div class="progress-bar-container" id="progressBarCard" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; font-weight: bold; padding: 0 4px;">
+                        <span style="color: var(--accent-green);" id="progressText">🟢 پیشرفت دریافت کانال‌ها: ۰ از ۱,۰۰۰</span>
+                        <span style="color: var(--accent-cyan);" id="progressPercent">۰٪</span>
+                    </div>
+                    <div class="progress-bar-fill" id="progressBarFill"></div>
+                </div>
+
+                <!-- پنل کنترل صفحه‌بندی بالا -->
+                <div id="paginationTop" style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 12px; background: rgba(0,0,0,0.35); padding: 10px; border-radius: 14px; border: 1px solid rgba(0,229,255,0.2); flex-wrap: wrap;"></div>
+
+                <div id="webChannelsContainer" style="max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-left: 5px;">
+                    <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 30px 0; font-size: 0.85rem;">
+                        هیچ نتایجی هنوز ذخیره نشده است. عبارت موردنظر خود را بالا جستجو کنید یا فایل JSON نتایج را بارگذاری فرمایید. 💎
+                    </div>
+                </div>
+
+                <!-- پنل کنترل صفحه‌بندی پایین -->
+                <div id="paginationBottom" style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 12px; background: rgba(0,0,0,0.35); padding: 10px; border-radius: 14px; border: 1px solid rgba(0,229,255,0.2); flex-wrap: wrap;"></div>
+            </div>
+
+            <!-- کارت تنظیمات اختصاصی -->
+            <div class="glass-card">
+                <h2 class="card-title">⚙️ تنظیمات و متغیرهای محرمانه (پرونده ربات)</h2>
+                <p style="font-size: 0.8rem; line-height: 1.5; color: rgba(255,255,255,0.6); margin-top: -10px; margin-bottom: 15px;">
+                    این تنظیمات صرفاً در حافظه امن مرورگر شما به صورت محلی ذخیره می‌شوند تا بتوانید دستور فعال‌سازی گیت‌هاب را مستقیم صادر کنید.
+                </p>
+
+                <div class="form-grid">
+                    <!-- گیت هاب -->
+                    <div style="border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 14px; background: rgba(0,0,0,0.2);">
+                        <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; color: var(--accent-cyan);">🔑 دسترسی گیت‌هاب (جهت روشن کردن سرور):</h4>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label class="input-label">شناسه کاربری گیت‌هاب (Username):</label>
+                                <input type="text" id="ghOwner" class="input-field" placeholder="مثلا Alendirani" style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">نام مخزن شما (Repository Name):</label>
+                                <input type="text" id="ghRepo" class="input-field" placeholder="مثلا Save-Restricted-Bot" style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">توکن دسترسی گیت‌هاب (Personal Access Token):</label>
+                                <input type="password" id="ghPat" class="input-field" placeholder="github_pat_..." style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">نام شاخه گیت‌هاب (Branch Name):</label>
+                                <input type="text" id="ghBranch" class="input-field" placeholder="مثلا main" style="direction: ltr;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- متغیرهای ربات تلگرام -->
+                    <div style="border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 14px; background: rgba(0,0,0,0.2); margin-top: 5px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; color: var(--accent-purple);">🤖 شناسه‌های تلگرام ربات:</h4>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label class="input-label">API_ID تلگرام:</label>
+                                <input type="text" id="tgApiId" class="input-field" placeholder="مثلا 123456" style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">API_HASH تلگرام:</label>
+                                <input type="password" id="tgApiHash" class="input-field" placeholder="کد ۳۲ کاراکتری" style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">BOT_TOKEN ربات تلگرام:</label>
+                                <input type="password" id="tgBotToken" class="input-field" placeholder="توکن بات‌فادر" style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">SESSION_STRING اکانت تلگرام:</label>
+                                <input type="password" id="tgSession" class="input-field" placeholder="رشته تولیدشده توسط ربات کمکی" style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">OWNER_ID شناسه عددی شما:</label>
+                                <input type="text" id="tgOwner" class="input-field" placeholder="مثلا 987654321" style="direction: ltr;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="env-preview" id="envPreview"># در حال تولید فایل config.env...</div>
+                <button class="action-btn" id="btnCopyEnv" style="margin-top: 15px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); box-shadow: none;">
+                    📋 کپی کردن متن محتوای فایل config.env
+                </button>
+            </div>
+
+            <!-- کارت آموزش فارسی -->
+            <div class="glass-card">
+                <h2 class="card-title">📖 راهنمای تصویری و قدم‌به‌قدم راه‌اندازی (فارسی)</h2>
+                <div class="step-list">
+                    <div class="step-item">
+                        <div class="step-num">۱</div>
+                        <div class="step-content">
+                            <strong>دریافت API_ID و API_HASH:</strong> به سایت <a href="https://my.telegram.org" target="_blank" style="color: var(--accent-cyan);">my.telegram.org</a> بروید، با شماره خود وارد شوید و در بخش "API development tools" یک برنامه جدید بسازید تا شناسه‌ها را دریافت کنید.
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num">۲</div>
+                        <div class="step-content">
+                            <strong>ساخت SESSION_STRING اکانت:</strong> وارد تلگرام شوید، به ربات <a href="https://t.me/TgDevToolBot" target="_blank" style="color: var(--accent-cyan);">@TgDevToolBot</a> پیام بدهید و با زدن دکمه <code>Pyrogram Session</code> و وارد کردن تلفن و کد تایید، رشته ارتباطی امن اکانت خود را بگیرید.
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num">۳</div>
+                        <div class="step-content">
+                            <strong>ساخت ربات تلگرام:</strong> به ربات رسمی <a href="https://t.me/BotFather" target="_blank" style="color: var(--accent-cyan);">@BotFather</a> بروید، دستور <code>/newbot</code> را بزنید، نام و آدرس ربات را تعیین کرده و توکن نهایی را ذخیره کنید.
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num">۴</div>
+                        <div class="step-content">
+                            <strong>ذخیره و دریافت توکن گیت‌هاب:</strong> به تنظیمات اکانت گیت‌هاب خود رفته و یک Personal Access Token با دسترسی نوشتن برای بخش <code>Actions</code> و <code>Repo</code> بسازید تا این پورتال بتواند موتور گیت‌هاب را از راه دور فرمان دهد!
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <!-- پنل دیاگ و عیب‌یابی کشویی -->
+            <div class="glass-card" style="margin-top: 10px;">
+                <div id="debugHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
+                    <h2 class="card-title" style="margin: 0; border: none; padding: 0;">🩺📟 پنل دیاگ و عیب‌یابی خطاهای گیت‌هاب</h2>
+                    <span id="debugToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: var(--accent-cyan);">🔽</span>
+                </div>
+
+                <div id="debugContent" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 0;">
+                    <p style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-top: 12px; margin-bottom: 12px; line-height: 1.5;">
+                        تمامی کوئری‌ها، پاسخ‌ها، وضعیت‌های HTTP و متن خطاهای ارتباطی با API گیت‌هاب در اینجا به صورت زنده ثبت می‌شوند تا متوجه کوچک‌ترین ناهماهنگی در تنظیمات شوید.
+                    </p>
+                    <textarea id="debugConsole" readonly class="input-field" style="height: 180px; font-family: 'Courier New', Courier, monospace; font-size: 0.78rem; color: #ff2d55; background: rgba(0,0,0,0.7); line-height: 1.4; resize: none; border-color: rgba(255, 30, 100, 0.35); direction: ltr; text-align: left;"></textarea>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+                        <button class="action-btn" id="btnCopyDebug" style="font-size: 0.85rem; padding: 10px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); box-shadow: none;">
+                            📋 کپی کردن لاگ‌های عیب‌یابی
+                        </button>
+                        <button class="action-btn" id="btnClearDebug" style="font-size: 0.85rem; padding: 10px; background: rgba(255,0,0,0.08); border-color: rgba(255,0,0,0.25); box-shadow: none; color: #ff8888;">
+                            🗑️ پاک کردن لاگ‌ها
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
     </div>
@@ -605,6 +687,18 @@
         ];
 
         let activeRunId = null; // ذخیره شناسه آخرین ورک‌فلو جهت توقف فوری
+
+        // مدیریت تغییر تب‌ها
+        function switchTab(tabNum) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            const targetBtn = document.getElementById(`tabBtn${tabNum}`);
+            const targetContent = document.getElementById(`tabContent${tabNum}`);
+
+            if (targetBtn) targetBtn.classList.add('active');
+            if (targetContent) targetContent.classList.add('active');
+        }
 
         // تابع ضدعفونی‌کننده کاراکترهای مخفی و جهت‌دهی نامرئی یونیکد
         function sanitizeString(str) {
@@ -691,12 +785,25 @@
             const owner = sanitizeString(document.getElementById('ghOwner').value);
             const repo = sanitizeString(document.getElementById('ghRepo').value);
             const pat = sanitizeString(document.getElementById('ghPat').value);
-            const dot = document.querySelector('.status-dot');
-            const txt = document.getElementById('statusText');
+
+            const badge1 = document.getElementById('workflowStatus1');
+            const txt1 = document.getElementById('statusText1');
+            const badge2 = document.getElementById('workflowStatus2');
+            const txt2 = document.getElementById('statusText2');
+
+            function updateUI(dotClass, text) {
+                if (badge1 && txt1) {
+                    badge1.querySelector('.status-dot').className = "status-dot " + dotClass;
+                    txt1.innerText = text;
+                }
+                if (badge2 && txt2) {
+                    badge2.querySelector('.status-dot').className = "status-dot " + dotClass;
+                    txt2.innerText = text;
+                }
+            }
 
             if (!owner || !repo || !pat) {
-                dot.className = "status-dot idle";
-                txt.innerText = "تنظیمات گیت‌هاب را وارد کنید";
+                updateUI("idle", "تنظیمات گیت‌هاب را وارد کنید");
                 return;
             }
 
@@ -719,7 +826,7 @@
                         const status = run.status; // queued, in_progress, completed
                         const conclusion = run.conclusion; // success, failure, cancelled
 
-                        dot.className = "status-dot " + (status === 'completed' ? (conclusion === 'success' ? 'completed' : 'failed') : status);
+                        const dotClass = (status === 'completed' ? (conclusion === 'success' ? 'completed' : 'failed') : status);
 
                         let persianStatus = "در حال کار";
                         if (status === 'queued') persianStatus = "در صف انتظار";
@@ -728,22 +835,19 @@
                             persianStatus = conclusion === 'success' ? "آماده به کار (خاموش) ✅" : "اجرای قبلی ناموفق ❌";
                         }
 
-                        txt.innerText = persianStatus;
+                        updateUI(dotClass, persianStatus);
                         logDebug(`وضعیت استعلام موفق: ${status} | نتیجه: ${conclusion || 'در حال اجرا'}`, 'success');
                     } else {
-                        dot.className = "status-dot idle";
-                        txt.innerText = "بدون اجرای قبلی";
+                        updateUI("idle", "بدون اجرای قبلی");
                         logDebug("هیچ اجرای قبلی برای ورک‌فلو یافت نشد.");
                     }
                 } else {
                     const errText = await response.text().catch(() => '');
-                    dot.className = "status-dot failed";
-                    txt.innerText = "خطا در اتصال به گیت‌هاب";
+                    updateUI("failed", "خطا در اتصال به گیت‌هاب");
                     logDebug(`خطا در استعلام وضعیت گیت‌هاب: کد وضعیت HTTP ${response.status} (${response.statusText}). پاسخ: ${errText}`, 'error');
                 }
             } catch (err) {
-                dot.className = "status-dot failed";
-                txt.innerText = "عدم اتصال به شبکه";
+                updateUI("failed", "عدم اتصال به شبکه");
                 logDebug(`خطای عدم اتصال شبکه در استعلام وضعیت: ${err.message}`, 'error');
             }
         }
@@ -766,13 +870,13 @@
             const tgOwner = sanitizeString(document.getElementById('tgOwner').value);
 
             if (!owner || !repo || !pat) {
-                showToast("⚠️ لطفاً اطلاعات دسترسی گیت‌هاب را ابتدا وارد کنید!");
+                showToast("⚠️ لطفاً اطلاعات دسترسی گیت‌هاب را در تب تنظیمات وارد کنید!");
                 logDebug("خطای اعتبارسنجی: اطلاعات دسترسی گیت‌هاب خالی است.", "error");
                 return;
             }
 
             if (!tgApiId || !tgApiHash || !tgBotToken || !tgSession || !tgOwner) {
-                showToast("⚠️ لطفا تمام شناسه‌های تلگرام ربات را پر کنید!");
+                showToast("⚠️ لطفا تمام شناسه‌های تلگرام ربات را در تب تنظیمات پر کنید!");
                 logDebug("خطای اعتبارسنجی: شناسه‌های تلگرام تکمیل نیستند.", "error");
                 return;
             }
@@ -836,16 +940,18 @@
         const debugContent = document.getElementById('debugContent');
         const debugToggleIcon = document.getElementById('debugToggleIcon');
 
-        debugHeader.onclick = () => {
-            if (debugContent.style.maxHeight === '0px' || !debugContent.style.maxHeight) {
-                debugContent.style.maxHeight = '300px';
-                debugToggleIcon.style.transform = 'rotate(180deg)';
-                logDebug("پنل عیب‌یابی و مانیتورینگ زنده باز شد.");
-            } else {
-                debugContent.style.maxHeight = '0px';
-                debugToggleIcon.style.transform = 'rotate(0deg)';
-            }
-        };
+        if (debugHeader) {
+            debugHeader.onclick = () => {
+                if (debugContent.style.maxHeight === '0px' || !debugContent.style.maxHeight) {
+                    debugContent.style.maxHeight = '300px';
+                    debugToggleIcon.style.transform = 'rotate(180deg)';
+                    logDebug("پنل عیب‌یابی و مانیتورینگ زنده باز شد.");
+                } else {
+                    debugContent.style.maxHeight = '0px';
+                    debugToggleIcon.style.transform = 'rotate(0deg)';
+                }
+            };
+        }
 
         // کپی لاگ‌ها
         document.getElementById('btnCopyDebug').onclick = () => {
@@ -1068,6 +1174,7 @@
         function setDownloadLink(link) {
             document.getElementById('dlLink').value = link;
             showToast("📥 لینک کانال در کادر دانلود قرار گرفت!");
+            switchTab(1);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
