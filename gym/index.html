@@ -772,7 +772,7 @@
     </header>
 
     <div id="restTimer" class="rest-timer">
-        <span class="icon">⏳</span> زمان استراحت تا تمرین بعدی:
+        <span class="icon">⏳</span> <span id="timerLabel">زمان استراحت تا تمرین بعدی:</span>
         <span id="countdown" class="timer-countdown">۰۰:۰۰:۰۰</span>
     </div>
 
@@ -1501,20 +1501,28 @@
         return toPersianDigits(new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     }
 
+    function getRestEndTime(lastWorkoutTime) {
+        const d = new Date(lastWorkoutTime);
+        const midnightStart = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0, 0).getTime();
+        const restPeriod = 48 * 60 * 60 * 1000;
+        return {
+            midnightStart: midnightStart,
+            restEndTime: midnightStart + restPeriod
+        };
+    }
+
     function checkRestStatus() {
         const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
         if (history.length === 0) return true;
 
         const lastWorkout = history[0];
-        const lastTime = lastWorkout.id;
         const now = Date.now();
-        const diff = now - lastTime;
-        const restPeriod = 48 * 60 * 60 * 1000;
+        const { midnightStart, restEndTime } = getRestEndTime(lastWorkout.id);
 
         const hasDraft = localStorage.getItem(STORAGE_KEYS.DRAFT);
 
-        if (diff < restPeriod) {
-            showTimer(restPeriod - diff);
+        if (now < restEndTime) {
+            showTimer(midnightStart, restEndTime);
             return false;
         } else {
             hideTimer();
@@ -1549,29 +1557,38 @@
         }
     }
 
-    function showTimer(remainingMs) {
+    function showTimer(midnightStart, restEndTime) {
         const timerDiv = document.getElementById('restTimer');
         const mainForm = document.getElementById('mainForm');
+        const timerLabel = document.getElementById('timerLabel');
         timerDiv.classList.add('active');
         mainForm.classList.add('blocked');
         clearInterval(restInterval);
-        updateTimerDisplay(remainingMs);
-        restInterval = setInterval(() => {
-            remainingMs -= 1000;
-            if (remainingMs <= 0) {
+
+        const tick = () => {
+            const now = Date.now();
+            if (now < midnightStart) {
+                if (timerLabel) timerLabel.innerText = 'زمان استراحت (شروع شمارش معکوس ۴۸ ساعته از ۱۲ شب):';
+                updateTimerDisplay(48 * 60 * 60 * 1000);
+            } else if (now < restEndTime) {
+                if (timerLabel) timerLabel.innerText = 'زمان استراحت تا تمرین بعدی:';
+                updateTimerDisplay(restEndTime - now);
+            } else {
                 clearInterval(restInterval);
                 hideTimer();
                 checkRestStatus();
-            } else {
-                updateTimerDisplay(remainingMs);
             }
-        }, 1000);
+        };
+
+        tick();
+        restInterval = setInterval(tick, 1000);
     }
 
     function updateTimerDisplay(ms) {
-        const hours = Math.floor(ms / (1000 * 60 * 60));
-        const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+        const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
         document.getElementById('countdown').innerText = toPersianDigits(`${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`);
     }
 
@@ -2379,19 +2396,17 @@
         if (history.length === 0) return;
 
         const lastWorkout = history[0];
-        const lastTime = lastWorkout.id;
         const now = Date.now();
-        const diff = now - lastTime;
-        const fortyEightHours = 48 * 60 * 60 * 1000;
+        const { restEndTime } = getRestEndTime(lastWorkout.id);
 
-        // اگر ۴۸ ساعت گذشته باشد و قبلاً برای این تمرین خاص اعلان نداده باشیم
+        // اگر ۴۸ ساعت از ۱۲ شب روز تمرین گذشته باشد و قبلاً برای این تمرین خاص اعلان نداده باشیم
         const lastNotifiedId = localStorage.getItem('last_notified_workout_id');
 
-        if (diff >= fortyEightHours && lastNotifiedId !== lastWorkout.id.toString()) {
+        if (now >= restEndTime && lastNotifiedId !== lastWorkout.id.toString()) {
             if ('Notification' in window && Notification.permission === 'granted') {
                 navigator.serviceWorker.ready.then(registration => {
                     registration.showNotification('وقت فعالیت شد! 💪', {
-                        body: '۴۸ ساعت از فعالیت قبلیت گذشته پهلوان. امروز نوبت کدوم مرحله است؟',
+                        body: 'استراحت ۴۸ ساعته‌ت به پایان رسید پهلوان. امروز نوبت کدوم مرحله است؟',
                         icon: 'icon-192.png',
                         vibrate: [200, 100, 200],
                         badge: 'icon-192.png'
