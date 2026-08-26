@@ -27,6 +27,10 @@ def send_channel_notice(text):
     except Exception as e:
         print(f"DEBUG: send_channel_notice error: {e}")
 
+class SimpleMsg:
+    def __init__(self, mid):
+        self.id = mid
+
 async def safe_send_message(owner_id, text, disable_web_page_preview=False):
     from main import Bot, bot, userbot, BOT_TOKEN
 
@@ -52,7 +56,10 @@ async def safe_send_message(owner_id, text, disable_web_page_preview=False):
             req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
             with urllib.request.urlopen(req) as resp:
                 print("DEBUG: Direct Telegram Bot API sendMessage succeeded.")
-                return True
+                resp_data = json.loads(resp.read().decode('utf-8'))
+                if resp_data.get('ok') and 'result' in resp_data:
+                    msg_id_val = resp_data['result'].get('message_id', 0)
+                    return SimpleMsg(msg_id_val)
     except Exception as e_api:
         print(f"DEBUG: Direct Telegram Bot API failed: {e_api}")
 
@@ -75,7 +82,7 @@ async def safe_send_message(owner_id, text, disable_web_page_preview=False):
 
 async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=False):
     from main import Bot, bot, userbot
-    if not msg_obj:
+    if not msg_obj or not hasattr(msg_obj, 'id'):
         return await safe_send_message(owner_id, text, disable_web_page_preview)
 
     is_telethon = hasattr(msg_obj, 'client') or hasattr(msg_obj, 'respond')
@@ -679,6 +686,7 @@ async def main_download():
 
         # Send starting message to owner
         msg = await safe_send_message(owner_id, f"📥 *شروع دانلود لینک درخواستی:*\n`{link}`\n\n🕒 لطفا صبور باشید...")
+        edit_id = msg.id if (msg and hasattr(msg, 'id')) else 0
 
         from main.plugins.pyroplug import get_msg
         from main.plugins.helpers import get_link, join
@@ -688,9 +696,12 @@ async def main_download():
                 # Join channel
                 res = await join(userbot, link)
                 await safe_edit_message(owner_id, msg, f"🔑 *نتیجه ورود به کانال خصوصی:*\n{res}")
+            elif 't.me/' not in link:
+                # Direct social media download
+                await process_social_media_download(link, owner_id, msg)
             else:
-                # Download and send
-                await get_msg(userbot, Bot, bot, owner_id, msg.id, link, 0)
+                # Telegram link download
+                await get_msg(userbot, Bot, bot, owner_id, edit_id, link, 0)
                 await safe_send_message(owner_id, "✅ *دانلود و ارسال با موفقیت پایان یافت!*")
         except Exception as e:
             print(f"Error during execution: {e}")
