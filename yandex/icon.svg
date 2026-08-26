@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EF5350" />
+      <stop offset="40%" stop-color="#D32F2F" />
+      <stop offset="100%" stop-color="#9A0007" />
+    </linearGradient>
+    <filter id="emboss3d" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="8" flood-color="#300000" flood-opacity="0.65"/>
+      <feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    <linearGradient id="yGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="85%" stop-color="#F5F5F5" />
+      <stop offset="100%" stop-color="#E0E0E0" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="url(#bgGrad)" />
+  <rect x="12" y="12" width="488" height="488" rx="103" fill="none" stroke="#FFFFFF" stroke-width="4" opacity="0.2" />
+  <text x="256" y="378" font-family="Impact, Arial Black, sans-serif" font-weight="900" font-size="360" fill="url(#yGrad)" text-anchor="middle" filter="url(#emboss3d)">Y</text>
+</svg>
