@@ -1543,32 +1543,10 @@
             <span class="month-name">${MONTH_NAMES[mi]}</span>
           </div>
         `;
-        header.onclick = (e) => {
-          if (e.target.closest('.toggle-all-btn')) return;
+        header.onclick = () => {
           collapsedState[mi] = !collapsedState[mi];
           card.classList.toggle('collapsed', collapsedState[mi]);
         };
-
-        const toggleAll = document.createElement('button');
-        toggleAll.className = 'toggle-all-btn';
-        toggleAll.textContent = '✔️ همه';
-        toggleAll.onclick = (e) => {
-          e.stopPropagation();
-          const allChecked = fundNames.every((_,fi) => paymentState[fi][mi]);
-          for(let fi=0; fi<fundNames.length; fi++){
-            if(!allChecked && !paymentState[fi][mi]) {
-              if(!historyData[mi]) historyData[mi]=[];
-              if(!historyData[mi][fi]) historyData[mi][fi]=[];
-              historyData[mi][fi].push(getCurrentJalaliDateTime());
-              paymentState[fi][mi] = true;
-            } else if(allChecked) {
-              paymentState[fi][mi] = false;
-            }
-          }
-          saveToStorage();
-          renderAll(); // دکمه همه نیاز به رندر کامل دارد برای به روز رسانی ظاهر دایره‌ها
-        };
-        header.appendChild(toggleAll);
         card.appendChild(header);
 
         const fundsDiv = document.createElement('div');
