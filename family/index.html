@@ -1276,18 +1276,15 @@
                 });
             }
 
-            // Spouses placeholders if count exceeds active list
+            // Spouses placeholders (always at least 1 placeholder available beyond registered spouses)
             const currentSpousesCount = active.spouses ? active.spouses.length : 0;
-            const targetSpousesCount = active.isMarried ? parseInt(active.spousesCount || 1) : 0;
-            if (targetSpousesCount > currentSpousesCount) {
-                for (let i = 0; i < (targetSpousesCount - currentSpousesCount); i++) {
-                    const spousePlaceholder = createPlaceholderCard('spouse', `➕ همسر ${i + 1}`, active.id);
-                    // Add attention class if this is the target spotlight
-                    if (highlightChainNodeId === 'spouse_' + i) {
-                        spousePlaceholder.querySelector('.member-card').classList.add('chain-attention');
-                    }
-                    centerGroup.appendChild(spousePlaceholder);
+            const targetSpousesCount = Math.max(active.isMarried ? parseInt(active.spousesCount || 1) : 0, currentSpousesCount + 1);
+            for (let i = 0; i < (targetSpousesCount - currentSpousesCount); i++) {
+                const spousePlaceholder = createPlaceholderCard('spouse', `➕ افزودن همسر ${currentSpousesCount + i + 1}`, active.id);
+                if (highlightChainNodeId === 'spouse_' + i) {
+                    spousePlaceholder.querySelector('.member-card').classList.add('chain-attention');
                 }
+                centerGroup.appendChild(spousePlaceholder);
             }
 
             // ---- 2. RENDER PARENTS ----
@@ -1320,17 +1317,15 @@
                 }
             });
 
-            // Placeholders for children
-            const targetChildrenCount = active.isMarried ? parseInt(active.childrenCount || 0) : 0;
-            if (targetChildrenCount > renderedChildren) {
-                const missing = targetChildrenCount - renderedChildren;
-                for (let i = 0; i < missing; i++) {
-                    const childPlaceholder = createPlaceholderCard('child', `➕ فرزند ${renderedChildren + i + 1}`, active.id);
-                    if (highlightChainNodeId === 'child_' + i) {
-                        childPlaceholder.querySelector('.member-card').classList.add('chain-attention');
-                    }
-                    childrenRow.appendChild(childPlaceholder);
+            // Placeholders for children (always at least 1 placeholder available beyond rendered children)
+            const targetChildrenCount = Math.max(active.isMarried ? parseInt(active.childrenCount || 0) : 0, renderedChildren + 1);
+            const missingChildren = targetChildrenCount - renderedChildren;
+            for (let i = 0; i < missingChildren; i++) {
+                const childPlaceholder = createPlaceholderCard('child', `➕ افزودن فرزند ${renderedChildren + i + 1}`, active.id);
+                if (highlightChainNodeId === 'child_' + i) {
+                    childPlaceholder.querySelector('.member-card').classList.add('chain-attention');
                 }
+                childrenRow.appendChild(childPlaceholder);
             }
 
             // Trigger line connections rendering
@@ -1433,6 +1428,46 @@
                 openEditDialog(member.id);
             };
             card.appendChild(editBtn);
+
+            // Quick actions on active focus card
+            if (relationStyle === 'active') {
+                const quickActions = document.createElement('div');
+                quickActions.style.display = 'flex';
+                quickActions.style.gap = '4px';
+                quickActions.style.marginTop = '4px';
+
+                const addSpouseBtn = document.createElement('button');
+                addSpouseBtn.innerHTML = '💍 همسر';
+                addSpouseBtn.style.fontSize = '0.65rem';
+                addSpouseBtn.style.padding = '2px 6px';
+                addSpouseBtn.style.borderRadius = '8px';
+                addSpouseBtn.style.border = '1px solid var(--primary-green)';
+                addSpouseBtn.style.background = 'var(--light-green)';
+                addSpouseBtn.style.color = 'var(--primary-green)';
+                addSpouseBtn.style.cursor = 'pointer';
+                addSpouseBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openAddDialog(member.id, 'spouse');
+                };
+
+                const addChildBtn = document.createElement('button');
+                addChildBtn.innerHTML = '👶 فرزند';
+                addChildBtn.style.fontSize = '0.65rem';
+                addChildBtn.style.padding = '2px 6px';
+                addChildBtn.style.borderRadius = '8px';
+                addChildBtn.style.border = '1px solid var(--primary-green)';
+                addChildBtn.style.background = 'var(--light-green)';
+                addChildBtn.style.color = 'var(--primary-green)';
+                addChildBtn.style.cursor = 'pointer';
+                addChildBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openAddDialog(member.id, 'child');
+                };
+
+                quickActions.appendChild(addSpouseBtn);
+                quickActions.appendChild(addChildBtn);
+                card.appendChild(quickActions);
+            }
 
             container.appendChild(card);
             return container;
