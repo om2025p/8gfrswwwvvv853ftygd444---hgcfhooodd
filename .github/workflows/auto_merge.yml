@@ -5,6 +5,9 @@ on:
     branches-ignore:
       - 'main'
 
+permissions:
+  contents: write
+
 jobs:
   merge-to-main:
     runs-on: ubuntu-latest
@@ -14,6 +17,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |

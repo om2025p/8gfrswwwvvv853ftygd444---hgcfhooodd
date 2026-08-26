@@ -765,15 +765,21 @@
 
     <!-- Empty State -->
     <div class="empty-state" id="emptyState">
-        <div class="empty-icon">🌸</div>
-        <div class="empty-text">بازمانده گرامی، ابتدا مایلید اطلاعات کدام جد بزرگ خود را ثبت و کامل کنید؟</div>
-        <div style="display: flex; gap: 10px; margin-top: 12px;">
-            <button class="btn-primary" onclick="openAddDialog(null, 'ancestor'); setGender('male'); document.getElementById('member-relation').value = 'جد بزرگ پدری';" style="border-radius: 30px; padding: 10px 18px; font-weight: bold; font-size: 0.85rem;">
-                🌱 ثبت اولین جد پدری
+        <div class="empty-icon">🌳</div>
+        <div class="empty-text" style="font-size: 1.05rem; font-weight: 700; color: #1B5E20; line-height: 1.6;">
+            خوش آمدید به شجره‌نامه عمارت! 📜<br>
+            برای شروع ساخت درخت، ابتدا جد بزرگ شاخه پدری یا مادری خود را ثبت کنید:
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 8px;">
+            <button class="btn-primary" onclick="openAddDialog(null, 'ancestor'); setGender('male'); document.getElementById('member-relation').value = 'جد بزرگ پدری';" style="border-radius: 30px; padding: 12px 18px; font-weight: bold; font-size: 0.9rem;">
+                🌱 ۱. ثبت جد بزرگ پدری (پدربزرگ / مادربزرگ پدری)
             </button>
-            <button class="btn-primary" onclick="openAddDialog(null, 'ancestor'); setGender('female'); document.getElementById('member-relation').value = 'جد بزرگ مادری';" style="border-radius: 30px; padding: 10px 18px; font-weight: bold; font-size: 0.85rem; background: #689F38 !important;">
-                🌸 ثبت اولین جد مادری
+            <button class="btn-primary" onclick="openAddDialog(null, 'ancestor'); setGender('female'); document.getElementById('member-relation').value = 'جد بزرگ مادری';" style="border-radius: 30px; padding: 12px 18px; font-weight: bold; font-size: 0.9rem; background: #689F38 !important;">
+                🌸 ۲. ثبت جد بزرگ مادری (پدربزرگ / مادربزرگ مادری)
             </button>
+        </div>
+        <div style="font-size: 0.78rem; color: #666; background: rgba(255,255,255,0.7); padding: 8px 12px; border-radius: 12px; border: 1px dashed #A5D6A7;">
+            💡 <b>راهنما:</b> با ثبت جد پدری و جد مادری و اتصال وصلت (ازدواج فرزندانشان)، نسل بعد و فرزندان به زیبایی در مرکز درخت پیوند داده می‌شوند.
         </div>
     </div>
 
@@ -1506,62 +1512,126 @@
             return container;
         }
 
-        // SVG Vine connector drawing logic
+        // Clean Fork/Junction Hub SVG connector drawing logic
         function drawConnections() {
             const svg = document.getElementById('connections-svg');
-            svg.innerHTML = ''; // Clear lines
+            svg.innerHTML = ''; // Clear SVG canvas
 
             const canvas = document.getElementById('canvas');
 
-            // Locate elements to connect
             const activeCard = document.querySelector('.active-focus');
             if (!activeCard) return;
 
             const activeBox = getRelativeCoords(activeCard, canvas);
 
-            // 1. Connect grandparents (Row 0 -> Row 1)
-            // Society Norm: Maternal grands connect to mother, Paternal grands connect to father
+            // 1. Connect grandparents (Row 0) to parents (Row 1) via fork junction
             const parentCards = document.querySelectorAll('#parentsRow .member-card');
-            const maternalGrandCards = document.querySelectorAll('#grandparentsRow .member-card:nth-child(n+3)'); // maternal ones listed last
-            const paternalGrandCards = document.querySelectorAll('#grandparentsRow .member-card:nth-child(-n+2)'); // paternal ones first
+            const paternalGrandCards = document.querySelectorAll('#grandparentsRow .member-card:nth-child(-n+2)');
+            const maternalGrandCards = document.querySelectorAll('#grandparentsRow .member-card:nth-child(n+3)');
 
-            // Draw connections from paternal grandparents to paternal father (first parent card)
-            if (parentCards.length > 0) {
+            if (parentCards.length > 0 && paternalGrandCards.length > 0) {
                 const fatherBox = getRelativeCoords(parentCards[0], canvas);
-                paternalGrandCards.forEach(gCard => {
-                    const gBox = getRelativeCoords(gCard, canvas);
-                    drawVinePath(svg, gBox.centerX, gBox.bottom, fatherBox.centerX, fatherBox.top);
-                });
+                drawForkJunction(svg, Array.from(paternalGrandCards).map(c => getRelativeCoords(c, canvas)), fatherBox, true);
             }
 
-            // Draw connections from maternal grandparents to maternal mother (second parent card)
-            if (parentCards.length > 1) {
+            if (parentCards.length > 1 && maternalGrandCards.length > 0) {
                 const motherBox = getRelativeCoords(parentCards[1], canvas);
-                maternalGrandCards.forEach(gCard => {
-                    const gBox = getRelativeCoords(gCard, canvas);
-                    drawVinePath(svg, gBox.centerX, gBox.bottom, motherBox.centerX, motherBox.top);
-                });
+                drawForkJunction(svg, Array.from(maternalGrandCards).map(c => getRelativeCoords(c, canvas)), motherBox, true);
             }
 
-            // 2. Connect parents to active (Row 1 -> Row 2)
-            parentCards.forEach(pCard => {
-                const pBox = getRelativeCoords(pCard, canvas);
-                drawVinePath(svg, pBox.centerX, pBox.bottom, activeBox.centerX, activeBox.top);
-            });
+            // 2. Connect parents (Row 1) to active (Row 2) via fork junction
+            if (parentCards.length > 0) {
+                drawForkJunction(svg, Array.from(parentCards).map(c => getRelativeCoords(c, canvas)), activeBox, true);
+            }
 
-            // 3. Connect spouses (sides of Row 2)
+            // 3. Connect spouses (Row 2 side-by-side) with clean horizontal line & ring icon
             const spouseCards = document.querySelectorAll('#centerGroup .member-card:not(.active-focus)');
             spouseCards.forEach(spCard => {
                 const spBox = getRelativeCoords(spCard, canvas);
-                drawVinePath(svg, activeBox.centerX, activeBox.centerY, spBox.centerX, spBox.centerY, true);
+                drawSpouseConnection(svg, activeBox, spBox);
             });
 
-            // 4. Connect children (Row 2 -> Row 3)
+            // 4. Connect active (Row 2) to children (Row 3) via fork junction
             const childCards = document.querySelectorAll('#childrenRow .member-card');
-            childCards.forEach(chCard => {
-                const chBox = getRelativeCoords(chCard, canvas);
-                drawVinePath(svg, activeBox.centerX, activeBox.bottom, chBox.centerX, chBox.top);
-            });
+            if (childCards.length > 0) {
+                drawForkJunction(svg, [activeBox], Array.from(childCards).map(c => getRelativeCoords(c, canvas)), false);
+            }
+        }
+
+        // Draw clean Fork Junction Hub (Vertical Trunk -> Horizontal Bar -> Vertical Drops)
+        function drawForkJunction(svg, sourceBoxes, targetBoxes, isParentsToChild = false) {
+            if (!sourceBoxes || sourceBoxes.length === 0) return;
+            if (Array.isArray(targetBoxes) && targetBoxes.length === 0) return;
+
+            const targets = Array.isArray(targetBoxes) ? targetBoxes : [targetBoxes];
+
+            if (isParentsToChild) {
+                // Convergence: Multiple parents -> Midpoint Trunk -> Single child
+                const avgSourceX = sourceBoxes.reduce((sum, b) => sum + b.centerX, 0) / sourceBoxes.length;
+                const minY = Math.max(...sourceBoxes.map(b => b.bottom));
+                const maxY = targets[0].top;
+                const midY = (minY + maxY) / 2;
+
+                // Horizontal bar across parents
+                const minX = Math.min(...sourceBoxes.map(b => b.centerX));
+                const maxX = Math.max(...sourceBoxes.map(b => b.centerX));
+
+                // Vertical lines down from each parent to midY
+                sourceBoxes.forEach(b => {
+                    drawOrthogonalLine(svg, b.centerX, b.bottom, b.centerX, midY);
+                });
+
+                // Horizontal connecting bar
+                if (minX !== maxX) {
+                    drawOrthogonalLine(svg, minX, midY, maxX, midY);
+                    addLeafDecoration(svg, (minX + maxX) / 2, midY);
+                }
+
+                // Vertical trunk from midY down to target
+                drawOrthogonalLine(svg, avgSourceX, midY, targets[0].centerX, targets[0].top);
+            } else {
+                // Divergence: Single parent / Active -> Midpoint Trunk -> Multiple children
+                const parentBox = sourceBoxes[0];
+                const minY = parentBox.bottom;
+                const maxY = Math.min(...targets.map(b => b.top));
+                const midY = (minY + maxY) / 2;
+
+                const minX = Math.min(...targets.map(b => b.centerX));
+                const maxX = Math.max(...targets.map(b => b.centerX));
+
+                // Vertical trunk down from parent to midY
+                drawOrthogonalLine(svg, parentBox.centerX, minY, parentBox.centerX, midY);
+
+                // Horizontal distribution bar
+                drawOrthogonalLine(svg, minX, midY, maxX, midY);
+                addLeafDecoration(svg, (minX + maxX) / 2, midY);
+
+                // Vertical drops down to each child
+                targets.forEach(b => {
+                    drawOrthogonalLine(svg, b.centerX, midY, b.centerX, b.top);
+                });
+            }
+        }
+
+        // Draw crisp SVG line with rounded corners for orthogonal forks
+        function drawOrthogonalLine(svg, x1, y1, x2, y2) {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const d = `M ${x1} ${y1} L ${x2} ${y2}`;
+
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', '#388E3C');
+            path.setAttribute('stroke-width', '3.5');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(path);
+        }
+
+        function addLeafDecoration(svg, x, y) {
+            const leaf = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            leaf.setAttribute('d', 'M0,0 C5,-10 15,-10 15,-5 C15,5 5,10 0,0');
+            leaf.setAttribute('fill', '#4CAF50');
+            leaf.setAttribute('transform', `translate(${x}, ${y - 8}) scale(0.8)`);
+            svg.appendChild(leaf);
         }
 
         function getRelativeCoords(elem, parent) {
@@ -1586,6 +1656,29 @@
         }
 
         // Vine connection renderer with organic leaf elements
+        function drawSpouseConnection(svg, box1, box2) {
+            const x1 = box1.centerX < box2.centerX ? box1.x + box1.width : box1.x;
+            const x2 = box1.centerX < box2.centerX ? box2.x : box2.x + box2.width;
+            const y = (box1.centerY + box2.centerY) / 2;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', `M ${x1} ${y} L ${x2} ${y}`);
+            path.setAttribute('stroke', '#E91E63');
+            path.setAttribute('stroke-width', '3');
+            path.setAttribute('stroke-dasharray', '6 4');
+            path.setAttribute('fill', 'none');
+            svg.appendChild(path);
+
+            const midX = (x1 + x2) / 2;
+            const ring = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            ring.setAttribute('x', midX);
+            ring.setAttribute('y', y + 5);
+            ring.setAttribute('text-anchor', 'middle');
+            ring.setAttribute('font-size', '14');
+            ring.textContent = '💍';
+            svg.appendChild(ring);
+        }
+
         function drawVinePath(svg, x1, y1, x2, y2, isHorizontal = false) {
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             let d = '';
