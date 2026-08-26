@@ -1,0 +1,36 @@
+{
+  "name": "ثبت آرامش عمارت",
+  "short_name": "ثبت آرامش",
+  "description": "اپلیکیشن هوشمند ثبت آرامش و پیگیری لحظات حس خوب عمارت دیجیتال",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#112d1c",
+  "theme_color": "#1b5e20",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "fa-IR",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

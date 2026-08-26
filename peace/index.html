@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1b5e20">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title>ثبت آرامش</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body, h1, h2, h3, p, ul, li, button, input, div, section {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            font-size: 100%;
+            font: inherit;
+            vertical-align: baseline;
+            list-style: none;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            direction: rtl;
+            background: linear-gradient(135deg, #112d1c 0%, #06190e 100%);
+            color: #e0f2fe;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            padding-bottom: 60px;
+        }
+
+        .container {
+            width: 92%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 24px;
+            background: rgba(18, 48, 28, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        header h1 {
+            color: #ffd54f;
+            font-weight: bold;
+            font-size: 2em;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            letter-spacing: -0.5px;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .record-button {
+            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+            color: #fff;
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 16px 32px;
+            border-radius: 16px;
+            border: 1px solid #a5d6a7;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            align-self: center;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+            width: 80%;
+        }
+
+        .record-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(46, 125, 50, 0.6);
+            background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);
+        }
+
+        .record-button:active {
+            transform: scale(0.96);
+        }
+
+        .records-section, .trash-section {
+            background: rgba(10, 30, 18, 0.6);
+            padding: 20px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+        }
+
+        .records-section h2, .trash-section h2 {
+            color: #ffecb3;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .peace-records-list-container {
+            max-height: 340px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .day-box {
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 14px;
+            background: rgba(15, 42, 25, 0.7);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .day-header {
+            background: rgba(46, 125, 50, 0.3);
+            color: #ffe082;
+            padding: 12px 18px;
+            text-align: right;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .day-header-count {
+            font-size: 0.9em;
+            color: #a5d6a7;
+        }
+
+        .peace-records-list-day {
+            padding-left: 0;
+        }
+
+        .peace-records-list-day li, .trash-list li {
+            background: transparent;
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            flex-direction: column;
+        }
+
+        .peace-records-list-day li:last-child, .trash-list li:last-child {
+            border-bottom: none;
+        }
+
+        .record-item-date-time {
+            flex-grow: 1;
+            text-align: right;
+            margin-bottom: 4px;
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .record-item-elapsed-time-between {
+            font-size: 0.88em;
+            color: #81c784;
+            text-align: left;
+            direction: ltr;
+        }
+
+        .record-item-actions, .trash-item-actions {
+            display: flex;
+            gap: 12px;
+            align-self: flex-start;
+        }
+
+        .delete-button, .restore-button, .permanent-delete-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #b0bec5;
+            font-size: 1.1em;
+            transition: color 0.2s ease;
+        }
+
+        .delete-button:hover { color: #ef5350; }
+        .restore-button:hover { color: #64b5f6; }
+        .permanent-delete-button:hover { color: #e53935; }
+
+        .no-data-message {
+            color: #90a4ae;
+            font-style: italic;
+            text-align: center;
+            padding: 15px;
+        }
+
+        .trash-button-main, .toggle-trash-button, .backup-button, .restore-button-main {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffe082;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 224, 130, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-self: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+
+        .trash-button-main:hover, .toggle-trash-button:hover, .backup-button:hover, .restore-button-main:hover {
+            background: rgba(255, 224, 130, 0.18);
+            color: #ffffff;
+            border-color: rgba(255, 224, 130, 0.5);
+        }
+
+        .trash-section { display: none; }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #81c784;
+            font-size: 0.85em;
+            margin-top: auto;
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                width: 100%;
+                border-radius: 0;
+                box-shadow: none;
+                padding: 16px;
+            }
+            .record-button {
+                width: 100%;
+                font-size: 1.1em;
+                padding: 14px 20px;
+            }
+        }
+
+        .backup-restore-buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        #restore-file-input { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ثبت آرامش</h1>
+        </header>
+
+        <main>
+            <button id="record-button" class="record-button">
+                <i class="fa-solid fa-heart-circle-plus"></i> ثبت آرامش
+            </button>
+
+            <section id="records-section" class="records-section">
+                <h2>لیست ثبت‌ها</h2>
+                <div class="peace-records-list-container">
+                    <ul id="peace-records-list" class="peace-records-list">
+                        <li id="no-records-message" style="display: none;" class="no-data-message">هنوز آرامشی ثبت نشده.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="trash-section" class="trash-section" style="display: none;">
+                <h2>سطل زباله</h2>
+                <ul id="trash-list" class="trash-list">
+                    <li id="no-trash-message" style="display: none;" class="no-data-message">سطل زباله خالی است.</li>
+                </ul>
+                <button id="toggle-trash-button" class="toggle-trash-button" style="margin-top: 15px;">بازگشت به لیست ثبت‌ها</button>
+            </section>
+
+            <div class="backup-restore-buttons-container">
+                <button id="backup-button" class="backup-button">
+                    <i class="fa-solid fa-download"></i> بکاپ اطلاعات
+                </button>
+                <button id="restore-button-main" class="restore-button-main">
+                    <i class="fa-solid fa-upload"></i> بازیابی اطلاعات
+                </button>
+                <input type="file" id="restore-file-input" accept=".json">
+            </div>
+
+            <button id="trash-button-main" class="trash-button-main">
+                <i class="fa-solid fa-trash-can"></i> سطل زباله
+            </button>
+        </main>
+
+        <footer>
+            <p>&copy; 1403 عمارت دیجیتال - ثبت آرامش</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const recordButton = document.getElementById('record-button');
+            const peaceRecordsList = document.getElementById('peace-records-list');
+            const noRecordsMessage = document.getElementById('no-records-message');
+            const recordsSection = document.getElementById('records-section');
+            const trashSection = document.getElementById('trash-section');
+            const trashButtonMain = document.getElementById('trash-button-main');
+            const toggleTrashButton = document.getElementById('toggle-trash-button');
+            const trashList = document.getElementById('trash-list');
+            const noTrashMessage = document.getElementById('no-trash-message');
+            const backupButton = document.getElementById('backup-button');
+            const restoreButtonMain = document.getElementById('restore-button-main');
+            const restoreFileInput = document.getElementById('restore-file-input');
+
+            let peaceRecords = loadRecords('peaceRecords') || [];
+            let trashRecords = loadRecords('trashRecords') || [];
+
+            renderPeaceRecordsList();
+            renderTrashList();
+
+            recordButton.addEventListener('click', recordPeace);
+            trashButtonMain.addEventListener('click', showTrashSection);
+            toggleTrashButton.addEventListener('click', hideTrashSection);
+            backupButton.addEventListener('click', backupData);
+            restoreButtonMain.addEventListener('click', function() {
+                restoreFileInput.click();
+            });
+            restoreFileInput.addEventListener('change', restoreData);
+
+            function recordPeace() {
+                const now = new Date();
+                const persianDate = toPersianDate(now);
+                const timeString = toPersianTime(now);
+                const dateTimeString = `${persianDate} ${timeString}`;
+                const timestamp = now.getTime();
+
+                peaceRecords.unshift({ dateTime: dateTimeString, timestamp: timestamp });
+                saveRecords('peaceRecords', peaceRecords);
+                renderPeaceRecordsList();
+            }
+
+            function renderPeaceRecordsList() {
+                peaceRecordsList.innerHTML = '';
+
+                if (peaceRecords.length === 0) {
+                    noRecordsMessage.style.display = 'block';
+                } else {
+                    noRecordsMessage.style.display = 'none';
+                    const groupedRecords = groupByDate(peaceRecords);
+
+                    for (const date in groupedRecords) {
+                        if (groupedRecords.hasOwnProperty(date)) {
+                            const dayRecords = groupedRecords[date];
+                            const dayBox = document.createElement('div');
+                            dayBox.classList.add('day-box');
+
+                            const dayHeader = document.createElement('div');
+                            dayHeader.classList.add('day-header');
+                            dayHeader.textContent = date;
+
+                            const dayRecordCountSpan = document.createElement('span');
+                            dayRecordCountSpan.classList.add('day-header-count');
+                            dayRecordCountSpan.textContent = `(${dayRecords.length} ثبت)`;
+                            dayHeader.appendChild(dayRecordCountSpan);
+
+                            dayBox.appendChild(dayHeader);
+
+                            const dayRecordList = document.createElement('ul');
+                            dayRecordList.classList.add('peace-records-list-day');
+
+                            dayRecords.forEach((record, indexInDay) => {
+                                const listItem = document.createElement('li');
+                                let elapsedTimeBetween = '';
+
+                                const recordIndexInPeaceRecords = peaceRecords.findIndex(r => r === record);
+                                if (recordIndexInPeaceRecords > 0) {
+                                    const previousRecord = peaceRecords[recordIndexInPeaceRecords - 1];
+                                    elapsedTimeBetween = calculateElapsedTimeBetween(record.timestamp, previousRecord.timestamp);
+                                }
+
+                                listItem.innerHTML = `
+                                    <div class="record-item-actions">
+                                        <button class="delete-button" data-index="${indexInDay}" data-date="${date}" title="حذف">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </div>
+                                    <span class="record-item-date-time">${record.dateTime.split(' ')[1]}</span>
+                                    ${elapsedTimeBetween ? `<p class="record-item-elapsed-time-between">${elapsedTimeBetween}</p>` : ''}
+                                `;
+                                dayRecordList.appendChild(listItem);
+                            });
+                            dayBox.appendChild(dayRecordList);
+                            peaceRecordsList.appendChild(dayBox);
+                        }
+                    }
+
+                    document.querySelectorAll('.peace-records-list-day .delete-button').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const indexToDelete = parseInt(this.dataset.index);
+                            const dateToDelete = this.dataset.date;
+                            moveToTrash(indexToDelete, dateToDelete);
+                        });
+                    });
+                }
+            }
+
+            function groupByDate(records) {
+                const grouped = {};
+                records.forEach(record => {
+                    const date = record.dateTime.split(' ')[0];
+                    if (!grouped[date]) {
+                        grouped[date] = [];
+                    }
+                    grouped[date].push(record);
+                });
+                return grouped;
+            }
+
+            function moveToTrash(index, date) {
+                const dayRecords = peaceRecords.filter(record => record.dateTime.startsWith(date));
+                const recordIndexInDay = dayRecords.length - 1 - index;
+                const recordToTrash = dayRecords[recordIndexInDay];
+                const recordGlobalIndex = peaceRecords.indexOf(recordToTrash);
+
+                if (recordGlobalIndex > -1) {
+                    peaceRecords.splice(recordGlobalIndex, 1);
+                    trashRecords.unshift(recordToTrash);
+                    saveRecords('peaceRecords', peaceRecords);
+                    saveRecords('trashRecords', trashRecords);
+                    renderPeaceRecordsList();
+                    renderTrashList();
+                }
+            }
+
+            function showTrashSection() {
+                trashSection.style.display = 'block';
+                recordsSection.style.display = 'none';
+                trashButtonMain.style.display = 'none';
+            }
+
+            function hideTrashSection() {
+                trashSection.style.display = 'none';
+                recordsSection.style.display = 'block';
+                trashButtonMain.style.display = 'block';
+            }
+
+            function renderTrashList() {
+                trashList.innerHTML = '';
+
+                if (trashRecords.length === 0) {
+                    noTrashMessage.style.display = 'block';
+                } else {
+                    noTrashMessage.style.display = 'none';
+                    trashRecords.forEach((record, index) => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <span class="record-item-date-time">${record.dateTime}</span>
+                            <div class="trash-item-actions">
+                                <button class="restore-button" data-index="${index}" title="بازیابی">
+                                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                                </button>
+                                <button class="permanent-delete-button" data-index="${index}" title="حذف دائمی">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        `;
+                        trashList.appendChild(listItem);
+                    });
+
+                    trashList.querySelectorAll('.restore-button').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const indexToRestore = parseInt(this.dataset.index);
+                            restoreFromTrash(indexToRestore);
+                        });
+                    });
+                    trashList.querySelectorAll('.permanent-delete-button').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const indexToDeletePermanently = parseInt(this.dataset.index);
+                            permanentlyDelete(indexToDeletePermanently);
+                        });
+                    });
+                }
+            }
+
+            function restoreFromTrash(index) {
+                const recordToRestore = trashRecords.splice(index, 1)[0];
+                peaceRecords.unshift(recordToRestore);
+                saveRecords('peaceRecords', peaceRecords);
+                saveRecords('trashRecords', trashRecords);
+                renderPeaceRecordsList();
+                renderTrashList();
+            }
+
+            function permanentlyDelete(index) {
+                trashRecords.splice(index, 1);
+                saveRecords('trashRecords', trashRecords);
+                renderTrashList();
+            }
+
+            function saveRecords(key, records) {
+                localStorage.setItem(key, JSON.stringify(records));
+            }
+
+            function loadRecords(key) {
+                const recordsJson = localStorage.getItem(key);
+                return recordsJson ? JSON.parse(recordsJson) : null;
+            }
+
+            function toPersianDate(date) {
+                const year = date.toLocaleDateString('fa-IR-u-ca-persian', { year: 'numeric' });
+                const month = date.toLocaleDateString('fa-IR-u-ca-persian', { month: '2-digit' });
+                const day = date.toLocaleDateString('fa-IR-u-ca-persian', { day: '2-digit' });
+                return `${year}/${month}/${day}`;
+            }
+
+            function toPersianTime(date) {
+                const hours = date.toLocaleTimeString('fa-IR', { hour: '2-digit', hour12: false, timeZone: 'Asia/Tehran' });
+                const minutes = date.toLocaleTimeString('fa-IR', { minute: '2-digit', timeZone: 'Asia/Tehran' });
+                return `${hours}:${minutes}`;
+            }
+
+            function backupData() {
+                const backup = {
+                    peaceRecords: peaceRecords,
+                    trashRecords: trashRecords
+                };
+                const backupJson = JSON.stringify(backup);
+                const blob = new Blob([backupJson], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = 'peace-records-backup.json';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(url);
+            }
+
+            function restoreData(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const backupJson = e.target.result;
+                        const backup = JSON.parse(backupJson);
+                        if (backup.peaceRecords && backup.trashRecords) {
+                            peaceRecords = backup.peaceRecords;
+                            trashRecords = backup.trashRecords;
+                            saveRecords('peaceRecords', peaceRecords);
+                            saveRecords('trashRecords', trashRecords);
+                            renderPeaceRecordsList();
+                            renderTrashList();
+                            alert('بازیابی اطلاعات با موفقیت انجام شد!');
+                        } else {
+                            alert('فایل بکاپ نامعتبر است.');
+                        }
+                    } catch (error) {
+                        alert('خطا در خواندن یا پردازش فایل بکاپ.');
+                        console.error('خطا در بازیابی اطلاعات:', error);
+                    } finally {
+                        restoreFileInput.value = '';
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            function calculateElapsedTimeBetween(currentTimestamp, nextTimestamp) {
+                const diffInSeconds = Math.floor((nextTimestamp - currentTimestamp) / 1000);
+                if (diffInSeconds < 60) {
+                    return `${diffInSeconds} ثانیه گذشت`;
+                }
+                const diffInMinutes = Math.floor(diffInSeconds / 60);
+                if (diffInMinutes < 60) {
+                    return `${diffInMinutes} دقیقه گذشت`;
+                }
+                const diffInHours = Math.floor(diffInMinutes / 60);
+                if (diffInHours < 24) {
+                    return `${diffInHours} ساعت گذشت`;
+                }
+                const diffInDays = Math.floor(diffInHours / 24);
+                return `${diffInDays} روز گذشت`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v28';
+const CACHE_NAME = 'emarat-portal-v29';
 const ASSETS = [
   './',
   './index.html',
@@ -180,7 +180,16 @@ const ASSETS = [
   './monthly-deposit/icon-192-maskable.png',
   './monthly-deposit/icon-512-maskable.png',
   './monthly-deposit/apple-touch-icon.png',
-  './monthly-deposit/favicon.ico'
+  './monthly-deposit/favicon.ico',
+  // Peace App (ثبت آرامش)
+  './peace/index.html',
+  './peace/manifest.json',
+  './peace/icon-192.png',
+  './peace/icon-512.png',
+  './peace/icon-192-maskable.png',
+  './peace/icon-512-maskable.png',
+  './peace/apple-touch-icon.png',
+  './peace/favicon.ico'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
