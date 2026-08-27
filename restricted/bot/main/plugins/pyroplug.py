@@ -21,19 +21,26 @@ def thumbnail(sender):
          return None
 
 async def safe_edit_msg_pyroplug(client, bot, sender, edit_id, text):
+    if not edit_id or isinstance(edit_id, bool):
+        try:
+            return await bot.send_message(sender, text)
+        except Exception:
+            return None
     try:
-        return await client.edit_message_text(sender, edit_id, text)
+        res = await client.edit_message_text(sender, edit_id, text)
+        return res if res and not isinstance(res, bool) else edit_id
     except Exception as e:
         print(f"DEBUG: Pyroplug client.edit_message_text failed: {e}. Trying Telethon bot...")
         try:
-            return await bot.edit_message(sender, edit_id, text)
+            res = await bot.edit_message(sender, edit_id, text)
+            return res if res and not isinstance(res, bool) else edit_id
         except Exception as e2:
             print(f"DEBUG: Pyroplug bot.edit_message failed: {e2}. Sending new message...")
             try:
                 return await bot.send_message(sender, text)
             except Exception as e3:
                 print(f"DEBUG: All pyroplug fallback edit methods failed: {e3}")
-                return None
+                return edit_id
 
 async def safe_edit_object(msg_obj, text):
     if not msg_obj:
