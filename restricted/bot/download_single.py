@@ -85,36 +85,38 @@ async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=Fa
     if not msg_obj or isinstance(msg_obj, bool) or not hasattr(msg_obj, 'id') or getattr(msg_obj, 'id', None) is None:
         return await safe_send_message(owner_id, text, disable_web_page_preview)
 
+    msg_id_val = getattr(msg_obj, 'id', 0)
     is_telethon = hasattr(msg_obj, 'client') or hasattr(msg_obj, 'respond')
+
     if is_telethon:
         try:
             res = await msg_obj.edit(text, link_preview=not disable_web_page_preview)
-            if res and not isinstance(res, bool) and hasattr(res, 'id'):
+            if res and not isinstance(res, bool) and hasattr(res, 'id') and getattr(res, 'id', None) is not None:
                 return res
-            return msg_obj
+            return SimpleMsg(msg_id_val) if msg_id_val else msg_obj
         except Exception as e:
             print(f"DEBUG: Telethon edit failed ({e}). Sending new message...")
             return await safe_send_message(owner_id, text, disable_web_page_preview)
     else:
         try:
             res = await msg_obj.edit_text(text, disable_web_page_preview=disable_web_page_preview)
-            if res and not isinstance(res, bool) and hasattr(res, 'id'):
+            if res and not isinstance(res, bool) and hasattr(res, 'id') and getattr(res, 'id', None) is not None:
                 return res
-            return msg_obj
+            return SimpleMsg(msg_id_val) if msg_id_val else msg_obj
         except Exception as e:
             print(f"DEBUG: Pyrogram edit_text failed ({e}). Trying Bot.edit_message_text...")
             try:
                 res = await Bot.edit_message_text(owner_id, msg_obj.id, text, disable_web_page_preview=disable_web_page_preview)
-                if res and not isinstance(res, bool) and hasattr(res, 'id'):
+                if res and not isinstance(res, bool) and hasattr(res, 'id') and getattr(res, 'id', None) is not None:
                     return res
-                return msg_obj
+                return SimpleMsg(msg_id_val) if msg_id_val else msg_obj
             except Exception as e2:
                 print(f"DEBUG: Pyrogram Bot.edit_message_text failed ({e2}). Trying userbot edit...")
                 try:
                     res = await userbot.edit_message_text(owner_id, msg_obj.id, text, disable_web_page_preview=disable_web_page_preview)
-                    if res and not isinstance(res, bool) and hasattr(res, 'id'):
+                    if res and not isinstance(res, bool) and hasattr(res, 'id') and getattr(res, 'id', None) is not None:
                         return res
-                    return msg_obj
+                    return SimpleMsg(msg_id_val) if msg_id_val else msg_obj
                 except Exception as e3:
                     print(f"DEBUG: All edits failed. Sending new message...")
                     return await safe_send_message(owner_id, text, disable_web_page_preview)
@@ -802,8 +804,9 @@ async def main_download():
                 await safe_send_message(owner_id, "✅ *دانلود و ارسال با موفقیت پایان یافت!*")
         except Exception as e:
             print(f"Error during execution: {e}")
+            err_msg_type = "شبکه اجتماعی (تیک‌تاک / اینستاگرام)" if is_social else "تلگرام"
             try:
-                await safe_send_message(owner_id, f"❌ *خطا در پردازش لینک:*\n`{str(e)}`")
+                await safe_send_message(owner_id, f"❌ *خطا در پردازش لینک {err_msg_type}:*\n`{str(e)}`")
             except:
                 pass
     finally:
