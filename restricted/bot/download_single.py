@@ -347,6 +347,101 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                 except Exception as ex_tt:
                     print(f"DEBUG: TikTok fallback layer failed: {ex_tt}")
 
+            # Layer 2.5: Try xHamster dedicated metadata parser (shorts & full videos)
+            if 'xhamster.com' in link and not scan_files():
+                try:
+                    import urllib.request, re, json
+                    xh_headers = {
+                        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                        'Accept-Language': 'en-US,en;q=0.9',
+                    }
+                    req_xh = urllib.request.Request(link, headers=xh_headers)
+                    with urllib.request.urlopen(req_xh, timeout=15) as resp_xh:
+                        html_xh = resp_xh.read().decode('utf-8', errors='ignore')
+
+                    match_xh = re.search(r'window\.initials\s*=\s*(\{.+?\});\s*</script>', html_xh, re.DOTALL)
+                    if match_xh:
+                        data_xh = json.loads(match_xh.group(1))
+                        layout_page = data_xh.get('layoutPage', {})
+                        moment = layout_page.get('momentProps') or layout_page.get('videoModel') or {}
+
+                        if not caption and moment.get('title'):
+                            caption = moment.get('title')
+
+                        mp4_candidates = []
+                        def extract_direct_mp4s(obj):
+                            if isinstance(obj, dict):
+                                for k, v in obj.items():
+                                    extract_direct_mp4s(v)
+                            elif isinstance(obj, list):
+                                for v in obj:
+                                    extract_direct_mp4s(v)
+                            elif isinstance(obj, str):
+                                if obj.startswith('http') and '.mp4' in obj and not '.m3u8' in obj:
+                                    mp4_candidates.append(obj)
+
+                        extract_direct_mp4s(moment)
+
+                        out_path = os.path.join(temp_dir, "xhamster_video.mp4")
+                        downloaded_mp4 = False
+
+                        if mp4_candidates:
+                            # Try best quality direct MP4 link first
+                            target_mp4 = mp4_candidates[-1]
+                            try:
+                                dl_req = urllib.request.Request(target_mp4, headers=xh_headers)
+                                with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_path, 'wb') as out_file:
+                                    out_file.write(dl_resp.read())
+                                if os.path.exists(out_path) and os.path.getsize(out_path) > 0:
+                                    downloaded_mp4 = True
+                                    print(f"DEBUG: xHamster direct MP4 fallback successfully saved video to {out_path}")
+                            except Exception as ex_mp4:
+                                print(f"DEBUG: Direct MP4 download failed: {ex_mp4}")
+
+                        if not downloaded_mp4:
+                            sources = moment.get('sources', {})
+                            standard = sources.get('standard', {}).get('h264', [])
+                            m3u8_url = None
+                            for item in reversed(standard):
+                                u = item.get('url') or item.get('fallback')
+                                if u and '.m3u8' in u:
+                                    m3u8_url = u
+                                    break
+
+                            if not m3u8_url:
+                                hls = sources.get('hls', {}).get('h264', {})
+                                m3u8_url = hls.get('url') or hls.get('fallback')
+
+                            if m3u8_url:
+                                req_m3u8 = urllib.request.Request(m3u8_url, headers=xh_headers)
+                                with urllib.request.urlopen(req_m3u8, timeout=15) as resp_m3u8:
+                                    m3u8_content = resp_m3u8.read().decode('utf-8')
+                                lines = [line.strip() for line in m3u8_content.splitlines() if line.strip()]
+                                media_m3u8_url = m3u8_url
+                                if any('#EXT-X-STREAM-INF' in l for l in lines):
+                                    sub_m3u8s = [l for l in lines if not l.startswith('#')]
+                                    if sub_m3u8s:
+                                        from urllib.parse import urljoin
+                                        media_m3u8_url = urljoin(m3u8_url, sub_m3u8s[-1])
+                                        req_sub = urllib.request.Request(media_m3u8_url, headers=xh_headers)
+                                        with urllib.request.urlopen(req_sub, timeout=15) as resp_sub:
+                                            m3u8_content = resp_sub.read().decode('utf-8')
+
+                                segments = [line.strip() for line in m3u8_content.splitlines() if line.strip() and not line.startswith('#')]
+                                if segments:
+                                    from urllib.parse import urljoin
+                                    with open(out_path, 'wb') as outfile:
+                                        for seg_url in segments:
+                                            if not seg_url.startswith('http'):
+                                                seg_url = urljoin(media_m3u8_url, seg_url)
+                                            seg_req = urllib.request.Request(seg_url, headers=xh_headers)
+                                            with urllib.request.urlopen(seg_req, timeout=15) as seg_resp:
+                                                outfile.write(seg_resp.read())
+                                    print(f"DEBUG: xHamster m3u8 segment fallback successfully saved video to {out_path}")
+                except Exception as ex_xh:
+                    print(f"DEBUG: xHamster fallback layer failed: {ex_xh}")
+
         # Retrieve caption / description
         if info:
             if isinstance(info, dict):
