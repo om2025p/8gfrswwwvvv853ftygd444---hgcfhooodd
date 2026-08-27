@@ -112,7 +112,8 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
     round_message = False
     clean_link = msg_link.split("?")[0].rstrip("/")
     try:
-        msg_id = int(clean_link.split("/")[-1]) + int(i)
+        last_part = clean_link.split("/")[-1]
+        msg_id = int(last_part) + int(i) if last_part and last_part.isdigit() else 0
     except Exception:
         msg_id = 0
     height, width, duration, thumb_path = 90, 90, 0, None
