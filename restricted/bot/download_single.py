@@ -367,8 +367,6 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
             file_cap = final_caption if idx == 0 else None
             await send_media_to_destinations(filepath, file_cap, owner_id)
 
-        await safe_send_message(owner_id, f"✅ *دانلود و ارسال محتوا هم به پی‌وی شما و هم به کانال «دنیا های قشنگ» با موفقیت کامل انجام شد!* 💎")
-
     except Exception as e:
         print(f"DEBUG: Error in process_social_media_download: {e}")
         await safe_edit_message(owner_id, msg_obj, f"❌ *خطا در پردازش لینک رسانه:*\n`{str(e)}`")
