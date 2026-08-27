@@ -123,14 +123,15 @@ async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=Fa
 
 def get_notif_config():
     token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
-    chat_id = os.environ.get("NOTIF_CHAT_ID") or config("NOTIF_CHAT_ID", default=None)
+    chat_id = os.environ.get("NOTIF_CHAT_ID") or config("NOTIF_CHAT_ID", default="-1002617482597")
     if not token or token == "None":
         token = config("BOT_TOKEN", default=None)
-    if chat_id and str(chat_id).strip() != "":
-        try:
-            chat_id = int(str(chat_id).strip())
-        except (ValueError, TypeError):
-            pass
+    if not chat_id or str(chat_id).strip() in ["", "None"]:
+        chat_id = "-1002617482597"
+    try:
+        chat_id = int(str(chat_id).strip())
+    except (ValueError, TypeError):
+        chat_id = -1002617482597
     return token, chat_id
 
 async def send_media_to_destinations(filepath, caption, owner_id):
