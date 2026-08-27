@@ -31,45 +31,50 @@ async function handleRequest(request) {
     const matches = text.match(linkRegex);
 
     if (matches && matches.length > 0) {
-      const targetLink = matches[0];
       const botToken = typeof BOT_TOKEN !== "undefined" ? BOT_TOKEN : "";
       const ghPat = typeof GH_PAT !== "undefined" ? GH_PAT : "";
       const ghRepo = typeof GH_REPO !== "undefined" ? GH_REPO : "";
       const ghBranch = typeof GH_BRANCH !== "undefined" ? GH_BRANCH : "75";
 
-      // 1. Send immediate Persian live log to Telegram User Chat
+      // Send status message to user informing how many links were queued
       if (botToken) {
         const tgApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        const queueText = matches.length === 1
+          ? `⚡ *لینک شما در سیستم صف ۲۴ ساعته قرار گرفت!*\n\n🔗 *لینک:* \`${matches[0]}\`\n\n🕒 *وضعیت:* در حال استخراج و بیدار کردن موتور دانلود ابری گیت‌هاب... 🚀`
+          : `⚡ *تعداد ${matches.length} لینک شناسایی شد و به صف دانلود افزوده‌شدند!* 📋\n\n🕒 *وضعیت:* ربات به ترتیب نوبت تمام فایل‌ها را استخراج کرده و به پی‌وی و کانال ارسال می‌کند. 🚀`;
+
         await fetch(tgApiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: chatId,
-            text: `⚡ *درخواست دانلود شما با موفقیت در سیستم کلودفلر ۲۴ ساعته ثبت شد!*\n\n🔗 *لینک:* \`${targetLink}\`\n\n🕒 *وضعیت:* در حال اتصال و بیدار کردن موتور دانلود ابری گیت‌هاب... 🚀`,
+            text: queueText,
             parse_mode: "Markdown"
           })
         });
       }
 
-      // 2. Trigger GitHub Actions Workflow via Workflow Dispatch
+      // Trigger GitHub Actions Workflow for each link sequentially
       if (ghPat && ghRepo) {
         const ghApiUrl = `https://api.github.com/repos/${ghRepo}/actions/workflows/restricted_bot.yml/dispatches`;
-        await fetch(ghApiUrl, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${ghPat}`,
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "Cloudflare-Worker-EmaratBot",
-            "X-GitHub-Api-Version": "2022-11-28"
-          },
-          body: JSON.stringify({
-            ref: ghBranch,
-            inputs: {
-              TELEGRAM_LINK: targetLink,
-              OWNER_ID: String(chatId)
-            }
-          })
-        });
+        for (const targetLink of matches) {
+          await fetch(ghApiUrl, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${ghPat}`,
+              "Accept": "application/vnd.github+json",
+              "User-Agent": "Cloudflare-Worker-EmaratBot",
+              "X-GitHub-Api-Version": "2022-11-28"
+            },
+            body: JSON.stringify({
+              ref: ghBranch,
+              inputs: {
+                TELEGRAM_LINK: targetLink,
+                OWNER_ID: String(chatId)
+              }
+            })
+          });
+        }
       }
     }
 

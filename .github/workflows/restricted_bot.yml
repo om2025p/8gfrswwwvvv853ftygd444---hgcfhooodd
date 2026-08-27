@@ -1,8 +1,8 @@
 name: Run Restricted Bot Server
 
 concurrency:
-  group: restricted-bot-server
-  cancel-in-progress: true
+  group: restricted-bot-server-${{ github.event.inputs.TELEGRAM_LINK || github.run_id }}
+  cancel-in-progress: false
 
 on:
   workflow_dispatch:
