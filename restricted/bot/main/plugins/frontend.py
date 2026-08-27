@@ -33,7 +33,7 @@ async def clone(event):
         if s == True:
             await event.reply(r)
             return
-    edit = await event.reply("Processing!")
+    edit = await event.reply("⚡ *لینک دریافت شد! در حال بررسی و تحلیل هوشمند...*", parse_mode='markdown')
     try:
         # Ensure userbot is connected dynamically
         if not getattr(userbot, 'is_connected', False):
@@ -51,15 +51,16 @@ async def clone(event):
 
         if 't.me/+' in link or 't.me/joinchat/' in link:
             q = await join(userbot, link)
-            await edit.edit(q)
+            await edit.edit(f"🔑 *نتیجه ورود به کانال خصوصی:*\n{q}")
             return
         if is_tg_domain:
+            await edit.edit("📥 *لینک تلگرام شناسایی شد! در حال استخراج و دانلود محتوا...*", parse_mode='markdown')
             await get_msg(userbot, Bot, Drone, event.sender_id, edit.id, link, 0)
         else:
             from download_single import process_social_media_download
             await process_social_media_download(link, event.sender_id, edit)
     except FloodWait as fw:
-        return await Drone.send_message(event.sender_id, f'Try again after {fw.x} seconds due to floodwait from telegram.')
+        return await Drone.send_message(event.sender_id, f'⚠️ لطفاً {fw.x} ثانیه دیگر مجدداً تلاش کنید (محدودیت تلگرام).')
     except Exception as e:
         print(e)
-        await Drone.send_message(event.sender_id, f"An error occurred during cloning of `{link}`\n\n**Error:** {str(e)}")
+        await Drone.send_message(event.sender_id, f"❌ *خطا در دانلود یا پردازش لینک:* `{link}`\n\n**جزئیات خطا:** `{str(e)}`")

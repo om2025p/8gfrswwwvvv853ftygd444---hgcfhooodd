@@ -121,6 +121,123 @@ async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=Fa
                     print(f"DEBUG: All edits failed. Sending new message...")
                     return await safe_send_message(owner_id, text, disable_web_page_preview)
 
+def get_notif_config():
+    token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
+    chat_id = os.environ.get("NOTIF_CHAT_ID") or config("NOTIF_CHAT_ID", default="-1002617482597")
+    if not token or token == "None":
+        token = config("BOT_TOKEN", default=None)
+    if not chat_id or str(chat_id).strip() in ["", "None"]:
+        chat_id = "-1002617482597"
+    try:
+        chat_id = int(str(chat_id).strip())
+    except (ValueError, TypeError):
+        chat_id = -1002617482597
+    return token, chat_id
+
+async def send_media_to_destinations(filepath, caption, owner_id):
+    from main import Bot, bot, userbot, BOT_TOKEN
+    ext = os.path.splitext(filepath)[1].lower()
+    token, chat_id = get_notif_config()
+
+    try:
+        owner_id = int(str(owner_id).strip())
+    except Exception:
+        pass
+
+    destinations = [owner_id]
+    if chat_id and chat_id not in destinations:
+        destinations.append(chat_id)
+
+    print(f"DEBUG: send_media_to_destinations starting for file={filepath}, size={os.path.getsize(filepath) if os.path.exists(filepath) else 0} bytes, destinations={destinations}")
+
+    for dest in destinations:
+        if not dest:
+            continue
+        sent = False
+        print(f"DEBUG: Attempting to send {filepath} to dest={dest}...")
+
+        # Pre-resolve dest with userbot if possible
+        if getattr(userbot, 'is_connected', False):
+            try:
+                if str(dest).startswith('-100'):
+                    await userbot.get_chat(dest)
+                else:
+                    await userbot.get_users(dest)
+            except Exception as e_res:
+                print(f"DEBUG: userbot resolve ({dest}) notice: {e_res}")
+
+        # 1. Try Pyrogram Bot
+        if not sent:
+            try:
+                if getattr(Bot, 'is_connected', False):
+                    print(f"DEBUG: Trying Pyrogram Bot to send to {dest}...")
+                    if ext in ['.mp4', '.mkv', '.webm', '.mov']:
+                        await Bot.send_video(chat_id=dest, video=filepath, caption=caption)
+                    elif ext in ['.jpg', '.jpeg', '.png', '.webp']:
+                        await Bot.send_photo(chat_id=dest, photo=filepath, caption=caption)
+                    else:
+                        await Bot.send_document(chat_id=dest, document=filepath, caption=caption)
+                    sent = True
+                    print(f"DEBUG: Pyrogram Bot successfully sent to {dest}")
+            except Exception as e_pbot:
+                print(f"DEBUG: Pyrogram Bot send to {dest} failed: {e_pbot}")
+
+        # 2. Try Telethon Bot
+        if not sent:
+            try:
+                if bot.is_connected():
+                    print(f"DEBUG: Trying Telethon Bot to send to {dest}...")
+                    await bot.send_file(dest, filepath, caption=caption)
+                    sent = True
+                    print(f"DEBUG: Telethon Bot successfully sent to {dest}")
+            except Exception as e_tbot:
+                print(f"DEBUG: Telethon Bot send to {dest} failed: {e_tbot}")
+
+        # 3. Try Pyrogram Userbot
+        if not sent:
+            try:
+                if getattr(userbot, 'is_connected', False):
+                    print(f"DEBUG: Trying Pyrogram Userbot to send to {dest}...")
+                    if ext in ['.mp4', '.mkv', '.webm', '.mov']:
+                        await userbot.send_video(chat_id=dest, video=filepath, caption=caption)
+                    elif ext in ['.jpg', '.jpeg', '.png', '.webp']:
+                        await userbot.send_photo(chat_id=dest, photo=filepath, caption=caption)
+                    else:
+                        await userbot.send_document(chat_id=dest, document=filepath, caption=caption)
+                    sent = True
+                    print(f"DEBUG: Pyrogram Userbot successfully sent to {dest}")
+            except Exception as e_ubot:
+                print(f"DEBUG: Pyrogram Userbot send to {dest} failed: {e_ubot}")
+
+        # 4. Try Direct Bot API HTTP multipart upload via curl
+        if not sent:
+            try:
+                token_to_use = token or BOT_TOKEN
+                if token_to_use:
+                    print(f"DEBUG: Trying Direct Bot API multipart HTTP to send to {dest}...")
+                    import subprocess
+                    endpoint = "sendVideo" if ext in ['.mp4', '.mkv', '.webm', '.mov'] else ("sendPhoto" if ext in ['.jpg', '.jpeg', '.png', '.webp'] else "sendDocument")
+                    field = "video" if ext in ['.mp4', '.mkv', '.webm', '.mov'] else ("photo" if ext in ['.jpg', '.jpeg', '.png', '.webp'] else "document")
+                    url = f"https://api.telegram.org/bot{token_to_use}/{endpoint}"
+
+                    cmd = ["curl", "-s", "-F", f"chat_id={dest}", "-F", f"{field}=@{filepath}"]
+                    if caption:
+                        safe_cap = caption if not str(caption).startswith('@') else ' ' + str(caption)
+                        cmd.extend(["-F", f"caption={safe_cap}"])
+                    cmd.append(url)
+
+                    res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+                    print(f"DEBUG: Curl response: {res.stdout}")
+                    if '"ok":true' in res.stdout:
+                        sent = True
+                        print(f"DEBUG: Direct Bot API HTTP upload to {dest} succeeded.")
+            except Exception as e_http:
+                print(f"DEBUG: Direct Bot API multipart HTTP upload to {dest} failed: {e_http}")
+
+        if not sent:
+            print(f"DEBUG: ERROR! Failed to send media {filepath} to destination {dest} via ALL methods.")
+            send_channel_notice(f"⚠️ *خطا در ارسال فایل ویدیو به {dest}:* هیچ‌کدام از روش‌های آپلود (ربات، یورربات، هدر HTTP) موفق نشدند.")
+
 async def process_social_media_download(link, owner_id, msg_obj=None):
     from main import Bot, bot, userbot
 
@@ -258,50 +375,11 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
 
         await safe_edit_message(owner_id, msg_obj, f"⬆️ *دانلود با موفقیت انجام شد! در حال آپلود به تلگرام ({len(downloaded_files)} فایل)...*")
 
+        final_caption = f"🎬 {caption}\n\n🔗 لینک منبع:\n`{link}`\n\n🛡️📥 دانلود شده توسط سپر دانلود عمارت" if caption else f"🎬 دانلود شده توسط سپر دانلود عمارت 🛡️📥\n`{link}`"
+
         for idx, filepath in enumerate(downloaded_files):
-            file_caption = caption if idx == 0 else None
-            ext = os.path.splitext(filepath)[1].lower()
-
-            sent = False
-            # 1. Try Pyrogram Bot
-            try:
-                if getattr(Bot, 'is_connected', False):
-                    if ext in ['.mp4', '.mkv', '.webm', '.mov']:
-                        await Bot.send_video(chat_id=owner_id, video=filepath, caption=file_caption)
-                        sent = True
-                    elif ext in ['.jpg', '.jpeg', '.png', '.webp']:
-                        await Bot.send_photo(chat_id=owner_id, photo=filepath, caption=file_caption)
-                        sent = True
-                    else:
-                        await Bot.send_document(chat_id=owner_id, document=filepath, caption=file_caption)
-                        sent = True
-            except Exception as e_pbot:
-                print(f"DEBUG: Pyrogram Bot social send failed ({e_pbot}). Trying Telethon...")
-
-            # 2. Try Telethon Bot
-            if not sent:
-                try:
-                    if bot.is_connected():
-                        await bot.send_file(owner_id, filepath, caption=file_caption)
-                        sent = True
-                except Exception as e_tbot:
-                    print(f"DEBUG: Telethon Bot social send failed ({e_tbot}). Trying Userbot...")
-
-            # 3. Try Pyrogram Userbot
-            if not sent:
-                try:
-                    if getattr(userbot, 'is_connected', False):
-                        if ext in ['.mp4', '.mkv', '.webm', '.mov']:
-                            await userbot.send_video(chat_id=owner_id, video=filepath, caption=file_caption)
-                        elif ext in ['.jpg', '.jpeg', '.png', '.webp']:
-                            await userbot.send_photo(chat_id=owner_id, photo=filepath, caption=file_caption)
-                        else:
-                            await userbot.send_document(chat_id=owner_id, document=filepath, caption=file_caption)
-                        sent = True
-                except Exception as e_ubot:
-                    print(f"DEBUG: Pyrogram Userbot social send failed ({e_ubot})")
-
-        await safe_send_message(owner_id, "✅ *دانلود و ارسال محتوای اینستاگرام / تیک‌تاک / واتساپ با موفقیت کامل انجام شد!*")
+            file_cap = final_caption if idx == 0 else None
+            await send_media_to_destinations(filepath, file_cap, owner_id)
 
     except Exception as e:
         print(f"DEBUG: Error in process_social_media_download: {e}")
@@ -541,7 +619,8 @@ async def main_download():
 
         is_social = any(domain in link_lower for domain in [
             'instagram.com', 'instagr.am', 'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
-            'whatsapp.com', 'chat.whatsapp.com', 'wa.me', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com'
+            'whatsapp.com', 'chat.whatsapp.com', 'wa.me', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com',
+            'xhamster.com', 'xvideos.com', 'pornhub.com'
         ]) or (link_lower.startswith(('http://', 'https://')) and not is_telegram_link)
 
         if is_social and not link_lower.startswith("search:"):

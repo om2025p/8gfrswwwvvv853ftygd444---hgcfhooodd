@@ -458,6 +458,31 @@
                     📥 دانلود و ارسال مستقیم به تلگرام
                 </button>
             </div>
+
+            <!-- منوی کشویی آخرین بروزرسانی‌ها با تاریخ و ساعت خورشیدی به وقت تهران -->
+            <div class="white-card" style="margin-top: -5px;">
+                <div id="updatesAccordionHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
+                    <h2 class="card-title" style="margin: 0; border: none; padding: 0; font-size: 0.98rem; color: var(--accent-blue);">
+                        📅 آخرین بروزرسانی‌های سیستم (تاریخ خورشیدی تهران)
+                    </h2>
+                    <span id="updatesAccordionToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: var(--accent-blue);">🔽</span>
+                </div>
+
+                <div id="updatesAccordionContent" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 0;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-top: 14px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; margin-bottom: 10px;">
+                            <span style="font-size: 0.82rem; font-weight: 700; color: #334155;">🕒 زمان آخرین بروزرسانی نسخه:</span>
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #16a34a; background: #dc26260f; padding: 3px 10px; border-radius: 10px; border: 1px solid #bbf7d0;">۵ شهریور ۱۴۰۵ ساعت ۰۷:۴۶</span>
+                        </div>
+                        <ul style="margin: 0; padding-right: 18px; font-size: 0.82rem; color: #475569; line-height: 1.7;">
+                            <li>🟢 <strong>اتصال لایو دیباگ سرور:</strong> استریم خط‌به‌خط لاگ‌های سرور ابری گیت‌هاب در پنل دیاگ دانلود.</li>
+                            <li>⚡ <strong>موتور ۴ لایه مدرن رسانه:</strong> استخراج تیک‌تاک بدون واترمارک HD (TikWM API)، ریلز اینستاگرام (Embed Engine)، yt-dlp 2024 و Direct Parser.</li>
+                            <li>📢 <strong>ارسال دوگانه هوشمند:</strong> ارسال همزمان فایل‌های دانلودشده به پی‌وی کاربر و کانال تلگرام «دنیا های قشنگ».</li>
+                            <li>🌐 <strong>پشتیبانی کامل پیوندها:</strong> قابلیت دانلود مستقیم لینک‌های عمومی و خصوصی تلگرام، تیک‌تاک و اینستاگرام.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- ==================== تب ۲: تنظیمات و امکانات پیشرفته ==================== -->
@@ -883,6 +908,130 @@
         setInterval(fetchGitHubStatus, 15000);
         fetchGitHubStatus();
 
+        // استعلام زنده لاگ‌های سرور (Live Server Actions Logs)
+        let logPollInterval = null;
+        let lastLoggedStepName = "";
+
+        async function pollServerLogs(owner, repo, pat) {
+            if (logPollInterval) clearInterval(logPollInterval);
+
+            logDlDebug("🌐 اتصال زنده به لاگ‌های سرور ابری گیت‌هاب برقرار شد...");
+            logDebug("🌐 شروع استعلام لاگ‌های زنده سرور گیت‌هاب (Server Log Poller)...");
+
+            let pollCount = 0;
+            const maxPolls = 120; // حداکثر ۱۰ دقیقه (هر ۵ ثانیه)
+
+            logPollInterval = setInterval(async () => {
+                pollCount++;
+                if (pollCount > maxPolls) {
+                    clearInterval(logPollInterval);
+                    logDlDebug("⏱️ زمان استعلام لاگ‌های سرور به پایان رسید.");
+                    return;
+                }
+
+                try {
+                    // ۱. دریافت آخرین ورک‌فلو در حال اجرا یا اجرا شده
+                    const runsUrl = `https://api.github.com/repos/${owner}/${repo}/actions/runs?per_page=1`;
+                    const runsResp = await fetch(runsUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${pat}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+
+                    if (!runsResp.ok) return;
+                    const runsData = await runsResp.json();
+                    if (!runsData.workflow_runs || runsData.workflow_runs.length === 0) return;
+
+                    const latestRun = runsData.workflow_runs[0];
+                    activeRunId = latestRun.id;
+
+                    // ۲. دریافت جاب‌های مربوط به این اجرای ورک‌فلو
+                    const jobsUrl = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${latestRun.id}/jobs`;
+                    const jobsResp = await fetch(jobsUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${pat}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+
+                    if (!jobsResp.ok) return;
+                    const jobsData = await jobsResp.json();
+                    if (!jobsData.jobs || jobsData.jobs.length === 0) return;
+
+                    const job = jobsData.jobs[0];
+
+                    // گزارش وضعیت تک تک گام‌ها (Steps) به لاگ‌های تب ۱ و عمومی
+                    if (job.steps && job.steps.length > 0) {
+                        job.steps.forEach(step => {
+                            if (step.status === 'in_progress' && lastLoggedStepName !== step.name) {
+                                lastLoggedStepName = step.name;
+                                logDlDebug(`⚡ گام در حال اجرای سرور: [${step.name}]`);
+                                logDebug(`⚡ سرور در حال اجرای گام: ${step.name}`);
+                            } else if (step.status === 'completed' && step.conclusion === 'failure') {
+                                logDlDebug(`❌ خطای گام سرور: [${step.name}]`, 'error');
+                            }
+                        });
+                    }
+
+                    // ۳. اگر اجرای سرور به پایان رسید، تمام لاگ‌های کامل متنی را دریافت و نمایش بده
+                    if (latestRun.status === 'completed') {
+                        clearInterval(logPollInterval);
+                        logDlDebug(`🏁 اجرای سرور به پایان رسید. نتیجه: ${latestRun.conclusion === 'success' ? 'موفقیت‌آمیز ✅' : 'خطا ❌'}`);
+                        logDebug(`🏁 پایان اجرای سرور. نتیجه: ${latestRun.conclusion}`);
+
+                        // دریافت لاگ متنی کامل از API گیت‌هاب
+                        try {
+                            const logsUrl = `https://api.github.com/repos/${owner}/${repo}/actions/jobs/${job.id}/logs`;
+                            const rawLogsResp = await fetch(logsUrl, {
+                                headers: {
+                                    'Authorization': `Bearer ${pat}`,
+                                    'Accept': 'application/vnd.github.v3+json'
+                                }
+                            });
+
+                            if (rawLogsResp.ok) {
+                                const fullLogsText = await rawLogsResp.text();
+                                logDlDebug("📄 ===== متن کامل لاگ‌های سرور (Server Full Logs) =====");
+                                // فیلتر و رندر خطوط مهم در لاگ
+                                const lines = fullLogsText.split('\n');
+                                const filteredLines = lines.filter(l =>
+                                    l.includes('DEBUG') ||
+                                    l.includes('Starting') ||
+                                    l.includes('Error') ||
+                                    l.includes('download') ||
+                                    l.includes('upload') ||
+                                    l.includes('Telegram') ||
+                                    l.includes('https://') ||
+                                    l.includes('Run ') ||
+                                    l.includes('DONE') ||
+                                    l.includes('✅') ||
+                                    l.includes('❌') ||
+                                    l.includes('📥') ||
+                                    l.includes('🎬')
+                                );
+
+                                if (filteredLines.length > 0) {
+                                    filteredLines.slice(-100).forEach(line => {
+                                        logDlDebug(line.trim());
+                                    });
+                                } else {
+                                    lines.slice(-50).forEach(line => {
+                                        logDlDebug(line.trim());
+                                    });
+                                }
+                                logDlDebug("📄 ===== پایان لاگ‌های سرور =====");
+                            }
+                        } catch (eLogs) {
+                            logDlDebug(`⚠️ عدم امکان دریافت لاگ متنی کامل: ${eLogs.message}`);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error polling server logs:", err);
+                }
+            }, 5000);
+        }
+
         // صدور دستور شروع سرور یا دانلود یا سرچ
         async function triggerWorkflow(downloadLink = null) {
             const owner = sanitizeString(document.getElementById('ghOwner').value);
@@ -980,6 +1129,24 @@
                 showToast("❌ خطای ارتباطی با سرور گیت‌هاب!");
             }
         }
+
+        // تاشو کردن و محاسبه ساعت خورشیدی برای منوی آکاردئونی بروزرسانی‌ها (انتهای تب ۱)
+        const updatesAccordionHeader = document.getElementById('updatesAccordionHeader');
+        const updatesAccordionContent = document.getElementById('updatesAccordionContent');
+        const updatesAccordionToggleIcon = document.getElementById('updatesAccordionToggleIcon');
+
+        if (updatesAccordionHeader) {
+            updatesAccordionHeader.onclick = () => {
+                if (updatesAccordionContent.style.maxHeight === '0px' || !updatesAccordionContent.style.maxHeight) {
+                    updatesAccordionContent.style.maxHeight = '350px';
+                    updatesAccordionToggleIcon.style.transform = 'rotate(180deg)';
+                } else {
+                    updatesAccordionContent.style.maxHeight = '0px';
+                    updatesAccordionToggleIcon.style.transform = 'rotate(0deg)';
+                }
+            };
+        }
+
 
         // تاشو کردن پنل دیباگ اختصاصی دانلود سریع (تب ۱)
         const dlDebugHeader = document.getElementById('dlDebugHeader');

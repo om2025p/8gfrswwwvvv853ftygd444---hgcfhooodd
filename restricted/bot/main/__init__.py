@@ -22,12 +22,21 @@ except RuntimeError:
     pass
 
 # variables
-API_ID = config("API_ID", default=None, cast=int)
+def safe_int_config(key):
+    val = config(key, default=None)
+    if not val:
+        return None
+    try:
+        return int(str(val).strip())
+    except (ValueError, TypeError):
+        return None
+
+API_ID = safe_int_config("API_ID")
 API_HASH = config("API_HASH", default=None)
 BOT_TOKEN = config("BOT_TOKEN", default=None)
 SESSION = config("SESSION", default=None)
 FORCESUB = config("FORCESUB", default=None)
-AUTH = config("AUTH", default=None, cast=int)
+AUTH = safe_int_config("AUTH")
 
 # Create the Telethon Client instance
 bot = TelegramClient('bot', API_ID, API_HASH)
@@ -49,7 +58,7 @@ if not is_async_context:
 Bot = Client(
     "SaveRestricted",
     bot_token=BOT_TOKEN,
-    api_id=int(API_ID),
+    api_id=API_ID,
     api_hash=API_HASH
 )
 
