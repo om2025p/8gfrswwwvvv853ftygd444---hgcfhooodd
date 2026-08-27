@@ -300,7 +300,7 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
     else:
         # Public Channel Link
         print(f"DEBUG: Link classified as PUBLIC. Chat extracted: {msg_link}")
-        edit = await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "Cloning public link...")
+        edit = await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "📥 *در حال دریافت محتوای لینک عمومی تلگرام...*")
         chat = clean_link.split("t.me")[1].split("/")[1]
         try:
             print(f"DEBUG: Attempting direct copy of public message {msg_id} from public channel {chat}...")
@@ -315,6 +315,7 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
             print("DEBUG: Direct copy succeeded.")
             await safe_delete_object(edit)
         except Exception as e:
+            from download_single import send_media_to_destinations
             print(f"DEBUG: Direct copy of public message failed: {e}. Falling back to download/upload using userbot...")
             try:
                 # Get message via userbot instead (handles restricted/protected public channels)

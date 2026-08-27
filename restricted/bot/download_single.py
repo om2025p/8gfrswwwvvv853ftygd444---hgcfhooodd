@@ -1,37 +1,22 @@
-# Download a single link and send it to the owner and notification channel
+# Download a single link and send it to the owner
 import sys
 import os
 import asyncio
 import time
 import tempfile
 import shutil
-import re
-import urllib.parse
-import urllib.request
-import json
 import yt_dlp
 from decouple import config
 
 # Add current directory to path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-# Target notification channel & Bot token safely retrieved from config/environment
-def get_notif_config():
+def send_channel_notice(text):
     token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
     chat_id = os.environ.get("NOTIF_CHAT_ID") or config("NOTIF_CHAT_ID", default=None)
-    if not token or token == "None":
-        token = config("BOT_TOKEN", default=None)
-    if chat_id and str(chat_id).strip() != "":
-        try:
-            chat_id = int(str(chat_id).strip())
-        except (ValueError, TypeError):
-            pass
-    return token, chat_id
-
-def send_channel_notice(text):
-    token, chat_id = get_notif_config()
     if not token or not chat_id:
         return
+    import urllib.request, json
     url = f'https://api.telegram.org/bot{token}/sendMessage'
     payload = {'chat_id': chat_id, 'text': text, 'disable_web_page_preview': True}
     data = json.dumps(payload).encode('utf-8')
@@ -52,18 +37,15 @@ async def safe_send_message(owner_id, text, disable_web_page_preview=False):
     # 1. Try Pyrogram Bot FIRST so messages land directly in the Bot Chat with the user!
     try:
         if getattr(Bot, 'is_connected', False):
-            res = await Bot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
-            if res and not isinstance(res, bool) and hasattr(res, 'id'):
-                return res
-            return SimpleMsg(getattr(res, 'id', 0) if hasattr(res, 'id') else 1)
+            return await Bot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
     except Exception as e:
         print(f"DEBUG: Bot.send_message failed: {e}")
 
     # 2. Try Direct Telegram Bot API HTTP Request
     try:
-        token_to_use = BOT_TOKEN or get_notif_config()[0]
-        if token_to_use:
-            url = f"https://api.telegram.org/bot{token_to_use}/sendMessage"
+        if BOT_TOKEN:
+            import urllib.request, json
+            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
             payload = {
                 'chat_id': owner_id,
                 'text': text,
@@ -73,6 +55,7 @@ async def safe_send_message(owner_id, text, disable_web_page_preview=False):
             data = json.dumps(payload).encode('utf-8')
             req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
             with urllib.request.urlopen(req) as resp:
+                print("DEBUG: Direct Telegram Bot API sendMessage succeeded.")
                 resp_data = json.loads(resp.read().decode('utf-8'))
                 if resp_data.get('ok') and 'result' in resp_data:
                     msg_id_val = resp_data['result'].get('message_id', 0)
@@ -83,10 +66,7 @@ async def safe_send_message(owner_id, text, disable_web_page_preview=False):
     # 3. Try Telethon Bot
     try:
         if bot.is_connected():
-            res = await bot.send_message(owner_id, text, link_preview=not disable_web_page_preview)
-            if res and not isinstance(res, bool) and hasattr(res, 'id'):
-                return res
-            return SimpleMsg(getattr(res, 'id', 0) if hasattr(res, 'id') else 1)
+            return await bot.send_message(owner_id, text, link_preview=not disable_web_page_preview)
     except Exception as e2:
         print(f"DEBUG: Telethon bot.send_message failed: {e2}")
 
@@ -94,13 +74,11 @@ async def safe_send_message(owner_id, text, disable_web_page_preview=False):
     try:
         if getattr(userbot, 'is_connected', False):
             res = await userbot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
-            send_channel_notice("📢 رئیس بزرگ! نتیجه جدید به پیام‌های ذخیره‌شده (Saved Messages) شما فرستاده شد. 💎")
-            if res and not isinstance(res, bool) and hasattr(res, 'id'):
-                return res
-            return SimpleMsg(getattr(res, 'id', 0) if hasattr(res, 'id') else 1)
+            send_channel_notice("📢 رئیس بزرگ! به دلیل محدودیت موقت چند دقیقه‌ای تلگرام روی ربات اصلی، نتیجه جدید به پیام‌های ذخیره‌شده (Saved Messages) شما فرستاده شد. 💎")
+            return res
     except Exception as e3:
         print(f"DEBUG: userbot fallback failed: {e3}")
-        return SimpleMsg(1)
+        raise e3
 
 async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=False):
     from main import Bot, bot, userbot
@@ -143,25 +121,31 @@ async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=Fa
                     print(f"DEBUG: All edits failed. Sending new message...")
                     return await safe_send_message(owner_id, text, disable_web_page_preview)
 
+def get_notif_config():
+    token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
+    chat_id = os.environ.get("NOTIF_CHAT_ID") or config("NOTIF_CHAT_ID", default=None)
+    if not token or token == "None":
+        token = config("BOT_TOKEN", default=None)
+    if chat_id and str(chat_id).strip() != "":
+        try:
+            chat_id = int(str(chat_id).strip())
+        except (ValueError, TypeError):
+            pass
+    return token, chat_id
+
 async def send_media_to_destinations(filepath, caption, owner_id):
-    from main import Bot, bot, userbot, BOT_TOKEN
+    from main import Bot, bot, userbot
     ext = os.path.splitext(filepath)[1].lower()
     token, chat_id = get_notif_config()
 
-    # Ensure distinct destinations
     destinations = [owner_id]
     if chat_id and chat_id not in destinations:
         destinations.append(chat_id)
-
-    print(f"DEBUG: send_media_to_destinations file={filepath}, destinations={destinations}")
 
     for dest in destinations:
         if not dest:
             continue
         sent = False
-        print(f"DEBUG: Sending media {filepath} to destination: {dest}")
-
-        # 1. Try Pyrogram Bot
         try:
             if getattr(Bot, 'is_connected', False):
                 if ext in ['.mp4', '.mkv', '.webm', '.mov']:
@@ -171,44 +155,17 @@ async def send_media_to_destinations(filepath, caption, owner_id):
                 else:
                     await Bot.send_document(chat_id=dest, document=filepath, caption=caption)
                 sent = True
-                print(f"DEBUG: Pyrogram Bot successfully sent media to {dest}")
-        except Exception as e_pbot:
-            print(f"DEBUG: Pyrogram Bot send to {dest} failed ({e_pbot}). Trying Direct Bot API HTTP...")
+        except Exception:
+            pass
 
-        # 2. Try Direct Telegram Bot API HTTP Upload (curl)
-        if not sent:
-            try:
-                bot_token_use = token or BOT_TOKEN
-                if bot_token_use:
-                    endpoint = 'sendVideo' if ext in ['.mp4', '.mkv', '.webm', '.mov'] else ('sendPhoto' if ext in ['.jpg', '.jpeg', '.png', '.webp'] else 'sendDocument')
-                    field_name = 'video' if ext in ['.mp4', '.mkv', '.webm', '.mov'] else ('photo' if ext in ['.jpg', '.jpeg', '.png', '.webp'] else 'document')
-                    url = f"https://api.telegram.org/bot{bot_token_use}/{endpoint}"
-
-                    import subprocess
-                    cmd = ["curl", "-s", "-F", f"chat_id={dest}", "-F", f"{field_name}=@{filepath}"]
-                    if caption:
-                        cmd.extend(["-F", f"caption={caption}"])
-                    cmd.append(url)
-                    res = subprocess.run(cmd, capture_output=True, text=True)
-                    if '"ok":true' in res.stdout:
-                        sent = True
-                        print(f"DEBUG: Direct Telegram Bot API HTTP upload to {dest} succeeded.")
-                    else:
-                        print(f"DEBUG: Direct Telegram Bot API response for {dest}: {res.stdout}")
-            except Exception as e_http:
-                print(f"DEBUG: Direct Telegram Bot API HTTP upload to {dest} failed: {e_http}")
-
-        # 3. Try Telethon Bot
         if not sent:
             try:
                 if bot.is_connected():
                     await bot.send_file(dest, filepath, caption=caption)
                     sent = True
-                    print(f"DEBUG: Telethon Bot successfully sent media to {dest}")
-            except Exception as e_tbot:
-                print(f"DEBUG: Telethon Bot send to {dest} failed ({e_tbot}). Trying Userbot...")
+            except Exception:
+                pass
 
-        # 4. Try Pyrogram Userbot
         if not sent:
             try:
                 if getattr(userbot, 'is_connected', False):
@@ -219,30 +176,53 @@ async def send_media_to_destinations(filepath, caption, owner_id):
                     else:
                         await userbot.send_document(chat_id=dest, document=filepath, caption=caption)
                     sent = True
-                    print(f"DEBUG: Pyrogram Userbot successfully sent media to {dest}")
-            except Exception as e_ubot:
-                print(f"DEBUG: Pyrogram Userbot send to {dest} failed ({e_ubot})")
-
-        if not sent:
-            print(f"DEBUG: WARNING! Could not send media to destination: {dest} via any method.")
+            except Exception:
+                pass
 
 async def process_social_media_download(link, owner_id, msg_obj=None):
-    status_text = f"🎬 *در حال استخراج و دانلود با مدرن‌ترین شگردها:*\n`{link}`\n\n🕒 لطفاً کمی صبور باشید..."
+    from main import Bot, bot, userbot
+
+    status_text = f"🎬 *در حال استخراج و دانلود از اینستاگرام / تیک‌تاک / واتساپ:*\n`{link}`\n\n🕒 لطفاً کمی صبور باشید..."
     if msg_obj:
         msg_obj = await safe_edit_message(owner_id, msg_obj, status_text)
     else:
         msg_obj = await safe_send_message(owner_id, status_text)
 
-    temp_dir = tempfile.mkdtemp(prefix="emarat_media_")
+    temp_dir = tempfile.mkdtemp(prefix="emarat_social_")
     caption = ""
 
     try:
+        # Robust user-agents and headers for Instagram / TikTok / Social media
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'Accept-Language': 'fa-IR,fa;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept-Language': 'en-US,en;q=0.9',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Sec-Fetch-Mode': 'navigate',
         }
 
+        def run_ytdlp():
+            ydl_opts = {
+                'outtmpl': os.path.join(temp_dir, '%(title).30s_%(id)s.%(ext)s'),
+                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                'quiet': True,
+                'no_warnings': True,
+                'ignoreerrors': True,
+                'http_headers': headers,
+                'extractor_args': {
+                    'youtube': ['player_client=android,web'],
+                    'tiktok': ['app_version=30.0.0'],
+                },
+                'retries': 3,
+                'fragment_retries': 3,
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(link, download=True)
+                return info
+
+        loop = asyncio.get_running_loop()
+        info = await loop.run_in_executor(None, run_ytdlp)
+
+        # Multi-layer Fallback Service if yt-dlp extracted no media
         def scan_files():
             files_list = []
             for r, _, fs in os.walk(temp_dir):
@@ -251,115 +231,90 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                         files_list.append(os.path.join(r, f))
             return files_list
 
-        # --- Layer 1: TikTok TikWM API Extraction ---
-        if 'tiktok.com' in link:
-            try:
-                print("DEBUG: Executing Modern Layer 1 (TikTok TikWM API)...")
-                req_data = urllib.parse.urlencode({'url': link, 'hd': 1}).encode('utf-8')
-                api_req = urllib.request.Request('https://www.tikwm.com/api/', data=req_data, headers={
-                    'User-Agent': headers['User-Agent'],
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-                })
-                with urllib.request.urlopen(api_req, timeout=12) as api_resp:
-                    res = json.loads(api_resp.read().decode('utf-8'))
-                    if res.get('code') == 0 and res.get('data'):
-                        data_obj = res['data']
-                        v_url = data_obj.get('hdplay') or data_obj.get('play')
-                        if v_url:
-                            out_path = os.path.join(temp_dir, f"tiktok_{data_obj.get('id', 'video')}.mp4")
-                            dl_req = urllib.request.Request(v_url, headers=headers)
-                            with urllib.request.urlopen(dl_req, timeout=25) as dl_resp, open(out_path, 'wb') as out_file:
-                                out_file.write(dl_resp.read())
-                            caption = data_obj.get('title') or ""
-                            print(f"DEBUG: Layer 1 (TikWM) succeeded: {out_path}")
-            except Exception as ex_tt:
-                print(f"DEBUG: Layer 1 (TikWM) failed: {ex_tt}")
-
-        # --- Layer 2: Instagram Embed Engine ---
-        if ('instagram.com' in link or 'instagr.am' in link) and not scan_files():
-            try:
-                print("DEBUG: Executing Modern Layer 2 (Instagram Embed Engine)...")
-                match = re.search(r'/(?:p|reel|reels|tv)/([A-Za-z0-9_-]+)', link)
-                if match:
-                    shortcode = match.group(1)
-                    embed_url = f"https://www.instagram.com/p/{shortcode}/embed/captioned/"
-                    req = urllib.request.Request(embed_url, headers=headers)
-                    with urllib.request.urlopen(req, timeout=12) as resp:
-                        html_text = resp.read().decode('utf-8', errors='ignore')
-                        video_urls = re.findall(r'\"video_url\":\"(https:[^\"]+)\"', html_text)
-                        display_urls = re.findall(r'\"display_url\":\"(https:[^\"]+)\"', html_text)
-
-                        media_urls = [v.replace('\\u0026', '&').replace('\\/', '/') for v in video_urls]
-                        if not media_urls:
-                            media_urls = [d.replace('\\u0026', '&').replace('\\/', '/') for d in display_urls]
-
-                        if media_urls:
-                            target_url = media_urls[0]
-                            ext = '.mp4' if len(video_urls) > 0 else '.jpg'
-                            out_path = os.path.join(temp_dir, f"instagram_{shortcode}{ext}")
-                            dl_req = urllib.request.Request(target_url, headers=headers)
-                            with urllib.request.urlopen(dl_req, timeout=20) as dl_resp, open(out_path, 'wb') as out_file:
-                                out_file.write(dl_resp.read())
-                            print(f"DEBUG: Layer 2 (Instagram Embed Engine) succeeded: {out_path}")
-            except Exception as ex_ig:
-                print(f"DEBUG: Layer 2 (Instagram Embed Engine) failed: {ex_ig}")
-
-        # --- Layer 3: Enhanced yt-dlp Engine ---
         if not scan_files():
-            print("DEBUG: Executing Modern Layer 3 (Enhanced yt-dlp)...")
-            def run_ytdlp():
-                ydl_opts = {
-                    'outtmpl': os.path.join(temp_dir, '%(title).30s_%(id)s.%(ext)s'),
-                    'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-                    'quiet': True,
-                    'no_warnings': True,
-                    'ignoreerrors': True,
-                    'http_headers': headers,
-                    'extractor_args': {
-                        'youtube': ['player_client=android,web'],
-                        'tiktok': ['app_version=30.0.0'],
-                    },
-                    'retries': 3,
-                    'fragment_retries': 3,
-                }
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    info_data = ydl.extract_info(link, download=True)
-                    return info_data
+            print("DEBUG: yt-dlp produced no files. Attempting fallback extraction layers...")
+            # Layer 1: Try Instagram alternative URL wrappers (e.g., ddinstagram / vxinstagram embed parsing)
+            if 'instagram.com' in link or 'instagr.am' in link:
+                try:
+                    import urllib.parse, urllib.request, re
+                    match = re.search(r'/(?:p|reel|reels|tv)/([A-Za-z0-9_-]+)', link)
+                    if match:
+                        shortcode = match.group(1)
+                        embed_url = f"https://www.instagram.com/p/{shortcode}/embed/captioned/"
+                        req = urllib.request.Request(embed_url, headers=headers)
+                        with urllib.request.urlopen(req, timeout=10) as resp:
+                            html_text = resp.read().decode('utf-8', errors='ignore')
+                            video_urls = re.findall(r'\"video_url\":\"(https:[^\"]+)\"', html_text)
+                            display_urls = re.findall(r'\"display_url\":\"(https:[^\"]+)\"', html_text)
 
-            loop = asyncio.get_running_loop()
-            info = await loop.run_in_executor(None, run_ytdlp)
-            if info and isinstance(info, dict) and not caption:
+                            media_urls = [v.replace('\\u0026', '&').replace('\\/', '/') for v in video_urls]
+                            if not media_urls:
+                                media_urls = [d.replace('\\u0026', '&').replace('\\/', '/') for d in display_urls]
+
+                            if media_urls:
+                                target_url = media_urls[0]
+                                ext = '.mp4' if 'video' in target_url or len(video_urls) > 0 else '.jpg'
+                                out_path = os.path.join(temp_dir, f"instagram_{shortcode}{ext}")
+                                dl_req = urllib.request.Request(target_url, headers=headers)
+                                with urllib.request.urlopen(dl_req, timeout=15) as dl_resp, open(out_path, 'wb') as out_file:
+                                    out_file.write(dl_resp.read())
+                                print(f"DEBUG: Instagram Embed fallback successfully saved media to {out_path}")
+                except Exception as ex_ig:
+                    print(f"DEBUG: Instagram fallback layer failed: {ex_ig}")
+
+            # Layer 2: Try TikTok API fallback services (e.g., SSSTik / TikWM / Cobalt)
+            if 'tiktok.com' in link and not scan_files():
+                try:
+                    import urllib.parse, urllib.request, json
+                    # TikWM API Request
+                    req_data = urllib.parse.urlencode({'url': link, 'hd': 1}).encode('utf-8')
+                    api_req = urllib.request.Request('https://www.tikwm.com/api/', data=req_data, headers={
+                        'User-Agent': headers['User-Agent'],
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    })
+                    with urllib.request.urlopen(api_req, timeout=10) as api_resp:
+                        res = json.loads(api_resp.read().decode('utf-8'))
+                        if res.get('code') == 0 and res.get('data'):
+                            data_obj = res['data']
+                            v_url = data_obj.get('hdplay') or data_obj.get('play')
+                            if v_url:
+                                out_path = os.path.join(temp_dir, f"tiktok_{data_obj.get('id', 'video')}.mp4")
+                                dl_req = urllib.request.Request(v_url, headers=headers)
+                                with urllib.request.urlopen(dl_req, timeout=20) as dl_resp, open(out_path, 'wb') as out_file:
+                                    out_file.write(dl_resp.read())
+                                if not caption and data_obj.get('title'):
+                                    caption = data_obj.get('title')
+                                print(f"DEBUG: TikTok TikWM fallback successfully saved video to {out_path}")
+                except Exception as ex_tt:
+                    print(f"DEBUG: TikTok fallback layer failed: {ex_tt}")
+
+        # Retrieve caption / description
+        if info:
+            if isinstance(info, dict):
                 caption = info.get('description') or info.get('title') or ""
+                if not caption and 'entries' in info and info['entries']:
+                    first_entry = info['entries'][0]
+                    if isinstance(first_entry, dict):
+                        caption = first_entry.get('description') or first_entry.get('title') or ""
 
-        # --- Layer 4: Direct HTTP Media Parser ---
-        if not scan_files() and link.startswith(('http://', 'https://')):
-            try:
-                print("DEBUG: Executing Layer 4 (Direct HTTP Parser)...")
-                req = urllib.request.Request(link, headers=headers)
-                with urllib.request.urlopen(req, timeout=15) as resp:
-                    content_type = resp.headers.get('Content-Type', '')
-                    if 'video' in content_type:
-                        out_path = os.path.join(temp_dir, "direct_download.mp4")
-                        with open(out_path, 'wb') as f:
-                            f.write(resp.read())
-                    elif 'image' in content_type:
-                        out_path = os.path.join(temp_dir, "direct_download.jpg")
-                        with open(out_path, 'wb') as f:
-                            f.write(resp.read())
-            except Exception as ex_direct:
-                print(f"DEBUG: Layer 4 Direct Parser failed: {ex_direct}")
+            if len(caption) > 1000:
+                caption = caption[:995] + "..."
 
-        downloaded_files = scan_files()
+        # Scan for downloaded media files
+        downloaded_files = []
+        for root, _, files in os.walk(temp_dir):
+            for file in files:
+                if not file.endswith(('.description', '.json', '.part', '.ytdl', '.txt', '.info')):
+                    downloaded_files.append(os.path.join(root, file))
+
+        # Sort files to maintain order
         downloaded_files.sort()
 
         if not downloaded_files:
-            await safe_edit_message(owner_id, msg_obj, f"❌ *خطا در دانلود رسانه:*\n`هیچ فایل ویدیویی یا تصویری قابل دانلودی در این لینک یافت نشد.`")
+            await safe_edit_message(owner_id, msg_obj, f"❌ *خطا در دانلود از شبکه اجتماعی:*\n`هیچ فایل ویدیویی یا تصویری قابل دانلودی در این لینک یافت نشد یا محتوا خصوصی (Private) است.`")
             return
 
-        await safe_edit_message(owner_id, msg_obj, f"⬆️ *دانلود با موفقیت انجام شد! در حال آپلود به تلگرام و ارسال به کانال...*")
-
-        if len(caption) > 1000:
-            caption = caption[:995] + "..."
+        await safe_edit_message(owner_id, msg_obj, f"⬆️ *دانلود با موفقیت انجام شد! در حال آپلود به تلگرام ({len(downloaded_files)} فایل)...*")
 
         final_caption = f"🎬 {caption}\n\n🔗 لینک منبع:\n`{link}`\n\n🛡️📥 دانلود شده توسط سپر دانلود عمارت" if caption else f"🎬 دانلود شده توسط سپر دانلود عمارت 🛡️📥\n`{link}`"
 
@@ -369,7 +324,7 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
 
     except Exception as e:
         print(f"DEBUG: Error in process_social_media_download: {e}")
-        await safe_edit_message(owner_id, msg_obj, f"❌ *خطا در پردازش لینک رسانه:*\n`{str(e)}`")
+        await safe_edit_message(owner_id, msg_obj, f"❌ *خطا در پردازش لینک شبکه اجتماعی:*\n`{str(e)}`")
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -392,6 +347,8 @@ def clean_channel_title(chat, username):
     if not title or str(title).strip().lower() in ["none", "null", ""]:
         title = f"@{username}"
     return str(title).strip()
+
+import re
 
 def normalize_persian(text):
     if not text or not isinstance(text, str):
@@ -421,6 +378,7 @@ def is_query_in_channel(title, username, query):
     if not q_words:
         return True
 
+    # High recall matching: if any primary query word matches in title or username, keep channel
     matched_count = sum(1 for w in q_words if w in t_norm or w in u_norm)
     if matched_count >= 1:
         return True
@@ -433,9 +391,11 @@ def calculate_relevance_score(title, username, members, query):
     t_clean = str(title).lower().strip()
     u_clean = str(username).lower().strip()
 
+    # Exact full query match in title or username -> HUGE BOOST
     if q_clean in t_clean or q_clean in u_clean:
         score += 10000
 
+    # Member count boost (logarithmic scale)
     m_val = members if members is not None else 0
     import math
     if m_val > 0:
@@ -456,6 +416,7 @@ def expand_persian_query(query):
     query = query.strip()
     queries = [query]
 
+    # Stemming suffixes
     words = query.split()
     for w in words:
         if len(w) > 1:
@@ -464,6 +425,7 @@ def expand_persian_query(query):
             if len(w_stem) > 1 and w_stem != w:
                 queries.append(w_stem)
 
+    # Finglish / Transliteration dictionary
     finglish_map = {
         'عکس': ['aks', 'aksam', 'pic', 'photo', 'picture'],
         'عکسهام': ['aks', 'aksam', 'pic', 'photo'],
@@ -478,6 +440,7 @@ def expand_persian_query(query):
         if q_word in finglish_map:
             queries.extend(finglish_map[q_word])
 
+    # Suffixes & Prefixes
     keywords = [
         'کانال', 'گروه', 'رسمی', 'اصلی', 'جدید', 'بزرگ', 'ایران', 'آنلاین',
         'دانلود', 'منبع', 'خاص', 'channel', 'official', 'group', 'iran', 'plus', 'vip', '1', '2'
@@ -488,6 +451,7 @@ def expand_persian_query(query):
             queries.append(f"{term} {kw}")
             queries.append(f"{kw} {term}")
 
+    # Alphabet expansion for deep sub-queries
     alphabet = ['ا', 'ب', 'پ', 'ت', 'ث', 'ج', 'چ', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'ژ', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ک', 'گ', 'ل', 'م', 'ن', 'و', 'ه', 'ی', 'a', 'b', 'c', 'd', 'e', 'f', 'm', 's', '1', '2']
     for term in base_terms[:5]:
         for char in alphabet:
@@ -505,15 +469,19 @@ def expand_persian_query(query):
     return unique_queries[:250]
 
 async def main_download():
+    # Load inputs
     link = os.environ.get("TELEGRAM_LINK") or (sys.argv[1] if len(sys.argv) > 1 else None)
     if not link:
         print("Error: No link provided in TELEGRAM_LINK or arguments.")
         return
 
     print("Connecting to Telegram clients...")
+    # On import, main/__init__.py creates client instances without auto-starting if in async context
     from main import bot, userbot, Bot, AUTH, BOT_TOKEN
+
     import inspect
 
+    # Start Userbot (the actual user session) - critical blocking start
     try:
         print("Starting Userbot (SESSION_STRING) dynamically...")
         res = userbot.start()
@@ -523,8 +491,32 @@ async def main_download():
     except Exception as e:
         err_msg = str(e)
         print(f"Fatal error starting Userbot: {err_msg}")
-        sys.exit(1)
+        if "AUTH_KEY_DUPLICATED" in err_msg:
+            friendly_err = (
+                f"\n❌ خطای امنیتی تلگرام [406 AUTH_KEY_DUPLICATED]:\n"
+                f"رئیس بزرگ، سشن تلگرام شما (SESSION_STRING) همزمان در جای دیگری فعال است یا باطل شده است!\n"
+                f"لطفاً ربات‌ها یا اسکریپت‌های دیگر خود را خاموش کنید و یا با استفاده از @TgDevToolBot یک سشن جدید بسازید و جایگزین کنید.\n"
+            )
+            print(friendly_err)
+            sys.exit(1)
+        elif "FLOOD_WAIT" in err_msg or "FLOOD_WAIT_" in err_msg:
+            friendly_err = (
+                f"\n❌ خطای محدودیت تلگرام [420 FLOOD_WAIT]:\n"
+                f"تلگرام اکانت کاربری شما را به دلیل درخواست‌های مکرر به طور موقت محدود کرده است.\n"
+                f"لطفاً چند دقیقه صبر کنید و سپس دوباره تلاش نمایید.\n"
+            )
+            print(friendly_err)
+            sys.exit(1)
+        else:
+            friendly_err = (
+                f"\n❌ خطا در راه‌اندازی اکانت کاربری (Userbot):\n"
+                f"متن خطا: {err_msg}\n"
+                f"لطفاً مطمئن شوید SESSION_STRING معتبر است.\n"
+            )
+            print(friendly_err)
+            sys.exit(1)
 
+    # Start Pyrogram Bot - Soft, non-blocking fallback start (won't crash on FLOOD_WAIT or Auth errors)
     try:
         print("Starting Pyrogram Bot dynamically...")
         res = Bot.start()
@@ -532,8 +524,9 @@ async def main_download():
             await res
         print("Pyrogram Bot started successfully.")
     except Exception as e:
-        print(f"Warning: Soft-start failed for Pyrogram Bot: {e}.")
+        print(f"Warning: Soft-start failed for Pyrogram Bot: {e}. We will safely fall back to Userbot for sending messages.")
 
+    # Start Telethon Bot safely under async context - Soft, non-blocking fallback start
     try:
         if not bot.is_connected():
             print("Starting Telethon bot dynamically...")
@@ -542,65 +535,310 @@ async def main_download():
                 await bot.sign_in(bot_token=BOT_TOKEN)
             print("Telethon Bot started successfully.")
     except Exception as e:
-        print(f"Warning: Soft-start failed for Telethon bot: {e}.")
+        print(f"Warning: Soft-start failed for Telethon bot dynamically: {e}. We will safely fall back to Userbot.")
 
     try:
-        raw_owner = AUTH or os.environ.get("OWNER_ID") or config("OWNER_ID", default=None)
-        owner_id = None
-        if raw_owner:
-            try:
-                owner_id = int(str(raw_owner).strip())
-            except (ValueError, TypeError):
-                print(f"DEBUG: Invalid OWNER_ID format: {raw_owner}")
+        owner_id = AUTH or config("OWNER_ID", default=None, cast=int)
         if not owner_id:
             print("Error: OWNER_ID is not configured. Cannot send to owner.")
             return
 
+        # Force resolve owner_id with userbot to populate internal cache
         try:
+            print(f"DEBUG: Resolving owner_id ({owner_id}) using userbot...")
             await userbot.get_users(owner_id)
+            print("DEBUG: Successfully resolved owner_id using userbot.")
         except Exception as ex:
             print(f"DEBUG: Warning resolving owner_id with userbot: {ex}")
 
+        # Check if link is social media / web link (Instagram, TikTok, WhatsApp, YouTube, Twitter, etc.)
         link_str = str(link).strip()
         link_lower = link_str.lower()
-        parsed_domain = urllib.parse.urlparse(link_lower).netloc
+        from urllib.parse import urlparse
+        parsed_domain = urlparse(link_lower).netloc
         is_telegram_link = 't.me' in parsed_domain or 'telegram.me' in parsed_domain
 
-        # Handle Deep Telegram Search
-        if link_lower.startswith("search:"):
-            query = link_str[7:].strip()
-            print(f"Starting deep Telegram search for: {query} for owner: {owner_id}")
-            msg = await safe_send_message(owner_id, f"🔎 *در حال جستجوی عمیق و ترکیبی کلمه «{query}» در سرورهای رسمی تلگرام...*\n\n🕒 لطفا صبور باشید...")
-            # Execute search pipeline...
-            # (Search functionality preserved)
+        is_social = any(domain in link_lower for domain in [
+            'instagram.com', 'instagr.am', 'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
+            'whatsapp.com', 'chat.whatsapp.com', 'wa.me', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com'
+        ]) or (link_lower.startswith(('http://', 'https://')) and not is_telegram_link)
+
+        if is_social and not link_lower.startswith("search:"):
+            print(f"Starting social media download for: {link_str} to owner: {owner_id}")
+            msg = await safe_send_message(owner_id, f"🎬 *تشخیص لینک شبکه اجتماعی (اینستاگرام / تیک‌تاک / واتساپ):*\n`{link_str}`\n\n🕒 لطفا صبور باشید...")
+            await process_social_media_download(link_str, owner_id, msg)
             return
 
-        # Handle Download (Social Media / Web / Telegram Links)
-        print(f"Starting media download for link: {link_str}")
-        msg = await safe_send_message(owner_id, f"📥 *شروع دانلود لینک درخواستی:*\n`{link_str}`\n\n🕒 لطفا صبور باشید...")
-        edit_id = getattr(msg, 'id', 0) if (msg and not isinstance(msg, bool)) else 0
+        # Check if this is a deep Telegram search request
+        if isinstance(link, str) and link.startswith("search:"):
+            query = link[7:].strip()
+            print(f"Starting deep Telegram search for: {query} for owner: {owner_id}")
+
+            # Send starting message to owner
+            msg = await safe_send_message(owner_id, f"🔎 *در حال جستجوی عمیق و ترکیبی کلمه «{query}» در سرورهای رسمی تلگرام...*\n\n🕒 لطفا صبور باشید...")
+
+            try:
+                from pyrogram.raw.functions.contacts import Search
+                from main.plugins.seen_db import mark_channels_as_seen, get_all_seen_usernames
+
+                # Get expanded queries
+                expanded_queries = expand_persian_query(query)
+                print(f"DEBUG: Expanded search queries for execution: {expanded_queries}")
+
+                send_channel_notice(f"🔎 *شروع لاگ زنده جستجوی عمیق تلگرام برای:* «{query}»\n📌 تعداد انشعاب‌های الفبایی و کلمه‌ای: {len(expanded_queries)} عبارت")
+
+                db_seen_usernames = get_all_seen_usernames()
+                channels = []
+                seen_usernames = set()
+
+                total_steps = len(expanded_queries)
+                for idx, q_term in enumerate(expanded_queries, 1):
+                    print(f"DEBUG: Executing search for term variation: {q_term}")
+                    try:
+                        # Invoke raw global search with a limit of 1000
+                        found = await userbot.invoke(Search(q=q_term, limit=1000))
+                        if found and hasattr(found, 'chats'):
+                            for chat in found.chats:
+                                username = getattr(chat, 'username', None)
+                                if username and is_valid_channel(username, chat):
+                                    u_lower = username.lower().strip()
+                                    if u_lower not in seen_usernames and u_lower not in db_seen_usernames:
+                                        title = clean_channel_title(chat, username)
+                                        if is_query_in_channel(title, username, query):
+                                            seen_usernames.add(u_lower)
+                                            members = getattr(chat, 'participants_count', None) or getattr(chat, 'members_count', None)
+                                            channels.append((title, username, members))
+                    except Exception as e_search:
+                        print(f"DEBUG: Search variation '{q_term}' contacts.Search failed: {e_search}")
+
+                    try:
+                        # Global message search for variation
+                        search_iterator = None
+                        try:
+                            search_iterator = userbot.search_global(query=q_term, limit=300)
+                        except AttributeError:
+                            try:
+                                search_iterator = userbot.search_global_messages(query=q_term, limit=300)
+                            except AttributeError:
+                                pass
+
+                        if search_iterator:
+                            async for message in search_iterator:
+                                if message.chat and getattr(message.chat, 'username', None):
+                                    username = getattr(message.chat, 'username')
+                                    if username and is_valid_channel(username, message.chat):
+                                        u_lower = username.lower().strip()
+                                        if u_lower not in seen_usernames and u_lower not in db_seen_usernames:
+                                            title = clean_channel_title(message.chat, username)
+                                            if is_query_in_channel(title, username, query):
+                                                seen_usernames.add(u_lower)
+                                                members = getattr(message.chat, 'participants_count', None) or getattr(message.chat, 'members_count', None)
+                                                channels.append((title, username, members))
+                    except Exception as e_msg_search:
+                        print(f"DEBUG: Search variation '{q_term}' search_global failed: {e_msg_search}")
+
+                    # Real-time update in Telegram chat with green progress bar
+                    if idx % 5 == 0 or idx == total_steps:
+                        progress_bar = generate_green_progress_bar(idx, total_steps)
+                        progress_msg = (
+                            f"🔎 *در حال جستجوی عمیق و ترکیبی کلمه «{query}» در سرورهای تلگرام...*\n\n"
+                            f"{progress_bar}\n"
+                            f"⚡ گام {idx} از {total_steps} (عبارت: `{q_term}`)\n"
+                            f"🟢 مجموع کانال‌های کشف‌شده تا این لحظه: *{len(channels):,} کانال*"
+                        )
+                        await safe_edit_message(owner_id, msg, progress_msg)
+                        send_channel_notice(f"⚡ [گام {idx}/{total_steps}] عبارت «{q_term}» -> تاکنون مجموعاً {len(channels):,} کانال عمومی مطابقت‌دار کشف شد.")
+
+                    await asyncio.sleep(0.3)
+
+                # RECURSIVE SPIDER CRAWL with Extended Depth (Top 30 channels)
+                send_channel_notice(f"🕷️ *شروع خزش عنکبوتی عمیق و خسته‌ناپذیر برای کشف شبکه‌های مشابه...*")
+                crawl_targets = sorted([c for c in channels if c[2] is not None], key=lambda x: x[2], reverse=True)[:30]
+                if not crawl_targets:
+                    crawl_targets = channels[:30]
+
+                for title, username, members in crawl_targets:
+                    similar = None
+                    try:
+                        similar = await userbot.get_chat_recommendations(username)
+                    except Exception:
+                        try:
+                            similar = await userbot.get_similar_channels(username)
+                        except Exception:
+                            pass
+
+                    if similar:
+                        for sim_channel in similar:
+                            sim_username = getattr(sim_channel, 'username', None)
+                            if sim_username and is_valid_channel(sim_username, sim_channel):
+                                u_lower = sim_username.lower().strip()
+                                if u_lower not in seen_usernames and u_lower not in db_seen_usernames:
+                                    sim_title = clean_channel_title(sim_channel, sim_username)
+                                    if is_query_in_channel(sim_title, sim_username, query):
+                                        seen_usernames.add(u_lower)
+                                        sim_members = getattr(sim_channel, 'participants_count', None) or getattr(sim_channel, 'members_count', None)
+                                        channels.append((sim_title, sim_username, sim_members))
+
+                # Deduplicate strictly by lowercase username
+                unique_dict = {}
+                for title, username, members in channels:
+                    u_key = str(username or '').lower().strip()
+                    if u_key and u_key not in unique_dict:
+                        unique_dict[u_key] = (title, username, members)
+                channels = list(unique_dict.values())
+
+                # Filter strictly again and sort by Relevance Score
+                channels = [c for c in channels if is_query_in_channel(c[0], c[1], query)]
+                channels.sort(key=lambda c: calculate_relevance_score(c[0], c[1], c[2], query), reverse=True)
+                send_channel_notice(f"📊 *پایان لاگ زنده جستجو!*\n🎯 کل کانال‌های عمومی یافت‌شده: {len(channels):,} کانال\n⭐ الگوریتم رتبه‌بندی بر اساس ارتباط کلمه‌ای و اعضا اعمال گردید.")
+
+                if not channels:
+                    await safe_edit_message(owner_id, msg, f"❌ *رئیس بزرگ، هیچ کانال عمومی *جدیدی* برای عبارت «{query}» در تلگرام یافت نشد! (تمامی موارد قبلاً دیده‌شده‌اند)*")
+                    return
+
+                # Mark all new channels as seen in SQLite database
+                mark_channels_as_seen(channels)
+
+                # Save search results to search_results.json for web platform display
+                import json
+                search_results_payload = {
+                    'query': query,
+                    'total_count': len(channels),
+                    'timestamp': time.time(),
+                    'channels': [
+                        {
+                            'title': title,
+                            'username': username,
+                            'members': members if members is not None else 0,
+                            'link': f"https://t.me/{username}"
+                        }
+                        for title, username, members in channels
+                    ]
+                }
+                for json_path in ['search_results.json', '../search_results.json', 'restricted/search_results.json']:
+                    try:
+                        with open(json_path, 'w', encoding='utf-8') as f_json:
+                            json.dump(search_results_payload, f_json, ensure_ascii=False, indent=2)
+                    except Exception:
+                        pass
+
+                # Populate SEARCH_CACHE and format page 1 using 10 items per page for Telegram
+                from main.plugins.search import SEARCH_CACHE, format_search_page, get_search_buttons
+                import math
+
+                search_id = str(int(time.time()))
+                cache_key = f"{owner_id}_{search_id}"
+                SEARCH_CACHE[cache_key] = {
+                    'query': query,
+                    'channels': channels,
+                    'id': search_id,
+                    'time': time.time()
+                }
+
+                page_text, total_pages, current_page = format_search_page(query, channels, page=1, page_size=10)
+                buttons = get_search_buttons(search_id, current_page, total_pages)
+
+                # Send using telethon bot directly if connected to retain inline glass buttons
+                sent_with_buttons = False
+                try:
+                    if bot.is_connected():
+                        await bot.send_message(owner_id, page_text, buttons=buttons, link_preview=False)
+                        sent_with_buttons = True
+                except Exception as e_btn:
+                    print(f"DEBUG: Sending message with inline buttons via Telethon failed: {e_btn}")
+
+                if not sent_with_buttons:
+                    await safe_edit_message(owner_id, msg, page_text, disable_web_page_preview=True)
+
+                if total_pages > 1:
+                    info_msg = (
+                        f"💡 *رئیس بزرگ، تعداد کل کانال‌های یافت‌شده {len(channels):,} عدد در {total_pages} صفحه ۱۰تایی است.*\n"
+                        f"برای مرور زنده و استفاده از دکمه‌های شیشه‌ای «صفحه بعدی ⏩»، سرور ربات تا چند دقیقه آینده شنود می‌کند یا می‌توانید دستور `/search {query}` را مستقیم در چت ربات بزنید! 💎"
+                    )
+                    await safe_send_message(owner_id, info_msg)
+
+                await safe_send_message(owner_id, "✅ *جستجوی عمیق تلگرام با موفقیت کامل شد!*")
+
+                # Keep listening for 5 minutes (300 seconds) with registered Telethon callback handler so inline pagination works
+                if total_pages > 1 and bot.is_connected():
+                    print("DEBUG: Registering inline pagination handler and serving callbacks for 300s...")
+                    from telethon import events
+                    from main.plugins.search import format_search_page, get_search_buttons
+
+                    async def on_single_download_callback(event):
+                        try:
+                            await event.answer()
+                        except Exception:
+                            pass
+                        s_id_raw = event.pattern_match.group(1)
+                        s_id = s_id_raw.decode('utf-8') if isinstance(s_id_raw, bytes) else str(s_id_raw)
+                        if s_id != search_id:
+                            return
+
+                        target_page = int(event.pattern_match.group(2))
+                        p_text, t_pages, c_page = format_search_page(query, channels, page=target_page, page_size=10)
+                        btns = get_search_buttons(s_id, c_page, t_pages)
+                        try:
+                            await event.edit(p_text, buttons=btns, link_preview=False)
+                        except Exception as e_edit:
+                            print(f"DEBUG: Single download callback edit error: {e_edit}")
+
+                    callback_handler = bot.add_event_handler(on_single_download_callback, events.CallbackQuery(pattern=r'^sp:(.+):(\d+)$'))
+                    try:
+                        await asyncio.sleep(300)
+                    finally:
+                        try:
+                            bot.remove_event_handler(callback_handler)
+                        except Exception:
+                            pass
+
+            except Exception as e:
+                print(f"Error during execution of search: {e}")
+                try:
+                    await safe_edit_message(owner_id, msg, f"❌ *خطا در اجرای جستجوی عمیق تلگرام:*\n`{str(e)}`")
+                except:
+                    pass
+            return
+
+        print(f"Starting single download for link: {link} to owner: {owner_id}")
+
+        # Send starting message to owner
+        msg = await safe_send_message(owner_id, f"📥 *شروع دانلود لینک درخواستی:*\n`{link}`\n\n🕒 لطفا صبور باشید...")
+        edit_id = msg.id if (msg and hasattr(msg, 'id')) else 0
 
         from main.plugins.pyroplug import get_msg
-        from main.plugins.helpers import join
+        from main.plugins.helpers import get_link, join
 
-        if 't.me/+' in link_str or 't.me/joinchat/' in link_str:
-            res = await join(userbot, link_str)
-            await safe_edit_message(owner_id, msg, f"🔑 *نتیجه ورود به کانال خصوصی:*\n{res}")
-        elif is_telegram_link:
-            await get_msg(userbot, Bot, bot, owner_id, edit_id, link_str, 0)
-            await safe_send_message(owner_id, "✅ *دانلود و ارسال فایل تلگرام با موفقیت پایان یافت!*")
-        else:
-            await process_social_media_download(link_str, owner_id, msg)
-
+        try:
+            if 't.me/+' in link or 't.me/joinchat/' in link:
+                # Join channel
+                res = await join(userbot, link)
+                await safe_edit_message(owner_id, msg, f"🔑 *نتیجه ورود به کانال خصوصی:*\n{res}")
+            elif not is_telegram_link:
+                # Direct social media download
+                await process_social_media_download(link, owner_id, msg)
+            else:
+                # Telegram link download
+                await get_msg(userbot, Bot, bot, owner_id, edit_id, link, 0)
+                await safe_send_message(owner_id, "✅ *دانلود و ارسال با موفقیت پایان یافت!*")
+        except Exception as e:
+            print(f"Error during execution: {e}")
+            err_msg_type = "شبکه اجتماعی (تیک‌تاک / اینستاگرام)" if is_social else "تلگرام"
+            try:
+                await safe_send_message(owner_id, f"❌ *خطا در پردازش لینک {err_msg_type}:*\n`{str(e)}`")
+            except:
+                pass
     finally:
         print("Stopping Pyrogram clients before exit...")
         for client_obj in [userbot, Bot]:
             try:
+                # Use is_connected property method
                 is_conn = client_obj.is_connected
                 if inspect.iscoroutine(is_conn):
                     is_conn = await is_conn
 
                 if is_conn:
+                    print(f"Stopping client dynamically: {client_obj.name if hasattr(client_obj, 'name') else 'Client'}")
                     res = client_obj.stop()
                     if inspect.iscoroutine(res):
                         await res
@@ -609,6 +847,7 @@ async def main_download():
 
         try:
             if bot.is_connected():
+                print("Stopping Telethon bot...")
                 res = bot.disconnect()
                 if inspect.iscoroutine(res):
                     await res
