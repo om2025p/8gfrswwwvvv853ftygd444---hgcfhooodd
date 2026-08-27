@@ -520,7 +520,13 @@ async def main_download():
         print(f"Warning: Soft-start failed for Telethon bot: {e}.")
 
     try:
-        owner_id = AUTH or config("OWNER_ID", default=None, cast=int)
+        raw_owner = AUTH or os.environ.get("OWNER_ID") or config("OWNER_ID", default=None)
+        owner_id = None
+        if raw_owner:
+            try:
+                owner_id = int(str(raw_owner).strip())
+            except (ValueError, TypeError):
+                print(f"DEBUG: Invalid OWNER_ID format: {raw_owner}")
         if not owner_id:
             print("Error: OWNER_ID is not configured. Cannot send to owner.")
             return
