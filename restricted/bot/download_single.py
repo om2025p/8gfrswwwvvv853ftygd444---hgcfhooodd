@@ -88,21 +88,33 @@ async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=Fa
     is_telethon = hasattr(msg_obj, 'client') or hasattr(msg_obj, 'respond')
     if is_telethon:
         try:
-            return await msg_obj.edit(text, link_preview=not disable_web_page_preview)
+            res = await msg_obj.edit(text, link_preview=not disable_web_page_preview)
+            if res and not isinstance(res, bool) and hasattr(res, 'id'):
+                return res
+            return msg_obj
         except Exception as e:
             print(f"DEBUG: Telethon edit failed ({e}). Sending new message...")
             return await safe_send_message(owner_id, text, disable_web_page_preview)
     else:
         try:
-            return await msg_obj.edit_text(text, disable_web_page_preview=disable_web_page_preview)
+            res = await msg_obj.edit_text(text, disable_web_page_preview=disable_web_page_preview)
+            if res and not isinstance(res, bool) and hasattr(res, 'id'):
+                return res
+            return msg_obj
         except Exception as e:
             print(f"DEBUG: Pyrogram edit_text failed ({e}). Trying Bot.edit_message_text...")
             try:
-                return await Bot.edit_message_text(owner_id, msg_obj.id, text, disable_web_page_preview=disable_web_page_preview)
+                res = await Bot.edit_message_text(owner_id, msg_obj.id, text, disable_web_page_preview=disable_web_page_preview)
+                if res and not isinstance(res, bool) and hasattr(res, 'id'):
+                    return res
+                return msg_obj
             except Exception as e2:
                 print(f"DEBUG: Pyrogram Bot.edit_message_text failed ({e2}). Trying userbot edit...")
                 try:
-                    return await userbot.edit_message_text(owner_id, msg_obj.id, text, disable_web_page_preview=disable_web_page_preview)
+                    res = await userbot.edit_message_text(owner_id, msg_obj.id, text, disable_web_page_preview=disable_web_page_preview)
+                    if res and not isinstance(res, bool) and hasattr(res, 'id'):
+                        return res
+                    return msg_obj
                 except Exception as e3:
                     print(f"DEBUG: All edits failed. Sending new message...")
                     return await safe_send_message(owner_id, text, disable_web_page_preview)
