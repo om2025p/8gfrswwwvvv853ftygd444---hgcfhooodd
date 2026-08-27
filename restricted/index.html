@@ -458,6 +458,31 @@
                     📥 دانلود و ارسال مستقیم به تلگرام
                 </button>
             </div>
+
+            <!-- منوی کشویی آخرین بروزرسانی‌ها با تاریخ و ساعت خورشیدی به وقت تهران -->
+            <div class="white-card" style="margin-top: -5px;">
+                <div id="updatesAccordionHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
+                    <h2 class="card-title" style="margin: 0; border: none; padding: 0; font-size: 0.98rem; color: var(--accent-blue);">
+                        📅 آخرین بروزرسانی‌های سیستم (تاریخ خورشیدی تهران)
+                    </h2>
+                    <span id="updatesAccordionToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: var(--accent-blue);">🔽</span>
+                </div>
+
+                <div id="updatesAccordionContent" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 0;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-top: 14px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; margin-bottom: 10px;">
+                            <span style="font-size: 0.82rem; font-weight: 700; color: #334155;">🕒 زمان بروزرسانی خورشیدی:</span>
+                            <span id="jalaliClock" style="font-size: 0.82rem; font-weight: 800; color: #16a34a; background: #dc26260f; padding: 3px 10px; border-radius: 10px; border: 1px solid #bbf7d0;">در حال محاسبه...</span>
+                        </div>
+                        <ul style="margin: 0; padding-right: 18px; font-size: 0.82rem; color: #475569; line-height: 1.7;">
+                            <li>🟢 <strong>اتصال لایو دیباگ سرور:</strong> استریم خط‌به‌خط لاگ‌های سرور ابری گیت‌هاب در پنل دیاگ دانلود.</li>
+                            <li>⚡ <strong>موتور ۴ لایه مدرن رسانه:</strong> استخراج تیک‌تاک بدون واترمارک HD (TikWM API)، ریلز اینستاگرام (Embed Engine)، yt-dlp 2024 و Direct Parser.</li>
+                            <li>📢 <strong>ارسال دوگانه هوشمند:</strong> ارسال همزمان فایل‌های دانلودشده به پی‌وی کاربر و کانال تلگرام «دنیا های قشنگ».</li>
+                            <li>🌐 <strong>پشتیبانی کامل پیوندها:</strong> قابلیت دانلود مستقیم لینک‌های عمومی و خصوصی تلگرام، تیک‌تاک و اینستاگرام.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- ==================== تب ۲: تنظیمات و امکانات پیشرفته ==================== -->
@@ -1104,6 +1129,49 @@
                 showToast("❌ خطای ارتباطی با سرور گیت‌هاب!");
             }
         }
+
+        // تاشو کردن و محاسبه ساعت خورشیدی برای منوی آکاردئونی بروزرسانی‌ها (انتهای تب ۱)
+        const updatesAccordionHeader = document.getElementById('updatesAccordionHeader');
+        const updatesAccordionContent = document.getElementById('updatesAccordionContent');
+        const updatesAccordionToggleIcon = document.getElementById('updatesAccordionToggleIcon');
+
+        if (updatesAccordionHeader) {
+            updatesAccordionHeader.onclick = () => {
+                if (updatesAccordionContent.style.maxHeight === '0px' || !updatesAccordionContent.style.maxHeight) {
+                    updatesAccordionContent.style.maxHeight = '350px';
+                    updatesAccordionToggleIcon.style.transform = 'rotate(180deg)';
+                } else {
+                    updatesAccordionContent.style.maxHeight = '0px';
+                    updatesAccordionToggleIcon.style.transform = 'rotate(0deg)';
+                }
+            };
+        }
+
+        function updateJalaliClock() {
+            const clockEl = document.getElementById('jalaliClock');
+            if (!clockEl) return;
+            try {
+                const now = new Date();
+                const options = {
+                    timeZone: 'Asia/Tehran',
+                    calendar: 'persian',
+                    numberingSystem: 'latn',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                };
+                const formatter = new Intl.DateTimeFormat('fa-IR', options);
+                clockEl.innerText = formatter.format(now);
+            } catch (e) {
+                clockEl.innerText = new Date().toLocaleString('fa-IR');
+            }
+        }
+        setInterval(updateJalaliClock, 1000);
+        updateJalaliClock();
 
         // تاشو کردن پنل دیباگ اختصاصی دانلود سریع (تب ۱)
         const dlDebugHeader = document.getElementById('dlDebugHeader');
