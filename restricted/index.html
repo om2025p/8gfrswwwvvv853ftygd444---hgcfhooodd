@@ -920,7 +920,7 @@
                 logDebug(`📥 دیاگ لینک دانلود: ${downloadLink}`);
                 logDlDebug(`📥 ارسال لینک جدید برای دانلود سریع (تب ۱): ${downloadLink}`);
                 if (downloadLink.includes('tiktok.com')) {
-                    logDlDebug(`🎵 تحلیل پلتفرم: ویدیوی تیک‌تاک (استخراج توسط yt-dlp)`);
+                    logDlDebug(`🎵 تحلیل پلتفرم: ویدیوی تیک‌تاک (استخراج هوشمند TikWM / yt-dlp)`);
                 } else if (downloadLink.includes('instagram.com') || downloadLink.includes('instagr.am')) {
                     logDlDebug(`📸 تحلیل پلتفرم: اینستاگرام (ریلز / پست / استوری / آلبوم)`);
                 } else if (downloadLink.includes('whatsapp.com') || downloadLink.includes('wa.me')) {
@@ -931,6 +931,9 @@
                     logDlDebug(`🌐 تحلیل پلتفرم: لینک مستقیم وب`);
                 }
             }
+
+            // شروع استعلام زنده لاگ‌های اجرای سرور (Live Server Actions Logs)
+            pollServerLogs(owner, repo, pat);
 
             try {
                 const workflowId = "restricted_bot.yml";
