@@ -19,9 +19,9 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 def get_notif_config():
     token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
     chat_id = os.environ.get("NOTIF_CHAT_ID") or config("NOTIF_CHAT_ID", default=None)
-    if not token:
+    if not token or token == "None":
         token = config("BOT_TOKEN", default=None)
-    if chat_id:
+    if chat_id and str(chat_id).strip() != "":
         try:
             chat_id = int(str(chat_id).strip())
         except (ValueError, TypeError):
@@ -144,17 +144,23 @@ async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=Fa
                     return await safe_send_message(owner_id, text, disable_web_page_preview)
 
 async def send_media_to_destinations(filepath, caption, owner_id):
-    from main import Bot, bot, userbot
+    from main import Bot, bot, userbot, BOT_TOKEN
     ext = os.path.splitext(filepath)[1].lower()
     token, chat_id = get_notif_config()
+
+    # Ensure distinct destinations
     destinations = [owner_id]
-    if chat_id:
+    if chat_id and chat_id not in destinations:
         destinations.append(chat_id)
+
+    print(f"DEBUG: send_media_to_destinations file={filepath}, destinations={destinations}")
 
     for dest in destinations:
         if not dest:
             continue
         sent = False
+        print(f"DEBUG: Sending media {filepath} to destination: {dest}")
+
         # 1. Try Pyrogram Bot
         try:
             if getattr(Bot, 'is_connected', False):
@@ -165,25 +171,30 @@ async def send_media_to_destinations(filepath, caption, owner_id):
                 else:
                     await Bot.send_document(chat_id=dest, document=filepath, caption=caption)
                 sent = True
+                print(f"DEBUG: Pyrogram Bot successfully sent media to {dest}")
         except Exception as e_pbot:
-            print(f"DEBUG: Pyrogram Bot send to {dest} failed ({e_pbot}). Trying Telethon...")
+            print(f"DEBUG: Pyrogram Bot send to {dest} failed ({e_pbot}). Trying Direct Bot API HTTP...")
 
-        # 2. Try Direct Telegram Bot API HTTP Upload
+        # 2. Try Direct Telegram Bot API HTTP Upload (curl)
         if not sent:
             try:
-                endpoint = 'sendVideo' if ext in ['.mp4', '.mkv', '.webm', '.mov'] else ('sendPhoto' if ext in ['.jpg', '.jpeg', '.png', '.webp'] else 'sendDocument')
-                field_name = 'video' if ext in ['.mp4', '.mkv', '.webm', '.mov'] else ('photo' if ext in ['.jpg', '.jpeg', '.png', '.webp'] else 'document')
-                url = f"https://api.telegram.org/bot{token}/{endpoint}"
+                bot_token_use = token or BOT_TOKEN
+                if bot_token_use:
+                    endpoint = 'sendVideo' if ext in ['.mp4', '.mkv', '.webm', '.mov'] else ('sendPhoto' if ext in ['.jpg', '.jpeg', '.png', '.webp'] else 'sendDocument')
+                    field_name = 'video' if ext in ['.mp4', '.mkv', '.webm', '.mov'] else ('photo' if ext in ['.jpg', '.jpeg', '.png', '.webp'] else 'document')
+                    url = f"https://api.telegram.org/bot{bot_token_use}/{endpoint}"
 
-                import subprocess
-                cmd = ["curl", "-s", "-F", f"chat_id={dest}", "-F", f"{field_name}=@{filepath}"]
-                if caption:
-                    cmd.extend(["-F", f"caption={caption}"])
-                cmd.append(url)
-                res = subprocess.run(cmd, capture_output=True, text=True)
-                if '"ok":true' in res.stdout:
-                    sent = True
-                    print(f"DEBUG: Direct Telegram Bot API HTTP upload to {dest} succeeded.")
+                    import subprocess
+                    cmd = ["curl", "-s", "-F", f"chat_id={dest}", "-F", f"{field_name}=@{filepath}"]
+                    if caption:
+                        cmd.extend(["-F", f"caption={caption}"])
+                    cmd.append(url)
+                    res = subprocess.run(cmd, capture_output=True, text=True)
+                    if '"ok":true' in res.stdout:
+                        sent = True
+                        print(f"DEBUG: Direct Telegram Bot API HTTP upload to {dest} succeeded.")
+                    else:
+                        print(f"DEBUG: Direct Telegram Bot API response for {dest}: {res.stdout}")
             except Exception as e_http:
                 print(f"DEBUG: Direct Telegram Bot API HTTP upload to {dest} failed: {e_http}")
 
@@ -193,6 +204,7 @@ async def send_media_to_destinations(filepath, caption, owner_id):
                 if bot.is_connected():
                     await bot.send_file(dest, filepath, caption=caption)
                     sent = True
+                    print(f"DEBUG: Telethon Bot successfully sent media to {dest}")
             except Exception as e_tbot:
                 print(f"DEBUG: Telethon Bot send to {dest} failed ({e_tbot}). Trying Userbot...")
 
@@ -207,8 +219,12 @@ async def send_media_to_destinations(filepath, caption, owner_id):
                     else:
                         await userbot.send_document(chat_id=dest, document=filepath, caption=caption)
                     sent = True
+                    print(f"DEBUG: Pyrogram Userbot successfully sent media to {dest}")
             except Exception as e_ubot:
                 print(f"DEBUG: Pyrogram Userbot send to {dest} failed ({e_ubot})")
+
+        if not sent:
+            print(f"DEBUG: WARNING! Could not send media to destination: {dest} via any method.")
 
 async def process_social_media_download(link, owner_id, msg_obj=None):
     status_text = f"🎬 *در حال استخراج و دانلود با مدرن‌ترین شگردها:*\n`{link}`\n\n🕒 لطفاً کمی صبور باشید..."
