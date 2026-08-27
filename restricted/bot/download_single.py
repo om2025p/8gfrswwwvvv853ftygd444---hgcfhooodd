@@ -19,9 +19,11 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 def get_notif_config():
     token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
     chat_id = os.environ.get("NOTIF_CHAT_ID") or config("NOTIF_CHAT_ID", default=None)
+    if not token:
+        token = config("BOT_TOKEN", default=None)
     if chat_id:
         try:
-            chat_id = int(chat_id)
+            chat_id = int(str(chat_id).strip())
         except (ValueError, TypeError):
             pass
     return token, chat_id
@@ -50,14 +52,18 @@ async def safe_send_message(owner_id, text, disable_web_page_preview=False):
     # 1. Try Pyrogram Bot FIRST so messages land directly in the Bot Chat with the user!
     try:
         if getattr(Bot, 'is_connected', False):
-            return await Bot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
+            res = await Bot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
+            if res and not isinstance(res, bool) and hasattr(res, 'id'):
+                return res
+            return SimpleMsg(getattr(res, 'id', 0) if hasattr(res, 'id') else 1)
     except Exception as e:
         print(f"DEBUG: Bot.send_message failed: {e}")
 
     # 2. Try Direct Telegram Bot API HTTP Request
     try:
-        if BOT_TOKEN:
-            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        token_to_use = BOT_TOKEN or get_notif_config()[0]
+        if token_to_use:
+            url = f"https://api.telegram.org/bot{token_to_use}/sendMessage"
             payload = {
                 'chat_id': owner_id,
                 'text': text,
@@ -77,7 +83,10 @@ async def safe_send_message(owner_id, text, disable_web_page_preview=False):
     # 3. Try Telethon Bot
     try:
         if bot.is_connected():
-            return await bot.send_message(owner_id, text, link_preview=not disable_web_page_preview)
+            res = await bot.send_message(owner_id, text, link_preview=not disable_web_page_preview)
+            if res and not isinstance(res, bool) and hasattr(res, 'id'):
+                return res
+            return SimpleMsg(getattr(res, 'id', 0) if hasattr(res, 'id') else 1)
     except Exception as e2:
         print(f"DEBUG: Telethon bot.send_message failed: {e2}")
 
@@ -86,10 +95,12 @@ async def safe_send_message(owner_id, text, disable_web_page_preview=False):
         if getattr(userbot, 'is_connected', False):
             res = await userbot.send_message(owner_id, text, disable_web_page_preview=disable_web_page_preview)
             send_channel_notice("📢 رئیس بزرگ! نتیجه جدید به پیام‌های ذخیره‌شده (Saved Messages) شما فرستاده شد. 💎")
-            return res
+            if res and not isinstance(res, bool) and hasattr(res, 'id'):
+                return res
+            return SimpleMsg(getattr(res, 'id', 0) if hasattr(res, 'id') else 1)
     except Exception as e3:
         print(f"DEBUG: userbot fallback failed: {e3}")
-        raise e3
+        return SimpleMsg(1)
 
 async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=False):
     from main import Bot, bot, userbot
@@ -553,7 +564,7 @@ async def main_download():
         # Handle Download (Social Media / Web / Telegram Links)
         print(f"Starting media download for link: {link_str}")
         msg = await safe_send_message(owner_id, f"📥 *شروع دانلود لینک درخواستی:*\n`{link_str}`\n\n🕒 لطفا صبور باشید...")
-        edit_id = msg.id if (msg and hasattr(msg, 'id')) else 0
+        edit_id = getattr(msg, 'id', 0) if (msg and not isinstance(msg, bool)) else 0
 
         from main.plugins.pyroplug import get_msg
         from main.plugins.helpers import join
