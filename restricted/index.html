@@ -755,7 +755,7 @@
                 document.getElementById(id).value = val;
                 localStorage.setItem('restricted_bot_' + id, val);
             } else if (id === 'ghBranch') {
-                document.getElementById(id).value = '72'; // مقدار پیش‌فرض 72
+                document.getElementById(id).value = '74'; // مقدار پیش‌فرض 74
             }
 
             // ذخیره خودکار و ضدعفونی همزمان هنگام کپی/پیست یا تایپ
@@ -888,7 +888,7 @@
             const owner = sanitizeString(document.getElementById('ghOwner').value);
             const repo = sanitizeString(document.getElementById('ghRepo').value);
             const pat = sanitizeString(document.getElementById('ghPat').value);
-            const branch = sanitizeString(document.getElementById('ghBranch').value) || '60';
+            const branch = sanitizeString(document.getElementById('ghBranch').value) || '74';
 
             const tgApiId = sanitizeString(document.getElementById('tgApiId').value);
             const tgApiHash = sanitizeString(document.getElementById('tgApiHash').value);

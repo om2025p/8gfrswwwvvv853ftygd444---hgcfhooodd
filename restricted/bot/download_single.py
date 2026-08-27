@@ -117,8 +117,17 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
         msg_obj = await safe_send_message(owner_id, status_text)
 
     temp_dir = tempfile.mkdtemp(prefix="emarat_social_")
+    caption = ""
 
     try:
+        # Robust user-agents and headers for Instagram / TikTok / Social media
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Sec-Fetch-Mode': 'navigate',
+        }
+
         def run_ytdlp():
             ydl_opts = {
                 'outtmpl': os.path.join(temp_dir, '%(title).30s_%(id)s.%(ext)s'),
@@ -126,6 +135,13 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                 'quiet': True,
                 'no_warnings': True,
                 'ignoreerrors': True,
+                'http_headers': headers,
+                'extractor_args': {
+                    'youtube': ['player_client=android,web'],
+                    'tiktok': ['app_version=30.0.0'],
+                },
+                'retries': 3,
+                'fragment_retries': 3,
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(link, download=True)
@@ -134,8 +150,73 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
         loop = asyncio.get_running_loop()
         info = await loop.run_in_executor(None, run_ytdlp)
 
+        # Multi-layer Fallback Service if yt-dlp extracted no media
+        def scan_files():
+            files_list = []
+            for r, _, fs in os.walk(temp_dir):
+                for f in fs:
+                    if not f.endswith(('.description', '.json', '.part', '.ytdl', '.txt', '.info')):
+                        files_list.append(os.path.join(r, f))
+            return files_list
+
+        if not scan_files():
+            print("DEBUG: yt-dlp produced no files. Attempting fallback extraction layers...")
+            # Layer 1: Try Instagram alternative URL wrappers (e.g., ddinstagram / vxinstagram embed parsing)
+            if 'instagram.com' in link or 'instagr.am' in link:
+                try:
+                    import urllib.parse, urllib.request, re
+                    match = re.search(r'/(?:p|reel|reels|tv)/([A-Za-z0-9_-]+)', link)
+                    if match:
+                        shortcode = match.group(1)
+                        embed_url = f"https://www.instagram.com/p/{shortcode}/embed/captioned/"
+                        req = urllib.request.Request(embed_url, headers=headers)
+                        with urllib.request.urlopen(req, timeout=10) as resp:
+                            html_text = resp.read().decode('utf-8', errors='ignore')
+                            video_urls = re.findall(r'\"video_url\":\"(https:[^\"]+)\"', html_text)
+                            display_urls = re.findall(r'\"display_url\":\"(https:[^\"]+)\"', html_text)
+
+                            media_urls = [v.replace('\\u0026', '&').replace('\\/', '/') for v in video_urls]
+                            if not media_urls:
+                                media_urls = [d.replace('\\u0026', '&').replace('\\/', '/') for d in display_urls]
+
+                            if media_urls:
+                                target_url = media_urls[0]
+                                ext = '.mp4' if 'video' in target_url or len(video_urls) > 0 else '.jpg'
+                                out_path = os.path.join(temp_dir, f"instagram_{shortcode}{ext}")
+                                dl_req = urllib.request.Request(target_url, headers=headers)
+                                with urllib.request.urlopen(dl_req, timeout=15) as dl_resp, open(out_path, 'wb') as out_file:
+                                    out_file.write(dl_resp.read())
+                                print(f"DEBUG: Instagram Embed fallback successfully saved media to {out_path}")
+                except Exception as ex_ig:
+                    print(f"DEBUG: Instagram fallback layer failed: {ex_ig}")
+
+            # Layer 2: Try TikTok API fallback services (e.g., SSSTik / TikWM / Cobalt)
+            if 'tiktok.com' in link and not scan_files():
+                try:
+                    import urllib.parse, urllib.request, json
+                    # TikWM API Request
+                    req_data = urllib.parse.urlencode({'url': link, 'hd': 1}).encode('utf-8')
+                    api_req = urllib.request.Request('https://www.tikwm.com/api/', data=req_data, headers={
+                        'User-Agent': headers['User-Agent'],
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    })
+                    with urllib.request.urlopen(api_req, timeout=10) as api_resp:
+                        res = json.loads(api_resp.read().decode('utf-8'))
+                        if res.get('code') == 0 and res.get('data'):
+                            data_obj = res['data']
+                            v_url = data_obj.get('hdplay') or data_obj.get('play')
+                            if v_url:
+                                out_path = os.path.join(temp_dir, f"tiktok_{data_obj.get('id', 'video')}.mp4")
+                                dl_req = urllib.request.Request(v_url, headers=headers)
+                                with urllib.request.urlopen(dl_req, timeout=20) as dl_resp, open(out_path, 'wb') as out_file:
+                                    out_file.write(dl_resp.read())
+                                if not caption and data_obj.get('title'):
+                                    caption = data_obj.get('title')
+                                print(f"DEBUG: TikTok TikWM fallback successfully saved video to {out_path}")
+                except Exception as ex_tt:
+                    print(f"DEBUG: TikTok fallback layer failed: {ex_tt}")
+
         # Retrieve caption / description
-        caption = ""
         if info:
             if isinstance(info, dict):
                 caption = info.get('description') or info.get('title') or ""
