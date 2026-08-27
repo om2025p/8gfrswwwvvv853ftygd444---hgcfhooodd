@@ -561,7 +561,8 @@ async def main_download():
 
         is_social = any(domain in link_lower for domain in [
             'instagram.com', 'instagr.am', 'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
-            'whatsapp.com', 'chat.whatsapp.com', 'wa.me', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com'
+            'whatsapp.com', 'chat.whatsapp.com', 'wa.me', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com',
+            'xhamster.com', 'xvideos.com', 'pornhub.com'
         ]) or (link_lower.startswith(('http://', 'https://')) and not is_telegram_link)
 
         if is_social and not link_lower.startswith("search:"):
