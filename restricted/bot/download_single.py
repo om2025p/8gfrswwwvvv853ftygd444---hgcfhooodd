@@ -791,7 +791,7 @@ async def main_download():
         except Exception as e:
             print(f"Error during execution: {e}")
             try:
-                await safe_send_message(owner_id, f"❌ *خطا در پردازش لینک تلگرام:*\n`{str(e)}`")
+                await safe_send_message(owner_id, f"❌ *خطا در پردازش لینک:*\n`{str(e)}`")
             except:
                 pass
     finally:
