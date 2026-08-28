@@ -300,123 +300,88 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
     else:
         # Public Channel Link
         print(f"DEBUG: Link classified as PUBLIC. Chat extracted: {msg_link}")
-        edit = await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "📥 *در حال دریافت محتوای لینک عمومی تلگرام...*")
-        chat = clean_link.split("t.me")[1].split("/")[1]
+        edit = await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "📥 *در حال دریافت و تحلیل محتوای لینک عمومی تلگرام...*")
+
+        parts = [p for p in clean_link.split("/") if p]
+        chat = parts[-2] if len(parts) >= 2 else clean_link.split("t.me")[1].split("/")[1]
+
+        from download_single import send_media_to_destinations
+
         try:
-            print(f"DEBUG: Attempting direct copy of public message {msg_id} from public channel {chat}...")
-            msg = await client.get_messages(chat, msg_id)
-            if msg.empty:
-                print("DEBUG: Message was empty. Trying fallback recursion route...")
-                new_link = f't.me/b/{chat}/{int(msg_id)}'
-                return await get_msg(userbot, client, bot, sender, edit_id, new_link, i)
-
-            # Try to copy message directly
-            await client.copy_message(sender, chat, msg_id)
-            print("DEBUG: Direct copy succeeded.")
-            await safe_delete_object(edit)
-        except Exception as e:
-            from download_single import send_media_to_destinations
-            print(f"DEBUG: Direct copy of public message failed: {e}. Falling back to download/upload using userbot...")
+            print(f"DEBUG: Fetching message {msg_id} from public channel {chat} via userbot/client...")
+            msg = None
             try:
-                # Get message via userbot instead (handles restricted/protected public channels)
                 msg = await userbot.get_messages(chat, msg_id)
-                if msg.empty:
-                    print("DEBUG: Fallback userbot message is empty.")
-                    await safe_edit_msg_pyroplug(client, bot, sender, edit_id, f'Failed to save public link: Message is empty or unavailable.')
-                    return
+            except Exception as e_ub:
+                print(f"DEBUG: userbot.get_messages failed for public chat {chat}: {e_ub}")
+                try:
+                    msg = await client.get_messages(chat, msg_id)
+                except Exception as e_cl:
+                    print(f"DEBUG: client.get_messages failed for public chat {chat}: {e_cl}")
 
-                if msg.media:
-                    await safe_edit_object(edit, "Downloading public restricted media...")
+            if not msg or getattr(msg, 'empty', True):
+                print("DEBUG: Message was empty or unavailable.")
+                await safe_edit_msg_pyroplug(client, bot, sender, edit_id, f"❌ *رئیس بزرگ، پیام یا محتوای مورد نظر در لینک عمومی دریافت نشد یا حذف شده است.*")
+                raise Exception("Public message is empty or unavailable.")
+
+            if msg.media and msg.media != MessageMediaType.WEB_PAGE:
+                await safe_edit_object(edit, "⚡ *در حال استخراج و دانلود محتوای رسانه‌ای تلگرام...*")
+                file = None
+                try:
                     file = await userbot.download_media(
                         msg,
                         progress=progress_for_pyrogram,
                         progress_args=(
                             client,
-                            "**DOWNLOADING (FALLBACK):**\n",
+                            "**DOWNLOADING:**\n",
                             edit,
                             time.time()
                         )
                     )
-                    await safe_edit_object(edit, 'Preparing to Upload!')
-                    caption = msg.caption if msg.caption is not None else None
+                except Exception as dl_ub_err:
+                    print(f"DEBUG: userbot download_media failed: {dl_ub_err}. Trying client download_media...")
+                    try:
+                        file = await client.download_media(
+                            msg,
+                            progress=progress_for_pyrogram,
+                            progress_args=(
+                                client,
+                                "**DOWNLOADING (RETRY):**\n",
+                                edit,
+                                time.time()
+                            )
+                        )
+                    except Exception as dl_cl_err:
+                        print(f"DEBUG: client download_media failed: {dl_cl_err}")
 
-                    if msg.media==MessageMediaType.VIDEO_NOTE:
-                        data = video_metadata(file)
-                        height, width, duration = data["height"], data["width"], data["duration"]
-                        try:
-                            thumb_path = await screenshot(file, duration, sender)
-                        except Exception:
-                            thumb_path = None
-                        try:
-                            await client.send_video_note(
-                                chat_id=sender,
-                                video_note=file,
-                                length=height, duration=duration,
-                                thumb=thumb_path,
-                                progress=progress_for_pyrogram,
-                                progress_args=(
-                                    client,
-                                    '**UPLOADING:**\n',
-                                    edit,
-                                    time.time()
-                                )
-                            )
-                        except Exception as p_err:
-                            print(f"DEBUG: Pyrogram public send_video_note failed ({p_err}). Fallback to Telethon...")
-                            UT = time.time()
-                            uploader = await fast_upload(f'{file}', f'{file}', UT, bot, edit, '**UPLOADING:**')
-                            attributes = [DocumentAttributeVideo(duration=duration, w=width, h=height, round_message=True, supports_streaming=True)]
-                            await bot.send_file(sender, uploader, caption=caption, thumb=thumb_path, attributes=attributes, force_document=False)
-                    elif msg.media==MessageMediaType.VIDEO and msg.video.mime_type in ["video/mp4", "video/x-matroska"]:
-                        data = video_metadata(file)
-                        height, width, duration = data["height"], data["width"], data["duration"]
-                        try:
-                            thumb_path = await screenshot(file, duration, sender)
-                        except Exception:
-                            thumb_path = None
-                        try:
-                            await client.send_video(
-                                chat_id=sender,
-                                video=file,
-                                caption=caption,
-                                supports_streaming=True,
-                                height=height, width=width, duration=duration,
-                                thumb=thumb_path,
-                                progress=progress_for_pyrogram,
-                                progress_args=(
-                                    client,
-                                    '**UPLOADING:**\n',
-                                    edit,
-                                    time.time()
-                                )
-                            )
-                        except Exception as p_err:
-                            print(f"DEBUG: Pyrogram public send_video failed ({p_err}). Fallback to Telethon...")
-                            UT = time.time()
-                            uploader = await fast_upload(f'{file}', f'{file}', UT, bot, edit, '**UPLOADING:**')
-                            attributes = [DocumentAttributeVideo(duration=duration, w=width, h=height, round_message=False, supports_streaming=True)]
-                            await bot.send_file(sender, uploader, caption=caption, thumb=thumb_path, attributes=attributes, force_document=False)
-                    elif msg.media==MessageMediaType.PHOTO or (hasattr(msg, 'photo') and msg.photo):
-                        await safe_edit_object(edit, "Uploading photo...")
-                        from download_single import send_media_to_destinations
-                        await send_media_to_destinations(file, caption, sender)
-                    else:
-                        thumb_path=thumbnail(sender)
-                        from download_single import send_media_to_destinations
-                        await send_media_to_destinations(file, caption, sender)
+                if file and os.path.exists(file):
+                    await safe_edit_object(edit, '⬆️ *فایل با موفقیت دانلود شد. در حال ارسال به شما...*')
+                    caption = msg.caption if msg.caption is not None else None
+                    await send_media_to_destinations(file, caption, sender)
                     try:
                         os.remove(file)
-                    except:
-                        pass
-                elif msg.text:
-                    try:
-                        await client.send_message(sender, msg.text.markdown)
                     except Exception:
-                        await bot.send_message(sender, msg.text.markdown)
+                        pass
+                    await safe_delete_object(edit)
+                else:
+                    await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "❌ *خطا در دانلود فایل رسانه‌ای تلگرام.*")
+                    raise Exception("Failed to download media file.")
+            elif msg.text or (msg.media == MessageMediaType.WEB_PAGE and msg.text):
+                await safe_edit_object(edit, "📥 *در حال ارسال متن پیام...*")
+                caption_text = msg.text.markdown if hasattr(msg.text, 'markdown') else str(msg.text)
+                try:
+                    await client.send_message(sender, caption_text)
+                except Exception:
+                    await bot.send_message(sender, caption_text)
                 await safe_delete_object(edit)
-            except Exception as ex:
-                print(f"DEBUG: Fallback routine completely failed: {ex}")
-                await safe_edit_msg_pyroplug(client, bot, sender, edit_id, f'Failed to save public link: `{msg_link}`\n\nError: {str(ex)}')
+            else:
+                await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "❌ *پیام انتخابی فاقد محتوای قابل دانلود می‌باشد.*")
+                raise Exception("Selected message has no downloadable content.")
+        except Exception as e:
+            print(f"DEBUG: Error processing public link {msg_link}: {e}")
+            if "Public message is empty" not in str(e) and "Failed to download" not in str(e) and "no downloadable content" not in str(e):
+                await safe_edit_msg_pyroplug(client, bot, sender, edit_id, f'❌ *خطا در دریافت لینک عمومی:* `{msg_link}`\n\n`{str(e)}`')
+            raise e
 
 async def get_bulk_msg(userbot, client, sender, msg_link, i):
     x = await client.send_message(sender, "Processing!")
