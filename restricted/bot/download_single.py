@@ -606,6 +606,102 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                 except Exception as ex_xh:
                     print(f"DEBUG: xHamster fallback layer failed: {ex_xh}")
 
+            # Layer 3: Generic Webpage Video Extractor (luticlip.com, embedded video blogs, etc.)
+            if not scan_files():
+                try:
+                    import urllib.request, re, subprocess
+                    from urllib.parse import urljoin
+
+                    msg_obj = await safe_edit_message(owner_id, msg_obj, f"🔍 *در حال اسکن عمیق صفحه و استخراج بالاترین کیفیت ویدیو...*\n`لطفاً صبور باشید...`")
+                    gen_headers = get_random_headers()
+                    page_html = ""
+
+                    try:
+                        req_gen = urllib.request.Request(link, headers=gen_headers)
+                        with urllib.request.urlopen(req_gen, timeout=15) as resp_gen:
+                            page_html = resp_gen.read().decode('utf-8', errors='ignore')
+                    except Exception as ex_p1:
+                        print(f"DEBUG: Generic page fetch urllib failed: {ex_p1}")
+
+                    if not page_html:
+                        try:
+                            cmd_curl = ["curl", "-s", "-L", "-A", gen_headers['User-Agent'], link]
+                            res_curl = subprocess.run(cmd_curl, capture_output=True, text=True, timeout=20)
+                            if res_curl.stdout and len(res_curl.stdout) > 200:
+                                page_html = res_curl.stdout
+                        except Exception as ex_p2:
+                            print(f"DEBUG: Generic page fetch curl failed: {ex_p2}")
+
+                    extracted_video_urls = []
+                    if page_html:
+                        # Extract og:video / og:video:secure_url / twitter:player:stream
+                        og_videos = re.findall(r'<meta[^>]+(?:property|name)=[\"\'](?:og:video|og:video:secure_url|twitter:player:stream)[\"\'][^>]+content=[\"\']([^\"\']+)[\"\']', page_html, re.I)
+                        extracted_video_urls.extend(og_videos)
+
+                        # Extract video src / source src
+                        src_videos = re.findall(r'<(?:video|source)[^>]+src=[\"\']([^\"\']+)[\"\']', page_html, re.I)
+                        extracted_video_urls.extend(src_videos)
+
+                        # Extract direct mp4 links from html
+                        direct_mp4s = re.findall(r'https?://[^\s\"\'<>]+\.mp4(?:\?[^\s\"\'<>]*)?', page_html, re.I)
+                        extracted_video_urls.extend(direct_mp4s)
+
+                        # Extract page title for caption
+                        title_match = re.search(r'<title>([^<]+)</title>', page_html, re.I)
+                        if title_match and not caption:
+                            caption = title_match.group(1).strip()
+
+                    # Clean and normalize URLs
+                    clean_v_urls = []
+                    for v_u in extracted_video_urls:
+                        full_u = urljoin(link, v_u.replace('&amp;', '&'))
+                        if full_u.startswith('http') and full_u not in clean_v_urls:
+                            clean_v_urls.append(full_u)
+
+                    # Try downloading from extracted links (prefer highest quality / mp4)
+                    downloaded_gen = False
+                    out_path_gen = os.path.join(temp_dir, "webpage_video.mp4")
+
+                    for target_v_url in clean_v_urls:
+                        try:
+                            print(f"DEBUG: Trying direct generic video link: {target_v_url}")
+                            dl_req = urllib.request.Request(target_v_url, headers=gen_headers)
+                            with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_path_gen, 'wb') as out_file:
+                                chunk = dl_resp.read(1024 * 1024)
+                                if chunk:
+                                    out_file.write(chunk)
+                                    while True:
+                                        c = dl_resp.read(1024 * 1024)
+                                        if not c:
+                                            break
+                                        out_file.write(c)
+
+                            if os.path.exists(out_path_gen) and os.path.getsize(out_path_gen) > 50000:
+                                downloaded_gen = True
+                                print(f"DEBUG: Generic webpage video successfully downloaded to {out_path_gen}")
+                                break
+                        except Exception as ex_dl_gen:
+                            print(f"DEBUG: Failed downloading generic video link {target_v_url}: {ex_dl_gen}")
+
+                    # Fallback to Gemini AI Link Extractor if regex produced no working download
+                    if not downloaded_gen and page_html:
+                        print("DEBUG: Generic regex extraction failed. Invoking Gemini AI link extraction...")
+                        msg_obj = await safe_edit_message(owner_id, msg_obj, f"✨ *در حال تحلیل هوشمند ویدیوهای صفحه با لایه هوش مصنوعی Gemini...*\n`لطفاً صبور باشید...`")
+                        ai_url = await call_gemini_ai_extract(page_html, link)
+                        if ai_url and ai_url.startswith('http'):
+                            try:
+                                dl_req = urllib.request.Request(ai_url, headers=gen_headers)
+                                with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_path_gen, 'wb') as out_file:
+                                    out_file.write(dl_resp.read())
+                                if os.path.exists(out_path_gen) and os.path.getsize(out_path_gen) > 50000:
+                                    downloaded_gen = True
+                                    print(f"DEBUG: Gemini AI extracted video successfully downloaded to {out_path_gen}")
+                            except Exception as ex_ai_dl:
+                                print(f"DEBUG: Gemini AI link download failed: {ex_ai_dl}")
+
+                except Exception as ex_gen_layer:
+                    print(f"DEBUG: Generic Webpage Video Extractor layer failed: {ex_gen_layer}")
+
         # Retrieve caption / description
         if info:
             if isinstance(info, dict):
