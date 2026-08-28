@@ -296,7 +296,13 @@ async def call_gemini_ai_extract(html_snippet, page_url):
         return None
 
     def _do_extract():
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={api_key}"
+        models = [
+            "gemini-1.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-pro",
+            "gemini-flash-latest",
+            "gemini-pro"
+        ]
         prompt = (
             f"You are an expert media link extractor. Analyze the webpage HTML snippet for URL '{page_url}'. "
             "Find the direct downloadable video MP4 URL or high-res image JPG/PNG URL. "
@@ -313,20 +319,31 @@ async def call_gemini_ai_extract(html_snippet, page_url):
                 }
             ]
         }
-        import urllib.request, json, time
+        import urllib.request, json, time, random
         data = json.dumps(payload).encode('utf-8')
-        req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
-        for attempt in range(3):
-            try:
-                with urllib.request.urlopen(req, timeout=15) as resp:
-                    res = json.loads(resp.read().decode('utf-8'))
-                    if res.get('candidates') and len(res['candidates']) > 0:
-                        text = res['candidates'][0]['content']['parts'][0]['text'].strip()
-                        if text.startswith('http'):
-                            return text.split()[0]
-            except Exception as e:
-                print(f"DEBUG: Gemini AI call attempt {attempt+1} error: {e}")
-                time.sleep(1.5)
+
+        for model in models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+            for attempt in range(2):
+                try:
+                    with urllib.request.urlopen(req, timeout=12) as resp:
+                        res = json.loads(resp.read().decode('utf-8'))
+                        if res.get('candidates') and len(res['candidates']) > 0:
+                            candidate = res['candidates'][0]
+                            parts = candidate.get('content', {}).get('parts', [])
+                            if parts and 'text' in parts[0]:
+                                text = parts[0]['text'].strip()
+                                if text.startswith('http'):
+                                    print(f"DEBUG: Gemini AI successfully extracted link with model {model}: {text[:60]}...")
+                                    return text.split()[0]
+                except urllib.error.HTTPError as http_err:
+                    print(f"DEBUG: Gemini AI model {model} attempt {attempt+1} HTTP {http_err.code}: {http_err.reason}")
+                    time.sleep(1.0 + random.uniform(0.2, 0.8))
+                except Exception as e:
+                    print(f"DEBUG: Gemini AI model {model} attempt {attempt+1} error: {e}")
+                    time.sleep(1.0)
+
         return None
 
     return await asyncio.to_thread(_do_extract)
@@ -369,24 +386,37 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
         headers = get_random_headers()
 
         def run_ytdlp():
-            ydl_opts = {
-                'outtmpl': os.path.join(temp_dir, '%(title).30s_%(id)s.%(ext)s'),
-                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-                'quiet': True,
-                'no_warnings': True,
-                'ignoreerrors': True,
-                'http_headers': headers,
-                'extractor_args': {
-                    'youtube': ['player_client=android,web,ios,mweb'],
-                    'tiktok': ['app_version=30.0.0'],
-                },
-                'retries': 10,
-                'fragment_retries': 10,
-                'retry_sleep_functions': {'http': lambda n: random.uniform(2, 5)},
-            }
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(link, download=True)
-                return info
+            # Try primary yt-dlp run with android_creator / tv_embedded / ios clients to bypass YouTube cloud bot check
+            player_clients_list = [
+                'android_creator,tv_embedded,ios',
+                'android,mweb',
+                'tv,web'
+            ]
+            for p_clients in player_clients_list:
+                try:
+                    ydl_opts = {
+                        'outtmpl': os.path.join(temp_dir, '%(title).30s_%(id)s.%(ext)s'),
+                        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                        'quiet': True,
+                        'no_warnings': True,
+                        'ignoreerrors': True,
+                        'http_headers': get_random_headers(),
+                        'extractor_args': {
+                            'youtube': [f'player_client={p_clients}'],
+                            'tiktok': ['app_version=30.0.0'],
+                        },
+                        'retries': 5,
+                        'fragment_retries': 5,
+                        'retry_sleep_functions': {'http': lambda n: random.uniform(1.5, 3.5)},
+                    }
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(link, download=True)
+                        if info and scan_files():
+                            print(f"DEBUG: yt-dlp succeeded with player_client={p_clients}")
+                            return info
+                except Exception as ex_ytdlp:
+                    print(f"DEBUG: yt-dlp run failed with player_client={p_clients}: {ex_ytdlp}")
+            return None
 
         loop = asyncio.get_running_loop()
         info = await loop.run_in_executor(None, run_ytdlp)
@@ -605,6 +635,78 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                                     print(f"DEBUG: xHamster m3u8 segment fallback successfully saved video to {out_path}")
                 except Exception as ex_xh:
                     print(f"DEBUG: xHamster fallback layer failed: {ex_xh}")
+
+            # Layer 2.8: Dedicated YouTube Cloud Anti-Bot Fallback (Cobalt API / Invidious API / YouTube NoCookie Embed)
+            if ('youtube.com' in link or 'youtu.be' in link) and not scan_files():
+                try:
+                    import urllib.request, json, re, subprocess
+                    msg_obj = await safe_edit_message(owner_id, msg_obj, f"✨ *در حال عبور هوشمند از فیلتر ربات‌آزمایی یوتیوب...*\n`چند لحظه صبور باشید...`")
+
+                    # Extract YouTube Video ID
+                    yt_match = re.search(r'(?:v=|\/([0-9A-Za-z_-]{11}))', link)
+                    yt_id = yt_match.group(1) if (yt_match and yt_match.group(1)) else None
+                    if not yt_id and 'v=' in link:
+                        yt_id = link.split('v=')[1].split('&')[0]
+
+                    out_yt_path = os.path.join(temp_dir, f"youtube_{yt_id or 'video'}.mp4")
+
+                    # Try Cobalt public instance API
+                    if yt_id and not scan_files():
+                        cobalt_instances = [
+                            "https://api.cobalt.tools/api/json",
+                            "https://cobalt-api.kwippy.com/api/json",
+                            "https://co.wuk.sh/api/json"
+                        ]
+                        for cob_url in cobalt_instances:
+                            try:
+                                payload = json.dumps({"url": f"https://www.youtube.com/watch?v={yt_id}", "vQuality": "max"}).encode('utf-8')
+                                req_cob = urllib.request.Request(cob_url, data=payload, headers={
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'User-Agent': get_random_headers()['User-Agent']
+                                })
+                                with urllib.request.urlopen(req_cob, timeout=12) as resp_cob:
+                                    cob_res = json.loads(resp_cob.read().decode('utf-8'))
+                                    v_stream_url = cob_res.get('url') or cob_res.get('picker', [{}])[0].get('url')
+                                    if v_stream_url:
+                                        dl_req = urllib.request.Request(v_stream_url, headers=get_random_headers())
+                                        with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_yt_path, 'wb') as out_f:
+                                            out_f.write(dl_resp.read())
+                                        if os.path.exists(out_yt_path) and os.path.getsize(out_yt_path) > 50000:
+                                            print(f"DEBUG: Cobalt API successfully downloaded YouTube video to {out_yt_path}")
+                                            break
+                            except Exception as ex_cob:
+                                print(f"DEBUG: Cobalt API instance ({cob_url}) failed: {ex_cob}")
+
+                    # Try Invidious API instance fallback
+                    if yt_id and not scan_files():
+                        invidious_instances = [
+                            f"https://inv.tux.pizza/api/v1/videos/{yt_id}",
+                            f"https://invidious.nerdvpn.de/api/v1/videos/{yt_id}",
+                            f"https://vid.puffyan.us/api/v1/videos/{yt_id}"
+                        ]
+                        for inv_url in invidious_instances:
+                            try:
+                                req_inv = urllib.request.Request(inv_url, headers=get_random_headers())
+                                with urllib.request.urlopen(req_inv, timeout=10) as resp_inv:
+                                    inv_data = json.loads(resp_inv.read().decode('utf-8'))
+                                    fmt_streams = inv_data.get('formatStreams', [])
+                                    if fmt_streams:
+                                        target_stream = fmt_streams[-1].get('url')
+                                        if target_stream:
+                                            dl_req = urllib.request.Request(target_stream, headers=get_random_headers())
+                                            with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_yt_path, 'wb') as out_f:
+                                                out_f.write(dl_resp.read())
+                                            if os.path.exists(out_yt_path) and os.path.getsize(out_yt_path) > 50000:
+                                                if not caption and inv_data.get('title'):
+                                                    caption = inv_data.get('title')
+                                                print(f"DEBUG: Invidious API successfully downloaded YouTube video to {out_yt_path}")
+                                                break
+                            except Exception as ex_inv:
+                                print(f"DEBUG: Invidious API ({inv_url}) failed: {ex_inv}")
+
+                except Exception as ex_yt_fallback:
+                    print(f"DEBUG: YouTube fallback layer failed: {ex_yt_fallback}")
 
             # Layer 3: Generic Webpage Video Extractor (luticlip.com, embedded video blogs, etc.)
             if not scan_files():
