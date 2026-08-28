@@ -391,13 +391,25 @@
         <!-- GitHub Settings Modal -->
         <div id="githubSettingsModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.6); backdrop-filter:blur(5px); justify-content:center; align-items:center;">
             <div style="background-color:#fff; color:#333; margin:auto; padding:20px; border-radius:15px; width:90%; max-width:450px; box-shadow:0 5px 15px rgba(0,0,0,0.3); direction:rtl; font-family:Tahoma,sans-serif;">
-                <h3 style="margin-top:0; color:#0288d1; text-align:center;">⚙️ تنظیمات پشتیبان‌گیری در گیت‌هاب</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3 style="margin:0; color:#0288d1;">⚙️ تنظیمات پشتیبان‌گیری در گیت‌هاب</h3>
+                    <button onclick="toggleGithubGuide()" style="background:#0288d1; color:#fff; border:none; padding:4px 10px; border-radius:12px; font-size:12px; cursor:pointer;">❓ راهنما</button>
+                </div>
+
+                <div id="githubGuideBox" style="display:none; background:#e1f5fe; border:1px solid #b3e5fc; border-radius:8px; padding:10px; margin-bottom:12px; font-size:11px; line-height:1.6; color:#0277bd;">
+                    <strong>💡 راهنمای ساخت توکن و تنظیمات:</strong><br>
+                    ۱. در گیت‌هاب به مسیر <b>Settings -> Developer Settings -> Personal access tokens -> Tokens (classic)</b> بروید.<br>
+                    ۲. یک توکن جدید بسازید و حتماً تیک دسترسی <b>repo</b> (دسترسی کامل به مخازن) را بزنید.<br>
+                    ۳. اگر مخزن شما شخصی (Private) است، حتماً نام مخزن را دقیقاً به شکل <code>username/repo</code> وارد کنید.<br>
+                    ۴. مسیر فایل پیشنهادی: <code>gold6/gold6_backup.json</code>
+                </div>
+
                 <p style="font-size:12px; color:#666; line-height:1.6; margin-bottom:15px; text-align:justify;">
                     با فعال‌سازی این بخش، با هر بار زدن دکمه‌ی «ذخیره فایل»، اطلاعات شما علاوه بر ذخیره در فایل محلی، به صورت خودکار به مخزن گیت‌هاب شخصی شما ارسال می‌شود. این اطلاعات فقط در مرورگر شما ذخیره می‌شوند و ۱۰۰٪ امن هستند.
                 </p>
                 <div style="margin-bottom:12px;">
                     <label style="display:block; font-size:13px; margin-bottom:5px; font-weight:bold;">توکن شخصی گیت‌هاب (Personal Access Token):</label>
-                    <input type="password" id="gh_token" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="ghp_...">
+                    <input type="password" id="gh_token" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="ghp_... یا github_pat_...">
                 </div>
                 <div style="margin-bottom:12px;">
                     <label style="display:block; font-size:13px; margin-bottom:5px; font-weight:bold;">نام مخزن (مثال: username/repo):</label>
@@ -409,8 +421,16 @@
                 </div>
                 <div style="margin-bottom:12px;">
                     <label style="display:block; font-size:13px; margin-bottom:5px; font-weight:bold;">مسیر ذخیره فایل در مخزن:</label>
-                    <input type="text" id="gh_filepath" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="backups/cement_percent_backup.json">
+                    <input type="text" id="gh_filepath" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="gold6/gold6_backup.json">
                 </div>
+
+                <!-- GitHub Log Container -->
+                <div id="githubLogContainer" style="display:none; margin-bottom:12px;">
+                    <label style="display:block; font-size:12px; margin-bottom:3px; font-weight:bold; color:#444;">📜 گزارش جزئیات ارتباط با گیت‌هاب:</label>
+                    <div id="githubLogBox" style="width:100%; max-height:100px; overflow-y:auto; background:#f4f4f4; border:1px solid #ddd; border-radius:6px; padding:6px; font-family:monospace; font-size:11px; direction:ltr; text-align:left; white-space:pre-wrap; color:#333;"></div>
+                    <button onclick="copyGithubErrorLogs()" style="margin-top:4px; background:#607d8b; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:11px; cursor:pointer;">📋 کپی گزارش خطا</button>
+                </div>
+
                 <div style="display:flex; gap:10px; margin-top:15px;">
                     <button onclick="saveGithubSettings()" style="flex:1; background-color:#2e7d32; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;">ذخیره</button>
                     <button onclick="closeGithubSettings()" style="flex:1; background-color:#757575; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;">انصراف</button>
@@ -1020,36 +1040,96 @@
             if(confirm('پاکسازی کامل سطل زباله؟')) { trash = []; updateUI(); saveData(); }
         };
 
-        async function uploadToGitHub(contentString, fileName) {
-            const token = localStorage.getItem("github_backup_token");
-            const repo = localStorage.getItem("github_backup_repo");
-            const branch = localStorage.getItem("github_backup_branch") || "main";
-            let filePath = localStorage.getItem("github_backup_filepath");
+        window.toggleGithubGuide = function() {
+            const guide = document.getElementById("githubGuideBox");
+            if (guide) guide.style.display = guide.style.display === "none" ? "block" : "none";
+        };
 
-            if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست." };
+        let currentGithubLogs = [];
+        function appendGithubLog(msg) {
+            const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const logLine = `[${timeStr}] ${msg}`;
+            currentGithubLogs.push(logLine);
+            const container = document.getElementById("githubLogContainer");
+            const logBox = document.getElementById("githubLogBox");
+            if (container) container.style.display = "block";
+            if (logBox) {
+                logBox.innerText = currentGithubLogs.join("\n");
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+            console.log(logLine);
+        }
+
+        window.copyGithubErrorLogs = function() {
+            if (currentGithubLogs.length === 0) {
+                alert("لاگی برای کپی وجود ندارد.");
+                return;
+            }
+            const fullLogText = currentGithubLogs.join("\n");
+            navigator.clipboard.writeText(fullLogText).then(() => {
+                alert("📋 گزارش خطا با موفقیت کپی شد!");
+            }).catch(() => {
+                prompt("لطفا متن زیر را دستی کپی کنید:", fullLogText);
+            });
+        };
+
+        async function uploadToGitHub(contentString, fileName) {
+            let token = (localStorage.getItem("github_backup_token") || "").trim();
+            let repo = (localStorage.getItem("github_backup_repo") || "").trim();
+            let branch = (localStorage.getItem("github_backup_branch") || "main").trim();
+            let filePath = (localStorage.getItem("github_backup_filepath") || "").trim();
+
+            currentGithubLogs = [];
+            appendGithubLog("شروع فرآیند پشتیبان‌گیری گیت‌هاب...");
+
+            if (!token || !repo) {
+                appendGithubLog("❌ خطا: توکن یا نام مخزن در تنظیمات وارد نشده است.");
+                return { success: false, message: "تنظیمات گیت‌هاب کامل نیست." };
+            }
+
+            if (repo.includes("github.com/")) {
+                repo = repo.split("github.com/")[1].replace(/\.git$/, "").replace(/\/$/, "");
+            }
+            repo = repo.replace(/^\/+|\/+$/g, '');
 
             if (!filePath) {
-                filePath = `backups/${fileName}`;
+                filePath = `gold6/${fileName}`;
             } else if (filePath.endsWith("/")) {
                 filePath += fileName;
             }
+            filePath = filePath.replace(/^\/+/, '');
 
+            const authHeader = token.startsWith("github_pat_") || token.startsWith("Bearer ") ? (token.startsWith("Bearer ") ? token : `Bearer ${token}`) : `token ${token}`;
             const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
             const headers = {
-                "Authorization": `token ${token}`,
+                "Authorization": authHeader,
                 "Accept": "application/vnd.github.v3+json"
             };
 
+            appendGithubLog(`مخزن هدف: ${repo}`);
+            appendGithubLog(`شاخه target: ${branch}`);
+            appendGithubLog(`مسیر فایل: ${filePath}`);
+
             try {
                 let sha = null;
+                appendGithubLog("در حال بررسی وجود فایل قبلی در گیت‌هاب...");
                 try {
-                    const checkRes = await fetch(`${url}?ref=${branch}`, { headers });
+                    const checkRes = await fetch(`${url}?ref=${encodeURIComponent(branch)}`, { headers });
+                    appendGithubLog(`پاسخ بررسی فایل: HTTP ${checkRes.status}`);
                     if (checkRes.status === 200) {
                         const fileData = await checkRes.json();
                         sha = fileData.sha;
+                        appendGithubLog(`فایل موجود یافت شد. SHA: ${sha.substring(0, 7)}...`);
+                    } else if (checkRes.status === 404) {
+                        appendGithubLog("فایل قبلی یافت نشد. فایل جدید ایجاد خواهد شد.");
+                    } else if (checkRes.status === 401) {
+                        appendGithubLog("❌ خطا 401: توکن دسترسی نامعتبر است یا منقضی شده.");
                     }
-                } catch (e) {}
+                } catch (e) {
+                    appendGithubLog(`هشدار در بررسی فایل قبلی: ${e.message}`);
+                }
 
+                appendGithubLog("در حال تبدیل محتوا به Base64...");
                 const base64Content = btoa(unescape(encodeURIComponent(contentString)));
                 const body = {
                     message: `بکاپ خودکار برنامه - ${new Date().toLocaleString('fa-IR')}`,
@@ -1058,14 +1138,30 @@
                 };
                 if (sha) body.sha = sha;
 
+                appendGithubLog("در حال ارسال درخواست PUT به API گیت‌هاب...");
                 const putRes = await fetch(url, {
                     method: "PUT",
                     headers: { ...headers, "Content-Type": "application/json" },
                     body: JSON.stringify(body)
                 });
 
-                return putRes.ok ? { success: true } : { success: false, message: "خطا در آپلود" };
+                appendGithubLog(`پاسخ آپلود: HTTP ${putRes.status} ${putRes.statusText}`);
+
+                if (putRes.ok) {
+                    appendGithubLog("✅ پشتیبان‌گیری با موفقیت در گیت‌هاب ثبت شد!");
+                    return { success: true };
+                } else {
+                    const errData = await putRes.json().catch(() => ({}));
+                    const errMsg = errData.message || putRes.statusText;
+                    appendGithubLog(`❌ خطا در آپلود: HTTP ${putRes.status} - ${errMsg}`);
+                    if (putRes.status === 404) {
+                        appendGithubLog("💡 راهنمایی 404: آیا مخزن شخصی (Private) است؟ اگر بله، مطمئن شوید توکن دسترسی scope 'repo' را دارد.");
+                        appendGithubLog("💡 همچنین نام مخزن (Owner/Repo) و نام شاخه (Branch) را مجددا بررسی کنید.");
+                    }
+                    return { success: false, message: `خطا در آپلود: HTTP ${putRes.status} (${errMsg})` };
+                }
             } catch (err) {
+                appendGithubLog(`❌ خطای شبکه یا مرورگر: ${err.message}`);
                 return { success: false, message: err.message };
             }
         }
@@ -1075,7 +1171,7 @@
             document.getElementById("gh_token").value = localStorage.getItem("github_backup_token") || "";
             document.getElementById("gh_repo").value = localStorage.getItem("github_backup_repo") || "";
             document.getElementById("gh_branch").value = localStorage.getItem("github_backup_branch") || "";
-            document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "backups/cement_percent_backup.json";
+            document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "gold6/gold6_backup.json";
         };
 
         window.closeGithubSettings = function() {
@@ -1091,7 +1187,7 @@
             localStorage.setItem("github_backup_token", token);
             localStorage.setItem("github_backup_repo", repo);
             localStorage.setItem("github_backup_branch", branch || "main");
-            localStorage.setItem("github_backup_filepath", filepath || "backups/cement_percent_backup.json");
+            localStorage.setItem("github_backup_filepath", filepath || "gold6/gold6_backup.json");
 
             alert("✅ تنظیمات گیت‌هاب ذخیره شد");
             closeGithubSettings();
