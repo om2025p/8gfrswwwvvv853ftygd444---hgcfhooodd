@@ -1350,7 +1350,7 @@
             const token = (localStorage.getItem("github_backup_token") || "").trim();
             let repo = (localStorage.getItem("github_backup_repo") || "").trim();
             let branch = (localStorage.getItem("github_backup_branch") || "main").trim();
-            let basePath = (localStorage.getItem("github_backup_filepath") || "gold3").trim();
+            let basePath = (localStorage.getItem("github_backup_filepath_gold3") || "gold3").trim();
 
             if (!token || !repo) {
                 const errMsg = "❌ تنظیمات گیت‌هاب کامل نیست. لطفاً توکن و نام مخزن را وارد کنید.";
@@ -1500,7 +1500,7 @@
             document.getElementById("gh_token").value = localStorage.getItem("github_backup_token") || "";
             document.getElementById("gh_repo").value = localStorage.getItem("github_backup_repo") || "";
             document.getElementById("gh_branch").value = localStorage.getItem("github_backup_branch") || "";
-            document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "gold3";
+            document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath_gold3") || "gold3";
 
             const logArea = document.getElementById("githubLogArea");
             if (logArea && githubBackupLogs.length > 0) {
@@ -1522,7 +1522,7 @@
             localStorage.setItem("github_backup_token", token);
             localStorage.setItem("github_backup_repo", repo);
             localStorage.setItem("github_backup_branch", branch || "main");
-            localStorage.setItem("github_backup_filepath", filepath || "gold3");
+            localStorage.setItem("github_backup_filepath_gold3", filepath || "gold3");
 
             alert("✅ تنظیمات گیت‌هاب با موفقیت ذخیره شد!");
             closeGithubSettings();
