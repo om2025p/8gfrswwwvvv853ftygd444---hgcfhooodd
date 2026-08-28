@@ -117,6 +117,75 @@ def convert_persian_to_english_numbers(text):
     return text.translate(translation_table)
 
 
+def analyze_page_with_gemini(page):
+    """
+    Sends full structural DOM text/HTML information (not screenshot) to Gemini AI
+    to analyze the page structure and locate the username selector when standard selectors fail.
+    Includes Exponential Backoff Retry mechanism to gracefully prevent and handle HTTP 429 (Rate Limit) errors.
+    """
+    print("[+] Calling Gemini AI for structural page analysis...")
+    if not GEMINI_API_KEY:
+        print("[i] Gemini API key not provided, skipping AI analysis.")
+        return None
+
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
+    headers = {
+        "Content-Type": "application/json",
+        "X-goog-api-key": GEMINI_API_KEY
+    }
+
+    # Extract page HTML/inputs metadata
+    page_content = page.content()[:8000] # First 8KB of HTML context
+    visible_text = page.locator("body").inner_text()[:3000]
+
+    prompt_text = (
+        f"Analyze this webpage structure and identify the CSS selector for the username/login input field.\n"
+        f"Current Page URL: {page.url}\n\n"
+        f"Visible Body Text:\n{visible_text}\n\n"
+        f"HTML Snippet:\n{page_content}\n\n"
+        f"Return ONLY the CSS selector as plain text (e.g. 'input[name=\"Username\"]' or 'input#Username'). Do not include markdown or explanations."
+    )
+
+    payload = json.dumps({
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt_text}
+                ]
+            }
+        ]
+    }).encode("utf-8")
+
+    # Exponential backoff retry loop for 429 rate limit prevention
+    retries = 3
+    delay = 5  # start with 5 seconds delay
+
+    for attempt in range(1, retries + 1):
+        try:
+            req = urllib.request.Request(url, data=payload, headers=headers)
+            with urllib.request.urlopen(req, timeout=20) as res:
+                if res.status == 200:
+                    res_data = json.loads(res.read().decode("utf-8"))
+                    ai_text = res_data['candidates'][0]['content']['parts'][0]['text'].strip()
+                    # Clean markdown formatting if present
+                    ai_text = ai_text.replace("```css", "").replace("```html", "").replace("```", "").strip("`'\" \n")
+                    print(f"[+] Gemini AI suggested selector: {ai_text}")
+                    return ai_text
+        except urllib.error.HTTPError as http_err:
+            if http_err.code == 429:
+                print(f"[i] Gemini AI Rate Limit (429) hit on attempt {attempt}/{retries}. Waiting {delay}s before retrying...")
+                time.sleep(delay)
+                delay *= 2  # double wait time for exponential backoff
+            else:
+                print(f"[-] Gemini AI HTTP Error {http_err.code}: {http_err}")
+                break
+        except Exception as e:
+            print(f"[-] Gemini AI analysis failed on attempt {attempt}: {e}")
+            break
+
+    return None
+
+
 def send_telegram_message(message, photo_path=None):
     """Sends a markdown message to the Telegram channel, optionally with a photo."""
     print(f"[+] Sending Telegram message: {message[:100]}...")
@@ -508,11 +577,19 @@ def run_automation():
                 password_selector = "input[name='Password'], input#Password, input[type='password']"
                 submit_selector = "button[type='submit'], button#loginBtn"
 
-                # Wait for fields
-                page.wait_for_selector(username_selector, timeout=15000)
-                page.fill(username_selector, EASYTRADER_USER)
+                # Wait for fields with 120s timeout and AI assistance fallback
+                try:
+                    page.wait_for_selector(username_selector, timeout=120000)
+                    page.fill(username_selector, EASYTRADER_USER)
+                except Exception as wait_err:
+                    print(f"[i] Timeout 120s exceeded for username selector: {wait_err}. Triggering AI analysis...")
+                    ai_selector = analyze_page_with_gemini(page)
+                    if ai_selector:
+                        page.fill(ai_selector, EASYTRADER_USER)
+                    else:
+                        raise wait_err
 
-                page.wait_for_selector(password_selector, timeout=15000)
+                page.wait_for_selector(password_selector, timeout=120000)
                 page.fill(password_selector, EASYTRADER_PASS)
 
                 # Screenshot before submit
