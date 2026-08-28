@@ -977,6 +977,14 @@
                             errMsg += `: ${errData.message}`;
                         }
                     } catch (e) {}
+
+                    if (putRes.status === 404) {
+                        errMsg += "\n💡 دلیل احتمالی خطای 404 در مخزن خصوصی (Private):";
+                        errMsg += "\n1. توکن شما دسترسی `repo` (دسترسی کامل به مخازن خصوصی) را ندارد.";
+                        errMsg += "\n2. نام مالک یا مخزن (`Owner/Repo`) اشتباه وارد شده است.";
+                        errMsg += "\n3. شاخه انتخاب شده در این مخزن هنوز وجود ندارد.";
+                    }
+
                     appendGithubLog(`❌ ${errMsg}`);
                     return { success: false, message: errMsg };
                 }
