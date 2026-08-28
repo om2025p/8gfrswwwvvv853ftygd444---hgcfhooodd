@@ -34,7 +34,7 @@ async function handleRequest(request) {
       const botToken = typeof BOT_TOKEN !== "undefined" ? BOT_TOKEN : "";
       const ghPat = typeof GH_PAT !== "undefined" ? GH_PAT : "";
       const ghRepo = typeof GH_REPO !== "undefined" ? GH_REPO : "";
-      const ghBranch = typeof GH_BRANCH !== "undefined" ? GH_BRANCH : "75";
+      const ghBranch = typeof GH_BRANCH !== "undefined" ? GH_BRANCH : "80";
 
       // Send status message to user informing how many links were queued
       if (botToken) {
