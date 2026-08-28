@@ -1,6 +1,6 @@
 #Github.com-Vasusen-code
 
-import asyncio, time, os, inspect
+import asyncio, time, os, inspect, math
 
 from .. import bot as Drone
 from main.plugins.progress import progress_for_pyrogram
@@ -14,11 +14,22 @@ from ethon.telefunc import fast_upload
 from telethon.tl.types import DocumentAttributeVideo
 from telethon import events
 
+def humanbytes(size):
+    if not size:
+        return "0 B"
+    power = 2**10
+    n = 0
+    dic_power_n = {0: ' ', 1: 'Ki', 2: 'Mi', 3: 'Gi', 4: 'Ti'}
+    while size > power and n < 4:
+        size /= power
+        n += 1
+    return f"{round(size, 2)} {dic_power_n[n]}B"
+
 def thumbnail(sender):
     if os.path.exists(f'{sender}.jpg'):
         return f'{sender}.jpg'
     else:
-         return None
+        return None
 
 async def safe_edit_msg_pyroplug(client, bot, sender, edit_id, text):
     if not edit_id or isinstance(edit_id, bool):
@@ -300,15 +311,29 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
     else:
         # Public Channel Link
         print(f"DEBUG: Link classified as PUBLIC. Chat extracted: {msg_link}")
-        edit = await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "📥 *در حال دریافت و تحلیل محتوای لینک عمومی تلگرام...*")
 
         parts = [p for p in clean_link.split("/") if p]
         chat = parts[-2] if len(parts) >= 2 else clean_link.split("t.me")[1].split("/")[1]
 
-        from download_single import send_media_to_destinations
+        from download_single import send_media_to_destinations, safe_edit_message, safe_send_message
+
+        edit = await safe_edit_message(sender, edit_id, f"📥 *در حال ارتباط با سرور و استخراج پست تلگرام از @{chat}...*")
 
         try:
-            print(f"DEBUG: Fetching message {msg_id} from public channel {chat} via userbot/client...")
+            # Pre-resolve chat with userbot to populate peer cache
+            if getattr(userbot, 'is_connected', False):
+                try:
+                    print(f"DEBUG: Pre-resolving chat @{chat} with userbot...")
+                    await userbot.get_chat(chat)
+                except Exception as e_gc:
+                    print(f"DEBUG: userbot.get_chat(@{chat}) failed: {e_gc}")
+                    try:
+                        await userbot.join_chat(chat)
+                        print(f"DEBUG: Successfully joined public channel @{chat}")
+                    except Exception as e_jc:
+                        print(f"DEBUG: userbot.join_chat(@{chat}) notice: {e_jc}")
+
+            print(f"DEBUG: Fetching message {msg_id} from public channel {chat}...")
             msg = None
             try:
                 msg = await userbot.get_messages(chat, msg_id)
@@ -321,41 +346,51 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
 
             if not msg or getattr(msg, 'empty', True):
                 print("DEBUG: Message was empty or unavailable.")
-                await safe_edit_msg_pyroplug(client, bot, sender, edit_id, f"❌ *رئیس بزرگ، پیام یا محتوای مورد نظر در لینک عمومی دریافت نشد یا حذف شده است.*")
-                raise Exception("Public message is empty or unavailable.")
+                await safe_edit_message(sender, edit, f"❌ *رئیس بزرگ، پیام یا محتوای مورد نظر در پست @{chat}/{msg_id} دریافت نشد یا حذف شده است.*")
+                return
 
             if msg.media and msg.media != MessageMediaType.WEB_PAGE:
-                await safe_edit_object(edit, "⚡ *در حال استخراج و دانلود محتوای رسانه‌ای تلگرام...*")
+                edit = await safe_edit_message(sender, edit, f"⚡ *در حال دانلود محتوای رسانه‌ای پست @{chat}/{msg_id}...*")
+
+                last_update = [0]
+                start_time = time.time()
+
+                async def custom_progress(current, total):
+                    now = time.time()
+                    if now - last_update[0] < 2.5 and current < total:
+                        return
+                    last_update[0] = now
+                    diff = max(now - start_time, 0.1)
+                    percentage = (current * 100 / total) if total > 0 else 0
+                    speed = current / diff
+                    filled = int(percentage // 10)
+                    bar = "█" * filled + "░" * (10 - filled)
+                    p_text = (
+                        f"⬇️ *در حال دانلود محتوا از تلگرام...*\n\n"
+                        f"🟢 `[{bar}] {round(percentage, 1)}%`\n"
+                        f"📊 *حجم:* {humanbytes(current)} از {humanbytes(total)}\n"
+                        f"🚀 *سرعت:* {humanbytes(speed)}/s"
+                    )
+                    await safe_edit_message(sender, edit, p_text)
+
                 file = None
                 try:
                     file = await userbot.download_media(
                         msg,
-                        progress=progress_for_pyrogram,
-                        progress_args=(
-                            client,
-                            "**DOWNLOADING:**\n",
-                            edit,
-                            time.time()
-                        )
+                        progress=custom_progress
                     )
                 except Exception as dl_ub_err:
                     print(f"DEBUG: userbot download_media failed: {dl_ub_err}. Trying client download_media...")
                     try:
                         file = await client.download_media(
                             msg,
-                            progress=progress_for_pyrogram,
-                            progress_args=(
-                                client,
-                                "**DOWNLOADING (RETRY):**\n",
-                                edit,
-                                time.time()
-                            )
+                            progress=custom_progress
                         )
                     except Exception as dl_cl_err:
                         print(f"DEBUG: client download_media failed: {dl_cl_err}")
 
-                if file and os.path.exists(file):
-                    await safe_edit_object(edit, '⬆️ *فایل با موفقیت دانلود شد. در حال ارسال به شما...*')
+                if file and os.path.exists(file) and os.path.getsize(file) > 0:
+                    await safe_edit_message(sender, edit, '⬆️ *فایل با موفقیت دانلود شد. در حال ارسال به چت شما...*')
                     caption = msg.caption if msg.caption is not None else None
                     await send_media_to_destinations(file, caption, sender)
                     try:
@@ -364,24 +399,17 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                         pass
                     await safe_delete_object(edit)
                 else:
-                    await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "❌ *خطا در دانلود فایل رسانه‌ای تلگرام.*")
-                    raise Exception("Failed to download media file.")
+                    await safe_edit_message(sender, edit, "❌ *خطا در دانلود فایل رسانه‌ای تلگرام. حجم فایل صفر یا دریافت ناموفق بود.*")
             elif msg.text or (msg.media == MessageMediaType.WEB_PAGE and msg.text):
-                await safe_edit_object(edit, "📥 *در حال ارسال متن پیام...*")
+                await safe_edit_message(sender, edit, "📥 *در حال ارسال متن پیام...*")
                 caption_text = msg.text.markdown if hasattr(msg.text, 'markdown') else str(msg.text)
-                try:
-                    await client.send_message(sender, caption_text)
-                except Exception:
-                    await bot.send_message(sender, caption_text)
+                await safe_send_message(sender, caption_text)
                 await safe_delete_object(edit)
             else:
-                await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "❌ *پیام انتخابی فاقد محتوای قابل دانلود می‌باشد.*")
-                raise Exception("Selected message has no downloadable content.")
+                await safe_edit_message(sender, edit, "❌ *پیام انتخابی فاقد محتوای رسانه‌ای قابل دانلود می‌باشد.*")
         except Exception as e:
             print(f"DEBUG: Error processing public link {msg_link}: {e}")
-            if "Public message is empty" not in str(e) and "Failed to download" not in str(e) and "no downloadable content" not in str(e):
-                await safe_edit_msg_pyroplug(client, bot, sender, edit_id, f'❌ *خطا در دریافت لینک عمومی:* `{msg_link}`\n\n`{str(e)}`')
-            raise e
+            await safe_edit_message(sender, edit, f'❌ *خطا در دریافت پست عمومی تلگرام:* `{msg_link}`\n\n`{str(e)}`')
 
 async def get_bulk_msg(userbot, client, sender, msg_link, i):
     x = await client.send_message(sender, "Processing!")
