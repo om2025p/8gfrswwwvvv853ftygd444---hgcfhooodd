@@ -344,13 +344,29 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
     caption = ""
 
     try:
-        # Robust user-agents and headers for Instagram / TikTok / Social media
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-            'Sec-Fetch-Mode': 'navigate',
-        }
+        import random
+
+        USER_AGENTS = [
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0'
+        ]
+
+        def get_random_headers():
+            ua = random.choice(USER_AGENTS)
+            return {
+                'User-Agent': ua,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9,fa;q=0.8',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Site': 'none',
+                'Upgrade-Insecure-Requests': '1'
+            }
+
+        headers = get_random_headers()
 
         def run_ytdlp():
             ydl_opts = {
@@ -361,11 +377,12 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                 'ignoreerrors': True,
                 'http_headers': headers,
                 'extractor_args': {
-                    'youtube': ['player_client=android,web'],
+                    'youtube': ['player_client=android,web,ios,mweb'],
                     'tiktok': ['app_version=30.0.0'],
                 },
-                'retries': 3,
-                'fragment_retries': 3,
+                'retries': 10,
+                'fragment_retries': 10,
+                'retry_sleep_functions': {'http': lambda n: random.uniform(2, 5)},
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(link, download=True)
@@ -471,20 +488,43 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                 except Exception as ex_tt:
                     print(f"DEBUG: TikTok fallback layer failed: {ex_tt}")
 
-            # Layer 2.5: Try xHamster dedicated metadata parser (shorts & full videos)
+            # Layer 2.5: Try xHamster dedicated metadata parser (shorts & full videos) with anti-429 retry loops
             if 'xhamster.com' in link and not scan_files():
                 try:
-                    import urllib.request, re, json
-                    xh_headers = {
-                        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                        'Accept-Language': 'en-US,en;q=0.9',
-                    }
-                    req_xh = urllib.request.Request(link, headers=xh_headers)
-                    with urllib.request.urlopen(req_xh, timeout=15) as resp_xh:
-                        html_xh = resp_xh.read().decode('utf-8', errors='ignore')
+                    import urllib.request, re, json, time, subprocess
+                    html_xh = ""
+                    xh_headers = get_random_headers()
 
-                    match_xh = re.search(r'window\.initials\s*=\s*(\{.+?\});\s*</script>', html_xh, re.DOTALL)
+                    # Exponential Backoff Retry Loop for Page HTML fetching against 429 Rate Limits
+                    for attempt in range(5):
+                        try:
+                            req_xh = urllib.request.Request(link, headers=get_random_headers())
+                            with urllib.request.urlopen(req_xh, timeout=15) as resp_xh:
+                                html_xh = resp_xh.read().decode('utf-8', errors='ignore')
+                                if html_xh:
+                                    break
+                        except urllib.error.HTTPError as err_http:
+                            print(f"DEBUG: xHamster page fetch attempt {attempt+1} HTTP error: {err_http.code}")
+                            if err_http.code == 429:
+                                time.sleep(2 * (attempt + 1) + random.uniform(0.5, 1.5))
+                            else:
+                                time.sleep(1.5)
+                        except Exception as ex_fetch:
+                            print(f"DEBUG: xHamster page fetch attempt {attempt+1} error: {ex_fetch}")
+                            time.sleep(1.5)
+
+                    # Curl fallback if urllib was blocked
+                    if not html_xh:
+                        try:
+                            cmd_curl = ["curl", "-s", "-L", "-A", random.choice(USER_AGENTS), link]
+                            res_curl = subprocess.run(cmd_curl, capture_output=True, text=True, timeout=20)
+                            if res_curl.stdout and len(res_curl.stdout) > 500:
+                                html_xh = res_curl.stdout
+                                print("DEBUG: xHamster curl fallback fetched page HTML successfully.")
+                        except Exception as ex_curl:
+                            print(f"DEBUG: xHamster curl fallback error: {ex_curl}")
+
+                    match_xh = re.search(r'window\.initials\s*=\s*(\{.+?\});\s*</script>', html_xh, re.DOTALL) if html_xh else None
                     if match_xh:
                         data_xh = json.loads(match_xh.group(1))
                         layout_page = data_xh.get('layoutPage', {})
