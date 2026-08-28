@@ -2,8 +2,10 @@ name: Daily EasyTrader 5 Sync (Synergy)
 
 on:
   schedule:
-    # 22:00 Tehran Time is exactly 18:30 UTC (Tehran is permanently UTC+3:30)
-    - cron: '30 18 * * *'
+    # 15:30 Tehran Time (UTC+3:30) = 12:00 UTC
+    # Saturday to Wednesday in Tehran = Saturday to Wednesday in UTC (Days 6,0,1,2,3)
+    # Excludes Thursday (Day 4 in UTC) and Friday (Day 5 in UTC)
+    - cron: '0 12 * * 0,1,2,3,6'
   workflow_dispatch: # Allows 1-click manual trigger
 
 permissions:
