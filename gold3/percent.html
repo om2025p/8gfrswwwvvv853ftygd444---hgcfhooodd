@@ -402,7 +402,7 @@
                     1️⃣ <b>توکن گیت‌هاب (PAT):</b> به حساب گیت‌هاب خود بروید 👈 <i>Settings ➔ Developer Settings ➔ Personal Access Tokens ➔ Tokens (classic)</i> و یک توکن با دسترسی <b>repo</b> ایجاد و کپی کنید.<br>
                     2️⃣ <b>مالک و نام مخزن:</b> نام کاربری و نام مخزن (مانند: <code>om2025p/comp-bkp</code>).<br>
                     3️⃣ <b>نام شاخه:</b> نام شاخه مخزن (معمولاً <code>main</code> یا <code>master</code>).<br>
-                    4️⃣ <b>مسیر فایل:</b> نام پوشه و فایل (مانند: <code>comp-bkp/gold3_backup.json</code>).
+                    4️⃣ <b>مسیر پوشه در مخزن:</b> پوشه اختصاصی ابزار (مانند: <code>gold3</code>). فایل‌ها خودکار درون زیرپوشه تاریخ خورشیدی (مثال: <code>gold3/1405.6.6/kian-momtaz-backup-...json</code>) قرار می‌گیرند.
                 </div>
 
                 <p style="font-size:12px; color:#666; line-height:1.6; margin-bottom:15px; text-align:justify;">
@@ -421,8 +421,8 @@
                     <input type="text" id="gh_branch" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="main">
                 </div>
                 <div style="margin-bottom:15px;">
-                    <label style="display:block; font-size:13px; margin-bottom:5px; font-weight:bold;">مسیر و نام فایل بکاپ:</label>
-                    <input type="text" id="gh_filepath" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="backups/gold3_percent_backup.json">
+                    <label style="display:block; font-size:13px; margin-bottom:5px; font-weight:bold;">پوشه یا مسیر اختصاصی ابزار در مخزن:</label>
+                    <input type="text" id="gh_filepath" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; text-align:left; direction:ltr;" placeholder="gold3">
                 </div>
 
                 <!-- بخش نمایش لاگ‌ها و گزارش خطا با قابلیت کپی -->
@@ -1316,6 +1316,33 @@
             }
         };
 
+        function getJalaliDateStr(date = new Date()) {
+            let g_y = date.getFullYear(), g_m = date.getMonth() + 1, g_d = date.getDate();
+            let g_days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            let j_days_in_month = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29];
+            if ((g_y % 4 === 0 && g_y % 100 !== 0) || (g_y % 400 === 0)) g_days_in_month[1] = 29;
+            let gy = g_y - 1600, gm = g_m - 1, gd = g_d - 1;
+            let g_day_no = 365 * gy + Math.floor((gy + 3) / 4) - Math.floor((gy + 99) / 100) + Math.floor((gy + 399) / 400);
+            for (let i = 0; i < gm; ++i) g_day_no += g_days_in_month[i];
+            g_day_no += gd;
+            let j_day_no = g_day_no - 79;
+            let j_np = Math.floor(j_day_no / 12053);
+            j_day_no %= 12053;
+            let jy = 979 + 33 * j_np + 4 * Math.floor(j_day_no / 1461);
+            j_day_no %= 1461;
+            if (j_day_no >= 366) {
+                jy += Math.floor((j_day_no - 1) / 365);
+                j_day_no = (j_day_no - 1) % 365;
+            }
+            let i = 0;
+            for (i = 0; i < 11 && j_day_no >= j_days_in_month[i]; ++i) {
+                j_day_no -= j_days_in_month[i];
+            }
+            let jm = i + 1;
+            let jd = j_day_no + 1;
+            return `${jy}.${jm}.${jd}`;
+        }
+
         async function uploadToGitHub(contentString, fileName) {
             githubBackupLogs = [];
             appendGithubLog("🚀 شروع فرآیند پشتیبان‌گیری ابری گیت‌هاب (ثبت درصد ۳)...");
@@ -1323,7 +1350,7 @@
             const token = (localStorage.getItem("github_backup_token") || "").trim();
             let repo = (localStorage.getItem("github_backup_repo") || "").trim();
             let branch = (localStorage.getItem("github_backup_branch") || "main").trim();
-            let filePath = (localStorage.getItem("github_backup_filepath") || "").trim();
+            let basePath = (localStorage.getItem("github_backup_filepath") || "gold3").trim();
 
             if (!token || !repo) {
                 const errMsg = "❌ تنظیمات گیت‌هاب کامل نیست. لطفاً توکن و نام مخزن را وارد کنید.";
@@ -1333,19 +1360,18 @@
 
             repo = repo.replace(/^https?:\/\/github\.com\//i, "").replace(/\/+$/, "");
 
-            if (!filePath) {
-                filePath = `backups/${fileName}`;
-            } else if (filePath.endsWith("/")) {
-                filePath += fileName;
-            } else {
-                filePath = filePath.replace(/^\/+/, "");
-            }
+            if (!basePath) basePath = "gold3";
+            basePath = basePath.replace(/^\/+|\/+$/g, "");
+
+            const jalaliFolder = getJalaliDateStr();
+            const fullFilePath = `${basePath}/${jalaliFolder}/${fileName}`;
 
             appendGithubLog(`📦 مخزن هدف: ${repo}`);
             appendGithubLog(`🌿 شاخه: ${branch}`);
-            appendGithubLog(`📁 مسیر فایل: ${filePath}`);
+            appendGithubLog(`📁 پوشه اختصاصی + تاریخ خورشیدی: ${basePath}/${jalaliFolder}`);
+            appendGithubLog(`📄 مسیر نهایی فایل: ${fullFilePath}`);
 
-            const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
+            const url = `https://api.github.com/repos/${repo}/contents/${fullFilePath}`;
             const authHeader = token.startsWith("github_pat_") ? `Bearer ${token}` : `token ${token}`;
             const headers = {
                 "Authorization": authHeader,
@@ -1425,7 +1451,7 @@
             document.getElementById("gh_token").value = localStorage.getItem("github_backup_token") || "";
             document.getElementById("gh_repo").value = localStorage.getItem("github_backup_repo") || "";
             document.getElementById("gh_branch").value = localStorage.getItem("github_backup_branch") || "";
-            document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "backups/gold3_percent_backup.json";
+            document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "gold3";
 
             const logArea = document.getElementById("githubLogArea");
             if (logArea && githubBackupLogs.length > 0) {
@@ -1447,7 +1473,7 @@
             localStorage.setItem("github_backup_token", token);
             localStorage.setItem("github_backup_repo", repo);
             localStorage.setItem("github_backup_branch", branch || "main");
-            localStorage.setItem("github_backup_filepath", filepath || "backups/gold3_percent_backup.json");
+            localStorage.setItem("github_backup_filepath", filepath || "gold3");
 
             alert("✅ تنظیمات گیت‌هاب با موفقیت ذخیره شد!");
             closeGithubSettings();
