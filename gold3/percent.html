@@ -1358,10 +1358,18 @@
                 return { success: false, message: errMsg };
             }
 
-            repo = repo.replace(/^https?:\/\/github\.com\//i, "").replace(/\/+$/, "");
+            const repoClean = repo.replace(/^https?:\/\/github\.com\//i, "").replace(/\/+$/, "");
+            const repoNameOnly = repoClean.split("/").pop();
+            repo = repoClean;
 
-            if (!basePath) basePath = "gold3";
             basePath = basePath.replace(/^\/+|\/+$/g, "");
+            if (basePath.toLowerCase().startsWith(repoClean.toLowerCase() + "/")) {
+                basePath = basePath.substring(repoClean.length + 1);
+            } else if (repoNameOnly && basePath.toLowerCase().startsWith(repoNameOnly.toLowerCase() + "/")) {
+                basePath = basePath.substring(repoNameOnly.length + 1);
+            }
+            basePath = basePath.replace(/\.[a-zA-Z0-9]+$/i, "").replace(/^\/+|\/+$/g, "");
+            if (!basePath) basePath = "gold3";
 
             const jalaliFolder = getJalaliDateStr();
             const fullFilePath = `${basePath}/${jalaliFolder}/${fileName}`;
@@ -1420,6 +1428,47 @@
                 if (putRes.ok) {
                     appendGithubLog("🎉 پشتیبان‌گیری با موفقیت کامل انجام شد!");
                     return { success: true };
+                } else if (putRes.status === 409) {
+                    appendGithubLog("⚠️ خطای ۴۰۹ (تعارض فایل با پوشه): فایلی با نام این پوشه در مخزن وجود دارد. در حال تلاش با پوشه جایگزین...");
+                    const fallbackBasePath = `${basePath}_dir`;
+                    const fallbackPath = `${fallbackBasePath}/${jalaliFolder}/${fileName}`;
+                    const fallbackUrl = `https://api.github.com/repos/${repo}/contents/${fallbackPath}`;
+
+                    appendGithubLog(`📄 مسیر نهایی جایگزین: ${fallbackPath}`);
+                    let fallbackSha = null;
+                    try {
+                        const fbCheck = await fetch(`${fallbackUrl}?ref=${encodeURIComponent(branch)}`, { headers });
+                        if (fbCheck.status === 200) {
+                            const fbData = await fbCheck.json();
+                            fallbackSha = fbData.sha;
+                        }
+                    } catch(e) {}
+
+                    const fbBody = {
+                        message: `بکاپ خودکار ثبت درصد ۳ (پوشه جایگزین) - ${new Date().toLocaleString('fa-IR')}`,
+                        content: base64Content,
+                        branch: branch
+                    };
+                    if (fallbackSha) fbBody.sha = fallbackSha;
+
+                    const fbPutRes = await fetch(fallbackUrl, {
+                        method: "PUT",
+                        headers: { ...headers, "Content-Type": "application/json" },
+                        body: JSON.stringify(fbBody)
+                    });
+
+                    if (fbPutRes.ok) {
+                        appendGithubLog("🎉 پشتیبان‌گیری با موفقیت در پوشه جایگزین انجام شد!");
+                        return { success: true };
+                    } else {
+                        let fbErrMsg = `خطا در آپلود پوشه جایگزین (کد وضعیت: ${fbPutRes.status})`;
+                        try {
+                            const fbErrData = await fbPutRes.json();
+                            if (fbErrData && fbErrData.message) fbErrMsg += `: ${fbErrData.message}`;
+                        } catch(e) {}
+                        appendGithubLog(`❌ ${fbErrMsg}`);
+                        return { success: false, message: fbErrMsg };
+                    }
                 } else {
                     let errMsg = `خطا در آپلود (کد وضعیت: ${putRes.status})`;
                     try {
