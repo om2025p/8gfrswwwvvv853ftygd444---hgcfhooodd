@@ -477,10 +477,22 @@
 
 <!-- GitHub Settings Modal -->
 <div id="githubSettingsModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.6); backdrop-filter:blur(5px); justify-content:center; align-items:center;">
-    <div style="background-color:#fff; color:#333; margin:auto; padding:20px; border-radius:15px; width:90%; max-width:450px; box-shadow:0 5px 15px rgba(0,0,0,0.3); direction:rtl; font-family:Tahoma,sans-serif;">
-        <h3 style="margin-top:0; color:#2196F3; text-align:center;">⚙️ تنظیمات پشتیبان‌گیری در گیت‌هاب</h3>
+    <div style="background-color:#fff; color:#333; margin:auto; padding:20px; border-radius:15px; width:90%; max-width:480px; box-shadow:0 5px 15px rgba(0,0,0,0.3); direction:rtl; font-family:Tahoma,sans-serif; position:relative;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0; color:#2196F3;">⚙️ تنظیمات پشتیبان‌گیری گیت‌هاب</h3>
+            <button onclick="toggleGithubGuide()" style="background:#009688; color:white; border:none; padding:5px 12px; border-radius:20px; cursor:pointer; font-size:12px; font-weight:bold; display:flex; align-items:center; gap:4px;">❓ راهنما</button>
+        </div>
+
+        <div id="githubGuideBox" style="display:none; background-color:#e0f2f1; border:1px solid #80cbc4; border-radius:10px; padding:12px; font-size:12px; line-height:1.7; margin-bottom:15px; color:#004d40;">
+            <strong style="display:block; margin-bottom:6px; color:#00695c; font-size:13px;">📖 راهنمای گام‌به‌گام تنظیم گیت‌هاب:</strong>
+            1️⃣ <b>توکن گیت‌هاب (PAT):</b> به حساب گیت‌هاب خود بروید 👈 <i>Settings ➔ Developer Settings ➔ Personal Access Tokens ➔ Tokens (classic)</i> و یک توکن با دسترسی <b>repo</b> ایجاد و کپی کنید.<br>
+            2️⃣ <b>مالک و نام مخزن:</b> نام کاربری و نام مخزنی که ساخته‌اید را وارد کنید (مانند: <code>om2025p/comp-bkp</code>).<br>
+            3️⃣ <b>نام شاخه:</b> نام شاخه مخزن (معمولاً <code>main</code> یا <code>master</code>).<br>
+            4️⃣ <b>مسیر فایل:</b> نام پوشه و فایل برای ذخیره بکاپ (مانند: <code>comp-bkp/gold2_backup.json</code>).
+        </div>
+
         <p style="font-size:12px; color:#666; line-height:1.6; margin-bottom:15px; text-align:justify;">
-            با فعال‌سازی این بخش، با هر بار زدن دکمه‌ی «ذخیره»، اطلاعات شما علاوه بر ذخیره در فایل محلی، به صورت خودکار به مخزن گیت‌هاب شخصی شما ارسال می‌شود. این اطلاعات فقط در مرورگر شما ذخیره می‌شوند و ۱۰۰٪ امن هستند.
+            با فعال‌سازی این بخش، با هر بار زدن دکمه‌ی «ذخیره»، اطلاعات شما علاوه بر ذخیره در فایل محلی، به صورت خودکار به مخزن گیت‌هاب شخصی شما ارسال می‌شود.
         </p>
 
         <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; text-align:right;">🔑 توکن شخصی گیت‌هاب (PAT):</label>
@@ -494,6 +506,15 @@
 
         <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:5px; text-align:right;">📁 مسیر ذخیره فایل در مخزن (File Path):</label>
         <input type="text" id="gh_filepath" placeholder="backups/gold2_backup.json" style="width:100%; padding:10px; border:2px solid #ddd; border-radius:8px; margin-bottom:15px; font-family:monospace; direction:ltr; box-sizing:border-box;">
+
+        <!-- بخش نمایش لاگ‌ها و گزارش خطا با قابلیت کپی -->
+        <div id="githubLogsContainer" style="display:none; margin-bottom:15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <span style="font-size:11px; font-weight:bold; color:#d32f2f;">📋 گزارش عملکرد و خطای گیت‌هاب:</span>
+                <button onclick="copyGithubErrorLogs()" style="background:#673ab7; color:white; border:none; padding:4px 8px; border-radius:5px; font-size:11px; cursor:pointer;">📋 کپی گزارش خطا</button>
+            </div>
+            <textarea id="githubLogArea" readonly style="width:100%; height:90px; background:#263238; color:#80cbc4; font-family:monospace; font-size:11px; direction:ltr; padding:8px; border-radius:8px; box-sizing:border-box; resize:vertical;"></textarea>
+        </div>
 
         <div style="display:flex; gap:10px;">
             <button onclick="saveGithubSettings()" style="flex:1; padding:10px; border:none; border-radius:8px; background-color:#4CAF50; color:white; cursor:pointer; font-weight:bold;">💾 ذخیره تنظیمات</button>
@@ -832,13 +853,57 @@
 
         function clearTrash() { trash = []; updateUI(); saveData(); }
 
+        let githubBackupLogs = [];
+
+        function appendGithubLog(msg) {
+            const timeStr = new Date().toLocaleTimeString('fa-IR');
+            const logEntry = `[${timeStr}] ${msg}`;
+            githubBackupLogs.push(logEntry);
+            const container = document.getElementById("githubLogsContainer");
+            const logArea = document.getElementById("githubLogArea");
+            if (container && logArea) {
+                container.style.display = "block";
+                logArea.value = githubBackupLogs.join("\n");
+                logArea.scrollTop = logArea.scrollHeight;
+            }
+        }
+
+        function toggleGithubGuide() {
+            const guideBox = document.getElementById("githubGuideBox");
+            if (guideBox) {
+                guideBox.style.display = guideBox.style.display === "none" ? "block" : "none";
+            }
+        }
+
+        function copyGithubErrorLogs() {
+            const logArea = document.getElementById("githubLogArea");
+            if (logArea && logArea.value.trim()) {
+                navigator.clipboard.writeText(logArea.value).then(() => {
+                    alert("📋 گزارش کامل خطا با موفقیت در کلیپ‌بورد کپی شد!");
+                }).catch(() => {
+                    logArea.select();
+                    document.execCommand('copy');
+                    alert("📋 گزارش کامل خطا کپی شد!");
+                });
+            } else {
+                alert("ℹ️ گزارشی برای کپی وجود ندارد.");
+            }
+        }
+
         async function uploadToGitHub(contentString, fileName) {
+            githubBackupLogs = [];
+            appendGithubLog("🚀 شروع فرآیند پشتیبان‌گیری ابری گیت‌هاب...");
+
             const token = (localStorage.getItem("github_backup_token") || "").trim();
             let repo = (localStorage.getItem("github_backup_repo") || "").trim();
             let branch = (localStorage.getItem("github_backup_branch") || "main").trim();
             let filePath = (localStorage.getItem("github_backup_filepath") || "").trim();
 
-            if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست. لطفاً توکن و نام مخزن را وارد کنید." };
+            if (!token || !repo) {
+                const errMsg = "❌ تنظیمات گیت‌هاب کامل نیست. لطفاً توکن و نام مخزن را وارد کنید.";
+                appendGithubLog(errMsg);
+                return { success: false, message: errMsg };
+            }
 
             // تمیزکاری repo در صورت کپی‌پیست کامل URL یا داشتن اسلش اضافه
             repo = repo.replace(/^https?:\/\/github\.com\//i, "").replace(/\/+$/, "");
@@ -851,6 +916,10 @@
                 filePath = filePath.replace(/^\/+/, "");
             }
 
+            appendGithubLog(`📦 مخزن هدف: ${repo}`);
+            appendGithubLog(`🌿 شاخه: ${branch}`);
+            appendGithubLog(`📁 مسیر فایل: ${filePath}`);
+
             const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
             const authHeader = token.startsWith("github_pat_") ? `Bearer ${token}` : `token ${token}`;
             const headers = {
@@ -860,18 +929,26 @@
 
             try {
                 let sha = null;
+                appendGithubLog("🔎 بررسی وجود فایل قبلی و دریافت SHA...");
                 try {
                     const checkRes = await fetch(`${url}?ref=${encodeURIComponent(branch)}`, { headers });
+                    appendGithubLog(`📡 پاسخ برسی فایل: وضعیت ${checkRes.status}`);
                     if (checkRes.status === 200) {
                         const fileData = await checkRes.json();
                         sha = fileData.sha;
+                        appendGithubLog(`✅ فایل قبلی یافت شد. (SHA: ${sha.substring(0, 7)})`);
                     } else if (checkRes.status === 401) {
-                        return { success: false, message: "توکن گیت‌هاب نامعتبر یا منقضی شده است (خطای ۴۰۱)." };
+                        const errMsg = "❌ توکن گیت‌هاب نامعتبر یا منقضی شده است (خطای ۴۰۱).";
+                        appendGithubLog(errMsg);
+                        return { success: false, message: errMsg };
                     } else if (checkRes.status === 404) {
-                        // فایل هنوز وجود ندارد یا مخزن/شاخه یافت نشد؛ برای فایل جدید اشکالی ندارد اما کدهای خطای پاسخ PUT دقیق‌تر بررسی می‌شود
+                        appendGithubLog("ℹ️ فایل جدید است و پیش‌تر در این مسیر وجود نداشته.");
                     }
-                } catch (e) {}
+                } catch (e) {
+                    appendGithubLog(`⚠️ هشدار در بررسی SHA: ${e.message}`);
+                }
 
+                appendGithubLog("⚙️ کدگذاری محتوای فایل پشتیبان به Base64...");
                 const base64Content = btoa(unescape(encodeURIComponent(contentString)));
                 const body = {
                     message: `بکاپ خودکار برنامه - ${new Date().toLocaleString('fa-IR')}`,
@@ -880,13 +957,17 @@
                 };
                 if (sha) body.sha = sha;
 
+                appendGithubLog("📤 ارسال به API گیت‌هاب (روش PUT)...");
                 const putRes = await fetch(url, {
                     method: "PUT",
                     headers: { ...headers, "Content-Type": "application/json" },
                     body: JSON.stringify(body)
                 });
 
+                appendGithubLog(`📡 پاسخ آپلود گیت‌هاب: کد ${putRes.status}`);
+
                 if (putRes.ok) {
+                    appendGithubLog("🎉 پشتیبان‌گیری با موفقیت کامل انجام شد!");
                     return { success: true };
                 } else {
                     let errMsg = `خطا در آپلود (کد وضعیت: ${putRes.status})`;
@@ -896,9 +977,12 @@
                             errMsg += `: ${errData.message}`;
                         }
                     } catch (e) {}
+                    appendGithubLog(`❌ ${errMsg}`);
                     return { success: false, message: errMsg };
                 }
             } catch (err) {
+                const errMsg = `💥 خطای استثنا شبکه/مرورگر: ${err.message}`;
+                appendGithubLog(errMsg);
                 return { success: false, message: err.message };
             }
         }
@@ -909,6 +993,12 @@
             document.getElementById("gh_repo").value = localStorage.getItem("github_backup_repo") || "";
             document.getElementById("gh_branch").value = localStorage.getItem("github_backup_branch") || "";
             document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "backups/gold2_backup.json";
+
+            const logArea = document.getElementById("githubLogArea");
+            if (logArea && githubBackupLogs.length > 0) {
+                document.getElementById("githubLogsContainer").style.display = "block";
+                logArea.value = githubBackupLogs.join("\n");
+            }
         }
 
         function closeGithubSettings() {
