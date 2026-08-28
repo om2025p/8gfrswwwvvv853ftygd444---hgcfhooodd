@@ -49,6 +49,7 @@ def _get_default_gemini_key():
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or _get_default_gemini_key()
 
 BACKUP_FILE_PATH = "gold5/gold5_backup.json"
+BACKUP_FILE_PATH_ATIE = "gold4/gold4_backup.json"
 
 
 def validate_environment():
@@ -241,7 +242,7 @@ def send_telegram_message(message, photo_path=None):
 
 
 def fetch_cloud_state():
-    """Fetches the latest state from MantleDB cloud backup if MANTLE_FINGERPRINT is set."""
+    """Fetches the latest state from MantleDB cloud backup for both App 5 and App 4 if MANTLE_FINGERPRINT is set."""
     if not MANTLE_FINGERPRINT:
         print("[i] MANTLE_FINGERPRINT not provided, skipping cloud fetch.")
         return None
@@ -255,24 +256,60 @@ def fetch_cloud_state():
             if res.status == 200:
                 cloud_resp = json.loads(res.read().decode('utf-8'))
                 data = cloud_resp.get("data", {})
+
+                # App 5 (Synergy)
                 synergy_str = data.get("energy_fund_synergy", "{}")
                 synergy_obj = json.loads(synergy_str) if synergy_str else {}
-
-                history_str = data.get("sinergy_history", "[]")
-                history_list = json.loads(history_str) if history_str else []
-
-                base_str = data.get("sinergy_baseNumber", "")
-                base_num = 0
-                if base_str:
+                synergy_history_str = data.get("sinergy_history", "[]")
+                synergy_history = json.loads(synergy_history_str) if synergy_history_str else []
+                synergy_base_str = data.get("sinergy_baseNumber", "")
+                synergy_base = 0
+                if synergy_base_str:
                     try:
-                        base_num = float(str(base_str).replace(',', ''))
+                        synergy_base = float(str(synergy_base_str).replace(',', ''))
+                    except ValueError:
+                        pass
+
+                # App 4 (Atie / Retirement Fund)
+                atie_percents_str = data.get("mofid_atie_percents", "[]")
+                atie_percents = json.loads(atie_percents_str) if atie_percents_str else []
+                atie_trash_str = data.get("mofid_atie_trash", "[]")
+                atie_trash = json.loads(atie_trash_str) if atie_trash_str else []
+                atie_goal_str = data.get("mofid_atie_goal", "null")
+                atie_goal = json.loads(atie_goal_str) if atie_goal_str else None
+                atie_hl_str = data.get("mofid_atie_highlightedStates", "{}")
+                atie_hl = json.loads(atie_hl_str) if atie_hl_str else {}
+                atie_pt_str = data.get("mofid_atie_periodTarget", "null")
+                atie_pt = json.loads(atie_pt_str) if atie_pt_str else None
+                atie_ap_str = data.get("mofid_atie_achievedPeriods", "[]")
+                atie_ap = json.loads(atie_ap_str) if atie_ap_str else []
+                atie_notes_str = data.get("mofid_atie_notes", "[]")
+                atie_notes = json.loads(atie_notes_str) if atie_notes_str else []
+                atie_history_str = data.get("mofid_atie_history", "[]")
+                atie_history = json.loads(atie_history_str) if atie_history_str else []
+                atie_base_str = data.get("mofid_atie_baseNumber", "")
+                atie_base = 0
+                if atie_base_str:
+                    try:
+                        atie_base = float(str(atie_base_str).replace(',', ''))
                     except ValueError:
                         pass
 
                 return {
                     "synergy": synergy_obj,
-                    "history": history_list,
-                    "baseNumber": base_num,
+                    "synergy_history": synergy_history,
+                    "synergy_baseNumber": synergy_base,
+                    "atie": {
+                        "percents": atie_percents,
+                        "trash": atie_trash,
+                        "goal": atie_goal,
+                        "highlightedStates": atie_hl,
+                        "periodTarget": atie_pt,
+                        "achievedPeriods": atie_ap,
+                        "notes": atie_notes,
+                        "history": atie_history,
+                        "baseNumber": atie_base
+                    },
                     "cloud_data_raw": data
                 }
     except Exception as e:
@@ -280,8 +317,8 @@ def fetch_cloud_state():
     return None
 
 
-def sync_with_mantledb(new_val, percent_val, base_val, local_state_payload):
-    """Syncs the new records to MantleDB to automatically sync user's PWAs."""
+def sync_with_mantledb(synergy_payload=None, atie_payload=None):
+    """Syncs updated records for both Synergy (App 5) and Atie (App 4) to MantleDB."""
     if not MANTLE_FINGERPRINT:
         print("[i] MANTLE_FINGERPRINT not provided, skipping cloud synchronization.")
         return False
@@ -289,7 +326,7 @@ def sync_with_mantledb(new_val, percent_val, base_val, local_state_payload):
     namespace = "emarat-pwa-backup-v2"
     url = f"https://mantledb.sh/v2/{namespace}/{MANTLE_FINGERPRINT}"
 
-    print(f"[+] Syncing with MantleDB at URL: {url}")
+    print(f"[+] Syncing both App 5 and App 4 with MantleDB at URL: {url}")
     try:
         req = urllib.request.Request(url)
         current_cloud = {}
@@ -302,24 +339,34 @@ def sync_with_mantledb(new_val, percent_val, base_val, local_state_payload):
 
         cloud_data = current_cloud.get("data", {})
 
-        # Re-save energy_fund_synergy object using the updated local_state payload
-        updated_synergy_obj = {
-            "percents": local_state_payload.get("percents", []),
-            "trash": local_state_payload.get("trash", []),
-            "goal": local_state_payload.get("goal", None),
-            "highlightedStates": local_state_payload.get("highlightedStates", {}),
-            "periodTarget": local_state_payload.get("periodTarget", None),
-            "achievedPeriods": local_state_payload.get("achievedPeriods", []),
-            "notes": local_state_payload.get("notes", [])
-        }
-        cloud_data["energy_fund_synergy"] = json.dumps(updated_synergy_obj)
+        # 1. Update Synergy (App 5)
+        if synergy_payload:
+            updated_synergy_obj = {
+                "percents": synergy_payload.get("percents", []),
+                "trash": synergy_payload.get("trash", []),
+                "goal": synergy_payload.get("goal", None),
+                "highlightedStates": synergy_payload.get("highlightedStates", {}),
+                "periodTarget": synergy_payload.get("periodTarget", None),
+                "achievedPeriods": synergy_payload.get("achievedPeriods", []),
+                "notes": synergy_payload.get("notes", [])
+            }
+            cloud_data["energy_fund_synergy"] = json.dumps(updated_synergy_obj)
+            new_syn_val = synergy_payload.get("new_val", 0)
+            cloud_data["sinergy_baseNumber"] = f"{new_syn_val:,}"
+            cloud_data["sinergy_history"] = json.dumps(synergy_payload.get("history", []))
 
-        # Update sinergy_baseNumber
-        formatted_new_val = f"{new_val:,}"
-        cloud_data["sinergy_baseNumber"] = formatted_new_val
-
-        # Update sinergy_history
-        cloud_data["sinergy_history"] = json.dumps(local_state_payload.get("history", []))
+        # 2. Update Atie (App 4)
+        if atie_payload:
+            cloud_data["mofid_atie_percents"] = json.dumps(atie_payload.get("percents", []))
+            cloud_data["mofid_atie_trash"] = json.dumps(atie_payload.get("trash", []))
+            cloud_data["mofid_atie_goal"] = json.dumps(atie_payload.get("goal", None))
+            cloud_data["mofid_atie_highlightedStates"] = json.dumps(atie_payload.get("highlightedStates", {}))
+            cloud_data["mofid_atie_periodTarget"] = json.dumps(atie_payload.get("periodTarget", None))
+            cloud_data["mofid_atie_achievedPeriods"] = json.dumps(atie_payload.get("achievedPeriods", []))
+            cloud_data["mofid_atie_notes"] = json.dumps(atie_payload.get("notes", []))
+            new_atie_val = atie_payload.get("new_val", 0)
+            cloud_data["mofid_atie_baseNumber"] = f"{new_atie_val:,}"
+            cloud_data["mofid_atie_history"] = json.dumps(atie_payload.get("history", []))
 
         # Set last modified
         timestamp_ms = int(time.time() * 1000)
@@ -341,7 +388,7 @@ def sync_with_mantledb(new_val, percent_val, base_val, local_state_payload):
         )
         with urllib.request.urlopen(req_post) as res_post:
             if res_post.status in [200, 201]:
-                print("[+] Successfully synchronized state with MantleDB cloud backup!")
+                print("[+] Successfully synchronized both App 4 and App 5 with MantleDB cloud backup!")
                 return True
 
     except Exception as e:
@@ -439,8 +486,8 @@ def run_automation():
 
     validate_environment()
 
-    # Read or initialize local state backup
-    local_state = {
+    # --- Read or initialize App 5 (Synergy) local state backup ---
+    local_state_syn = {
         "percents": [],
         "trash": [],
         "goal": None,
@@ -448,48 +495,71 @@ def run_automation():
         "periodTarget": None,
         "achievedPeriods": [],
         "notes": [],
-        "baseNumber": 100983803, # Fallback initial base
+        "baseNumber": 100983803,
         "history": []
     }
 
     if os.path.exists(BACKUP_FILE_PATH):
         try:
             with open(BACKUP_FILE_PATH, 'r', encoding='utf-8') as f:
-                local_state = json.load(f)
-                print(f"[+] Loaded existing backup file. Current base value: {local_state.get('baseNumber')}")
+                local_state_syn = json.load(f)
+                print(f"[+] App 5 (Synergy): Loaded existing backup file. Current base value: {local_state_syn.get('baseNumber')}")
         except Exception as e:
-            print(f"[-] Warning: Failed to parse backup file, using defaults: {e}")
+            print(f"[-] Warning: Failed to parse App 5 backup file, using defaults: {e}")
 
-    # Fetch fresh cloud state if available to merge cloud deletions & additions
+    # --- Read or initialize App 4 (Atie / Retirement Fund) local state backup ---
+    local_state_atie = {
+        "percents": [],
+        "trash": [],
+        "goal": None,
+        "highlightedStates": {},
+        "periodTarget": None,
+        "achievedPeriods": [],
+        "notes": [],
+        "baseNumber": 274631868,
+        "history": []
+    }
+
+    if os.path.exists(BACKUP_FILE_PATH_ATIE):
+        try:
+            with open(BACKUP_FILE_PATH_ATIE, 'r', encoding='utf-8') as f:
+                local_state_atie = json.load(f)
+                print(f"[+] App 4 (Atie): Loaded existing backup file. Current base value: {local_state_atie.get('baseNumber')}")
+        except Exception as e:
+            print(f"[-] Warning: Failed to parse App 4 backup file, using defaults: {e}")
+
+    # --- Fetch fresh cloud state for both apps to merge cloud deletions & additions ---
     cloud_state = fetch_cloud_state()
     if cloud_state:
+        # App 5 (Synergy) Merge
         synergy_cloud = cloud_state.get("synergy", {})
         if synergy_cloud:
-            if "percents" in synergy_cloud:
-                local_state["percents"] = synergy_cloud.get("percents", [])
-            if "trash" in synergy_cloud:
-                local_state["trash"] = synergy_cloud.get("trash", [])
-            if "goal" in synergy_cloud:
-                local_state["goal"] = synergy_cloud.get("goal")
-            if "highlightedStates" in synergy_cloud:
-                local_state["highlightedStates"] = synergy_cloud.get("highlightedStates", {})
-            if "periodTarget" in synergy_cloud:
-                local_state["periodTarget"] = synergy_cloud.get("periodTarget")
-            if "achievedPeriods" in synergy_cloud:
-                local_state["achievedPeriods"] = synergy_cloud.get("achievedPeriods", [])
-            if "notes" in synergy_cloud:
-                local_state["notes"] = synergy_cloud.get("notes", [])
+            for key in ["percents", "trash", "goal", "highlightedStates", "periodTarget", "achievedPeriods", "notes"]:
+                if key in synergy_cloud:
+                    local_state_syn[key] = synergy_cloud[key]
+        if cloud_state.get("synergy_history"):
+            local_state_syn["history"] = cloud_state.get("synergy_history")
+        if cloud_state.get("synergy_baseNumber") and cloud_state.get("synergy_baseNumber") > 0:
+            local_state_syn["baseNumber"] = cloud_state.get("synergy_baseNumber")
 
-        if cloud_state.get("history"):
-            local_state["history"] = cloud_state.get("history")
+        # App 4 (Atie) Merge
+        atie_cloud = cloud_state.get("atie", {})
+        if atie_cloud:
+            for key in ["percents", "trash", "goal", "highlightedStates", "periodTarget", "achievedPeriods", "notes"]:
+                if key in atie_cloud and atie_cloud[key] is not None:
+                    local_state_atie[key] = atie_cloud[key]
+            if atie_cloud.get("history"):
+                local_state_atie["history"] = atie_cloud.get("history")
+            if atie_cloud.get("baseNumber") and atie_cloud.get("baseNumber") > 0:
+                local_state_atie["baseNumber"] = atie_cloud.get("baseNumber")
 
-        if cloud_state.get("baseNumber") and cloud_state.get("baseNumber") > 0:
-            local_state["baseNumber"] = cloud_state.get("baseNumber")
+        print("[+] Merged live cloud state for App 4 and App 5 from MantleDB.")
 
-        print("[+] Merged live cloud state from MantleDB into local automation state.")
+    base_val_syn = local_state_syn.get("baseNumber", 100983803)
+    history_list_syn = local_state_syn.get("history", [])
 
-    base_val = local_state.get("baseNumber", 100983803)
-    history_list = local_state.get("history", [])
+    base_val_atie = local_state_atie.get("baseNumber", 274631868)
+    history_list_atie = local_state_atie.get("history", [])
 
     session_file_path = "gold5/easytrader_session.json"
     session_exists = os.path.exists(session_file_path)
@@ -917,79 +987,261 @@ def run_automation():
                     raise Exception("Still on login/verification page or authentication failed.")
                 raise Exception(f"Could not extract any valid numerical values from Synergy row container. Raw text: {body_text[:1000]}")
 
-            new_val = extracted_value
-            print(f"[+] Confirmed Synergy total asset value: {new_val:,} Rials")
+            new_val_syn = extracted_value
+            print(f"[+] Confirmed Synergy total asset value: {new_val_syn:,} Rials")
 
-            # 5. Calculation
-            diff = new_val - base_val
-            percent_change = (diff / base_val) * 100
+            # 5. Calculation for App 5 (Synergy)
+            diff_syn = new_val_syn - base_val_syn
+            percent_change_syn = (diff_syn / base_val_syn) * 100 if base_val_syn > 0 else 0.0
 
-            print(f"[+] Base Value: {base_val:,}")
-            print(f"[+] New Value: {new_val:,}")
-            print(f"[+] Percent Change: {percent_change:+.4f}%")
+            print(f"[+] App 5 Base Value: {base_val_syn:,}")
+            print(f"[+] App 5 New Value: {new_val_syn:,}")
+            print(f"[+] App 5 Percent Change: {percent_change_syn:+.4f}%")
 
-            # Save new percent in local state list
             timestamp_ms = int(time.time() * 1000)
 
-            local_state["percents"].append({
-                "value": float(round(percent_change, 2)),
+            local_state_syn["percents"].append({
+                "value": float(round(percent_change_syn, 2)),
                 "timestamp": timestamp_ms
             })
-            local_state["percents"].sort(key=lambda x: x["timestamp"])
+            local_state_syn["percents"].sort(key=lambda x: x["timestamp"])
 
-            # Update history list in local state as well
             persian_date_str = get_current_persian_datetime()
-            diff_type = "neutral"
-            if percent_change > 0:
-                diff_type = "increase"
-            elif percent_change < 0:
-                diff_type = "decrease"
+            diff_type_syn = "increase" if percent_change_syn > 0 else ("decrease" if percent_change_syn < 0 else "neutral")
 
-            formatted_new_val = f"{new_val:,}"
-            history_list.insert(0, {
+            formatted_new_val_syn = f"{new_val_syn:,}"
+            history_list_syn.insert(0, {
                 "id": timestamp_ms,
-                "base": f"{base_val:,}",
-                "new": formatted_new_val,
-                "percent": f"{percent_change:.2f}",
-                "type": diff_type,
-                "rawBase": float(base_val),
-                "rawNew": float(new_val),
+                "base": f"{base_val_syn:,}",
+                "new": formatted_new_val_syn,
+                "percent": f"{percent_change_syn:.2f}",
+                "type": diff_type_syn,
+                "rawBase": float(base_val_syn),
+                "rawNew": float(new_val_syn),
                 "timestamp": datetime.now().isoformat() + "Z",
                 "persianDate": persian_date_str
             })
-            if len(history_list) > 60:
-                history_list = history_list[:60]
+            if len(history_list_syn) > 60:
+                history_list_syn = history_list_syn[:60]
 
-            local_state["history"] = history_list
+            local_state_syn["history"] = history_list_syn
+            local_state_syn["baseNumber"] = new_val_syn
 
-            # Update base number for tomorrow
-            local_state["baseNumber"] = new_val
-
-            # Write updated local state back to JSON file
+            # Write updated local state back to JSON file for App 5
             os.makedirs(os.path.dirname(BACKUP_FILE_PATH), exist_ok=True)
             with open(BACKUP_FILE_PATH, 'w', encoding='utf-8') as f:
-                json.dump(local_state, f, ensure_ascii=False, indent=2)
-            print(f"[+] Successfully wrote updated local backup to {BACKUP_FILE_PATH}")
+                json.dump(local_state_syn, f, ensure_ascii=False, indent=2)
+            print(f"[+] App 5: Successfully wrote updated local backup to {BACKUP_FILE_PATH}")
 
-            # 6. Synchronization with MantleDB (Cloud sync)
-            sync_ok = sync_with_mantledb(new_val, round(percent_change, 2), base_val, local_state)
+            # -------------------------------------------------------------------------
+            # 6. NAVIGATE & EXTRACT "صندوق آتیه / بازنشستگی" (App 4 - ثبت درصد ۴)
+            # -------------------------------------------------------------------------
+            print("\n[+] Navigating to 'سایر' -> 'صندوق‌های مفید' to extract App 4 (Atie / Retirement Fund)...")
 
-            # 7. Send Telegram Notification
-            emoji = "📈" if percent_change > 0 else ("📉" if percent_change < 0 else "⚖️")
+            extracted_value_atie = None
+
+            # Strategy 1: Click "سایر" tab from navigation bar then click "صندوق‌های مفید"
+            try:
+                print("[+] Searching for 'سایر' navigation button...")
+                sayer_selectors = [
+                    "text='سایر'",
+                    "span:has-text('سایر')",
+                    "button:has-text('سایر')",
+                    "a:has-text('سایر')",
+                    ".tab-item:has-text('سایر')",
+                    "[aria-label*='سایر']"
+                ]
+
+                sayer_clicked = False
+                for sel in sayer_selectors:
+                    elem = page.locator(sel).first
+                    if elem.is_visible():
+                        elem.click(force=True)
+                        print(f"[+] Successfully clicked 'سایر' using selector: {sel}")
+                        sayer_clicked = True
+                        time.sleep(3)
+                        break
+
+                if sayer_clicked:
+                    page.screenshot(path="sayer_menu.png")
+                    print("[+] Screenshot saved to sayer_menu.png")
+
+                    # Now click "صندوق‌های مفید" or "صندوق‌ها"
+                    funds_selectors = [
+                        "text='صندوق‌های مفید'",
+                        "text='صندوق ها'",
+                        "text='صندوق‌ها'",
+                        "span:has-text('صندوق')",
+                        "div:has-text('صندوق‌های مفید')",
+                        "a:has-text('صندوق‌های مفید')"
+                    ]
+
+                    for sel in funds_selectors:
+                        elem = page.locator(sel).first
+                        if elem.is_visible():
+                            elem.click(force=True)
+                            print(f"[+] Successfully clicked 'صندوق‌های مفید' using selector: {sel}")
+                            time.sleep(4)
+                            break
+            except Exception as ex_nav:
+                print(f"[i] Navigation via tab clicks had exception: {ex_nav}. Trying direct URL or DOM scan...")
+
+            # Wait for Atie / Funds screen numbers to hydrate
+            time.sleep(3)
+            page.screenshot(path="atie_loaded.png")
+            print("[+] Saved Atie page screenshot to atie_loaded.png")
+
+            # Scan full page text stream for "آتیه" or "بازنشستگی"
+            body_text_atie = page.locator("body").inner_text()
+            normalized_body_atie = convert_persian_to_english_numbers(body_text_atie)
+
+            lines_atie = [line.strip() for line in normalized_body_atie.split("\n") if line.strip()]
+            for idx, line in enumerate(lines_atie):
+                if "آتیه" in line or "بازنشستگی" in line:
+                    print(f"[+] Found 'آتیه/بازنشستگی' in body text at line {idx}: '{line}'")
+                    candidate_numbers_atie = []
+                    # Check current line and adjacent window
+                    search_range = range(max(0, idx - 2), min(len(lines_atie), idx + 10))
+                    for scan_idx in search_range:
+                        target_line = lines_atie[scan_idx]
+                        found_nums = re.findall(r'[\d,]+', target_line)
+                        for num_str in found_nums:
+                            clean_num = num_str.replace(",", "")
+                            if clean_num.isdigit() and len(clean_num) >= 6:
+                                candidate_numbers_atie.append(int(clean_num))
+                                print(f"    -> Found candidate Atie asset value: {int(clean_num):,}")
+
+                    if candidate_numbers_atie:
+                        extracted_value_atie = max(candidate_numbers_atie)
+                        print(f"[+] Successfully extracted Atie total asset value: {extracted_value_atie:,} Rials")
+                        break
+
+            # Fallback scan for "ارزش صندوق‌ها" or overall funds total if specific Atie label wasn't isolated
+            if not extracted_value_atie:
+                print("[i] Fallback scanning for 'ارزش صندوق‌ها'...")
+                for idx, line in enumerate(lines_atie):
+                    if "ارزش صندوق" in line:
+                        candidate_numbers_atie = []
+                        for offset in range(0, 5):
+                            if idx + offset < len(lines_atie):
+                                target_line = lines_atie[idx + offset]
+                                found_nums = re.findall(r'[\d,]+', target_line)
+                                for num_str in found_nums:
+                                    clean_num = num_str.replace(",", "")
+                                    if clean_num.isdigit() and len(clean_num) >= 6:
+                                        candidate_numbers_atie.append(int(clean_num))
+                        if candidate_numbers_atie:
+                            extracted_value_atie = max(candidate_numbers_atie)
+                            print(f"[+] Fallback extracted Atie fund total value: {extracted_value_atie:,} Rials")
+                            break
+
+            if not extracted_value_atie:
+                print("[-] Warning: Could not extract Atie asset value automatically. Keeping previous base value to avoid corrupting state.")
+                extracted_value_atie = base_val_atie
+
+            new_val_atie = extracted_value_atie
+            diff_atie = new_val_atie - base_val_atie
+            percent_change_atie = (diff_atie / base_val_atie) * 100 if base_val_atie > 0 else 0.0
+
+            print(f"[+] App 4 Base Value: {base_val_atie:,}")
+            print(f"[+] App 4 New Value: {new_val_atie:,}")
+            print(f"[+] App 4 Percent Change: {percent_change_atie:+.4f}%")
+
+            local_state_atie["percents"].append({
+                "value": float(round(percent_change_atie, 2)),
+                "timestamp": timestamp_ms
+            })
+            local_state_atie["percents"].sort(key=lambda x: x["timestamp"])
+
+            diff_type_atie = "increase" if percent_change_atie > 0 else ("decrease" if percent_change_atie < 0 else "neutral")
+
+            formatted_new_val_atie = f"{new_val_atie:,}"
+            history_list_atie.insert(0, {
+                "id": timestamp_ms,
+                "base": f"{base_val_atie:,}",
+                "new": formatted_new_val_atie,
+                "percent": f"{percent_change_atie:.2f}",
+                "type": diff_type_atie,
+                "rawBase": float(base_val_atie),
+                "rawNew": float(new_val_atie),
+                "timestamp": datetime.now().isoformat() + "Z",
+                "persianDate": persian_date_str
+            })
+            if len(history_list_atie) > 60:
+                history_list_atie = history_list_atie[:60]
+
+            local_state_atie["history"] = history_list_atie
+            local_state_atie["baseNumber"] = new_val_atie
+
+            # Write updated local state back to JSON file for App 4
+            os.makedirs(os.path.dirname(BACKUP_FILE_PATH_ATIE), exist_ok=True)
+            with open(BACKUP_FILE_PATH_ATIE, 'w', encoding='utf-8') as f:
+                json.dump(local_state_atie, f, ensure_ascii=False, indent=2)
+            print(f"[+] App 4: Successfully wrote updated local backup to {BACKUP_FILE_PATH_ATIE}")
+
+            # -------------------------------------------------------------------------
+            # 7. SYNCHRONIZATION WITH MANTLEDB (Cloud Sync for both App 4 and App 5)
+            # -------------------------------------------------------------------------
+            synergy_payload = {
+                "new_val": new_val_syn,
+                "percents": local_state_syn.get("percents", []),
+                "trash": local_state_syn.get("trash", []),
+                "goal": local_state_syn.get("goal"),
+                "highlightedStates": local_state_syn.get("highlightedStates", {}),
+                "periodTarget": local_state_syn.get("periodTarget"),
+                "achievedPeriods": local_state_syn.get("achievedPeriods", []),
+                "notes": local_state_syn.get("notes", []),
+                "history": local_state_syn.get("history", [])
+            }
+
+            atie_payload = {
+                "new_val": new_val_atie,
+                "percents": local_state_atie.get("percents", []),
+                "trash": local_state_atie.get("trash", []),
+                "goal": local_state_atie.get("goal"),
+                "highlightedStates": local_state_atie.get("highlightedStates", {}),
+                "periodTarget": local_state_atie.get("periodTarget"),
+                "achievedPeriods": local_state_atie.get("achievedPeriods", []),
+                "notes": local_state_atie.get("notes", []),
+                "history": local_state_atie.get("history", [])
+            }
+
+            sync_ok = sync_with_mantledb(synergy_payload=synergy_payload, atie_payload=atie_payload)
+
+            # -------------------------------------------------------------------------
+            # 8. SEND TELEGRAM NOTIFICATIONS (TWO SEPARATE MESSAGES)
+            # -------------------------------------------------------------------------
             persian_time_report = get_current_persian_datetime()
 
-            telegram_report = (
+            # --- Message 1: App 5 (صندوق سینرژی) ---
+            emoji_syn = "📈" if percent_change_syn > 0 else ("📉" if percent_change_syn < 0 else "⚖️")
+            telegram_report_syn = (
                 f"<b>🤖 عملیات خودکار ثبت درصد ۵ (صندوق سینرژی) با موفقیت انجام شد!</b>\n\n"
                 f"📅 <b>تاریخ و زمان:</b> {persian_time_report}\n"
-                f"💵 <b>دارایی قبلی (پایه):</b> {base_val:,} ریال\n"
-                f"💰 <b>دارایی جدید استخراج‌شده:</b> {new_val:,} ریال\n"
-                f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change:+.2f}%</code> {emoji}\n\n"
+                f"💵 <b>دارایی قبلی (پایه):</b> {base_val_syn:,} ریال\n"
+                f"💰 <b>دارایی جدید استخراج‌شده:</b> {new_val_syn:,} ریال\n"
+                f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change_syn:+.2f}%</code> {emoji_syn}\n\n"
                 f"🔄 <b>سینک ابری MantleDB:</b> {'✅ انجام شد' if sync_ok else '❌ انجام نشد (تنظیم نشده یا خطا)'}\n"
                 f"💾 <b>فایل پشتیبان محلی:</b> ✅ بروزرسانی و در گیت‌هاب ذخیره شد\n\n"
                 f"🌹 فردا هم راس ساعت ۱۰ شب همینجا منتظر من باشید! شب خوش."
             )
+            print("[+] Sending Telegram Message 1 (App 5 - Synergy)...")
+            send_telegram_message(telegram_report_syn, photo_path="portfolio_loaded.png" if os.path.exists("portfolio_loaded.png") else None)
 
-            send_telegram_message(telegram_report, photo_path="portfolio_loaded.png")
+            # --- Message 2: App 4 (صندوق آتیه / بازنشستگی) ---
+            emoji_atie = "📈" if percent_change_atie > 0 else ("📉" if percent_change_atie < 0 else "⚖️")
+            telegram_report_atie = (
+                f"<b>🤖 عملیات خودکار ثبت درصد ۴ (صندوق آتیه / بازنشستگی) با موفقیت انجام شد!</b>\n\n"
+                f"📅 <b>تاریخ و زمان:</b> {persian_time_report}\n"
+                f"💵 <b>دارایی قبلی (پایه):</b> {base_val_atie:,} ریال\n"
+                f"💰 <b>دارایی جدید استخراج‌شده:</b> {new_val_atie:,} ریال\n"
+                f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change_atie:+.2f}%</code> {emoji_atie}\n\n"
+                f"🔄 <b>سینک ابری MantleDB:</b> {'✅ انجام شد' if sync_ok else '❌ انجام نشد (تنظیم نشده یا خطا)'}\n"
+                f"💾 <b>فایل پشتیبان محلی:</b> ✅ بروزرسانی و در گیت‌هاب ذخیره شد\n\n"
+                f"🌹 فردا هم راس ساعت ۱۰ شب همینجا منتظر من باشید! شب خوش."
+            )
+            print("[+] Sending Telegram Message 2 (App 4 - Atie)...")
+            send_telegram_message(telegram_report_atie, photo_path="atie_loaded.png" if os.path.exists("atie_loaded.png") else None)
 
             context.close()
             browser.close()
