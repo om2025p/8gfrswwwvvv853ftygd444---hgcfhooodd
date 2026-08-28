@@ -1086,10 +1086,15 @@ def run_automation():
             except Exception as ex_nav:
                 print(f"[i] Navigation via tab clicks had exception: {ex_nav}. Trying direct URL or DOM scan...")
 
-            # Wait for Atie / Funds screen numbers to hydrate
+            # Ensure Atie fund card and numbers hydrate fully before taking screenshot
+            try:
+                print("[+] Waiting for Atie fund card element to load...")
+                page.wait_for_selector("text='آتیه'", timeout=10000)
+            except Exception:
+                pass
             time.sleep(3)
             page.screenshot(path="atie_loaded.png")
-            print("[+] Saved Atie page screenshot to atie_loaded.png")
+            print("[+] Saved dedicated Atie asset page screenshot to atie_loaded.png")
 
             # Scan full page text stream for "آتیه" or "بازنشستگی"
             body_text_atie = page.locator("body").inner_text()
@@ -1223,7 +1228,7 @@ def run_automation():
                 f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change_syn:+.2f}%</code> {emoji_syn}\n\n"
                 f"🔄 <b>سینک ابری MantleDB:</b> {'✅ انجام شد' if sync_ok else '❌ انجام نشد (تنظیم نشده یا خطا)'}\n"
                 f"💾 <b>فایل پشتیبان محلی:</b> ✅ بروزرسانی و در گیت‌هاب ذخیره شد\n\n"
-                f"🌹 فردا هم راس ساعت ۱۰ شب همینجا منتظر من باشید! شب خوش."
+                f"🌹 فردا هم رأس ساعت ۱۵:۳۰ همینجا منتظر من باشید! روز خوش."
             )
             print("[+] Sending Telegram Message 1 (App 5 - Synergy)...")
             send_telegram_message(telegram_report_syn, photo_path="portfolio_loaded.png" if os.path.exists("portfolio_loaded.png") else None)
@@ -1238,7 +1243,7 @@ def run_automation():
                 f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change_atie:+.2f}%</code> {emoji_atie}\n\n"
                 f"🔄 <b>سینک ابری MantleDB:</b> {'✅ انجام شد' if sync_ok else '❌ انجام نشد (تنظیم نشده یا خطا)'}\n"
                 f"💾 <b>فایل پشتیبان محلی:</b> ✅ بروزرسانی و در گیت‌هاب ذخیره شد\n\n"
-                f"🌹 فردا هم راس ساعت ۱۰ شب همینجا منتظر من باشید! شب خوش."
+                f"🌹 فردا هم رأس ساعت ۱۵:۳۰ همینجا منتظر من باشید! روز خوش."
             )
             print("[+] Sending Telegram Message 2 (App 4 - Atie)...")
             send_telegram_message(telegram_report_atie, photo_path="atie_loaded.png" if os.path.exists("atie_loaded.png") else None)
