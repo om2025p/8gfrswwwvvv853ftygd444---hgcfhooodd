@@ -833,32 +833,42 @@
         function clearTrash() { trash = []; updateUI(); saveData(); }
 
         async function uploadToGitHub(contentString, fileName) {
-            const token = localStorage.getItem("github_backup_token");
-            const repo = localStorage.getItem("github_backup_repo");
-            const branch = localStorage.getItem("github_backup_branch") || "main";
-            let filePath = localStorage.getItem("github_backup_filepath");
+            const token = (localStorage.getItem("github_backup_token") || "").trim();
+            let repo = (localStorage.getItem("github_backup_repo") || "").trim();
+            let branch = (localStorage.getItem("github_backup_branch") || "main").trim();
+            let filePath = (localStorage.getItem("github_backup_filepath") || "").trim();
 
-            if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست." };
+            if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست. لطفاً توکن و نام مخزن را وارد کنید." };
+
+            // تمیزکاری repo در صورت کپی‌پیست کامل URL یا داشتن اسلش اضافه
+            repo = repo.replace(/^https?:\/\/github\.com\//i, "").replace(/\/+$/, "");
 
             if (!filePath) {
                 filePath = `backups/${fileName}`;
             } else if (filePath.endsWith("/")) {
                 filePath += fileName;
+            } else {
+                filePath = filePath.replace(/^\/+/, "");
             }
 
             const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
+            const authHeader = token.startsWith("github_pat_") ? `Bearer ${token}` : `token ${token}`;
             const headers = {
-                "Authorization": `token ${token}`,
+                "Authorization": authHeader,
                 "Accept": "application/vnd.github.v3+json"
             };
 
             try {
                 let sha = null;
                 try {
-                    const checkRes = await fetch(`${url}?ref=${branch}`, { headers });
+                    const checkRes = await fetch(`${url}?ref=${encodeURIComponent(branch)}`, { headers });
                     if (checkRes.status === 200) {
                         const fileData = await checkRes.json();
                         sha = fileData.sha;
+                    } else if (checkRes.status === 401) {
+                        return { success: false, message: "توکن گیت‌هاب نامعتبر یا منقضی شده است (خطای ۴۰۱)." };
+                    } else if (checkRes.status === 404) {
+                        // فایل هنوز وجود ندارد یا مخزن/شاخه یافت نشد؛ برای فایل جدید اشکالی ندارد اما کدهای خطای پاسخ PUT دقیق‌تر بررسی می‌شود
                     }
                 } catch (e) {}
 
@@ -876,7 +886,18 @@
                     body: JSON.stringify(body)
                 });
 
-                return putRes.ok ? { success: true } : { success: false, message: "خطا در آپلود به API گیت‌هاب" };
+                if (putRes.ok) {
+                    return { success: true };
+                } else {
+                    let errMsg = `خطا در آپلود (کد وضعیت: ${putRes.status})`;
+                    try {
+                        const errData = await putRes.json();
+                        if (errData && errData.message) {
+                            errMsg += `: ${errData.message}`;
+                        }
+                    } catch (e) {}
+                    return { success: false, message: errMsg };
+                }
             } catch (err) {
                 return { success: false, message: err.message };
             }
