@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#8b5cf6">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <script src="../cloud-sync.js"></script>
+    <title>ثبت درصد 7 · آهنگ سهام کیان</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: Tahoma, 'Segoe UI', Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+        }
+        .app-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+        .tabs {
+            display: flex;
+            background: linear-gradient(135deg, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            position: relative;
+            z-index: 100;
+            transition: background 0.3s;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border-bottom: 3px solid transparent;
+            opacity: 0.85;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+        .tab.active {
+            opacity: 1;
+            background: rgba(255,255,255,0.2);
+            border-bottom: 3px solid #ffffff;
+        }
+        .tab-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        .tab-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            border: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-wrapper">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab(0)">📊 ثبت درصد</div>
+            <div class="tab" onclick="switchTab(1)">🏆 محاسبه تغییرات</div>
+            <div class="tab" onclick="switchTab(2)">🏷️ ثبت ابطال</div>
+        </div>
+        <div class="tab-container">
+            <div id="content0" class="tab-content active">
+                <iframe src="percent.html"></iframe>
+            </div>
+            <div id="content1" class="tab-content">
+                <iframe src="calculator.html"></iframe>
+            </div>
+            <div id="content2" class="tab-content">
+                <iframe src="price.html"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(index) {
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                t.classList.toggle('active', i === index);
+            });
+            document.querySelectorAll('.tab-content').forEach((c, i) => {
+                c.classList.toggle('active', i === index);
+            });
+
+            // تغییر رنگ تم بر اساس تب انتخاب شده با افکت‌های رنگین‌کمانی
+            const themeColor = document.querySelector('meta[name="theme-color"]');
+            const tabsHeader = document.querySelector('.tabs');
+
+            if (index === 0) {
+                themeColor.setAttribute('content', '#8b5cf6');
+                tabsHeader.style.background = 'linear-gradient(135deg, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6)';
+            } else if (index === 1) {
+                themeColor.setAttribute('content', '#3b82f6');
+                tabsHeader.style.background = 'linear-gradient(135deg, #8b5cf6, #3b82f6, #10b981, #f59e0b, #ef4444)';
+            } else if (index === 2) {
+                themeColor.setAttribute('content', '#10b981');
+                tabsHeader.style.background = 'linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6, #ef4444, #f59e0b)';
+            }
+        }
+    </script>
+</body>
+</html>

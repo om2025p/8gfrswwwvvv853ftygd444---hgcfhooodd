@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>ثبت قیمت ابطال + جدول رشد | آهنگ سهام کیان</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0f172a; margin: 0; padding: 8px; min-height: 100vh; color: #f8fafc; }
+        .container { max-width: 1200px; margin: 0 auto; background: #1e293b; border-radius: 24px; padding: 12px; border: 1px solid #8b5cf6; }
+        h1 { font-size: 1.4rem; text-align: center; background: linear-gradient(135deg, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6); -webkit-background-clip: text; background-clip: text; color: transparent; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .card { background: #0f172a; border-radius: 20px; padding: 14px; margin-bottom: 16px; border-right: 3px solid #8b5cf6; }
+        .input-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+        label { font-weight: bold; color: #f8fafc; display: flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+        input { background: #1e293b; border: 1px solid #475569; padding: 10px 14px; border-radius: 18px; font-size: 0.9rem; color: #fff; font-family: monospace; text-align: left; direction: ltr; }
+        input:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3); }
+        button { background: linear-gradient(135deg, #8b5cf6, #3b82f6); border: none; padding: 10px 18px; font-weight: bold; border-radius: 35px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; color: #fff; margin: 4px 4px 0 0; }
+        button:hover { transform: scale(0.98); opacity: 0.9; }
+        .btn-outline { background: transparent; border: 1px solid #8b5cf6; color: #c084fc; }
+        .btn-danger { background: #ef4444; color: white; }
+        .price-list { background: #0f172a; border-radius: 20px; padding: 10px; max-height: 280px; overflow-y: auto; }
+        .price-item { background: #1e293b; margin: 6px 0; padding: 8px 12px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+        .price-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 2; }
+        .date-badge { background: #334155; padding: 3px 8px; border-radius: 25px; font-size: 0.65rem; font-family: monospace; cursor: pointer; }
+        .value-badge { font-weight: bold; font-size: 0.9rem; direction: ltr; cursor: pointer; }
+        .percent-badge { background: #0f172a; padding: 2px 6px; border-radius: 20px; font-size: 0.6rem; font-weight: bold; direction: ltr; }
+        .percent-positive { color: #34d399; }
+        .percent-negative { color: #f87171; }
+        .item-actions { display: flex; gap: 5px; }
+        .icon-btn { background: #475569; padding: 4px 10px; font-size: 0.7rem; margin: 0; border-radius: 25px; }
+        .icon-btn.edit-btn { background: #3b82f6; }
+        .icon-btn.delete-btn { background: #ef4444; }
+        .stats { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-top: 12px; }
+        .stat-card { background: #1e293b; padding: 8px 10px; border-radius: 16px; flex: 1; text-align: center; border-top: 2px solid #8b5cf6; font-size: 0.75rem; }
+        .stat-card span { font-size: 1rem; font-weight: bold; display: block; margin-top: 4px; }
+        .positive { color: #34d399; }
+        .negative { color: #f87171; }
+        .neutral { color: #38bdf8; }
+        .chart-scroll-container { overflow-x: auto; overflow-y: hidden; border-radius: 16px; background: #0f172a; padding: 8px 0; cursor: grab; scroll-behavior: smooth; }
+        .chart-scroll-container svg { display: block; background: #0f172a; border-radius: 14px; height: auto; font-family: monospace; }
+        .growth-table-section { background: #0f172a; border-radius: 20px; padding: 12px; margin-top: 16px; }
+        .growth-table-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+        .milestone-input { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .forecast-days-input { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .milestone-input label, .forecast-days-input label { margin-bottom: 0; font-size: 0.75rem; }
+        .milestone-input input, .forecast-days-input input { width: 70px; padding: 6px 8px; font-size: 0.8rem; }
+        .apply-milestone-btn, .forecast-btn { margin: 0; padding: 5px 12px; }
+        .forecast-btn { background-color: #f59e0b; }
+        .table-wrapper { max-height: 400px; overflow-y: auto; overflow-x: auto; border-radius: 14px; border: 1px solid #334155; }
+        .growth-table { width: 100%; border-collapse: collapse; table-layout: auto; font-family: monospace; font-size: 0.7rem; min-width: 500px; }
+        .growth-table th { background: #8b5cf6; color: #ffffff; padding: 8px 4px; position: sticky; top: 0; font-weight: bold; text-align: center; white-space: nowrap; }
+        .growth-table td { padding: 6px 4px; text-align: center; border-bottom: 1px solid #334155; white-space: nowrap; }
+        .growth-table tr.highlight { background: #f59e0b; color: #0f172a; }
+        .growth-table tr.highlight td { color: #0f172a; font-weight: bold; }
+        .col-right { text-align: right; direction: ltr; }
+        .col-center { text-align: center; }
+        .col-left { text-align: left; direction: ltr; }
+        .col-day { text-align: center; font-weight: bold; color: #38bdf8; }
+        .stats-bar { background: #1e293b; border-radius: 14px; padding: 8px 10px; margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: space-around; gap: 8px; font-size: 0.7rem; text-align: center; }
+        .stat-item { flex: 1; min-width: 60px; }
+        .stat-label { color: #94a3b8; font-size: 0.6rem; }
+        .stat-value { font-weight: bold; font-size: 0.8rem; color: #f59e0b; }
+        .formula-badge { background: #1e293b; border-radius: 12px; padding: 5px 8px; font-size: 0.6rem; text-align: center; margin-top: 8px; color: #94a3b8; }
+        .flex-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #000000cc; backdrop-filter: blur(12px); color: #38bdf8; padding: 6px 16px; border-radius: 40px; font-size: 0.75rem; opacity: 0; transition: 0.2s; pointer-events: none; z-index: 10000; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎵 ثبت قیمت ابطال + جدول رشد <span style="font-size:0.7rem;">| آهنگ کیان</span></h1>
+    <div class="card">
+        <div class="input-row">
+            <label>💰 قیمت امروز (تومان):</label>
+            <input type="text" id="todayPrice" placeholder="مثال: 1,250,000" autocomplete="off">
+            <button id="saveBtn">➕ ثبت قیمت امروز</button>
+        </div>
+        <div class="stats" id="statsArea">
+            <div class="stat-card">📆 نسبت به دیروز<br><span id="dailyPercent">—-</span></div>
+            <div class="stat-card">📊 نسبت به اولین روز<br><span id="totalPercent">—-</span></div>
+            <div class="stat-card">⚡ میانگین رشد روزانه<br><span id="avgPercent">—-</span></div>
+        </div>
+    </div>
+    <div class="card">
+        <h3 style="margin:0 0 8px 0; font-size:1rem;">🗂 تاریخچه قیمت‌ها</h3>
+        <div class="price-list" id="priceList"><div style="text-align:center; padding:15px;">📭 هنوز قیمتی ثبت نشده</div></div>
+        <div class="flex-btns">
+            <button id="backupBtn" class="btn-outline">📦 پشتیبان‌گیری</button>
+            <button id="restoreBtn" class="btn-outline">🔄 بازیابی</button>
+            <button id="dangerClearBtn" class="btn-danger">🗑 پاک کردن کل تاریخچه</button>
+        </div>
+    </div>
+    <div class="card">
+        <div class="chart-scroll-container" id="chartScrollContainer">
+            <svg id="priceChart" width="100%" height="180" viewBox="0 0 600 180" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+    </div>
+    <div class="growth-table-section">
+        <div class="growth-table-header">
+            <h3 style="margin:0; font-size:0.95rem;">📊 جدول رشد پیش‌بینی (روزهای آینده)</h3>
+            <div class="milestone-input">
+                <label>🌟 درصد نقطه عطف:</label>
+                <input type="text" id="milestone_percent" value="10">
+                <span style="font-size:0.7rem;">%</span>
+                <button id="applyMilestoneBtn" class="apply-milestone-btn">✅ اعمال</button>
+            </div>
+        </div>
+        <div class="forecast-days-input">
+            <label>📅 تعداد روز پیش‌بینی:</label>
+            <input type="text" id="forecastDays" value="30" placeholder="30">
+            <button id="forecastBtn" class="forecast-btn">🔮 نمایش جدول</button>
+        </div>
+        <div id="growthTableContainer">
+            <div class="neutral" style="padding:15px; text-align:center; font-size:0.8rem;">📋 ابتدا حداقل ۲ قیمت ثبت کنید</div>
+        </div>
+    </div>
+</div>
+<div id="toastMsg" class="toast">✅ انجام شد</div>
+
+<script>
+    const STORAGE_PRICES = "ahang_kian_prices_v1";
+    const priceInput = document.getElementById("todayPrice");
+    const saveBtn = document.getElementById("saveBtn");
+    const priceListDiv = document.getElementById("priceList");
+    const dailySpan = document.getElementById("dailyPercent");
+    const totalSpan = document.getElementById("totalPercent");
+    const avgSpan = document.getElementById("avgPercent");
+    const toastMsgDiv = document.getElementById("toastMsg");
+    const backupBtn = document.getElementById("backupBtn");
+    const restoreBtn = document.getElementById("restoreBtn");
+    const dangerClearBtn = document.getElementById("dangerClearBtn");
+    const chartSvg = document.getElementById("priceChart");
+    const chartScrollContainer = document.getElementById("chartScrollContainer");
+    const milestoneInput = document.getElementById("milestone_percent");
+    const applyMilestoneBtn = document.getElementById("applyMilestoneBtn");
+    const growthTableContainer = document.getElementById("growthTableContainer");
+    const forecastBtn = document.getElementById("forecastBtn");
+    const forecastDaysInput = document.getElementById("forecastDays");
+
+    let lastAvgPercent = 0;
+
+    function showMessage(msg) {
+        toastMsgDiv.textContent = msg;
+        toastMsgDiv.style.opacity = "1";
+        setTimeout(() => { toastMsgDiv.style.opacity = "0"; }, 2000);
+    }
+
+    function toEnglishNumber(input) {
+        if (!input && input !== 0) return "";
+        const str = String(input);
+        const map = { '۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9' };
+        return str.replace(/[۰-۹]/g, m => map[m] || m);
+    }
+
+    function parsePrice(raw) {
+        let cleaned = toEnglishNumber(raw).replace(/[^0-9.]/g, "");
+        if (cleaned === "") return NaN;
+        let num = parseFloat(cleaned);
+        return isNaN(num) ? NaN : num;
+    }
+
+    function formatWithCommas(x) {
+        if (isNaN(x)) return "";
+        return Math.round(x).toLocaleString("en-US");
+    }
+
+    function getPersianDate() {
+        return new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    }
+
+    function getPrices() {
+        const raw = localStorage.getItem(STORAGE_PRICES);
+        if (!raw) return [];
+        try { return JSON.parse(raw); } catch(e) { return []; }
+    }
+
+    function savePrices(pricesArray) {
+        localStorage.setItem(STORAGE_PRICES, JSON.stringify(pricesArray));
+        renderAll();
+    }
+
+    function calculateStats(prices) {
+        if (!prices.length) {
+            dailySpan.innerText = "—"; totalSpan.innerText = "—"; avgSpan.innerText = "—";
+            lastAvgPercent = 0;
+            return;
+        }
+        const lastPrice = prices[prices.length - 1].price;
+        if (prices.length >= 2) {
+            const prevPrice = prices[prices.length - 2].price;
+            const diff = lastPrice - prevPrice;
+            const dailyPercent = (diff / prevPrice) * 100;
+            dailySpan.innerHTML = `<span class="${dailyPercent>=0?'positive':'negative'}">${dailyPercent.toFixed(2)}%</span>`;
+        } else {
+            dailySpan.innerHTML = `<span class="neutral">📅 اولین ثبت</span>`;
+        }
+        const firstPrice = prices[0].price;
+        const totalPercentVal = ((lastPrice - firstPrice) / firstPrice) * 100;
+        totalSpan.innerHTML = `<span class="${totalPercentVal>=0?'positive':'negative'}">${totalPercentVal.toFixed(2)}%</span>`;
+
+        if (prices.length >= 2) {
+            let sumPercent = 0;
+            for (let i = 1; i < prices.length; i++) {
+                const prev = prices[i-1].price;
+                const curr = prices[i].price;
+                sumPercent += ((curr - prev) / prev) * 100;
+            }
+            const avgVal = sumPercent / (prices.length - 1);
+            lastAvgPercent = avgVal;
+            avgSpan.innerHTML = `<span class="${avgVal>=0?'positive':'negative'}">${avgVal.toFixed(2)}%</span>`;
+        } else {
+            avgSpan.innerHTML = `<span class="neutral">نیاز به ۲ ثبت</span>`;
+            lastAvgPercent = 0;
+        }
+    }
+
+    function drawChart(prices) {
+        if (!prices.length) {
+            chartSvg.innerHTML = `<text x="300" y="90" text-anchor="middle" fill="#aaa" dy=".3em" font-size="12">📉 ثبت قیمت برای دیدن نمودار</text>`;
+            return;
+        }
+        const baseHeight = 180;
+        const padding = 30;
+        const pointsCount = prices.length;
+        const pointWidth = 38;
+        const dynamicWidth = Math.max(600, pointsCount * pointWidth);
+        const innerWidth = dynamicWidth - 2 * padding;
+        const innerHeight = baseHeight - 2 * padding;
+        const values = prices.map(p => p.price);
+        const minVal = Math.min(...values);
+        const maxVal = Math.max(...values);
+        const range = maxVal - minVal;
+        const yScale = (val) => {
+            if (range === 0) return padding + innerHeight / 2;
+            return padding + innerHeight - ((val - minVal) / range) * innerHeight;
+        };
+        const xStep = innerWidth / (values.length - 1 || 1);
+        let points = "", circles = "";
+        values.forEach((val, idx) => {
+            const x = padding + idx * xStep;
+            const y = yScale(val);
+            points += `${x},${y} `;
+            circles += `<circle cx="${x}" cy="${y}" r="3" fill="#8b5cf6" />`;
+        });
+        chartSvg.setAttribute("width", dynamicWidth);
+        chartSvg.setAttribute("height", baseHeight);
+        chartSvg.setAttribute("viewBox", `0 0 ${dynamicWidth} ${baseHeight}`);
+        chartSvg.innerHTML = `<polyline points="${points.trim()}" fill="none" stroke="#8b5cf6" stroke-width="2" />${circles}`;
+    }
+
+    function renderHistoryAndStats() {
+        const prices = getPrices();
+        if (!prices.length) {
+            priceListDiv.innerHTML = `<div style="text-align:center; padding:15px;">📭 هیچ قیمتی ثبت نشده</div>`;
+            calculateStats(prices);
+            drawChart(prices);
+            return;
+        }
+
+        const reversed = [...prices].reverse();
+        priceListDiv.innerHTML = reversed.map((item) => `
+            <div class="price-item">
+                <div class="price-info">
+                    <span class="date-badge">📅 ${item.date}</span>
+                    <span class="value-badge">💰 ${formatWithCommas(item.price)} تومان</span>
+                </div>
+                <div class="item-actions">
+                    <button class="icon-btn delete-btn" onclick="deletePriceItem(${item.id})">❌</button>
+                </div>
+            </div>
+        `).join("");
+
+        calculateStats(prices);
+        drawChart(prices);
+    }
+
+    function renderGrowthTable(basePrice, avgPercent, forecastDays) {
+        if (!basePrice || !avgPercent || forecastDays <= 0) {
+            growthTableContainer.innerHTML = '<div class="neutral" style="padding:15px;text-align:center;">📊 حداقل ۲ قیمت ثبت کنید</div>';
+            return;
+        }
+
+        const growthFactor = 1 + (avgPercent / 100);
+        let currentAmount = basePrice;
+        let tableHtml = `<div class="table-wrapper"><table class="growth-table" dir="ltr"><thead><tr>
+            <th>💰 قیمت پایان روز</th>
+            <th>📊 درصد کل</th>
+            <th>📆 روز</th>
+        </tr></thead><tbody>`;
+
+        for (let day = 1; day <= forecastDays; day++) {
+            const endAmount = currentAmount * growthFactor;
+            const cumPercent = ((endAmount / basePrice) - 1) * 100;
+            tableHtml += `<tr>
+                <td class="col-right">${formatWithCommas(Math.round(endAmount))} تومان</td>
+                <td class="col-center">${cumPercent.toFixed(2)}%</td>
+                <td class="col-day">${day}</td>
+             </tr>`;
+            currentAmount = endAmount;
+        }
+        tableHtml += `</tbody></table></div>`;
+        growthTableContainer.innerHTML = tableHtml;
+    }
+
+    function refreshGrowthTable() {
+        const prices = getPrices();
+        if (prices.length < 2) return;
+        const lastPrice = prices[prices.length-1].price;
+        let forecastDays = parseInt(forecastDaysInput.value) || 30;
+        renderGrowthTable(lastPrice, lastAvgPercent, forecastDays);
+    }
+
+    window.deletePriceItem = function(id) {
+        if (!confirm("🗑 حذف شود؟")) return;
+        let prices = getPrices();
+        prices = prices.filter(p => p.id != id);
+        savePrices(prices);
+    };
+
+    function renderAll() {
+        renderHistoryAndStats();
+        refreshGrowthTable();
+    }
+
+    function handleSave() {
+        const numPrice = parsePrice(priceInput.value);
+        if (isNaN(numPrice) || numPrice <= 0) { showMessage("❌ قیمت معتبر وارد کن"); return; }
+        const prices = getPrices();
+        prices.push({ id: Date.now(), date: getPersianDate(), timestamp: new Date().toISOString(), price: numPrice });
+        savePrices(prices);
+        priceInput.value = "";
+        showMessage("✅ ثبت شد");
+    }
+
+    saveBtn.addEventListener("click", handleSave);
+    backupBtn.addEventListener("click", () => {
+        const dataStr = JSON.stringify(getPrices(), null, 2);
+        const blob = new Blob([dataStr], {type: "application/json"});
+        const a = document.createElement("a");
+        a.download = `backup_ahang_kian_prices_${Date.now()}.json`;
+        a.href = URL.createObjectURL(blob);
+        a.click();
+    });
+    restoreBtn.addEventListener("click", () => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "application/json";
+        input.onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const imported = JSON.parse(ev.target.result);
+                    if (Array.isArray(imported)) {
+                        localStorage.setItem(STORAGE_PRICES, JSON.stringify(imported));
+                        renderAll();
+                        showMessage("✅ بازیابی شد");
+                    }
+                } catch(err) { showMessage("❌ فایل نامعتبر"); }
+            };
+            reader.readAsText(e.target.files[0]);
+        };
+        input.click();
+    });
+    dangerClearBtn.addEventListener("click", () => {
+        if (confirm("⚠️ پاک شود؟")) {
+            localStorage.removeItem(STORAGE_PRICES);
+            renderAll();
+        }
+    });
+
+    renderAll();
+</script>
+</body>
+</html>

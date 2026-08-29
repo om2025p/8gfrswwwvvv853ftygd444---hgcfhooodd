@@ -788,7 +788,8 @@
                 3: "kian_history",
                 4: "pension_history",
                 5: "sinergy_history",
-                6: "cement_history"
+                6: "cement_history",
+                7: "ahang_kian_history"
             };
             const peakKeys = {
                 1: "gold_peakNumber",
@@ -796,7 +797,8 @@
                 3: "kian_peakNumber",
                 4: "pension_peakNumber",
                 5: "sinergy_peakNumber",
-                6: "cement_peakNumber"
+                6: "cement_peakNumber",
+                7: "ahang_kian_peakNumber"
             };
             const historyKey = historyKeys[appId];
             let historyRaw = localStorage.getItem(historyKey);
@@ -866,7 +868,63 @@
                 3: "kian_history",
                 4: "pension_history",
                 5: "sinergy_history",
-                6: "cement_history"
+                6: "cement_history",
+                7: "ahang_kian_history"
+            };
+            const historyKey = historyKeys[appId];
+            let historyRaw = localStorage.getItem(historyKey);
+            let history = [];
+            try { history = JSON.parse(historyRaw) || []; } catch(e) {}
+
+            if (history.length === 0) return 0;
+
+            let totalTomanProfit = 0;
+            let firstDate = null;
+            let lastDate = null;
+
+            history.forEach(calc => {
+                let d = null;
+                if (calc.timestamp) {
+                    d = new Date(calc.timestamp);
+                }
+                if (!d || isNaN(d.getTime())) return;
+
+                if (!firstDate || d < firstDate) firstDate = d;
+                if (!lastDate || d > lastDate) lastDate = d;
+
+                let rawBase = 0;
+                let rawNew = 0;
+
+                if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
+                    rawBase = calc.rawBase;
+                } else if (calc.base) {
+                    rawBase = parseFloat(normalizeToEnglishDigits(calc.base).replace(/,/g, '')) || 0;
+                }
+
+                if (calc.rawNew !== undefined && calc.rawNew !== null && !isNaN(calc.rawNew)) {
+                    rawNew = calc.rawNew;
+                } else if (calc.new) {
+                    rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
+                }
+
+                const diff = rawNew - rawBase;
+                totalTomanProfit += Math.round(diff / 10000);
+            });
+
+            if (!firstDate || !lastDate) return 0;
+            let daysDiff = Math.max(1, Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24)));
+            return totalTomanProfit / daysDiff;
+        }
+
+        function calculateDailyAverageTomanProfit(appId) {
+            const historyKeys = {
+                1: "gold_history",
+                2: "fixedIncome_history",
+                3: "kian_history",
+                4: "pension_history",
+                5: "sinergy_history",
+                6: "cement_history",
+                7: "ahang_kian_history"
             };
             const historyKey = historyKeys[appId];
             let historyRaw = localStorage.getItem(historyKey);
@@ -923,7 +981,8 @@
                 3: "kian_history",
                 4: "pension_history",
                 5: "sinergy_history",
-                6: "cement_history"
+                6: "cement_history",
+                7: "ahang_kian_history"
             };
             const peakKeys = {
                 1: "gold_peakNumber",
@@ -931,12 +990,13 @@
                 3: "kian_peakNumber",
                 4: "pension_peakNumber",
                 5: "sinergy_peakNumber",
-                6: "cement_peakNumber"
+                6: "cement_peakNumber",
+                7: "ahang_kian_peakNumber"
             };
 
             const processedAppsPerDay = {}; // { 'YYYY-MM-DD': Set([appId1, appId2, ...]) }
 
-            for (let appId = 1; appId <= 6; appId++) {
+            for (let appId = 1; appId <= 7; appId++) {
                 const historyKey = historyKeys[appId];
                 let historyRaw = localStorage.getItem(historyKey);
                 let history = [];
@@ -1234,6 +1294,17 @@
                 }
             } catch(e) {}
             result.push({ id: 6, title: "ثبت درصد 6", data: app6Data });
+
+            // ۷. ثبت درصد 7
+            let app7Raw = localStorage.getItem("ahang_kian_percents");
+            let app7Data = [];
+            try {
+                if (app7Raw) {
+                    let parsed = JSON.parse(app7Raw);
+                    app7Data = parsed.percents || [];
+                }
+            } catch(e) {}
+            result.push({ id: 7, title: "ثبت درصد 7", data: app7Data });
 
             cachedAppsPercentData = result;
             return result;
@@ -1546,7 +1617,7 @@
                     // حالت عادی (پیش‌فرض)
                     listEl.innerHTML = history.map(item => {
                         const isTabAnalysis = tabName === 'analysis';
-                        const val = isTabAnalysis ? (item.value / 6) : item.value;
+                        const val = isTabAnalysis ? (item.value / 7) : item.value;
                         const precision = isTabAnalysis ? 3 : 2;
                         const isPositive = val >= 0;
                         const valueSign = isPositive ? '+' : '';
@@ -1579,7 +1650,7 @@
                         let negativeCount = 0;
 
                         history.forEach(item => {
-                            const val = tabName === 'analysis' ? (item.value / 6) : item.value;
+                            const val = tabName === 'analysis' ? (item.value / 7) : item.value;
                             if (val > 0) positiveCount++;
                             else if (val < 0) negativeCount++;
                         });
@@ -1783,12 +1854,12 @@
 
             aiCard.style.display = 'flex';
 
-            if (completedAppsCount < 6) {
+            if (completedAppsCount < 7) {
                 const cachedAnalysis = localStorage.getItem('monitor_last_gemini_analysis');
                 if (cachedAnalysis) {
-                    aiContent.innerHTML = `⏳ منتظر ثبت درصد بقیه اپ‌ها (${completedAppsCount} از ۶ تکمیل شده)...<br><br><span style="font-size: 0.8rem; opacity: 0.7;">💡 تحلیل آخرین روز تکمیل‌شده:</span><br>« ${cachedAnalysis} »`;
+                    aiContent.innerHTML = `⏳ منتظر ثبت درصد بقیه اپ‌ها (${completedAppsCount} از ۷ تکمیل شده)...<br><br><span style="font-size: 0.8rem; opacity: 0.7;">💡 تحلیل آخرین روز تکمیل‌شده:</span><br>« ${cachedAnalysis} »`;
                 } else {
-                    aiContent.innerText = `⏳ برای دریافت تحلیل هوش مصنوعی، لطفاً درصد هر ۶ اپلیکیشن را برای امروز ثبت کنید (${completedAppsCount} از ۶ تکمیل شده).`;
+                    aiContent.innerText = `⏳ برای دریافت تحلیل هوش مصنوعی، لطفاً درصد هر ۷ اپلیکیشن را برای امروز ثبت کنید (${completedAppsCount} از ۷ تکمیل شده).`;
                 }
                 return;
             }
@@ -1825,7 +1896,7 @@
 
             const prompt = `
                 تو یک هوش مصنوعی بسیار باهوش، رفیق شفیق، با نمک و کمی شوخ‌طبع برای عمارت دیجیتال هستی.
-                امروز هر ۶ درصد ثبت شدند و مجموع درصدهای ثبت‌شده امروز به ${totalSum.toFixed(2)}% رسیده است.
+                امروز هر ۷ درصد ثبت شدند و مجموع درصدهای ثبت‌شده امروز به ${totalSum.toFixed(2)}% رسیده است.
                 هدف نهایی ما رسیدن به ${targetPercent}% سود است. یعنی ${remainingToTarget.toFixed(2)}% تا هدف طلایی فاصله داریم.
                 با توجه به این عدد مجموع درصدها و فاصله تا هدف ۳۰۰۰ درصدی، یک جمله‌ی فارسی بسیار جذاب، شیوا، موجز و شوخ‌طبعانه (حداکثر در ۳ خط کوتاه) بگو. به هیچ وجه متن طولانی ننویس.
             `;

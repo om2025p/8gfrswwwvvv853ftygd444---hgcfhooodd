@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>محاسبه تغییرات درصد · صندوق آهنگ سهام کیان</title>
+    <style>
+        :root {
+            --bg-body: #0f172a;
+            --bg-container: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --primary-color: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --border-color: #334155;
+            --section-bg: #0f172a;
+            --input-bg: #1e293b;
+            --input-border: #475569;
+            --input-text: #f8fafc;
+            --btn-copy-bg: #334155;
+            --btn-copy-hover: #475569;
+            --btn-copy-text: #38bdf8;
+            --result-bg: #1e1b4b;
+            --result-text: #f8fafc;
+            --positive-color: #34d399;
+            --negative-color: #f87171;
+            --neutral-color: #38bdf8;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --history-bg: #1e293b;
+            --history-item-hover: #334155;
+            --history-border: #334155;
+            --toast-bg: #8b5cf6;
+            --toast-color: #ffffff;
+        }
+
+        body {
+            font-family: Tahoma, 'Segoe UI', Arial, system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            direction: rtl;
+        }
+
+        .container {
+            background-color: var(--bg-container);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px var(--shadow-color);
+            padding: 30px;
+            width: 85%;
+            max-width: 720px;
+            position: relative;
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            text-align: center;
+            background: linear-gradient(135deg, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 25px;
+            margin-top: 10px;
+            font-weight: 800;
+            font-size: 1.3rem;
+        }
+
+        .calculator-section {
+            margin-bottom: 25px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background-color: var(--section-bg);
+        }
+
+        h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--input-border);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1.1em;
+            color: var(--input-text);
+            background-color: var(--input-bg);
+            flex-grow: 1;
+            transition: all 0.3s ease;
+            font-family: monospace;
+            direction: ltr;
+            text-align: left;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--shadow-color);
+        }
+
+        .copy-btn {
+            background-color: var(--btn-copy-bg);
+            color: var(--btn-copy-text);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            min-width: 48px;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--btn-copy-hover);
+        }
+
+        .copy-btn svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+        }
+
+        .calc-btn {
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            color: white;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            font-family: inherit;
+            width: 100%;
+            margin-top: 15px;
+            font-size: 1.2em;
+            font-weight: 700;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .calc-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.4);
+        }
+
+        .result-container {
+            margin-top: 20px;
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .result {
+            flex-grow: 1;
+            padding: 15px;
+            background-color: var(--result-bg);
+            color: var(--result-text);
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            min-height: 24px;
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .positive {
+            color: var(--positive-color);
+            background-color: rgba(52, 211, 153, 0.1);
+            border-color: var(--positive-color);
+        }
+
+        .recovering {
+            color: #f59e0b;
+            background-color: rgba(245, 158, 11, 0.1);
+            border-color: #f59e0b;
+        }
+
+        .negative {
+            color: var(--negative-color);
+            background-color: rgba(248, 113, 113, 0.1);
+            border-color: var(--negative-color);
+        }
+
+        .neutral {
+            color: var(--neutral-color);
+        }
+
+        .readonly-input {
+            background-color: var(--btn-copy-bg) !important;
+            color: var(--primary-color) !important;
+            border-color: var(--border-color) !important;
+            cursor: not-allowed;
+            font-weight: bold;
+        }
+
+        /* استایل تاریخچه */
+        .history-section {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .history-dropdown {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--history-bg);
+            min-width: 100%;
+            max-height: 380px;
+            overflow-y: auto;
+            box-shadow: 0 8px 24px var(--shadow-color);
+            border-radius: 12px;
+            z-index: 1000;
+            margin-top: 10px;
+            border: 1px solid var(--history-border);
+        }
+
+        .history-section.show .dropdown-content {
+            display: block;
+        }
+
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--history-border);
+            cursor: pointer;
+            transition: background 0.2s;
+            user-select: none;
+        }
+
+        .history-item:hover {
+            background-color: var(--history-item-hover);
+        }
+
+        .history-item .copyable-number,
+        .history-item .copyable-percent,
+        .history-item .copyable-full {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 12px;
+        }
+
+        .history-item .date {
+            color: var(--primary-color);
+            font-size: 0.7rem;
+            direction: ltr;
+            display: inline-block;
+            background: var(--btn-copy-bg);
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+        }
+
+        .history-item .details {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            margin: 5px 0;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .clear-history {
+            background-color: #ef4444;
+            margin-top: 12px;
+            width: 100%;
+        }
+
+        .badge {
+            background: #f59e0b;
+            border-radius: 30px;
+            padding: 2px 10px;
+            font-size: 0.7rem;
+            margin-right: 8px;
+            color: #0f172a;
+            font-weight: bold;
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--toast-bg);
+            color: var(--toast-color);
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 95%;
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.2rem;
+            }
+            .calculator-section {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎵 محاسبه تغییرات درصد · صندوق آهنگ سهام کیان</h1>
+
+    <div class="calculator-section">
+        <h2>محاسبه تفاوت درصد</h2>
+
+        <div class="input-group">
+            <label for="ahang_kian_number1">عدد پایه (با کاما):</label>
+            <div class="input-wrapper">
+                <input type="text" id="ahang_kian_number1" placeholder="مثال: 1,000,000">
+                <button class="copy-btn" onclick="copyFieldValue('ahang_kian_number1')" title="کپی">
+                    <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="ahang_kian_peakNumber">🏔️ بالاترین عدد ثبت‌شده / قله (غیرقابل ویرایش):</label>
+            <div class="input-wrapper">
+                <input type="text" id="ahang_kian_peakNumber" class="readonly-input" readonly placeholder="هنوز قله‌ای ثبت نشده">
+                <button id="ahang_kian_resetPeak" class="copy-btn" style="background-color: #f59e0b; color: #fff; border-color: #f59e0b; font-weight: bold; min-width: 80px;" title="ریست قله به عدد پایه">🔄 ریست</button>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="ahang_kian_number2">عدد جدید (با کاما):</label>
+            <div class="input-wrapper">
+                <input type="text" id="ahang_kian_number2" placeholder="مثال: 500,000">
+                <button class="copy-btn" onclick="copyFieldValue('ahang_kian_number2')" title="کپی">
+                    <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <button id="ahang_kian_calculateDifference" class="calc-btn">✨ محاسبه و ذخیره در تاریخچه</button>
+
+        <div class="result-container">
+            <div class="result" id="ahang_kian_differenceResult"></div>
+            <button class="copy-btn" onclick="copyResult()" title="کپی نتیجه" id="resultCopyBtn" style="display: none;">
+                <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="history-section" id="historySection">
+        <div class="history-dropdown">
+            <button class="history-btn calc-btn" id="historyToggleBtn">
+                📜 نمایش/بستن تاریخچه محاسبات <span class="badge" id="historyCount">0</span> ▼
+            </button>
+            <div class="dropdown-content" id="historyList">
+                <div style="padding: 15px; text-align: center; color: var(--text-secondary);">📭 هنوز محاسبه‌ای انجام نشده</div>
+            </div>
+        </div>
+        <button class="clear-history calc-btn" id="clearHistoryBtn">🗑️ پاک کردن کل تاریخچه</button>
+    </div>
+</div>
+
+<div id="toastMsg" class="toast-msg">✅ کپی شد!</div>
+
+<script>
+    const STORAGE_BASE = 'ahang_kian_baseNumber';
+    const STORAGE_PEAK = 'ahang_kian_peakNumber';
+    const STORAGE_HISTORY = 'ahang_kian_history';
+
+    const num1Input = document.getElementById('ahang_kian_number1');
+    const peakInput = document.getElementById('ahang_kian_peakNumber');
+    const num2Input = document.getElementById('ahang_kian_number2');
+    const resetPeakBtn = document.getElementById('ahang_kian_resetPeak');
+    const resultDiv = document.getElementById('ahang_kian_differenceResult');
+    const calcBtn = document.getElementById('ahang_kian_calculateDifference');
+    const historyToggleBtn = document.getElementById('historyToggleBtn');
+    const historyListDiv = document.getElementById('historyList');
+    const historyCountSpan = document.getElementById('historyCount');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const historySection = document.getElementById('historySection');
+    const toastMsg = document.getElementById('toastMsg');
+    const resultCopyBtn = document.getElementById('resultCopyBtn');
+
+    function convertToEnglishNumbers(input) {
+        if (!input && input !== 0) return '';
+        const str = String(input);
+        const persianNumbers = {
+            '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
+            '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
+            '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+            '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9'
+        };
+        return str.replace(/[۰-۹٠-٩]/g, (match) => persianNumbers[match] || match);
+    }
+
+    function normalizeNumberString(str) {
+        if (!str) return '';
+        let converted = convertToEnglishNumbers(str);
+        converted = converted.replace(/[^0-9,.]/g, '');
+        return converted;
+    }
+
+    function showToast(text) {
+        toastMsg.textContent = text || '✅ کپی شد!';
+        toastMsg.style.opacity = '1';
+        setTimeout(() => {
+            toastMsg.style.opacity = '0';
+        }, 1500);
+    }
+
+    function copyToClipboard(text) {
+        if (!text) return;
+        const englishText = convertToEnglishNumbers(text);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(englishText).then(() => {
+                showToast(`📋 کپی شد: ${englishText.length > 30 ? englishText.substring(0, 30) + '...' : englishText}`);
+            }).catch(() => {
+                fallbackCopy(englishText);
+            });
+        } else {
+            fallbackCopy(englishText);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(`📋 کپی شد`);
+    }
+
+    function copyFieldValue(fieldId) {
+        const inputElement = document.getElementById(fieldId);
+        const textToCopy = inputElement.value;
+        if (textToCopy) copyToClipboard(textToCopy);
+    }
+
+    function copyResult() {
+        const textToCopy = resultDiv.textContent;
+        if (textToCopy && textToCopy !== '') copyToClipboard(textToCopy);
+    }
+
+    function formatNumberWithCommas(x) {
+        if (x === undefined || x === null || isNaN(x)) return '';
+        return Number(x).toLocaleString('en-US');
+    }
+
+    function parseNumberWithCommas(str) {
+        if (!str || str.trim() === '') return NaN;
+        const normalized = normalizeNumberString(str);
+        const cleaned = normalized.replace(/,/g, '');
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? NaN : num;
+    }
+
+    function toPersianDate(date) {
+        return new Intl.DateTimeFormat('fa-IR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }).format(new Date(date));
+    }
+
+    function getHistory() {
+        const raw = localStorage.getItem(STORAGE_HISTORY);
+        if (!raw) return [];
+        try {
+            return JSON.parse(raw);
+        } catch(e) {
+            return [];
+        }
+    }
+
+    function saveHistory(history) {
+        localStorage.setItem(STORAGE_HISTORY, JSON.stringify(history));
+        renderHistory();
+    }
+
+    function addToHistory(baseNum, newNum, percent, diffType, rawBase, rawNew) {
+        const history = getHistory();
+        const now = new Date();
+        history.unshift({
+            id: Date.now(),
+            base: baseNum,
+            new: newNum,
+            percent: percent,
+            type: diffType,
+            rawBase: rawBase,
+            rawNew: rawNew,
+            timestamp: now.toISOString(),
+            persianDate: toPersianDate(now)
+        });
+        if (history.length > 60) history.pop();
+        saveHistory(history);
+    }
+
+    function getRawBaseFromHistoryItem(item) {
+        if (item.rawBase !== undefined && item.rawBase !== null && !isNaN(item.rawBase)) {
+            return item.rawBase;
+        }
+        if (item.base) return parseNumberWithCommas(item.base);
+        return NaN;
+    }
+
+    function getRawNewFromHistoryItem(item) {
+        if (item.rawNew !== undefined && item.rawNew !== null && !isNaN(item.rawNew)) {
+            return item.rawNew;
+        }
+        if (item.new) return parseNumberWithCommas(item.new);
+        return NaN;
+    }
+
+    function renderHistory() {
+        const history = getHistory();
+        historyCountSpan.innerText = history.length;
+
+        if (history.length === 0) {
+            historyListDiv.innerHTML = '<div style="padding: 15px; text-align: center; color: var(--text-secondary);">📭 هیچ محاسبه‌ای توی تاریخچه نیست</div>';
+            return;
+        }
+
+        historyListDiv.innerHTML = history.map(item => {
+            const percentNum = parseFloat(item.percent);
+            const percentColor = percentNum > 0 ? 'var(--positive-color)' : (percentNum < 0 ? 'var(--negative-color)' : 'var(--neutral-color)');
+            const typeText = item.type === 'increase' ? '📈 افزایش' : (item.type === 'decrease' ? '📉 کاهش' : '⚖️ بدون تغییر');
+            const baseDisplay = convertToEnglishNumbers(item.base || '???');
+            const newDisplay = convertToEnglishNumbers(item.new || '???');
+            const percentDisplay = convertToEnglishNumbers(item.percent || '0');
+            return `
+                <div class="history-item" data-id="${item.id}">
+                    <div class="date">📅 ${item.persianDate || toPersianDate(item.timestamp)}</div>
+                    <div class="details">
+                        <span class="copyable-number" data-copy-type="base" data-value="${baseDisplay}" data-raw="${getRawBaseFromHistoryItem(item)}">${baseDisplay}</span>
+                        →
+                        <span class="copyable-number" data-copy-type="new" data-value="${newDisplay}" data-raw="${getRawNewFromHistoryItem(item)}">${newDisplay}</span>
+                        <span class="copyable-percent" data-copy-type="percent" data-value="${percentDisplay}" style="color: ${percentColor}; font-weight: bold; cursor: pointer;"> (${percentDisplay}%)</span>
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--primary-color);" class="copyable-full" data-copy-type="full" data-base="${baseDisplay}" data-new="${newDisplay}" data-percent="${percentDisplay}" data-type="${typeText}">${typeText}</div>
+                </div>
+            `;
+        }).join('');
+
+        document.querySelectorAll('.history-item').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = parseInt(el.dataset.id);
+                const historyItem = getHistory().find(h => h.id === id);
+                if (historyItem) {
+                    const rawBase = getRawBaseFromHistoryItem(historyItem);
+                    const rawNew = getRawNewFromHistoryItem(historyItem);
+                    if (!isNaN(rawBase) && !isNaN(rawNew)) {
+                        num1Input.value = formatNumberWithCommas(rawBase);
+                        num2Input.value = formatNumberWithCommas(rawNew);
+                        calculateAndSave(false);
+                    } else {
+                        resultDiv.textContent = '⚠️ داده این آیتم تاریخچه ناقص است';
+                        resultDiv.className = 'result negative';
+                    }
+                    historySection.classList.remove('show');
+                }
+            });
+        });
+    }
+
+    function calculateAndSave(saveToHistory = true) {
+        let baseStr = num1Input.value;
+        let newStr = num2Input.value;
+
+        baseStr = normalizeNumberString(baseStr);
+        newStr = normalizeNumberString(newStr);
+
+        const baseNum = parseNumberWithCommas(baseStr);
+        const newNum = parseNumberWithCommas(newStr);
+
+        if (!isNaN(baseNum) && baseNum.toString() !== 'NaN') {
+            num1Input.value = formatNumberWithCommas(baseNum);
+        }
+        if (!isNaN(newNum) && newNum.toString() !== 'NaN') {
+            num2Input.value = formatNumberWithCommas(newNum);
+        }
+
+        resultDiv.className = 'result';
+        resultCopyBtn.style.display = 'none';
+
+        if (isNaN(baseNum) || isNaN(newNum)) {
+            resultDiv.textContent = '❌ لطفاً اعداد معتبر وارد کنید (فقط رقم و کاما)';
+            resultDiv.classList.add('negative');
+            return false;
+        }
+        if (baseNum === 0) {
+            resultDiv.textContent = '⚠️ عدد پایه نمی‌تواند صفر باشد!';
+            resultDiv.classList.add('negative');
+            return false;
+        }
+
+        let currentPeak = parseNumberWithCommas(normalizeNumberString(localStorage.getItem(STORAGE_PEAK)));
+        if (isNaN(currentPeak)) {
+            currentPeak = baseNum;
+        }
+
+        const diff = newNum - baseNum;
+        const percent = (diff / baseNum) * 100;
+        let percentFixed = percent.toFixed(2);
+        let type = 'neutral';
+        let resultText = `🎵 تغییرات درصد (آهنگ کیان): ${percentFixed}%`;
+
+        const changeAmount = Math.abs((percent/100) * baseNum);
+
+        if (newNum > currentPeak) {
+            currentPeak = newNum;
+            localStorage.setItem(STORAGE_PEAK, formatNumberWithCommas(currentPeak));
+            peakInput.value = formatNumberWithCommas(currentPeak);
+
+            resultText += ' 🚀 🟢 (سود خالص واقعی - عبور از قله)';
+            resultText += ` — 🎉 یعنی ${formatNumberWithCommas(Math.round(changeAmount))} تومان افزایش سرمایه واقعی و قله جدید ثبت شد!`;
+            type = 'increase';
+            resultDiv.classList.add('positive');
+        } else if (newNum > baseNum && newNum <= currentPeak) {
+            resultText += ' 🟠 (جبران ضرر / اصلاح قیمت)';
+            resultText += ` — ⚡ یعنی ${formatNumberWithCommas(Math.round(changeAmount))} تومان رشد از پایه، اما هنوز زیر قله قبلی (${formatNumberWithCommas(currentPeak)}) هستید!`;
+            type = 'recovering';
+            resultDiv.classList.add('recovering');
+        } else if (newNum < baseNum) {
+            resultText += ' 📉 🔴 (کاهش ارزش صندوق)';
+            resultText += ` — 😢 یعنی ${formatNumberWithCommas(Math.round(changeAmount))} تومان کاهش سرمایه!`;
+            type = 'decrease';
+            resultDiv.classList.add('negative');
+        } else {
+            resultText += ' ⚖️ (بدون تغییر)';
+            type = 'neutral';
+            resultDiv.classList.add('neutral');
+        }
+
+        resultDiv.textContent = resultText;
+        resultCopyBtn.style.display = 'flex';
+
+        if (saveToHistory) {
+            addToHistory(
+                formatNumberWithCommas(baseNum),
+                formatNumberWithCommas(newNum),
+                percentFixed,
+                type,
+                baseNum,
+                newNum
+            );
+        }
+        return true;
+    }
+
+    function handleNumberInput(e) {
+        let val = e.target.value;
+        const converted = normalizeNumberString(val);
+        const num = parseNumberWithCommas(converted);
+        if (!isNaN(num)) {
+            e.target.value = formatNumberWithCommas(num);
+        } else if (converted === '') {
+            e.target.value = '';
+        } else {
+            e.target.value = converted;
+        }
+
+        if (e.target.id === 'ahang_kian_number1') {
+            localStorage.setItem(STORAGE_BASE, e.target.value);
+        }
+
+        if (resultDiv.textContent !== '') {
+            resultDiv.textContent = '';
+            resultDiv.className = 'result';
+            resultCopyBtn.style.display = 'none';
+        }
+    }
+
+    num1Input.addEventListener('input', handleNumberInput);
+    num2Input.addEventListener('input', handleNumberInput);
+
+    resetPeakBtn.addEventListener('click', () => {
+        const password = prompt("🔑 لطفاً رمز عبور را وارد کنید:");
+        if (password !== "123456789") {
+            alert("❌ رمز عبور اشتباه است!");
+            return;
+        }
+
+        if (!confirm("تأیید ۱ از ۳: آیا از ریست کردن قله اطمینان دارید؟")) return;
+        if (!confirm("تأیید ۲ از ۳: با این کار قله به عدد پایه فعلی تغییر می‌کند، آیا مطمئن هستید؟")) return;
+        if (!confirm("تأیید ۳ از ۳: تأیید نهایی جهت تغییر قله؟")) return;
+
+        const baseVal = num1Input.value;
+        if (baseVal) {
+            localStorage.setItem(STORAGE_PEAK, baseVal);
+            peakInput.value = baseVal;
+            showToast('🔄 قله به عدد پایه ریست شد!');
+        } else {
+            localStorage.removeItem(STORAGE_PEAK);
+            peakInput.value = '';
+            showToast('🔄 قله ریست شد!');
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedBase = localStorage.getItem(STORAGE_BASE);
+        if (savedBase) {
+            const converted = normalizeNumberString(savedBase);
+            const num = parseNumberWithCommas(converted);
+            if (!isNaN(num)) num1Input.value = formatNumberWithCommas(num);
+        }
+        const savedPeak = localStorage.getItem(STORAGE_PEAK);
+        if (savedPeak) {
+            const converted = normalizeNumberString(savedPeak);
+            const num = parseNumberWithCommas(converted);
+            if (!isNaN(num)) peakInput.value = formatNumberWithCommas(num);
+        }
+
+        renderHistory();
+        num1Input.focus();
+    });
+
+    calcBtn.addEventListener('click', () => calculateAndSave(true));
+
+    clearHistoryBtn.addEventListener('click', () => {
+        if (confirm('❗ همه تاریخچه صندوق آهنگ کیان پاک می‌شه! مطمئنی؟')) {
+            localStorage.removeItem(STORAGE_HISTORY);
+            renderHistory();
+            resultDiv.textContent = '🧹 تاریخچه با موفقیت پاک شد';
+            resultDiv.className = 'result neutral';
+            resultCopyBtn.style.display = 'flex';
+            setTimeout(() => {
+                if(resultDiv.textContent === '🧹 تاریخچه با موفقیت پاک شد') {
+                    resultDiv.textContent = '';
+                    resultDiv.className = 'result';
+                    resultCopyBtn.style.display = 'none';
+                }
+            }, 2000);
+        }
+    });
+
+    historyToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        historySection.classList.toggle('show');
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!historySection.contains(e.target)) {
+            historySection.classList.remove('show');
+        }
+    });
+
+    const handleEnter = (e) => { if (e.key === 'Enter') calculateAndSave(true); };
+    num1Input.addEventListener('keypress', handleEnter);
+    num2Input.addEventListener('keypress', handleEnter);
+
+    window.copyFieldValue = copyFieldValue;
+    window.copyResult = copyResult;
+</script>
+</body>
+</html>
