@@ -687,7 +687,8 @@
       3: 'ثبت درصد 3 (اهرمی ممتازی)',
       4: 'ثبت درصد 4 (آتیه مفید)',
       5: 'ثبت درصد 5 (نفت و انرژی)',
-      6: 'ثبت درصد 6 (سیمان کیان)'
+      6: 'ثبت درصد 6 (سیمان کیان)',
+      7: 'ثبت درصد 7 (آهنگ کیان)'
     };
 
     const DEFAULT_FUND_MAPPING = {
@@ -696,7 +697,8 @@
       3: 'دوایکس اهرمی شاخصی',
       4: 'آتیه مفید',
       5: 'صندوق سهام نفت گاز برق',
-      6: 'صندوق  ارزش سیمان'
+      6: 'صندوق  ارزش سیمان',
+      7: 'صندوق آهنگ سهام کیان'
     };
 
     function getFundMapping() {
@@ -712,7 +714,7 @@
         const mapping = getFundMapping();
         const syncData = {};
 
-        for (let appId = 1; appId <= 6; appId++) {
+        for (let appId = 1; appId <= 7; appId++) {
           const targetFundName = mapping[appId];
           let fi = fundNames.findIndex(f => f && f.trim() === (targetFundName || '').trim());
           if (fi === -1 && targetFundName) {
@@ -773,7 +775,7 @@
         container.innerHTML = '';
         const currentMapping = getFundMapping();
 
-        for (let appId = 1; appId <= 6; appId++) {
+        for (let appId = 1; appId <= 7; appId++) {
           const row = document.createElement('div');
           row.className = 'settings-row';
 

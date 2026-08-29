@@ -1,0 +1,132 @@
+import os
+import subprocess
+
+svg_content = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- پس‌زمینه رنگین‌کمانی درخشان -->
+    <linearGradient id="bgRainbow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="25%" stop-color="#1e1b4b"/>
+      <stop offset="50%" stop-color="#311042"/>
+      <stop offset="75%" stop-color="#064e3b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <!-- گرادینت درخشش طلایی صندوق -->
+    <linearGradient id="goldChest" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082" />
+      <stop offset="40%" stop-color="#FFC107" />
+      <stop offset="100%" stop-color="#FF8F00" />
+    </linearGradient>
+
+    <!-- گرادینت داخل صندوق (تاریک و عمیق) -->
+    <linearGradient id="chestInside" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3a1c00" />
+      <stop offset="100%" stop-color="#150a00" />
+    </linearGradient>
+
+    <!-- گرادینت چوب طلایی صندوق -->
+    <linearGradient id="woodGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8D6E63"/>
+      <stop offset="50%" stop-color="#5D4037"/>
+      <stop offset="100%" stop-color="#3E2723"/>
+    </linearGradient>
+
+    <!-- هاله درخشان درصدهای مثبت -->
+    <filter id="glowGreen" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="glowGold" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- پس‌زمینه گرد با حاشیه درخشان -->
+  <rect width="512" height="512" rx="110" fill="url(#bgRainbow)" />
+  <rect width="504" height="504" x="4" y="4" rx="106" fill="none" stroke="url(#goldChest)" stroke-width="4" opacity="0.4" />
+
+  <!-- هاله نور خروج جادویی درصدهای مثبت از درون صندوق -->
+  <ellipse cx="256" cy="250" rx="160" ry="90" fill="#34d399" opacity="0.25" filter="url(#glowGreen)" />
+  <ellipse cx="256" cy="220" rx="110" ry="60" fill="#fbbf24" opacity="0.3" filter="url(#glowGold)" />
+
+  <!-- ذرات نوری و ستاره‌ها و درصدهای مثبت لایه‌بندی شده -->
+
+  <!-- درصدهای مثبت عمقی داخل و سربرآورده -->
+  <g font-family="Tahoma, Arial, sans-serif" font-weight="900" filter="url(#shadow)">
+    <!-- درصدهای مثبت بزرگ شناور و پاشیده شده در اطراف -->
+    <text x="130" y="150" font-size="38" fill="#34d399" filter="url(#glowGreen)">+15%</text>
+    <text x="320" y="130" font-size="44" fill="#34d399" filter="url(#glowGreen)">+28%</text>
+    <text x="220" y="110" font-size="52" fill="#6ee7b7" filter="url(#glowGreen)">+50%</text>
+    <text x="80" y="240" font-size="32" fill="#10b981" filter="url(#glowGreen)">+8%</text>
+    <text x="370" y="220" font-size="36" fill="#34d399" filter="url(#glowGreen)">+12%</text>
+
+    <!-- علامت‌های درصد ٪ و مثبت در هوا -->
+    <text x="180" y="80" font-size="28" fill="#f59e0b">+٪</text>
+    <text x="310" y="75" font-size="32" fill="#34d399">+٪</text>
+    <text x="250" y="160" font-size="40" fill="#a7f3d0">+٪</text>
+
+    <!-- درصدهای منفی کم و کوچک در حاشیه -->
+    <text x="65" y="340" font-size="18" fill="#f87171" opacity="0.75">-2%</text>
+    <text x="415" y="330" font-size="20" fill="#f87171" opacity="0.75">-1.5%</text>
+  </g>
+
+  <!-- بدنه صندوق گنج نیم‌باز -->
+  <g filter="url(#shadow)">
+    <!-- بخش داخلی صندوق (فضای تاریک پر از گنج) -->
+    <path d="M 120 280 L 392 280 L 370 380 L 142 380 Z" fill="url(#chestInside)" />
+
+    <!-- درصدهای داخل خود صندوق که دارن می‌زنن بیرون -->
+    <g font-family="Tahoma, Arial, sans-serif" font-weight="bold">
+      <text x="160" y="275" font-size="26" fill="#34d399">+35%</text>
+      <text x="240" y="270" font-size="30" fill="#6ee7b7">+100%</text>
+      <text x="310" y="278" font-size="24" fill="#34d399">+18%</text>
+    </g>
+
+    <!-- درب نیم‌باز صندوق (تکیه داده شده و زاویه‌دار به سمت بالا) -->
+    <!-- پشت درب / سقف نیم‌باز -->
+    <path d="M 100 250 C 100 170, 412 170, 412 250 L 392 275 C 392 210, 120 210, 120 275 Z" fill="url(#woodGrad)" stroke="url(#goldChest)" stroke-width="6" />
+    <!-- نوارهای طلایی تزئینی درب صندوق -->
+    <path d="M 160 215 C 160 180, 352 180, 352 215" fill="none" stroke="url(#goldChest)" stroke-width="8" />
+    <path d="M 220 195 C 220 180, 292 180, 292 195" fill="none" stroke="url(#goldChest)" stroke-width="8" />
+
+    <!-- دیواره اصلی پایینی صندوق -->
+    <rect x="110" y="280" width="292" height="130" rx="12" fill="url(#woodGrad)" stroke="#27130c" stroke-width="4" />
+
+    <!-- نوارهای فلزی طلایی عمودی روی بدنه صندوق -->
+    <rect x="140" y="280" width="24" height="130" fill="url(#goldChest)" />
+    <rect x="244" y="280" width="24" height="130" fill="url(#goldChest)" />
+    <rect x="348" y="280" width="24" height="130" fill="url(#goldChest)" />
+
+    <!-- نوار افقی بالای دیواره -->
+    <rect x="106" y="275" width="300" height="16" rx="6" fill="url(#goldChest)" />
+
+    <!-- قفل طلایی پادشاهی و کلید در مرکز صندوق -->
+    <rect x="236" y="315" width="40" height="50" rx="8" fill="url(#goldChest)" stroke="#5D4037" stroke-width="3" />
+    <circle cx="256" cy="335" r="7" fill="#3E2723" />
+    <polygon points="253,338 259,338 261,355 251,355" fill="#3E2723" />
+
+    <!-- گل‌میخ‌های روی نوارهای طلایی -->
+    <circle cx="152" cy="295" r="3" fill="#3E2723" />
+    <circle cx="152" cy="395" r="3" fill="#3E2723" />
+    <circle cx="360" cy="295" r="3" fill="#3E2723" />
+    <circle cx="360" cy="395" r="3" fill="#3E2723" />
+  </g>
+
+  <!-- الماس‌ها و سکه‌های درخشان افتاده بیرون صندوق -->
+  <circle cx="130" cy="430" r="10" fill="url(#goldChest)" filter="url(#shadow)" />
+  <circle cx="150" cy="440" r="8" fill="#34d399" filter="url(#shadow)" />
+  <circle cx="370" cy="435" r="12" fill="url(#goldChest)" filter="url(#shadow)" />
+  <circle cx="390" cy="425" r="7" fill="#6ee7b7" filter="url(#shadow)" />
+</svg>
+'''
+
+with open("gold7/chest_icon.svg", "w") as f:
+    f.write(svg_content)
+
+print("SVG icon written to gold7/chest_icon.svg")
