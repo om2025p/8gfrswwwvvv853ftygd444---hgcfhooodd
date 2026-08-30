@@ -407,8 +407,15 @@
             if (!token || !htmlSnippet || !htmlSnippet.trim()) return "";
 
             const cleanCode = htmlSnippet.slice(0, 3500).replace(/\s+/g, ' ');
-            const prompt = `موضوع اصلی و محتوای انسانی کد HTML زیر را خوانده و فقط یک عبارت کوتاه و روان فارسی بنویس که بگوید محتوای این فایل درباره چیست (مثلاً: در مورد شناخت هویت ایمانا است و موانع پیش رو جراحی اف اف اس در اسپانیا).
-اصلاً از اصطلاحات فنی بر برنامه‌نویسی مثل HTML، CSS، کد، تگ، وب‌سایت، هوش مصنوعی، یا مقدمه‌چینی مانند "بر اساس کد" استفاده نکن. فقط خود عبارت موضوعی روان و خلاصه را بنویس بدون هیچ کاراکتر غیرمجاز فایل مثل / \\ : * ? " < > |\n\nکد:\n${cleanCode}`;
+            const prompt = `موضوع اصلی این کد را بخوان و فقط و فقط یک عبارت خلاصه روان فارسی بگو بدون هیچ مقدمه یا کلمات اضافه (مثلاً: در مورد شناخت هویت ایمانا است و موانع پیش رو جراحی اف اف اس در اسپانیا).
+
+قوانین بسیار مهم:
+- اصلاً کلماتی مانند "فایل تحت وب"، "بر اساس"، "بررسی دقیق کد"، "شامل عنوان"، "کد HTML"، "HTML"، "تگ"، "وب‌سایت" را نیاور.
+- هیچ علامت غیرمجاز نام فایل مثل / \\ : * ? " < > | را نیاور.
+- فقط خلاصه موضوع انسانی را بنویس.
+
+کد:
+${cleanCode}`;
 
             const models = [
                 'gemini-3.6-flash',
@@ -432,10 +439,22 @@
                     if (response.ok) {
                         const data = await response.json();
                         let aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+                        // Clean unwanted meta phrases if AI generated them
                         aiText = aiText.trim()
-                            .replace(/^این فایل\s*:\s*/g, '')
+                            .replace(/^این فایل\s*:\s*/gi, '')
+                            .replace(/فایل تحت وب\s*\d*\s*-?\s*/gi, '')
+                            .replace(/بر اساس بررسی دقیق کد HTML/gi, '')
+                            .replace(/بر اساس بررسی دقیق کد/gi, '')
+                            .replace(/بر اساس بررسی/gi, '')
+                            .replace(/بر اساس/gi, '')
+                            .replace(/\(شامل عنوان/gi, '')
+                            .replace(/شامل عنوان/gi, '')
+                            .replace(/کد HTML/gi, '')
                             .replace(/["'\n\r\\/:\*\?<>\|]/g, '')
+                            .trim()
                             .slice(0, 80);
+
                         if (aiText) {
                             return aiText;
                         }
@@ -579,9 +598,9 @@
 
             let fileName = "";
             if (aiTitle) {
-                fileName = `این فایل : ${aiTitle} . ${jalaliDateStr}.html`;
+                fileName = `این فایل - ${aiTitle} - ${jalaliDateStr}.html`;
             } else {
-                fileName = `این فایل : محتوای کد تحت وب . ${jalaliDateStr}.html`;
+                fileName = `این فایل - محتوای کد تحت وب - ${jalaliDateStr}.html`;
             }
 
             const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
