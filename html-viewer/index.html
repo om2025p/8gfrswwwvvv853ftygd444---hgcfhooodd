@@ -418,11 +418,12 @@
 ${cleanCode}`;
 
             const models = [
+                'gemini-3.5-flash',
+                'gemini-3.5-flash-lite',
                 'gemini-3.6-flash',
-                'gemini-flash-latest',
-                'gemini-2.5-flash',
-                'gemini-1.5-flash',
-                'gemini-pro'
+                'gemini-3.1-flash-lite',
+                'gemini-2.5-pro',
+                'gemini-flash-latest'
             ];
 
             for (const model of models) {
@@ -572,12 +573,22 @@ ${cleanCode}`;
             }
         });
 
-        // Instant download HTML file formatted as: این فایل : [محتوای خلاصه] . [تاریخ خورشیدی].html
+        // Instant download HTML file formatted as: این فایل - [محتوای خلاصه] - [تاریخ خورشیدی].html
         async function downloadHtmlFile() {
             const code = editor.value;
             if (!code || code.trim() === '') {
                 showToast('⚠️ لطفاً ابتدا کد HTML را وارد یا کپی نمایید!');
                 return;
+            }
+
+            let aiTitle = cachedAiTitle;
+            if (!aiTitle && aiTitlePromise) {
+                showToast('🤖 در حال دریافت عنوان هوشمند از هوش مصنوعی...');
+                aiTitle = await aiTitlePromise;
+            }
+            if (!aiTitle) {
+                showToast('🤖 در حال ساخت عنوان هوشمند با هوش مصنوعی...');
+                aiTitle = await generateSmartPersianTitle(code);
             }
 
             // Get & Increment Download Counter
@@ -587,14 +598,6 @@ ${cleanCode}`;
             updateDownloadCounterBadge();
 
             const jalaliDateStr = getJalaliDateString();
-
-            let aiTitle = cachedAiTitle;
-            if (!aiTitle && aiTitlePromise) {
-                aiTitle = await aiTitlePromise;
-            }
-            if (!aiTitle) {
-                aiTitle = await generateSmartPersianTitle(code);
-            }
 
             let fileName = "";
             if (aiTitle) {
