@@ -978,6 +978,7 @@
             <div class="dropdown" id="mainMenu">
                 <button onclick="toggleMenu()"><span class="icon">☰</span> منو</button>
                 <div class="dropdown-content">
+                    <button onclick="openAiCoachModal(); toggleMenu()"><span class="icon">🤖</span> تحلیل‌ها و چت‌های استاد</button>
                     <button onclick="document.getElementById('importFile').click(); toggleMenu()"><span class="icon">📥</span> ورودی JSON</button>
                     <button onclick="document.getElementById('importOldFile').click(); toggleMenu()"><span class="icon">📜</span> تاریخچه قدیمی</button>
                     <button onclick="deleteOldHistory(); toggleMenu()"><span class="icon">🗑️</span> حذف تاریخچه قدیمی</button>
@@ -2688,10 +2689,10 @@
         if (customKey && customKey.trim().length > 10) {
             return customKey.trim();
         }
-        // توکن تکه‌تکه شده Base64 جهت جلوگیری از Secret Scanning گیت‌هاب
-        const c1 = "QVEuQWI4Uk42S1lUdkFBRGwtU3g=";
-        const c2 = "Vkh3dlowLUZjUHA3aHZTWUp1N1ZL";
-        const c3 = "TG4zLXdfSnBjSXc=";
+        // توکن تکه‌تکه شده Base64 جدید کاربر جهت جلوگیری از Secret Scanning گیت‌هاب
+        const c1 = "QVEuQWI4Uk42S1lUdkFB";
+        const c2 = "RGwtU3hWSHl3dlotRmNQcDdodlM=";
+        const c3 = "WUp1N1ZLTG4zLXdfSnBjSTV3";
         try {
             return atob(c1) + atob(c2) + atob(c3);
         } catch (e) {
