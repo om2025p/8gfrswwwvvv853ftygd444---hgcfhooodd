@@ -389,36 +389,44 @@
             }
         }
 
-        // Generate short smart Persian title using Gemini AI based on HTML content
+        // Generate short smart Persian title using Gemini AI with fallback models based on HTML content
         async function generateSmartPersianTitle(htmlSnippet) {
             const token = getGeminiToken();
             if (!token) return "";
 
-            // Truncate code if too long for prompt
             const cleanCode = htmlSnippet.slice(0, 2500).replace(/\s+/g, ' ');
             const prompt = `بر اساس کد HTML زیر، یک عنوان بسیار کوتاه، جذاب و خلاصه به زبان فارسی (حداکثر ۱ تا ۳ کلمه) بدون هیچ علامت یا علامت علامت‌گذاری اضافه‌ای پیشنهاد بده:\n\n${cleanCode}`;
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${encodeURIComponent(token)}`;
+            const models = [
+                'gemini-3.6-flash',
+                'gemini-flash-latest',
+                'gemini-2.5-flash',
+                'gemini-1.5-flash',
+                'gemini-pro'
+            ];
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }]
-                    })
-                });
+            for (const model of models) {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(token)}`;
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }]
+                        })
+                    });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    let aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                    aiText = aiText.trim().replace(/["'\n\r\\/:\*\?<>\|]/g, '').slice(0, 30);
-                    if (aiText) {
-                        return aiText;
+                    if (response.ok) {
+                        const data = await response.json();
+                        let aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                        aiText = aiText.trim().replace(/["'\n\r\\/:\*\?<>\|]/g, '').slice(0, 30);
+                        if (aiText) {
+                            return aiText;
+                        }
                     }
+                } catch (err) {
+                    console.warn(`Gemini AI title generation with ${model} skipped:`, err);
                 }
-            } catch (err) {
-                console.warn('Gemini AI title generation skipped, fallback to standard name:', err);
             }
             return "";
         }
