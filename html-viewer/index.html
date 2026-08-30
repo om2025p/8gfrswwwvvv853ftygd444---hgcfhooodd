@@ -606,7 +606,21 @@ ${cleanCode}`;
                 fileName = `این فایل - محتوای کد تحت وب - ${jalaliDateStr}.html`;
             }
 
-            const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
+            const countFa = toPersianDigits(currentCount);
+
+            // Inject download sequence & app metadata into the HTML content
+            const metadataInjection = `<!-- این فایل ${countFa}مین فایلی است که از اپلیکیشن نمایشگر کد پلتفرم عمارت دانلود شده است -->\n<meta name="platform-download-sequence" content="${countFa}">\n<meta name="download-source" content="اپلیکیشن نمایشگر کد - پلتفرم عمارت">\n`;
+
+            let finalCode = code;
+            if (finalCode.includes('<head>')) {
+                finalCode = finalCode.replace('<head>', '<head>\n    ' + metadataInjection);
+            } else if (/<html[^>]*>/i.test(finalCode)) {
+                finalCode = finalCode.replace(/<html[^>]*>/i, '$&\n' + metadataInjection);
+            } else {
+                finalCode = metadataInjection + finalCode;
+            }
+
+            const blob = new Blob([finalCode], { type: 'text/html;charset=utf-8' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = fileName;
