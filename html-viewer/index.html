@@ -249,33 +249,6 @@
             background: #ffffff;
         }
 
-        /* Floating Exit Hint Button */
-        .preview-exit-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.85);
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            z-index: 100000;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: opacity 0.3s, transform 0.2s;
-        }
-
-        .preview-exit-btn:active {
-            transform: translateX(-50%) scale(0.95);
-        }
 
         /* Toast Notifications */
         .toast {
@@ -352,9 +325,6 @@
     <!-- Fullscreen Preview Overlay -->
     <div id="previewLayer">
         <iframe id="previewIframe" title="پیش‌نمایش کد"></iframe>
-        <button class="preview-exit-btn" onclick="exitFullScreenPreview()">
-            <span>🔙 خروج (یا دکمه برگشت گوشی)</span>
-        </button>
     </div>
 
     <!-- Toast Notification -->
