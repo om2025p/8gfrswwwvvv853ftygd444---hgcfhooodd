@@ -479,6 +479,7 @@
                 <option value="mofid_atie_percents">ثبت درصد 4</option>
                 <option value="energy_fund_synergy">ثبت درصد 5</option>
                 <option value="cement_factory_percents">ثبت درصد 6</option>
+                <option value="ahang_kian_percents">ثبت درصد 7 (آهنگ سهام کیان)</option>
             </select>
 
             <label>💰 مبلغ اولیه (تومان):</label>
@@ -689,7 +690,7 @@
         function calculateWatchDailyAverage(watchKey) {
             let percentsList = [];
             try {
-                if (watchKey === 'percents' || watchKey === 'kian_percents' || watchKey === 'mofid_atie_percents') {
+                if (watchKey === 'percents' || watchKey === 'kian_percents' || watchKey === 'mofid_atie_percents' || watchKey === 'ahang_kian_percents') {
                     percentsList = JSON.parse(localStorage.getItem(watchKey)) || [];
                 } else if (watchKey === 'stock____________tas9yl_new_unified' || watchKey === 'energy_fund_synergy' || watchKey === 'cement_factory_percents') {
                     let raw = localStorage.getItem(watchKey);
@@ -1300,7 +1301,8 @@
                 'stock____________tas9yl_new_unified': '📈 ثبت درصد 3',
                 'mofid_atie_percents': '📈 ثبت درصد 4',
                 'energy_fund_synergy': '📈 ثبت درصد 5',
-                'cement_factory_percents': '📈 ثبت درصد 6'
+                'cement_factory_percents': '📈 ثبت درصد 6',
+                'ahang_kian_percents': '📈 ثبت درصد 7 (آهنگ سهام کیان)'
             };
 
             // دسته‌بندی تب‌های فعال
@@ -1312,7 +1314,8 @@
                 'stock____________tas9yl_new_unified': [],
                 'mofid_atie_percents': [],
                 'energy_fund_synergy': [],
-                'cement_factory_percents': []
+                'cement_factory_percents': [],
+                'ahang_kian_percents': []
             };
 
             calculatorInstances.forEach((instanceData, tabId) => {
