@@ -2869,39 +2869,48 @@
         document.getElementById('aiCoachModal').classList.remove('active');
     }
 
-    function renderAiHistorySection(history, currentRecordId) {
+    let activeSelectedRecordId = null;
+
+    function renderAiHistorySection(history) {
         const historyContainer = document.getElementById('aiHistorySection');
         historyContainer.innerHTML = '';
 
         const aiStore = getAiStore();
-        const pastRecords = history.filter(r => r.id !== currentRecordId && aiStore[r.id]);
+        const recordsWithAi = history.filter(r => aiStore[r.id]);
 
-        if (pastRecords.length === 0) return;
+        if (recordsWithAi.length === 0) {
+            historyContainer.innerHTML = '<div style="text-align:center; color:var(--secondary-color); font-size:0.85rem; padding:10px;">هنوز تاریخچه‌ای برای تحلیل‌های استاد ثبت نشده است.</div>';
+            return;
+        }
 
-        let html = `<div class="ai-section-title">📜 تاریخچه تحلیل‌ها و چت‌های استاد (گروه‌بندی خورشیدی)</div>`;
+        let html = `<div class="ai-section-title">📜 لیست جلسات تمرین (انتخاب جهت مشاهده تحلیل و چت)</div>`;
+        html += `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:15px;">`;
 
-        pastRecords.forEach(rec => {
-            const data = aiStore[rec.id];
-            if (!data) return;
-
-            let chatHtml = '';
-            if (data.chat && data.chat.length > 0) {
-                chatHtml = `<div style="margin-top:10px; border-top:1px dashed var(--border-color); padding-top:8px;">
-                    <div style="font-size:0.8rem; font-weight:bold; color:var(--secondary-color); margin-bottom:5px;">💬 گفتگوی آن جلسه:</div>
-                    ${data.chat.map(c => `<div style="font-size:0.8rem; margin-bottom:4px;"><b>${c.role === 'user' ? 'شما' : 'استاد'}:</b> ${escapeHtml(c.text)}</div>`).join('')}
-                </div>`;
-            }
-
+        recordsWithAi.forEach(rec => {
+            const isSelected = rec.id === activeSelectedRecordId;
+            const activeStyle = isSelected ? 'background:#8b5cf6; color:#fff; border-color:#8b5cf6;' : 'background:var(--row-bg); color:var(--text-color); border:1px solid var(--border-color);';
             html += `
-                <details class="ai-history-group">
-                    <summary class="ai-history-date">📅 ${rec.date} (${rec.type}) - ⏰ ${rec.time}</summary>
-                    <div class="ai-analysis-box" style="margin-top:10px; font-size:0.88rem;">${escapeHtml(data.analysis)}</div>
-                    ${chatHtml}
-                </details>
+                <button onclick="selectAiSessionHistory(${rec.id})" style="padding:8px 12px; border-radius:20px; font-size:0.82rem; font-weight:bold; cursor:pointer; font-family:inherit; transition:all 0.2s; ${activeStyle}">
+                    📅 ${rec.date} - ⏰ ${rec.time} (${rec.type})
+                </button>
             `;
         });
 
+        html += `</div>`;
         historyContainer.innerHTML = html;
+    }
+
+    function selectAiSessionHistory(recordId) {
+        activeSelectedRecordId = recordId;
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
+        renderAiHistorySection(history);
+
+        const aiStore = getAiStore();
+        const record = history.find(r => r.id === recordId);
+        if (record && aiStore[recordId]) {
+            renderAiAnalysis(aiStore[recordId].analysis);
+            renderAiChat(aiStore[recordId].chat || []);
+        }
     }
 
     function renderAiAnalysis(text) {
@@ -2936,8 +2945,7 @@
 
         const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
         if (history.length === 0) return;
-        const currentRecord = history[0];
-        const recordId = currentRecord.id;
+        const recordId = activeSelectedRecordId || history[0].id;
 
         let aiStore = getAiStore();
         if (!aiStore[recordId]) aiStore[recordId] = { analysis: '', chat: [] };
