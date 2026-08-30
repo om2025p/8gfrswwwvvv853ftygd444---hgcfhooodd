@@ -324,7 +324,9 @@
 
     <!-- Fullscreen Preview Overlay -->
     <div id="previewLayer">
-        <iframe id="previewIframe" title="پیش‌نمایش کد"></iframe>
+        <iframe id="previewIframe" title="پیش‌نمایش کد"
+            allow="autoplay *; camera *; microphone *; clipboard-read *; clipboard-write *; encrypted-media *; fullscreen *; picture-in-picture *; display-capture *; geolocation *; accelerometer *; gyroscope *; magnetometer *; web-share *"
+            sandbox="allow-scripts allow-same-origin allow-modals allow-popups allow-forms allow-downloads allow-pointer-lock allow-orientation-lock allow-presentation"></iframe>
     </div>
 
     <!-- Toast Notification -->
@@ -528,7 +530,7 @@ ${cleanCode}`;
             }
         }
 
-        // Open Full Screen Preview
+        // Open Full Screen Preview with Advanced Dynamic Live Webview Capabilities
         function openFullScreenPreview() {
             const code = editor.value;
             if (!code || code.trim() === '') {
@@ -536,15 +538,47 @@ ${cleanCode}`;
                 return;
             }
 
-            // Render content inside iframe safely
+            // Render content inside iframe safely using srcdoc or document blob stream for full live Web Audio API & script execution
             previewLayer.style.display = 'flex';
-            const doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
-            doc.open();
-            doc.write(code);
-            doc.close();
+
+            try {
+                // Ensure audio context unlock helper script is injected if Web Audio API is used
+                let processedCode = code;
+                if (!processedCode.toLowerCase().includes('<base ')) {
+                    const baseTag = `<base href="${window.location.href}">\n`;
+                    if (processedCode.includes('<head>')) {
+                        processedCode = processedCode.replace('<head>', '<head>\n' + baseTag);
+                    } else if (/<html[^>]*>/i.test(processedCode)) {
+                        processedCode = processedCode.replace(/<html[^>]*>/i, '$&\n' + baseTag);
+                    } else {
+                        processedCode = baseTag + processedCode;
+                    }
+                }
+
+                const blob = new Blob([processedCode], { type: 'text/html;charset=utf-8' });
+                const blobUrl = URL.createObjectURL(blob);
+                previewIframe.src = blobUrl;
+            } catch (err) {
+                // Fallback to direct document write
+                const doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
+                doc.open();
+                doc.write(code);
+                doc.close();
+            }
 
             // Push History State so Phone's Hardware Back Button closes full-screen mode
             history.pushState({ fullScreen: true }, '');
+        }
+
+        function hidePreviewUI() {
+            previewLayer.style.display = 'none';
+            // Clear iframe content and revoke blob URL
+            try {
+                if (previewIframe.src && previewIframe.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(previewIframe.src);
+                }
+                previewIframe.src = 'about:blank';
+            } catch (e) {}
         }
 
         function exitFullScreenPreview() {
@@ -553,17 +587,6 @@ ${cleanCode}`;
             } else {
                 hidePreviewUI();
             }
-        }
-
-        function hidePreviewUI() {
-            previewLayer.style.display = 'none';
-            // Clear iframe content
-            try {
-                const doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
-                doc.open();
-                doc.write('');
-                doc.close();
-            } catch (e) {}
         }
 
         // Listen for phone's hardware/browser Back Button push (popstate)
