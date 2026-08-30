@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" href="favicon.ico">
+    <title>نمایشگر کد عمارت</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #10b981;
+            --secondary-hover: #059669;
+            --danger: #ef4444;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1e1b4b 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 15px;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 10px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 14px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title img {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title h1 {
+            font-size: 1.3rem;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f5f9;
+            color: #334155;
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .back-link:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .editor-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .editor-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: #334155;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-small:hover {
+            background: #e2e8f0;
+        }
+
+        textarea {
+            width: 100%;
+            height: 320px;
+            padding: 14px;
+            border: 2px solid #cbd5e1;
+            border-radius: 16px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95rem;
+            direction: ltr;
+            text-align: left;
+            resize: vertical;
+            outline: none;
+            background: #f8fafc;
+            color: #0f172a;
+            line-height: 1.5;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+            background: #ffffff;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 5px;
+        }
+
+        .btn-main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease;
+        }
+
+        .btn-main:active {
+            transform: scale(0.97);
+        }
+
+        .btn-preview {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+
+        .btn-preview:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .btn-download:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
+
+        .stats-badge {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f1f5f9;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .stats-badge span {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        /* Fullscreen Preview Layer */
+        #previewLayer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #ffffff;
+            z-index: 99999;
+            display: none;
+            flex-direction: column;
+        }
+
+        #previewIframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #ffffff;
+        }
+
+        /* Floating Exit Hint Button */
+        .preview-exit-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.85);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 100000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.3s, transform 0.2s;
+        }
+
+        .preview-exit-btn:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 50%;
+            transform: translateX(50%) translateY(100px);
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            z-index: 100001;
+            opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+            pointer-events: none;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(50%) translateY(0);
+            opacity: 1;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 16px; gap: 12px; }
+            .button-group { grid-template-columns: 1fr; }
+            textarea { height: 260px; }
+            .header-title h1 { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-title">
+                <img src="icon-192.png" alt="نمایشگر کد">
+                <h1>نمایشگر و دانلود کدهای HTML</h1>
+            </div>
+            <a href="../index.html" class="back-link">🔙 بازگشت</a>
+        </div>
+
+        <div class="editor-section">
+            <div class="editor-toolbar">
+                <span class="editor-label">📝 کدهای تحت وب HTML را وارد یا کپی کنید:</span>
+                <div class="quick-actions">
+                    <button class="btn-small" onclick="pasteFromClipboard()">📋 چسباندن</button>
+                    <button class="btn-small" onclick="clearEditor()" style="color: #ef4444;">🗑️ پاکسازی</button>
+                </div>
+            </div>
+            <textarea id="codeEditor" placeholder=" کدهای HTML خود را اینجا بگذارید..." spellcheck="false"></textarea>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-main btn-preview" onclick="openFullScreenPreview()">
+                🖥️ نمایش کد (تمام‌صفحه)
+            </button>
+            <button class="btn-main btn-download" onclick="downloadHtmlFile()">
+                📥 دانلود فایل تحت وب
+            </button>
+        </div>
+
+        <div class="stats-badge">
+            <span>📊 تعداد فایل‌های دانلود شده:</span>
+            <span id="downloadCountBadge">۰ فایل</span>
+        </div>
+    </div>
+
+    <!-- Fullscreen Preview Overlay -->
+    <div id="previewLayer">
+        <iframe id="previewIframe" title="پیش‌نمایش کد"></iframe>
+        <button class="preview-exit-btn" onclick="exitFullScreenPreview()">
+            <span>🔙 خروج (یا دکمه برگشت گوشی)</span>
+        </button>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const editor = document.getElementById('codeEditor');
+        const previewLayer = document.getElementById('previewLayer');
+        const previewIframe = document.getElementById('previewIframe');
+        const downloadCountBadge = document.getElementById('downloadCountBadge');
+
+        // Restore saved code & counter on startup
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedCode = localStorage.getItem('html_viewer_saved_code');
+            if (savedCode) {
+                editor.value = savedCode;
+            }
+            updateDownloadCounterBadge();
+        });
+
+        // Save code changes to LocalStorage
+        editor.addEventListener('input', () => {
+            localStorage.setItem('html_viewer_saved_code', editor.value);
+        });
+
+        // Convert English numbers to Persian digits
+        function toPersianDigits(num) {
+            return String(num).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+        }
+
+        // Get current Jalali Date (e.g., ۱۴۰۳.۱۲.۰۷)
+        function getJalaliDateString() {
+            try {
+                const now = new Date();
+                const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                const parts = formatter.format(now).split('/');
+                if (parts.length === 3) {
+                    return `${parts[0]}.${parts[1]}.${parts[2]}`;
+                }
+            } catch (e) {
+                console.error('Error formatting Jalali date:', e);
+            }
+            // Fallback to basic string
+            return toPersianDigits(new Date().toLocaleDateString('fa-IR'));
+        }
+
+        function updateDownloadCounterBadge() {
+            const count = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
+            downloadCountBadge.innerText = `${toPersianDigits(count)} فایل`;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        async function pasteFromClipboard() {
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    const text = await navigator.clipboard.readText();
+                    if (text) {
+                        editor.value = text;
+                        localStorage.setItem('html_viewer_saved_code', text);
+                        showToast('📋 کد با موفقیت جای‌گذاری شد');
+                    } else {
+                        showToast('حافظه کپی خالی است!');
+                    }
+                } else {
+                    showToast('دسترسی کپی دستی را در مرورگر فعال کنید');
+                }
+            } catch (err) {
+                showToast('کد را مستقیماً داخل کادرPaste (جای‌گذاری) کنید');
+            }
+        }
+
+        function clearEditor() {
+            if (editor.value.trim() === '') return;
+            if (confirm('آیا از پاک کردن کامل کد مطمئن هستید؟')) {
+                editor.value = '';
+                localStorage.removeItem('html_viewer_saved_code');
+                showToast('🗑️ کد پاکسازی شد');
+            }
+        }
+
+        // Open Full Screen Preview
+        function openFullScreenPreview() {
+            const code = editor.value;
+            if (!code || code.trim() === '') {
+                showToast('⚠️ لطفاً ابتدا کد HTML را وارد یا کپی نمایید!');
+                return;
+            }
+
+            // Render content inside iframe safely
+            previewLayer.style.display = 'flex';
+            const doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
+            doc.open();
+            doc.write(code);
+            doc.close();
+
+            // Push History State so Phone's Hardware Back Button closes full-screen mode
+            history.pushState({ fullScreen: true }, '');
+        }
+
+        function exitFullScreenPreview() {
+            if (history.state && history.state.fullScreen) {
+                history.back();
+            } else {
+                hidePreviewUI();
+            }
+        }
+
+        function hidePreviewUI() {
+            previewLayer.style.display = 'none';
+            // Clear iframe content
+            try {
+                const doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
+                doc.open();
+                doc.write('');
+                doc.close();
+            } catch (e) {}
+        }
+
+        // Listen for phone's hardware/browser Back Button push (popstate)
+        window.addEventListener('popstate', (e) => {
+            if (previewLayer.style.display === 'flex') {
+                hidePreviewUI();
+            }
+        });
+
+        // Download HTML file with incrementing counter & Jalali date
+        function downloadHtmlFile() {
+            const code = editor.value;
+            if (!code || code.trim() === '') {
+                showToast('⚠️ لطفاً ابتدا کد HTML را وارد یا کپی نمایید!');
+                return;
+            }
+
+            // Get & Increment Download Counter
+            let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
+            currentCount += 1;
+            localStorage.setItem('html_viewer_download_count', currentCount.toString());
+            updateDownloadCounterBadge();
+
+            const jalaliDateStr = getJalaliDateString();
+            const fileName = `فایل تحت وب ${currentCount} - ${jalaliDateStr}.html`;
+
+            const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+            showToast(`📥 ${fileName} دانلود شد`);
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('../sw.js').catch(err => console.error(err));
+        }
+    </script>
+</body>
+</html>

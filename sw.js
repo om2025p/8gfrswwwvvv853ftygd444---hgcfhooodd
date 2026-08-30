@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v32';
+const CACHE_NAME = 'emarat-portal-v33';
 const ASSETS = [
   './',
   './index.html',
@@ -210,7 +210,16 @@ const ASSETS = [
   './yandex/icon-192-maskable.png',
   './yandex/icon-512-maskable.png',
   './yandex/apple-touch-icon.png',
-  './yandex/favicon.ico'
+  './yandex/favicon.ico',
+  // HTML Viewer App (نمایشگر کد)
+  './html-viewer/index.html',
+  './html-viewer/manifest.json',
+  './html-viewer/icon-192.png',
+  './html-viewer/icon-512.png',
+  './html-viewer/icon-192-maskable.png',
+  './html-viewer/icon-512-maskable.png',
+  './html-viewer/apple-touch-icon.png',
+  './html-viewer/favicon.ico'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
