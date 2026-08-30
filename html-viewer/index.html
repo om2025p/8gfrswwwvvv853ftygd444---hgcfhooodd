@@ -367,14 +367,14 @@
             return String(num).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
         }
 
-        // Get current Jalali Date in Persian digits (e.g., ۱۴۰۵.۰۶.۰۸)
+        // Get current Jalali Date in Persian digits without leading zero padding (e.g., ۱۴۰۵.۶.۸)
         function getJalaliDateString() {
             try {
                 const now = new Date();
                 const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
                     year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
+                    month: 'numeric',
+                    day: 'numeric'
                 });
                 const parts = formatter.format(now).split('/');
                 if (parts.length === 3) {
@@ -401,13 +401,14 @@
             }
         }
 
-        // Generate short smart Persian title using Gemini AI with fallback models based on HTML content
+        // Generate clean Persian content summary using Gemini AI without technical jargon or AI fluff
         async function generateSmartPersianTitle(htmlSnippet) {
             const token = getGeminiToken();
             if (!token || !htmlSnippet || !htmlSnippet.trim()) return "";
 
-            const cleanCode = htmlSnippet.slice(0, 3000).replace(/\s+/g, ' ');
-            const prompt = `بر اساس کد HTML زیر، یک عنوان توصیفی کامل و جذاب به زبان فارسی برای نام‌گذاری فایل (تا جایی که مجاز است طولانی و دقیق، بدون علامت‌گذاری غیرمجاز فایل مثل / \\ : * ? " < > |) پیشنهاد بده:\n\n${cleanCode}`;
+            const cleanCode = htmlSnippet.slice(0, 3500).replace(/\s+/g, ' ');
+            const prompt = `موضوع اصلی و محتوای انسانی کد HTML زیر را خوانده و فقط یک عبارت کوتاه و روان فارسی بنویس که بگوید محتوای این فایل درباره چیست (مثلاً: در مورد شناخت هویت ایمانا است و موانع پیش رو جراحی اف اف اس در اسپانیا).
+اصلاً از اصطلاحات فنی بر برنامه‌نویسی مثل HTML، CSS، کد، تگ، وب‌سایت، هوش مصنوعی، یا مقدمه‌چینی مانند "بر اساس کد" استفاده نکن. فقط خود عبارت موضوعی روان و خلاصه را بنویس بدون هیچ کاراکتر غیرمجاز فایل مثل / \\ : * ? " < > |\n\nکد:\n${cleanCode}`;
 
             const models = [
                 'gemini-3.6-flash',
@@ -431,7 +432,10 @@
                     if (response.ok) {
                         const data = await response.json();
                         let aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                        aiText = aiText.trim().replace(/["'\n\r\\/:\*\?<>\|]/g, '').slice(0, 60);
+                        aiText = aiText.trim()
+                            .replace(/^این فایل\s*:\s*/g, '')
+                            .replace(/["'\n\r\\/:\*\?<>\|]/g, '')
+                            .slice(0, 80);
                         if (aiText) {
                             return aiText;
                         }
@@ -549,7 +553,7 @@
             }
         });
 
-        // Instant download HTML file using pre-processed or quick-resolved AI title
+        // Instant download HTML file formatted as: این فایل : [محتوای خلاصه] . [تاریخ خورشیدی].html
         async function downloadHtmlFile() {
             const code = editor.value;
             if (!code || code.trim() === '') {
@@ -564,7 +568,6 @@
             updateDownloadCounterBadge();
 
             const jalaliDateStr = getJalaliDateString();
-            const faCountStr = toPersianDigits(currentCount);
 
             let aiTitle = cachedAiTitle;
             if (!aiTitle && aiTitlePromise) {
@@ -576,9 +579,9 @@
 
             let fileName = "";
             if (aiTitle) {
-                fileName = `فایل تحت وب ${faCountStr} - ${aiTitle} - ${jalaliDateStr}.html`;
+                fileName = `این فایل : ${aiTitle} . ${jalaliDateStr}.html`;
             } else {
-                fileName = `فایل تحت وب ${faCountStr} - ${jalaliDateStr}.html`;
+                fileName = `این فایل : محتوای کد تحت وب . ${jalaliDateStr}.html`;
             }
 
             const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
