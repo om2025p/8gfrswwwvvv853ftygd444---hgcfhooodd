@@ -345,9 +345,21 @@
             updateDownloadCounterBadge();
         });
 
-        // Save code changes to LocalStorage
+        let cachedAiTitle = "";
+        let aiTitleTimer = null;
+        let aiTitlePromise = null;
+
+        // Save code changes to LocalStorage & wake up AI in background immediately
         editor.addEventListener('input', () => {
             localStorage.setItem('html_viewer_saved_code', editor.value);
+            triggerBackgroundAiTitle();
+        });
+
+        // Trigger AI on page load if saved code exists
+        window.addEventListener('load', () => {
+            if (editor.value.trim()) {
+                triggerBackgroundAiTitle();
+            }
         });
 
         // Convert English numbers to Persian digits
@@ -392,10 +404,10 @@
         // Generate short smart Persian title using Gemini AI with fallback models based on HTML content
         async function generateSmartPersianTitle(htmlSnippet) {
             const token = getGeminiToken();
-            if (!token) return "";
+            if (!token || !htmlSnippet || !htmlSnippet.trim()) return "";
 
-            const cleanCode = htmlSnippet.slice(0, 2500).replace(/\s+/g, ' ');
-            const prompt = `بر اساس کد HTML زیر، یک عنوان بسیار کوتاه، جذاب و خلاصه به زبان فارسی (حداکثر ۱ تا ۳ کلمه) بدون هیچ علامت یا علامت علامت‌گذاری اضافه‌ای پیشنهاد بده:\n\n${cleanCode}`;
+            const cleanCode = htmlSnippet.slice(0, 3000).replace(/\s+/g, ' ');
+            const prompt = `بر اساس کد HTML زیر، یک عنوان توصیفی کامل و جذاب به زبان فارسی برای نام‌گذاری فایل (تا جایی که مجاز است طولانی و دقیق، بدون علامت‌گذاری غیرمجاز فایل مثل / \\ : * ? " < > |) پیشنهاد بده:\n\n${cleanCode}`;
 
             const models = [
                 'gemini-3.6-flash',
@@ -419,7 +431,7 @@
                     if (response.ok) {
                         const data = await response.json();
                         let aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                        aiText = aiText.trim().replace(/["'\n\r\\/:\*\?<>\|]/g, '').slice(0, 30);
+                        aiText = aiText.trim().replace(/["'\n\r\\/:\*\?<>\|]/g, '').slice(0, 60);
                         if (aiText) {
                             return aiText;
                         }
@@ -429,6 +441,24 @@
                 }
             }
             return "";
+        }
+
+        // Trigger background AI pre-processing as soon as code changes or is pasted
+        function triggerBackgroundAiTitle() {
+            if (aiTitleTimer) clearTimeout(aiTitleTimer);
+            const code = editor.value;
+            if (!code || !code.trim()) {
+                cachedAiTitle = "";
+                aiTitlePromise = null;
+                return;
+            }
+
+            aiTitleTimer = setTimeout(() => {
+                aiTitlePromise = generateSmartPersianTitle(code).then(title => {
+                    cachedAiTitle = title;
+                    return title;
+                });
+            }, 300); // 300ms debounce
         }
 
         function updateDownloadCounterBadge() {
@@ -452,6 +482,7 @@
                     if (text) {
                         editor.value = text;
                         localStorage.setItem('html_viewer_saved_code', text);
+                        triggerBackgroundAiTitle();
                         showToast('📋 کد با موفقیت جای‌گذاری شد');
                     } else {
                         showToast('حافظه کپی خالی است!');
@@ -518,15 +549,13 @@
             }
         });
 
-        // Download HTML file with smart AI Persian naming, incrementing counter & Persian Jalali date
+        // Instant download HTML file using pre-processed or quick-resolved AI title
         async function downloadHtmlFile() {
             const code = editor.value;
             if (!code || code.trim() === '') {
                 showToast('⚠️ لطفاً ابتدا کد HTML را وارد یا کپی نمایید!');
                 return;
             }
-
-            showToast('🤖 در حال نام‌گذاری هوشمند توسط هوش مصنوعی...');
 
             // Get & Increment Download Counter
             let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
@@ -537,8 +566,13 @@
             const jalaliDateStr = getJalaliDateString();
             const faCountStr = toPersianDigits(currentCount);
 
-            // Get smart Persian title from AI
-            const aiTitle = await generateSmartPersianTitle(code);
+            let aiTitle = cachedAiTitle;
+            if (!aiTitle && aiTitlePromise) {
+                aiTitle = await aiTitlePromise;
+            }
+            if (!aiTitle) {
+                aiTitle = await generateSmartPersianTitle(code);
+            }
 
             let fileName = "";
             if (aiTitle) {
