@@ -355,11 +355,16 @@
             return String(num).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
         }
 
-        // Get current Jalali Date (e.g., ۱۴۰۳.۱۲.۰۷)
-        function getJalaliDateString() {
+        // Convert Persian digits to English digits
+        function toEnglishDigits(numStr) {
+            return String(numStr).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+        }
+
+        // Get current Jalali Date in English digits (e.g., 1405.06.08)
+        function getEnglishJalaliDateString() {
             try {
                 const now = new Date();
-                const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+                const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit'
@@ -371,8 +376,8 @@
             } catch (e) {
                 console.error('Error formatting Jalali date:', e);
             }
-            // Fallback to basic string
-            return toPersianDigits(new Date().toLocaleDateString('fa-IR'));
+            // Fallback to basic string converted to English digits
+            return toEnglishDigits(new Date().toLocaleDateString('fa-IR'));
         }
 
         function updateDownloadCounterBadge() {
@@ -476,8 +481,8 @@
             localStorage.setItem('html_viewer_download_count', currentCount.toString());
             updateDownloadCounterBadge();
 
-            const jalaliDateStr = getJalaliDateString();
-            const fileName = `فایل تحت وب ${currentCount} - ${jalaliDateStr}.html`;
+            const jalaliDateStr = getEnglishJalaliDateString();
+            const fileName = `webpage ${currentCount} - ${jalaliDateStr}.html`;
 
             const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
             const link = document.createElement('a');
