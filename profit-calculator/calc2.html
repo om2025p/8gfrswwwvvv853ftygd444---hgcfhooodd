@@ -1094,7 +1094,7 @@
 
                             if (confirm(`آیا مطمئن هستید؟\nاین کار تمام داده‌های فعلی را بازنویسی می‌کند.\n\nتعداد تب‌ها در بک‌آپ: ${backupData.tabs}`)) {
                                 calculatorInstances.forEach((instanceData, tabId) => {
-                                    closeTab(tabId);
+                                    closeTab(tabId, true);
                                 });
 
                                 if (backupData.history) {
@@ -1538,8 +1538,8 @@
             updateGroupDropdown();
         }
 
-        function closeTab(tabId) {
-            if (calculatorInstances.size === 1) {
+        function closeTab(tabId, force = false) {
+            if (!force && calculatorInstances.size === 1) {
                 alert("نمی‌توانید تنها تب موجود را حذف کنید.");
                 return;
             }
@@ -1552,6 +1552,9 @@
                 localStorage.removeItem(`tabCustomName_${tabId}`);
                 calculatorInstances.delete(tabId);
             }
+            localStorage.removeItem(`calculatorTab_${tabId}`);
+            localStorage.removeItem(`tabMarked_${tabId}`);
+            localStorage.removeItem(`tabCustomName_${tabId}`);
 
             const tabButton = document.querySelector(`.tab-button[data-tab-id="${tabId}"]`);
             if (tabButton) tabButton.remove();
@@ -1709,6 +1712,21 @@
                     switchTab(firstAvailableId);
                 }
             }
+
+            // پاکسازی کلیدهای یتیم و متروکه از LocalStorage که در تب‌های فعال وجود ندارند
+            const activeTabSet = new Set(Array.from(calculatorInstances.keys()));
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key) {
+                    if (key.startsWith('calculatorTab_') || key.startsWith('tabMarked_') || key.startsWith('tabCustomName_')) {
+                        const id = key.replace(/^(calculatorTab_|tabMarked_|tabCustomName_)/, '');
+                        if (!activeTabSet.has(id)) {
+                            localStorage.removeItem(key);
+                        }
+                    }
+                }
+            }
+            saveTabsState();
 
             // فراخوانی بروزرسانی نهایی مجموع کل پس از بارگذاری تمامی تب‌ها
             setTimeout(() => {
