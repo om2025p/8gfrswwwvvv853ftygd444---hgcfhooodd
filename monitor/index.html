@@ -660,6 +660,24 @@
             <!-- کارت‌ها به صورت پویا با JS ساخته میشن -->
         </div>
 
+        <!-- بخش جدید: دانلود گزارش ماهانه تاریخچه زرین -->
+        <div class="history-dropdown" id="monthly-pdf-dropdown">
+            <div class="history-header" style="display: flex; justify-content: space-between; align-items: center;" onclick="toggleHistoryMenu('monthly-pdf')">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span>📥 دانلود گزارش ماهانه تاریخچه زرین (PDF)</span>
+                </div>
+                <span class="history-arrow" id="monthly-pdf-history-arrow">▼</span>
+            </div>
+            <div class="history-content" id="monthly-pdf-history-content">
+                <div style="padding: 16px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); line-height: 1.6;">
+                    📌 جهت دریافت صورت‌حساب بانکی کادربندی‌شده و رسمی تاریخچه زرین سودهای هر ماه، ماه موردنظر را انتخاب کنید. بر اساس قوانین محاسباتی، دانلود گزارش فقط پس از **تکمیل شدن ماه** امکان‌پذیر می‌باشد.
+                </div>
+                <div id="monthly-pdf-list" style="padding: 0 15px 15px; display: flex; flex-direction: column; gap: 10px;">
+                    <!-- لیست ۱۲ ماه به صورت پویا رندر می‌شود -->
+                </div>
+            </div>
+        </div>
+
         <!-- منوی کشویی تاریخچه در تب زنده -->
         <div class="history-dropdown" id="live-history-dropdown">
             <div class="history-header" style="display: flex; justify-content: space-between; align-items: center;" onclick="handleHistoryHeaderClick(event, 'live')">
@@ -1460,10 +1478,11 @@
             }, 50);
         }
 
-        // مدیریت باز و بسته کردن آکاردئونی تاریخچه سودها در هر دو تب
+        // مدیریت باز و بسته کردن آکاردئونی تاریخچه سودها در تب‌ها و منوی دانلود ماهانه PDF
         const historyOpenState = {
             live: false,
-            analysis: false
+            analysis: false,
+            'monthly-pdf': false
         };
 
         function toggleHistoryMenu(tabName) {
@@ -2323,9 +2342,173 @@
             };
         }
 
+        // ---------- سیستم دانلود ماهانه تاریخچه زرین (PDF) ----------
+        const JALALI_MONTH_NAMES = [
+            "فروردین", "اردیبهشت", "خرداد",
+            "تیر", "مرداد", "شهریور",
+            "مهر", "آبان", "آذر",
+            "دی", "بهمن", "اسفند"
+        ];
+
+        function getCurrentJalaliDate() {
+            const now = new Date();
+            const formatterYear = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', { year: 'numeric' });
+            const formatterMonth = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', { month: 'numeric' });
+            const formatterDay = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', { day: 'numeric' });
+
+            const jYear = parseInt(formatterYear.format(now));
+            const jMonth = parseInt(formatterMonth.format(now));
+            const jDay = parseInt(formatterDay.format(now));
+
+            return { year: jYear, month: jMonth, day: jDay };
+        }
+
+        function renderMonthlyPdfList() {
+            const container = document.getElementById('monthly-pdf-list');
+            if (!container) return;
+
+            const curJalali = getCurrentJalaliDate();
+            const curYear = curJalali.year;
+            const curMonth = curJalali.month;
+
+            let html = '';
+
+            for (let m = 1; m <= 12; m++) {
+                const monthName = JALALI_MONTH_NAMES[m - 1];
+                const nextMonthName = JALALI_MONTH_NAMES[m % 12];
+
+                // وضعیت ماه: اگر ماه گذشته باشد (یا سال‌های قبل) کامل‌شده و قابل دانلود است.
+                // اگر ماه جاری باشد، قفل است تا ۱ ماه بعد.
+                // اگر ماه آینده باشد، ثبت نشده است.
+                const isCompleted = (m < curMonth);
+                const isCurrentMonth = (m === curMonth);
+                const isFutureMonth = (m > curMonth);
+
+                let badgeHtml = '';
+                let actionBtnHtml = '';
+
+                if (isCompleted) {
+                    badgeHtml = `<span style="background: rgba(52, 211, 153, 0.2); color: #34d399; padding: 4px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: bold; border: 1px solid rgba(52, 211, 153, 0.3);">🟢 ماه تکمیل‌شده</span>`;
+                    actionBtnHtml = `<button onclick="dispatchZarinPdfWorkflow(${curYear}, ${m}, '${monthName}')" style="background: linear-gradient(135deg, #16a34a, #15803d); color: #fff; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">دانلود گزارش 📥</button>`;
+                } else if (isCurrentMonth) {
+                    badgeHtml = `<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 4px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: bold; border: 1px solid rgba(245, 158, 11, 0.3);">⏳ ماه در حال جریان</span>`;
+                    actionBtnHtml = `<div style="background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.6); padding: 8px 12px; border-radius: 12px; font-size: 0.78rem; font-weight: bold; border: 1px solid rgba(255, 255, 255, 0.1);">🔒 غیرقابل دانلود تا ۱ ${nextMonthName}</div>`;
+                } else {
+                    badgeHtml = `<span style="background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.5); padding: 4px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 500;">📅 هنوز نرسیده</span>`;
+                    actionBtnHtml = `<div style="color: rgba(255, 255, 255, 0.3); font-size: 0.78rem;">🔒 غیرفعال</div>`;
+                }
+
+                html += `
+                    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                            <span style="font-weight: bold; font-size: 0.92rem; color: #ffffff;">📅 ${monthName} ${curYear}</span>
+                            ${badgeHtml}
+                        </div>
+                        <div>
+                            ${actionBtnHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        async function dispatchZarinPdfWorkflow(year, monthIdx, monthName) {
+            const ghOwner = localStorage.getItem('restricted_bot_ghOwner') || 'Alendirani';
+            const ghRepo = localStorage.getItem('restricted_bot_ghRepo') || 'Save-Restricted-Bot';
+            const ghPat = localStorage.getItem('restricted_bot_ghPat') || '';
+            const ghBranch = '86';
+
+            const tgBotToken = localStorage.getItem('restricted_bot_tgBotToken') || '';
+            const tgChatId = localStorage.getItem('restricted_bot_tgChatId') || '-1002617482597';
+
+            if (!ghPat) {
+                alert('⚠️ توکن دسترسی گیت‌هاب (GitHub PAT) یافت نشد.\nلطفاً ابتدا توکن گیت‌هاب خود را در تنظیمات برنامه‌های عمارت ذخیره کنید تا امکان ارسال درخواست ساخت PDF فراهم شود.');
+                return;
+            }
+
+            // Extract all positive history data
+            const rawHistory = calculateDailyHistory();
+            const appsInfo = getAppPercentData();
+
+            const formattedHistoryForPdf = [];
+
+            rawHistory.forEach(dayItem => {
+                const dayStr = dayItem.dayString; // YYYY-MM-DD
+                const dayTs = dayItem.timestamp;
+
+                const posItems = [];
+                appsInfo.forEach(app => {
+                    const appTomanProfit = (dailyTomanProfitAppMap[dayStr] && dailyTomanProfitAppMap[dayStr][app.id]) || 0;
+                    if (appTomanProfit > 0) {
+                        // Find percentage value
+                        let appPercentVal = 0;
+                        if (app.data) {
+                            for (let i = 0; i < app.data.length; i++) {
+                                const itemDStr = getGregorianDayString(app.data[i].timestamp);
+                                if (itemDStr === dayStr) {
+                                    appPercentVal = app.data[i].value;
+                                    break;
+                                }
+                            }
+                        }
+                        posItems.push({
+                            title: app.title,
+                            percent: appPercentVal,
+                            toman: appTomanProfit
+                        });
+                    }
+                });
+
+                if (posItems.length > 0) {
+                    formattedHistoryForPdf.push({
+                        timestamp: dayTs,
+                        positive_items: posItems
+                    });
+                }
+            });
+
+            const dataJsonStr = JSON.stringify({
+                history: formattedHistoryForPdf
+            });
+
+            try {
+                const url = `https://api.github.com/repos/${ghOwner}/${ghRepo}/actions/workflows/generate_zarin_pdf_workflow.yml/dispatches`;
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${ghPat}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ref: ghBranch,
+                        inputs: {
+                            JALALI_YEAR: String(year),
+                            JALALI_MONTH: String(monthIdx),
+                            BOT_TOKEN: tgBotToken,
+                            CHAT_ID: tgChatId,
+                            DATA_JSON: dataJsonStr
+                        }
+                    })
+                });
+
+                if (resp.ok) {
+                    alert(`📥 درخواست تولید گزارش PDF برای ${monthName} ${year} با موفقیت صادر شد!\n\nسرور ابری گیت‌هاب در حال آماده‌سازی صورت‌حساب بانکی کلاسیک است و تا لحظاتی دیگر به تلگرام شما ارسال می‌گردد. 🚀`);
+                } else {
+                    alert(`⚠️ خطا در ارسال درخواست به گیت‌هاب (کد status: ${resp.status}). لطفاً صحت توکن و دسترسی‌های گیت‌هاب را بررسی فرمایید.`);
+                }
+            } catch (e) {
+                console.error("Workflow dispatch error:", e);
+                alert("⚠️ خطا در ارتباط شبکه با سرور گیت‌هاب.");
+            }
+        }
+
         // لود اولیه و تنظیم آپدیت دوره‌ای (مثلاً هر ۳۰ ثانیه برای بروز ماندن «زمان گذشته»)
         resetMonitorCache();
         renderMonitor();
+        renderMonthlyPdfList();
         fetchTabdealBalanceInBg(); // فراخوانی خودکار پس‌زمینه
 
         // در هنگام لود دوره‌ای، همیشه کش‌ها مجدداً بررسی و نوسازی می‌شوند تا دیتای لحظه‌ای جا نماند
