@@ -690,17 +690,17 @@
         function calculateWatchDailyAverage(watchKey) {
             let percentsList = [];
             try {
-                if (watchKey === 'percents' || watchKey === 'kian_percents' || watchKey === 'mofid_atie_percents' || watchKey === 'ahang_kian_percents') {
-                    percentsList = JSON.parse(localStorage.getItem(watchKey)) || [];
-                } else if (watchKey === 'stock____________tas9yl_new_unified' || watchKey === 'energy_fund_synergy' || watchKey === 'cement_factory_percents') {
-                    let raw = localStorage.getItem(watchKey);
-                    if (raw) {
-                        let parsed = JSON.parse(raw);
-                        percentsList = parsed.percents || [];
-                    } else if (watchKey === 'stock____________tas9yl_new_unified') {
-                        let legacy = localStorage.getItem("stock____________tas9ylpercents");
-                        if (legacy) percentsList = JSON.parse(legacy) || [];
+                let raw = localStorage.getItem(watchKey);
+                if (raw) {
+                    let parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        percentsList = parsed;
+                    } else if (parsed && Array.isArray(parsed.percents)) {
+                        percentsList = parsed.percents;
                     }
+                } else if (watchKey === 'stock____________tas9yl_new_unified') {
+                    let legacy = localStorage.getItem("stock____________tas9ylpercents");
+                    if (legacy) percentsList = JSON.parse(legacy) || [];
                 }
             } catch (e) {
                 console.error("Error parsing watch source:", e);
