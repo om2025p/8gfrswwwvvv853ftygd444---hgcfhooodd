@@ -231,15 +231,17 @@
             color: white;
             border: none;
             border-radius: 5px;
-            padding: 5px 10px;
-            margin: 0 5px;
+            padding: 5px 12px;
+            margin: 0 4px;
             cursor: pointer;
             font-size: 14px;
             flex-shrink: 0;
-            width: 115px;
+            width: auto;
+            max-width: 260px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 6px;
         }
 
         .tab-button.active-tab {
@@ -443,9 +445,10 @@
             }
             .tab-button {
                 font-size: 12px;
-                padding: 4px 8px;
+                padding: 4px 10px;
                 margin: 0 3px;
-                width: 100px;
+                width: auto;
+                max-width: 200px;
             }
             .hidden-features button {
                 font-size: 10px;
