@@ -731,42 +731,13 @@
 
     <!-- تب ۳: صورت مالی ماهیانه -->
     <div id="pdf-tab" class="content-section">
-        <!-- تنظیمات توکن گیت‌هاب و تلگرام جهت صدور صورت‌حساب -->
+        <!-- کارت راهنمای صدور صورت مالی -->
         <div style="background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 18px; margin-bottom: 20px; box-shadow: var(--shadow);">
-            <div style="font-size: 1rem; font-weight: bold; color: var(--primary-light); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                <span>🔑 تنظیمات اتصال به گیت‌هاب و تلگرام</span>
+            <div style="font-size: 1rem; font-weight: bold; color: var(--primary-light); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                <span>🏛️ صدور صورت‌حساب بانکی کلاسیک (آفلاین و مستقیم)</span>
             </div>
-            <div style="font-size: 0.82rem; color: rgba(255, 255, 255, 0.7); line-height: 1.5; margin-bottom: 14px;">
-                برای اتصال به سرور ابری و ارسال مستقیم فایل PDF به تلگرام، توکن گیت‌هاب (GitHub PAT) و آیدی تلگرام را وارد کنید:
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div>
-                    <label style="font-size: 0.78rem; color: #d8b4fe; display: block; margin-bottom: 4px;">🔑 توکن دسترسی گیت‌هاب (GitHub PAT):</label>
-                    <input type="password" id="zarinGhPatInput" placeholder="github_pat_... یا ghp_..." style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(139,92,246,0.3); border-radius: 10px; padding: 8px 12px; color: #fff; font-size: 0.82rem; outline: none; direction: ltr; text-align: left; box-sizing: border-box;">
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <div style="flex: 1;">
-                        <label style="font-size: 0.78rem; color: #d8b4fe; display: block; margin-bottom: 4px;">👤 مالک مخزن (Owner):</label>
-                        <input type="text" id="zarinGhOwnerInput" placeholder="Alendirani" style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(139,92,246,0.3); border-radius: 10px; padding: 8px 12px; color: #fff; font-size: 0.82rem; outline: none; direction: ltr; text-align: left; box-sizing: border-box;">
-                    </div>
-                    <div style="flex: 1;">
-                        <label style="font-size: 0.78rem; color: #d8b4fe; display: block; margin-bottom: 4px;">📦 نام مخزن (Repo):</label>
-                        <input type="text" id="zarinGhRepoInput" placeholder="Save-Restricted-Bot" style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(139,92,246,0.3); border-radius: 10px; padding: 8px 12px; color: #fff; font-size: 0.82rem; outline: none; direction: ltr; text-align: left; box-sizing: border-box;">
-                    </div>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <div style="flex: 1;">
-                        <label style="font-size: 0.78rem; color: #d8b4fe; display: block; margin-bottom: 4px;">🆔 چت آیدی تلگرام (Chat ID):</label>
-                        <input type="text" id="zarinTgChatIdInput" placeholder="-1002617482597" style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(139,92,246,0.3); border-radius: 10px; padding: 8px 12px; color: #fff; font-size: 0.82rem; outline: none; direction: ltr; text-align: left; box-sizing: border-box;">
-                    </div>
-                    <div style="flex: 1;">
-                        <label style="font-size: 0.78rem; color: #d8b4fe; display: block; margin-bottom: 4px;">🤖 توکن ربات تلگرام (اختیاری):</label>
-                        <input type="password" id="zarinTgBotTokenInput" placeholder="7684...:AA..." style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(139,92,246,0.3); border-radius: 10px; padding: 8px 12px; color: #fff; font-size: 0.82rem; outline: none; direction: ltr; text-align: left; box-sizing: border-box;">
-                    </div>
-                </div>
-                <button onclick="saveZarinSettings()" style="margin-top: 6px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; border: none; padding: 10px; border-radius: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);">
-                    💾 ذخیره تنظیمات اتصال
-                </button>
+            <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); line-height: 1.6;">
+                📌 در این بخش صورت‌حساب رسمی بانکی تاریخچه زرین (سودهای مثبت) به صورت ۱۰۰٪ آفلاین و آنی درون مرورگر تولید و آماده پرینت یا ذخیره‌سازی به عنوان فایل PDF می‌گردد. دانلود هر ماه صرفاً پس از **تکمیل شدن ماه** فعال خواهد شد.
             </div>
         </div>
 
@@ -774,15 +745,12 @@
         <div class="history-dropdown" id="monthly-pdf-dropdown" style="display: block;">
             <div class="history-header" style="display: flex; justify-content: space-between; align-items: center;" onclick="toggleHistoryMenu('monthly-pdf')">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span>📥 دانلود گزارش ماهانه تاریخچه زرین (PDF)</span>
+                    <span>📥 دانلود گزارش ماهانه تاریخچه زرین</span>
                 </div>
                 <span class="history-arrow" id="monthly-pdf-history-arrow">▼</span>
             </div>
             <div class="history-content" id="monthly-pdf-history-content" style="display: block;">
-                <div style="padding: 16px; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); line-height: 1.6;">
-                    📌 جهت دریافت صورت‌حساب بانکی کادربندی‌شده و رسمی تاریخچه زرین سودهای هر ماه، ماه موردنظر را انتخاب کنید. بر اساس قوانین محاسباتی، دانلود گزارش فقط پس از **تکمیل شدن ماه** امکان‌پذیر می‌باشد.
-                </div>
-                <div id="monthly-pdf-list" style="padding: 0 15px 15px; display: flex; flex-direction: column; gap: 10px;">
+                <div id="monthly-pdf-list" style="padding: 15px; display: flex; flex-direction: column; gap: 10px;">
                     <!-- لیست ۱۲ ماه به صورت پویا رندر می‌شود -->
                 </div>
             </div>
@@ -2435,7 +2403,7 @@
 
                 if (isCompleted) {
                     badgeHtml = `<span style="background: rgba(52, 211, 153, 0.2); color: #34d399; padding: 4px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: bold; border: 1px solid rgba(52, 211, 153, 0.3);">🟢 ماه تکمیل‌شده</span>`;
-                    actionBtnHtml = `<button onclick="dispatchZarinPdfWorkflow(${curYear}, ${m}, '${monthName}')" style="background: linear-gradient(135deg, #16a34a, #15803d); color: #fff; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">دانلود گزارش 📥</button>`;
+                    actionBtnHtml = `<button onclick="downloadZarinOfflineReport(${curYear}, ${m}, '${monthName}')" style="background: linear-gradient(135deg, #16a34a, #15803d); color: #fff; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">دانلود گزارش 📥</button>`;
                 } else if (isCurrentMonth) {
                     badgeHtml = `<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 4px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: bold; border: 1px solid rgba(245, 158, 11, 0.3);">⏳ ماه در حال جریان</span>`;
                     actionBtnHtml = `<div style="background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.6); padding: 8px 12px; border-radius: 12px; font-size: 0.78rem; font-weight: bold; border: 1px solid rgba(255, 255, 255, 0.1);">🔒 غیرقابل دانلود تا ۱ ${nextMonthName}</div>`;
@@ -2460,138 +2428,294 @@
             container.innerHTML = html;
         }
 
-        async function dispatchZarinPdfWorkflow(year, monthIdx, monthName) {
-            const ghOwner = localStorage.getItem('restricted_bot_ghOwner') || 'Alendirani';
-            const ghRepo = localStorage.getItem('restricted_bot_ghRepo') || 'Save-Restricted-Bot';
-            const ghPat = localStorage.getItem('restricted_bot_ghPat') || '';
-            const ghBranch = '86';
-
-            const tgBotToken = localStorage.getItem('restricted_bot_tgBotToken') || '';
-            const tgChatId = localStorage.getItem('restricted_bot_tgChatId') || '-1002617482597';
-
-            if (!ghPat) {
-                alert('⚠️ توکن دسترسی گیت‌هاب (GitHub PAT) یافت نشد.\nلطفاً ابتدا توکن گیت‌هاب خود را در تنظیمات برنامه‌های عمارت ذخیره کنید تا امکان ارسال درخواست ساخت PDF فراهم شود.');
-                return;
-            }
-
-            // Extract all positive history data
+        function downloadZarinOfflineReport(year, monthIdx, monthName) {
             const rawHistory = calculateDailyHistory();
             const appsInfo = getAppPercentData();
 
-            const formattedHistoryForPdf = [];
+            let totalMonthToman = 0;
+            let dayBlocksHtml = '';
 
             rawHistory.forEach(dayItem => {
                 const dayStr = dayItem.dayString; // YYYY-MM-DD
                 const dayTs = dayItem.timestamp;
 
-                const posItems = [];
-                appsInfo.forEach(app => {
-                    const appTomanProfit = (dailyTomanProfitAppMap[dayStr] && dailyTomanProfitAppMap[dayStr][app.id]) || 0;
-                    if (appTomanProfit > 0) {
-                        // Find percentage value
-                        let appPercentVal = 0;
-                        if (app.data) {
-                            for (let i = 0; i < app.data.length; i++) {
-                                const itemDStr = getGregorianDayString(app.data[i].timestamp);
-                                if (itemDStr === dayStr) {
-                                    appPercentVal = app.data[i].value;
-                                    break;
+                // Check Jalali date of record
+                const d = new Date(dayTs);
+                const formatterYear = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', { year: 'numeric' });
+                const formatterMonth = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', { month: 'numeric' });
+                const formatterDay = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', { day: 'numeric' });
+
+                const rYear = parseInt(formatterYear.format(d));
+                const rMonth = parseInt(formatterMonth.format(d));
+                const rDay = parseInt(formatterDay.format(d));
+
+                if (rYear === year && rMonth === monthIdx) {
+                    const posItems = [];
+                    appsInfo.forEach(app => {
+                        const appTomanProfit = (dailyTomanProfitAppMap[dayStr] && dailyTomanProfitAppMap[dayStr][app.id]) || 0;
+                        if (appTomanProfit > 0) {
+                            let appPercentVal = 0;
+                            if (app.data) {
+                                for (let i = 0; i < app.data.length; i++) {
+                                    const itemDStr = getGregorianDayString(app.data[i].timestamp);
+                                    if (itemDStr === dayStr) {
+                                        appPercentVal = app.data[i].value;
+                                        break;
+                                    }
                                 }
                             }
+                            posItems.push({
+                                title: app.title,
+                                percent: appPercentVal,
+                                toman: appTomanProfit
+                            });
                         }
-                        posItems.push({
-                            title: app.title,
-                            percent: appPercentVal,
-                            toman: appTomanProfit
-                        });
-                    }
-                });
-
-                if (posItems.length > 0) {
-                    formattedHistoryForPdf.push({
-                        timestamp: dayTs,
-                        positive_items: posItems
                     });
+
+                    if (posItems.length > 0) {
+                        const dayTotalToman = posItems.reduce((acc, curr) => acc + curr.toman, 0);
+                        totalMonthToman += dayTotalToman;
+
+                        const dateStrFormatted = `${rYear}/${String(rMonth).padStart(2, '0')}/${String(rDay).padStart(2, '0')}`;
+                        const timeStrFormatted = d.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                        let rowsHtml = '';
+                        posItems.forEach((item, itemIdx) => {
+                            const bgClass = itemIdx % 2 === 0 ? 'yellow-bg' : 'white-bg';
+                            rowsHtml += `
+                                <div class="fund-row ${bgClass}">
+                                    <span class="fund-name">${item.title}</span>
+                                    <span class="fund-val pos">+${item.percent.toFixed(2)}% (+${item.toman.toLocaleString('fa-IR')} تومان)</span>
+                                </div>
+                            `;
+                        });
+
+                        dayBlocksHtml += `
+                            <div class="day-block">
+                                <div class="day-block-header">
+                                    <span>📅 تاریخ: ${dateStrFormatted} · ساعت ثبت: ${timeStrFormatted}</span>
+                                    <span class="day-total-badge">💰 مجموع روز: +${dayTotalToman.toLocaleString('fa-IR')} تومان</span>
+                                </div>
+                                ${rowsHtml}
+                            </div>
+                        `;
+                    }
                 }
             });
 
-            const dataJsonStr = JSON.stringify({
-                history: formattedHistoryForPdf
-            });
-
-            try {
-                const url = `https://api.github.com/repos/${ghOwner}/${ghRepo}/actions/workflows/generate_zarin_pdf_workflow.yml/dispatches`;
-                const resp = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${ghPat}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        ref: ghBranch,
-                        inputs: {
-                            JALALI_YEAR: String(year),
-                            JALALI_MONTH: String(monthIdx),
-                            BOT_TOKEN: tgBotToken,
-                            CHAT_ID: tgChatId,
-                            DATA_JSON: dataJsonStr
-                        }
-                    })
-                });
-
-                if (resp.ok) {
-                    alert(`📥 درخواست تولید گزارش PDF برای ${monthName} ${year} با موفقیت صادر شد!\n\nسرور ابری گیت‌هاب در حال آماده‌سازی صورت‌حساب بانکی کلاسیک است و تا لحظاتی دیگر به تلگرام شما ارسال می‌گردد. 🚀`);
-                } else {
-                    alert(`⚠️ خطا در ارسال درخواست به گیت‌هاب (کد status: ${resp.status}). لطفاً صحت توکن و دسترسی‌های گیت‌هاب را بررسی فرمایید.`);
-                }
-            } catch (e) {
-                console.error("Workflow dispatch error:", e);
-                alert("⚠️ خطا در ارتباط شبکه با سرور گیت‌هاب.");
+            if (!dayBlocksHtml) {
+                dayBlocksHtml = `
+                    <div style="text-align: center; padding: 40px; color: #64748b; font-size: 13px; border: 1px dashed #cbd5e1; border-radius: 12px;">
+                        📭 هیچ سود مثبتی برای این ماه ثبت نشده است.
+                    </div>
+                `;
             }
-        }
 
-        function loadZarinSettings() {
-            const pat = localStorage.getItem('restricted_bot_ghPat') || '';
-            const owner = localStorage.getItem('restricted_bot_ghOwner') || 'Alendirani';
-            const repo = localStorage.getItem('restricted_bot_ghRepo') || 'Save-Restricted-Bot';
-            const chatId = localStorage.getItem('restricted_bot_tgChatId') || '-1002617482597';
-            const botToken = localStorage.getItem('restricted_bot_tgBotToken') || '';
+            const bankDocHtml = `<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>صورت‌حساب تاریخچه زرین - ${monthName} ${year}</title>
+<style>
+    @page { size: A4; margin: 12mm; }
+    body {
+        font-family: 'Tahoma', 'Segoe UI', sans-serif;
+        background: #ffffff;
+        color: #0f172a;
+        margin: 0;
+        padding: 20px;
+        direction: rtl;
+        -webkit-print-color-adjust: exact;
+    }
+    .header-bank-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+        border: 2px solid #1e3a8a;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .header-bank-table td {
+        padding: 12px 15px;
+        vertical-align: middle;
+    }
+    .header-title-cell {
+        background: #1e3a8a;
+        color: #ffffff;
+        text-align: center;
+    }
+    .header-title { font-size: 18px; font-weight: bold; margin: 0; }
+    .header-sub { font-size: 11px; opacity: 0.9; margin-top: 4px; }
 
-            const patEl = document.getElementById('zarinGhPatInput');
-            const ownerEl = document.getElementById('zarinGhOwnerInput');
-            const repoEl = document.getElementById('zarinGhRepoInput');
-            const chatIdEl = document.getElementById('zarinTgChatIdInput');
-            const botTokenEl = document.getElementById('zarinTgBotTokenInput');
+    .info-grid {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+    }
+    .info-grid td {
+        padding: 8px 12px;
+        font-size: 11px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .info-label { font-weight: bold; color: #475569; width: 20%; }
+    .info-val { font-weight: bold; color: #0f172a; width: 30%; }
+    .badge-green { color: #16a34a; font-weight: bold; }
 
-            if (patEl) patEl.value = pat;
-            if (ownerEl) ownerEl.value = owner;
-            if (repoEl) repoEl.value = repo;
-            if (chatIdEl) chatIdEl.value = chatId;
-            if (botTokenEl) botTokenEl.value = botToken;
-        }
+    .day-block {
+        border: 2px solid #1e3a8a;
+        border-radius: 10px;
+        margin-bottom: 18px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+    .day-block-header {
+        background: #1e3a8a;
+        color: #ffffff;
+        padding: 10px 15px;
+        font-size: 13px;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .day-total-badge {
+        background: #fef08a;
+        color: #854d0e;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: bold;
+    }
 
-        function saveZarinSettings() {
-            const patEl = document.getElementById('zarinGhPatInput');
-            const ownerEl = document.getElementById('zarinGhOwnerInput');
-            const repoEl = document.getElementById('zarinGhRepoInput');
-            const chatIdEl = document.getElementById('zarinTgChatIdInput');
-            const botTokenEl = document.getElementById('zarinTgBotTokenInput');
+    .fund-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 15px;
+        font-size: 11px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .fund-row:last-child {
+        border-bottom: none;
+    }
+    .fund-row.yellow-bg {
+        background-color: #fef9c3;
+    }
+    .fund-row.white-bg {
+        background-color: #ffffff;
+    }
 
-            if (patEl) localStorage.setItem('restricted_bot_ghPat', patEl.value.trim());
-            if (ownerEl) localStorage.setItem('restricted_bot_ghOwner', ownerEl.value.trim() || 'Alendirani');
-            if (repoEl) localStorage.setItem('restricted_bot_ghRepo', repoEl.value.trim() || 'Save-Restricted-Bot');
-            if (chatIdEl) localStorage.setItem('restricted_bot_tgChatId', chatIdEl.value.trim() || '-1002617482597');
-            if (botTokenEl) localStorage.setItem('restricted_bot_tgBotToken', botTokenEl.value.trim());
+    .fund-name {
+        font-weight: bold;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .fund-val {
+        font-weight: 800;
+        direction: ltr;
+        font-size: 12px;
+    }
+    .fund-val.pos { color: #16a34a; }
 
-            alert('✅ تنظیمات اتصال به گیت‌هاب و تلگرام با موفقیت ذخیره شد!');
+    .footer-stamp {
+        margin-top: 25px;
+        border-top: 2px dashed #94a3b8;
+        padding-top: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 10px;
+        color: #64748b;
+    }
+    .stamp-box {
+        border: 2px double #1e3a8a;
+        color: #1e3a8a;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: bold;
+        text-align: center;
+        font-size: 10px;
+    }
+    @media print {
+        body { padding: 0; }
+        .no-print { display: none !important; }
+    }
+</style>
+</head>
+<body>
+
+<div class="no-print" style="margin-bottom: 15px; padding: 12px; background: #e0f2fe; border: 1px solid #0284c7; border-radius: 8px; text-align: center;">
+    <button onclick="window.print()" style="background: #0284c7; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer;">🖨️ پرینت یا ذخیره به صورت PDF</button>
+</div>
+
+<table class="header-bank-table">
+    <tr>
+        <td class="header-title-cell">
+            <div class="header-title">🏛️ بانک متمرکز عمارت دیجیتال</div>
+            <div class="header-sub">صورت‌حساب رسمی بانکی · گردش روزانه تاریخچه زرین سودهای مثبت</div>
+        </td>
+    </tr>
+</table>
+
+<table class="info-grid">
+    <tr>
+        <td class="info-label">📅 دوره گزارش:</td>
+        <td class="info-val">${monthName} ماه ${year}</td>
+        <td class="info-label">👤 دارنده حساب:</td>
+        <td class="info-val">مدیریت محترم عمارت</td>
+    </tr>
+    <tr>
+        <td class="info-label">🏷️ نوع صورت‌حساب:</td>
+        <td class="info-val">تاریخچه زرین (فقط سودهای مثبت)</td>
+        <td class="info-label">🏷️ کد پیگیری:</td>
+        <td class="info-val">EMR-${year}-${String(monthIdx).padStart(2, '0')}-ZARIN</td>
+    </tr>
+    <tr>
+        <td class="info-label">💰 مجموع سود ماه:</td>
+        <td class="info-val badge-green">+${totalMonthToman.toLocaleString('fa-IR')} تومان</td>
+        <td class="info-label">🟢 وضعیت گزارش:</td>
+        <td class="info-val badge-green">ماه تکمیل‌شده (رسمی)</td>
+    </tr>
+</table>
+
+<h4 style="margin-bottom: 10px; color: #1e3a8a;">📋 ریز صورت‌حساب سودهای مثبت ماه (زیر هم در کادرهای زرد و سفید):</h4>
+
+${dayBlocksHtml}
+
+<div class="footer-stamp">
+    <div>
+        📌 این سند به صورت الکترونیکی و آفلاین توسط سیستم مرکزی دیدبان درصدها صادر شده است.<br>
+        اصالت سند: معتبر و تأییدشده در سامانه عمارت دیجیتال.
+    </div>
+    <div class="stamp-box">
+        تأییدشده و رسمی<br>
+        🏛️ EMARAT DIGITAL
+    </div>
+</div>
+
+</body>
+</html>`;
+
+            const blob = new Blob([bankDocHtml], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `صورت_حساب_زرین_${year}_${String(monthIdx).padStart(2, '0')}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         // لود اولیه و تنظیم آپدیت دوره‌ای (مثلاً هر ۳۰ ثانیه برای بروز ماندن «زمان گذشته»)
         resetMonitorCache();
         renderMonitor();
         renderMonthlyPdfList();
-        loadZarinSettings();
         fetchTabdealBalanceInBg(); // فراخوانی خودکار پس‌زمینه
 
         // در هنگام لود دوره‌ای، همیشه کش‌ها مجدداً بررسی و نوسازی می‌شوند تا دیتای لحظه‌ای جا نماند
