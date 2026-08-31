@@ -1395,8 +1395,22 @@
 
         // ایجاد نمونه ماشین حساب
         function createCalculatorInstance(initialTabId = null) {
-            tabCounter++;
-            const tabId = initialTabId || tabCounter;
+            if (initialTabId) {
+                const parsedId = parseInt(initialTabId);
+                if (!isNaN(parsedId) && parsedId > tabCounter) {
+                    tabCounter = parsedId;
+                }
+            } else {
+                tabCounter++;
+            }
+            const tabId = (initialTabId || tabCounter).toString();
+
+            // پاکسازی عناصر قدیمی احتمالی با همان شناسه جهت جلوگیری از تب‌های نامرئی یا همزاد
+            const existingContainer = document.querySelector(`.calculator-instance[data-tab-id="${tabId}"]`);
+            if (existingContainer) existingContainer.remove();
+            const existingBtn = document.querySelector(`.tab-button[data-tab-id="${tabId}"]`);
+            if (existingBtn) existingBtn.remove();
+
             const template = document.getElementById('calculator-template');
             const calculatorApp = document.getElementById('calculator-app');
             const tabsContainer = document.getElementById('tabs-container');
@@ -1405,7 +1419,7 @@
             newInstance.dataset.tabId = tabId;
             calculatorApp.appendChild(newInstance);
 
-            calculatorInstances.set(tabId.toString(), { element: newInstance });
+            calculatorInstances.set(tabId, { element: newInstance });
 
             loadInputs(newInstance, tabId);
             setupFrequencyField(newInstance);
@@ -1497,32 +1511,29 @@
 
             applyTheme();
             updateTabName(tabId, newInstance);
+            saveTabsState();
             return tabId.toString();
         }
 
         function switchTab(tabId) {
-            if (activeTabId === tabId) return;
+            const strTabId = tabId ? tabId.toString() : null;
 
-            if (activeTabId) {
-                const currentActiveInstance = calculatorInstances.get(activeTabId)?.element;
-                if (currentActiveInstance) currentActiveInstance.classList.remove('active');
-                const currentActiveTabButton = document.querySelector(`.tab-button[data-tab-id="${activeTabId}"]`);
-                if (currentActiveTabButton) currentActiveTabButton.classList.remove('active-tab');
-            }
+            // غیرفعال کردن تمام تب‌ها و دکمه‌های قبلی به طور کامل
+            document.querySelectorAll('.calculator-instance').forEach(inst => inst.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active-tab'));
 
-            const newActiveInstance = calculatorInstances.get(tabId)?.element;
+            const newActiveInstance = calculatorInstances.get(strTabId)?.element || document.querySelector(`.calculator-instance[data-tab-id="${strTabId}"]`);
             if (newActiveInstance) {
                 newActiveInstance.classList.add('active');
             }
-            const newActiveTabButton = document.querySelector(`.tab-button[data-tab-id="${tabId}"]`);
-            if (newActiveTabButton) newActiveTabButton.classList.add('active-tab');
-
-            activeTabId = tabId;
-            localStorage.setItem('activeTabId', tabId);
-
+            const newActiveTabButton = document.querySelector(`.tab-button[data-tab-id="${strTabId}"]`);
             if (newActiveTabButton) {
+                newActiveTabButton.classList.add('active-tab');
                 newActiveTabButton.scrollIntoView({ behavior: 'smooth', inline: 'center' });
             }
+
+            activeTabId = strTabId;
+            localStorage.setItem('activeTabId', strTabId);
 
             updateGroupDropdown();
         }
@@ -1656,25 +1667,47 @@
                 saveTabsState();
             });
 
-            let savedTabs = JSON.parse(localStorage.getItem('savedTabs')) || [];
+            let savedTabs = [];
+            try {
+                savedTabs = JSON.parse(localStorage.getItem('savedTabs')) || [];
+            } catch (e) {
+                savedTabs = [];
+            }
+
+            // پالایش و یکتا کردن تب‌های ذخیره‌شده
+            savedTabs = Array.from(new Set(savedTabs.map(id => id ? id.toString() : ''))).filter(id => id.length > 0);
+
             let savedActiveTabId = localStorage.getItem('activeTabId');
             tabCounter = parseInt(localStorage.getItem('tabCounter') || '0');
 
             if (savedTabs.length > 0) {
                 savedTabs.forEach(id => {
-                    if (parseInt(id) > tabCounter) tabCounter = parseInt(id);
+                    const parsed = parseInt(id);
+                    if (!isNaN(parsed) && parsed > tabCounter) tabCounter = parsed;
                     const createdTabId = createCalculatorInstance(id);
-                    updateTabName(createdTabId, calculatorInstances.get(createdTabId).element);
+                    const inst = calculatorInstances.get(createdTabId);
+                    if (inst && inst.element) {
+                        updateTabName(createdTabId, inst.element);
+                    }
                 });
-                if (savedActiveTabId && calculatorInstances.has(savedActiveTabId)) {
-                    switchTab(savedActiveTabId);
+
+                if (savedActiveTabId && calculatorInstances.has(savedActiveTabId.toString())) {
+                    switchTab(savedActiveTabId.toString());
                 } else {
-                    switchTab(savedTabs[0]);
+                    const firstAvailableId = Array.from(calculatorInstances.keys())[0];
+                    switchTab(firstAvailableId);
                 }
             } else {
                 const newTabId = createCalculatorInstance("1");
                 switchTab(newTabId);
-                saveTabsState();
+            }
+
+            // ضامن صفحه سفید: اگر به هر دلیلی تبی فعال نبود، اولین تب موجود فعال می‌شود
+            if (!document.querySelector('.calculator-instance.active')) {
+                const firstAvailableId = Array.from(calculatorInstances.keys())[0];
+                if (firstAvailableId) {
+                    switchTab(firstAvailableId);
+                }
             }
 
             // فراخوانی بروزرسانی نهایی مجموع کل پس از بارگذاری تمامی تب‌ها
