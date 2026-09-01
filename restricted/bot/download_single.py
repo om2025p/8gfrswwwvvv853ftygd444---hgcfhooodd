@@ -359,6 +359,7 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
 
     temp_dir = tempfile.mkdtemp(prefix="emarat_social_")
     caption = ""
+    error_logs = []
 
     try:
         import random
@@ -414,7 +415,11 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                         if info and scan_files():
                             print(f"DEBUG: yt-dlp succeeded with player_client={p_clients}")
                             return info
+                        else:
+                            error_logs.append(f"yt-dlp (client={p_clients}): فایلی استخراج نشد.")
                 except Exception as ex_ytdlp:
+                    err_str = str(ex_ytdlp).strip()
+                    error_logs.append(f"yt-dlp (client={p_clients}): {err_str}")
                     print(f"DEBUG: yt-dlp run failed with player_client={p_clients}: {ex_ytdlp}")
             return None
 
@@ -455,6 +460,7 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                                     out_file.write(dl_resp.read())
                                 print(f"DEBUG: DDInstagram API successfully saved media to {out_path}")
                     except Exception as ex_dd:
+                        error_logs.append(f"DDInstagram API Layer: {ex_dd}")
                         print(f"DEBUG: DDInstagram API fallback failed: {ex_dd}")
 
                 # Try Embed HTML scraping
@@ -490,7 +496,10 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                                     with urllib.request.urlopen(dl_req, timeout=20) as dl_resp, open(out_path, 'wb') as out_file:
                                         out_file.write(dl_resp.read())
                                     print(f"DEBUG: Gemini AI successfully extracted Instagram media to {out_path}")
+                                else:
+                                    error_logs.append("Instagram Embed/AI Layer: هیچ لینکی توسط هوش مصنوعی یافت نشد.")
                     except Exception as ex_ig:
+                        error_logs.append(f"Instagram Embed/AI Layer: {ex_ig}")
                         print(f"DEBUG: Instagram embed/AI fallback layer failed: {ex_ig}")
 
             # Layer 2: Try TikTok API fallback services (e.g., TikWM)
@@ -515,7 +524,12 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                                 if not caption and data_obj.get('title'):
                                     caption = data_obj.get('title')
                                 print(f"DEBUG: TikTok TikWM fallback successfully saved video to {out_path}")
+                            else:
+                                error_logs.append("TikTok TikWM Layer: آدرس ویدیوی مستقیم دریافت نشد.")
+                        else:
+                            error_logs.append(f"TikTok TikWM Layer: پاسخ API ناموفق (کد {res.get('code')}).")
                 except Exception as ex_tt:
+                    error_logs.append(f"TikTok TikWM Layer: {ex_tt}")
                     print(f"DEBUG: TikTok fallback layer failed: {ex_tt}")
 
             # Layer 2.5: Try xHamster dedicated metadata parser (shorts & full videos) with anti-429 retry loops
@@ -552,6 +566,7 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                                 html_xh = res_curl.stdout
                                 print("DEBUG: xHamster curl fallback fetched page HTML successfully.")
                         except Exception as ex_curl:
+                            error_logs.append(f"xHamster Curl Fallback: {ex_curl}")
                             print(f"DEBUG: xHamster curl fallback error: {ex_curl}")
 
                     match_xh = re.search(r'window\.initials\s*=\s*(\{.+?\});\s*</script>', html_xh, re.DOTALL) if html_xh else None
@@ -591,6 +606,7 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                                     downloaded_mp4 = True
                                     print(f"DEBUG: xHamster direct MP4 fallback successfully saved video to {out_path}")
                             except Exception as ex_mp4:
+                                error_logs.append(f"xHamster Direct MP4 Download: {ex_mp4}")
                                 print(f"DEBUG: Direct MP4 download failed: {ex_mp4}")
 
                         if not downloaded_mp4:
@@ -634,6 +650,7 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                                                 outfile.write(seg_resp.read())
                                     print(f"DEBUG: xHamster m3u8 segment fallback successfully saved video to {out_path}")
                 except Exception as ex_xh:
+                    error_logs.append(f"xHamster Layer: {ex_xh}")
                     print(f"DEBUG: xHamster fallback layer failed: {ex_xh}")
 
             # Layer 2.8: Dedicated YouTube Cloud Anti-Bot Fallback (Cobalt API / Invidious API / YouTube NoCookie Embed)
@@ -676,6 +693,7 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                                             print(f"DEBUG: Cobalt API successfully downloaded YouTube video to {out_yt_path}")
                                             break
                             except Exception as ex_cob:
+                                error_logs.append(f"YouTube Cobalt API ({cob_url}): {ex_cob}")
                                 print(f"DEBUG: Cobalt API instance ({cob_url}) failed: {ex_cob}")
 
                     # Try Invidious API instance fallback
@@ -703,9 +721,11 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                                                 print(f"DEBUG: Invidious API successfully downloaded YouTube video to {out_yt_path}")
                                                 break
                             except Exception as ex_inv:
+                                error_logs.append(f"YouTube Invidious API ({inv_url}): {ex_inv}")
                                 print(f"DEBUG: Invidious API ({inv_url}) failed: {ex_inv}")
 
                 except Exception as ex_yt_fallback:
+                    error_logs.append(f"YouTube Fallback Layer: {ex_yt_fallback}")
                     print(f"DEBUG: YouTube fallback layer failed: {ex_yt_fallback}")
 
             # Layer 3: Generic Webpage Video Extractor (luticlip.com, embedded video blogs, etc.)
@@ -783,6 +803,7 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                                 print(f"DEBUG: Generic webpage video successfully downloaded to {out_path_gen}")
                                 break
                         except Exception as ex_dl_gen:
+                            error_logs.append(f"Generic Web Extractor URL ({target_v_url[:40]}...): {ex_dl_gen}")
                             print(f"DEBUG: Failed downloading generic video link {target_v_url}: {ex_dl_gen}")
 
                     # Fallback to Gemini AI Link Extractor if regex produced no working download
@@ -799,9 +820,13 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                                     downloaded_gen = True
                                     print(f"DEBUG: Gemini AI extracted video successfully downloaded to {out_path_gen}")
                             except Exception as ex_ai_dl:
+                                error_logs.append(f"Generic Gemini AI Download: {ex_ai_dl}")
                                 print(f"DEBUG: Gemini AI link download failed: {ex_ai_dl}")
+                        else:
+                            error_logs.append("Generic Gemini AI Extractor: هیچ لینک قابل دانلودی در صفحه استخراج نشد.")
 
                 except Exception as ex_gen_layer:
+                    error_logs.append(f"Generic Web Extractor Layer: {ex_gen_layer}")
                     print(f"DEBUG: Generic Webpage Video Extractor layer failed: {ex_gen_layer}")
 
         # Retrieve caption / description
@@ -826,8 +851,40 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
         # Sort files to maintain order
         downloaded_files.sort()
 
+        async def send_detailed_error_notification(base_title, extra_error=None):
+            if extra_error:
+                error_logs.append(f"خطای کلی سیستم: {extra_error}")
+
+            err_details = "\n".join(f"• {err}" for err in error_logs) if error_logs else "• هیچ فایلی در مسیر دانلود دریافت یا استخراج نگردید (محتوا خصوصی، محدود به فیلتر یا حذف گردیده است)."
+
+            base_msg = (
+                f"✨ *{base_title}*\n"
+                f"`لطفاً مجدداً تلاش کرده یا لینک دیگری ارسال فرمایید. 💎`"
+            )
+
+            if len(err_details) <= 800:
+                full_text = f"{base_msg}\n\n🔍 *شرح و علت دقیق مشکل:*\n```\n{err_details}\n```"
+                await safe_edit_message(owner_id, msg_obj, full_text)
+            else:
+                full_text = f"{base_msg}\n\n📄 *جزئیات و شرح دقیق خطا به علت طولانی بودن در فایل متنی پیوست گردید.*"
+                await safe_edit_message(owner_id, msg_obj, full_text)
+
+                err_file_path = os.path.join(temp_dir, "download_error_report.txt")
+                try:
+                    with open(err_file_path, "w", encoding="utf-8") as f_err:
+                        f_err.write(
+                            f"=== گزارش جامع خطای سپر دانلود عمارت ===\n"
+                            f"لینک درخواستی: {link}\n"
+                            f"زمان بروز خطا: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                            f"--- جزئیات خطاهای استخراج شده از تمام لایه‌ها ---\n"
+                            f"{err_details}\n"
+                        )
+                    await send_media_to_destinations(err_file_path, "📄 گزارش جامع علت عدم دریافت لینک", owner_id)
+                except Exception as ex_file:
+                    print(f"DEBUG: Failed writing error report file: {ex_file}")
+
         if not downloaded_files:
-            msg_obj = await safe_edit_message(owner_id, msg_obj, f"✨ *رئیس بزرگ، محتوای این لینک در حال حاضر اختصاصی یا محدود شده است.*\n`لطفاً مجدداً تلاش کرده یا لینک دیگری ارسال فرمایید. 💎`")
+            await send_detailed_error_notification("رئیس بزرگ، محتوای این لینک در حال حاضر اختصاصی، محدود یا غیرقابل استخراج شده است.")
             return
 
         msg_obj = await safe_edit_message(owner_id, msg_obj, f"⬆️ *دانلود با موفقیت انجام شد! در حال ارسال به تلگرام ({len(downloaded_files)} فایل)...*")
@@ -840,7 +897,7 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
 
     except Exception as e:
         print(f"DEBUG: Error in process_social_media_download: {e}")
-        await safe_edit_message(owner_id, msg_obj, f"✨ *رئیس بزرگ، در حال حاضر دریافت این محتوا غیرفعال است.*\n`لطفاً لینک را مجدداً ارسال نمایید. 💎`")
+        await send_detailed_error_notification("رئیس بزرگ، در حال حاضر دریافت این محتوا با خطا مواجه شده است.", extra_error=str(e))
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
