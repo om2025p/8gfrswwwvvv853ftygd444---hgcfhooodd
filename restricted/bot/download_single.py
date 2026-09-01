@@ -1440,6 +1440,19 @@ async def main_download():
                 await safe_send_message(owner_id, f"❌ *خطا در پردازش لینک {err_msg_type}:*\n`{str(e)}`")
             except:
                 pass
+
+        # 30-minute stay-alive listener loop
+        try:
+            stay_alive_notice = (
+                "🚀 *سرور سپر دانلود عمارت به مدت ۳۰ دقیقه (۱,۸۰۰ ثانیه) روشن می‌ماند.*\n"
+                "`در این مدت، تمامی درخواست‌ها با سرعت فوق‌العاده بالاتری پردازش خواهند شد! 💎`"
+            )
+            await safe_send_message(owner_id, stay_alive_notice)
+            print("DEBUG: Entering 30-minute stay-alive sleep loop (1,800 seconds)...")
+            await asyncio.sleep(1800)
+            print("DEBUG: 30-minute stay-alive loop completed.")
+        except Exception as ex_sleep:
+            print(f"DEBUG: Stay-alive sleep loop interrupted: {ex_sleep}")
     finally:
         print("Stopping Pyrogram clients before exit...")
         for client_obj in [userbot, Bot]:
