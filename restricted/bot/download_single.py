@@ -360,6 +360,7 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
     temp_dir = tempfile.mkdtemp(prefix="emarat_social_")
     caption = ""
     error_logs = []
+    page_html = ""
 
     try:
         import random
@@ -735,7 +736,6 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
 
                     msg_obj = await safe_edit_message(owner_id, msg_obj, f"🔍 *در حال اسکن عمیق صفحه و استخراج بالاترین کیفیت ویدیو...*\n`لطفاً صبور باشید...`")
                     gen_headers = get_random_headers()
-                    page_html = ""
 
                     try:
                         req_gen = urllib.request.Request(link, headers=gen_headers)
@@ -897,26 +897,29 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                 f"`لطفاً مجدداً تلاش کرده یا لینک دیگری ارسال فرمایید. 💎`"
             )
 
-            if len(err_details) <= 800:
-                full_text = f"{base_msg}\n\n🔍 *شرح و علت دقیق مشکل:*\n```\n{err_details}\n```"
-                await safe_edit_message(owner_id, msg_obj, full_text)
-            else:
-                full_text = f"{base_msg}\n\n📄 *جزئیات و شرح دقیق خطا به علت طولانی بودن در فایل متنی پیوست گردید.*"
-                await safe_edit_message(owner_id, msg_obj, full_text)
+            # Send brief inline status message in Telegram chat
+            full_text = f"{base_msg}\n\n🔍 *شرح خلاصه مشکل:*\n```\n{err_details[:700]}\n```\n\n📄 *سورس کامل HTML صفحه به همراه لاگ‌های دقیق در فایل متنی پیوست گردید.*"
+            await safe_edit_message(owner_id, msg_obj, full_text)
 
-                err_file_path = os.path.join(temp_dir, "download_error_report.txt")
-                try:
-                    with open(err_file_path, "w", encoding="utf-8") as f_err:
-                        f_err.write(
-                            f"=== گزارش جامع خطای سپر دانلود عمارت ===\n"
-                            f"لینک درخواستی: {link}\n"
-                            f"زمان بروز خطا: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                            f"--- جزئیات خطاهای استخراج شده از تمام لایه‌ها ---\n"
-                            f"{err_details}\n"
-                        )
-                    await send_media_to_destinations(err_file_path, "📄 گزارش جامع علت عدم دریافت لینک", owner_id)
-                except Exception as ex_file:
-                    print(f"DEBUG: Failed writing error report file: {ex_file}")
+            # Write full report file containing complete error logs + FULL PAGE HTML DOM code!
+            err_file_path = os.path.join(temp_dir, "download_error_report.txt")
+            try:
+                html_source_content = page_html if page_html else "(هیچ محتوای HTML از سورس صفحه دریافت نگردید)"
+                with open(err_file_path, "w", encoding="utf-8") as f_err:
+                    f_err.write(
+                        f"=== گزارش جامع خطای سپر دانلود عمارت ===\n"
+                        f"لینک درخواستی: {link}\n"
+                        f"زمان بروز خطا: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                        f"--- جزئیات خطاهای استخراج شده از تمام لایه‌ها ---\n"
+                        f"{err_details}\n\n"
+                        f"==================================================\n"
+                        f"=== سورس کامل HTML کد صفحه (FULL PAGE HTML DOM) ===\n"
+                        f"==================================================\n"
+                        f"{html_source_content}\n"
+                    )
+                await send_media_to_destinations(err_file_path, f"📄 سورس کامل کد صفحه و لاگ‌های خطا: {link[:50]}", owner_id)
+            except Exception as ex_file:
+                print(f"DEBUG: Failed writing error report file: {ex_file}")
 
         if not downloaded_files:
             await send_detailed_error_notification("رئیس بزرگ، محتوای این لینک در حال حاضر اختصاصی، محدود یا غیرقابل استخراج شده است.")
