@@ -2392,6 +2392,7 @@
 
             let totalMonthToman = 0;
             let totalMonthPercent = 0;
+            let activeDaysCount = 0;
             let dayBlocksHtml = '';
 
             const fundMonthlySums = {};
@@ -2449,6 +2450,7 @@
                     });
 
                     if (posItems.length > 0) {
+                        activeDaysCount++;
                         const dayTotalToman = posItems.reduce((acc, curr) => acc + curr.toman, 0);
 
                         const dateStrFormatted = `${rYear}/${String(rMonth).padStart(2, '0')}/${String(rDay).padStart(2, '0')}`;
@@ -2477,6 +2479,10 @@
                     }
                 }
             });
+
+            const safeDaysCount = Math.max(1, activeDaysCount);
+            const avgMonthPercent = totalMonthPercent / safeDaysCount;
+            const avgMonthToman = Math.round(totalMonthToman / safeDaysCount);
 
             // ساخت جدول خلاصه تفکیکی عملکرد صندوق‌ها در طول ماه
             let summaryRowsHtml = '';
@@ -2514,6 +2520,11 @@
                                 <td><strong>🏆 مجموع کل عملکرد ماه</strong></td>
                                 <td style="text-align: center; color: #16a34a; font-weight: 800; font-size: 13px;">+${toDigit(totalMonthPercent.toFixed(2))}٪</td>
                                 <td style="text-align: left; color: #16a34a; font-weight: 800; font-size: 13px;">+${toDigit(totalMonthToman.toLocaleString('en-US'))} تومان</td>
+                            </tr>
+                            <tr class="total-row" style="background: rgba(16, 185, 129, 0.12);">
+                                <td><strong>📈 میانگین روزانه عملکرد ماه (${toDigit(activeDaysCount)} روز)</strong></td>
+                                <td style="text-align: center; color: #16a34a; font-weight: 800; font-size: 13px;">+${toDigit(avgMonthPercent.toFixed(2))}٪</td>
+                                <td style="text-align: left; color: #16a34a; font-weight: 800; font-size: 13px;">+${toDigit(avgMonthToman.toLocaleString('en-US'))} تومان</td>
                             </tr>
                         </tbody>
                     </table>
@@ -2775,6 +2786,12 @@
         <td class="info-val badge-green">+${toDigit(totalMonthToman.toLocaleString('en-US'))} تومان</td>
         <td class="info-label">📊 مجموع سود درصدی ماه:</td>
         <td class="info-val badge-green">+${toDigit(totalMonthPercent.toFixed(2))}٪</td>
+    </tr>
+    <tr>
+        <td class="info-label">💸 میانگین روزانه سود تومانی:</td>
+        <td class="info-val badge-green">+${toDigit(avgMonthToman.toLocaleString('en-US'))} تومان</td>
+        <td class="info-label">📈 میانگین روزانه سود درصدی:</td>
+        <td class="info-val badge-green">+${toDigit(avgMonthPercent.toFixed(2))}٪</td>
     </tr>
 </table>
 
