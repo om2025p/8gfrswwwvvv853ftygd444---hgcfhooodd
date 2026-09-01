@@ -785,21 +785,40 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
 
                     for target_v_url in clean_v_urls:
                         try:
-                            print(f"DEBUG: Trying direct generic video link: {target_v_url}")
-                            dl_req = urllib.request.Request(target_v_url, headers=gen_headers)
-                            with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_path_gen, 'wb') as out_file:
-                                chunk = dl_resp.read(1024 * 1024)
-                                if chunk:
-                                    out_file.write(chunk)
-                                    while True:
-                                        c = dl_resp.read(1024 * 1024)
-                                        if not c:
-                                            break
-                                        out_file.write(c)
+                            print(f"DEBUG: Trying 1DM+ style direct generic video download: {target_v_url}")
+                            # 1DM+ Header injection: Inject Referer of the source page
+                            v_headers = dict(gen_headers)
+                            v_headers['Referer'] = link
+
+                            try:
+                                dl_req = urllib.request.Request(target_v_url, headers=v_headers)
+                                with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_path_gen, 'wb') as out_file:
+                                    chunk = dl_resp.read(1024 * 1024)
+                                    if chunk:
+                                        out_file.write(chunk)
+                                        while True:
+                                            c = dl_resp.read(1024 * 1024)
+                                            if not c:
+                                                break
+                                            out_file.write(c)
+                            except Exception as ex_urllib:
+                                print(f"DEBUG: Urllib 1DM+ download failed ({ex_urllib}). Trying curl 1DM+ engine fallback...")
+                                # Fallback: 1DM+ Curl engine with Referer, User-Agent, and Retries
+                                cmd_1dm = [
+                                    "curl", "-s", "-L",
+                                    "-e", link,
+                                    "-A", v_headers['User-Agent'],
+                                    "--retry", "5",
+                                    "--retry-connrefused",
+                                    "--retry-delay", "2",
+                                    "-o", out_path_gen,
+                                    target_v_url
+                                ]
+                                subprocess.run(cmd_1dm, timeout=60)
 
                             if os.path.exists(out_path_gen) and os.path.getsize(out_path_gen) > 50000:
                                 downloaded_gen = True
-                                print(f"DEBUG: Generic webpage video successfully downloaded to {out_path_gen}")
+                                print(f"DEBUG: Generic webpage video successfully downloaded with 1DM+ engine to {out_path_gen}")
                                 break
                         except Exception as ex_dl_gen:
                             error_logs.append(f"Generic Web Extractor URL ({target_v_url[:40]}...): {ex_dl_gen}")
@@ -812,9 +831,26 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                         ai_url = await call_gemini_ai_extract(page_html, link)
                         if ai_url and ai_url.startswith('http'):
                             try:
-                                dl_req = urllib.request.Request(ai_url, headers=gen_headers)
-                                with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_path_gen, 'wb') as out_file:
-                                    out_file.write(dl_resp.read())
+                                ai_headers = dict(gen_headers)
+                                ai_headers['Referer'] = link
+                                try:
+                                    dl_req = urllib.request.Request(ai_url, headers=ai_headers)
+                                    with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_path_gen, 'wb') as out_file:
+                                        out_file.write(dl_resp.read())
+                                except Exception as ex_ai_u:
+                                    print(f"DEBUG: Gemini AI urllib download failed ({ex_ai_u}). Trying curl 1DM+ engine...")
+                                    cmd_ai_curl = [
+                                        "curl", "-s", "-L",
+                                        "-e", link,
+                                        "-A", ai_headers['User-Agent'],
+                                        "--retry", "5",
+                                        "--retry-connrefused",
+                                        "--retry-delay", "2",
+                                        "-o", out_path_gen,
+                                        ai_url
+                                    ]
+                                    subprocess.run(cmd_ai_curl, timeout=60)
+
                                 if os.path.exists(out_path_gen) and os.path.getsize(out_path_gen) > 50000:
                                     downloaded_gen = True
                                     print(f"DEBUG: Gemini AI extracted video successfully downloaded to {out_path_gen}")
