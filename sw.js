@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v33';
+const CACHE_NAME = 'emarat-portal-v34';
 const ASSETS = [
   './',
   './index.html',
@@ -219,7 +219,16 @@ const ASSETS = [
   './html-viewer/icon-192-maskable.png',
   './html-viewer/icon-512-maskable.png',
   './html-viewer/apple-touch-icon.png',
-  './html-viewer/favicon.ico'
+  './html-viewer/favicon.ico',
+  // Funds Webview App (WWW.com)
+  './funds/index.html',
+  './funds/manifest.json',
+  './funds/icon-192.png',
+  './funds/icon-512.png',
+  './funds/icon-192-maskable.png',
+  './funds/icon-512-maskable.png',
+  './funds/apple-touch-icon.png',
+  './funds/favicon.ico'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها

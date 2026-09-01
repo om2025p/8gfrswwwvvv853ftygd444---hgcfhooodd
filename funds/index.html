@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WWW.com - وب‌سایت صندوق‌ها</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="theme-color" content="#0284c7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="../cloud-sync.js"></script>
+
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(15, 23, 42, 0.75);
+            --glass-border: rgba(56, 189, 248, 0.25);
+            --text-light: #f8fafc;
+            --accent-cyan: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* هدر فوقانی با تب‌ها */
+        .app-header {
+            background: linear-gradient(135deg, #0284c7 0%, #0f172a 100%);
+            padding: 10px 12px 8px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 100;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #ffffff;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .brand-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* دکمه‌های تب‌ها */
+        .tabs-container {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 14px;
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 4px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #94a3b8;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tab-btn.active {
+            color: #ffffff;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* محفظه اصلی وب‌ویوها */
+        .webview-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+        }
+
+        .webview-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: none;
+            background: #ffffff;
+        }
+
+        .webview-frame.active {
+            display: block;
+        }
+
+        /* لودر و اسپینر */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            z-index: 50;
+            transition: opacity 0.3s ease;
+        }
+
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid rgba(56, 189, 248, 0.2);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        /* دکمه بازگشت به پورتال اصلی */
+        .back-portal-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--glass-border);
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            z-index: 99;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: transform 0.2s ease;
+        }
+
+        .back-portal-btn:active {
+            transform: scale(0.9);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- هدر بالای صفحه با دکمه‌های تب و ابزارها -->
+    <header class="app-header">
+        <div class="header-top">
+            <div class="brand-title">
+                <img src="icon-192.png" alt="WWW.com" class="brand-icon">
+                <span>WWW.com</span>
+            </div>
+            <div class="header-actions">
+                <button class="action-btn" id="refreshBtn" title="بروزرسانی">
+                    🔄 تازه‌سازی
+                </button>
+                <button class="action-btn" id="openExternalBtn" title="باز کردن در مرورگر">
+                    🌐 مرورگر
+                </button>
+            </div>
+        </div>
+
+        <nav class="tabs-container">
+            <button class="tab-btn active" data-tab="tab1" data-url="https://energy.irfarabi.ir/">
+                انرژی فارابی
+            </button>
+            <button class="tab-btn" data-tab="tab2" data-url="https://kianfunds4.ir/">
+                کیان ۴
+            </button>
+            <button class="tab-btn" data-tab="tab3" data-url="https://kianfunds9.ir/reports/nav-trend?symbol=16">
+                کیان ۹ (NAV)
+            </button>
+        </nav>
+    </header>
+
+    <!-- محفظه وب‌ویوها -->
+    <main class="webview-container">
+        <!-- لودر هوشمند -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <div class="loading-text" id="loadingText">در حال بارگذاری وب‌سایت...</div>
+        </div>
+
+        <!-- ۳ آی‌فریم مجزا جهت حفظ وضعیت و سرعت فوق‌العاده (Keep-Alive) -->
+        <iframe id="frame-tab1" class="webview-frame active" src="https://energy.irfarabi.ir/" allow="fullscreen; autoplay; clipboard-write;"></iframe>
+        <iframe id="frame-tab2" class="webview-frame" data-src="https://kianfunds4.ir/" allow="fullscreen; autoplay; clipboard-write;"></iframe>
+        <iframe id="frame-tab3" class="webview-frame" data-src="https://kianfunds9.ir/reports/nav-trend?symbol=16" allow="fullscreen; autoplay; clipboard-write;"></iframe>
+    </main>
+
+    <!-- دکمه شناور بازگشت به پورتال عمارت -->
+    <a href="../index.html" class="back-portal-btn" title="بازگشت به پورتال">
+        🏠
+    </a>
+
+    <script>
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const frames = {
+            tab1: document.getElementById('frame-tab1'),
+            tab2: document.getElementById('frame-tab2'),
+            tab3: document.getElementById('frame-tab3')
+        };
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const openExternalBtn = document.getElementById('openExternalBtn');
+
+        let currentTab = 'tab1';
+
+        // مدیریت حالت بارگذاری آی‌فریم‌ها
+        Object.keys(frames).forEach(tabKey => {
+            const iframe = frames[tabKey];
+            iframe.addEventListener('load', () => {
+                if (tabKey === currentTab) {
+                    hideLoading();
+                }
+            });
+        });
+
+        function showLoading(text) {
+            loadingText.innerText = text || 'در حال بارگذاری...';
+            loadingOverlay.style.opacity = '1';
+            loadingOverlay.style.pointerEvents = 'auto';
+        }
+
+        function hideLoading() {
+            loadingOverlay.style.opacity = '0';
+            loadingOverlay.style.pointerEvents = 'none';
+        }
+
+        // سوئیچ بین تب‌ها با بالاترین سرعت و حفظ وضعیت Iframe
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.getAttribute('data-tab');
+                if (targetTab === currentTab) return;
+
+                // به‌روزرسانی استایل دکمه‌های فعال
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // مخفی‌سازی آی‌فریم قبلی و نمایش آی‌فریم جدید
+                Object.keys(frames).forEach(key => {
+                    if (key === targetTab) {
+                        const targetFrame = frames[key];
+                        // بارگذاری ایزوله (Lazy load) در اولین دکمه زدن
+                        if (!targetFrame.src && targetFrame.getAttribute('data-src')) {
+                            showLoading('در حال دریافت اطلاعات...');
+                            targetFrame.src = targetFrame.getAttribute('data-src');
+                        } else {
+                            hideLoading();
+                        }
+                        targetFrame.classList.add('active');
+                    } else {
+                        frames[key].classList.remove('active');
+                    }
+                });
+
+                currentTab = targetTab;
+            });
+        });
+
+        // دکمه تازه‌سازی (Refresh) آی‌فریم فعال
+        refreshBtn.addEventListener('click', () => {
+            const activeFrame = frames[currentTab];
+            if (activeFrame) {
+                showLoading('در حال به روزرسانی...');
+                const currentSrc = activeFrame.src || activeFrame.getAttribute('data-src');
+                activeFrame.src = currentSrc;
+            }
+        });
+
+        // باز کردن مستقیم در مرورگر خارجی
+        openExternalBtn.addEventListener('click', () => {
+            const activeBtn = document.querySelector('.tab-btn.active');
+            if (activeBtn) {
+                const targetUrl = activeBtn.getAttribute('data-url');
+                window.open(targetUrl, '_blank');
+            }
+        });
+
+        // هاید کردن لودر اولیه بعد از ۴ ثانیه در صورت کندی سرور مقصد
+        setTimeout(() => {
+            hideLoading();
+        }, 4000);
+    </script>
+</body>
+</html>
