@@ -199,31 +199,6 @@
             font-weight: 600;
         }
 
-        /* دکمه بازگشت به پورتال اصلی */
-        .back-portal-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(15, 23, 42, 0.85);
-            border: 1px solid var(--glass-border);
-            color: white;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            z-index: 99;
-            text-decoration: none;
-            font-size: 1.2rem;
-            transition: transform 0.2s ease;
-        }
-
-        .back-portal-btn:active {
-            transform: scale(0.9);
-        }
     </style>
 </head>
 <body>
@@ -272,10 +247,6 @@
         <iframe id="frame-tab3" class="webview-frame" data-src="https://kianfunds9.ir/reports/nav-trend?symbol=16" allow="fullscreen; autoplay; clipboard-write;"></iframe>
     </main>
 
-    <!-- دکمه شناور بازگشت به پورتال عمارت -->
-    <a href="../index.html" class="back-portal-btn" title="بازگشت به پورتال">
-        🏠
-    </a>
 
     <script>
         const tabBtns = document.querySelectorAll('.tab-btn');

@@ -334,13 +334,8 @@
             });
             DEFAULT_APPS.forEach(defaultApp => {
                 if (!apps.some(a => a.id === defaultApp.id)) {
-                    // قرار دادن برنامه‌های جدید قبل از برنامه دیدبان درصدها یا در انتهای لیست
-                    const monitorIdx = apps.findIndex(a => a.id === 'monitor');
-                    if (monitorIdx !== -1) {
-                        apps.splice(monitorIdx, 0, defaultApp);
-                    } else {
-                        apps.push(defaultApp);
-                    }
+                    // قرار دادن برنامه‌های جدید در انتهای لیست (سمت چپ‌ترین بخش اسکرول در تم RTL)
+                    apps.push(defaultApp);
                 }
             });
             localStorage.setItem('portal_app_order', JSON.stringify(apps));
