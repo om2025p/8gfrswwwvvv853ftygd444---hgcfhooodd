@@ -446,11 +446,22 @@
                 </div>
 
                 <!-- کادر ورودی پیوند عکس / فیلم -->
-                <div class="input-group" style="margin-bottom: 20px;">
+                <div class="input-group" style="margin-bottom: 12px;">
                     <label class="input-label" style="font-size: 0.9rem; color: #1e293b; font-weight: 700;">
                         🎬📸 لینک فیلم یا عکس تلگرام تیک تاک اینستاگرام را وارد کنید:
                     </label>
-                    <input type="text" id="dlLink" class="input-field" placeholder="https://t.me/c/123456789/22" style="direction: ltr; font-size: 0.95rem; padding: 15px; border-radius: 16px;">
+                    <div style="display: flex; gap: 8px; width: 100%;">
+                        <input type="text" id="dlLink" class="input-field" placeholder="https://t.me/c/123456789/22" style="direction: ltr; font-size: 0.95rem; padding: 15px; border-radius: 16px; flex: 1;">
+                        <button class="action-btn secondary" id="btnPaste" style="width: auto; padding: 0 16px; font-size: 0.9rem; border-radius: 16px; white-space: nowrap; flex-shrink: 0;">
+                            📋 چسباندن
+                        </button>
+                    </div>
+                </div>
+
+                <!-- شمارنده لینک‌های منحصربه‌فرد زیر کادر -->
+                <div id="uniqueLinksCounter" style="font-size: 0.83rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 8px 14px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+                    <span>🔗 تعداد لینک‌های دانلودشده (غیرتکراری):</span>
+                    <span id="uniqueLinksCountBadge" style="background: #2563eb; color: #ffffff; padding: 2px 10px; border-radius: 10px; font-size: 0.85rem;">۰</span>
                 </div>
 
                 <!-- دکمه دانلود بزرگ -->
@@ -472,9 +483,10 @@
                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-top: 14px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; margin-bottom: 10px;">
                             <span style="font-size: 0.82rem; font-weight: 700; color: #334155;">🕒 زمان آخرین بروزرسانی نسخه:</span>
-                            <span style="font-size: 0.82rem; font-weight: 800; color: #16a34a; background: #dc26260f; padding: 3px 10px; border-radius: 10px; border: 1px solid #bbf7d0;">۱۰ شهریور ۱۴۰۵ ساعت ۱۶:۴۵</span>
+                            <span style="font-size: 0.82rem; font-weight: 800; color: #16a34a; background: #dc26260f; padding: 3px 10px; border-radius: 10px; border: 1px solid #bbf7d0;">۱۲ شهریور ۱۴۰۵ ساعت ۱۱:۳۰</span>
                         </div>
                         <ul style="margin: 0; padding-right: 18px; font-size: 0.82rem; color: #475569; line-height: 1.7;">
+                            <li>📋 <strong>[۱۲ شهریور ۱۴۰۵ - ۱۱:۳۰] افزودن دکمه چسباندن پیوند و شمارنده هوشمند:</strong> قابلیت چسباندن سریع متن کلیپ‌بورد به کادر دانلود با یک کلیک و ثبت دائم تعداد کل لینک‌های منحصربه‌فرد (غیرتکراری) در حافظه مرورگر.</li>
                             <li>🩸 <strong>[۱۰ شهریور ۱۴۰۵ - ۱۶:۴۵] گزارش و عیب‌یابی هوشمند خطاها:</strong> ارائه علت و شرح دقیق عدم دریافت لینک در پیام تلگرام و ارسال فایل متنی پیوست در صورت طولانی بودن لاگ‌ها.</li>
                             <li>🟢 <strong>[۵ شهریور ۱۴۰۵ - ۰۷:۴۶] اتصال لایو دیباگ سرور:</strong> استریم خط‌به‌خط لاگ‌های سرور ابری گیت‌هاب در پنل دیاگ دانلود.</li>
                             <li>⚡ <strong>[۴ شهریور ۱۴۰۵ - ۲۲:۱۵] موتور ۴ لایه مدرن رسانه:</strong> استخراج تیک‌تاک بدون واترمارک HD (TikWM API)، ریلز اینستاگرام (Embed Engine)، yt-dlp 2024 و Direct Parser.</li>
@@ -1269,12 +1281,95 @@
             }
         };
 
+        // مدیریت لینک‌های منحصربه‌فرد (غیرتکراری) و حافظه دائمی مرورگر
+        const UNIQUE_LINKS_STORAGE_KEY = 'restricted_unique_download_links';
+
+        function getSavedUniqueLinks() {
+            try {
+                const dataStr = localStorage.getItem(UNIQUE_LINKS_STORAGE_KEY);
+                if (dataStr) {
+                    const parsed = JSON.parse(dataStr);
+                    if (Array.isArray(parsed)) {
+                        return new Set(parsed);
+                    }
+                }
+            } catch (e) {
+                logDlDebug("خطا در بازیابی لیست لینک‌های غیرتکراری: " + e.message, "error");
+            }
+            return new Set();
+        }
+
+        function saveUniqueLinks(linksSet) {
+            try {
+                const arr = Array.from(linksSet);
+                localStorage.setItem(UNIQUE_LINKS_STORAGE_KEY, JSON.stringify(arr));
+            } catch (e) {
+                logDlDebug("خطا در ذخیره لیست لینک‌های غیرتکراری: " + e.message, "error");
+            }
+        }
+
+        function updateUniqueLinksBadge() {
+            const badge = document.getElementById('uniqueLinksCountBadge');
+            if (!badge) return;
+            const linksSet = getSavedUniqueLinks();
+            badge.innerText = linksSet.size.toLocaleString('fa-IR');
+        }
+
+        function registerUniqueLink(rawLink) {
+            if (!rawLink) return false;
+            const cleaned = sanitizeString(rawLink.trim());
+            if (!cleaned || cleaned.startsWith("search:")) return false;
+
+            const linksSet = getSavedUniqueLinks();
+            const initialSize = linksSet.size;
+            linksSet.add(cleaned);
+
+            if (linksSet.size > initialSize) {
+                saveUniqueLinks(linksSet);
+                updateUniqueLinksBadge();
+                logDlDebug(`🔗 لینک منحصربه‌فرد جدید ثبت شد (مجموع: ${linksSet.size})`);
+                return true;
+            } else {
+                logDlDebug(`ℹ️ لینک قبلاً در لیست موجود بود و تکراری حساب نشد.`);
+                return false;
+            }
+        }
+
+        // بارگذاری اولیه شمارنده لینک‌های منحصربه‌فرد
+        updateUniqueLinksBadge();
+
+        // دکمه چسباندن متن از کلیپ‌بورد
+        const btnPaste = document.getElementById('btnPaste');
+        if (btnPaste) {
+            btnPaste.onclick = async () => {
+                try {
+                    if (navigator.clipboard && navigator.clipboard.readText) {
+                        const text = await navigator.clipboard.readText();
+                        if (text) {
+                            const cleaned = sanitizeString(text);
+                            document.getElementById('dlLink').value = cleaned;
+                            showToast("📋 متن کلیپ‌بورد با موفقیت چسبانده شد!");
+                            logDlDebug("متن از حافظه کلیپ‌بورد چسبانده شد.");
+                        } else {
+                            showToast("⚠️ متن یا پیوندی در کلیپ‌بورد یافت نشد!");
+                        }
+                    } else {
+                        showToast("⚠️ مرورگر شما از قابلیت چسباندن مستقیم پشتیبانی نمی‌کند!");
+                    }
+                } catch (err) {
+                    showToast("⚠️ لطفا اجازه دسترسی به کلیپ‌بورد را تایید کنید!");
+                    logDlDebug("خطای دسترسی به کلیپ‌بورد: " + err.message, "error");
+                }
+            };
+        }
+
         document.getElementById('btnDownload').onclick = () => {
             const link = document.getElementById('dlLink').value;
             if (!link) {
                 showToast("⚠️ لطفا آدرس پیوند تلگرام را در کادر بالا وارد کنید!");
                 return;
             }
+            registerUniqueLink(link);
             triggerWorkflow(link);
         };
 
