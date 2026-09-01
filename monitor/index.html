@@ -2342,7 +2342,12 @@
 
                 if (isCompleted) {
                     badgeHtml = `<span style="background: rgba(52, 211, 153, 0.15); color: var(--positive-color); padding: 4px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: bold; border: 1px solid rgba(52, 211, 153, 0.3);">🟢 ماه تکمیل‌شده</span>`;
-                    actionBtnHtml = `<button onclick="downloadZarinOfflineReport(${curYear}, ${m}, '${monthName}')" style="background: linear-gradient(135deg, #16a34a, #15803d); color: #fff; border: none; padding: 8px 14px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">دانلود گزارش 📥</button>`;
+                    actionBtnHtml = `
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button onclick="downloadZarinOfflineReport(${curYear}, ${m}, '${monthName}', true)" style="background: linear-gradient(135deg, #16a34a, #15803d); color: #fff; border: none; padding: 6px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.3);">🇮🇷 اعداد فارسی 📥</button>
+                            <button onclick="downloadZarinOfflineReport(${curYear}, ${m}, '${monthName}', false)" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; border: none; padding: 6px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);">🌐 اعداد انگلیسی 📥</button>
+                        </div>
+                    `;
                 } else if (isCurrentMonth) {
                     badgeHtml = `<span style="background: rgba(245, 158, 11, 0.15); color: var(--recovering-color); padding: 4px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: bold; border: 1px solid rgba(245, 158, 11, 0.3);">⏳ ماه در حال جریان</span>`;
                     actionBtnHtml = `<div style="background: var(--history-sub-bg); color: var(--text-muted); padding: 8px 12px; border-radius: 12px; font-size: 0.78rem; font-weight: bold; border: 1px solid var(--card-border);">🔒 غیرقابل دانلود تا ۱ ${nextMonthName}</div>`;
@@ -2367,12 +2372,36 @@
             container.innerHTML = html;
         }
 
-        function downloadZarinOfflineReport(year, monthIdx, monthName) {
+        function convertDigitsToPersian(str) {
+            if (str === null || str === undefined) return '';
+            const map = {'0':'۰', '1':'۱', '2':'۲', '3':'۳', '4':'۴', '5':'۵', '6':'۶', '7':'۷', '8':'۸', '9':'۹'};
+            return String(str).replace(/[0-9]/g, m => map[m] || m);
+        }
+
+        function convertDigitsToEnglish(str) {
+            if (str === null || str === undefined) return '';
+            const map = {'۰':'0', '۱':'1', '۲':'2', '۳':'3', '۴':'4', '۵':'5', '۶':'6', '۷':'7', '٨':'8', '۹':'9', '٠':'0', '١':'1', '٢':'2', '٣':'3', '٤':'4', '٥':'5', '٦':'6', '٧':'7', '٨':'8', '٩':'9'};
+            return String(str).replace(/[۰-۹٠-٩]/g, m => map[m] || m);
+        }
+
+        function downloadZarinOfflineReport(year, monthIdx, monthName, usePersianDigits = true) {
             const rawHistory = calculateDailyHistory();
             const appsInfo = getAppPercentData();
 
+            const toDigit = (val) => usePersianDigits ? convertDigitsToPersian(val) : convertDigitsToEnglish(val);
+
             let totalMonthToman = 0;
+            let totalMonthPercent = 0;
             let dayBlocksHtml = '';
+
+            const fundMonthlySums = {};
+            appsInfo.forEach(app => {
+                fundMonthlySums[app.id] = {
+                    title: app.title,
+                    percentSum: 0,
+                    tomanSum: 0
+                };
+            });
 
             rawHistory.forEach(dayItem => {
                 const dayStr = dayItem.dayString;
@@ -2402,17 +2431,25 @@
                                     }
                                 }
                             }
+
                             posItems.push({
                                 title: app.title,
                                 percent: appPercentVal,
                                 toman: appTomanProfit
                             });
+
+                            if (fundMonthlySums[app.id]) {
+                                fundMonthlySums[app.id].percentSum += appPercentVal;
+                                fundMonthlySums[app.id].tomanSum += appTomanProfit;
+                            }
+
+                            totalMonthPercent += appPercentVal;
+                            totalMonthToman += appTomanProfit;
                         }
                     });
 
                     if (posItems.length > 0) {
                         const dayTotalToman = posItems.reduce((acc, curr) => acc + curr.toman, 0);
-                        totalMonthToman += dayTotalToman;
 
                         const dateStrFormatted = `${rYear}/${String(rMonth).padStart(2, '0')}/${String(rDay).padStart(2, '0')}`;
                         const timeStrFormatted = d.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -2423,7 +2460,7 @@
                             rowsHtml += `
                                 <div class="fund-row ${bgClass}">
                                     <span class="fund-name">${item.title}</span>
-                                    <span class="fund-val pos">+${item.percent.toFixed(2)}% (+${item.toman.toLocaleString('fa-IR')} تومان)</span>
+                                    <span class="fund-val pos">+${toDigit(item.percent.toFixed(2))}٪ (+${toDigit(item.toman.toLocaleString('en-US'))} تومان)</span>
                                 </div>
                             `;
                         });
@@ -2431,8 +2468,8 @@
                         dayBlocksHtml += `
                             <div class="day-block">
                                 <div class="day-block-header">
-                                    <span>📅 تاریخ: ${dateStrFormatted} · ساعت ثبت: ${timeStrFormatted}</span>
-                                    <span class="day-total-badge">💰 مجموع روز: +${dayTotalToman.toLocaleString('fa-IR')} تومان</span>
+                                    <span>📅 تاریخ: ${toDigit(dateStrFormatted)} · ساعت ثبت: ${toDigit(timeStrFormatted)}</span>
+                                    <span class="day-total-badge">💰 مجموع روز: +${toDigit(dayTotalToman.toLocaleString('en-US'))} تومان</span>
                                 </div>
                                 ${rowsHtml}
                             </div>
@@ -2440,6 +2477,48 @@
                     }
                 }
             });
+
+            // ساخت جدول خلاصه تفکیکی عملکرد صندوق‌ها در طول ماه
+            let summaryRowsHtml = '';
+            let hasAnySummary = false;
+
+            appsInfo.forEach(app => {
+                const fundData = fundMonthlySums[app.id];
+                if (fundData && fundData.tomanSum > 0) {
+                    hasAnySummary = true;
+                    summaryRowsHtml += `
+                        <tr>
+                            <td><strong>${fundData.title}</strong></td>
+                            <td style="text-align: center; color: #16a34a; font-weight: bold;">+${toDigit(fundData.percentSum.toFixed(2))}٪</td>
+                            <td style="text-align: left; color: #16a34a; font-weight: bold;">+${toDigit(fundData.tomanSum.toLocaleString('en-US'))} تومان</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            let summaryTableHtml = '';
+            if (hasAnySummary) {
+                summaryTableHtml = `
+                    <h4 style="margin-bottom: 10px; color: var(--header-bg, #1e3a8a);">📊 خلاصه تفکیکی عملکرد هر صندوق در این ماه:</h4>
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>نام صندوق</th>
+                                <th style="text-align: center;">مجموع درصد ماه</th>
+                                <th style="text-align: left;">مجموع سود تومانی ماه</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${summaryRowsHtml}
+                            <tr class="total-row">
+                                <td><strong>🏆 مجموع کل عملکرد ماه</strong></td>
+                                <td style="text-align: center; color: #16a34a; font-weight: 800; font-size: 13px;">+${toDigit(totalMonthPercent.toFixed(2))}٪</td>
+                                <td style="text-align: left; color: #16a34a; font-weight: 800; font-size: 13px;">+${toDigit(totalMonthToman.toLocaleString('en-US'))} تومان</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+            }
 
             if (!dayBlocksHtml) {
                 dayBlocksHtml = `
@@ -2449,27 +2528,62 @@
                 `;
             }
 
+            const monthIdxStr = String(monthIdx).padStart(2, '0');
+
             const bankDocHtml = `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>صورت‌حساب تاریخچه زرین - ${monthName} ${year}</title>
+<title>صورت‌حساب تاریخچه زرین - ${monthName} ${toDigit(year)}</title>
 <style>
     @page { size: A4; margin: 12mm; }
+    :root {
+        --bg-color: #ffffff;
+        --text-color: #0f172a;
+        --card-bg: #ffffff;
+        --card-border: #cbd5e1;
+        --header-bg: #1e3a8a;
+        --header-text: #ffffff;
+        --info-bg: #f8fafc;
+        --summary-header-bg: #e2e8f0;
+        --summary-row-even: #f8fafc;
+        --total-row-bg: #dbeafe;
+        --badge-yellow-bg: #fef08a;
+        --badge-yellow-text: #854d0e;
+        --yellow-row-bg: #fef9c3;
+        --white-row-bg: #ffffff;
+    }
+    body.dark-theme {
+        --bg-color: #0f172a;
+        --text-color: #f8fafc;
+        --card-bg: #1e293b;
+        --card-border: #334155;
+        --header-bg: #1e293b;
+        --header-text: #60a5fa;
+        --info-bg: #1e293b;
+        --summary-header-bg: #334155;
+        --summary-row-even: #1e293b;
+        --total-row-bg: #1e3a8a;
+        --badge-yellow-bg: #854d0e;
+        --badge-yellow-text: #fef08a;
+        --yellow-row-bg: #1e293b;
+        --white-row-bg: #0f172a;
+    }
     body {
         font-family: 'Tahoma', 'Segoe UI', sans-serif;
-        background: #ffffff;
-        color: #0f172a;
+        background: var(--bg-color);
+        color: var(--text-color);
         margin: 0;
         padding: 20px;
         direction: rtl;
         -webkit-print-color-adjust: exact;
+        transition: background 0.3s, color 0.3s;
     }
     .header-bank-table {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 15px;
-        border: 2px solid #1e3a8a;
+        border: 2px solid var(--header-bg);
         border-radius: 8px;
         overflow: hidden;
     }
@@ -2478,7 +2592,7 @@
         vertical-align: middle;
     }
     .header-title-cell {
-        background: #1e3a8a;
+        background: var(--header-bg);
         color: #ffffff;
         text-align: center;
     }
@@ -2489,28 +2603,59 @@
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 20px;
-        background: #f8fafc;
-        border: 1px solid #cbd5e1;
+        background: var(--info-bg);
+        border: 1px solid var(--card-border);
         border-radius: 6px;
     }
     .info-grid td {
         padding: 8px 12px;
         font-size: 11px;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid var(--card-border);
+        color: var(--text-color);
     }
-    .info-label { font-weight: bold; color: #475569; width: 20%; }
-    .info-val { font-weight: bold; color: #0f172a; width: 30%; }
+    .info-label { font-weight: bold; color: var(--text-color); opacity: 0.8; width: 20%; }
+    .info-val { font-weight: bold; color: var(--text-color); width: 30%; }
     .badge-green { color: #16a34a; font-weight: bold; }
 
+    .summary-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        border: 1px solid var(--card-border);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .summary-table th {
+        background: var(--summary-header-bg);
+        color: var(--text-color);
+        padding: 8px 12px;
+        font-size: 11px;
+        text-align: right;
+        border-bottom: 2px solid var(--card-border);
+    }
+    .summary-table td {
+        padding: 8px 12px;
+        font-size: 11px;
+        border-bottom: 1px solid var(--card-border);
+        color: var(--text-color);
+    }
+    .summary-table tr:nth-child(even) {
+        background: var(--summary-row-even);
+    }
+    .summary-table tr.total-row {
+        background: var(--total-row-bg);
+        font-weight: bold;
+    }
+
     .day-block {
-        border: 2px solid #1e3a8a;
+        border: 2px solid var(--card-border);
         border-radius: 10px;
         margin-bottom: 18px;
         overflow: hidden;
-        background: #ffffff;
+        background: var(--card-bg);
     }
     .day-block-header {
-        background: #1e3a8a;
+        background: var(--header-bg);
         color: #ffffff;
         padding: 10px 15px;
         font-size: 13px;
@@ -2520,8 +2665,8 @@
         align-items: center;
     }
     .day-total-badge {
-        background: #fef08a;
-        color: #854d0e;
+        background: var(--badge-yellow-bg);
+        color: var(--badge-yellow-text);
         padding: 4px 10px;
         border-radius: 6px;
         font-size: 11px;
@@ -2534,21 +2679,21 @@
         align-items: center;
         padding: 8px 15px;
         font-size: 11px;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid var(--card-border);
     }
     .fund-row:last-child {
         border-bottom: none;
     }
     .fund-row.yellow-bg {
-        background-color: #fef9c3;
+        background-color: var(--yellow-row-bg);
     }
     .fund-row.white-bg {
-        background-color: #ffffff;
+        background-color: var(--white-row-bg);
     }
 
     .fund-name {
         font-weight: bold;
-        color: #1e293b;
+        color: var(--text-color);
         display: flex;
         align-items: center;
         gap: 6px;
@@ -2562,17 +2707,18 @@
 
     .footer-stamp {
         margin-top: 25px;
-        border-top: 2px dashed #94a3b8;
+        border-top: 2px dashed var(--card-border);
         padding-top: 12px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         font-size: 10px;
-        color: #64748b;
+        color: var(--text-color);
+        opacity: 0.8;
     }
     .stamp-box {
-        border: 2px double #1e3a8a;
-        color: #1e3a8a;
+        border: 2px double var(--header-bg);
+        color: var(--header-bg);
         padding: 6px 12px;
         border-radius: 6px;
         font-weight: bold;
@@ -2580,15 +2726,26 @@
         font-size: 10px;
     }
     @media print {
-        body { padding: 0; }
+        body { padding: 0; background: #ffffff !important; color: #0f172a !important; }
         .no-print { display: none !important; }
+        .header-bank-table, .day-block { border-color: #1e3a8a !important; }
+        .header-title-cell, .day-block-header { background: #1e3a8a !important; color: #ffffff !important; }
+        .info-grid { background: #f8fafc !important; border-color: #cbd5e1 !important; }
+        .summary-table { border-color: #cbd5e1 !important; }
+        .summary-table th { background: #e2e8f0 !important; color: #1e3a8a !important; }
+        .summary-table tr.total-row { background: #dbeafe !important; }
+        .day-total-badge { background: #fef08a !important; color: #854d0e !important; }
+        .fund-row.yellow-bg { background-color: #fef9c3 !important; }
+        .fund-row.white-bg { background-color: #ffffff !important; }
+        .fund-name, .info-label, .info-val { color: #0f172a !important; }
     }
 </style>
 </head>
 <body>
 
-<div class="no-print" style="margin-bottom: 15px; padding: 12px; background: #e0f2fe; border: 1px solid #0284c7; border-radius: 8px; text-align: center;">
-    <button onclick="window.print()" style="background: #0284c7; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer;">🖨️ پرینت یا ذخیره به صورت PDF</button>
+<div class="no-print" style="margin-bottom: 15px; padding: 12px; background: #e0f2fe; border: 1px solid #0284c7; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+    <button onclick="window.print()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer;">🖨️ پرینت یا ذخیره به صورت PDF</button>
+    <button onclick="document.body.classList.toggle('dark-theme'); this.innerText = document.body.classList.contains('dark-theme') ? '☀️ تم روشن' : '🌙 تم تاریک';" style="background: #1e293b; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer;">🌙 تم تاریک</button>
 </div>
 
 <table class="header-bank-table">
@@ -2603,7 +2760,7 @@
 <table class="info-grid">
     <tr>
         <td class="info-label">📅 دوره گزارش:</td>
-        <td class="info-val">${monthName} ماه ${year}</td>
+        <td class="info-val">${monthName} ماه ${toDigit(year)}</td>
         <td class="info-label">👤 دارنده حساب:</td>
         <td class="info-val">مدیریت محترم عمارت</td>
     </tr>
@@ -2611,17 +2768,19 @@
         <td class="info-label">🏷️ نوع صورت‌حساب:</td>
         <td class="info-val">تاریخچه زرین (فقط سودهای مثبت)</td>
         <td class="info-label">🏷️ کد پیگیری:</td>
-        <td class="info-val">EMR-${year}-${String(monthIdx).padStart(2, '0')}-ZARIN</td>
+        <td class="info-val">EMR-${toDigit(year)}-${toDigit(monthIdxStr)}-ZARIN</td>
     </tr>
     <tr>
-        <td class="info-label">💰 مجموع سود ماه:</td>
-        <td class="info-val badge-green">+${totalMonthToman.toLocaleString('fa-IR')} تومان</td>
-        <td class="info-label">🟢 وضعیت گزارش:</td>
-        <td class="info-val badge-green">ماه تکمیل‌شده (رسمی)</td>
+        <td class="info-label">💰 مجموع سود تومانی ماه:</td>
+        <td class="info-val badge-green">+${toDigit(totalMonthToman.toLocaleString('en-US'))} تومان</td>
+        <td class="info-label">📊 مجموع سود درصدی ماه:</td>
+        <td class="info-val badge-green">+${toDigit(totalMonthPercent.toFixed(2))}٪</td>
     </tr>
 </table>
 
-<h4 style="margin-bottom: 10px; color: #1e3a8a;">📋 ریز صورت‌حساب سودهای مثبت ماه (زیر هم در کادرهای زرد و سفید):</h4>
+${summaryTableHtml}
+
+<h4 style="margin-bottom: 10px; color: var(--header-bg, #1e3a8a);">📋 ریز صورت‌حساب سودهای مثبت روزانه (کادرهای زرد و سفید):</h4>
 
 ${dayBlocksHtml}
 
@@ -2639,11 +2798,12 @@ ${dayBlocksHtml}
 </body>
 </html>`;
 
+            const digitPrefix = usePersianDigits ? 'فارسی' : 'انگلیسی';
             const blob = new Blob([bankDocHtml], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `صورت_حساب_زرین_${year}_${String(monthIdx).padStart(2, '0')}.html`;
+            a.download = `صورت_حساب_زرین_${year}_${monthIdxStr}_${digitPrefix}.html`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
