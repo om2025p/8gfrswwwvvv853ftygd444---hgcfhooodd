@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <!-- این فایل ۹۷مین فایلی است که از اپلیکیشن نمایشگر کد پلتفرم عمارت دانلود شده است -->
+<meta name="platform-download-sequence" content="۹۷">
+<meta name="download-source" content="اپلیکیشن نمایشگر کد - پلتفرم عمارت">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ابزار نهایی دوام پول – با بخش‌های کشویی</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #f0ebe5;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            background: #ffffff;
+            padding: 30px 30px 40px;
+            border-radius: 32px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0d8d0;
+        }
+
+        h1 {
+            color: #1a3a5e;
+            font-size: 26px;
+            border-right: 6px solid #2e86c1;
+            padding-right: 16px;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            color: #7a6a5a;
+            font-size: 14px;
+            padding-right: 22px;
+            margin-bottom: 20px;
+        }
+
+        /* ========== بخش‌های کشویی (آکاردئون) ========== */
+        .accordion {
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            border: 1px solid #e0d8d0;
+        }
+        .accordion-header {
+            background: #f8f6f4;
+            padding: 14px 18px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+            font-weight: bold;
+            color: #1a3a5e;
+            font-size: 16px;
+            user-select: none;
+        }
+        .accordion-header:hover {
+            background: #f0ebe5;
+        }
+        .accordion-header .arrow {
+            transition: 0.3s;
+            font-size: 14px;
+        }
+        .accordion-header .arrow.open {
+            transform: rotate(180deg);
+        }
+        .accordion-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+            padding: 0 18px;
+            background: white;
+        }
+        .accordion-body.open {
+            max-height: 2000px;
+            padding: 16px 18px;
+        }
+
+        .input-group {
+            background: #f8f6f4;
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin: 8px 0;
+            border-right: 4px solid #2e86c1;
+        }
+        .input-group label {
+            display: block;
+            font-weight: bold;
+            color: #1a3a5e;
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #d5c8b8;
+            border-radius: 12px;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: right;
+            transition: 0.3s;
+            background: white;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #2e86c1;
+            box-shadow: 0 0 0 4px rgba(46, 134, 193, 0.1);
+        }
+        .input-group input::placeholder {
+            color: #bbb;
+            font-size: 14px;
+        }
+
+        .expense-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin: 8px 0;
+        }
+        .expense-box {
+            background: #f8f6f4;
+            border-radius: 16px;
+            padding: 14px 16px;
+            border: 1px solid #e0d8d0;
+            text-align: center;
+            transition: 0.3s;
+        }
+        .expense-box:focus-within {
+            border-color: #2e86c1;
+            box-shadow: 0 0 0 3px rgba(46, 134, 193, 0.1);
+        }
+        .expense-box label {
+            display: block;
+            font-weight: bold;
+            color: #1a3a5e;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .expense-box input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 2px solid #d5c8b8;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: right;
+            background: white;
+            transition: 0.3s;
+        }
+        .expense-box input:focus {
+            outline: none;
+            border-color: #2e86c1;
+            box-shadow: 0 0 0 3px rgba(46, 134, 193, 0.1);
+        }
+        .expense-box input::placeholder {
+            color: #bbb;
+            font-size: 13px;
+        }
+        .expense-box .icon {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .convert-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+            margin-top: 6px;
+            font-size: 12px;
+            color: #5a4a3a;
+            direction: ltr;
+            flex-wrap: wrap;
+        }
+        .convert-row .item {
+            background: #f0ebe5;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #3a2a2a;
+            white-space: nowrap;
+        }
+        .convert-row .item .label {
+            color: #7a6a5a;
+            font-size: 10px;
+        }
+        .convert-row .item .val {
+            font-weight: bold;
+            color: #1a3a5e;
+        }
+
+        .profit-section {
+            background: #eafaf1;
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin: 8px 0;
+            border-right: 4px solid #27ae60;
+        }
+        .profit-section .profit-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .profit-section .profit-row .profit-box {
+            flex: 1;
+            min-width: 140px;
+            background: white;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #d5c8b8;
+            text-align: center;
+        }
+        .profit-section .profit-row .profit-box label {
+            display: block;
+            font-weight: bold;
+            color: #1a5a2a;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+        .profit-section .profit-row .profit-box input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 2px solid #d5c8b8;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: right;
+            background: white;
+        }
+        .profit-section .profit-row .profit-box input:focus {
+            outline: none;
+            border-color: #27ae60;
+        }
+        .profit-section .profit-row .profit-box input::placeholder {
+            color: #bbb;
+            font-size: 13px;
+        }
+        .profit-section .profit-row .profit-box .unit {
+            font-size: 12px;
+            color: #7a6a5a;
+        }
+
+        .btn {
+            padding: 12px 22px;
+            border: none;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            color: white;
+            background: #2e86c1;
+        }
+        .btn:hover {
+            transform: scale(1.02);
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn-success {
+            background: #27ae60;
+        }
+        .btn-success:hover {
+            background: #1e8449;
+        }
+        .btn-warning {
+            background: #f39c12;
+        }
+        .btn-warning:hover {
+            background: #d68910;
+        }
+        .btn-purple {
+            background: #8e44ad;
+        }
+        .btn-purple:hover {
+            background: #6c3483;
+        }
+        .btn-teal {
+            background: #1abc9c;
+        }
+        .btn-teal:hover {
+            background: #16a085;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .flex-row .btn {
+            flex: 1;
+            min-width: 90px;
+        }
+
+        .result-box {
+            background: #eaf4fa;
+            border-radius: 20px;
+            padding: 20px 22px;
+            margin: 14px 0;
+            border: 2px solid #2e86c1;
+            text-align: center;
+        }
+        .result-box .big-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1a5276;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+        }
+        .result-box .big-number.green {
+            color: #1a7a3a;
+        }
+        .result-box .big-number.red {
+            color: #c0392b;
+        }
+        .result-box .big-number.gold {
+            color: #b7950b;
+        }
+        .result-box .sub-text {
+            font-size: 16px;
+            color: #2c1a3e;
+            margin-top: 6px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin: 12px 0;
+        }
+        .result-item {
+            background: #f8f6f4;
+            border-radius: 14px;
+            padding: 12px 10px;
+            border: 1px solid #e0d8d0;
+            text-align: center;
+        }
+        .result-item .label {
+            font-size: 12px;
+            color: #7a6a5a;
+        }
+        .result-item .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a3a5e;
+            font-family: 'Courier New', monospace;
+        }
+        .result-item .value.green {
+            color: #1a7a3a;
+        }
+        .result-item .value.red {
+            color: #c0392b;
+        }
+
+        .future-box {
+            background: #f0f8ff;
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin: 8px 0;
+            border-right: 4px solid #2e86c1;
+        }
+        .future-box .future-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .future-box .future-row input {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 14px;
+            border: 2px solid #d5c8b8;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: right;
+            background: white;
+        }
+        .future-box .future-row input:focus {
+            outline: none;
+            border-color: #2e86c1;
+            box-shadow: 0 0 0 4px rgba(46, 134, 193, 0.1);
+        }
+        .future-box .future-row input::placeholder {
+            color: #bbb;
+            font-size: 13px;
+        }
+        .future-box .future-row .btn {
+            flex: 0.5;
+            min-width: 80px;
+        }
+        .future-result {
+            margin-top: 10px;
+            padding: 14px 18px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e0d8d0;
+            font-size: 16px;
+            color: #2c1a3e;
+            line-height: 2.2;
+            text-align: center;
+        }
+
+        .target-section {
+            background: #f5f0ff;
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin: 8px 0;
+            border-right: 4px solid #8e44ad;
+        }
+        .target-section .target-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .target-section .target-row input {
+            flex: 2;
+            min-width: 130px;
+            padding: 10px 14px;
+            border: 2px solid #d5c8b8;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            text-align: right;
+            background: white;
+        }
+        .target-section .target-row input:focus {
+            outline: none;
+            border-color: #8e44ad;
+            box-shadow: 0 0 0 4px rgba(142, 68, 173, 0.1);
+        }
+        .target-section .target-row input::placeholder {
+            color: #bbb;
+            font-size: 13px;
+        }
+        .target-section .target-row .btn {
+            flex: 1;
+            min-width: 90px;
+        }
+        .target-result {
+            margin-top: 10px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e0d8d0;
+            font-size: 16px;
+            color: #2c1a3e;
+            line-height: 2;
+            text-align: center;
+        }
+        .target-result .highlight {
+            font-weight: bold;
+            color: #6c3483;
+            font-size: 20px;
+        }
+
+        .advice-box {
+            background: #fef9e7;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            border-right: 4px solid #f39c12;
+        }
+        .advice-box .title {
+            font-weight: bold;
+            color: #b7950b;
+            font-size: 16px;
+        }
+        .advice-box .text {
+            font-size: 15px;
+            color: #2c1a3e;
+            margin-top: 4px;
+            line-height: 1.9;
+        }
+
+        .history-box {
+            background: #f8f6f4;
+            border-radius: 14px;
+            padding: 12px 16px;
+            max-height: 120px;
+            overflow-y: auto;
+            margin: 10px 0;
+            border: 1px solid #e0d8d0;
+        }
+        .history-box .entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #f0ebe5;
+            font-size: 13px;
+            color: #5a4a3a;
+            display: flex;
+            justify-content: space-between;
+            direction: ltr;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .history-box .entry .date {
+            color: #7a6a5a;
+        }
+        .history-box .entry .amount {
+            font-weight: bold;
+            color: #1a3a5e;
+        }
+        .history-box::-webkit-scrollbar {
+            width: 4px;
+        }
+        .history-box::-webkit-scrollbar-track {
+            background: #f0ebe5;
+            border-radius: 10px;
+        }
+        .history-box::-webkit-scrollbar-thumb {
+            background: #d5c8b8;
+            border-radius: 10px;
+        }
+
+        .clear-history-btn {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+        .clear-history-btn:hover {
+            background: #fdf0ed;
+        }
+
+        footer {
+            margin-top: 20px;
+            padding-top: 14px;
+            border-top: 2px dashed #e0d8d0;
+            text-align: center;
+            color: #8a7a6a;
+            font-size: 14px;
+        }
+
+        @media (max-width: 900px) {
+            .result-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+        @media (max-width: 700px) {
+            .expense-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .result-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .container {
+                padding: 18px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            .result-box .big-number {
+                font-size: 26px;
+            }
+            .profit-section .profit-row {
+                flex-direction: column;
+            }
+            .profit-section .profit-row .profit-box {
+                width: 100%;
+            }
+            .future-box .future-row {
+                flex-direction: column;
+            }
+            .future-box .future-row input {
+                width: 100%;
+            }
+            .future-box .future-row .btn {
+                width: 100%;
+            }
+            .flex-row {
+                flex-direction: column;
+            }
+            .flex-row .btn {
+                width: 100%;
+            }
+            .convert-row {
+                font-size: 10px;
+                gap: 4px;
+            }
+            .convert-row .item {
+                font-size: 10px;
+                padding: 2px 6px;
+            }
+        }
+        @media (max-width: 500px) {
+            .expense-grid {
+                grid-template-columns: 1fr;
+            }
+            .result-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .container {
+                padding: 12px;
+            }
+            .target-section .target-row {
+                flex-direction: column;
+            }
+            .target-section .target-row input {
+                width: 100%;
+            }
+            .target-section .target-row .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>💰 ابزار نهایی دوام پول</h1>
+    <div class="subtitle">محاسبه دوام سرمایه + تبدیل خودکار هزینه‌ها + سود + آینده</div>
+
+    <!-- ========== بخش کشویی ۱: اطلاعات مالی ========== -->
+    <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>💰 اطلاعات مالی</span>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="accordion-body open">
+            <div class="input-group">
+                <label>💰 مقدار پول (تومان)</label>
+                <input type="text" id="moneyInput" placeholder="مثلاً ۱۰,۰۰۰,۰۰۰">
+            </div>
+
+            <div class="expense-grid">
+                <div class="expense-box" id="dailyBox">
+                    <span class="icon">☀️</span>
+                    <label>هزینه روزانه</label>
+                    <input type="text" id="dailyExpense" placeholder="مثلاً ۵۰۰,۰۰۰" data-type="daily">
+                    <div class="convert-row" id="dailyConvert">
+                        <span class="item"><span class="label">هفتگی:</span> <span class="val" id="dailyToWeekly">—</span></span>
+                        <span class="item"><span class="label">ماهانه:</span> <span class="val" id="dailyToMonthly">—</span></span>
+                    </div>
+                </div>
+
+                <div class="expense-box" id="weeklyBox">
+                    <span class="icon">📅</span>
+                    <label>هزینه هفتگی</label>
+                    <input type="text" id="weeklyExpense" placeholder="مثلاً ۲,۰۰۰,۰۰۰" data-type="weekly">
+                    <div class="convert-row" id="weeklyConvert">
+                        <span class="item"><span class="label">روزانه:</span> <span class="val" id="weeklyToDaily">—</span></span>
+                        <span class="item"><span class="label">ماهانه:</span> <span class="val" id="weeklyToMonthly">—</span></span>
+                    </div>
+                </div>
+
+                <div class="expense-box" id="monthlyBox">
+                    <span class="icon">📆</span>
+                    <label>هزینه ماهانه</label>
+                    <input type="text" id="monthlyExpense" placeholder="مثلاً ۸,۰۰۰,۰۰۰" data-type="monthly">
+                    <div class="convert-row" id="monthlyConvert">
+                        <span class="item"><span class="label">روزانه:</span> <span class="val" id="monthlyToDaily">—</span></span>
+                        <span class="item"><span class="label">هفتگی:</span> <span class="val" id="monthlyToWeekly">—</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== بخش کشویی ۲: سود ========== -->
+    <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>📈 سود (ماهیانه / روزانه)</span>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="accordion-body">
+            <div class="profit-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+                    <h3 style="color:#1a5a2a; font-size:17px;">📈 سود (ماهیانه / روزانه)</h3>
+                    <span style="font-size:13px; color:#7a6a5a;">به پول اضافه می‌شه و همزمان خرج می‌کنم</span>
+                </div>
+                <div class="profit-row">
+                    <div class="profit-box">
+                        <label>📆 سود ماهانه (%)</label>
+                        <input type="text" id="monthlyProfit" placeholder="مثلاً ۲">
+                        <span class="unit">درصد</span>
+                    </div>
+                    <div class="profit-box">
+                        <label>☀️ سود روزانه (%)</label>
+                        <input type="text" id="dailyProfit" placeholder="مثلاً ۰.۰۵">
+                        <span class="unit">درصد</span>
+                    </div>
+                    <div class="profit-box" style="background:#eafaf1; border-color:#27ae60;">
+                        <label>📊 سود ترکیبی</label>
+                        <div style="font-size:20px; font-weight:bold; color:#1a7a3a; padding:4px;" id="combinedProfitDisplay">۰.۰۰%</div>
+                        <span class="unit">معادل ماهانه</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== بخش کشویی ۳: آینده سرمایه ========== -->
+    <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>🔮 آینده سرمایه</span>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="accordion-body">
+            <div class="future-box">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+                    <h3 style="color:#1a5276; font-size:17px;">🔮 سرمایه در آینده</h3>
+                    <span style="font-size:13px; color:#7a6a5a;">با همان روند خرج کردن</span>
+                </div>
+                <div class="future-row">
+                    <input type="text" id="futureYears" placeholder="تعداد سال (مثلاً ۵)" value="5">
+                    <button class="btn btn-teal" onclick="calculateFuture()">🔮 محاسبه کن</button>
+                </div>
+                <div class="future-result" id="futureResult">
+                    💡 تعداد سال را وارد کنید و دکمه را بزنید.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== بخش کشویی ۴: خرید هدف ========== -->
+    <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>🎯 خرید هدف</span>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="accordion-body">
+            <div class="target-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+                    <h3 style="color:#6c3483; font-size:17px;">🎯 خرید هدف</h3>
+                    <span style="font-size:13px; color:#7a6a5a;">مثلاً خانه، ماشین، طلا و...</span>
+                </div>
+                <div class="target-row">
+                    <input type="text" id="targetName" placeholder="نام هدف (مثلاً خونه)" value="خانه">
+                    <input type="text" id="targetPrice" placeholder="قیمت هدف (تومان)">
+                    <button class="btn btn-purple" onclick="calculateTarget()">🔍 چند تا میشه خرید؟</button>
+                </div>
+                <div class="target-result" id="targetResult">
+                    💡 قیمت هدف را وارد کنید و دکمه را بزنید.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== بخش کشویی ۵: نتیجه ========== -->
+    <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>📊 نتیجه</span>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="accordion-body open">
+            <div id="resultArea">
+                <div class="result-box" id="resultBox">
+                    <div class="big-number" id="resultDays">—</div>
+                    <div class="sub-text" id="resultText">عدد وارد کنید و محاسبه کن را بزنید</div>
+                </div>
+
+                <div class="result-grid" id="resultGrid">
+                    <div class="result-item">
+                        <div class="label">⏳ روز</div>
+                        <div class="value" id="daysValue">—</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">📅 هفته</div>
+                        <div class="value" id="weeksValue">—</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">📆 ماه</div>
+                        <div class="value" id="monthsValue">—</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">📊 سال</div>
+                        <div class="value" id="yearsValue">—</div>
+                    </div>
+                    <div class="result-item" style="border-color:#27ae60; background:#f0faf0;">
+                        <div class="label">💰 با سود</div>
+                        <div class="value green" id="profitMonthsValue">—</div>
+                    </div>
+                    <div class="result-item" style="border-color:#2e86c1; background:#eaf4fa;">
+                        <div class="label">🔮 آینده</div>
+                        <div class="value" id="futureValue">—</div>
+                    </div>
+                </div>
+
+                <div class="advice-box" id="adviceBox">
+                    <div class="title">💡 پیشنهاد</div>
+                    <div class="text" id="adviceText">برای دیدن پیشنهاد، ابتدا محاسبه کنید.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== دکمه‌های اصلی ========== -->
+    <div class="flex-row">
+        <button class="btn" onclick="calculate()">🧮 محاسبه کن</button>
+        <button class="btn btn-success" onclick="saveScenario()">💾 ذخیره سناریو</button>
+        <button class="btn btn-teal" onclick="calculateWithProfit()">📈 محاسبه با سود</button>
+    </div>
+
+    <!-- ========== سناریوهای ذخیره شده ========== -->
+    <div style="margin-top:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+            <h3 style="color:#1a3a5e; font-size:17px;">📋 سناریوهای ذخیره شده</h3>
+            <button class="clear-history-btn" onclick="clearHistory()">🗑️ پاک کردن تاریخچه</button>
+        </div>
+        <div class="history-box" id="historyBox">
+            <div style="color:#aaa; text-align:center; padding:10px;">هیچ سناریویی ذخیره نشده</div>
+        </div>
+    </div>
+
+    <footer>
+        ⚡ نسخه نهایی – بخش‌های کشویی + ذخیره‌سازی خودکار
+        <br>
+        <span style="font-size:12px;">💰 هر کدام از هزینه‌ها را وارد کنید، بقیه خودکار محاسبه می‌شوند</span>
+    </footer>
+
+</div>
+
+<script>
+    // ========== توابع کشویی (آکاردئون) ==========
+    function toggleAccordion(header) {
+        const body = header.nextElementSibling;
+        const arrow = header.querySelector('.arrow');
+        const isOpen = body.classList.contains('open');
+
+        // بستن همه بخش‌ها (اختیاری - برای باز کردن فقط یکی)
+        // document.querySelectorAll('.accordion-body').forEach(b => b.classList.remove('open'));
+        // document.querySelectorAll('.accordion .arrow').forEach(a => a.classList.remove('open'));
+
+        if (isOpen) {
+            body.classList.remove('open');
+            arrow.classList.remove('open');
+        } else {
+            body.classList.add('open');
+            arrow.classList.add('open');
+        }
+    }
+
+    // ========== توابع کمکی ==========
+    function parseNumber(str) {
+        if (!str || str.trim() === '') return 0;
+        return parseFloat(str.replace(/,/g, '').trim()) || 0;
+    }
+
+    function formatNumber(num) {
+        if (isNaN(num) || num === 0) return '۰';
+        if (!isFinite(num)) return '∞';
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function formatInput(input) {
+        let val = input.value.replace(/,/g, '').trim();
+        if (val === '') return;
+        const num = parseFloat(val);
+        if (isNaN(num)) return;
+        input.value = formatNumber(Math.floor(num));
+    }
+
+    // ========== ذخیره‌سازی خودکار ==========
+    function saveToLocalStorage() {
+        const data = {
+            money: document.getElementById('moneyInput').value,
+            daily: document.getElementById('dailyExpense').value,
+            weekly: document.getElementById('weeklyExpense').value,
+            monthly: document.getElementById('monthlyExpense').value,
+            monthlyProfit: document.getElementById('monthlyProfit').value,
+            dailyProfit: document.getElementById('dailyProfit').value,
+            futureYears: document.getElementById('futureYears').value,
+            targetName: document.getElementById('targetName').value,
+            targetPrice: document.getElementById('targetPrice').value
+        };
+        localStorage.setItem('moneyToolData', JSON.stringify(data));
+    }
+
+    function loadFromLocalStorage() {
+        const saved = localStorage.getItem('moneyToolData');
+        if (!saved) return;
+        try {
+            const data = JSON.parse(saved);
+            document.getElementById('moneyInput').value = data.money || '';
+            document.getElementById('dailyExpense').value = data.daily || '';
+            document.getElementById('weeklyExpense').value = data.weekly || '';
+            document.getElementById('monthlyExpense').value = data.monthly || '';
+            document.getElementById('monthlyProfit').value = data.monthlyProfit || '';
+            document.getElementById('dailyProfit').value = data.dailyProfit || '';
+            document.getElementById('futureYears').value = data.futureYears || '5';
+            document.getElementById('targetName').value = data.targetName || 'خانه';
+            document.getElementById('targetPrice').value = data.targetPrice || '';
+
+            setTimeout(() => {
+                updateConversions('daily');
+                updateCombinedProfitDisplay();
+            }, 100);
+        } catch (e) {
+            console.log('خطا در بارگذاری داده‌ها');
+        }
+    }
+
+    document.addEventListener('input', function(e) {
+        if (e.target.tagName === 'INPUT') {
+            saveToLocalStorage();
+        }
+    });
+
+    // ========== فرمت کردن ورودی‌ها ==========
+    document.getElementById('moneyInput').addEventListener('input', function() { formatInput(this); });
+    document.getElementById('targetPrice').addEventListener('input', function() { formatInput(this); });
+    document.getElementById('futureYears').addEventListener('input', function() { formatInput(this); });
+
+    // ========== تبدیل خودکار هزینه‌ها ==========
+    function updateConversions(source) {
+        const dailyVal = parseNumber(document.getElementById('dailyExpense').value);
+        const weeklyVal = parseNumber(document.getElementById('weeklyExpense').value);
+        const monthlyVal = parseNumber(document.getElementById('monthlyExpense').value);
+
+        if (dailyVal > 0) {
+            document.getElementById('dailyToWeekly').textContent = formatNumber(Math.floor(dailyVal * 7));
+            document.getElementById('dailyToMonthly').textContent = formatNumber(Math.floor(dailyVal * 30));
+            document.getElementById('weeklyToDaily').textContent = formatNumber(Math.floor(dailyVal));
+            document.getElementById('weeklyToMonthly').textContent = formatNumber(Math.floor(dailyVal * 7 * 4.33));
+            document.getElementById('monthlyToDaily').textContent = formatNumber(Math.floor(dailyVal));
+            document.getElementById('monthlyToWeekly').textContent = formatNumber(Math.floor(dailyVal * 7));
+        } else if (weeklyVal > 0) {
+            const daily = weeklyVal / 7;
+            const monthly = weeklyVal * 4.33;
+            document.getElementById('weeklyToDaily').textContent = formatNumber(Math.floor(daily));
+            document.getElementById('weeklyToMonthly').textContent = formatNumber(Math.floor(monthly));
+            document.getElementById('dailyToWeekly').textContent = formatNumber(Math.floor(weeklyVal));
+            document.getElementById('dailyToMonthly').textContent = formatNumber(Math.floor(monthly));
+            document.getElementById('monthlyToDaily').textContent = formatNumber(Math.floor(daily));
+            document.getElementById('monthlyToWeekly').textContent = formatNumber(Math.floor(weeklyVal));
+        } else if (monthlyVal > 0) {
+            const daily = monthlyVal / 30;
+            const weekly = monthlyVal / 4.33;
+            document.getElementById('monthlyToDaily').textContent = formatNumber(Math.floor(daily));
+            document.getElementById('monthlyToWeekly').textContent = formatNumber(Math.floor(weekly));
+            document.getElementById('dailyToWeekly').textContent = formatNumber(Math.floor(weekly));
+            document.getElementById('dailyToMonthly').textContent = formatNumber(Math.floor(monthlyVal));
+            document.getElementById('weeklyToDaily').textContent = formatNumber(Math.floor(daily));
+            document.getElementById('weeklyToMonthly').textContent = formatNumber(Math.floor(monthlyVal));
+        }
+
+        if (dailyVal === 0 && weeklyVal === 0 && monthlyVal === 0) {
+            ['dailyToWeekly', 'dailyToMonthly', 'weeklyToDaily', 'weeklyToMonthly', 'monthlyToDaily', 'monthlyToWeekly']
+                .forEach(id => document.getElementById(id).textContent = '—');
+        }
+    }
+
+    document.getElementById('dailyExpense').addEventListener('input', function() {
+        formatInput(this);
+        updateConversions('daily');
+    });
+
+    document.getElementById('weeklyExpense').addEventListener('input', function() {
+        formatInput(this);
+        updateConversions('weekly');
+    });
+
+    document.getElementById('monthlyExpense').addEventListener('input', function() {
+        formatInput(this);
+        updateConversions('monthly');
+    });
+
+    // ========== محاسبه سود ترکیبی ==========
+    function getCombinedProfit() {
+        const monthlyProfit = parseNumber(document.getElementById('monthlyProfit').value);
+        const dailyProfit = parseNumber(document.getElementById('dailyProfit').value);
+        return monthlyProfit + (dailyProfit * 30);
+    }
+
+    function updateCombinedProfitDisplay() {
+        document.getElementById('combinedProfitDisplay').textContent = getCombinedProfit().toFixed(2) + '%';
+    }
+
+    document.getElementById('monthlyProfit').addEventListener('input', updateCombinedProfitDisplay);
+    document.getElementById('dailyProfit').addEventListener('input', updateCombinedProfitDisplay);
+
+    // ========== محاسبه اصلی ==========
+    function calculate() {
+        const money = parseNumber(document.getElementById('moneyInput').value);
+        const daily = parseNumber(document.getElementById('dailyExpense').value);
+        const weekly = parseNumber(document.getElementById('weeklyExpense').value);
+        const monthly = parseNumber(document.getElementById('monthlyExpense').value);
+
+        if (money <= 0) { alert('لطفاً مقدار پول را وارد کنید.'); return; }
+
+        const totalMonthly = (daily * 30) + (weekly * 4.33) + monthly;
+        if (totalMonthly <= 0) { alert('لطفاً حداقل یک هزینه وارد کنید.'); return; }
+
+        const days = money / (totalMonthly / 30);
+        const weeks = money / (totalMonthly / 4.33);
+        const months = money / totalMonthly;
+        const years = months / 12;
+
+        document.getElementById('daysValue').textContent = Math.floor(days) + ' روز';
+        document.getElementById('weeksValue').textContent = Math.floor(weeks) + ' هفته';
+        document.getElementById('monthsValue').textContent = Math.floor(months) + ' ماه';
+        document.getElementById('yearsValue').textContent = years >= 1 ? Math.floor(years) + ' سال' : '< ۱ سال';
+
+        const resultBox = document.getElementById('resultBox');
+        const resultDays = document.getElementById('resultDays');
+        if (years >= 5) {
+            resultBox.style.borderColor = '#27ae60';
+            resultBox.style.background = '#f0faf0';
+            resultDays.className = 'big-number green';
+            resultDays.textContent = '✔️ ' + Math.floor(years) + ' سال';
+            document.getElementById('resultText').textContent = 'پول شما بیش از ۵ سال دوام می‌آورد! وضعیت عالی.';
+        } else if (years >= 2) {
+            resultBox.style.borderColor = '#27ae60';
+            resultBox.style.background = '#f0faf0';
+            resultDays.className = 'big-number green';
+            resultDays.textContent = Math.floor(years) + ' سال';
+            document.getElementById('resultText').textContent = 'پول شما حدوداً ' + Math.floor(years) + ' سال دوام می‌آورد.';
+        } else if (months >= 6) {
+            resultBox.style.borderColor = '#f39c12';
+            resultBox.style.background = '#fef9e7';
+            resultDays.className = 'big-number gold';
+            resultDays.textContent = Math.floor(months) + ' ماه';
+            document.getElementById('resultText').textContent = 'پول شما حدوداً ' + Math.floor(months) + ' ماه دوام می‌آورد.';
+        } else if (months >= 1) {
+            resultBox.style.borderColor = '#2e86c1';
+            resultBox.style.background = '#eaf4fa';
+            resultDays.className = 'big-number';
+            resultDays.textContent = Math.floor(months) + ' ماه';
+            document.getElementById('resultText').textContent = 'پول شما حدوداً ' + Math.floor(months) + ' ماه دوام می‌آورد.';
+        } else {
+            resultBox.style.borderColor = '#e74c3c';
+            resultBox.style.background = '#fdf0ed';
+            resultDays.className = 'big-number red';
+            resultDays.textContent = Math.floor(days) + ' روز';
+            document.getElementById('resultText').textContent = 'پول شما کمتر از یک ماه دوام می‌آورد!';
+        }
+
+        document.getElementById('adviceText').innerHTML = getAdvice(months);
+        saveToLocalStorage();
+    }
+
+    // ========== محاسبه با سود ==========
+    function calculateWithProfit() {
+        const money = parseNumber(document.getElementById('moneyInput').value);
+        const daily = parseNumber(document.getElementById('dailyExpense').value);
+        const weekly = parseNumber(document.getElementById('weeklyExpense').value);
+        const monthly = parseNumber(document.getElementById('monthlyExpense').value);
+
+        if (money <= 0) { alert('لطفاً مقدار پول را وارد کنید.'); return; }
+
+        const totalMonthly = (daily * 30) + (weekly * 4.33) + monthly;
+        if (totalMonthly <= 0) { alert('لطفاً حداقل یک هزینه وارد کنید.'); return; }
+
+        const profit = getCombinedProfit() / 100;
+        let remaining = money, monthsWithProfit = 0, maxMonths = 10000;
+
+        while (remaining > 0 && monthsWithProfit < maxMonths) {
+            remaining -= totalMonthly;
+            monthsWithProfit++;
+            if (remaining > 0) remaining += remaining * profit;
+        }
+
+        document.getElementById('profitMonthsValue').textContent = monthsWithProfit >= maxMonths ? '∞ (ابدی)' : monthsWithProfit + ' ماه';
+
+        const monthsWithoutProfit = money / totalMonthly;
+        const resultBox = document.getElementById('resultBox');
+        const resultDays = document.getElementById('resultDays');
+
+        if (monthsWithProfit >= maxMonths) {
+            resultBox.style.borderColor = '#27ae60';
+            resultBox.style.background = '#f0faf0';
+            resultDays.className = 'big-number green';
+            resultDays.textContent = '♾️ ابدی!';
+            document.getElementById('resultText').textContent = 'با سود، پول شما هرگز تمام نمی‌شود!';
+        } else if (monthsWithProfit > monthsWithoutProfit) {
+            resultBox.style.borderColor = '#f39c12';
+            resultBox.style.background = '#fef9e7';
+            resultDays.className = 'big-number gold';
+            resultDays.textContent = monthsWithProfit + ' ماه';
+            document.getElementById('resultText').textContent = 'با سود، پول شما ' + monthsWithProfit + ' ماه دوام می‌آورد (بدون سود: ' + Math.floor(monthsWithoutProfit) + ' ماه)';
+        } else {
+            resultBox.style.borderColor = '#2e86c1';
+            resultBox.style.background = '#eaf4fa';
+            resultDays.className = 'big-number';
+            resultDays.textContent = monthsWithProfit + ' ماه';
+            document.getElementById('resultText').textContent = 'با سود، پول شما ' + monthsWithProfit + ' ماه دوام می‌آورد.';
+        }
+
+        document.getElementById('adviceText').innerHTML = getAdvice(monthsWithProfit) + ' (با در نظر گرفتن سود)';
+        saveToLocalStorage();
+    }
+
+    // ========== محاسبه آینده ==========
+    function calculateFuture() {
+        const money = parseNumber(document.getElementById('moneyInput').value);
+        const years = parseNumber(document.getElementById('futureYears').value);
+        const daily = parseNumber(document.getElementById('dailyExpense').value);
+        const weekly = parseNumber(document.getElementById('weeklyExpense').value);
+        const monthly = parseNumber(document.getElementById('monthlyExpense').value);
+
+        if (money <= 0 || years <= 0) {
+            document.getElementById('futureResult').innerHTML = '⚠️ لطفاً مقادیر معتبر وارد کنید.';
+            return;
+        }
+
+        const totalMonthly = (daily * 30) + (weekly * 4.33) + monthly;
+        if (totalMonthly <= 0) {
+            document.getElementById('futureResult').innerHTML = '⚠️ لطفاً حداقل یک هزینه وارد کنید.';
+            return;
+        }
+
+        const profit = getCombinedProfit() / 100;
+        let capital = money, capitalWithProfit = money;
+        const totalMonths = years * 12;
+
+        for (let i = 0; i < totalMonths && capital > 0; i++) {
+            capital -= totalMonthly;
+        }
+        if (capital < 0) capital = 0;
+
+        for (let i = 0; i < totalMonths && capitalWithProfit > 0; i++) {
+            capitalWithProfit -= totalMonthly;
+            if (capitalWithProfit > 0) capitalWithProfit += capitalWithProfit * profit;
+        }
+        if (capitalWithProfit < 0) capitalWithProfit = 0;
+
+        let result = `💰 سرمایه پس از ${years} سال: <span class="highlight">${formatNumber(Math.floor(capital))}</span> تومان`;
+        result += `<br>📈 با سود: <span class="highlight-green">${formatNumber(Math.floor(capitalWithProfit))}</span> تومان`;
+
+        if (capitalWithProfit > capital) {
+            result += `<br>💡 سود باعث شده <span class="highlight">${formatNumber(Math.floor(capitalWithProfit - capital))}</span> تومان بیشتر باقی بماند.`;
+        }
+
+        document.getElementById('futureResult').innerHTML = result;
+        document.getElementById('futureValue').textContent = formatNumber(Math.floor(capitalWithProfit)) + ' تومان';
+        document.getElementById('futureValue').className = 'value green';
+        saveToLocalStorage();
+    }
+
+    // ========== خرید هدف ==========
+    function calculateTarget() {
+        const money = parseNumber(document.getElementById('moneyInput').value);
+        const price = parseNumber(document.getElementById('targetPrice').value);
+        const name = document.getElementById('targetName').value.trim() || 'هدف';
+
+        if (money <= 0 || price <= 0) {
+            document.getElementById('targetResult').innerHTML = '⚠️ لطفاً مقادیر معتبر وارد کنید.';
+            return;
+        }
+
+        const count = Math.floor(money / price);
+        const remainder = money % price;
+
+        let result = count > 0
+            ? `✅ می‌توانید <span class="highlight">${formatNumber(count)}</span> عدد <strong>${name}</strong> بخرید.`
+            : `❌ پول شما برای خرید حتی یک <strong>${name}</strong> کافی نیست.`;
+
+        if (count > 0 && remainder > 0) {
+            result += `<br>💰 پس از خرید، <span class="highlight">${formatNumber(Math.floor(remainder))}</span> تومان باقی می‌ماند.`;
+        } else if (count === 0) {
+            result += `<br>💰 شما <span class="highlight">${formatNumber(Math.floor(price - money))}</span> تومان کم دارید.`;
+        }
+
+        document.getElementById('targetResult').innerHTML = result;
+        saveToLocalStorage();
+    }
+
+    // ========== پیشنهاد ==========
+    function getAdvice(months) {
+        if (months >= 60) return '✅ پول شما بیش از ۵ سال دوام می‌آورد! وضعیت مالی عالی.';
+        if (months >= 24) return '✅ پول شما بیش از ۲ سال دوام می‌آورد. وضعیت مالی خوب.';
+        if (months >= 12) return '✅ پول شما بیش از یک سال دوام می‌آورد.';
+        if (months >= 6) return '⚠️ پول شما حدوداً ' + Math.floor(months) + ' ماه دوام می‌آورد. بهتر است هزینه‌ها را کاهش دهید.';
+        if (months >= 3) return '⚠️ پول شما فقط ' + Math.floor(months) + ' ماه دوام می‌آورد. نیاز به برنامه‌ریزی جدی.';
+        if (months >= 1) return '🔴 پول شما کمتر از ' + Math.floor(months) + ' ماه دوام می‌آورد. وضعیت بحرانی!';
+        return '🔴 پول شما کمتر از ۱ ماه دوام می‌آورد! هزینه‌ها را کاهش دهید.';
+    }
+
+    // ========== ذخیره سناریو ==========
+    function saveScenario() {
+        const money = parseNumber(document.getElementById('moneyInput').value);
+        if (money <= 0) { alert('لطفاً مقدار پول را وارد کنید.'); return; }
+
+        const daily = parseNumber(document.getElementById('dailyExpense').value);
+        const weekly = parseNumber(document.getElementById('weeklyExpense').value);
+        const monthly = parseNumber(document.getElementById('monthlyExpense').value);
+        const totalMonthly = (daily * 30) + (weekly * 4.33) + monthly;
+        const months = totalMonthly > 0 ? money / totalMonthly : 0;
+
+        const history = JSON.parse(localStorage.getItem('moneyHistoryAdvanced') || '[]');
+        history.unshift({
+            date: new Date().toLocaleDateString('fa-IR'),
+            time: new Date().toLocaleTimeString('fa-IR'),
+            money: money,
+            months: Math.floor(months)
+        });
+        if (history.length > 20) history.pop();
+        localStorage.setItem('moneyHistoryAdvanced', JSON.stringify(history));
+        renderHistory();
+        alert('✅ سناریو ذخیره شد!');
+    }
+
+    function renderHistory() {
+        const history = JSON.parse(localStorage.getItem('moneyHistoryAdvanced') || '[]');
+        const box = document.getElementById('historyBox');
+        if (history.length === 0) {
+            box.innerHTML = '<div style="color:#aaa; text-align:center; padding:10px;">هیچ سناریویی ذخیره نشده</div>';
+            return;
+        }
+        box.innerHTML = history.map(entry => `
+            <div class="entry">
+                <span class="date">${entry.date} ${entry.time}</span>
+                <span>💰 ${formatNumber(entry.money)}</span>
+                <span>📆 ${entry.months} ماه</span>
+            </div>
+        `).join('');
+    }
+
+    function clearHistory() {
+        if (confirm('آیا از پاک کردن تاریخچه مطمئن هستید؟')) {
+            localStorage.removeItem('moneyHistoryAdvanced');
+            renderHistory();
+        }
+    }
+
+    // ========== بارگذاری اولیه ==========
+    loadFromLocalStorage();
+    renderHistory();
+    updateCombinedProfitDisplay();
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+            calculate();
+        }
+    });
+
+    console.log('💰 ابزار نهایی دوام پول – با بخش‌های کشویی');
+    console.log('📂 هر بخش قابل باز و بسته شدن است');
+</script>
+
+</body>
+</html>

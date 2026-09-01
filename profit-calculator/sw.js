@@ -1,8 +1,9 @@
-const CACHE_NAME = 'profit-calculator-v1';
+const CACHE_NAME = 'profit-calculator-v2';
 const ASSETS = [
   'index.html',
   'calc1.html',
   'calc2.html',
+  'calc3.html',
   'manifest.json',
   'icon-192.png',
   'icon-512.png',
