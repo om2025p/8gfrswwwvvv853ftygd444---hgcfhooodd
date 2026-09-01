@@ -386,6 +386,14 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
 
         headers = get_random_headers()
 
+        def scan_files():
+            files_list = []
+            for r, _, fs in os.walk(temp_dir):
+                for f in fs:
+                    if not f.endswith(('.description', '.json', '.part', '.ytdl', '.txt', '.info')):
+                        files_list.append(os.path.join(r, f))
+            return files_list
+
         def run_ytdlp():
             # Try primary yt-dlp run with android_creator / tv_embedded / ios clients to bypass YouTube cloud bot check
             player_clients_list = [
@@ -425,15 +433,6 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
 
         loop = asyncio.get_running_loop()
         info = await loop.run_in_executor(None, run_ytdlp)
-
-        # Multi-layer Fallback Service if yt-dlp extracted no media
-        def scan_files():
-            files_list = []
-            for r, _, fs in os.walk(temp_dir):
-                for f in fs:
-                    if not f.endswith(('.description', '.json', '.part', '.ytdl', '.txt', '.info')):
-                        files_list.append(os.path.join(r, f))
-            return files_list
 
         if not scan_files():
             print("DEBUG: yt-dlp produced no files. Attempting fallback extraction layers...")
