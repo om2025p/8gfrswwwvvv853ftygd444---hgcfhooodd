@@ -362,6 +362,41 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
     error_logs = []
     page_html = ""
 
+    async def send_detailed_error_notification(base_title, extra_error=None):
+        if extra_error:
+            error_logs.append(f"خطای کلی سیستم: {extra_error}")
+
+        err_details = "\n".join(f"• {err}" for err in error_logs) if error_logs else "• هیچ فایلی در مسیر دانلود دریافت یا استخراج نگردید (محتوا خصوصی، محدود به فیلتر یا حذف گردیده است)."
+
+        base_msg = (
+            f"✨ *{base_title}*\n"
+            f"`لطفاً مجدداً تلاش کرده یا لینک دیگری ارسال فرمایید. 💎`"
+        )
+
+        # Send brief inline status message in Telegram chat
+        full_text = f"{base_msg}\n\n🔍 *شرح خلاصه مشکل:*\n```\n{err_details[:700]}\n```\n\n📄 *سورس کامل HTML صفحه به همراه لاگ‌های دقیق در فایل متنی پیوست گردید.*"
+        await safe_edit_message(owner_id, msg_obj, full_text)
+
+        # Write full report file containing complete error logs + FULL PAGE HTML DOM code!
+        err_file_path = os.path.join(temp_dir, "download_error_report.txt")
+        try:
+            html_source_content = page_html if page_html else "(هیچ محتوای HTML از سورس صفحه دریافت نگردید)"
+            with open(err_file_path, "w", encoding="utf-8") as f_err:
+                f_err.write(
+                    f"=== گزارش جامع خطای سپر دانلود عمارت ===\n"
+                    f"لینک درخواستی: {link}\n"
+                    f"زمان بروز خطا: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                    f"--- جزئیات خطاهای استخراج شده از تمام لایه‌ها ---\n"
+                    f"{err_details}\n\n"
+                    f"==================================================\n"
+                    f"=== سورس کامل HTML کد صفحه (FULL PAGE HTML DOM) ===\n"
+                    f"==================================================\n"
+                    f"{html_source_content}\n"
+                )
+            await send_media_to_destinations(err_file_path, f"📄 سورس کامل کد صفحه و لاگ‌های خطا: {link[:50]}", owner_id)
+        except Exception as ex_file:
+            print(f"DEBUG: Failed writing error report file: {ex_file}")
+
     try:
         import random
 
@@ -885,41 +920,6 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
 
         # Sort files to maintain order
         downloaded_files.sort()
-
-        async def send_detailed_error_notification(base_title, extra_error=None):
-            if extra_error:
-                error_logs.append(f"خطای کلی سیستم: {extra_error}")
-
-            err_details = "\n".join(f"• {err}" for err in error_logs) if error_logs else "• هیچ فایلی در مسیر دانلود دریافت یا استخراج نگردید (محتوا خصوصی، محدود به فیلتر یا حذف گردیده است)."
-
-            base_msg = (
-                f"✨ *{base_title}*\n"
-                f"`لطفاً مجدداً تلاش کرده یا لینک دیگری ارسال فرمایید. 💎`"
-            )
-
-            # Send brief inline status message in Telegram chat
-            full_text = f"{base_msg}\n\n🔍 *شرح خلاصه مشکل:*\n```\n{err_details[:700]}\n```\n\n📄 *سورس کامل HTML صفحه به همراه لاگ‌های دقیق در فایل متنی پیوست گردید.*"
-            await safe_edit_message(owner_id, msg_obj, full_text)
-
-            # Write full report file containing complete error logs + FULL PAGE HTML DOM code!
-            err_file_path = os.path.join(temp_dir, "download_error_report.txt")
-            try:
-                html_source_content = page_html if page_html else "(هیچ محتوای HTML از سورس صفحه دریافت نگردید)"
-                with open(err_file_path, "w", encoding="utf-8") as f_err:
-                    f_err.write(
-                        f"=== گزارش جامع خطای سپر دانلود عمارت ===\n"
-                        f"لینک درخواستی: {link}\n"
-                        f"زمان بروز خطا: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                        f"--- جزئیات خطاهای استخراج شده از تمام لایه‌ها ---\n"
-                        f"{err_details}\n\n"
-                        f"==================================================\n"
-                        f"=== سورس کامل HTML کد صفحه (FULL PAGE HTML DOM) ===\n"
-                        f"==================================================\n"
-                        f"{html_source_content}\n"
-                    )
-                await send_media_to_destinations(err_file_path, f"📄 سورس کامل کد صفحه و لاگ‌های خطا: {link[:50]}", owner_id)
-            except Exception as ex_file:
-                print(f"DEBUG: Failed writing error report file: {ex_file}")
 
         if not downloaded_files:
             await send_detailed_error_notification("رئیس بزرگ، محتوای این لینک در حال حاضر اختصاصی، محدود یا غیرقابل استخراج شده است.")
