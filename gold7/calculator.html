@@ -652,12 +652,13 @@
         const changeAmount = Math.abs((percent/100) * baseNum);
 
         if (newNum > currentPeak) {
+            const netPeakProfit = Math.round(newNum - currentPeak);
             currentPeak = newNum;
             localStorage.setItem(STORAGE_PEAK, formatNumberWithCommas(currentPeak));
             peakInput.value = formatNumberWithCommas(currentPeak);
 
             resultText += ' 🚀 🟢 (سود خالص واقعی - عبور از قله)';
-            resultText += ` — 🎉 یعنی ${formatNumberWithCommas(Math.round(changeAmount))} تومان افزایش سرمایه واقعی و قله جدید ثبت شد!`;
+            resultText += ` — 🎉 یعنی ${formatNumberWithCommas(netPeakProfit)} تومان افزایش سرمایه واقعی و قله جدید ثبت شد!`;
             type = 'increase';
             resultDiv.classList.add('positive');
         } else if (newNum > baseNum && newNum <= currentPeak) {
