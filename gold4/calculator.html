@@ -735,7 +735,7 @@
         renderHistory();
     }
 
-    function addToHistory(baseNum, newNum, percent, diffType, rawBase, rawNew) {
+    function addToHistory(baseNum, newNum, percent, diffType, rawBase, rawNew, rawPeak) {
         const history = getHistory();
         const now = new Date();
         history.unshift({
@@ -746,6 +746,7 @@
             type: diffType,
             rawBase: rawBase,
             rawNew: rawNew,
+            rawPeak: rawPeak,
             timestamp: now.toISOString(),
             persianDate: toPersianDate(now)
         });
@@ -910,6 +911,7 @@
         if (isNaN(currentPeak)) {
             currentPeak = baseNum;
         }
+        const prevPeak = currentPeak;
 
         const diff = newNum - baseNum;
         const percent = (diff / baseNum) * 100;
@@ -957,7 +959,8 @@
                 percentFixed,
                 type,
                 baseNum,
-                newNum
+                newNum,
+                prevPeak
             );
         }
         return true;
