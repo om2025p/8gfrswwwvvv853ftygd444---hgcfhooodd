@@ -920,9 +920,6 @@
                 rawPeak = Math.max(rawPeak, parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0);
             }
 
-            const diff = rawNew - rawBase;
-            const tomanProfit = Math.round(diff / 10000);
-
             let status = calc.type;
             if (!status) {
                 if (rawNew < rawBase) {
@@ -932,6 +929,14 @@
                 } else {
                     status = 'increase';
                 }
+            }
+
+            let tomanProfit = 0;
+            if (status === 'increase' && rawPeak > 0 && rawNew > rawPeak) {
+                // سود خالص عبور از قله
+                tomanProfit = Math.round((rawNew - rawPeak) / 10000);
+            } else {
+                tomanProfit = Math.round((rawNew - rawBase) / 10000);
             }
 
             return {
@@ -993,8 +998,32 @@
                     rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
                 }
 
-                const diff = rawNew - rawBase;
-                totalTomanProfit += Math.round(diff / 10000);
+                let rawPeak = 0;
+                if (calc.rawPeak !== undefined && calc.rawPeak !== null && !isNaN(calc.rawPeak)) {
+                    rawPeak = calc.rawPeak;
+                } else if (calc.peak) {
+                    rawPeak = parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0;
+                }
+
+                let status = calc.type;
+                if (!status) {
+                    if (rawNew < rawBase) {
+                        status = 'decrease';
+                    } else if (rawPeak > 0 && rawNew < rawPeak) {
+                        status = 'recovering';
+                    } else {
+                        status = 'increase';
+                    }
+                }
+
+                let tomanProfit = 0;
+                if (status === 'increase' && rawPeak > 0 && rawNew > rawPeak) {
+                    tomanProfit = Math.round((rawNew - rawPeak) / 10000);
+                } else {
+                    tomanProfit = Math.round((rawNew - rawBase) / 10000);
+                }
+
+                totalTomanProfit += tomanProfit;
             });
 
             if (!firstDate || !lastDate) return 0;
@@ -1061,9 +1090,6 @@
                         rawPeak = Math.max(rawPeak, parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0);
                     }
 
-                    const diff = rawNew - rawBase;
-                    const tomanProfit = Math.round(diff / 10000);
-
                     let status = calc.type;
                     if (!status) {
                         if (rawNew < rawBase) {
@@ -1073,6 +1099,14 @@
                         } else {
                             status = 'increase';
                         }
+                    }
+
+                    let tomanProfit = 0;
+                    if (status === 'increase' && rawPeak > 0 && rawNew > rawPeak) {
+                        // سود خالص عبور از قله
+                        tomanProfit = Math.round((rawNew - rawPeak) / 10000);
+                    } else {
+                        tomanProfit = Math.round((rawNew - rawBase) / 10000);
                     }
 
                     let ts = null;
