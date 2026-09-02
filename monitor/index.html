@@ -920,10 +920,7 @@
                 rawPeak = Math.max(rawPeak, parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0);
             }
 
-            let diff = rawNew - rawBase;
-            if (rawPeak > 0 && rawNew > rawPeak) {
-                diff = rawNew - rawPeak;
-            }
+            const diff = rawNew - rawBase;
             const tomanProfit = Math.round(diff / 10000);
 
             let status = calc.type;
@@ -983,7 +980,6 @@
 
                 let rawBase = 0;
                 let rawNew = 0;
-                let rawPeak = 0;
 
                 if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
                     rawBase = calc.rawBase;
@@ -997,16 +993,7 @@
                     rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
                 }
 
-                if (calc.rawPeak !== undefined && calc.rawPeak !== null && !isNaN(calc.rawPeak)) {
-                    rawPeak = calc.rawPeak;
-                } else if (calc.peak) {
-                    rawPeak = parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0;
-                }
-
-                let diff = rawNew - rawBase;
-                if (rawPeak > 0 && rawNew > rawPeak) {
-                    diff = rawNew - rawPeak;
-                }
+                const diff = rawNew - rawBase;
                 totalTomanProfit += Math.round(diff / 10000);
             });
 
@@ -1074,10 +1061,7 @@
                         rawPeak = Math.max(rawPeak, parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0);
                     }
 
-                    let diff = rawNew - rawBase;
-                    if (rawPeak > 0 && rawNew > rawPeak) {
-                        diff = rawNew - rawPeak;
-                    }
+                    const diff = rawNew - rawBase;
                     const tomanProfit = Math.round(diff / 10000);
 
                     let status = calc.type;
