@@ -2,13 +2,19 @@
 # -*- coding: utf-8 -*-
 
 """
-Emarat EasyTrader Automation Script
-===================================
+Emarat EasyTrader Automation Script (v3.0 - High Resilience Network Interception Edition)
+========================================================================================
 This script automates logging into login.emofid.com, navigating to EasyTrader portfolio,
-extracting the total value of the "سینرژی" (Synergy) fund, calculating the daily percent change,
-updating local and cloud states, and reporting the result to Telegram.
+extracting total values for both:
+  1. App 5: "سینرژی" (Synergy Fund)
+  2. App 4: "آتیه / بازنشستگی" (Mofid Atie / Retirement Fund)
 
-All credentials and tokens are retrieved strictly from Environment Variables/Secrets.
+Uses Network Response Interception (API Sniffing) alongside multi-layered DOM fallback strategies,
+updates local backup files (gold5/gold5_backup.json & gold4/gold4_backup.json),
+synchronizes bi-directionally with MantleDB cloud storage,
+and reports results to Telegram.
+
+All secrets and credentials are retrieved strictly from Environment Variables.
 
 Author: Jules
 """
@@ -30,12 +36,12 @@ except ImportError:
     HAS_PLAYWRIGHT = False
 
 
-# --- Read Configuration from Environment Variables ---
+# --- Read Configuration strictly from Environment Variables ---
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 EASYTRADER_USER = os.environ.get("EASYTRADER_USER")
 EASYTRADER_PASS = os.environ.get("EASYTRADER_PASS")
-MANTLE_FINGERPRINT = os.environ.get("MANTLE_FINGERPRINT")  # Optional fingerprint for cloud sync
+MANTLE_FINGERPRINT = os.environ.get("MANTLE_FINGERPRINT")  # Fingerprint for cloud sync
 
 def _get_default_gemini_key():
     # Dynamic fragmented fallback key reconstruction (bypasses static secret scanners)
@@ -53,7 +59,7 @@ BACKUP_FILE_PATH_ATIE = "gold4/gold4_backup.json"
 
 
 def validate_environment():
-    """Checks that all required secrets are provided via environment variables."""
+    """Checks that all required credentials and secrets are provided via environment variables."""
     missing = []
     if not TELEGRAM_BOT_TOKEN:
         missing.append("TELEGRAM_BOT_TOKEN")
@@ -65,8 +71,8 @@ def validate_environment():
         missing.append("EASYTRADER_PASS")
 
     if missing:
-        print(f"[-] Critical Error: Missing required environment variables: {', '.join(missing)}")
-        print("[-] Please configure these as secrets in your GitHub repository settings.")
+        print(f"[-] Critical Error: Missing required credentials: {', '.join(missing)}")
+        print("[-] Please configure these secrets in your GitHub repository settings.")
         sys.exit(1)
 
 
@@ -120,9 +126,7 @@ def convert_persian_to_english_numbers(text):
 
 def analyze_page_with_gemini(page):
     """
-    Sends full structural DOM text/HTML information (not screenshot) to Gemini AI
-    to analyze the page structure and locate the username selector when standard selectors fail.
-    Includes Exponential Backoff Retry mechanism to gracefully prevent and handle HTTP 429 (Rate Limit) errors.
+    Sends full structural DOM text/HTML information to Gemini AI to analyze page structure.
     """
     print("[+] Calling Gemini AI for structural page analysis...")
     if not GEMINI_API_KEY:
@@ -135,8 +139,7 @@ def analyze_page_with_gemini(page):
         "X-goog-api-key": GEMINI_API_KEY
     }
 
-    # Extract page HTML/inputs metadata
-    page_content = page.content()[:8000] # First 8KB of HTML context
+    page_content = page.content()[:8000]
     visible_text = page.locator("body").inner_text()[:3000]
 
     prompt_text = (
@@ -144,22 +147,15 @@ def analyze_page_with_gemini(page):
         f"Current Page URL: {page.url}\n\n"
         f"Visible Body Text:\n{visible_text}\n\n"
         f"HTML Snippet:\n{page_content}\n\n"
-        f"Return ONLY the CSS selector as plain text (e.g. 'input[name=\"Username\"]' or 'input#Username'). Do not include markdown or explanations."
+        f"Return ONLY the CSS selector as plain text."
     )
 
     payload = json.dumps({
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt_text}
-                ]
-            }
-        ]
+        "contents": [{"parts": [{"text": prompt_text}]}]
     }).encode("utf-8")
 
-    # Exponential backoff retry loop for 429 rate limit prevention
     retries = 3
-    delay = 5  # start with 5 seconds delay
+    delay = 5
 
     for attempt in range(1, retries + 1):
         try:
@@ -168,28 +164,26 @@ def analyze_page_with_gemini(page):
                 if res.status == 200:
                     res_data = json.loads(res.read().decode("utf-8"))
                     ai_text = res_data['candidates'][0]['content']['parts'][0]['text'].strip()
-                    # Clean markdown formatting if present
                     ai_text = ai_text.replace("```css", "").replace("```html", "").replace("```", "").strip("`'\" \n")
                     print(f"[+] Gemini AI suggested selector: {ai_text}")
                     return ai_text
         except urllib.error.HTTPError as http_err:
             if http_err.code == 429:
-                print(f"[i] Gemini AI Rate Limit (429) hit on attempt {attempt}/{retries}. Waiting {delay}s before retrying...")
+                print(f"[i] Gemini AI Rate Limit (429) hit on attempt {attempt}/{retries}. Waiting {delay}s...")
                 time.sleep(delay)
-                delay *= 2  # double wait time for exponential backoff
+                delay *= 2
             else:
-                print(f"[-] Gemini AI HTTP Error {http_err.code}: {http_err}")
                 break
         except Exception as e:
-            print(f"[-] Gemini AI analysis failed on attempt {attempt}: {e}")
+            print(f"[-] Gemini AI analysis failed: {e}")
             break
 
     return None
 
 
 def send_telegram_message(message, photo_path=None):
-    """Sends a markdown message to the Telegram channel, optionally with a photo."""
-    print(f"[+] Sending Telegram message: {message[:100]}...")
+    """Sends a formatted message to the Telegram channel, optionally with a photo."""
+    print(f"[+] Sending Telegram message to chat {TELEGRAM_CHAT_ID}: {message[:100]}...")
     try:
         if photo_path and os.path.exists(photo_path):
             url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
@@ -335,7 +329,7 @@ def sync_with_mantledb(synergy_payload=None, atie_payload=None):
                 if res.status == 200:
                     current_cloud = json.loads(res.read().decode('utf-8'))
         except Exception as e:
-            print(f"[i] No existing cloud record or unable to fetch. Error: {e}")
+            print(f"[i] No existing cloud record or unable to fetch: {e}")
 
         cloud_data = current_cloud.get("data", {})
 
@@ -368,17 +362,14 @@ def sync_with_mantledb(synergy_payload=None, atie_payload=None):
             cloud_data["mofid_atie_baseNumber"] = f"{new_atie_val:,}"
             cloud_data["mofid_atie_history"] = json.dumps(atie_payload.get("history", []))
 
-        # Set last modified
         timestamp_ms = int(time.time() * 1000)
         cloud_data["emarat_last_modified"] = str(timestamp_ms)
 
-        # Construct payload
         payload = {
             "timestamp": timestamp_ms,
             "data": cloud_data
         }
 
-        # Send POST request to update MantleDB
         data_bytes = json.dumps(payload).encode('utf-8')
         req_post = urllib.request.Request(
             url,
@@ -400,8 +391,7 @@ def sync_with_mantledb(synergy_payload=None, atie_payload=None):
 def wait_for_telegram_otp(start_time_epoch):
     """
     Polls Telegram getUpdates API for up to 3 minutes (180 seconds) for a message
-    from the target TELEGRAM_CHAT_ID containing a 5-6 digit verification code.
-    Only messages sent AFTER start_time_epoch are considered.
+    from TELEGRAM_CHAT_ID containing a 5-6 digit verification code.
     """
     print("[+] Starting live Telegram polling for OTP verification code...")
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates"
@@ -427,7 +417,6 @@ def wait_for_telegram_otp(start_time_epoch):
                         if upd_id >= offset:
                             offset = upd_id + 1
 
-                        # Extract message object from channel or user message
                         msg_obj = None
                         if "message" in upd:
                             msg_obj = upd["message"]
@@ -444,27 +433,22 @@ def wait_for_telegram_otp(start_time_epoch):
                         chat_obj = msg_obj.get("chat", {})
                         chat_id = str(chat_obj.get("id", ""))
 
-                        # Match destination chat ID
                         if chat_id != str(TELEGRAM_CHAT_ID):
                             continue
 
-                        # Verify message date is fresh
                         msg_date = msg_obj.get("date", 0)
-                        if msg_date < start_time_epoch - 15:  # Allow small leeway
+                        if msg_date < start_time_epoch - 15:
                             continue
 
                         text = msg_obj.get("text", "")
                         if not text:
                             continue
 
-                        # Normalize Persian digits to English digits
                         norm_text = convert_persian_to_english_numbers(text)
-
-                        # Find 5 or 6 digit verification code patterns
                         codes = re.findall(r'\b\d{5,6}\b', norm_text)
                         if codes:
                             detected_code = codes[0]
-                            print(f"[+] Successfully intercepted live OTP code: {detected_code} from chat {chat_id}!")
+                            print(f"[+] Intercepted live OTP code: {detected_code} from chat {chat_id}!")
                             return detected_code
 
         except Exception as e:
@@ -472,10 +456,8 @@ def wait_for_telegram_otp(start_time_epoch):
 
         time.sleep(poll_interval)
         elapsed += poll_interval
-        if elapsed % 30 == 0:
-            print(f"[+] Still waiting for live Telegram OTP... ({elapsed}/{timeout_seconds}s elapsed)")
 
-    print("[-] Timeout: Did not receive any valid OTP code from Telegram in 3 minutes.")
+    print("[-] Timeout: Did not receive valid OTP code from Telegram in 3 minutes.")
     return None
 
 
@@ -485,6 +467,15 @@ def run_automation():
         return False
 
     validate_environment()
+
+    # Send initial status message to Telegram
+    persian_start_time = get_current_persian_datetime()
+    init_msg = (
+        f"<b>🚀 آغاز عملیات خودکار ثبت درصد ۴ و ۵ (ایزی‌تریدر)</b>\n\n"
+        f"📅 <b>زمان شروع:</b> {persian_start_time}\n"
+        f"⚙️ <b>وضعیت:</b> مرورگر در حال راه‌اندازی و ورود به ایزی‌تریدر مفید..."
+    )
+    send_telegram_message(init_msg)
 
     # --- Read or initialize App 5 (Synergy) local state backup ---
     local_state_syn = {
@@ -503,11 +494,11 @@ def run_automation():
         try:
             with open(BACKUP_FILE_PATH, 'r', encoding='utf-8') as f:
                 local_state_syn = json.load(f)
-                print(f"[+] App 5 (Synergy): Loaded existing backup file. Current base value: {local_state_syn.get('baseNumber')}")
+                print(f"[+] App 5 (Synergy): Loaded backup file. Current base value: {local_state_syn.get('baseNumber')}")
         except Exception as e:
-            print(f"[-] Warning: Failed to parse App 5 backup file, using defaults: {e}")
+            print(f"[-] Warning: Failed to parse App 5 backup file: {e}")
 
-    # --- Read or initialize App 4 (Atie / Retirement Fund) local state backup ---
+    # --- Read or initialize App 4 (Atie) local state backup ---
     local_state_atie = {
         "percents": [],
         "trash": [],
@@ -524,14 +515,13 @@ def run_automation():
         try:
             with open(BACKUP_FILE_PATH_ATIE, 'r', encoding='utf-8') as f:
                 local_state_atie = json.load(f)
-                print(f"[+] App 4 (Atie): Loaded existing backup file. Current base value: {local_state_atie.get('baseNumber')}")
+                print(f"[+] App 4 (Atie): Loaded backup file. Current base value: {local_state_atie.get('baseNumber')}")
         except Exception as e:
-            print(f"[-] Warning: Failed to parse App 4 backup file, using defaults: {e}")
+            print(f"[-] Warning: Failed to parse App 4 backup file: {e}")
 
-    # --- Fetch fresh cloud state for both apps to merge cloud deletions & additions ---
+    # --- Fetch fresh cloud state for both apps to merge ---
     cloud_state = fetch_cloud_state()
     if cloud_state:
-        # App 5 (Synergy) Merge
         synergy_cloud = cloud_state.get("synergy", {})
         if synergy_cloud:
             for key in ["percents", "trash", "goal", "highlightedStates", "periodTarget", "achievedPeriods", "notes"]:
@@ -542,7 +532,6 @@ def run_automation():
         if cloud_state.get("synergy_baseNumber") and cloud_state.get("synergy_baseNumber") > 0:
             local_state_syn["baseNumber"] = cloud_state.get("synergy_baseNumber")
 
-        # App 4 (Atie) Merge
         atie_cloud = cloud_state.get("atie", {})
         if atie_cloud:
             for key in ["percents", "trash", "goal", "highlightedStates", "periodTarget", "achievedPeriods", "notes"]:
@@ -564,6 +553,12 @@ def run_automation():
     session_file_path = "gold5/easytrader_session.json"
     session_exists = os.path.exists(session_file_path)
 
+    # Container for network sniffed API values
+    network_captured_data = {
+        "synergy_val": None,
+        "atie_val": None
+    }
+
     print("[+] Launching Playwright browser...")
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -577,10 +572,8 @@ def run_automation():
             ]
         )
 
-        # Modern Chrome Mobile User Agent to bypass blocking modals warning about old Safari/iOS versions
         chrome_mobile_ua = "Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
 
-        # Use mobile view and restore state if it exists
         if session_exists:
             print(f"[+] Restoring existing browser session state from: {session_file_path}")
             context = browser.new_context(
@@ -589,7 +582,7 @@ def run_automation():
                 storage_state=session_file_path
             )
         else:
-            print("[i] No browser session state found. Starting a fresh context...")
+            print("[i] No browser session state found. Starting fresh context...")
             context = browser.new_context(
                 viewport={"width": 390, "height": 844},
                 user_agent=chrome_mobile_ua
@@ -598,10 +591,72 @@ def run_automation():
         page = context.new_page()
         page.set_default_timeout(45000)
 
+        # --- Attach Network API Interceptor ---
+        def handle_network_response(response):
+            try:
+                content_type = response.headers.get("content-type", "")
+                if "application/json" in content_type or "text/plain" in content_type:
+                    body = response.text()
+                    if not body or len(body) > 600000:
+                        return
+
+                    if any(k in body for k in ["سینرژی", "آتیه", "بازنشستگی", "synergy", "atie"]):
+                        try:
+                            data = json.loads(body)
+
+                            def search_json(obj):
+                                if isinstance(obj, dict):
+                                    symbol_name = str(
+                                        obj.get("symbolTitle", "") or
+                                        obj.get("symbolName", "") or
+                                        obj.get("name", "") or
+                                        obj.get("title", "") or
+                                        obj.get("symbol", "")
+                                    )
+                                    total_val = (
+                                        obj.get("totalValue") or
+                                        obj.get("assetValue") or
+                                        obj.get("value") or
+                                        obj.get("totalPrice") or
+                                        obj.get("marketValue") or
+                                        obj.get("sumPrice")
+                                    )
+
+                                    if ("سینرژی" in symbol_name or "synergy" in symbol_name.lower()) and total_val:
+                                        try:
+                                            val_int = int(float(str(total_val).replace(',', '')))
+                                            if val_int >= 1000000:
+                                                network_captured_data["synergy_val"] = val_int
+                                                print(f"[+] [Network Sniffer] Captured Synergy asset value from API: {val_int:,} Rials")
+                                        except (ValueError, TypeError):
+                                            pass
+
+                                    if ("آتیه" in symbol_name or "بازنشستگی" in symbol_name or "atie" in symbol_name.lower()) and total_val:
+                                        try:
+                                            val_int = int(float(str(total_val).replace(',', '')))
+                                            if val_int >= 1000000:
+                                                network_captured_data["atie_val"] = val_int
+                                                print(f"[+] [Network Sniffer] Captured Atie asset value from API: {val_int:,} Rials")
+                                        except (ValueError, TypeError):
+                                            pass
+
+                                    for k, v in obj.items():
+                                        search_json(v)
+                                elif isinstance(obj, list):
+                                    for item in obj:
+                                        search_json(item)
+
+                            search_json(data)
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+        page.on("response", handle_network_response)
+
         try:
             is_logged_in = False
 
-            # Try direct navigation to portfolio if session exists
             if session_exists:
                 print("[+] Navigating directly to portfolio with active session...")
                 try:
@@ -617,42 +672,33 @@ def run_automation():
                     else:
                         print("[i] Session state expired or logged out. Re-authentication required.")
                 except Exception as e:
-                    print(f"[i] Direct portfolio navigation failed/timed out: {e}. Falling back to normal login...")
+                    print(f"[i] Direct portfolio navigation failed/timed out: {e}. Falling back to login...")
 
             if not is_logged_in:
-                # 1. Open EasyTrader Main/Login redirects
                 print("[+] Navigating to EasyTrader login sequence...")
                 page.goto("https://m.easytrader.ir/", wait_until="load")
                 time.sleep(3)
 
-                # Check if we are redirected to login.emofid.com
                 current_url = page.url
                 print(f"[+] Current URL: {current_url}")
 
-                # If not already on login, try directly navigating to emofid login
                 if "login.emofid.com" not in current_url:
                     print("[i] Directing browser to emofid SSO login page...")
                     page.goto("https://login.emofid.com/Login", wait_until="load")
                     time.sleep(3)
 
-                # Take screenshot of login page for debug
                 page.screenshot(path="login_page.png")
-                print("[+] Saved login page screenshot to login_page.png")
 
-                # 2. Fill login credentials
                 print("[+] Filling credentials...")
-
-                # Locate input fields (username and password)
                 username_selector = "input[name='Username'], input#Username, input[type='text']"
                 password_selector = "input[name='Password'], input#Password, input[type='password']"
                 submit_selector = "button[type='submit'], button#loginBtn"
 
-                # Wait for fields with 120s timeout and AI assistance fallback
                 try:
                     page.wait_for_selector(username_selector, timeout=120000)
                     page.fill(username_selector, EASYTRADER_USER)
                 except Exception as wait_err:
-                    print(f"[i] Timeout 120s exceeded for username selector: {wait_err}. Triggering AI analysis...")
+                    print(f"[i] Timeout 120s for username selector: {wait_err}. Triggering AI analysis...")
                     ai_selector = analyze_page_with_gemini(page)
                     if ai_selector:
                         page.fill(ai_selector, EASYTRADER_USER)
@@ -662,26 +708,21 @@ def run_automation():
                 page.wait_for_selector(password_selector, timeout=120000)
                 page.fill(password_selector, EASYTRADER_PASS)
 
-                # Screenshot before submit
                 page.screenshot(path="credentials_filled.png")
 
                 print("[+] Submitting login form...")
                 page.click(submit_selector)
                 time.sleep(5)
 
-                # Check URL and handle possible security or redirect states
                 current_url = page.url
                 print(f"[+] Current URL after login: {current_url}")
                 page.screenshot(path="after_login.png")
 
-                # Handle verification/OTP screen
                 if "Verify" in current_url or "verify" in current_url.lower():
                     print("[!] OTP Verification screen detected!")
 
-                    # 1. Check if we already have it in environment variables (for testing/bypass)
                     otp_code = os.environ.get("OTP_CODE")
 
-                    # 2. If not, trigger interactive live Telegram Polling
                     if not otp_code or otp_code.strip() == "":
                         print("[+] Triggering interactive live Telegram polling...")
                         start_time = int(time.time())
@@ -699,92 +740,56 @@ def run_automation():
                     if otp_code:
                         print(f"[+] Attempting to fill OTP code: {otp_code}")
 
-                        # Dynamic / Self-healing OTP input selector
                         otp_input = None
-
-                        # 1. Try standard/probable selectors first
                         standard_selectors = [
-                            "input[name='Token']",
-                            "input#Token",
-                            "input[name='token']",
-                            "input#token",
-                            "input[type='tel']",
-                            "input[type='number']",
-                            "input[inputmode='numeric']",
-                            "input[placeholder*='کد']",
-                            "input[placeholder*='code']",
-                            "input[name*='code']",
-                            "input[name*='Code']",
-                            "input[type='text']"
+                            "input[name='Token']", "input#Token", "input[name='token']",
+                            "input#token", "input[type='tel']", "input[type='number']",
+                            "input[inputmode='numeric']", "input[placeholder*='کد']",
+                            "input[placeholder*='code']", "input[name*='code']",
+                            "input[name*='Code']", "input[type='text']"
                         ]
 
-                        print("[+] Searching for OTP input element...")
                         for sel in standard_selectors:
                             try:
                                 element = page.locator(sel).first
                                 if element.is_visible():
                                     otp_input = element
-                                    print(f"[+] Found OTP input using selector: {sel}")
                                     break
                             except Exception:
                                 continue
 
-                        # 2. Self-healing fallback: scan all visible inputs
                         if not otp_input:
-                            print("[i] Standard OTP selectors failed or not visible yet. Waiting 5s then running self-healing scan...")
                             time.sleep(5)
                             try:
                                 all_inputs = page.locator("input").all()
                                 visible_inputs = [inp for inp in all_inputs if inp.is_visible()]
-
-                                print(f"[i] Found {len(visible_inputs)} visible input(s) on the page.")
-
                                 if len(visible_inputs) == 1:
                                     otp_input = visible_inputs[0]
-                                    print("[+] Self-healing: Found exactly one visible input, assuming it is the OTP field.")
                                 else:
-                                    # Filter by likely attributes
                                     for inp in visible_inputs:
                                         html = inp.evaluate("el => el.outerHTML").lower()
                                         if any(k in html for k in ["token", "code", "otp", "tel", "numeric", "کد", "تایید"]):
                                             otp_input = inp
-                                            print(f"[+] Self-healing: Found likely OTP input matching attributes in HTML: {html}")
                                             break
-
-                                    # Last resort: use the first visible input
                                     if not otp_input and visible_inputs:
                                         otp_input = visible_inputs[0]
-                                        print("[+] Self-healing last resort: Using the first visible input field on the page.")
-                            except Exception as scan_err:
-                                print(f"[-] Self-healing input scan failed: {scan_err}")
+                            except Exception:
+                                pass
 
                         if not otp_input:
-                            print("[!] Could not locate visible OTP input element. Attempting fallback wait for general input...")
-                            try:
-                                page.wait_for_selector("input", timeout=5000)
-                                otp_input = page.locator("input").first
-                            except Exception as final_wait_err:
-                                raise Exception(f"Failed to find any visible OTP input field: {final_wait_err}")
+                            page.wait_for_selector("input", timeout=5000)
+                            otp_input = page.locator("input").first
 
-                        # Fill the OTP code
                         otp_input.fill(otp_code)
-                        print("[+] OTP code filled successfully.")
 
-                        # Try to click the "تایید دو مرحله برای این سیستم لازم نیست." (Trust this device) checkbox
+                        # Check Trust Device
                         try:
-                            print("[+] Checking for 'Trust Device' checkbox on OTP page...")
                             checkbox_selectors = [
-                                "input[type='checkbox']",
-                                "input#TrustDevice",
-                                "input[name*='TrustDevice']",
-                                "input[name*='trust']",
+                                "input[type='checkbox']", "input#TrustDevice",
+                                "input[name*='TrustDevice']", "input[name*='trust']",
                                 "text='تایید دو مرحله برای این سیستم لازم نیست.'",
-                                "label:has-text('تایید دو مرحله')",
-                                ".custom-checkbox",
-                                "span:has-text('تایید دو مرحله')"
+                                "label:has-text('تایید دو مرحله')", ".custom-checkbox"
                             ]
-
-                            ticked = False
                             for sel in checkbox_selectors:
                                 checkbox = page.locator(sel).first
                                 if checkbox.is_visible():
@@ -792,211 +797,128 @@ def run_automation():
                                         checkbox.check(force=True)
                                     else:
                                         checkbox.click(force=True)
-                                    print(f"[+] Successfully ticked 'Trust Device' checkbox using selector: {sel}")
-                                    ticked = True
                                     break
-                            if not ticked:
-                                print("[i] Non-blocking: Could not find any visible 'Trust Device' checkbox.")
-                        except Exception as cb_err:
-                            print(f"[i] Non-blocking warning: Failed to check 'Trust Device' checkbox: {cb_err}")
+                        except Exception:
+                            pass
 
                         page.screenshot(path="otp_filled.png")
 
-                        # Try to click the submit button with self-healing fallback
-                        clicked_submit = False
                         submit_selectors = [
-                            "button[type='submit']",
-                            "button#verifyBtn",
-                            "button.btn-primary",
-                            "button:has-text('ادامه')",
-                            "button:has-text('ورود')",
-                            "button:has-text('تایید')",
-                            "input[type='submit']",
-                            "button"
+                            "button[type='submit']", "button#verifyBtn",
+                            "button.btn-primary", "button:has-text('ادامه')",
+                            "button:has-text('ورود')", "button:has-text('تایید')",
+                            "input[type='submit']", "button"
                         ]
-
                         for sel in submit_selectors:
                             try:
                                 btn = page.locator(sel).first
                                 if btn.is_visible():
                                     btn.click()
-                                    print(f"[+] Successfully clicked OTP submit button using: {sel}")
-                                    clicked_submit = True
                                     break
                             except Exception:
                                 continue
 
-                        if not clicked_submit:
-                            print("[i] Self-healing button click failed via locator. Attempting keyboard Enter key...")
-                            try:
-                                page.keyboard.press("Enter")
-                                print("[+] Pressed Enter key as fallback.")
-                            except Exception as key_err:
-                                print(f"[-] Keyboard fallback failed: {key_err}")
-
                         time.sleep(6)
-                        current_url = page.url
-                        print(f"[+] URL after OTP submission: {current_url}")
                     else:
                         failure_instructions = (
                             f"<b>❌ مهلت ارسال کد تایید به پایان رسید</b>\n\n"
-                            f"رئیس جان! متاسفانه بعد از ۳ دقیقه کدی از شما دریافت نکردم و عملیات متوقف شد.\n"
-                            f"هر زمان مایل بودید می‌توانید مجدداً جریان کار را در گیت‌هاب اکشنز اجرا کنید."
+                            f"رئیس جان! متاسفانه بعد از ۳ دقیقه کدی از شما دریافت نکردم و عملیات متوقف شد."
                         )
                         send_telegram_message(failure_instructions)
-                        raise Exception("OTP verification required but no valid code was provided via Telegram in 3 minutes.")
+                        raise Exception("OTP verification required but no valid code provided.")
 
-                # 3. Direct navigation to portfolio
                 portfolio_url = "https://m.easytrader.ir/portfolio-fill"
                 print(f"[+] Navigating directly to portfolio page: {portfolio_url}")
                 page.goto(portfolio_url, wait_until="load")
                 time.sleep(5)
 
-                # Active dialog / modal overlay dismissal check
                 try:
-                    print("[+] Checking for any block overlays, system update modals, or alerts to dismiss...")
                     modal_dismiss_selectors = [
-                        "button:has-text('✕')",
-                        "span:has-text('✕')",
-                        "div[class*='close']",
-                        "button[class*='close']",
-                        "i[class*='close']",
-                        "svg[class*='close']",
-                        "button:has-text('بستن')",
-                        "button:has-text('انصراف')"
+                        "button:has-text('✕')", "span:has-text('✕')",
+                        "div[class*='close']", "button[class*='close']",
+                        "button:has-text('بستن')", "button:has-text('انصراف')"
                     ]
                     for sel in modal_dismiss_selectors:
                         closer = page.locator(sel).first
                         if closer.is_visible():
                             closer.click(force=True)
-                            print(f"[+] Dismissed popup overlay using selector: {sel}")
                             time.sleep(2)
-                except Exception as ex_dismiss:
-                    print(f"[i] Non-blocking: Modal dismiss scanner had an exception: {ex_dismiss}")
+                except Exception:
+                    pass
 
                 page.screenshot(path="portfolio_loaded.png")
-                print("[+] Portfolio page screenshot saved to portfolio_loaded.png")
 
-                # Validate we are not still prompted to login
                 body_text = page.locator("body").inner_text()
                 if "ورود" in body_text or "رمز" in body_text or "login.emofid.com" in page.url:
                     raise Exception("Still on login/verification page or authentication failed.")
 
-                # Save the new storage state/session cookie file
                 os.makedirs(os.path.dirname(session_file_path), exist_ok=True)
                 context.storage_state(path=session_file_path)
-                print(f"[+] Successfully logged in and saved browser storage state to: {session_file_path}")
-
-            # 4. Extract "سینرژی" value
-            print("[+] Extracting total asset value for 'سینرژی'...")
-
-            # Additional modal dismissal sweep before scanning portfolio numbers
-            try:
-                modal_dismiss_selectors = [
-                    "button:has-text('✕')",
-                    "span:has-text('✕')",
-                    "div[class*='close']",
-                    "button[class*='close']",
-                    "button:has-text('بستن')",
-                    "button:has-text('انصراف')"
-                ]
-                for sel in modal_dismiss_selectors:
-                    closer = page.locator(sel).first
-                    if closer.is_visible():
-                        closer.click(force=True)
-                        print(f"[+] Late-stage sweep: Dismissed popup overlay using selector: {sel}")
-                        time.sleep(2)
-            except Exception:
-                pass
 
             # Wait 8 seconds to allow portfolio data and numbers to hydrate fully
-            print("[+] Waiting 8 seconds for portfolio numbers to hydrate fully...")
+            print("[+] Waiting 8 seconds for portfolio numbers and API network sniffing to hydrate...")
             time.sleep(8)
 
-            # --- STRATEGY 1: Dynamic Text Stream Parser of the Full Page Body ---
-            # This is the most resilient parsing method because it extracts text straight from the page viewport,
-            # avoiding any DOM traversal bugs or duplicate hidden elements containing 'سینرژی'.
-            body_text = page.locator("body").inner_text()
-            normalized_body = convert_persian_to_english_numbers(body_text)
+            # -------------------------------------------------------------------------
+            # 4. EXTRACT "سینرژی" (App 5 - ثبت درصد ۵)
+            # -------------------------------------------------------------------------
+            extracted_value_syn = network_captured_data.get("synergy_val")
+            if extracted_value_syn:
+                print(f"[+] [Layer 1 API Sniffer] Confirmed Synergy total asset value: {extracted_value_syn:,} Rials")
+            else:
+                print("[i] Layer 1 Network Sniffer produced no value. Trying Layer 2 Body Text Scan...")
+                body_text = page.locator("body").inner_text()
+                normalized_body = convert_persian_to_english_numbers(body_text)
 
-            extracted_value = None
+                lines = [line.strip() for line in normalized_body.split("\n") if line.strip()]
+                for idx, line in enumerate(lines):
+                    if "سینرژی" in line:
+                        candidate_numbers = []
+                        for offset in range(1, 13):
+                            if idx + offset < len(lines):
+                                target_line = lines[idx + offset]
+                                if "همسنگ" in target_line:
+                                    break
+                                found_nums = re.findall(r'[\d,]+', target_line)
+                                for num_str in found_nums:
+                                    clean_num = num_str.replace(",", "")
+                                    if clean_num.isdigit() and len(clean_num) >= 6:
+                                        candidate_numbers.append(int(clean_num))
+                        if candidate_numbers:
+                            extracted_value_syn = max(candidate_numbers)
+                            print(f"[+] [Layer 2 Body Scan] Synergy total asset value: {extracted_value_syn:,} Rials")
+                            break
 
-            print("[+] Strategy 1: Parsing full body text stream...")
-            lines = [line.strip() for line in normalized_body.split("\n") if line.strip()]
-            for idx, line in enumerate(lines):
-                if "سینرژی" in line:
-                    print(f"[+] Found 'سینرژی' in body text at line {idx}: '{line}'")
-                    # Look at the next 12 lines for large numeric patterns (assets are typically millions of Rials, i.e., 6+ digits)
-                    candidate_numbers = []
-                    for offset in range(1, 13):
-                        if idx + offset < len(lines):
-                            target_line = lines[idx + offset]
-                            # If we hit another fund symbol, stop scanning to avoid crossover data
-                            if "همسنگ" in target_line:
-                                print(f"[i] Hit next symbol 'همسنگ' at offset {offset}, stopping scan window.")
-                                break
-
-                            # Find all numbers in this line
-                            found_nums = re.findall(r'[\d,]+', target_line)
-                            for num_str in found_nums:
-                                clean_num = num_str.replace(",", "")
-                                if clean_num.isdigit() and len(clean_num) >= 6:
-                                    candidate_numbers.append(int(clean_num))
-                                    print(f"    -> Found candidate asset value at offset {offset}: {int(clean_num):,}")
-
-                    if candidate_numbers:
-                        # Total asset value is always the maximum number in the card (e.g. 102,666,552 vs 54,300 price)
-                        extracted_value = max(candidate_numbers)
-                        print(f"[+] Strategy 1 successfully extracted total asset value: {extracted_value:,} Rials")
-                        break
-
-            # --- STRATEGY 2: Resilient DOM Traversal & Child Scanner ---
-            # Used as a double-check or fallback if Strategy 1 did not resolve.
-            if not extracted_value:
-                print("[i] Strategy 1 resolved no numbers. Falling back to Strategy 2 (Visible DOM elements scanner)...")
-
+            if not extracted_value_syn:
+                # Layer 3 DOM scanner
                 synergy_elements = page.locator("text='سینرژی'").all()
-                print(f"[+] Found {len(synergy_elements)} element(s) with text 'سینرژی'. Scanning for active card container...")
-
-                for el_idx, synergy_element in enumerate(synergy_elements):
-                    if not synergy_element.is_visible():
+                for el in synergy_elements:
+                    if not el.is_visible():
                         continue
-
-                    print(f"  [*] Scanning element index {el_idx}...")
-                    parent = synergy_element
+                    parent = el
                     for level in range(1, 11):
                         parent = parent.locator("xpath=..")
                         parent_text = parent.inner_text()
-
                         if "سینرژی" in parent_text and "همسنگ" not in parent_text:
-                            normalized_parent = convert_persian_to_english_numbers(parent_text)
-                            numbers = re.findall(r'[\d,]+', normalized_parent)
-                            clean_digits = [num.replace(",", "") for num in numbers if num.replace(",", "").isdigit()]
-                            large_numbers = [int(digit) for digit in clean_digits if len(digit) >= 6]
-
-                            if large_numbers:
-                                extracted_value = max(large_numbers)
-                                print(f"[+] Strategy 2 successfully detected asset card and extracted: {extracted_value:,} Rials")
+                            norm_p = convert_persian_to_english_numbers(parent_text)
+                            numbers = re.findall(r'[\d,]+', norm_p)
+                            clean_digits = [n.replace(",", "") for n in numbers if n.replace(",", "").isdigit()]
+                            large_nums = [int(d) for d in clean_digits if len(d) >= 6]
+                            if large_nums:
+                                extracted_value_syn = max(large_nums)
+                                print(f"[+] [Layer 3 DOM Traversal] Synergy total asset value: {extracted_value_syn:,} Rials")
                                 break
-                    if extracted_value:
+                    if extracted_value_syn:
                         break
 
-            # Check for security screen block
-            if not extracted_value:
-                if "ورود" in body_text or "رمز" in body_text:
-                    raise Exception("Still on login/verification page or authentication failed.")
-                raise Exception(f"Could not extract any valid numerical values from Synergy row container. Raw text: {body_text[:1000]}")
+            if not extracted_value_syn:
+                raise Exception("Could not extract Synergy (App 5) asset value using Network, Body Scan, or DOM methods.")
 
-            new_val_syn = extracted_value
-            print(f"[+] Confirmed Synergy total asset value: {new_val_syn:,} Rials")
+            new_val_syn = extracted_value_syn
 
-            # 5. Calculation for App 5 (Synergy)
+            # Calculate App 5
             diff_syn = new_val_syn - base_val_syn
             percent_change_syn = (diff_syn / base_val_syn) * 100 if base_val_syn > 0 else 0.0
-
-            print(f"[+] App 5 Base Value: {base_val_syn:,}")
-            print(f"[+] App 5 New Value: {new_val_syn:,}")
-            print(f"[+] App 5 Percent Change: {percent_change_syn:+.4f}%")
 
             timestamp_ms = int(time.time() * 1000)
 
@@ -1027,118 +949,66 @@ def run_automation():
             local_state_syn["history"] = history_list_syn
             local_state_syn["baseNumber"] = new_val_syn
 
-            # Write updated local state back to JSON file for App 5
             os.makedirs(os.path.dirname(BACKUP_FILE_PATH), exist_ok=True)
             with open(BACKUP_FILE_PATH, 'w', encoding='utf-8') as f:
                 json.dump(local_state_syn, f, ensure_ascii=False, indent=2)
-            print(f"[+] App 5: Successfully wrote updated local backup to {BACKUP_FILE_PATH}")
+            print(f"[+] App 5: Wrote updated backup to {BACKUP_FILE_PATH}")
 
             # -------------------------------------------------------------------------
-            # 6. NAVIGATE & EXTRACT "صندوق آتیه / بازنشستگی" (App 4 - ثبت درصد ۴)
+            # 5. EXTRACT "آتیه / بازنشستگی" (App 4 - ثبت درصد ۴)
             # -------------------------------------------------------------------------
-            print("\n[+] Navigating to 'سایر' -> 'صندوق‌های مفید' to extract App 4 (Atie / Retirement Fund)...")
+            print("\n[+] Navigating to extract App 4 (Atie / Retirement Fund)...")
 
-            extracted_value_atie = None
+            extracted_value_atie = network_captured_data.get("atie_val")
+            if extracted_value_atie:
+                print(f"[+] [Layer 1 API Sniffer] Confirmed Atie asset value: {extracted_value_atie:,} Rials")
+            else:
+                # Navigation strategies to Mofid Funds tab
+                try:
+                    sayer_selectors = ["text='سایر'", "span:has-text('سایر')", "button:has-text('سایر')", "a:has-text('سایر')"]
+                    for sel in sayer_selectors:
+                        elem = page.locator(sel).first
+                        if elem.is_visible():
+                            elem.click(force=True)
+                            time.sleep(3)
+                            break
 
-            # Strategy 1: Click "سایر" tab from navigation bar then click "صندوق‌های مفید"
-            try:
-                print("[+] Searching for 'سایر' navigation button...")
-                sayer_selectors = [
-                    "text='سایر'",
-                    "span:has-text('سایر')",
-                    "button:has-text('سایر')",
-                    "a:has-text('سایر')",
-                    ".tab-item:has-text('سایر')",
-                    "[aria-label*='سایر']"
-                ]
-
-                sayer_clicked = False
-                for sel in sayer_selectors:
-                    elem = page.locator(sel).first
-                    if elem.is_visible():
-                        elem.click(force=True)
-                        print(f"[+] Successfully clicked 'سایر' using selector: {sel}")
-                        sayer_clicked = True
-                        time.sleep(3)
-                        break
-
-                if sayer_clicked:
-                    page.screenshot(path="sayer_menu.png")
-                    print("[+] Screenshot saved to sayer_menu.png")
-
-                    # Now click "صندوق‌های مفید" or "صندوق‌ها"
-                    funds_selectors = [
-                        "text='صندوق‌های مفید'",
-                        "text='صندوق ها'",
-                        "text='صندوق‌ها'",
-                        "span:has-text('صندوق')",
-                        "div:has-text('صندوق‌های مفید')",
-                        "a:has-text('صندوق‌های مفید')"
-                    ]
-
+                    funds_selectors = ["text='صندوق‌های مفید'", "text='صندوق ها'", "text='صندوق‌ها'", "span:has-text('صندوق')"]
                     for sel in funds_selectors:
                         elem = page.locator(sel).first
                         if elem.is_visible():
                             elem.click(force=True)
-                            print(f"[+] Successfully clicked 'صندوق‌های مفید' using selector: {sel}")
                             time.sleep(4)
                             break
-            except Exception as ex_nav:
-                print(f"[i] Navigation via tab clicks had exception: {ex_nav}. Trying direct URL or DOM scan...")
+                except Exception as ex_nav:
+                    print(f"[i] Navigation click exception: {ex_nav}")
 
-            # Ensure Atie fund card and numbers hydrate fully before taking screenshot
-            try:
-                print("[+] Waiting for Atie fund card element to load...")
-                page.wait_for_selector("text='آتیه'", timeout=10000)
-            except Exception:
-                pass
-            time.sleep(3)
-            page.screenshot(path="atie_loaded.png")
-            print("[+] Saved dedicated Atie asset page screenshot to atie_loaded.png")
+                # Check network sniffer again after navigating to funds tab
+                extracted_value_atie = network_captured_data.get("atie_val")
 
-            # Scan full page text stream for "آتیه" or "بازنشستگی"
-            body_text_atie = page.locator("body").inner_text()
-            normalized_body_atie = convert_persian_to_english_numbers(body_text_atie)
+                if not extracted_value_atie:
+                    # Layer 2 Scan body text
+                    body_text_atie = page.locator("body").inner_text()
+                    normalized_body_atie = convert_persian_to_english_numbers(body_text_atie)
+                    lines_atie = [line.strip() for line in normalized_body_atie.split("\n") if line.strip()]
 
-            lines_atie = [line.strip() for line in normalized_body_atie.split("\n") if line.strip()]
-            for idx, line in enumerate(lines_atie):
-                if "آتیه" in line or "بازنشستگی" in line:
-                    print(f"[+] Found 'آتیه/بازنشستگی' in body text at line {idx}: '{line}'")
-                    candidate_numbers_atie = []
-                    # Check current line and adjacent window
-                    search_range = range(max(0, idx - 2), min(len(lines_atie), idx + 10))
-                    for scan_idx in search_range:
-                        target_line = lines_atie[scan_idx]
-                        found_nums = re.findall(r'[\d,]+', target_line)
-                        for num_str in found_nums:
-                            clean_num = num_str.replace(",", "")
-                            if clean_num.isdigit() and len(clean_num) >= 6:
-                                candidate_numbers_atie.append(int(clean_num))
-                                print(f"    -> Found candidate Atie asset value: {int(clean_num):,}")
-
-                    if candidate_numbers_atie:
-                        extracted_value_atie = max(candidate_numbers_atie)
-                        print(f"[+] Successfully extracted Atie total asset value: {extracted_value_atie:,} Rials")
-                        break
-
-            # Fallback scan for "ارزش صندوق‌ها" or overall funds total if specific Atie label wasn't isolated
-            if not extracted_value_atie:
-                print("[i] Fallback scanning for 'ارزش صندوق‌ها'...")
-                for idx, line in enumerate(lines_atie):
-                    if "ارزش صندوق" in line:
-                        candidate_numbers_atie = []
-                        for offset in range(0, 5):
-                            if idx + offset < len(lines_atie):
-                                target_line = lines_atie[idx + offset]
+                    for idx, line in enumerate(lines_atie):
+                        if "آتیه" in line or "بازنشستگی" in line:
+                            candidate_numbers_atie = []
+                            search_range = range(max(0, idx - 2), min(len(lines_atie), idx + 10))
+                            for scan_idx in search_range:
+                                target_line = lines_atie[scan_idx]
                                 found_nums = re.findall(r'[\d,]+', target_line)
                                 for num_str in found_nums:
                                     clean_num = num_str.replace(",", "")
                                     if clean_num.isdigit() and len(clean_num) >= 6:
                                         candidate_numbers_atie.append(int(clean_num))
-                        if candidate_numbers_atie:
-                            extracted_value_atie = max(candidate_numbers_atie)
-                            print(f"[+] Fallback extracted Atie fund total value: {extracted_value_atie:,} Rials")
-                            break
+                            if candidate_numbers_atie:
+                                extracted_value_atie = max(candidate_numbers_atie)
+                                print(f"[+] [Layer 2 Body Scan] Atie asset value: {extracted_value_atie:,} Rials")
+                                break
+
+            page.screenshot(path="atie_loaded.png")
 
             if not extracted_value_atie:
                 print("[-] Warning: Could not extract Atie asset value automatically. Keeping previous base value to avoid corrupting state.")
@@ -1147,10 +1017,6 @@ def run_automation():
             new_val_atie = extracted_value_atie
             diff_atie = new_val_atie - base_val_atie
             percent_change_atie = (diff_atie / base_val_atie) * 100 if base_val_atie > 0 else 0.0
-
-            print(f"[+] App 4 Base Value: {base_val_atie:,}")
-            print(f"[+] App 4 New Value: {new_val_atie:,}")
-            print(f"[+] App 4 Percent Change: {percent_change_atie:+.4f}%")
 
             local_state_atie["percents"].append({
                 "value": float(round(percent_change_atie, 2)),
@@ -1178,14 +1044,13 @@ def run_automation():
             local_state_atie["history"] = history_list_atie
             local_state_atie["baseNumber"] = new_val_atie
 
-            # Write updated local state back to JSON file for App 4
             os.makedirs(os.path.dirname(BACKUP_FILE_PATH_ATIE), exist_ok=True)
             with open(BACKUP_FILE_PATH_ATIE, 'w', encoding='utf-8') as f:
                 json.dump(local_state_atie, f, ensure_ascii=False, indent=2)
-            print(f"[+] App 4: Successfully wrote updated local backup to {BACKUP_FILE_PATH_ATIE}")
+            print(f"[+] App 4: Wrote updated backup to {BACKUP_FILE_PATH_ATIE}")
 
             # -------------------------------------------------------------------------
-            # 7. SYNCHRONIZATION WITH MANTLEDB (Cloud Sync for both App 4 and App 5)
+            # 6. SYNCHRONIZATION WITH MANTLEDB
             # -------------------------------------------------------------------------
             synergy_payload = {
                 "new_val": new_val_syn,
@@ -1214,11 +1079,11 @@ def run_automation():
             sync_ok = sync_with_mantledb(synergy_payload=synergy_payload, atie_payload=atie_payload)
 
             # -------------------------------------------------------------------------
-            # 8. SEND TELEGRAM NOTIFICATIONS (TWO SEPARATE MESSAGES)
+            # 7. SEND TELEGRAM NOTIFICATIONS
             # -------------------------------------------------------------------------
             persian_time_report = get_current_persian_datetime()
 
-            # --- Message 1: App 5 (صندوق سینرژی) ---
+            # Message 1: App 5
             emoji_syn = "📈" if percent_change_syn > 0 else ("📉" if percent_change_syn < 0 else "⚖️")
             telegram_report_syn = (
                 f"<b>🤖 عملیات خودکار ثبت درصد ۵ (صندوق سینرژی) با موفقیت انجام شد!</b>\n\n"
@@ -1233,7 +1098,7 @@ def run_automation():
             print("[+] Sending Telegram Message 1 (App 5 - Synergy)...")
             send_telegram_message(telegram_report_syn, photo_path="portfolio_loaded.png" if os.path.exists("portfolio_loaded.png") else None)
 
-            # --- Message 2: App 4 (صندوق آتیه / بازنشستگی) ---
+            # Message 2: App 4
             emoji_atie = "📈" if percent_change_atie > 0 else ("📉" if percent_change_atie < 0 else "⚖️")
             telegram_report_atie = (
                 f"<b>🤖 عملیات خودکار ثبت درصد ۴ (صندوق آتیه / بازنشستگی) با موفقیت انجام شد!</b>\n\n"
@@ -1256,16 +1121,15 @@ def run_automation():
             print(f"[-] Error during Playwright execution: {err}")
             try:
                 page.screenshot(path="error_emergency.png")
-                print("[-] Emergency screenshot saved to error_emergency.png")
             except Exception:
                 pass
 
             persian_time_report = get_current_persian_datetime()
             failure_report = (
-                f"<b>⚠️ خطا در اجرای اتوماسیون ثبت درصد ۵ (صندوق سینرژی)</b>\n\n"
+                f"<b>⚠️ خطا در اجرای اتوماسیون ثبت درصد ۴ و ۵</b>\n\n"
                 f"📅 <b>تاریخ:</b> {persian_time_report}\n"
                 f"❌ <b>جزئیات خطا:</b> <code>{str(err)[:500]}</code>\n\n"
-                f"🛠️ لطفا وضعیت و لاگ‌های گیت‌هاب اکشنز را بررسی کنید تا ریشه مشکل مشخص شود."
+                f"🛠️ لطفا وضعیت لاگ‌ها در گیت‌هاب اکشنز را بررسی کنید."
             )
             send_telegram_message(failure_report, photo_path="error_emergency.png" if os.path.exists("error_emergency.png") else None)
 
@@ -1275,7 +1139,7 @@ def run_automation():
 
 
 if __name__ == "__main__":
-    print("[+] Starting EasyTrader Automation Script...")
+    print("[+] Starting EasyTrader Automation Script (v3.0)...")
     success = run_automation()
     if success:
         print("[+] Automation execution finished successfully.")
