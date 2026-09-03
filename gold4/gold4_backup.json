@@ -1,0 +1,28 @@
+{
+  "percents": [
+    {
+      "value": 3.24,
+      "timestamp": 1788446643250
+    }
+  ],
+  "trash": [],
+  "goal": null,
+  "highlightedStates": {},
+  "periodTarget": null,
+  "achievedPeriods": [],
+  "notes": [],
+  "baseNumber": 283530660,
+  "history": [
+    {
+      "id": 1788446643250,
+      "base": "274,631,868",
+      "new": "283,530,660",
+      "percent": "3.24",
+      "type": "increase",
+      "rawBase": 274631868.0,
+      "rawNew": 283530660.0,
+      "timestamp": "2026-09-03T14:44:10.402423Z",
+      "persianDate": "1405/06/12 14:44:03"
+    }
+  ]
+}
