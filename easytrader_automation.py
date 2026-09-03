@@ -2,17 +2,23 @@
 # -*- coding: utf-8 -*-
 
 """
-Emarat EasyTrader Automation Script (v3.0 - High Resilience Network Interception Edition)
-========================================================================================
+Emarat EasyTrader Automation Script (v3.2 - Dual History & Key Sync Edition)
+=============================================================================
 This script automates logging into login.emofid.com, navigating to EasyTrader portfolio,
 extracting total values for both:
   1. App 5: "سینرژی" (Synergy Fund)
   2. App 4: "آتیه / بازنشستگی" (Mofid Atie / Retirement Fund)
 
-Uses Network Response Interception (API Sniffing) alongside multi-layered DOM fallback strategies,
-updates local backup files (gold5/gold5_backup.json & gold4/gold4_backup.json),
-synchronizes bi-directionally with MantleDB cloud storage,
-and reports results to Telegram.
+Features:
+  - Checks if user has ALREADY recorded today's percent manually before 15:30.
+    If so, gracefully halts automation to prevent overwriting or duplicate entries.
+  - Network Response Interception (API Sniffing) alongside multi-layered DOM fallback strategies.
+  - Updates local backup files (gold5/gold5_backup.json & gold4/gold4_backup.json).
+  - Synchronizes bi-directionally with MantleDB cloud storage across ALL key variants:
+    * App 4: Both 'mofid_atie_history'/'mofid_atie_baseNumber' AND 'pension_history'/'pension_baseNumber'
+      to guarantee 100% synchronization with Percent Monitor ('monitor/index.html') and Calculator ('gold4/calculator.html').
+    * App 5: 'energy_fund_synergy', 'sinergy_baseNumber', and 'sinergy_history'.
+  - Reports results to Telegram.
 
 All secrets and credentials are retrieved strictly from Environment Variables.
 
@@ -112,6 +118,37 @@ def get_current_persian_datetime():
     now = datetime.now()
     jy, jm, jd = gregorian_to_jalali(now.year, now.month, now.day)
     return f"{jy:04d}/{jm:02d}/{jd:02d} {now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+
+
+def is_already_recorded_today(history_list):
+    """
+    Checks if an entry for today (same Jalali date) already exists in the history list.
+    """
+    if not history_list:
+        return False
+
+    current_persian_date = get_current_persian_datetime().split()[0]  # e.g. "1405/06/11"
+
+    for item in history_list:
+        p_date = item.get("persianDate", "")
+        if p_date and p_date.split()[0] == current_persian_date:
+            return True
+
+        ts = item.get("timestamp")
+        if ts:
+            try:
+                if isinstance(ts, (int, float)):
+                    dt = datetime.fromtimestamp(ts / 1000.0)
+                else:
+                    dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+                jy, jm, jd = gregorian_to_jalali(dt.year, dt.month, dt.day)
+                item_jdate = f"{jy:04d}/{jm:02d}/{jd:02d}"
+                if item_jdate == current_persian_date:
+                    return True
+            except Exception:
+                pass
+
+    return False
 
 
 def convert_persian_to_english_numbers(text):
@@ -279,9 +316,11 @@ def fetch_cloud_state():
                 atie_ap = json.loads(atie_ap_str) if atie_ap_str else []
                 atie_notes_str = data.get("mofid_atie_notes", "[]")
                 atie_notes = json.loads(atie_notes_str) if atie_notes_str else []
-                atie_history_str = data.get("mofid_atie_history", "[]")
+
+                # Support both pension_history and mofid_atie_history for 100% monitor app sync
+                atie_history_str = data.get("pension_history") or data.get("mofid_atie_history", "[]")
                 atie_history = json.loads(atie_history_str) if atie_history_str else []
-                atie_base_str = data.get("mofid_atie_baseNumber", "")
+                atie_base_str = data.get("pension_baseNumber") or data.get("mofid_atie_baseNumber", "")
                 atie_base = 0
                 if atie_base_str:
                     try:
@@ -358,9 +397,16 @@ def sync_with_mantledb(synergy_payload=None, atie_payload=None):
             cloud_data["mofid_atie_periodTarget"] = json.dumps(atie_payload.get("periodTarget", None))
             cloud_data["mofid_atie_achievedPeriods"] = json.dumps(atie_payload.get("achievedPeriods", []))
             cloud_data["mofid_atie_notes"] = json.dumps(atie_payload.get("notes", []))
+
             new_atie_val = atie_payload.get("new_val", 0)
-            cloud_data["mofid_atie_baseNumber"] = f"{new_atie_val:,}"
-            cloud_data["mofid_atie_history"] = json.dumps(atie_payload.get("history", []))
+            formatted_base_atie = f"{new_atie_val:,}"
+            history_atie_json = json.dumps(atie_payload.get("history", []))
+
+            # Sync both mofid_atie_* AND pension_* keys for 100% compatibility with Monitor App & Calculator
+            cloud_data["mofid_atie_baseNumber"] = formatted_base_atie
+            cloud_data["mofid_atie_history"] = history_atie_json
+            cloud_data["pension_baseNumber"] = formatted_base_atie
+            cloud_data["pension_history"] = history_atie_json
 
         timestamp_ms = int(time.time() * 1000)
         cloud_data["emarat_last_modified"] = str(timestamp_ms)
@@ -468,15 +514,6 @@ def run_automation():
 
     validate_environment()
 
-    # Send initial status message to Telegram
-    persian_start_time = get_current_persian_datetime()
-    init_msg = (
-        f"<b>🚀 آغاز عملیات خودکار ثبت درصد ۴ و ۵ (ایزی‌تریدر)</b>\n\n"
-        f"📅 <b>زمان شروع:</b> {persian_start_time}\n"
-        f"⚙️ <b>وضعیت:</b> مرورگر در حال راه‌اندازی و ورود به ایزی‌تریدر مفید..."
-    )
-    send_telegram_message(init_msg)
-
     # --- Read or initialize App 5 (Synergy) local state backup ---
     local_state_syn = {
         "percents": [],
@@ -549,6 +586,33 @@ def run_automation():
 
     base_val_atie = local_state_atie.get("baseNumber", 274631868)
     history_list_atie = local_state_atie.get("history", [])
+
+    # --- FEATURE: CHECK IF USER ALREADY RECORDED PERCENT TODAY ---
+    syn_recorded_today = is_already_recorded_today(history_list_syn)
+    atie_recorded_today = is_already_recorded_today(history_list_atie)
+
+    current_persian_date = get_current_persian_datetime().split()[0]
+
+    if syn_recorded_today and atie_recorded_today:
+        print("[+] Both Fund 4 and Fund 5 percents were already recorded today by user. Gracefully halting automation.")
+        stop_msg = (
+            f"<b>☕ رئیس جان خسته نباشید! ثبت درصد امروز قبلاً انجام شده است</b>\n\n"
+            f"📅 <b>تاریخ امروز:</b> {current_persian_date}\n\n"
+            f"دیدم شما امروز خودتون زودتر دست به کار شدید و درصد هر دو صندوق ۴ (آتیه) و ۵ (سینرژی) رو با موفقیت ثبت کردید! 🌹\n"
+            f"من به تصمیم شما احترام می‌گذارم و عملیات خودکار امروز رو متوقف می‌کنم تا اطلاعات شما دست‌نخورده بمونه.\n\n"
+            f"فردا رأس ساعت ۱۵:۳۰ دوباره منتظرتون هستم! روزتون خوش. 😎✨"
+        )
+        send_telegram_message(stop_msg)
+        return True
+
+    # Send initial status message to Telegram
+    persian_start_time = get_current_persian_datetime()
+    init_msg = (
+        f"<b>🚀 آغاز عملیات خودکار ثبت درصد ۴ و ۵ (ایزی‌تریدر)</b>\n\n"
+        f"📅 <b>زمان شروع:</b> {persian_start_time}\n"
+        f"⚙️ <b>وضعیت:</b> مرورگر در حال راه‌اندازی و ورود به ایزی‌تریدر مفید..."
+    )
+    send_telegram_message(init_msg)
 
     session_file_path = "gold5/easytrader_session.json"
     session_exists = os.path.exists(session_file_path)
@@ -862,198 +926,215 @@ def run_automation():
             # -------------------------------------------------------------------------
             # 4. EXTRACT "سینرژی" (App 5 - ثبت درصد ۵)
             # -------------------------------------------------------------------------
-            extracted_value_syn = network_captured_data.get("synergy_val")
-            if extracted_value_syn:
-                print(f"[+] [Layer 1 API Sniffer] Confirmed Synergy total asset value: {extracted_value_syn:,} Rials")
-            else:
-                print("[i] Layer 1 Network Sniffer produced no value. Trying Layer 2 Body Text Scan...")
-                body_text = page.locator("body").inner_text()
-                normalized_body = convert_persian_to_english_numbers(body_text)
+            percent_change_syn = None
+            new_val_syn = None
 
-                lines = [line.strip() for line in normalized_body.split("\n") if line.strip()]
-                for idx, line in enumerate(lines):
-                    if "سینرژی" in line:
-                        candidate_numbers = []
-                        for offset in range(1, 13):
-                            if idx + offset < len(lines):
-                                target_line = lines[idx + offset]
-                                if "همسنگ" in target_line:
+            if syn_recorded_today:
+                print("[i] Fund 5 (Synergy) was already recorded today by user. Skipping extraction.")
+                send_telegram_message(f"ℹ️ <b>صندوق ۵ (سینرژی):</b> درصد امروز قبلاً توسط شما ثبت شده بود، پس دست‌نخورده باقی ماند. ☕")
+            else:
+                extracted_value_syn = network_captured_data.get("synergy_val")
+                if extracted_value_syn:
+                    print(f"[+] [Layer 1 API Sniffer] Confirmed Synergy total asset value: {extracted_value_syn:,} Rials")
+                else:
+                    print("[i] Layer 1 Network Sniffer produced no value. Trying Layer 2 Body Text Scan...")
+                    body_text = page.locator("body").inner_text()
+                    normalized_body = convert_persian_to_english_numbers(body_text)
+
+                    lines = [line.strip() for line in normalized_body.split("\n") if line.strip()]
+                    for idx, line in enumerate(lines):
+                        if "سینرژی" in line:
+                            candidate_numbers = []
+                            for offset in range(1, 13):
+                                if idx + offset < len(lines):
+                                    target_line = lines[idx + offset]
+                                    if "همسنگ" in target_line:
+                                        break
+                                    found_nums = re.findall(r'[\d,]+', target_line)
+                                    for num_str in found_nums:
+                                        clean_num = num_str.replace(",", "")
+                                        if clean_num.isdigit() and len(clean_num) >= 6:
+                                            candidate_numbers.append(int(clean_num))
+                            if candidate_numbers:
+                                extracted_value_syn = max(candidate_numbers)
+                                print(f"[+] [Layer 2 Body Scan] Synergy total asset value: {extracted_value_syn:,} Rials")
+                                break
+
+                if not extracted_value_syn:
+                    # Layer 3 DOM scanner
+                    synergy_elements = page.locator("text='سینرژی'").all()
+                    for el in synergy_elements:
+                        if not el.is_visible():
+                            continue
+                        parent = el
+                        for level in range(1, 11):
+                            parent = parent.locator("xpath=..")
+                            parent_text = parent.inner_text()
+                            if "سینرژی" in parent_text and "همسنگ" not in parent_text:
+                                norm_p = convert_persian_to_english_numbers(parent_text)
+                                numbers = re.findall(r'[\d,]+', norm_p)
+                                clean_digits = [n.replace(",", "") for n in numbers if n.replace(",", "").isdigit()]
+                                large_nums = [int(d) for d in clean_digits if len(d) >= 6]
+                                if large_nums:
+                                    extracted_value_syn = max(large_nums)
+                                    print(f"[+] [Layer 3 DOM Traversal] Synergy total asset value: {extracted_value_syn:,} Rials")
                                     break
-                                found_nums = re.findall(r'[\d,]+', target_line)
-                                for num_str in found_nums:
-                                    clean_num = num_str.replace(",", "")
-                                    if clean_num.isdigit() and len(clean_num) >= 6:
-                                        candidate_numbers.append(int(clean_num))
-                        if candidate_numbers:
-                            extracted_value_syn = max(candidate_numbers)
-                            print(f"[+] [Layer 2 Body Scan] Synergy total asset value: {extracted_value_syn:,} Rials")
+                        if extracted_value_syn:
                             break
 
-            if not extracted_value_syn:
-                # Layer 3 DOM scanner
-                synergy_elements = page.locator("text='سینرژی'").all()
-                for el in synergy_elements:
-                    if not el.is_visible():
-                        continue
-                    parent = el
-                    for level in range(1, 11):
-                        parent = parent.locator("xpath=..")
-                        parent_text = parent.inner_text()
-                        if "سینرژی" in parent_text and "همسنگ" not in parent_text:
-                            norm_p = convert_persian_to_english_numbers(parent_text)
-                            numbers = re.findall(r'[\d,]+', norm_p)
-                            clean_digits = [n.replace(",", "") for n in numbers if n.replace(",", "").isdigit()]
-                            large_nums = [int(d) for d in clean_digits if len(d) >= 6]
-                            if large_nums:
-                                extracted_value_syn = max(large_nums)
-                                print(f"[+] [Layer 3 DOM Traversal] Synergy total asset value: {extracted_value_syn:,} Rials")
-                                break
-                    if extracted_value_syn:
-                        break
+                if not extracted_value_syn:
+                    raise Exception("Could not extract Synergy (App 5) asset value using Network, Body Scan, or DOM methods.")
 
-            if not extracted_value_syn:
-                raise Exception("Could not extract Synergy (App 5) asset value using Network, Body Scan, or DOM methods.")
+                new_val_syn = extracted_value_syn
 
-            new_val_syn = extracted_value_syn
+                # Calculate App 5
+                diff_syn = new_val_syn - base_val_syn
+                percent_change_syn = (diff_syn / base_val_syn) * 100 if base_val_syn > 0 else 0.0
 
-            # Calculate App 5
-            diff_syn = new_val_syn - base_val_syn
-            percent_change_syn = (diff_syn / base_val_syn) * 100 if base_val_syn > 0 else 0.0
+                timestamp_ms = int(time.time() * 1000)
 
-            timestamp_ms = int(time.time() * 1000)
+                local_state_syn["percents"].append({
+                    "value": float(round(percent_change_syn, 2)),
+                    "timestamp": timestamp_ms
+                })
+                local_state_syn["percents"].sort(key=lambda x: x["timestamp"])
 
-            local_state_syn["percents"].append({
-                "value": float(round(percent_change_syn, 2)),
-                "timestamp": timestamp_ms
-            })
-            local_state_syn["percents"].sort(key=lambda x: x["timestamp"])
+                persian_date_str = get_current_persian_datetime()
+                diff_type_syn = "increase" if percent_change_syn > 0 else ("decrease" if percent_change_syn < 0 else "neutral")
 
-            persian_date_str = get_current_persian_datetime()
-            diff_type_syn = "increase" if percent_change_syn > 0 else ("decrease" if percent_change_syn < 0 else "neutral")
+                formatted_new_val_syn = f"{new_val_syn:,}"
+                history_list_syn.insert(0, {
+                    "id": timestamp_ms,
+                    "base": f"{base_val_syn:,}",
+                    "new": formatted_new_val_syn,
+                    "percent": f"{percent_change_syn:.2f}",
+                    "type": diff_type_syn,
+                    "rawBase": float(base_val_syn),
+                    "rawNew": float(new_val_syn),
+                    "timestamp": datetime.now().isoformat() + "Z",
+                    "persianDate": persian_date_str
+                })
+                if len(history_list_syn) > 60:
+                    history_list_syn = history_list_syn[:60]
 
-            formatted_new_val_syn = f"{new_val_syn:,}"
-            history_list_syn.insert(0, {
-                "id": timestamp_ms,
-                "base": f"{base_val_syn:,}",
-                "new": formatted_new_val_syn,
-                "percent": f"{percent_change_syn:.2f}",
-                "type": diff_type_syn,
-                "rawBase": float(base_val_syn),
-                "rawNew": float(new_val_syn),
-                "timestamp": datetime.now().isoformat() + "Z",
-                "persianDate": persian_date_str
-            })
-            if len(history_list_syn) > 60:
-                history_list_syn = history_list_syn[:60]
+                local_state_syn["history"] = history_list_syn
+                local_state_syn["baseNumber"] = new_val_syn
 
-            local_state_syn["history"] = history_list_syn
-            local_state_syn["baseNumber"] = new_val_syn
-
-            os.makedirs(os.path.dirname(BACKUP_FILE_PATH), exist_ok=True)
-            with open(BACKUP_FILE_PATH, 'w', encoding='utf-8') as f:
-                json.dump(local_state_syn, f, ensure_ascii=False, indent=2)
-            print(f"[+] App 5: Wrote updated backup to {BACKUP_FILE_PATH}")
+                os.makedirs(os.path.dirname(BACKUP_FILE_PATH), exist_ok=True)
+                with open(BACKUP_FILE_PATH, 'w', encoding='utf-8') as f:
+                    json.dump(local_state_syn, f, ensure_ascii=False, indent=2)
+                print(f"[+] App 5: Wrote updated backup to {BACKUP_FILE_PATH}")
 
             # -------------------------------------------------------------------------
             # 5. EXTRACT "آتیه / بازنشستگی" (App 4 - ثبت درصد ۴)
             # -------------------------------------------------------------------------
-            print("\n[+] Navigating to extract App 4 (Atie / Retirement Fund)...")
+            percent_change_atie = None
+            new_val_atie = None
 
-            extracted_value_atie = network_captured_data.get("atie_val")
-            if extracted_value_atie:
-                print(f"[+] [Layer 1 API Sniffer] Confirmed Atie asset value: {extracted_value_atie:,} Rials")
+            if atie_recorded_today:
+                print("[i] Fund 4 (Atie) was already recorded today by user. Skipping extraction.")
+                send_telegram_message(f"ℹ️ <b>صندوق ۴ (آتیه):</b> درصد امروز قبلاً توسط شما ثبت شده بود، پس دست‌نخورده باقی ماند. ☕")
             else:
-                # Navigation strategies to Mofid Funds tab
-                try:
-                    sayer_selectors = ["text='سایر'", "span:has-text('سایر')", "button:has-text('سایر')", "a:has-text('سایر')"]
-                    for sel in sayer_selectors:
-                        elem = page.locator(sel).first
-                        if elem.is_visible():
-                            elem.click(force=True)
-                            time.sleep(3)
-                            break
+                print("\n[+] Navigating to extract App 4 (Atie / Retirement Fund)...")
 
-                    funds_selectors = ["text='صندوق‌های مفید'", "text='صندوق ها'", "text='صندوق‌ها'", "span:has-text('صندوق')"]
-                    for sel in funds_selectors:
-                        elem = page.locator(sel).first
-                        if elem.is_visible():
-                            elem.click(force=True)
-                            time.sleep(4)
-                            break
-                except Exception as ex_nav:
-                    print(f"[i] Navigation click exception: {ex_nav}")
-
-                # Check network sniffer again after navigating to funds tab
                 extracted_value_atie = network_captured_data.get("atie_val")
-
-                if not extracted_value_atie:
-                    # Layer 2 Scan body text
-                    body_text_atie = page.locator("body").inner_text()
-                    normalized_body_atie = convert_persian_to_english_numbers(body_text_atie)
-                    lines_atie = [line.strip() for line in normalized_body_atie.split("\n") if line.strip()]
-
-                    for idx, line in enumerate(lines_atie):
-                        if "آتیه" in line or "بازنشستگی" in line:
-                            candidate_numbers_atie = []
-                            search_range = range(max(0, idx - 2), min(len(lines_atie), idx + 10))
-                            for scan_idx in search_range:
-                                target_line = lines_atie[scan_idx]
-                                found_nums = re.findall(r'[\d,]+', target_line)
-                                for num_str in found_nums:
-                                    clean_num = num_str.replace(",", "")
-                                    if clean_num.isdigit() and len(clean_num) >= 6:
-                                        candidate_numbers_atie.append(int(clean_num))
-                            if candidate_numbers_atie:
-                                extracted_value_atie = max(candidate_numbers_atie)
-                                print(f"[+] [Layer 2 Body Scan] Atie asset value: {extracted_value_atie:,} Rials")
+                if extracted_value_atie:
+                    print(f"[+] [Layer 1 API Sniffer] Confirmed Atie asset value: {extracted_value_atie:,} Rials")
+                else:
+                    # Navigation strategies to Mofid Funds tab
+                    try:
+                        sayer_selectors = ["text='سایر'", "span:has-text('سایر')", "button:has-text('سایر')", "a:has-text('سایر')"]
+                        for sel in sayer_selectors:
+                            elem = page.locator(sel).first
+                            if elem.is_visible():
+                                elem.click(force=True)
+                                time.sleep(3)
                                 break
 
-            page.screenshot(path="atie_loaded.png")
+                        funds_selectors = ["text='صندوق‌های مفید'", "text='صندوق ها'", "text='صندوق‌ها'", "span:has-text('صندوق')"]
+                        for sel in funds_selectors:
+                            elem = page.locator(sel).first
+                            if elem.is_visible():
+                                elem.click(force=True)
+                                time.sleep(4)
+                                break
+                    except Exception as ex_nav:
+                        print(f"[i] Navigation click exception: {ex_nav}")
 
-            if not extracted_value_atie:
-                print("[-] Warning: Could not extract Atie asset value automatically. Keeping previous base value to avoid corrupting state.")
-                extracted_value_atie = base_val_atie
+                    # Check network sniffer again after navigating to funds tab
+                    extracted_value_atie = network_captured_data.get("atie_val")
 
-            new_val_atie = extracted_value_atie
-            diff_atie = new_val_atie - base_val_atie
-            percent_change_atie = (diff_atie / base_val_atie) * 100 if base_val_atie > 0 else 0.0
+                    if not extracted_value_atie:
+                        # Layer 2 Scan body text
+                        body_text_atie = page.locator("body").inner_text()
+                        normalized_body_atie = convert_persian_to_english_numbers(body_text_atie)
+                        lines_atie = [line.strip() for line in normalized_body_atie.split("\n") if line.strip()]
 
-            local_state_atie["percents"].append({
-                "value": float(round(percent_change_atie, 2)),
-                "timestamp": timestamp_ms
-            })
-            local_state_atie["percents"].sort(key=lambda x: x["timestamp"])
+                        for idx, line in enumerate(lines_atie):
+                            if "آتیه" in line or "بازنشستگی" in line:
+                                candidate_numbers_atie = []
+                                search_range = range(max(0, idx - 2), min(len(lines_atie), idx + 10))
+                                for scan_idx in search_range:
+                                    target_line = lines_atie[scan_idx]
+                                    found_nums = re.findall(r'[\d,]+', target_line)
+                                    for num_str in found_nums:
+                                        clean_num = num_str.replace(",", "")
+                                        if clean_num.isdigit() and len(clean_num) >= 6:
+                                            candidate_numbers_atie.append(int(clean_num))
+                                if candidate_numbers_atie:
+                                    extracted_value_atie = max(candidate_numbers_atie)
+                                    print(f"[+] [Layer 2 Body Scan] Atie asset value: {extracted_value_atie:,} Rials")
+                                    break
 
-            diff_type_atie = "increase" if percent_change_atie > 0 else ("decrease" if percent_change_atie < 0 else "neutral")
+                page.screenshot(path="atie_loaded.png")
 
-            formatted_new_val_atie = f"{new_val_atie:,}"
-            history_list_atie.insert(0, {
-                "id": timestamp_ms,
-                "base": f"{base_val_atie:,}",
-                "new": formatted_new_val_atie,
-                "percent": f"{percent_change_atie:.2f}",
-                "type": diff_type_atie,
-                "rawBase": float(base_val_atie),
-                "rawNew": float(new_val_atie),
-                "timestamp": datetime.now().isoformat() + "Z",
-                "persianDate": persian_date_str
-            })
-            if len(history_list_atie) > 60:
-                history_list_atie = history_list_atie[:60]
+                if not extracted_value_atie:
+                    print("[-] Warning: Could not extract Atie asset value automatically. Keeping previous base value to avoid corrupting state.")
+                    extracted_value_atie = base_val_atie
 
-            local_state_atie["history"] = history_list_atie
-            local_state_atie["baseNumber"] = new_val_atie
+                new_val_atie = extracted_value_atie
+                diff_atie = new_val_atie - base_val_atie
+                percent_change_atie = (diff_atie / base_val_atie) * 100 if base_val_atie > 0 else 0.0
 
-            os.makedirs(os.path.dirname(BACKUP_FILE_PATH_ATIE), exist_ok=True)
-            with open(BACKUP_FILE_PATH_ATIE, 'w', encoding='utf-8') as f:
-                json.dump(local_state_atie, f, ensure_ascii=False, indent=2)
-            print(f"[+] App 4: Wrote updated backup to {BACKUP_FILE_PATH_ATIE}")
+                timestamp_ms = int(time.time() * 1000)
+
+                local_state_atie["percents"].append({
+                    "value": float(round(percent_change_atie, 2)),
+                    "timestamp": timestamp_ms
+                })
+                local_state_atie["percents"].sort(key=lambda x: x["timestamp"])
+
+                persian_date_str = get_current_persian_datetime()
+                diff_type_atie = "increase" if percent_change_atie > 0 else ("decrease" if percent_change_atie < 0 else "neutral")
+
+                formatted_new_val_atie = f"{new_val_atie:,}"
+                history_list_atie.insert(0, {
+                    "id": timestamp_ms,
+                    "base": f"{base_val_atie:,}",
+                    "new": formatted_new_val_atie,
+                    "percent": f"{percent_change_atie:.2f}",
+                    "type": diff_type_atie,
+                    "rawBase": float(base_val_atie),
+                    "rawNew": float(new_val_atie),
+                    "timestamp": datetime.now().isoformat() + "Z",
+                    "persianDate": persian_date_str
+                })
+                if len(history_list_atie) > 60:
+                    history_list_atie = history_list_atie[:60]
+
+                local_state_atie["history"] = history_list_atie
+                local_state_atie["baseNumber"] = new_val_atie
+
+                os.makedirs(os.path.dirname(BACKUP_FILE_PATH_ATIE), exist_ok=True)
+                with open(BACKUP_FILE_PATH_ATIE, 'w', encoding='utf-8') as f:
+                    json.dump(local_state_atie, f, ensure_ascii=False, indent=2)
+                print(f"[+] App 4: Wrote updated backup to {BACKUP_FILE_PATH_ATIE}")
 
             # -------------------------------------------------------------------------
             # 6. SYNCHRONIZATION WITH MANTLEDB
             # -------------------------------------------------------------------------
             synergy_payload = {
-                "new_val": new_val_syn,
+                "new_val": new_val_syn or base_val_syn,
                 "percents": local_state_syn.get("percents", []),
                 "trash": local_state_syn.get("trash", []),
                 "goal": local_state_syn.get("goal"),
@@ -1065,7 +1146,7 @@ def run_automation():
             }
 
             atie_payload = {
-                "new_val": new_val_atie,
+                "new_val": new_val_atie or base_val_atie,
                 "percents": local_state_atie.get("percents", []),
                 "trash": local_state_atie.get("trash", []),
                 "goal": local_state_atie.get("goal"),
@@ -1076,7 +1157,8 @@ def run_automation():
                 "history": local_state_atie.get("history", [])
             }
 
-            sync_ok = sync_with_mantledb(synergy_payload=synergy_payload, atie_payload=atie_payload)
+            sync_ok = sync_with_mantledb(synergy_payload=synergy_payload if not syn_recorded_today else None,
+                                       atie_payload=atie_payload if not atie_recorded_today else None)
 
             # -------------------------------------------------------------------------
             # 7. SEND TELEGRAM NOTIFICATIONS
@@ -1084,34 +1166,36 @@ def run_automation():
             persian_time_report = get_current_persian_datetime()
 
             # Message 1: App 5
-            emoji_syn = "📈" if percent_change_syn > 0 else ("📉" if percent_change_syn < 0 else "⚖️")
-            telegram_report_syn = (
-                f"<b>🤖 عملیات خودکار ثبت درصد ۵ (صندوق سینرژی) با موفقیت انجام شد!</b>\n\n"
-                f"📅 <b>تاریخ و زمان:</b> {persian_time_report}\n"
-                f"💵 <b>دارایی قبلی (پایه):</b> {base_val_syn:,} ریال\n"
-                f"💰 <b>دارایی جدید استخراج‌شده:</b> {new_val_syn:,} ریال\n"
-                f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change_syn:+.2f}%</code> {emoji_syn}\n\n"
-                f"🔄 <b>سینک ابری MantleDB:</b> {'✅ انجام شد' if sync_ok else '❌ انجام نشد (تنظیم نشده یا خطا)'}\n"
-                f"💾 <b>فایل پشتیبان محلی:</b> ✅ بروزرسانی و در گیت‌هاب ذخیره شد\n\n"
-                f"🌹 فردا هم رأس ساعت ۱۵:۳۰ همینجا منتظر من باشید! روز خوش."
-            )
-            print("[+] Sending Telegram Message 1 (App 5 - Synergy)...")
-            send_telegram_message(telegram_report_syn, photo_path="portfolio_loaded.png" if os.path.exists("portfolio_loaded.png") else None)
+            if not syn_recorded_today and percent_change_syn is not None:
+                emoji_syn = "📈" if percent_change_syn > 0 else ("📉" if percent_change_syn < 0 else "⚖️")
+                telegram_report_syn = (
+                    f"<b>🤖 عملیات خودکار ثبت درصد ۵ (صندوق سینرژی) با موفقیت انجام شد!</b>\n\n"
+                    f"📅 <b>تاریخ و زمان:</b> {persian_time_report}\n"
+                    f"💵 <b>دارایی قبلی (پایه):</b> {base_val_syn:,} ریال\n"
+                    f"💰 <b>دارایی جدید استخراج‌شده:</b> {new_val_syn:,} ریال\n"
+                    f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change_syn:+.2f}%</code> {emoji_syn}\n\n"
+                    f"🔄 <b>سینک ابری MantleDB:</b> {'✅ انجام شد' if sync_ok else '❌ انجام نشد (تنظیم نشده یا خطا)'}\n"
+                    f"💾 <b>فایل پشتیبان محلی:</b> ✅ بروزرسانی و در گیت‌هاب ذخیره شد\n\n"
+                    f"🌹 فردا هم رأس ساعت ۱۵:۳۰ همینجا منتظر من باشید! روز خوش."
+                )
+                print("[+] Sending Telegram Message 1 (App 5 - Synergy)...")
+                send_telegram_message(telegram_report_syn, photo_path="portfolio_loaded.png" if os.path.exists("portfolio_loaded.png") else None)
 
             # Message 2: App 4
-            emoji_atie = "📈" if percent_change_atie > 0 else ("📉" if percent_change_atie < 0 else "⚖️")
-            telegram_report_atie = (
-                f"<b>🤖 عملیات خودکار ثبت درصد ۴ (صندوق آتیه / بازنشستگی) با موفقیت انجام شد!</b>\n\n"
-                f"📅 <b>تاریخ و زمان:</b> {persian_time_report}\n"
-                f"💵 <b>دارایی قبلی (پایه):</b> {base_val_atie:,} ریال\n"
-                f"💰 <b>دارایی جدید استخراج‌شده:</b> {new_val_atie:,} ریال\n"
-                f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change_atie:+.2f}%</code> {emoji_atie}\n\n"
-                f"🔄 <b>سینک ابری MantleDB:</b> {'✅ انجام شد' if sync_ok else '❌ انجام نشد (تنظیم نشده یا خطا)'}\n"
-                f"💾 <b>فایل پشتیبان محلی:</b> ✅ بروزرسانی و در گیت‌هاب ذخیره شد\n\n"
-                f"🌹 فردا هم رأس ساعت ۱۵:۳۰ همینجا منتظر من باشید! روز خوش."
-            )
-            print("[+] Sending Telegram Message 2 (App 4 - Atie)...")
-            send_telegram_message(telegram_report_atie, photo_path="atie_loaded.png" if os.path.exists("atie_loaded.png") else None)
+            if not atie_recorded_today and percent_change_atie is not None:
+                emoji_atie = "📈" if percent_change_atie > 0 else ("📉" if percent_change_atie < 0 else "⚖️")
+                telegram_report_atie = (
+                    f"<b>🤖 عملیات خودکار ثبت درصد ۴ (صندوق آتیه / بازنشستگی) با موفقیت انجام شد!</b>\n\n"
+                    f"📅 <b>تاریخ و زمان:</b> {persian_time_report}\n"
+                    f"💵 <b>دارایی قبلی (پایه):</b> {base_val_atie:,} ریال\n"
+                    f"💰 <b>دارایی جدید استخراج‌شده:</b> {new_val_atie:,} ریال\n"
+                    f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change_atie:+.2f}%</code> {emoji_atie}\n\n"
+                    f"🔄 <b>سینک ابری MantleDB:</b> {'✅ انجام شد' if sync_ok else '❌ انجام نشد (تنظیم نشده یا خطا)'}\n"
+                    f"💾 <b>فایل پشتیبان محلی:</b> ✅ بروزرسانی و در گیت‌هاب ذخیره شد\n\n"
+                    f"🌹 فردا هم رأس ساعت ۱۵:۳۰ همینجا منتظر من باشید! روز خوش."
+                )
+                print("[+] Sending Telegram Message 2 (App 4 - Atie)...")
+                send_telegram_message(telegram_report_atie, photo_path="atie_loaded.png" if os.path.exists("atie_loaded.png") else None)
 
             context.close()
             browser.close()
@@ -1139,7 +1223,7 @@ def run_automation():
 
 
 if __name__ == "__main__":
-    print("[+] Starting EasyTrader Automation Script (v3.0)...")
+    print("[+] Starting EasyTrader Automation Script (v3.2)...")
     success = run_automation()
     if success:
         print("[+] Automation execution finished successfully.")
