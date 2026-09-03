@@ -2,17 +2,26 @@
 # -*- coding: utf-8 -*-
 
 """
-Emarat EasyTrader Automation Script (v3.0 - High Resilience Network Interception Edition)
-========================================================================================
+Emarat EasyTrader Automation Script (v3.3 - Full Live Logging & Debug Edition)
+=============================================================================
 This script automates logging into login.emofid.com, navigating to EasyTrader portfolio,
 extracting total values for both:
   1. App 5: "سینرژی" (Synergy Fund)
   2. App 4: "آتیه / بازنشستگی" (Mofid Atie / Retirement Fund)
 
-Uses Network Response Interception (API Sniffing) alongside multi-layered DOM fallback strategies,
-updates local backup files (gold5/gold5_backup.json & gold4/gold4_backup.json),
-synchronizes bi-directionally with MantleDB cloud storage,
-and reports results to Telegram.
+Features:
+  - Full end-to-end live event logging to console, log file (automation_full_execution.log),
+    and live Telegram updates.
+  - Automatic document upload of full execution log file to Telegram at completion or error.
+  - Checks if user has ALREADY recorded today's percent manually before 15:30.
+    If so, gracefully halts automation to prevent overwriting or duplicate entries.
+  - Network Response Interception (API Sniffing) alongside multi-layered DOM fallback strategies.
+  - Updates local backup files (gold5/gold5_backup.json & gold4/gold4_backup.json).
+  - Synchronizes bi-directionally with MantleDB cloud storage across ALL key variants:
+    * App 4: Both 'mofid_atie_history'/'mofid_atie_baseNumber' AND 'pension_history'/'pension_baseNumber'
+      to guarantee 100% synchronization with Percent Monitor ('monitor/index.html') and Calculator ('gold4/calculator.html').
+    * App 5: 'energy_fund_synergy', 'sinergy_baseNumber', and 'sinergy_history'.
+  - Reports results to Telegram.
 
 All secrets and credentials are retrieved strictly from Environment Variables.
 
@@ -42,20 +51,34 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 EASYTRADER_USER = os.environ.get("EASYTRADER_USER")
 EASYTRADER_PASS = os.environ.get("EASYTRADER_PASS")
 MANTLE_FINGERPRINT = os.environ.get("MANTLE_FINGERPRINT")  # Fingerprint for cloud sync
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-def _get_default_gemini_key():
-    # Dynamic fragmented fallback key reconstruction (bypasses static secret scanners)
-    part_a = "AQ.Ab8RN6JH"
-    part_b = "ADV3Zb8n8Z"
-    part_c = "iiO7FoO8KJ"
-    part_d = "be0zTe7i9l"
-    part_e = "lw5moEMdZEwA"
-    return part_a + part_b + part_c + part_d + part_e
-
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or _get_default_gemini_key()
+LOG_FILE_PATH = "automation_full_execution.log"
 
 BACKUP_FILE_PATH = "gold5/gold5_backup.json"
 BACKUP_FILE_PATH_ATIE = "gold4/gold4_backup.json"
+
+
+def log_event(msg, telegram_live=False):
+    """
+    Logs an event with a timestamp to console, writes to automation_full_execution.log,
+    and optionally broadcasts a live update to Telegram.
+    """
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    formatted_msg = f"[{timestamp}] {msg}"
+    print(formatted_msg)
+
+    try:
+        with open(LOG_FILE_PATH, "a", encoding="utf-8") as f:
+            f.write(formatted_msg + "\n")
+    except Exception as e:
+        print(f"[-] Log writing error: {e}")
+
+    if telegram_live and TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
+        try:
+            send_telegram_message(f"📝 <b>[LOG]</b> {msg}")
+        except Exception:
+            pass
 
 
 def validate_environment():
@@ -71,9 +94,12 @@ def validate_environment():
         missing.append("EASYTRADER_PASS")
 
     if missing:
-        print(f"[-] Critical Error: Missing required credentials: {', '.join(missing)}")
-        print("[-] Please configure these secrets in your GitHub repository settings.")
+        err_msg = f"Critical Error: Missing required credentials: {', '.join(missing)}"
+        log_event(f"[-] {err_msg}")
+        log_event("[-] Please configure these secrets in your GitHub repository settings.")
         sys.exit(1)
+    else:
+        log_event("[+] All required environment variables (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, EASYTRADER_USER, EASYTRADER_PASS) are valid.")
 
 
 def gregorian_to_jalali(gy, gm, gd):
@@ -114,6 +140,41 @@ def get_current_persian_datetime():
     return f"{jy:04d}/{jm:02d}/{jd:02d} {now.hour:02d}:{now.minute:02d}:{now.second:02d}"
 
 
+def is_already_recorded_today(history_list, fund_name=""):
+    """
+    Checks if an entry for today (same Jalali date) already exists in the history list.
+    """
+    if not history_list:
+        log_event(f"[i] History list for {fund_name} is empty.")
+        return False
+
+    current_persian_date = get_current_persian_datetime().split()[0]  # e.g. "1403/12/07"
+
+    for item in history_list:
+        p_date = item.get("persianDate", "")
+        if p_date and p_date.split()[0] == current_persian_date:
+            log_event(f"[+] Found matching Persian date entry for today ({current_persian_date}) in {fund_name} history.")
+            return True
+
+        ts = item.get("timestamp")
+        if ts:
+            try:
+                if isinstance(ts, (int, float)):
+                    dt = datetime.fromtimestamp(ts / 1000.0)
+                else:
+                    dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+                jy, jm, jd = gregorian_to_jalali(dt.year, dt.month, dt.day)
+                item_jdate = f"{jy:04d}/{jm:02d}/{jd:02d}"
+                if item_jdate == current_persian_date:
+                    log_event(f"[+] Found matching ISO timestamp entry for today ({current_persian_date}) in {fund_name} history.")
+                    return True
+            except Exception:
+                pass
+
+    log_event(f"[i] No entry recorded for today ({current_persian_date}) yet in {fund_name}.")
+    return False
+
+
 def convert_persian_to_english_numbers(text):
     """Converts Persian/Arabic numerals in a string to English digits."""
     if not text:
@@ -128,9 +189,9 @@ def analyze_page_with_gemini(page):
     """
     Sends full structural DOM text/HTML information to Gemini AI to analyze page structure.
     """
-    print("[+] Calling Gemini AI for structural page analysis...")
+    log_event("[+] Calling Gemini AI for structural page analysis...")
     if not GEMINI_API_KEY:
-        print("[i] Gemini API key not provided, skipping AI analysis.")
+        log_event("[i] Gemini API key not provided, skipping AI analysis.")
         return None
 
     url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
@@ -165,17 +226,17 @@ def analyze_page_with_gemini(page):
                     res_data = json.loads(res.read().decode("utf-8"))
                     ai_text = res_data['candidates'][0]['content']['parts'][0]['text'].strip()
                     ai_text = ai_text.replace("```css", "").replace("```html", "").replace("```", "").strip("`'\" \n")
-                    print(f"[+] Gemini AI suggested selector: {ai_text}")
+                    log_event(f"[+] Gemini AI suggested selector: {ai_text}")
                     return ai_text
         except urllib.error.HTTPError as http_err:
             if http_err.code == 429:
-                print(f"[i] Gemini AI Rate Limit (429) hit on attempt {attempt}/{retries}. Waiting {delay}s...")
+                log_event(f"[i] Gemini AI Rate Limit (429) hit on attempt {attempt}/{retries}. Waiting {delay}s...")
                 time.sleep(delay)
                 delay *= 2
             else:
                 break
         except Exception as e:
-            print(f"[-] Gemini AI analysis failed: {e}")
+            log_event(f"[-] Gemini AI analysis failed: {e}")
             break
 
     return None
@@ -183,7 +244,6 @@ def analyze_page_with_gemini(page):
 
 def send_telegram_message(message, photo_path=None):
     """Sends a formatted message to the Telegram channel, optionally with a photo."""
-    print(f"[+] Sending Telegram message to chat {TELEGRAM_CHAT_ID}: {message[:100]}...")
     try:
         if photo_path and os.path.exists(photo_path):
             url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
@@ -214,7 +274,6 @@ def send_telegram_message(message, photo_path=None):
 
             with urllib.request.urlopen(req) as response:
                 res_data = response.read()
-                print("[+] Photo sent successfully to Telegram.")
                 return json.loads(res_data)
         else:
             url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
@@ -227,7 +286,6 @@ def send_telegram_message(message, photo_path=None):
             req = urllib.request.Request(url, data=data)
             with urllib.request.urlopen(req) as response:
                 res_data = response.read()
-                print("[+] Message sent successfully to Telegram.")
                 return json.loads(res_data)
 
     except Exception as e:
@@ -235,21 +293,69 @@ def send_telegram_message(message, photo_path=None):
         return None
 
 
+def send_telegram_document(file_path, caption=None):
+    """Sends a document/file to Telegram channel using HTTP multipart/form-data."""
+    if not file_path or not os.path.exists(file_path):
+        log_event(f"[-] Document path does not exist: {file_path}")
+        return None
+
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        return None
+
+    log_event(f"[+] Sending log document file ({file_path}) to Telegram chat {TELEGRAM_CHAT_ID}...")
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendDocument"
+        boundary = '----WebKitFormBoundary7MA4YWxkTrZu0gW'
+        parts = []
+        parts.append(f'--{boundary}')
+        parts.append(f'Content-Disposition: form-data; name="chat_id"\r\n\r\n{TELEGRAM_CHAT_ID}')
+        parts.append(f'--{boundary}')
+        parts.append(f'Content-Disposition: form-data; name="parse_mode"\r\n\r\nHTML')
+        if caption:
+            parts.append(f'--{boundary}')
+            parts.append(f'Content-Disposition: form-data; name="caption"\r\n\r\n{caption}')
+        parts.append(f'--{boundary}')
+
+        with open(file_path, 'rb') as f:
+            file_data = f.read()
+
+        filename = os.path.basename(file_path)
+        parts.append(f'Content-Disposition: form-data; name="document"; filename="{filename}"\r\nContent-Type: text/plain\r\n\r\n')
+
+        body = b''
+        for p in parts[:-1]:
+            body += p.encode('utf-8') + b'\r\n'
+        body += parts[-1].encode('utf-8') + file_data + b'\r\n'
+        body += f'--{boundary}--\r\n'.encode('utf-8')
+
+        req = urllib.request.Request(url, data=body)
+        req.add_header('Content-Type', f'multipart/form-data; boundary={boundary}')
+
+        with urllib.request.urlopen(req) as response:
+            res_data = response.read()
+            log_event("[+] Execution log document sent successfully to Telegram!")
+            return json.loads(res_data)
+    except Exception as e:
+        log_event(f"[-] Failed to send Telegram document: {e}")
+        return None
+
+
 def fetch_cloud_state():
     """Fetches the latest state from MantleDB cloud backup for both App 5 and App 4 if MANTLE_FINGERPRINT is set."""
     if not MANTLE_FINGERPRINT:
-        print("[i] MANTLE_FINGERPRINT not provided, skipping cloud fetch.")
+        log_event("[i] MANTLE_FINGERPRINT not provided, skipping cloud fetch.")
         return None
 
     namespace = "emarat-pwa-backup-v2"
     url = f"https://mantledb.sh/v2/{namespace}/{MANTLE_FINGERPRINT}"
-    print(f"[+] Fetching latest cloud state from MantleDB: {url}")
+    log_event(f"[+] Fetching latest cloud state from MantleDB: {url}")
     try:
         req = urllib.request.Request(url)
         with urllib.request.urlopen(req) as res:
             if res.status == 200:
                 cloud_resp = json.loads(res.read().decode('utf-8'))
                 data = cloud_resp.get("data", {})
+                log_event(f"[+] Cloud state retrieved. Keys available: {list(data.keys())}")
 
                 # App 5 (Synergy)
                 synergy_str = data.get("energy_fund_synergy", "{}")
@@ -279,15 +385,20 @@ def fetch_cloud_state():
                 atie_ap = json.loads(atie_ap_str) if atie_ap_str else []
                 atie_notes_str = data.get("mofid_atie_notes", "[]")
                 atie_notes = json.loads(atie_notes_str) if atie_notes_str else []
-                atie_history_str = data.get("mofid_atie_history", "[]")
+
+                # Support both pension_history and mofid_atie_history for 100% monitor app sync
+                atie_history_str = data.get("pension_history") or data.get("mofid_atie_history", "[]")
                 atie_history = json.loads(atie_history_str) if atie_history_str else []
-                atie_base_str = data.get("mofid_atie_baseNumber", "")
+                atie_base_str = data.get("pension_baseNumber") or data.get("mofid_atie_baseNumber", "")
                 atie_base = 0
                 if atie_base_str:
                     try:
                         atie_base = float(str(atie_base_str).replace(',', ''))
                     except ValueError:
                         pass
+
+                log_event(f"[+] App 5 Cloud Base: {synergy_base:,} | History Count: {len(synergy_history)}")
+                log_event(f"[+] App 4 Cloud Base: {atie_base:,} | History Count: {len(atie_history)}")
 
                 return {
                     "synergy": synergy_obj,
@@ -307,20 +418,20 @@ def fetch_cloud_state():
                     "cloud_data_raw": data
                 }
     except Exception as e:
-        print(f"[i] Could not fetch cloud state from MantleDB: {e}")
+        log_event(f"[i] Could not fetch cloud state from MantleDB: {e}")
     return None
 
 
 def sync_with_mantledb(synergy_payload=None, atie_payload=None):
     """Syncs updated records for both Synergy (App 5) and Atie (App 4) to MantleDB."""
     if not MANTLE_FINGERPRINT:
-        print("[i] MANTLE_FINGERPRINT not provided, skipping cloud synchronization.")
+        log_event("[i] MANTLE_FINGERPRINT not provided, skipping cloud synchronization.")
         return False
 
     namespace = "emarat-pwa-backup-v2"
     url = f"https://mantledb.sh/v2/{namespace}/{MANTLE_FINGERPRINT}"
 
-    print(f"[+] Syncing both App 5 and App 4 with MantleDB at URL: {url}")
+    log_event(f"[+] Syncing both App 5 and App 4 with MantleDB at URL: {url}", telegram_live=True)
     try:
         req = urllib.request.Request(url)
         current_cloud = {}
@@ -329,7 +440,7 @@ def sync_with_mantledb(synergy_payload=None, atie_payload=None):
                 if res.status == 200:
                     current_cloud = json.loads(res.read().decode('utf-8'))
         except Exception as e:
-            print(f"[i] No existing cloud record or unable to fetch: {e}")
+            log_event(f"[i] No existing cloud record or unable to fetch: {e}")
 
         cloud_data = current_cloud.get("data", {})
 
@@ -358,9 +469,16 @@ def sync_with_mantledb(synergy_payload=None, atie_payload=None):
             cloud_data["mofid_atie_periodTarget"] = json.dumps(atie_payload.get("periodTarget", None))
             cloud_data["mofid_atie_achievedPeriods"] = json.dumps(atie_payload.get("achievedPeriods", []))
             cloud_data["mofid_atie_notes"] = json.dumps(atie_payload.get("notes", []))
+
             new_atie_val = atie_payload.get("new_val", 0)
-            cloud_data["mofid_atie_baseNumber"] = f"{new_atie_val:,}"
-            cloud_data["mofid_atie_history"] = json.dumps(atie_payload.get("history", []))
+            formatted_base_atie = f"{new_atie_val:,}"
+            history_atie_json = json.dumps(atie_payload.get("history", []))
+
+            # Sync both mofid_atie_* AND pension_* keys for 100% compatibility with Monitor App & Calculator
+            cloud_data["mofid_atie_baseNumber"] = formatted_base_atie
+            cloud_data["mofid_atie_history"] = history_atie_json
+            cloud_data["pension_baseNumber"] = formatted_base_atie
+            cloud_data["pension_history"] = history_atie_json
 
         timestamp_ms = int(time.time() * 1000)
         cloud_data["emarat_last_modified"] = str(timestamp_ms)
@@ -379,11 +497,11 @@ def sync_with_mantledb(synergy_payload=None, atie_payload=None):
         )
         with urllib.request.urlopen(req_post) as res_post:
             if res_post.status in [200, 201]:
-                print("[+] Successfully synchronized both App 4 and App 5 with MantleDB cloud backup!")
+                log_event("[+] Successfully synchronized both App 4 and App 5 with MantleDB cloud backup!", telegram_live=True)
                 return True
 
     except Exception as e:
-        print(f"[-] Error syncing with MantleDB: {e}")
+        log_event(f"[-] Error syncing with MantleDB: {e}", telegram_live=True)
 
     return False
 
@@ -393,7 +511,7 @@ def wait_for_telegram_otp(start_time_epoch):
     Polls Telegram getUpdates API for up to 3 minutes (180 seconds) for a message
     from TELEGRAM_CHAT_ID containing a 5-6 digit verification code.
     """
-    print("[+] Starting live Telegram polling for OTP verification code...")
+    log_event("[+] Starting live Telegram polling for OTP verification code...", telegram_live=True)
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates"
 
     timeout_seconds = 180
@@ -448,34 +566,36 @@ def wait_for_telegram_otp(start_time_epoch):
                         codes = re.findall(r'\b\d{5,6}\b', norm_text)
                         if codes:
                             detected_code = codes[0]
-                            print(f"[+] Intercepted live OTP code: {detected_code} from chat {chat_id}!")
+                            log_event(f"[+] Intercepted live OTP code: {detected_code} from chat {chat_id}!", telegram_live=True)
                             return detected_code
 
         except Exception as e:
-            print(f"[i] Warning during live Telegram polling: {e}")
+            log_event(f"[i] Warning during live Telegram polling: {e}")
 
         time.sleep(poll_interval)
         elapsed += poll_interval
 
-    print("[-] Timeout: Did not receive valid OTP code from Telegram in 3 minutes.")
+    log_event("[-] Timeout: Did not receive valid OTP code from Telegram in 3 minutes.", telegram_live=True)
     return None
 
 
 def run_automation():
+    # Clear previous log file on new execution start
+    if os.path.exists(LOG_FILE_PATH):
+        try:
+            os.remove(LOG_FILE_PATH)
+        except Exception:
+            pass
+
+    log_event("=========================================================================")
+    log_event(f"🚀 EasyTrader Automation Started at: {get_current_persian_datetime()}")
+    log_event("=========================================================================")
+
     if not HAS_PLAYWRIGHT:
-        print("[-] Playwright library is not installed. Cannot run browser automation.")
+        log_event("[-] Playwright library is not installed. Cannot run browser automation.")
         return False
 
     validate_environment()
-
-    # Send initial status message to Telegram
-    persian_start_time = get_current_persian_datetime()
-    init_msg = (
-        f"<b>🚀 آغاز عملیات خودکار ثبت درصد ۴ و ۵ (ایزی‌تریدر)</b>\n\n"
-        f"📅 <b>زمان شروع:</b> {persian_start_time}\n"
-        f"⚙️ <b>وضعیت:</b> مرورگر در حال راه‌اندازی و ورود به ایزی‌تریدر مفید..."
-    )
-    send_telegram_message(init_msg)
 
     # --- Read or initialize App 5 (Synergy) local state backup ---
     local_state_syn = {
@@ -494,9 +614,9 @@ def run_automation():
         try:
             with open(BACKUP_FILE_PATH, 'r', encoding='utf-8') as f:
                 local_state_syn = json.load(f)
-                print(f"[+] App 5 (Synergy): Loaded backup file. Current base value: {local_state_syn.get('baseNumber')}")
+                log_event(f"[+] App 5 (Synergy): Loaded backup file ({BACKUP_FILE_PATH}). Current base value: {local_state_syn.get('baseNumber')}")
         except Exception as e:
-            print(f"[-] Warning: Failed to parse App 5 backup file: {e}")
+            log_event(f"[-] Warning: Failed to parse App 5 backup file: {e}")
 
     # --- Read or initialize App 4 (Atie) local state backup ---
     local_state_atie = {
@@ -515,9 +635,9 @@ def run_automation():
         try:
             with open(BACKUP_FILE_PATH_ATIE, 'r', encoding='utf-8') as f:
                 local_state_atie = json.load(f)
-                print(f"[+] App 4 (Atie): Loaded backup file. Current base value: {local_state_atie.get('baseNumber')}")
+                log_event(f"[+] App 4 (Atie): Loaded backup file ({BACKUP_FILE_PATH_ATIE}). Current base value: {local_state_atie.get('baseNumber')}")
         except Exception as e:
-            print(f"[-] Warning: Failed to parse App 4 backup file: {e}")
+            log_event(f"[-] Warning: Failed to parse App 4 backup file: {e}")
 
     # --- Fetch fresh cloud state for both apps to merge ---
     cloud_state = fetch_cloud_state()
@@ -542,13 +662,41 @@ def run_automation():
             if atie_cloud.get("baseNumber") and atie_cloud.get("baseNumber") > 0:
                 local_state_atie["baseNumber"] = atie_cloud.get("baseNumber")
 
-        print("[+] Merged live cloud state for App 4 and App 5 from MantleDB.")
+        log_event("[+] Merged live cloud state for App 4 and App 5 from MantleDB.")
 
     base_val_syn = local_state_syn.get("baseNumber", 100983803)
     history_list_syn = local_state_syn.get("history", [])
 
     base_val_atie = local_state_atie.get("baseNumber", 274631868)
     history_list_atie = local_state_atie.get("history", [])
+
+    # --- FEATURE: CHECK IF USER ALREADY RECORDED PERCENT TODAY ---
+    syn_recorded_today = is_already_recorded_today(history_list_syn, "Fund 5 (Synergy)")
+    atie_recorded_today = is_already_recorded_today(history_list_atie, "Fund 4 (Atie)")
+
+    current_persian_date = get_current_persian_datetime().split()[0]
+
+    if syn_recorded_today and atie_recorded_today:
+        log_event("[+] Both Fund 4 and Fund 5 percents were already recorded today by user. Gracefully halting automation.", telegram_live=True)
+        stop_msg = (
+            f"<b>☕ رئیس جان خسته نباشید! ثبت درصد امروز قبلاً انجام شده است</b>\n\n"
+            f"📅 <b>تاریخ امروز:</b> {current_persian_date}\n\n"
+            f"دیدم شما امروز خودتون زودتر دست به کار شدید و درصد هر دو صندوق ۴ (آتیه) و ۵ (سینرژی) رو با موفقیت ثبت کردید! 🌹\n"
+            f"من به تصمیم شما احترام می‌گذارم و عملیات خودکار امروز رو متوقف می‌کنم تا اطلاعات شما دست‌نخورده بمونه.\n\n"
+            f"فردا رأس ساعت ۱۵:۳۰ دوباره منتظرتون هستم! روزتون خوش. 😎✨"
+        )
+        send_telegram_message(stop_msg)
+        send_telegram_document(LOG_FILE_PATH, caption="📋 <b>فایل کامل لاگ اجرای امروز (توقف به دلیل ثبت قبلی)</b>")
+        return True
+
+    # Send initial status message to Telegram
+    persian_start_time = get_current_persian_datetime()
+    init_msg = (
+        f"<b>🚀 آغاز عملیات خودکار ثبت درصد ۴ و ۵ (ایزی‌تریدر)</b>\n\n"
+        f"📅 <b>زمان شروع:</b> {persian_start_time}\n"
+        f"⚙️ <b>وضعیت:</b> مرورگر در حال راه‌اندازی و ورود به ایزی‌تریدر مفید..."
+    )
+    send_telegram_message(init_msg)
 
     session_file_path = "gold5/easytrader_session.json"
     session_exists = os.path.exists(session_file_path)
@@ -559,7 +707,7 @@ def run_automation():
         "atie_val": None
     }
 
-    print("[+] Launching Playwright browser...")
+    log_event("[+] Launching Playwright browser context...", telegram_live=True)
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,
@@ -575,14 +723,14 @@ def run_automation():
         chrome_mobile_ua = "Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
 
         if session_exists:
-            print(f"[+] Restoring existing browser session state from: {session_file_path}")
+            log_event(f"[+] Restoring existing browser session state from: {session_file_path}")
             context = browser.new_context(
                 viewport={"width": 390, "height": 844},
                 user_agent=chrome_mobile_ua,
                 storage_state=session_file_path
             )
         else:
-            print("[i] No browser session state found. Starting fresh context...")
+            log_event("[i] No browser session state found. Starting fresh context...")
             context = browser.new_context(
                 viewport={"width": 390, "height": 844},
                 user_agent=chrome_mobile_ua
@@ -627,7 +775,7 @@ def run_automation():
                                             val_int = int(float(str(total_val).replace(',', '')))
                                             if val_int >= 1000000:
                                                 network_captured_data["synergy_val"] = val_int
-                                                print(f"[+] [Network Sniffer] Captured Synergy asset value from API: {val_int:,} Rials")
+                                                log_event(f"[+] [Network Sniffer] Captured Synergy asset value from API: {val_int:,} Rials", telegram_live=True)
                                         except (ValueError, TypeError):
                                             pass
 
@@ -636,7 +784,7 @@ def run_automation():
                                             val_int = int(float(str(total_val).replace(',', '')))
                                             if val_int >= 1000000:
                                                 network_captured_data["atie_val"] = val_int
-                                                print(f"[+] [Network Sniffer] Captured Atie asset value from API: {val_int:,} Rials")
+                                                log_event(f"[+] [Network Sniffer] Captured Atie asset value from API: {val_int:,} Rials", telegram_live=True)
                                         except (ValueError, TypeError):
                                             pass
 
@@ -658,7 +806,7 @@ def run_automation():
             is_logged_in = False
 
             if session_exists:
-                print("[+] Navigating directly to portfolio with active session...")
+                log_event("[+] Navigating directly to portfolio with active session...")
                 try:
                     page.goto("https://m.easytrader.ir/portfolio-fill", wait_until="load", timeout=30000)
                     time.sleep(5)
@@ -666,30 +814,30 @@ def run_automation():
                     body_text = page.locator("body").inner_text()
 
                     if "login.emofid.com" not in current_url and "ورود" not in body_text:
-                        print("[+] Active session resumed successfully!")
+                        log_event("[+] Active session resumed successfully!", telegram_live=True)
                         page.screenshot(path="portfolio_loaded.png")
                         is_logged_in = True
                     else:
-                        print("[i] Session state expired or logged out. Re-authentication required.")
+                        log_event("[i] Session state expired or logged out. Re-authentication required.")
                 except Exception as e:
-                    print(f"[i] Direct portfolio navigation failed/timed out: {e}. Falling back to login...")
+                    log_event(f"[i] Direct portfolio navigation failed/timed out: {e}. Falling back to login...")
 
             if not is_logged_in:
-                print("[+] Navigating to EasyTrader login sequence...")
+                log_event("[+] Navigating to EasyTrader login sequence...", telegram_live=True)
                 page.goto("https://m.easytrader.ir/", wait_until="load")
                 time.sleep(3)
 
                 current_url = page.url
-                print(f"[+] Current URL: {current_url}")
+                log_event(f"[+] Current URL: {current_url}")
 
                 if "login.emofid.com" not in current_url:
-                    print("[i] Directing browser to emofid SSO login page...")
+                    log_event("[i] Directing browser to emofid SSO login page...")
                     page.goto("https://login.emofid.com/Login", wait_until="load")
                     time.sleep(3)
 
                 page.screenshot(path="login_page.png")
 
-                print("[+] Filling credentials...")
+                log_event("[+] Filling credentials...", telegram_live=True)
                 username_selector = "input[name='Username'], input#Username, input[type='text']"
                 password_selector = "input[name='Password'], input#Password, input[type='password']"
                 submit_selector = "button[type='submit'], button#loginBtn"
@@ -698,7 +846,7 @@ def run_automation():
                     page.wait_for_selector(username_selector, timeout=120000)
                     page.fill(username_selector, EASYTRADER_USER)
                 except Exception as wait_err:
-                    print(f"[i] Timeout 120s for username selector: {wait_err}. Triggering AI analysis...")
+                    log_event(f"[i] Timeout 120s for username selector: {wait_err}. Triggering AI analysis...")
                     ai_selector = analyze_page_with_gemini(page)
                     if ai_selector:
                         page.fill(ai_selector, EASYTRADER_USER)
@@ -710,21 +858,21 @@ def run_automation():
 
                 page.screenshot(path="credentials_filled.png")
 
-                print("[+] Submitting login form...")
+                log_event("[+] Submitting login form...")
                 page.click(submit_selector)
                 time.sleep(5)
 
                 current_url = page.url
-                print(f"[+] Current URL after login: {current_url}")
+                log_event(f"[+] Current URL after login: {current_url}")
                 page.screenshot(path="after_login.png")
 
                 if "Verify" in current_url or "verify" in current_url.lower():
-                    print("[!] OTP Verification screen detected!")
+                    log_event("[!] OTP Verification screen detected!", telegram_live=True)
 
                     otp_code = os.environ.get("OTP_CODE")
 
                     if not otp_code or otp_code.strip() == "":
-                        print("[+] Triggering interactive live Telegram polling...")
+                        log_event("[+] Triggering interactive live Telegram polling...")
                         start_time = int(time.time())
 
                         otp_prompt = (
@@ -738,7 +886,7 @@ def run_automation():
                         otp_code = wait_for_telegram_otp(start_time)
 
                     if otp_code:
-                        print(f"[+] Attempting to fill OTP code: {otp_code}")
+                        log_event(f"[+] Attempting to fill OTP code: {otp_code}")
 
                         otp_input = None
                         standard_selectors = [
@@ -828,7 +976,7 @@ def run_automation():
                         raise Exception("OTP verification required but no valid code provided.")
 
                 portfolio_url = "https://m.easytrader.ir/portfolio-fill"
-                print(f"[+] Navigating directly to portfolio page: {portfolio_url}")
+                log_event(f"[+] Navigating directly to portfolio page: {portfolio_url}")
                 page.goto(portfolio_url, wait_until="load")
                 time.sleep(5)
 
@@ -856,204 +1004,221 @@ def run_automation():
                 context.storage_state(path=session_file_path)
 
             # Wait 8 seconds to allow portfolio data and numbers to hydrate fully
-            print("[+] Waiting 8 seconds for portfolio numbers and API network sniffing to hydrate...")
+            log_event("[+] Waiting 8 seconds for portfolio numbers and API network sniffing to hydrate...", telegram_live=True)
             time.sleep(8)
 
             # -------------------------------------------------------------------------
             # 4. EXTRACT "سینرژی" (App 5 - ثبت درصد ۵)
             # -------------------------------------------------------------------------
-            extracted_value_syn = network_captured_data.get("synergy_val")
-            if extracted_value_syn:
-                print(f"[+] [Layer 1 API Sniffer] Confirmed Synergy total asset value: {extracted_value_syn:,} Rials")
-            else:
-                print("[i] Layer 1 Network Sniffer produced no value. Trying Layer 2 Body Text Scan...")
-                body_text = page.locator("body").inner_text()
-                normalized_body = convert_persian_to_english_numbers(body_text)
+            percent_change_syn = None
+            new_val_syn = None
 
-                lines = [line.strip() for line in normalized_body.split("\n") if line.strip()]
-                for idx, line in enumerate(lines):
-                    if "سینرژی" in line:
-                        candidate_numbers = []
-                        for offset in range(1, 13):
-                            if idx + offset < len(lines):
-                                target_line = lines[idx + offset]
-                                if "همسنگ" in target_line:
+            if syn_recorded_today:
+                log_event("[i] Fund 5 (Synergy) was already recorded today by user. Skipping extraction.", telegram_live=True)
+                send_telegram_message(f"ℹ️ <b>صندوق ۵ (سینرژی):</b> درصد امروز قبلاً توسط شما ثبت شده بود، پس دست‌نخورده باقی ماند. ☕")
+            else:
+                extracted_value_syn = network_captured_data.get("synergy_val")
+                if extracted_value_syn:
+                    log_event(f"[+] [Layer 1 API Sniffer] Confirmed Synergy total asset value: {extracted_value_syn:,} Rials", telegram_live=True)
+                else:
+                    log_event("[i] Layer 1 Network Sniffer produced no value. Trying Layer 2 Body Text Scan...")
+                    body_text = page.locator("body").inner_text()
+                    normalized_body = convert_persian_to_english_numbers(body_text)
+
+                    lines = [line.strip() for line in normalized_body.split("\n") if line.strip()]
+                    for idx, line in enumerate(lines):
+                        if "سینرژی" in line:
+                            candidate_numbers = []
+                            for offset in range(1, 13):
+                                if idx + offset < len(lines):
+                                    target_line = lines[idx + offset]
+                                    if "همسنگ" in target_line:
+                                        break
+                                    found_nums = re.findall(r'[\d,]+', target_line)
+                                    for num_str in found_nums:
+                                        clean_num = num_str.replace(",", "")
+                                        if clean_num.isdigit() and len(clean_num) >= 6:
+                                            candidate_numbers.append(int(clean_num))
+                            if candidate_numbers:
+                                extracted_value_syn = max(candidate_numbers)
+                                log_event(f"[+] [Layer 2 Body Scan] Synergy total asset value: {extracted_value_syn:,} Rials", telegram_live=True)
+                                break
+
+                if not extracted_value_syn:
+                    # Layer 3 DOM scanner
+                    synergy_elements = page.locator("text='سینرژی'").all()
+                    for el in synergy_elements:
+                        if not el.is_visible():
+                            continue
+                        parent = el
+                        for level in range(1, 11):
+                            parent = parent.locator("xpath=..")
+                            parent_text = parent.inner_text()
+                            if "سینرژی" in parent_text and "همسنگ" not in parent_text:
+                                norm_p = convert_persian_to_english_numbers(parent_text)
+                                numbers = re.findall(r'[\d,]+', norm_p)
+                                clean_digits = [n.replace(",", "") for n in numbers if n.replace(",", "").isdigit()]
+                                large_nums = [int(d) for d in clean_digits if len(d) >= 6]
+                                if large_nums:
+                                    extracted_value_syn = max(large_nums)
+                                    log_event(f"[+] [Layer 3 DOM Traversal] Synergy total asset value: {extracted_value_syn:,} Rials", telegram_live=True)
                                     break
-                                found_nums = re.findall(r'[\d,]+', target_line)
-                                for num_str in found_nums:
-                                    clean_num = num_str.replace(",", "")
-                                    if clean_num.isdigit() and len(clean_num) >= 6:
-                                        candidate_numbers.append(int(clean_num))
-                        if candidate_numbers:
-                            extracted_value_syn = max(candidate_numbers)
-                            print(f"[+] [Layer 2 Body Scan] Synergy total asset value: {extracted_value_syn:,} Rials")
+                        if extracted_value_syn:
                             break
 
-            if not extracted_value_syn:
-                # Layer 3 DOM scanner
-                synergy_elements = page.locator("text='سینرژی'").all()
-                for el in synergy_elements:
-                    if not el.is_visible():
-                        continue
-                    parent = el
-                    for level in range(1, 11):
-                        parent = parent.locator("xpath=..")
-                        parent_text = parent.inner_text()
-                        if "سینرژی" in parent_text and "همسنگ" not in parent_text:
-                            norm_p = convert_persian_to_english_numbers(parent_text)
-                            numbers = re.findall(r'[\d,]+', norm_p)
-                            clean_digits = [n.replace(",", "") for n in numbers if n.replace(",", "").isdigit()]
-                            large_nums = [int(d) for d in clean_digits if len(d) >= 6]
-                            if large_nums:
-                                extracted_value_syn = max(large_nums)
-                                print(f"[+] [Layer 3 DOM Traversal] Synergy total asset value: {extracted_value_syn:,} Rials")
-                                break
-                    if extracted_value_syn:
-                        break
+                if not extracted_value_syn:
+                    raise Exception("Could not extract Synergy (App 5) asset value using Network, Body Scan, or DOM methods.")
 
-            if not extracted_value_syn:
-                raise Exception("Could not extract Synergy (App 5) asset value using Network, Body Scan, or DOM methods.")
+                new_val_syn = extracted_value_syn
 
-            new_val_syn = extracted_value_syn
+                # Calculate App 5
+                diff_syn = new_val_syn - base_val_syn
+                percent_change_syn = (diff_syn / base_val_syn) * 100 if base_val_syn > 0 else 0.0
 
-            # Calculate App 5
-            diff_syn = new_val_syn - base_val_syn
-            percent_change_syn = (diff_syn / base_val_syn) * 100 if base_val_syn > 0 else 0.0
+                timestamp_ms = int(time.time() * 1000)
 
-            timestamp_ms = int(time.time() * 1000)
+                local_state_syn["percents"].append({
+                    "value": float(round(percent_change_syn, 2)),
+                    "timestamp": timestamp_ms
+                })
+                local_state_syn["percents"].sort(key=lambda x: x["timestamp"])
 
-            local_state_syn["percents"].append({
-                "value": float(round(percent_change_syn, 2)),
-                "timestamp": timestamp_ms
-            })
-            local_state_syn["percents"].sort(key=lambda x: x["timestamp"])
+                persian_date_str = get_current_persian_datetime()
+                diff_type_syn = "increase" if percent_change_syn > 0 else ("decrease" if percent_change_syn < 0 else "neutral")
 
-            persian_date_str = get_current_persian_datetime()
-            diff_type_syn = "increase" if percent_change_syn > 0 else ("decrease" if percent_change_syn < 0 else "neutral")
+                formatted_new_val_syn = f"{new_val_syn:,}"
+                history_list_syn.insert(0, {
+                    "id": timestamp_ms,
+                    "base": f"{base_val_syn:,}",
+                    "new": formatted_new_val_syn,
+                    "percent": f"{percent_change_syn:.2f}",
+                    "type": diff_type_syn,
+                    "rawBase": float(base_val_syn),
+                    "rawNew": float(new_val_syn),
+                    "timestamp": datetime.now().isoformat() + "Z",
+                    "persianDate": persian_date_str
+                })
+                if len(history_list_syn) > 60:
+                    history_list_syn = history_list_syn[:60]
 
-            formatted_new_val_syn = f"{new_val_syn:,}"
-            history_list_syn.insert(0, {
-                "id": timestamp_ms,
-                "base": f"{base_val_syn:,}",
-                "new": formatted_new_val_syn,
-                "percent": f"{percent_change_syn:.2f}",
-                "type": diff_type_syn,
-                "rawBase": float(base_val_syn),
-                "rawNew": float(new_val_syn),
-                "timestamp": datetime.now().isoformat() + "Z",
-                "persianDate": persian_date_str
-            })
-            if len(history_list_syn) > 60:
-                history_list_syn = history_list_syn[:60]
+                local_state_syn["history"] = history_list_syn
+                local_state_syn["baseNumber"] = new_val_syn
 
-            local_state_syn["history"] = history_list_syn
-            local_state_syn["baseNumber"] = new_val_syn
-
-            os.makedirs(os.path.dirname(BACKUP_FILE_PATH), exist_ok=True)
-            with open(BACKUP_FILE_PATH, 'w', encoding='utf-8') as f:
-                json.dump(local_state_syn, f, ensure_ascii=False, indent=2)
-            print(f"[+] App 5: Wrote updated backup to {BACKUP_FILE_PATH}")
+                os.makedirs(os.path.dirname(BACKUP_FILE_PATH), exist_ok=True)
+                with open(BACKUP_FILE_PATH, 'w', encoding='utf-8') as f:
+                    json.dump(local_state_syn, f, ensure_ascii=False, indent=2)
+                log_event(f"[+] App 5: Wrote updated backup to {BACKUP_FILE_PATH}")
 
             # -------------------------------------------------------------------------
             # 5. EXTRACT "آتیه / بازنشستگی" (App 4 - ثبت درصد ۴)
             # -------------------------------------------------------------------------
-            print("\n[+] Navigating to extract App 4 (Atie / Retirement Fund)...")
+            percent_change_atie = None
+            new_val_atie = None
 
-            extracted_value_atie = network_captured_data.get("atie_val")
-            if extracted_value_atie:
-                print(f"[+] [Layer 1 API Sniffer] Confirmed Atie asset value: {extracted_value_atie:,} Rials")
+            if atie_recorded_today:
+                log_event("[i] Fund 4 (Atie) was already recorded today by user. Skipping extraction.", telegram_live=True)
+                send_telegram_message(f"ℹ️ <b>صندوق ۴ (آتیه):</b> درصد امروز قبلاً توسط شما ثبت شده بود، پس دست‌نخورده باقی ماند. ☕")
             else:
-                # Navigation strategies to Mofid Funds tab
-                try:
-                    sayer_selectors = ["text='سایر'", "span:has-text('سایر')", "button:has-text('سایر')", "a:has-text('سایر')"]
-                    for sel in sayer_selectors:
-                        elem = page.locator(sel).first
-                        if elem.is_visible():
-                            elem.click(force=True)
-                            time.sleep(3)
-                            break
+                log_event("\n[+] Navigating to extract App 4 (Atie / Retirement Fund)...", telegram_live=True)
 
-                    funds_selectors = ["text='صندوق‌های مفید'", "text='صندوق ها'", "text='صندوق‌ها'", "span:has-text('صندوق')"]
-                    for sel in funds_selectors:
-                        elem = page.locator(sel).first
-                        if elem.is_visible():
-                            elem.click(force=True)
-                            time.sleep(4)
-                            break
-                except Exception as ex_nav:
-                    print(f"[i] Navigation click exception: {ex_nav}")
-
-                # Check network sniffer again after navigating to funds tab
                 extracted_value_atie = network_captured_data.get("atie_val")
-
-                if not extracted_value_atie:
-                    # Layer 2 Scan body text
-                    body_text_atie = page.locator("body").inner_text()
-                    normalized_body_atie = convert_persian_to_english_numbers(body_text_atie)
-                    lines_atie = [line.strip() for line in normalized_body_atie.split("\n") if line.strip()]
-
-                    for idx, line in enumerate(lines_atie):
-                        if "آتیه" in line or "بازنشستگی" in line:
-                            candidate_numbers_atie = []
-                            search_range = range(max(0, idx - 2), min(len(lines_atie), idx + 10))
-                            for scan_idx in search_range:
-                                target_line = lines_atie[scan_idx]
-                                found_nums = re.findall(r'[\d,]+', target_line)
-                                for num_str in found_nums:
-                                    clean_num = num_str.replace(",", "")
-                                    if clean_num.isdigit() and len(clean_num) >= 6:
-                                        candidate_numbers_atie.append(int(clean_num))
-                            if candidate_numbers_atie:
-                                extracted_value_atie = max(candidate_numbers_atie)
-                                print(f"[+] [Layer 2 Body Scan] Atie asset value: {extracted_value_atie:,} Rials")
+                if extracted_value_atie:
+                    log_event(f"[+] [Layer 1 API Sniffer] Confirmed Atie asset value: {extracted_value_atie:,} Rials", telegram_live=True)
+                else:
+                    # Navigation strategies to Mofid Funds tab
+                    try:
+                        sayer_selectors = ["text='سایر'", "span:has-text('سایر')", "button:has-text('سایر')", "a:has-text('سایر')"]
+                        for sel in sayer_selectors:
+                            elem = page.locator(sel).first
+                            if elem.is_visible():
+                                elem.click(force=True)
+                                time.sleep(3)
                                 break
 
-            page.screenshot(path="atie_loaded.png")
+                        funds_selectors = ["text='صندوق‌های مفید'", "text='صندوق ها'", "text='صندوق‌ها'", "span:has-text('صندوق')"]
+                        for sel in funds_selectors:
+                            elem = page.locator(sel).first
+                            if elem.is_visible():
+                                elem.click(force=True)
+                                time.sleep(4)
+                                break
+                    except Exception as ex_nav:
+                        log_event(f"[i] Navigation click exception: {ex_nav}")
 
-            if not extracted_value_atie:
-                print("[-] Warning: Could not extract Atie asset value automatically. Keeping previous base value to avoid corrupting state.")
-                extracted_value_atie = base_val_atie
+                    # Check network sniffer again after navigating to funds tab
+                    extracted_value_atie = network_captured_data.get("atie_val")
 
-            new_val_atie = extracted_value_atie
-            diff_atie = new_val_atie - base_val_atie
-            percent_change_atie = (diff_atie / base_val_atie) * 100 if base_val_atie > 0 else 0.0
+                    if not extracted_value_atie:
+                        # Layer 2 Scan body text
+                        body_text_atie = page.locator("body").inner_text()
+                        normalized_body_atie = convert_persian_to_english_numbers(body_text_atie)
+                        lines_atie = [line.strip() for line in normalized_body_atie.split("\n") if line.strip()]
 
-            local_state_atie["percents"].append({
-                "value": float(round(percent_change_atie, 2)),
-                "timestamp": timestamp_ms
-            })
-            local_state_atie["percents"].sort(key=lambda x: x["timestamp"])
+                        for idx, line in enumerate(lines_atie):
+                            if "آتیه" in line or "بازنشستگی" in line:
+                                candidate_numbers_atie = []
+                                search_range = range(max(0, idx - 2), min(len(lines_atie), idx + 10))
+                                for scan_idx in search_range:
+                                    target_line = lines_atie[scan_idx]
+                                    found_nums = re.findall(r'[\d,]+', target_line)
+                                    for num_str in found_nums:
+                                        clean_num = num_str.replace(",", "")
+                                        if clean_num.isdigit() and len(clean_num) >= 6:
+                                            candidate_numbers_atie.append(int(clean_num))
+                                if candidate_numbers_atie:
+                                    extracted_value_atie = max(candidate_numbers_atie)
+                                    log_event(f"[+] [Layer 2 Body Scan] Atie asset value: {extracted_value_atie:,} Rials", telegram_live=True)
+                                    break
 
-            diff_type_atie = "increase" if percent_change_atie > 0 else ("decrease" if percent_change_atie < 0 else "neutral")
+                page.screenshot(path="atie_loaded.png")
 
-            formatted_new_val_atie = f"{new_val_atie:,}"
-            history_list_atie.insert(0, {
-                "id": timestamp_ms,
-                "base": f"{base_val_atie:,}",
-                "new": formatted_new_val_atie,
-                "percent": f"{percent_change_atie:.2f}",
-                "type": diff_type_atie,
-                "rawBase": float(base_val_atie),
-                "rawNew": float(new_val_atie),
-                "timestamp": datetime.now().isoformat() + "Z",
-                "persianDate": persian_date_str
-            })
-            if len(history_list_atie) > 60:
-                history_list_atie = history_list_atie[:60]
+                if not extracted_value_atie:
+                    log_event("[-] Warning: Could not extract Atie asset value automatically. Keeping previous base value to avoid corrupting state.")
+                    extracted_value_atie = base_val_atie
 
-            local_state_atie["history"] = history_list_atie
-            local_state_atie["baseNumber"] = new_val_atie
+                new_val_atie = extracted_value_atie
+                diff_atie = new_val_atie - base_val_atie
+                percent_change_atie = (diff_atie / base_val_atie) * 100 if base_val_atie > 0 else 0.0
 
-            os.makedirs(os.path.dirname(BACKUP_FILE_PATH_ATIE), exist_ok=True)
-            with open(BACKUP_FILE_PATH_ATIE, 'w', encoding='utf-8') as f:
-                json.dump(local_state_atie, f, ensure_ascii=False, indent=2)
-            print(f"[+] App 4: Wrote updated backup to {BACKUP_FILE_PATH_ATIE}")
+                timestamp_ms = int(time.time() * 1000)
+
+                local_state_atie["percents"].append({
+                    "value": float(round(percent_change_atie, 2)),
+                    "timestamp": timestamp_ms
+                })
+                local_state_atie["percents"].sort(key=lambda x: x["timestamp"])
+
+                persian_date_str = get_current_persian_datetime()
+                diff_type_atie = "increase" if percent_change_atie > 0 else ("decrease" if percent_change_atie < 0 else "neutral")
+
+                formatted_new_val_atie = f"{new_val_atie:,}"
+                history_list_atie.insert(0, {
+                    "id": timestamp_ms,
+                    "base": f"{base_val_atie:,}",
+                    "new": formatted_new_val_atie,
+                    "percent": f"{percent_change_atie:.2f}",
+                    "type": diff_type_atie,
+                    "rawBase": float(base_val_atie),
+                    "rawNew": float(new_val_atie),
+                    "timestamp": datetime.now().isoformat() + "Z",
+                    "persianDate": persian_date_str
+                })
+                if len(history_list_atie) > 60:
+                    history_list_atie = history_list_atie[:60]
+
+                local_state_atie["history"] = history_list_atie
+                local_state_atie["baseNumber"] = new_val_atie
+
+                os.makedirs(os.path.dirname(BACKUP_FILE_PATH_ATIE), exist_ok=True)
+                with open(BACKUP_FILE_PATH_ATIE, 'w', encoding='utf-8') as f:
+                    json.dump(local_state_atie, f, ensure_ascii=False, indent=2)
+                log_event(f"[+] App 4: Wrote updated backup to {BACKUP_FILE_PATH_ATIE}")
 
             # -------------------------------------------------------------------------
             # 6. SYNCHRONIZATION WITH MANTLEDB
             # -------------------------------------------------------------------------
             synergy_payload = {
-                "new_val": new_val_syn,
+                "new_val": new_val_syn or base_val_syn,
                 "percents": local_state_syn.get("percents", []),
                 "trash": local_state_syn.get("trash", []),
                 "goal": local_state_syn.get("goal"),
@@ -1065,7 +1230,7 @@ def run_automation():
             }
 
             atie_payload = {
-                "new_val": new_val_atie,
+                "new_val": new_val_atie or base_val_atie,
                 "percents": local_state_atie.get("percents", []),
                 "trash": local_state_atie.get("trash", []),
                 "goal": local_state_atie.get("goal"),
@@ -1084,41 +1249,46 @@ def run_automation():
             persian_time_report = get_current_persian_datetime()
 
             # Message 1: App 5
-            emoji_syn = "📈" if percent_change_syn > 0 else ("📉" if percent_change_syn < 0 else "⚖️")
-            telegram_report_syn = (
-                f"<b>🤖 عملیات خودکار ثبت درصد ۵ (صندوق سینرژی) با موفقیت انجام شد!</b>\n\n"
-                f"📅 <b>تاریخ و زمان:</b> {persian_time_report}\n"
-                f"💵 <b>دارایی قبلی (پایه):</b> {base_val_syn:,} ریال\n"
-                f"💰 <b>دارایی جدید استخراج‌شده:</b> {new_val_syn:,} ریال\n"
-                f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change_syn:+.2f}%</code> {emoji_syn}\n\n"
-                f"🔄 <b>سینک ابری MantleDB:</b> {'✅ انجام شد' if sync_ok else '❌ انجام نشد (تنظیم نشده یا خطا)'}\n"
-                f"💾 <b>فایل پشتیبان محلی:</b> ✅ بروزرسانی و در گیت‌هاب ذخیره شد\n\n"
-                f"🌹 فردا هم رأس ساعت ۱۵:۳۰ همینجا منتظر من باشید! روز خوش."
-            )
-            print("[+] Sending Telegram Message 1 (App 5 - Synergy)...")
-            send_telegram_message(telegram_report_syn, photo_path="portfolio_loaded.png" if os.path.exists("portfolio_loaded.png") else None)
+            if not syn_recorded_today and percent_change_syn is not None:
+                emoji_syn = "📈" if percent_change_syn > 0 else ("📉" if percent_change_syn < 0 else "⚖️")
+                telegram_report_syn = (
+                    f"<b>🤖 عملیات خودکار ثبت درصد ۵ (صندوق سینرژی) با موفقیت انجام شد!</b>\n\n"
+                    f"📅 <b>تاریخ و زمان:</b> {persian_time_report}\n"
+                    f"💵 <b>دارایی قبلی (پایه):</b> {base_val_syn:,} ریال\n"
+                    f"💰 <b>دارایی جدید استخراج‌شده:</b> {new_val_syn:,} ریال\n"
+                    f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change_syn:+.2f}%</code> {emoji_syn}\n\n"
+                    f"🔄 <b>سینک ابری MantleDB:</b> {'✅ انجام شد' if sync_ok else '❌ انجام نشد (تنظیم نشده یا خطا)'}\n"
+                    f"💾 <b>فایل پشتیبان محلی:</b> ✅ بروزرسانی و در گیت‌هاب ذخیره شد\n\n"
+                    f"🌹 فردا هم رأس ساعت ۱۵:۳۰ همینجا منتظر من باشید! روز خوش."
+                )
+                log_event("[+] Sending Telegram Message 1 (App 5 - Synergy)...")
+                send_telegram_message(telegram_report_syn, photo_path="portfolio_loaded.png" if os.path.exists("portfolio_loaded.png") else None)
 
             # Message 2: App 4
-            emoji_atie = "📈" if percent_change_atie > 0 else ("📉" if percent_change_atie < 0 else "⚖️")
-            telegram_report_atie = (
-                f"<b>🤖 عملیات خودکار ثبت درصد ۴ (صندوق آتیه / بازنشستگی) با موفقیت انجام شد!</b>\n\n"
-                f"📅 <b>تاریخ و زمان:</b> {persian_time_report}\n"
-                f"💵 <b>دارایی قبلی (پایه):</b> {base_val_atie:,} ریال\n"
-                f"💰 <b>دارایی جدید استخراج‌شده:</b> {new_val_atie:,} ریال\n"
-                f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change_atie:+.2f}%</code> {emoji_atie}\n\n"
-                f"🔄 <b>سینک ابری MantleDB:</b> {'✅ انجام شد' if sync_ok else '❌ انجام نشد (تنظیم نشده یا خطا)'}\n"
-                f"💾 <b>فایل پشتیبان محلی:</b> ✅ بروزرسانی و در گیت‌هاب ذخیره شد\n\n"
-                f"🌹 فردا هم رأس ساعت ۱۵:۳۰ همینجا منتظر من باشید! روز خوش."
-            )
-            print("[+] Sending Telegram Message 2 (App 4 - Atie)...")
-            send_telegram_message(telegram_report_atie, photo_path="atie_loaded.png" if os.path.exists("atie_loaded.png") else None)
+            if not atie_recorded_today and percent_change_atie is not None:
+                emoji_atie = "📈" if percent_change_atie > 0 else ("📉" if percent_change_atie < 0 else "⚖️")
+                telegram_report_atie = (
+                    f"<b>🤖 عملیات خودکار ثبت درصد ۴ (صندوق آتیه / بازنشستگی) با موفقیت انجام شد!</b>\n\n"
+                    f"📅 <b>تاریخ و زمان:</b> {persian_time_report}\n"
+                    f"💵 <b>دارایی قبلی (پایه):</b> {base_val_atie:,} ریال\n"
+                    f"💰 <b>دارایی جدید استخراج‌شده:</b> {new_val_atie:,} ریال\n"
+                    f"📊 <b>تغییرات درصد امروز:</b> <code>{percent_change_atie:+.2f}%</code> {emoji_atie}\n\n"
+                    f"🔄 <b>سینک ابری MantleDB:</b> {'✅ انجام شد' if sync_ok else '❌ انجام نشد (تنظیم نشده یا خطا)'}\n"
+                    f"💾 <b>فایل پشتیبان محلی:</b> ✅ بروزرسانی و در گیت‌هاب ذخیره شد\n\n"
+                    f"🌹 فردا هم رأس ساعت ۱۵:۳۰ همینجا منتظر من باشید! روز خوش."
+                )
+                log_event("[+] Sending Telegram Message 2 (App 4 - Atie)...")
+                send_telegram_message(telegram_report_atie, photo_path="atie_loaded.png" if os.path.exists("atie_loaded.png") else None)
 
             context.close()
             browser.close()
+
+            log_event("[+] Uploading full execution log document to Telegram...", telegram_live=True)
+            send_telegram_document(LOG_FILE_PATH, caption="📋 <b>فایل کامل لاگ اجرا و اشکال‌زدایی اتوماسیون (easytrader_automation.log)</b>")
             return True
 
         except Exception as err:
-            print(f"[-] Error during Playwright execution: {err}")
+            log_event(f"[-] Error during Playwright execution: {err}", telegram_live=True)
             try:
                 page.screenshot(path="error_emergency.png")
             except Exception:
@@ -1129,9 +1299,10 @@ def run_automation():
                 f"<b>⚠️ خطا در اجرای اتوماسیون ثبت درصد ۴ و ۵</b>\n\n"
                 f"📅 <b>تاریخ:</b> {persian_time_report}\n"
                 f"❌ <b>جزئیات خطا:</b> <code>{str(err)[:500]}</code>\n\n"
-                f"🛠️ لطفا وضعیت لاگ‌ها در گیت‌هاب اکشنز را بررسی کنید."
+                f"🛠️ لاگ کامل اجرا به پیوست ارسال شد."
             )
             send_telegram_message(failure_report, photo_path="error_emergency.png" if os.path.exists("error_emergency.png") else None)
+            send_telegram_document(LOG_FILE_PATH, caption="📋 <b>فایل لاگ کامل خطا (دیباگ)</b>")
 
             context.close()
             browser.close()
@@ -1139,11 +1310,11 @@ def run_automation():
 
 
 if __name__ == "__main__":
-    print("[+] Starting EasyTrader Automation Script (v3.0)...")
+    log_event("[+] Starting EasyTrader Automation Script (v3.3)...")
     success = run_automation()
     if success:
-        print("[+] Automation execution finished successfully.")
+        log_event("[+] Automation execution finished successfully.")
         sys.exit(0)
     else:
-        print("[-] Automation execution failed.")
+        log_event("[-] Automation execution failed.")
         sys.exit(1)

@@ -1083,6 +1083,24 @@
     const handleEnter = (e) => { if (e.key === 'Enter') calculateAndSave(true); };
     num1Input.addEventListener('keypress', handleEnter);
     num2Input.addEventListener('keypress', handleEnter);
+
+    window.addEventListener('storage', function(e) {
+        if (!e.key || e.key.includes('pension_') || e.key.includes('mofid_atie_') || e.key === 'emarat_last_modified') {
+            const savedBase = localStorage.getItem(STORAGE_BASE);
+            if (savedBase) {
+                const converted = normalizeNumberString(savedBase);
+                const num = parseNumberWithCommas(converted);
+                if (!isNaN(num)) num1Input.value = formatNumberWithCommas(num);
+            }
+            const savedPeak = localStorage.getItem(STORAGE_PEAK);
+            if (savedPeak) {
+                const converted = normalizeNumberString(savedPeak);
+                const num = parseNumberWithCommas(converted);
+                if (!isNaN(num)) peakInput.value = formatNumberWithCommas(num);
+            }
+            renderHistory();
+        }
+    });
 </script>
 </body>
 </html>

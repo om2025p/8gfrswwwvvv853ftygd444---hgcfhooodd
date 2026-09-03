@@ -786,15 +786,17 @@
         function updatePercentList() {
             const listElement = document.getElementById('percentList');
             const formatter = new Intl.DateTimeFormat('fa-IR-u-nu-latn', { dateStyle: 'short', timeStyle: 'medium' });
-            listElement.innerHTML = percents.map((item, index) => `
+            listElement.innerHTML = percents.map((item, index) => {
+                const autoBadge = (item.source === 'automation' || item.auto) ? '<span title="ثبت‌شده توسط اتوماسیون ایزی‌تریدر" style="font-size:12px; margin-left:4px;">🤖</span>' : '';
+                return `
                 <li class="percent-item ${highlightedStates[index] ? 'highlighted-persist' : ''}" onclick="toggleHighlight(${index})">
-                    <span class="${item.value >= 0 ? 'positive' : 'negative'}">${item.value.toFixed(2)}%</span>
+                    <span class="${item.value >= 0 ? 'positive' : 'negative'}">${item.value.toFixed(2)}% ${autoBadge}</span>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span class="date-time">${formatter.format(new Date(item.timestamp))}</span>
                         <button class="delete-btn" onclick="deletePercent(${index}, event)">حذف</button>
                     </div>
                 </li>
-            `).join('');
+            `;}).join('');
         }
 
         function updateGoalProgress() {
@@ -1400,6 +1402,28 @@
                 arrow.classList.add('open');
             }
         }
+
+        function reloadLocalData() {
+            percents = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "percents")) || [];
+            trash = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "trash")) || [];
+            goal = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "goal")) || null;
+            highlightedStates = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "highlightedStates")) || {};
+            notes = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "notes")) || [];
+            notes = notes.map(migrateNote).filter(n => n !== null);
+            periodTarget = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "periodTarget")) || null;
+            achievedPeriods = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "achievedPeriods")) || [];
+
+            percents.sort((a, b) => a.timestamp - b.timestamp);
+            checkPeriodAchievement();
+            updateUI();
+            if (document.getElementById('chartPage').classList.contains('active-page')) drawChart();
+        }
+
+        window.addEventListener('storage', function(e) {
+            if (!e.key || e.key.includes('mofid_atie_') || e.key.includes('pension_') || e.key === 'emarat_last_modified') {
+                reloadLocalData();
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', function() {
             applySavedTheme();
