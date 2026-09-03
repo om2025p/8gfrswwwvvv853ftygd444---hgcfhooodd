@@ -124,30 +124,81 @@
             transform: scale(0.95);
         }
 
-        .backup-action-btn {
+        /* منوی همبرگری کشویی */
+        .hamburger-container {
+            position: relative;
+        }
+
+        .hamburger-btn {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             color: var(--text-color);
-            font-size: 0.8rem;
-            font-weight: bold;
+            font-size: 1.3rem;
             cursor: pointer;
-            padding: 8px 12px;
-            border-radius: 12px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
             box-shadow: var(--card-shadow);
             transition: all 0.2s ease;
         }
 
-        .backup-action-btn:hover {
-            border-color: var(--primary-light);
-            transform: translateY(-1px);
+        .hamburger-btn:hover {
+            transform: scale(1.08);
         }
 
-        .backup-action-btn:active {
+        .hamburger-btn:active {
             transform: scale(0.95);
+        }
+
+        .hamburger-dropdown {
+            position: absolute;
+            top: 50px;
+            left: 0;
+            background-color: var(--card-bg) !important;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+            border-radius: 18px;
+            padding: 8px;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 99999;
+            min-width: 180px;
+            animation: fadeInDown 0.2s ease forwards;
+        }
+
+        .hamburger-dropdown.open {
+            display: flex;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .menu-item-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 10px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: right;
+        }
+
+        .menu-item-btn:hover {
+            background: var(--history-sub-bg);
         }
 
         .tab-container {
@@ -680,11 +731,23 @@
             <span style="font-size: 1.8rem;">🖥️</span>
             <h1>دیدبان درصد ها</h1>
         </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <button class="backup-action-btn" onclick="exportFullBackup()" title="دانلود بکاپ کامل هفت صندوق">💾 بکاپ</button>
-            <button class="backup-action-btn" onclick="triggerImportFullBackup()" title="بازیابی کامل فایل بکاپ">📂 بازیابی</button>
+        <div class="hamburger-container">
+            <button id="hamburgerBtn" class="hamburger-btn" onclick="toggleHamburgerMenu(event)" title="منوی امکانات">☰</button>
+            <div id="hamburgerDropdown" class="hamburger-dropdown">
+                <button class="menu-item-btn" onclick="exportFullBackup(); closeHamburgerMenu();">
+                    <span>💾</span>
+                    <span>دانلود بکاپ کامل</span>
+                </button>
+                <button class="menu-item-btn" onclick="triggerImportFullBackup(); closeHamburgerMenu();">
+                    <span>📂</span>
+                    <span>بازیابی اطلاعات</span>
+                </button>
+                <button class="menu-item-btn" onclick="toggleTheme(); closeHamburgerMenu();">
+                    <span id="menuThemeIcon">🌙</span>
+                    <span id="menuThemeText">تم تاریک</span>
+                </button>
+            </div>
             <input type="file" id="fullBackupFileInput" accept=".json" style="display: none;" onchange="importFullBackup(event)">
-            <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="تغییر تم">🌙</button>
         </div>
     </header>
 
@@ -845,13 +908,46 @@
     </footer>
 
     <script>
+        function toggleHamburgerMenu(event) {
+            if (event) event.stopPropagation();
+            const dropdown = document.getElementById('hamburgerDropdown');
+            if (dropdown) dropdown.classList.toggle('open');
+        }
+
+        function closeHamburgerMenu() {
+            const dropdown = document.getElementById('hamburgerDropdown');
+            if (dropdown) dropdown.classList.remove('open');
+        }
+
+        document.addEventListener('click', function(event) {
+            const container = document.querySelector('.hamburger-container');
+            if (container && !container.contains(event.target)) {
+                closeHamburgerMenu();
+            }
+        });
+
+        function updateThemeMenuUI(isDark) {
+            const menuIcon = document.getElementById('menuThemeIcon');
+            const menuText = document.getElementById('menuThemeText');
+            if (menuIcon && menuText) {
+                if (isDark) {
+                    menuIcon.innerText = '☀️';
+                    menuText.innerText = 'تم روشن';
+                } else {
+                    menuIcon.innerText = '🌙';
+                    menuText.innerText = 'تم تاریک';
+                }
+            }
+        }
+
         // مدیریت سیستم تغییر تم (سفید روشن / تاریک خاکستری)
         function initTheme() {
             const savedTheme = localStorage.getItem('monitor_theme_preference');
             const toggleBtn = document.getElementById('themeToggleBtn');
             const metaTheme = document.getElementById('metaThemeColor');
 
-            if (savedTheme === 'dark') {
+            const isDark = (savedTheme === 'dark');
+            if (isDark) {
                 document.body.classList.add('dark-theme');
                 if (toggleBtn) toggleBtn.innerText = '☀️';
                 if (metaTheme) metaTheme.setAttribute('content', '#111827');
@@ -860,6 +956,7 @@
                 if (toggleBtn) toggleBtn.innerText = '🌙';
                 if (metaTheme) metaTheme.setAttribute('content', '#ffffff');
             }
+            updateThemeMenuUI(isDark);
         }
 
         function toggleTheme() {
@@ -876,6 +973,7 @@
                 if (toggleBtn) toggleBtn.innerText = '🌙';
                 if (metaTheme) metaTheme.setAttribute('content', '#ffffff');
             }
+            updateThemeMenuUI(isDark);
 
             // بازرسم چارت رشد پس از تغییر تم
             ['live', 'analysis'].forEach(tabName => {
