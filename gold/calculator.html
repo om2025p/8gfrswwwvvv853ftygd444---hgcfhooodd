@@ -722,63 +722,24 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         let savedBase = localStorage.getItem(STORAGE_BASE);
-        if (!savedBase) {
-            savedBase = '316,292,700';
-            localStorage.setItem(STORAGE_BASE, savedBase);
-        }
-        const convertedBase = normalizeNumberString(savedBase);
-        const numBase = parseNumberWithCommas(convertedBase);
-        if (!isNaN(numBase)) {
-            num1Input.value = formatNumberWithCommas(numBase);
+        if (savedBase) {
+            const convertedBase = normalizeNumberString(savedBase);
+            const numBase = parseNumberWithCommas(convertedBase);
+            if (!isNaN(numBase)) {
+                num1Input.value = formatNumberWithCommas(numBase);
+            }
         }
 
         let savedPeak = localStorage.getItem(STORAGE_PEAK);
-        if (!savedPeak) {
-            savedPeak = '321,710,700';
-            localStorage.setItem(STORAGE_PEAK, savedPeak);
-        }
-        const convertedPeak = normalizeNumberString(savedPeak);
-        const numPeak = parseNumberWithCommas(convertedPeak);
-        if (!isNaN(numPeak)) {
-            peakInput.value = formatNumberWithCommas(numPeak);
-        }
-
-        if (!num2Input.value) {
-            num2Input.value = '321,920,680';
-        }
-
-        let history = getHistory();
-        if (history.length === 0) {
-            const now = new Date();
-            const defaultItem = {
-                id: Date.now(),
-                base: '316,292,700',
-                new: '321,920,680',
-                percent: '1.78',
-                type: 'increase',
-                rawBase: 316292700,
-                rawNew: 321920680,
-                rawPeak: 321710700,
-                tomanProfit: 21,
-                timestamp: now.toISOString(),
-                persianDate: toPersianDate(now)
-            };
-            history = [defaultItem];
-            localStorage.setItem(STORAGE_HISTORY, JSON.stringify(history));
-
-            let percentsRaw = localStorage.getItem('percents');
-            let percents = [];
-            try { percents = JSON.parse(percentsRaw) || []; } catch(e) {}
-            if (percents.length === 0) {
-                percents = [{ value: 1.78, timestamp: now.getTime() }];
-                localStorage.setItem('percents', JSON.stringify(percents));
+        if (savedPeak) {
+            const convertedPeak = normalizeNumberString(savedPeak);
+            const numPeak = parseNumberWithCommas(convertedPeak);
+            if (!isNaN(numPeak)) {
+                peakInput.value = formatNumberWithCommas(numPeak);
             }
         }
 
         renderHistory();
-        if (num1Input.value && num2Input.value) {
-            calculateAndSave(false);
-        }
         num1Input.focus();
     });
 
