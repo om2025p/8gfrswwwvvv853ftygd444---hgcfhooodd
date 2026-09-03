@@ -605,6 +605,7 @@
         if (isNaN(currentPeak)) {
             currentPeak = baseNum;
         }
+        const prevPeak = currentPeak;
 
         const diff = newNum - baseNum;
         const percent = (diff / baseNum) * 100;
@@ -622,7 +623,7 @@
             peakInput.value = formatNumberWithCommas(currentPeak);
 
             resultText += ' 🚀 🟢 (سود خالص واقعی - عبور از قله)';
-            resultText += ` — 🎉 یعنی ${formatNumberWithCommas(netPeakProfit)} تومان سود واقعی و قله جدید ثبت شد!`;
+            resultText += ` — 🎉 یعنی ${formatNumberWithCommas(netPeakProfit)} ریال سود واقعی و قله جدید ثبت شد!`;
             type = 'increase';
             resultDiv.classList.add('positive');
         } else if (newNum > baseNum && newNum <= currentPeak) {
@@ -720,20 +721,21 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
-        const savedBase = localStorage.getItem(STORAGE_BASE);
+        let savedBase = localStorage.getItem(STORAGE_BASE);
         if (savedBase) {
-            const converted = normalizeNumberString(savedBase);
-            const num = parseNumberWithCommas(converted);
-            if (!isNaN(num)) {
-                num1Input.value = formatNumberWithCommas(num);
+            const convertedBase = normalizeNumberString(savedBase);
+            const numBase = parseNumberWithCommas(convertedBase);
+            if (!isNaN(numBase)) {
+                num1Input.value = formatNumberWithCommas(numBase);
             }
         }
-        const savedPeak = localStorage.getItem(STORAGE_PEAK);
+
+        let savedPeak = localStorage.getItem(STORAGE_PEAK);
         if (savedPeak) {
-            const converted = normalizeNumberString(savedPeak);
-            const num = parseNumberWithCommas(converted);
-            if (!isNaN(num)) {
-                peakInput.value = formatNumberWithCommas(num);
+            const convertedPeak = normalizeNumberString(savedPeak);
+            const numPeak = parseNumberWithCommas(convertedPeak);
+            if (!isNaN(numPeak)) {
+                peakInput.value = formatNumberWithCommas(numPeak);
             }
         }
 
