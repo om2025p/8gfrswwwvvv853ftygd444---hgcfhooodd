@@ -124,6 +124,32 @@
             transform: scale(0.95);
         }
 
+        .backup-action-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-color);
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.2s ease;
+        }
+
+        .backup-action-btn:hover {
+            border-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .backup-action-btn:active {
+            transform: scale(0.95);
+        }
+
         .tab-container {
             width: 100%;
             max-width: 460px;
@@ -654,7 +680,12 @@
             <span style="font-size: 1.8rem;">🖥️</span>
             <h1>دیدبان درصد ها</h1>
         </div>
-        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="تغییر تم">🌙</button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="backup-action-btn" onclick="exportFullBackup()" title="دانلود بکاپ کامل هفت صندوق">💾 بکاپ</button>
+            <button class="backup-action-btn" onclick="triggerImportFullBackup()" title="بازیابی کامل فایل بکاپ">📂 بازیابی</button>
+            <input type="file" id="fullBackupFileInput" accept=".json" style="display: none;" onchange="importFullBackup(event)">
+            <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="تغییر تم">🌙</button>
+        </div>
     </header>
 
     <div class="tab-container">
@@ -2841,6 +2872,73 @@ ${dayBlocksHtml}
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        }
+
+        function exportFullBackup() {
+            try {
+                const data = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    data[key] = localStorage.getItem(key);
+                }
+
+                const curJalali = getCurrentJalaliDate();
+                const dateStr = `${curJalali.year}-${String(curJalali.month).padStart(2, '0')}-${String(curJalali.day).padStart(2, '0')}`;
+                const fileName = `emarat_full_backup_${dateStr}.json`;
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                alert('خطا در دانلود پشتیبان: ' + e.message);
+            }
+        }
+
+        function triggerImportFullBackup() {
+            const input = document.getElementById('fullBackupFileInput');
+            if (input) input.click();
+        }
+
+        function importFullBackup(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (typeof data !== 'object' || data === null) {
+                        throw new Error('فرمت فایل پشتیبان معتبر نیست.');
+                    }
+
+                    let count = 0;
+                    Object.keys(data).forEach(key => {
+                        if (typeof data[key] === 'string') {
+                            localStorage.setItem(key, data[key]);
+                        } else {
+                            localStorage.setItem(key, JSON.stringify(data[key]));
+                        }
+                        count++;
+                    });
+
+                    resetMonitorCache();
+                    renderMonitor();
+                    renderMonthlyPdfList();
+
+                    alert(`✅ بازیابی کامل اطلاعات با موفقیت انجام شد! (${count} آیتم اطلاعاتی بازگردانی شد)`);
+                } catch (err) {
+                    alert('❌ خطا در بازگردانی پشتیبان: ' + err.message);
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
         }
 
         // لود اولیه تم و راه‌اندازی دیدبان
