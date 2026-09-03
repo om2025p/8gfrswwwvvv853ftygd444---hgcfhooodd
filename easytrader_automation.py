@@ -1157,8 +1157,7 @@ def run_automation():
                 "history": local_state_atie.get("history", [])
             }
 
-            sync_ok = sync_with_mantledb(synergy_payload=synergy_payload if not syn_recorded_today else None,
-                                       atie_payload=atie_payload if not atie_recorded_today else None)
+            sync_ok = sync_with_mantledb(synergy_payload=synergy_payload, atie_payload=atie_payload)
 
             # -------------------------------------------------------------------------
             # 7. SEND TELEGRAM NOTIFICATIONS
