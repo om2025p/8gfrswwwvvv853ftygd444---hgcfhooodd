@@ -735,7 +735,7 @@
         renderHistory();
     }
 
-    function addToHistory(baseNum, newNum, percent, diffType, rawBase, rawNew) {
+    function addToHistory(baseNum, newNum, percent, diffType, rawBase, rawNew, rawPeak, tomanProfit) {
         const history = getHistory();
         const now = new Date();
         history.unshift({
@@ -746,6 +746,8 @@
             type: diffType,
             rawBase: rawBase,
             rawNew: rawNew,
+            rawPeak: rawPeak,
+            tomanProfit: tomanProfit,
             timestamp: now.toISOString(),
             persianDate: toPersianDate(now)
         });
@@ -950,6 +952,8 @@
         resultDiv.textContent = resultText;
         resultCopyBtn.style.display = 'flex';
 
+        const calculatedTomanProfit = (type === 'increase' && newNum > prevPeak) ? Math.round((newNum - prevPeak) / 10000) : Math.round((newNum - baseNum) / 10000);
+
         if (saveToHistory) {
             addToHistory(
                 formatNumberWithCommas(baseNum),
@@ -957,7 +961,9 @@
                 percentFixed,
                 type,
                 baseNum,
-                newNum
+                newNum,
+                prevPeak,
+                calculatedTomanProfit
             );
         }
         return true;

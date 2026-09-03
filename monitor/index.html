@@ -920,8 +920,13 @@
                 rawPeak = Math.max(rawPeak, parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0);
             }
 
-            const diff = rawNew - rawBase;
-            const tomanProfit = Math.round(diff / 10000);
+            let tomanProfit;
+            if (calc.tomanProfit !== undefined && calc.tomanProfit !== null && !isNaN(calc.tomanProfit)) {
+                tomanProfit = calc.tomanProfit;
+            } else {
+                const diff = rawNew - rawBase;
+                tomanProfit = Math.round(diff / 10000);
+            }
 
             let status = calc.type;
             if (!status) {
@@ -993,8 +998,14 @@
                     rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
                 }
 
-                const diff = rawNew - rawBase;
-                totalTomanProfit += Math.round(diff / 10000);
+                let tomanProfit;
+                if (calc.tomanProfit !== undefined && calc.tomanProfit !== null && !isNaN(calc.tomanProfit)) {
+                    tomanProfit = calc.tomanProfit;
+                } else {
+                    const diff = rawNew - rawBase;
+                    tomanProfit = Math.round(diff / 10000);
+                }
+                totalTomanProfit += tomanProfit;
             });
 
             if (!firstDate || !lastDate) return 0;
@@ -1061,8 +1072,13 @@
                         rawPeak = Math.max(rawPeak, parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0);
                     }
 
-                    const diff = rawNew - rawBase;
-                    const tomanProfit = Math.round(diff / 10000);
+                    let tomanProfit;
+                    if (calc.tomanProfit !== undefined && calc.tomanProfit !== null && !isNaN(calc.tomanProfit)) {
+                        tomanProfit = calc.tomanProfit;
+                    } else {
+                        const diff = rawNew - rawBase;
+                        tomanProfit = Math.round(diff / 10000);
+                    }
 
                     let status = calc.type;
                     if (!status) {
