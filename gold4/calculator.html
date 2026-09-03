@@ -912,6 +912,7 @@
         if (isNaN(currentPeak)) {
             currentPeak = baseNum;
         }
+        const prevPeak = currentPeak;
 
         const diff = newNum - baseNum;
         const percent = (diff / baseNum) * 100;
