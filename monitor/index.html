@@ -900,7 +900,7 @@
             const calc = history[0];
             let rawBase = 0;
             let rawNew = 0;
-            let rawPeak = 0;
+            let rawPeak = peakStored || 0;
 
             if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
                 rawBase = calc.rawBase;
@@ -915,11 +915,16 @@
             }
 
             if (calc.rawPeak !== undefined && calc.rawPeak !== null && !isNaN(calc.rawPeak)) {
-                rawPeak = calc.rawPeak;
+                rawPeak = Math.max(rawPeak, calc.rawPeak);
             } else if (calc.peak) {
-                rawPeak = parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0;
+                rawPeak = Math.max(rawPeak, parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0);
+            }
+
+            let tomanProfit = 0;
+            if (calc.tomanProfit !== undefined && calc.tomanProfit !== null && !isNaN(calc.tomanProfit)) {
+                tomanProfit = calc.tomanProfit;
             } else {
-                rawPeak = peakStored || 0;
+                tomanProfit = Math.round((rawNew - rawBase) / 10000);
             }
 
             let status = calc.type;
@@ -932,12 +937,6 @@
                     status = 'increase';
                 }
             }
-
-            let diff = rawNew - rawBase;
-            if ((status === 'increase' || calc.type === 'increase') && rawPeak > 0 && rawNew > rawPeak) {
-                diff = rawNew - rawPeak;
-            }
-            const tomanProfit = Math.round(diff / 10000);
 
             return {
                 profit: tomanProfit,
@@ -985,7 +984,6 @@
 
                 let rawBase = 0;
                 let rawNew = 0;
-                let rawPeak = 0;
 
                 if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
                     rawBase = calc.rawBase;
@@ -999,17 +997,13 @@
                     rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
                 }
 
-                if (calc.rawPeak !== undefined && calc.rawPeak !== null && !isNaN(calc.rawPeak)) {
-                    rawPeak = calc.rawPeak;
-                } else if (calc.peak) {
-                    rawPeak = parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0;
+                let tomanProfit = 0;
+                if (calc.tomanProfit !== undefined && calc.tomanProfit !== null && !isNaN(calc.tomanProfit)) {
+                    tomanProfit = calc.tomanProfit;
+                } else {
+                    tomanProfit = Math.round((rawNew - rawBase) / 10000);
                 }
-
-                let diff = rawNew - rawBase;
-                if ((calc.type === 'increase') && rawPeak > 0 && rawNew > rawPeak) {
-                    diff = rawNew - rawPeak;
-                }
-                totalTomanProfit += Math.round(diff / 10000);
+                totalTomanProfit += tomanProfit;
             });
 
             if (!firstDate || !lastDate) return 0;
@@ -1056,7 +1050,7 @@
                     const calc = history[i];
                     let rawBase = 0;
                     let rawNew = 0;
-                    let rawPeak = 0;
+                    let rawPeak = peakStored || 0;
 
                     if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
                         rawBase = calc.rawBase;
@@ -1071,11 +1065,16 @@
                     }
 
                     if (calc.rawPeak !== undefined && calc.rawPeak !== null && !isNaN(calc.rawPeak)) {
-                        rawPeak = calc.rawPeak;
+                        rawPeak = Math.max(rawPeak, calc.rawPeak);
                     } else if (calc.peak) {
-                        rawPeak = parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0;
+                        rawPeak = Math.max(rawPeak, parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0);
+                    }
+
+                    let tomanProfit = 0;
+                    if (calc.tomanProfit !== undefined && calc.tomanProfit !== null && !isNaN(calc.tomanProfit)) {
+                        tomanProfit = calc.tomanProfit;
                     } else {
-                        rawPeak = peakStored || 0;
+                        tomanProfit = Math.round((rawNew - rawBase) / 10000);
                     }
 
                     let status = calc.type;
@@ -1088,12 +1087,6 @@
                             status = 'increase';
                         }
                     }
-
-                    let diff = rawNew - rawBase;
-                    if ((status === 'increase' || calc.type === 'increase') && rawPeak > 0 && rawNew > rawPeak) {
-                        diff = rawNew - rawPeak;
-                    }
-                    const tomanProfit = Math.round(diff / 10000);
 
                     let ts = null;
                     if (calc.timestamp) {
