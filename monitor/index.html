@@ -1050,8 +1050,10 @@
             }
 
             let tomanProfit;
-            if (calc.tomanProfit !== undefined && calc.tomanProfit !== null && !isNaN(calc.tomanProfit)) {
+            if (calc.tomanProfit !== undefined && calc.tomanProfit !== null && !isNaN(calc.tomanProfit) && calc.tomanProfit !== Math.round((rawNew - rawBase) / 10000)) {
                 tomanProfit = calc.tomanProfit;
+            } else if (rawPeak > 0 && rawNew > rawPeak) {
+                tomanProfit = Math.round((rawNew - rawPeak) / 10000);
             } else {
                 const diff = rawNew - rawBase;
                 tomanProfit = Math.round(diff / 10000);
@@ -1202,8 +1204,10 @@
                     }
 
                     let tomanProfit;
-                    if (calc.tomanProfit !== undefined && calc.tomanProfit !== null && !isNaN(calc.tomanProfit)) {
+                    if (calc.tomanProfit !== undefined && calc.tomanProfit !== null && !isNaN(calc.tomanProfit) && calc.tomanProfit !== Math.round((rawNew - rawBase) / 10000)) {
                         tomanProfit = calc.tomanProfit;
+                    } else if (rawPeak > 0 && rawNew > rawPeak) {
+                        tomanProfit = Math.round((rawNew - rawPeak) / 10000);
                     } else {
                         const diff = rawNew - rawBase;
                         tomanProfit = Math.round(diff / 10000);
