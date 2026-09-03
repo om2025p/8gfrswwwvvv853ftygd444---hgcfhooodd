@@ -2,19 +2,20 @@
 # -*- coding: utf-8 -*-
 
 """
-Emarat EasyTrader Automation Script (v3.3 - Full Live Logging & Debug Edition)
-=============================================================================
+Emarat EasyTrader Automation Script (v3.4 - Smart User/Bot Record Discrimination Edition)
+========================================================================================
 This script automates logging into login.emofid.com, navigating to EasyTrader portfolio,
 extracting total values for both:
   1. App 5: "سینرژی" (Synergy Fund)
   2. App 4: "آتیه / بازنشستگی" (Mofid Atie / Retirement Fund)
 
 Features:
+  - Smart distinction between manual user recordings vs bot automated recordings.
+    If user manually recorded today's percentage before 15:30, automation gracefully halts for that app.
+    Automated test runs or previous bot entries are ignored during the manual entry check.
   - Full end-to-end live event logging to console, log file (automation_full_execution.log),
     and live Telegram updates.
   - Automatic document upload of full execution log file to Telegram at completion or error.
-  - Checks if user has ALREADY recorded today's percent manually before 15:30.
-    If so, gracefully halts automation to prevent overwriting or duplicate entries.
   - Network Response Interception (API Sniffing) alongside multi-layered DOM fallback strategies.
   - Updates local backup files (gold5/gold5_backup.json & gold4/gold4_backup.json).
   - Synchronizes bi-directionally with MantleDB cloud storage across ALL key variants:
@@ -142,18 +143,23 @@ def get_current_persian_datetime():
 
 def is_already_recorded_today(history_list, fund_name=""):
     """
-    Checks if an entry for today (same Jalali date) already exists in the history list.
+    Checks if a MANUAL user entry for today (same Jalali date) already exists in the history list.
+    Automated bot entries (marked with source == 'automation' or auto == True) are ignored.
     """
     if not history_list:
         log_event(f"[i] History list for {fund_name} is empty.")
         return False
 
-    current_persian_date = get_current_persian_datetime().split()[0]  # e.g. "1403/12/07"
+    current_persian_date = get_current_persian_datetime().split()[0]  # e.g. "1405/06/12"
 
     for item in history_list:
+        # Ignore automated bot entries
+        if item.get("source") == "automation" or item.get("auto") is True:
+            continue
+
         p_date = item.get("persianDate", "")
         if p_date and p_date.split()[0] == current_persian_date:
-            log_event(f"[+] Found matching Persian date entry for today ({current_persian_date}) in {fund_name} history.")
+            log_event(f"[+] Found matching manual user Persian date entry for today ({current_persian_date}) in {fund_name} history.")
             return True
 
         ts = item.get("timestamp")
@@ -166,12 +172,12 @@ def is_already_recorded_today(history_list, fund_name=""):
                 jy, jm, jd = gregorian_to_jalali(dt.year, dt.month, dt.day)
                 item_jdate = f"{jy:04d}/{jm:02d}/{jd:02d}"
                 if item_jdate == current_persian_date:
-                    log_event(f"[+] Found matching ISO timestamp entry for today ({current_persian_date}) in {fund_name} history.")
+                    log_event(f"[+] Found matching manual user ISO timestamp entry for today ({current_persian_date}) in {fund_name} history.")
                     return True
             except Exception:
                 pass
 
-    log_event(f"[i] No entry recorded for today ({current_persian_date}) yet in {fund_name}.")
+    log_event(f"[i] No manual user entry recorded for today ({current_persian_date}) yet in {fund_name}.")
     return False
 
 
@@ -1015,7 +1021,7 @@ def run_automation():
 
             if syn_recorded_today:
                 log_event("[i] Fund 5 (Synergy) was already recorded today by user. Skipping extraction.", telegram_live=True)
-                send_telegram_message(f"ℹ️ <b>صندوق ۵ (سینرژی):</b> درصد امروز قبلاً توسط شما ثبت شده بود، پس دست‌نخورده باقی ماند. ☕")
+                send_telegram_message(f"ℹ️ <b>صندوق ۵ (سینرژی):</b> درصد امروز قبلاً توسط شما به صورت دستی ثبت شده بود، پس دست‌نخورده باقی ماند. ☕")
             else:
                 extracted_value_syn = network_captured_data.get("synergy_val")
                 if extracted_value_syn:
@@ -1079,7 +1085,9 @@ def run_automation():
 
                 local_state_syn["percents"].append({
                     "value": float(round(percent_change_syn, 2)),
-                    "timestamp": timestamp_ms
+                    "timestamp": timestamp_ms,
+                    "source": "automation",
+                    "auto": True
                 })
                 local_state_syn["percents"].sort(key=lambda x: x["timestamp"])
 
@@ -1096,7 +1104,9 @@ def run_automation():
                     "rawBase": float(base_val_syn),
                     "rawNew": float(new_val_syn),
                     "timestamp": datetime.now().isoformat() + "Z",
-                    "persianDate": persian_date_str
+                    "persianDate": persian_date_str,
+                    "source": "automation",
+                    "auto": True
                 })
                 if len(history_list_syn) > 60:
                     history_list_syn = history_list_syn[:60]
@@ -1117,7 +1127,7 @@ def run_automation():
 
             if atie_recorded_today:
                 log_event("[i] Fund 4 (Atie) was already recorded today by user. Skipping extraction.", telegram_live=True)
-                send_telegram_message(f"ℹ️ <b>صندوق ۴ (آتیه):</b> درصد امروز قبلاً توسط شما ثبت شده بود، پس دست‌نخورده باقی ماند. ☕")
+                send_telegram_message(f"ℹ️ <b>صندوق ۴ (آتیه):</b> درصد امروز قبلاً توسط شما به صورت دستی ثبت شده بود، پس دست‌نخورده باقی ماند. ☕")
             else:
                 log_event("\n[+] Navigating to extract App 4 (Atie / Retirement Fund)...", telegram_live=True)
 
@@ -1184,7 +1194,9 @@ def run_automation():
 
                 local_state_atie["percents"].append({
                     "value": float(round(percent_change_atie, 2)),
-                    "timestamp": timestamp_ms
+                    "timestamp": timestamp_ms,
+                    "source": "automation",
+                    "auto": True
                 })
                 local_state_atie["percents"].sort(key=lambda x: x["timestamp"])
 
@@ -1201,7 +1213,9 @@ def run_automation():
                     "rawBase": float(base_val_atie),
                     "rawNew": float(new_val_atie),
                     "timestamp": datetime.now().isoformat() + "Z",
-                    "persianDate": persian_date_str
+                    "persianDate": persian_date_str,
+                    "source": "automation",
+                    "auto": True
                 })
                 if len(history_list_atie) > 60:
                     history_list_atie = history_list_atie[:60]
@@ -1310,7 +1324,7 @@ def run_automation():
 
 
 if __name__ == "__main__":
-    log_event("[+] Starting EasyTrader Automation Script (v3.3)...")
+    log_event("[+] Starting EasyTrader Automation Script (v3.4)...")
     success = run_automation()
     if success:
         log_event("[+] Automation execution finished successfully.")
