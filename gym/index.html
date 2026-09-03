@@ -2326,8 +2326,52 @@
         if (tab === 'stats') { renderStats(); renderTrash(); }
     }
 
+    function buildDailyTimeline(history) {
+        if (!history || history.length === 0) return [];
+
+        // تاریخ‌ها صعودی بر اساس زمان تشکیل می‌شوند
+        const sortedHistory = history.slice().sort((a, b) => a.id - b.id);
+        const firstTime = sortedHistory[0].id;
+        const lastTime = Date.now();
+
+        // شروع روز از نیمه‌شب (00:00:00) اولین تمرین
+        const startDate = new Date(firstTime);
+        startDate.setHours(0, 0, 0, 0);
+
+        const endDate = new Date(lastTime);
+        endDate.setHours(0, 0, 0, 0);
+
+        const timeline = [];
+        let curr = new Date(startDate);
+
+        // نقشه‌برداری جلسات بر اساس کلید روز متناظر
+        const historyByDayKey = {};
+        sortedHistory.forEach(rec => {
+            const d = new Date(rec.id);
+            const dayKey = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+            if (!historyByDayKey[dayKey]) historyByDayKey[dayKey] = [];
+            historyByDayKey[dayKey].push(rec);
+        });
+
+        while (curr.getTime() <= endDate.getTime()) {
+            const dayKey = `${curr.getFullYear()}-${curr.getMonth() + 1}-${curr.getDate()}`;
+            const dayRecords = historyByDayKey[dayKey] || [];
+
+            timeline.push({
+                timestamp: curr.getTime(),
+                dayKey: dayKey,
+                hasWorkout: dayRecords.length > 0,
+                records: dayRecords
+            });
+
+            curr.setDate(curr.getDate() + 1);
+        }
+
+        return timeline;
+    }
+
     function renderStats() {
-        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]').slice().reverse();
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
         const container = document.getElementById('statsSummary');
 
         if (history.length === 0) {
@@ -2367,44 +2411,67 @@
         const height = 200;
         const padding = 30;
 
+        const timeline = buildDailyTimeline(history);
+        if (timeline.length === 0) return;
+
         let heavyPoints = [];
         let lightPoints = [];
         let heavySessions = 0;
         let lightSessions = 0;
 
-        history.forEach((rec, index) => {
-            if (rec.typeCode === 'heavy') heavySessions++;
-            else lightSessions++;
-
-            heavyPoints.push({x: index, y: heavySessions});
-            lightPoints.push({x: index, y: lightSessions});
+        timeline.forEach((day, index) => {
+            if (day.hasWorkout) {
+                day.records.forEach(rec => {
+                    if (rec.typeCode === 'heavy') heavySessions++;
+                    else lightSessions++;
+                });
+                heavyPoints.push({x: index, y: heavySessions, active: true});
+                lightPoints.push({x: index, y: lightSessions, active: true});
+            } else {
+                // روز عدم تمرین (افت به صفر / OFF مثل چارت بازار)
+                heavyPoints.push({x: index, y: 0, active: false});
+                lightPoints.push({x: index, y: 0, active: false});
+            }
         });
 
         const maxSessions = Math.max(heavySessions, lightSessions, 1);
-        const xScale = (width - 2 * padding) / (history.length - 1 || 1);
+        const xScale = (width - 2 * padding) / (timeline.length - 1 || 1);
         const yScale = (height - 2 * padding) / maxSessions;
 
         const makePath = (points, color) => {
             if (points.length === 0) return '';
-            let d = `M ${padding} ${height - padding}`;
+            let d = '';
             points.forEach((p, i) => {
                 const x = padding + p.x * xScale;
                 const y = height - padding - p.y * yScale;
-                d += ` L ${x} ${y}`;
+                d += (i === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`);
             });
-            return `<path d="${d}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />`;
+            return `<path d="${d}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />`;
         };
+
+        let dotsSvg = '';
+        lightPoints.forEach(p => {
+            const x = padding + p.x * xScale;
+            const y = height - padding - p.y * yScale;
+            dotsSvg += `<circle cx="${x}" cy="${y}" r="${p.active ? 3.5 : 2}" fill="${p.active ? '#007bff' : 'var(--border-color)'}" />`;
+        });
+        heavyPoints.forEach(p => {
+            const x = padding + p.x * xScale;
+            const y = height - padding - p.y * yScale;
+            dotsSvg += `<circle cx="${x}" cy="${y}" r="${p.active ? 3.5 : 2}" fill="${p.active ? '#dc3545' : 'var(--border-color)'}" />`;
+        });
 
         container.innerHTML = `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}">
             <line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="var(--border-color)" />
             <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height-padding}" stroke="var(--border-color)" />
             ${makePath(lightPoints, '#007bff')}
             ${makePath(heavyPoints, '#dc3545')}
+            ${dotsSvg}
         </svg>`;
     }
 
     function renderComparisonChartFromFilters() {
-        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]').slice().reverse();
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]');
         const selected = Array.from(document.querySelectorAll('#chartFilters input:checked')).map(i => i.value);
         renderComparisonChart(history, selected);
     }
@@ -2415,6 +2482,9 @@
         const width = container.clientWidth || 300;
         const height = 250;
         const padding = 30;
+
+        const timeline = buildDailyTimeline(history);
+        if (timeline.length === 0) return;
 
         const allParams = [
             { key: 'stomach', color: '#ff5722', defaultMax: 10 },
@@ -2427,7 +2497,7 @@
 
         const params = selectedKeys ? allParams.filter(p => selectedKeys.includes(p.key)) : allParams;
 
-        // Calculate dynamic max for each parameter
+        // محاسبه حداکثر مقدار پویا برای هر پارامتر
         params.forEach(p => {
             let currentMax = p.defaultMax;
             history.forEach(rec => {
@@ -2440,10 +2510,10 @@
                 }
                 if (val > currentMax) currentMax = val;
             });
-            p.max = currentMax * 1.1; // 10% buffer
+            p.max = currentMax * 1.1; // 10% حاشیه
         });
 
-        const xScale = (width - 2 * padding) / (history.length - 1 || 1);
+        const xScale = (width - 2 * padding) / (timeline.length - 1 || 1);
 
         let svgContent = `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}">
             <line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" stroke="var(--border-color)" />
@@ -2451,36 +2521,41 @@
 
         params.forEach(p => {
             let pathD = '';
-            history.forEach((rec, index) => {
+            timeline.forEach((day, index) => {
                 let val = 0;
-                if (p.key === 'duration') {
-                    const secs = rec.durationSeconds || (rec.duration ? rec.duration * 60 : 0);
-                    val = secs / 60;
-                } else {
-                    val = (rec.ratings && rec.ratings[p.key]) || 0;
-                }
+                if (day.hasWorkout && day.records.length > 0) {
+                    const lastRec = day.records[day.records.length - 1];
+                    if (p.key === 'duration') {
+                        const secs = lastRec.durationSeconds || (lastRec.duration ? lastRec.duration * 60 : 0);
+                        val = secs / 60;
+                    } else {
+                        val = (lastRec.ratings && lastRec.ratings[p.key]) || 0;
+                    }
+                } // در صورت عدم انجام تمرین، val برابر صفر ماندگاری داشته و افت می‌کند (OFF)
+
                 const x = padding + index * xScale;
                 const yScale = (height - 2 * padding) / p.max;
                 const y = height - padding - Math.min(val, p.max) * yScale;
                 pathD += (index === 0 ? 'M' : 'L') + ` ${x} ${y}`;
             });
-            svgContent += `<path d="${pathD}" fill="none" stroke="${p.color}" stroke-width="2" stroke-opacity="0.7" />`;
+            svgContent += `<path d="${pathD}" fill="none" stroke="${p.color}" stroke-width="2" stroke-opacity="0.8" stroke-linecap="round" stroke-linejoin="round" />`;
 
-            const startIdx = Math.max(0, history.length - 10);
-            for(let i = startIdx; i < history.length; i++) {
-                const rec = history[i];
+            timeline.forEach((day, i) => {
                 let val = 0;
-                if (p.key === 'duration') {
-                    const secs = rec.durationSeconds || (rec.duration ? rec.duration * 60 : 0);
-                    val = secs / 60;
-                } else {
-                    val = (rec.ratings && rec.ratings[p.key]) || 0;
+                if (day.hasWorkout && day.records.length > 0) {
+                    const lastRec = day.records[day.records.length - 1];
+                    if (p.key === 'duration') {
+                        const secs = lastRec.durationSeconds || (lastRec.duration ? lastRec.duration * 60 : 0);
+                        val = secs / 60;
+                    } else {
+                        val = (lastRec.ratings && lastRec.ratings[p.key]) || 0;
+                    }
                 }
                 const x = padding + i * xScale;
                 const yScale = (height - 2 * padding) / p.max;
                 const y = height - padding - Math.min(val, p.max) * yScale;
-                svgContent += `<circle cx="${x}" cy="${y}" r="3" fill="${p.color}" />`;
-            }
+                svgContent += `<circle cx="${x}" cy="${y}" r="${day.hasWorkout ? 3 : 1.5}" fill="${day.hasWorkout ? p.color : 'var(--border-color)'}" />`;
+            });
         });
 
         svgContent += `</svg>`;
