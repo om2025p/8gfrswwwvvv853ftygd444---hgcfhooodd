@@ -2425,13 +2425,10 @@
                     if (rec.typeCode === 'heavy') heavySessions++;
                     else lightSessions++;
                 });
-                heavyPoints.push({x: index, y: heavySessions, active: true});
-                lightPoints.push({x: index, y: lightSessions, active: true});
-            } else {
-                // روز عدم تمرین (افت به صفر / OFF مثل چارت بازار)
-                heavyPoints.push({x: index, y: 0, active: false});
-                lightPoints.push({x: index, y: 0, active: false});
             }
+            // روند تجمعی صعودی پله‌ای DNA: در روزهای عدم تمرین y ثابت می‌ماند (خط افقی بدون صعود)
+            heavyPoints.push({x: index, y: heavySessions, active: day.hasWorkout});
+            lightPoints.push({x: index, y: lightSessions, active: day.hasWorkout});
         });
 
         const maxSessions = Math.max(heavySessions, lightSessions, 1);
@@ -2446,19 +2443,23 @@
                 const y = height - padding - p.y * yScale;
                 d += (i === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`);
             });
-            return `<path d="${d}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />`;
+            return `<path d="${d}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />`;
         };
 
         let dotsSvg = '';
         lightPoints.forEach(p => {
-            const x = padding + p.x * xScale;
-            const y = height - padding - p.y * yScale;
-            dotsSvg += `<circle cx="${x}" cy="${y}" r="${p.active ? 3.5 : 2}" fill="${p.active ? '#007bff' : 'var(--border-color)'}" />`;
+            if (p.active) {
+                const x = padding + p.x * xScale;
+                const y = height - padding - p.y * yScale;
+                dotsSvg += `<circle cx="${x}" cy="${y}" r="4" fill="#007bff" />`;
+            }
         });
         heavyPoints.forEach(p => {
-            const x = padding + p.x * xScale;
-            const y = height - padding - p.y * yScale;
-            dotsSvg += `<circle cx="${x}" cy="${y}" r="${p.active ? 3.5 : 2}" fill="${p.active ? '#dc3545' : 'var(--border-color)'}" />`;
+            if (p.active) {
+                const x = padding + p.x * xScale;
+                const y = height - padding - p.y * yScale;
+                dotsSvg += `<circle cx="${x}" cy="${y}" r="4" fill="#dc3545" />`;
+            }
         });
 
         container.innerHTML = `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}">
