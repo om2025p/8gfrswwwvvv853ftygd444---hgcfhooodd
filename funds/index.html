@@ -145,22 +145,86 @@
             position: relative;
             width: 100%;
             height: 100%;
-            background-color: #ffffff;
+            background-color: var(--bg-dark);
         }
 
-        .webview-frame {
+        .webview-wrapper {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            border: none;
             display: none;
+        }
+
+        .webview-wrapper.active {
+            display: block;
+        }
+
+        .webview-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
             background: #ffffff;
         }
 
-        .webview-frame.active {
-            display: block;
+        /* کارت جایگزین باز کردن مستقیم وب‌سایت */
+        .fallback-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 24px;
+            text-align: center;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            gap: 16px;
+        }
+
+        .fallback-icon {
+            font-size: 3.5rem;
+            margin-bottom: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.85; }
+        }
+
+        .fallback-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .fallback-desc {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            max-width: 340px;
+            line-height: 1.6;
+        }
+
+        .fallback-launch-btn {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .fallback-launch-btn:active {
+            transform: scale(0.96);
         }
 
         /* لودر و اسپینر */
@@ -233,7 +297,7 @@
         </nav>
     </header>
 
-    <!-- محفظه وب‌ویوها -->
+    <!-- محفظه اصلی وب‌ویوها -->
     <main class="webview-container">
         <!-- لودر هوشمند -->
         <div class="loading-overlay" id="loadingOverlay">
@@ -241,20 +305,48 @@
             <div class="loading-text" id="loadingText">در حال بارگذاری وب‌سایت...</div>
         </div>
 
-        <!-- ۳ آی‌فریم مجزا جهت حفظ وضعیت و سرعت فوق‌العاده (Keep-Alive) -->
-        <iframe id="frame-tab1" class="webview-frame active" src="https://energy.irfarabi.ir/" allow="fullscreen; autoplay; clipboard-write;"></iframe>
-        <iframe id="frame-tab2" class="webview-frame" data-src="https://kianfunds4.ir/" allow="fullscreen; autoplay; clipboard-write;"></iframe>
-        <iframe id="frame-tab3" class="webview-frame" data-src="https://kianfunds9.ir/reports/nav-trend?symbol=16" allow="fullscreen; autoplay; clipboard-write;"></iframe>
-    </main>
+        <!-- تب ۱: انرژی فارابی (حالت کارت ورودی مستقیم جهت ماندگاری و اطمینان از عملکرد) -->
+        <div id="wrapper-tab1" class="webview-wrapper active">
+            <div class="fallback-card">
+                <div class="fallback-icon">⚡</div>
+                <div class="fallback-title">صندوق انرژی فارابی</div>
+                <div class="fallback-desc">
+                    جهت مشاهده سریع و کامل امکانات وب‌سایت انرژی فارابی، روی دکمه زیر کلیک کنید.
+                </div>
+                <a class="fallback-launch-btn" href="https://energy.irfarabi.ir/" target="_blank" rel="noopener noreferrer">
+                    🚀 ورود به سامانه انرژی فارابی
+                </a>
+            </div>
+        </div>
 
+        <!-- تب ۲: کیان ۴ -->
+        <div id="wrapper-tab2" class="webview-wrapper">
+            <div class="fallback-card">
+                <div class="fallback-icon">📈</div>
+                <div class="fallback-title">صندوق کیان ۴</div>
+                <div class="fallback-desc">
+                    جهت مشاهده مستقیم و کامل اطلاعات صندوق کیان ۴، روی دکمه زیر کلیک کنید.
+                </div>
+                <a class="fallback-launch-btn" href="https://kianfunds4.ir/" target="_blank" rel="noopener noreferrer">
+                    🚀 ورود به سامانه کیان ۴
+                </a>
+            </div>
+        </div>
+
+        <!-- تب ۳: کیان ۹ (این وب‌سایت اجازه نمایش در آی‌فریم را می‌دهد) -->
+        <div id="wrapper-tab3" class="webview-wrapper">
+            <iframe id="frame-tab3" class="webview-frame" data-src="https://kianfunds9.ir/reports/nav-trend?symbol=16" allow="fullscreen; autoplay; clipboard-write;"></iframe>
+        </div>
+    </main>
 
     <script>
         const tabBtns = document.querySelectorAll('.tab-btn');
-        const frames = {
-            tab1: document.getElementById('frame-tab1'),
-            tab2: document.getElementById('frame-tab2'),
-            tab3: document.getElementById('frame-tab3')
+        const wrappers = {
+            tab1: document.getElementById('wrapper-tab1'),
+            tab2: document.getElementById('wrapper-tab2'),
+            tab3: document.getElementById('wrapper-tab3')
         };
+        const frameTab3 = document.getElementById('frame-tab3');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loadingText = document.getElementById('loadingText');
         const refreshBtn = document.getElementById('refreshBtn');
@@ -262,15 +354,13 @@
 
         let currentTab = 'tab1';
 
-        // مدیریت حالت بارگذاری آی‌فریم‌ها
-        Object.keys(frames).forEach(tabKey => {
-            const iframe = frames[tabKey];
-            iframe.addEventListener('load', () => {
-                if (tabKey === currentTab) {
+        if (frameTab3) {
+            frameTab3.addEventListener('load', () => {
+                if (currentTab === 'tab3') {
                     hideLoading();
                 }
             });
-        });
+        }
 
         function showLoading(text) {
             loadingText.innerText = text || 'در حال بارگذاری...';
@@ -283,30 +373,33 @@
             loadingOverlay.style.pointerEvents = 'none';
         }
 
-        // سوئیچ بین تب‌ها با بالاترین سرعت و حفظ وضعیت Iframe
+        // سوئیچ سریع بین تب‌ها
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const targetTab = btn.getAttribute('data-tab');
                 if (targetTab === currentTab) return;
 
-                // به‌روزرسانی استایل دکمه‌های فعال
+                // به‌روزرسانی استایل دکمه فعال
                 tabBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
 
-                // مخفی‌سازی آی‌فریم قبلی و نمایش آی‌فریم جدید
-                Object.keys(frames).forEach(key => {
+                // نمایش محتوای تب انتخاب شده
+                Object.keys(wrappers).forEach(key => {
                     if (key === targetTab) {
-                        const targetFrame = frames[key];
-                        // بارگذاری ایزوله (Lazy load) در اولین دکمه زدن
-                        if (!targetFrame.src && targetFrame.getAttribute('data-src')) {
-                            showLoading('در حال دریافت اطلاعات...');
-                            targetFrame.src = targetFrame.getAttribute('data-src');
+                        wrappers[key].classList.add('active');
+
+                        if (key === 'tab3' && frameTab3) {
+                            if (!frameTab3.src && frameTab3.getAttribute('data-src')) {
+                                showLoading('در حال دریافت اطلاعات...');
+                                frameTab3.src = frameTab3.getAttribute('data-src');
+                            } else {
+                                hideLoading();
+                            }
                         } else {
                             hideLoading();
                         }
-                        targetFrame.classList.add('active');
                     } else {
-                        frames[key].classList.remove('active');
+                        wrappers[key].classList.remove('active');
                     }
                 });
 
@@ -314,17 +407,20 @@
             });
         });
 
-        // دکمه تازه‌سازی (Refresh) آی‌فریم فعال
+        // دکمه تازه‌سازی (Refresh)
         refreshBtn.addEventListener('click', () => {
-            const activeFrame = frames[currentTab];
-            if (activeFrame) {
+            if (currentTab === 'tab3' && frameTab3) {
                 showLoading('در حال به روزرسانی...');
-                const currentSrc = activeFrame.src || activeFrame.getAttribute('data-src');
-                activeFrame.src = currentSrc;
+                frameTab3.src = frameTab3.src || frameTab3.getAttribute('data-src');
+            } else {
+                const activeBtn = document.querySelector('.tab-btn.active');
+                if (activeBtn) {
+                    window.open(activeBtn.getAttribute('data-url'), '_blank');
+                }
             }
         });
 
-        // باز کردن مستقیم در مرورگر خارجی
+        // باز کردن مستقیم در مرورگر
         openExternalBtn.addEventListener('click', () => {
             const activeBtn = document.querySelector('.tab-btn.active');
             if (activeBtn) {
@@ -333,10 +429,10 @@
             }
         });
 
-        // هاید کردن لودر اولیه بعد از ۴ ثانیه در صورت کندی سرور مقصد
+        // مخفی‌سازی لودر پس از ۱ ثانیه
         setTimeout(() => {
             hideLoading();
-        }, 4000);
+        }, 1000);
     </script>
 </body>
 </html>
