@@ -623,7 +623,7 @@
             peakInput.value = formatNumberWithCommas(currentPeak);
 
             resultText += ' 🚀 🟢 (سود خالص واقعی - عبور از قله)';
-            resultText += ` — 🎉 یعنی ${formatNumberWithCommas(netPeakProfit)} تومان سود واقعی و قله جدید ثبت شد!`;
+            resultText += ` — 🎉 یعنی ${formatNumberWithCommas(netPeakProfit)} ریال سود واقعی و قله جدید ثبت شد!`;
             type = 'increase';
             resultDiv.classList.add('positive');
         } else if (newNum > baseNum && newNum <= currentPeak) {
@@ -734,7 +734,7 @@
 
         let savedPeak = localStorage.getItem(STORAGE_PEAK);
         if (!savedPeak) {
-            savedPeak = '321,920,680';
+            savedPeak = '321,710,700';
             localStorage.setItem(STORAGE_PEAK, savedPeak);
         }
         const convertedPeak = normalizeNumberString(savedPeak);
@@ -776,6 +776,9 @@
         }
 
         renderHistory();
+        if (num1Input.value && num2Input.value) {
+            calculateAndSave(false);
+        }
         num1Input.focus();
     });
 
