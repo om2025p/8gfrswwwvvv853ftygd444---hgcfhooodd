@@ -1012,6 +1012,11 @@
                                 logDebug(`⚡ سرور در حال اجرای گام: ${step.name}`);
                             } else if (step.status === 'completed' && step.conclusion === 'failure') {
                                 logDlDebug(`❌ خطای گام سرور: [${step.name}]`, 'error');
+                                const history = getDownloadHistory();
+                                const inProgressItem = history.find(it => it.status === 'in_progress');
+                                if (inProgressItem) {
+                                    updateDownloadHistoryStatus(inProgressItem.id, 'failed', '❌ اجرای گام ناموفق', `خطای گام سرور گیت‌هاب [${step.name}]`);
+                                }
                             }
                         });
                     }
@@ -1428,15 +1433,33 @@
             return newItem.id;
         }
 
-        function updateDownloadHistoryStatus(itemId, status, statusText) {
+        function updateDownloadHistoryStatus(itemId, status, statusText, errorLog = null) {
             const history = getDownloadHistory();
             const idx = history.findIndex(item => item.id === itemId || item.link === itemId);
             if (idx !== -1) {
                 history[idx].status = status;
                 history[idx].statusText = statusText;
+                if (errorLog) {
+                    history[idx].errorLog = errorLog;
+                }
                 saveDownloadHistory(history);
                 renderDownloadHistory();
             }
+        }
+
+        function copyDownloadErrorLog(itemId) {
+            const history = getDownloadHistory();
+            const item = history.find(it => item.id === itemId || it.id === itemId || it.link === itemId);
+            if (!item || !item.errorLog) {
+                showToast("⚠️ لاگ خطایی برای این لینک ثبت نشده است.");
+                return;
+            }
+            const logContent = `=== لاگ خطای دانلود لینک سپر دانلود عمارت ===\nآدرس لینک: ${item.link}\nزمان: ${item.timestamp}\nوضعیت: ${item.statusText}\n\n--- شرح دقیق لاگ خطا ---\n${item.errorLog}`;
+            navigator.clipboard.writeText(logContent).then(() => {
+                showToast("📋 لاگ دقیق خطای این لینک کپی شد!");
+            }).catch(() => {
+                showToast("❌ خطا در کپی کردن لاگ به حافظه.");
+            });
         }
 
         function renderDownloadHistory() {
@@ -1473,6 +1496,19 @@
 
                 const uniqueTag = item.isUnique === false ? `<span style="font-size: 0.7rem; background: #f1f5f9; color: #64748b; padding: 1px 6px; border-radius: 6px; margin-right: 4px;">🔁 تکراری</span>` : '';
 
+                let errorBoxHtml = '';
+                if (item.errorLog || item.status === 'failed') {
+                    const briefErr = item.errorLog ? item.errorLog.slice(0, 120) + (item.errorLog.length > 120 ? '...' : '') : 'خطایی در حین استخراج یا دانلود رخ داده است.';
+                    errorBoxHtml = `
+                    <div style="margin-top: 4px; background: #fff5f5; border: 1px solid #fecaca; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px;">
+                        <span style="font-size: 0.75rem; color: #991b1b; font-weight: 600;">❌ شرح لاگ خطا:</span>
+                        <div style="font-size: 0.73rem; color: #7f1d1d; direction: ltr; text-align: left; font-family: monospace; white-space: pre-wrap; word-break: break-all;">${briefErr}</div>
+                        <button onclick="copyDownloadErrorLog('${item.id}')" class="action-btn secondary" style="padding: 4px 8px; font-size: 0.75rem; color: #dc2626; border-color: #fca5a5; width: auto; align-self: flex-end; margin-top: 2px;">
+                            📋 کپی لاگ خطا
+                        </button>
+                    </div>`;
+                }
+
                 html += `
                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
@@ -1484,6 +1520,7 @@
                     <div style="font-size: 0.82rem; color: #0f172a; direction: ltr; text-align: left; word-break: break-all; font-family: monospace; background: #ffffff; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0;">
                         ${item.link}
                     </div>
+                    ${errorBoxHtml}
                 </div>`;
             });
 
