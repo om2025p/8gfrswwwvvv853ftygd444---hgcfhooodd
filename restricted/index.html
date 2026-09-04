@@ -470,6 +470,35 @@
                 </button>
             </div>
 
+            <!-- کارت آکاردئونی کشویی تاریخچه و وضعیت زنده دانلودها -->
+            <div class="white-card" style="margin-top: -5px;">
+                <div id="historyAccordionHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
+                    <h2 class="card-title" style="margin: 0; border: none; padding: 0; font-size: 0.98rem; color: var(--accent-purple);">
+                        📜 تاریخچه و وضعیت زنده دانلودها
+                    </h2>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span id="downloadHistoryCountBadge" style="background: #f3e8ff; border: 1px solid #d8b4fe; color: var(--accent-purple); padding: 2px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: bold;">۰</span>
+                        <span id="historyAccordionToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: var(--accent-purple);">🔽</span>
+                    </div>
+                </div>
+
+                <div id="historyAccordionContent" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 0;">
+                    <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">لیست آخرین لینک‌های در حال پردازش یا تکمیل شده:</span>
+                            <button class="action-btn secondary" id="btnClearHistory" style="width: auto; padding: 4px 10px; font-size: 0.75rem; border-radius: 8px; color: #ef4444; border-color: #fca5a5;">
+                                🗑️ پاکسازی تاریخچه
+                            </button>
+                        </div>
+                        <div id="downloadHistoryContainer" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-left: 2px;">
+                            <div style="text-align: center; color: #94a3b8; padding: 20px 0; font-size: 0.82rem;">
+                                هیچ دانلودی در تاریخچه ثبت نشده است. 💎
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- منوی کشویی آخرین بروزرسانی‌ها با تاریخ و ساعت خورشیدی به وقت تهران -->
             <div class="white-card" style="margin-top: -5px;">
                 <div id="updatesAccordionHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
@@ -1281,8 +1310,26 @@
             }
         };
 
-        // مدیریت لینک‌های منحصربه‌فرد (غیرتکراری) و حافظه دائمی مرورگر
+        // مدیریت آکاردئون کشویی تاریخچه و وضعیت زنده دانلودها
+        const historyAccordionHeader = document.getElementById('historyAccordionHeader');
+        const historyAccordionContent = document.getElementById('historyAccordionContent');
+        const historyAccordionToggleIcon = document.getElementById('historyAccordionToggleIcon');
+
+        if (historyAccordionHeader) {
+            historyAccordionHeader.onclick = () => {
+                if (historyAccordionContent.style.maxHeight === '0px' || !historyAccordionContent.style.maxHeight) {
+                    historyAccordionContent.style.maxHeight = '400px';
+                    if (historyAccordionToggleIcon) historyAccordionToggleIcon.style.transform = 'rotate(180deg)';
+                } else {
+                    historyAccordionContent.style.maxHeight = '0px';
+                    if (historyAccordionToggleIcon) historyAccordionToggleIcon.style.transform = 'rotate(0deg)';
+                }
+            };
+        }
+
+        // کلیدهای حافظه محلی LocalStorage
         const UNIQUE_LINKS_STORAGE_KEY = 'restricted_unique_download_links';
+        const DOWNLOAD_HISTORY_STORAGE_KEY = 'restricted_download_history';
 
         function getSavedUniqueLinks() {
             try {
@@ -1330,13 +1377,137 @@
                 logDlDebug(`🔗 لینک منحصربه‌فرد جدید ثبت شد (مجموع: ${linksSet.size})`);
                 return true;
             } else {
-                logDlDebug(`ℹ️ لینک قبلاً در لیست موجود بود و تکراری حساب نشد.`);
+                logDlDebug(`ℹ️ لینک قبلاً در لیست موجود بود و مجدداً برای دانلود ارسال شد (تکراری محسوب گردید و به شمارنده اضافه نشد).`);
                 return false;
             }
         }
 
         // بارگذاری اولیه شمارنده لینک‌های منحصربه‌فرد
         updateUniqueLinksBadge();
+
+        // مدیریت تاریخچه زنده دانلودها
+        function getDownloadHistory() {
+            try {
+                const raw = localStorage.getItem(DOWNLOAD_HISTORY_STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) return parsed;
+                }
+            } catch (e) {
+                console.error("Error reading download history:", e);
+            }
+            return [];
+        }
+
+        function saveDownloadHistory(historyArr) {
+            try {
+                localStorage.setItem(DOWNLOAD_HISTORY_STORAGE_KEY, JSON.stringify(historyArr.slice(0, 50))); // نگه داشتن ۵۰ مورد اخیر
+            } catch (e) {
+                console.error("Error saving download history:", e);
+            }
+        }
+
+        function addDownloadHistoryItem(rawLink, isUnique = true) {
+            const history = getDownloadHistory();
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateStr = now.toLocaleDateString('fa-IR');
+
+            const newItem = {
+                id: 'dl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                link: rawLink,
+                timestamp: `${dateStr} - ${timeStr}`,
+                status: 'in_progress', // in_progress, completed, failed
+                statusText: '⏳ در حال فرستادن به سرور...',
+                isUnique: isUnique
+            };
+
+            history.unshift(newItem);
+            saveDownloadHistory(history);
+            renderDownloadHistory();
+            return newItem.id;
+        }
+
+        function updateDownloadHistoryStatus(itemId, status, statusText) {
+            const history = getDownloadHistory();
+            const idx = history.findIndex(item => item.id === itemId || item.link === itemId);
+            if (idx !== -1) {
+                history[idx].status = status;
+                history[idx].statusText = statusText;
+                saveDownloadHistory(history);
+                renderDownloadHistory();
+            }
+        }
+
+        function renderDownloadHistory() {
+            const container = document.getElementById('downloadHistoryContainer');
+            const countBadge = document.getElementById('downloadHistoryCountBadge');
+            if (!container) return;
+
+            const history = getDownloadHistory();
+            if (countBadge) countBadge.innerText = history.length.toLocaleString('fa-IR');
+
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #94a3b8; padding: 20px 0; font-size: 0.82rem;">
+                        هیچ دانلودی در تاریخچه ثبت نشده است. 💎
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            history.forEach(item => {
+                let badgeBg = '#eff6ff';
+                let badgeColor = '#2563eb';
+                let badgeBorder = '#bfdbfe';
+
+                if (item.status === 'completed') {
+                    badgeBg = '#f0fdf4';
+                    badgeColor = '#16a34a';
+                    badgeBorder = '#bbf7d0';
+                } else if (item.status === 'failed') {
+                    badgeBg = '#fef2f2';
+                    badgeColor = '#dc2626';
+                    badgeBorder = '#fecaca';
+                }
+
+                const uniqueTag = item.isUnique === false ? `<span style="font-size: 0.7rem; background: #f1f5f9; color: #64748b; padding: 1px 6px; border-radius: 6px; margin-right: 4px;">🔁 تکراری</span>` : '';
+
+                html += `
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                        <span style="font-size: 0.78rem; color: #64748b; font-weight: 600;">🕒 ${item.timestamp} ${uniqueTag}</span>
+                        <span style="font-size: 0.75rem; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder}; padding: 2px 8px; border-radius: 8px; font-weight: 700;">
+                            ${item.statusText || 'در حال انجام'}
+                        </span>
+                    </div>
+                    <div style="font-size: 0.82rem; color: #0f172a; direction: ltr; text-align: left; word-break: break-all; font-family: monospace; background: #ffffff; padding: 6px 8px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        ${item.link}
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        renderDownloadHistory();
+
+        const btnClearHistory = document.getElementById('btnClearHistory');
+        if (btnClearHistory) {
+            btnClearHistory.onclick = () => {
+                localStorage.removeItem(DOWNLOAD_HISTORY_STORAGE_KEY);
+                renderDownloadHistory();
+                showToast("🗑️ تاریخچه دانلودها پاکسازی شد.");
+            };
+        }
+
+        // تابع استخراج تمام لینک‌ها از یک متن چند خطی یا معمولی
+        function extractLinksFromText(text) {
+            if (!text || typeof text !== 'string') return [];
+            const urlRegex = /(https?:\/\/[^\s"'<>]+)/gi;
+            const matches = text.match(urlRegex) || [];
+            return matches.map(u => sanitizeString(u.trim())).filter(u => u.length > 5);
+        }
 
         // دکمه چسباندن متن از کلیپ‌بورد
         const btnPaste = document.getElementById('btnPaste');
@@ -1363,14 +1534,43 @@
             };
         }
 
-        document.getElementById('btnDownload').onclick = () => {
-            const link = document.getElementById('dlLink').value;
-            if (!link) {
+        document.getElementById('btnDownload').onclick = async () => {
+            const rawText = document.getElementById('dlLink').value;
+            if (!rawText || !rawText.trim()) {
                 showToast("⚠️ لطفا آدرس پیوند تلگرام را در کادر بالا وارد کنید!");
                 return;
             }
-            registerUniqueLink(link);
-            triggerWorkflow(link);
+
+            const links = extractLinksFromText(rawText);
+            if (links.length === 0) {
+                showToast("⚠️ هیچ آدرس اینترنتی (لینک معتبر) در متن کادر یافت نشد!");
+                return;
+            }
+
+            showToast(`🚀 شناسایی ${links.length.toLocaleString('fa-IR')} لینک معتبر... در حال ارسال به صف دانلود!`);
+            logDlDebug(`⚡ مجموعاً ${links.length} لینک برای دانلود شناسایی شد.`);
+
+            // باز کردن خودکار آکاردئون تاریخچه
+            if (historyAccordionContent) {
+                historyAccordionContent.style.maxHeight = '400px';
+                if (historyAccordionToggleIcon) historyAccordionToggleIcon.style.transform = 'rotate(180deg)';
+            }
+
+            for (let i = 0; i < links.length; i++) {
+                const link = links[i];
+                const isNewUnique = registerUniqueLink(link);
+                const historyId = addDownloadHistoryItem(link, isNewUnique);
+
+                await triggerWorkflow(link);
+                updateDownloadHistoryStatus(historyId, 'in_progress', '⚡ ارسال شد به صف دانلود');
+
+                // وقفه کوتاه بین درخواست‌ها جهت حفظ ترتیب صف
+                if (i < links.length - 1) {
+                    await new Promise(r => setTimeout(r, 400));
+                }
+            }
+
+            document.getElementById('dlLink').value = '';
         };
 
         document.getElementById('btnSearchTelegram').onclick = () => {

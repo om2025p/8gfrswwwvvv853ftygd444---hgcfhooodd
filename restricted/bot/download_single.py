@@ -1081,10 +1081,21 @@ def expand_persian_query(query):
 
 async def main_download():
     # Load inputs
-    link = os.environ.get("TELEGRAM_LINK") or (sys.argv[1] if len(sys.argv) > 1 else None)
-    if not link:
+    raw_input_link = os.environ.get("TELEGRAM_LINK") or (sys.argv[1] if len(sys.argv) > 1 else None)
+    if not raw_input_link:
         print("Error: No link provided in TELEGRAM_LINK or arguments.")
         return
+
+    # Extract all valid HTTP/HTTPS links if input contains multiple links or text
+    extracted_links = re.findall(r'https?://[^\s"\'<>]+', str(raw_input_link))
+    if not extracted_links and str(raw_input_link).strip().startswith("search:"):
+        extracted_links = [str(raw_input_link).strip()]
+
+    if not extracted_links:
+        print("Error: No valid URLs extracted from input.")
+        return
+
+    print(f"DEBUG: Extracted {len(extracted_links)} link(s) for processing: {extracted_links}")
 
     print("Connecting to Telegram clients...")
     # On import, main/__init__.py creates client instances without auto-starting if in async context
@@ -1412,47 +1423,65 @@ async def main_download():
                     pass
             return
 
-        print(f"Starting single download for link: {link} to owner: {owner_id}")
-
-        # Send starting message to owner
-        msg = await safe_send_message(owner_id, f"📥 *شروع دانلود لینک درخواستی:*\n`{link}`\n\n🕒 لطفا صبور باشید...")
-        edit_id = msg.id if (msg and hasattr(msg, 'id')) else 0
-
         from main.plugins.pyroplug import get_msg
         from main.plugins.helpers import get_link, join
 
-        try:
-            if 't.me/+' in link or 't.me/joinchat/' in link:
-                # Join channel
-                res = await join(userbot, link)
-                await safe_edit_message(owner_id, msg, f"🔑 *نتیجه ورود به کانال خصوصی:*\n{res}")
-            elif not is_telegram_link:
-                # Direct social media download
-                await process_social_media_download(link, owner_id, msg)
-            else:
-                # Telegram link download
-                await get_msg(userbot, Bot, bot, owner_id, edit_id, link, 0)
-                await safe_send_message(owner_id, "✅ *دانلود و ارسال با موفقیت پایان یافت!*")
-        except Exception as e:
-            print(f"Error during execution: {e}")
-            err_msg_type = "شبکه اجتماعی (تیک‌تاک / اینستاگرام)" if is_social else "تلگرام"
-            try:
-                await safe_send_message(owner_id, f"❌ *خطا در پردازش لینک {err_msg_type}:*\n`{str(e)}`")
-            except:
-                pass
+        for link_idx, target_link in enumerate(extracted_links, 1):
+            target_link_str = str(target_link).strip()
+            target_link_lower = target_link_str.lower()
+            from urllib.parse import urlparse
+            parsed_domain = urlparse(target_link_lower).netloc
+            is_telegram_link = 't.me' in parsed_domain or 'telegram.me' in parsed_domain
 
-        # 30-minute stay-alive listener loop
+            is_social = any(domain in target_link_lower for domain in [
+                'instagram.com', 'instagr.am', 'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
+                'whatsapp.com', 'chat.whatsapp.com', 'wa.me', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com',
+                'xhamster.com', 'xvideos.com', 'pornhub.com'
+            ]) or (target_link_lower.startswith(('http://', 'https://')) and not is_telegram_link)
+
+            if is_social and not target_link_lower.startswith("search:"):
+                print(f"Starting social media download [{link_idx}/{len(extracted_links)}] for: {target_link_str} to owner: {owner_id}")
+                msg = await safe_send_message(owner_id, f"🎬 *تشخیص لینک شبکه اجتماعی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
+                await process_social_media_download(target_link_str, owner_id, msg)
+                continue
+
+            print(f"Starting single download [{link_idx}/{len(extracted_links)}] for link: {target_link_str} to owner: {owner_id}")
+
+            # Send starting message to owner
+            msg = await safe_send_message(owner_id, f"📥 *شروع دانلود لینک درخواستی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
+            edit_id = msg.id if (msg and hasattr(msg, 'id')) else 0
+
+            try:
+                if 't.me/+' in target_link_str or 't.me/joinchat/' in target_link_str:
+                    # Join channel
+                    res = await join(userbot, target_link_str)
+                    await safe_edit_message(owner_id, msg, f"🔑 *نتیجه ورود به کانال خصوصی:*\n{res}")
+                elif not is_telegram_link:
+                    # Direct social media download
+                    await process_social_media_download(target_link_str, owner_id, msg)
+                else:
+                    # Telegram link download
+                    await get_msg(userbot, Bot, bot, owner_id, edit_id, target_link_str, 0)
+                    await safe_send_message(owner_id, f"✅ *دانلود و ارسال لینک {link_idx} با موفقیت پایان یافت!*")
+            except Exception as e:
+                print(f"Error during execution for link {target_link_str}: {e}")
+                err_msg_type = "شبکه اجتماعی (تیک‌تاک / اینستاگرام)" if is_social else "تلگرام"
+                try:
+                    await safe_send_message(owner_id, f"❌ *خطا در پردازش لینک {err_msg_type}:*\n`{str(e)}`")
+                except:
+                    pass
+
+        # Brief stay-alive window so logs flush and next queue dispatch picks up immediately
         try:
             stay_alive_notice = (
-                "🚀 *سرور سپر دانلود عمارت به مدت ۳۰ دقیقه (۱,۸۰۰ ثانیه) روشن می‌ماند.*\n"
-                "`در این مدت، تمامی درخواست‌ها با سرعت فوق‌العاده بالاتری پردازش خواهند شد! 💎`"
+                f"✅ *پردازش کامل {len(extracted_links)} لینک با موفقیت انجام شد!*\n"
+                "`سپر دانلود عمارت آماده دریافت درخواست‌های جدید شماست. 💎`"
             )
             await safe_send_message(owner_id, stay_alive_notice)
-            print("DEBUG: Entering 30-minute stay-alive sleep loop (1,800 seconds)...")
-            await asyncio.sleep(1800)
-            print("DEBUG: 30-minute stay-alive loop completed.")
+            print("DEBUG: Brief 3-second buffer completed successfully.")
+            await asyncio.sleep(3)
         except Exception as ex_sleep:
-            print(f"DEBUG: Stay-alive sleep loop interrupted: {ex_sleep}")
+            print(f"DEBUG: Stay-alive sleep buffer interrupted: {ex_sleep}")
     finally:
         print("Stopping Pyrogram clients before exit...")
         for client_obj in [userbot, Bot]:
