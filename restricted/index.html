@@ -1021,11 +1021,22 @@
                         });
                     }
 
-                    // ۳. اگر اجرای سرور به پایان رسید، تمام لاگ‌های کامل متنی را دریافت و نمایش بده
+                    // ۳. اگر اجرای سرور به پایان رسید، تمام لاگ‌های کامل متنی را دریافت و وضعیت تاریخچه را بروزرسانی کن
                     if (latestRun.status === 'completed') {
                         clearInterval(logPollInterval);
-                        logDlDebug(`🏁 اجرای سرور به پایان رسید. نتیجه: ${latestRun.conclusion === 'success' ? 'موفقیت‌آمیز ✅' : 'خطا ❌'}`);
+                        const isSuccess = latestRun.conclusion === 'success';
+                        logDlDebug(`🏁 اجرای سرور به پایان رسید. نتیجه: ${isSuccess ? 'موفقیت‌آمیز ✅' : 'خطا ❌'}`);
                         logDebug(`🏁 پایان اجرای سرور. نتیجه: ${latestRun.conclusion}`);
+
+                        const history = getDownloadHistory();
+                        const inProgressItem = history.find(it => it.status === 'in_progress');
+                        if (inProgressItem) {
+                            if (isSuccess) {
+                                updateDownloadHistoryStatus(inProgressItem.id, 'completed', 'دانلود با موفقیت انجام شد ✅');
+                            } else {
+                                updateDownloadHistoryStatus(inProgressItem.id, 'failed', '❌ خطا در دانلود / اجرای ناموفق', 'اجرای سرور گیت‌هاب با خطا مواجه شد. لطفاً پنل دیاگ یا تلگرام را چک فرمایید.');
+                            }
+                        }
 
                         // دریافت لاگ متنی کامل از API گیت‌هاب
                         try {
@@ -1461,6 +1472,7 @@
                 showToast("❌ خطا در کپی کردن لاگ به حافظه.");
             });
         }
+        window.copyDownloadErrorLog = copyDownloadErrorLog;
 
         function renderDownloadHistory() {
             const container = document.getElementById('downloadHistoryContainer');
@@ -1598,8 +1610,12 @@
                 const isNewUnique = registerUniqueLink(link);
                 const historyId = addDownloadHistoryItem(link, isNewUnique);
 
-                await triggerWorkflow(link);
-                updateDownloadHistoryStatus(historyId, 'in_progress', '⚡ ارسال شد به صف دانلود');
+                const dispatchSuccess = await triggerWorkflow(link);
+                if (dispatchSuccess) {
+                    updateDownloadHistoryStatus(historyId, 'in_progress', '⚡ در حال پردازش در سرور...');
+                } else {
+                    updateDownloadHistoryStatus(historyId, 'failed', '❌ عدم موفقیت در ارسال درخواست به گیت‌هاب', 'ارسال درخواست به گیت‌هاب با خطا مواجه شد. لطفاً توکن PAT و تنظیمات گیت‌هاب را بررسی کنید.');
+                }
 
                 // وقفه کوتاه بین درخواست‌ها جهت حفظ ترتیب صف
                 if (i < links.length - 1) {
