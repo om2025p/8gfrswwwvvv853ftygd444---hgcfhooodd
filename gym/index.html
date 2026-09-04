@@ -1566,32 +1566,100 @@
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
         if (audioContext && audioContext.state === 'suspended') {
-            audioContext.resume();
+            audioContext.resume().catch(() => {});
         }
     }
 
-    function playBeep(freq, vol, duration) {
-        initAudio();
+    // باز کردن قفل صوتی مرورگر با اولین اشاره یا کلیک کاربر روی صفحه
+    document.addEventListener('click', initAudio, { passive: true });
+    document.addEventListener('touchstart', initAudio, { passive: true });
+
+    function playHTML5Beep(freq = 1000, duration = 0.2) {
         try {
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = freq;
-            const safeVol = Math.max(0.01, vol);
-            gain.gain.setValueAtTime(safeVol, audioContext.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration);
-            osc.connect(gain);
-            gain.connect(audioContext.destination);
-            osc.start();
-            osc.stop(audioContext.currentTime + duration);
+            const sampleRate = 8000;
+            const numSamples = Math.floor(sampleRate * duration);
+            const buffer = new Uint8Array(44 + numSamples);
+
+            const writeString = (offset, str) => {
+                for (let i = 0; i < str.length; i++) buffer[offset + i] = str.charCodeAt(i);
+            };
+            const writeUint32 = (offset, val) => {
+                buffer[offset] = val & 0xff;
+                buffer[offset + 1] = (val >> 8) & 0xff;
+                buffer[offset + 2] = (val >> 16) & 0xff;
+                buffer[offset + 3] = (val >> 24) & 0xff;
+            };
+            const writeUint16 = (offset, val) => {
+                buffer[offset] = val & 0xff;
+                buffer[offset + 1] = (val >> 8) & 0xff;
+            };
+
+            writeString(0, 'RIFF');
+            writeUint32(4, 36 + numSamples);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            writeUint32(16, 16);
+            writeUint16(20, 1);
+            writeUint16(22, 1);
+            writeUint32(24, sampleRate);
+            writeUint32(28, sampleRate);
+            writeUint16(32, 1);
+            writeUint16(34, 8);
+            writeString(36, 'data');
+            writeUint32(40, numSamples);
+
+            for (let i = 0; i < numSamples; i++) {
+                const t = i / sampleRate;
+                const sample = Math.sin(2 * Math.PI * freq * t);
+                buffer[44 + i] = Math.floor((sample + 1) * 127);
+            }
+
+            let binary = '';
+            for (let i = 0; i < buffer.length; i++) {
+                binary += String.fromCharCode(buffer[i]);
+            }
+            const base64Str = 'data:audio/wav;base64,' + btoa(binary);
+            const audio = new Audio(base64Str);
+            audio.play().catch(e => console.warn("HTML5 audio play blocked", e));
+        } catch(err) {
+            console.warn("HTML5 audio beep failed:", err);
+        }
+    }
+
+    function playBeep(freq = 1000, vol = 0.8, duration = 0.2) {
+        initAudio();
+        let webAudioSuccess = false;
+        try {
+            if (audioContext) {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+
+                const now = audioContext.currentTime;
+                const safeVol = Math.max(0.01, vol);
+                gain.gain.setValueAtTime(safeVol, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + duration);
+
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+
+                osc.start(now);
+                osc.stop(now + duration);
+                webAudioSuccess = true;
+            }
         } catch(e) {
-            console.warn("Audio playback error:", e);
+            console.warn("Web Audio playback failed:", e);
+        }
+
+        if (!webAudioSuccess) {
+            playHTML5Beep(freq, duration);
         }
     }
 
     function testSound() {
         initAudio();
-        playBeep(1000, 0.5, 0.3);
+        playBeep(1000, 0.8, 0.3);
     }
 
     let beepTimeout;
@@ -2650,6 +2718,7 @@
 
         saveWorkoutData();
         loadDraft(); // استفاده از loadDraft به جای initWorkout برای حفظ تیک‌ها
+        saveDraft(); // ذخیره‌سازی وضعیت کامل پیش‌نویس شامل حرکت جدید
         renderExerciseManager();
 
         // پاک کردن فیلدها
