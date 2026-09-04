@@ -336,11 +336,12 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
             print(f"DEBUG: Fetching message {msg_id} from public channel {chat}...")
             msg = None
             try:
-                msg = await userbot.get_messages(chat, msg_id)
+                msg = await asyncio.wait_for(userbot.get_messages(chat, msg_id), timeout=15)
             except Exception as e_ub:
                 print(f"DEBUG: userbot.get_messages failed for public chat {chat}: {e_ub}")
                 try:
-                    msg = await client.get_messages(chat, msg_id)
+                    if getattr(client, 'is_connected', False):
+                        msg = await asyncio.wait_for(client.get_messages(chat, msg_id), timeout=15)
                 except Exception as e_cl:
                     print(f"DEBUG: client.get_messages failed for public chat {chat}: {e_cl}")
 
@@ -375,17 +376,12 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
 
                 file = None
                 try:
-                    file = await userbot.download_media(
-                        msg,
-                        progress=custom_progress
-                    )
+                    file = await asyncio.wait_for(userbot.download_media(msg, progress=custom_progress), timeout=180)
                 except Exception as dl_ub_err:
                     print(f"DEBUG: userbot download_media failed: {dl_ub_err}. Trying client download_media...")
                     try:
-                        file = await client.download_media(
-                            msg,
-                            progress=custom_progress
-                        )
+                        if getattr(client, 'is_connected', False):
+                            file = await asyncio.wait_for(client.download_media(msg, progress=custom_progress), timeout=180)
                     except Exception as dl_cl_err:
                         print(f"DEBUG: client download_media failed: {dl_cl_err}")
 
@@ -397,14 +393,14 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                         os.remove(file)
                     except Exception:
                         pass
-                    await safe_delete_object(edit)
+                    await safe_edit_message(sender, edit, "✅ *دانلود و ارسال فایل با موفقیت پایان یافت!*")
                 else:
                     await safe_edit_message(sender, edit, "❌ *خطا در دانلود فایل رسانه‌ای تلگرام. حجم فایل صفر یا دریافت ناموفق بود.*")
             elif msg.text or (msg.media == MessageMediaType.WEB_PAGE and msg.text):
                 await safe_edit_message(sender, edit, "📥 *در حال ارسال متن پیام...*")
                 caption_text = msg.text.markdown if hasattr(msg.text, 'markdown') else str(msg.text)
                 await safe_send_message(sender, caption_text)
-                await safe_delete_object(edit)
+                await safe_edit_message(sender, edit, "✅ *ارسال متن پیام با موفقیت پایان یافت!*")
             else:
                 await safe_edit_message(sender, edit, "❌ *پیام انتخابی فاقد محتوای رسانه‌ای قابل دانلود می‌باشد.*")
         except Exception as e:
