@@ -1439,28 +1439,19 @@ async def main_download():
                 'xhamster.com', 'xvideos.com', 'pornhub.com'
             ]) or (target_link_lower.startswith(('http://', 'https://')) and not is_telegram_link)
 
-            if is_social and not target_link_lower.startswith("search:"):
-                print(f"Starting social media download [{link_idx}/{len(extracted_links)}] for: {target_link_str} to owner: {owner_id}")
-                msg = await safe_send_message(owner_id, f"🎬 *تشخیص لینک شبکه اجتماعی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
-                await process_social_media_download(target_link_str, owner_id, msg)
-                continue
-
             print(f"Starting single download [{link_idx}/{len(extracted_links)}] for link: {target_link_str} to owner: {owner_id}")
 
-            # Send starting message to owner
-            msg = await safe_send_message(owner_id, f"📥 *شروع دانلود لینک درخواستی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
-            edit_id = msg.id if (msg and hasattr(msg, 'id')) else 0
-
             try:
-                if 't.me/+' in target_link_str or 't.me/joinchat/' in target_link_str:
-                    # Join channel
+                if is_social and not target_link_lower.startswith("search:"):
+                    msg = await safe_send_message(owner_id, f"🎬 *تشخیص لینک شبکه اجتماعی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
+                    await process_social_media_download(target_link_str, owner_id, msg)
+                elif 't.me/+' in target_link_str or 't.me/joinchat/' in target_link_str:
+                    msg = await safe_send_message(owner_id, f"📥 *شروع ورود به کانال خصوصی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
                     res = await join(userbot, target_link_str)
                     await safe_edit_message(owner_id, msg, f"🔑 *نتیجه ورود به کانال خصوصی:*\n{res}")
-                elif not is_telegram_link:
-                    # Direct social media download
-                    await process_social_media_download(target_link_str, owner_id, msg)
                 else:
-                    # Telegram link download
+                    msg = await safe_send_message(owner_id, f"📥 *شروع دانلود لینک تلگرام ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
+                    edit_id = msg.id if (msg and hasattr(msg, 'id')) else 0
                     await get_msg(userbot, Bot, bot, owner_id, edit_id, target_link_str, 0)
                     await safe_send_message(owner_id, f"✅ *دانلود و ارسال لینک {link_idx} با موفقیت پایان یافت!*")
             except Exception as e:

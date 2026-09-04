@@ -923,10 +923,10 @@
                         const dotClass = (status === 'completed' ? (conclusion === 'success' ? 'completed' : 'failed') : status);
 
                         let persianStatus = "در حال کار";
-                        if (status === 'queued') persianStatus = "در صف انتظار";
-                        else if (status === 'in_progress') persianStatus = "در حال اجرا ⚡";
+                        if (status === 'queued') persianStatus = "در صف انتظار ⏳";
+                        else if (status === 'in_progress') persianStatus = "در حال دانلود / پردازش ⚡";
                         else if (status === 'completed') {
-                            persianStatus = conclusion === 'success' ? "آماده به کار (خاموش) ✅" : "اجرای قبلی ناموفق ❌";
+                            persianStatus = conclusion === 'success' ? "دانلود با موفقیت انجام شد ✅" : "آماده به کار (خاموش) 🚀";
                         }
 
                         updateUI(dotClass, persianStatus);
@@ -1449,7 +1449,7 @@
 
         function copyDownloadErrorLog(itemId) {
             const history = getDownloadHistory();
-            const item = history.find(it => item.id === itemId || it.id === itemId || it.link === itemId);
+            const item = history.find(it => it.id === itemId || it.link === itemId);
             if (!item || !item.errorLog) {
                 showToast("⚠️ لاگ خطایی برای این لینک ثبت نشده است.");
                 return;
