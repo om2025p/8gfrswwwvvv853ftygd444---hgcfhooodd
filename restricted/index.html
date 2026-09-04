@@ -824,9 +824,9 @@
             } else if (id === 'ghBranch') {
                 document.getElementById(id).value = '81'; // مقدار پیش‌فرض 81
             }
-            if (id === 'ghBranch' && (!document.getElementById(id).value || document.getElementById(id).value === '80')) {
-                document.getElementById(id).value = '81';
-                localStorage.setItem('restricted_bot_ghBranch', '81');
+            if (id === 'ghBranch' && (!document.getElementById(id).value || document.getElementById(id).value === '80' || document.getElementById(id).value === '81')) {
+                document.getElementById(id).value = '100';
+                localStorage.setItem('restricted_bot_ghBranch', '100');
             }
 
             // ذخیره خودکار و ضدعفونی همزمان هنگام کپی/پیست یا تایپ
@@ -958,20 +958,45 @@
         let logPollInterval = null;
         let lastLoggedStepName = "";
 
-        async function pollServerLogs(owner, repo, pat) {
+        async function getLatestWorkflowRunId(owner, repo, pat) {
+            try {
+                const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs?per_page=1`;
+                const resp = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${pat}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.workflow_runs && data.workflow_runs.length > 0) {
+                        return data.workflow_runs[0].id;
+                    }
+                }
+            } catch (e) {
+                console.error("Error fetching latest run id:", e);
+            }
+            return null;
+        }
+
+        async function pollServerLogs(owner, repo, pat, targetHistoryId, beforeRunId, dispatchTime) {
             if (logPollInterval) clearInterval(logPollInterval);
 
             logDlDebug("🌐 اتصال زنده به لاگ‌های سرور ابری گیت‌هاب برقرار شد...");
             logDebug("🌐 شروع استعلام لاگ‌های زنده سرور گیت‌هاب (Server Log Poller)...");
 
             let pollCount = 0;
-            const maxPolls = 120; // حداکثر ۱۰ دقیقه (هر ۵ ثانیه)
+            const maxPolls = 120; // حداکثر ۱۰ دقیقه (هر ۴ ثانیه)
+            let newRunDetected = false;
 
             logPollInterval = setInterval(async () => {
                 pollCount++;
                 if (pollCount > maxPolls) {
                     clearInterval(logPollInterval);
                     logDlDebug("⏱️ زمان استعلام لاگ‌های سرور به پایان رسید.");
+                    if (targetHistoryId) {
+                        updateDownloadHistoryStatus(targetHistoryId, 'failed', '⚠️ زمان پاسخ سرور به پایان رسید', 'سرور گیت‌هاب در زمان مقرر پاسخی ارسال نکرد.');
+                    }
                     return;
                 }
 
@@ -990,7 +1015,41 @@
                     if (!runsData.workflow_runs || runsData.workflow_runs.length === 0) return;
 
                     const latestRun = runsData.workflow_runs[0];
+                    const runCreatedAt = new Date(latestRun.created_at).getTime();
+
+                    // اگر آیدی اجرا همان اجرای قدیمی قبلی است یا تاریخ ایجادش قبل از دیسپچ جدید است، هنوز اجرای جدید توسط گیت‌هاب ساخته نشده!
+                    if (!newRunDetected) {
+                        if (beforeRunId && latestRun.id === beforeRunId) {
+                            logDlDebug(`⏳ در انتظار ایجاد جاب جدید گیت‌هاب... (${pollCount * 4} ثانیه)`);
+                            if (targetHistoryId) {
+                                updateDownloadHistoryStatus(targetHistoryId, 'in_progress', '⏳ در صف برپاخاستن سرور...');
+                            }
+                            return;
+                        }
+                        if (dispatchTime && runCreatedAt < dispatchTime - 10000) {
+                            logDlDebug(`⏳ در انتظار ایجاد جاب جدید گیت‌هاب... (${pollCount * 4} ثانیه)`);
+                            if (targetHistoryId) {
+                                updateDownloadHistoryStatus(targetHistoryId, 'in_progress', '⏳ در صف برپاخاستن سرور...');
+                            }
+                            return;
+                        }
+                        // اگر اجرای جدید کشف شد!
+                        newRunDetected = true;
+                        logDlDebug(`🚀 جاب جدید گیت‌هاب شناسایی شد! ID: ${latestRun.id}`);
+                    }
+
                     activeRunId = latestRun.id;
+
+                    // بروزرسانی وضعیت تاریخچه در صورت فعال بودن اجرا
+                    if (latestRun.status === 'queued') {
+                        if (targetHistoryId) {
+                            updateDownloadHistoryStatus(targetHistoryId, 'in_progress', '⏳ در صف اجرای سرور...');
+                        }
+                    } else if (latestRun.status === 'in_progress') {
+                        if (targetHistoryId) {
+                            updateDownloadHistoryStatus(targetHistoryId, 'in_progress', '⚡ در حال دانلود و پردازش در سرور...');
+                        }
+                    }
 
                     // ۲. دریافت جاب‌های مربوط به این اجرای ورک‌فلو
                     const jobsUrl = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${latestRun.id}/jobs`;
@@ -1016,10 +1075,8 @@
                                 logDebug(`⚡ سرور در حال اجرای گام: ${step.name}`);
                             } else if (step.status === 'completed' && step.conclusion === 'failure') {
                                 logDlDebug(`❌ خطای گام سرور: [${step.name}]`, 'error');
-                                const history = getDownloadHistory();
-                                const inProgressItem = history.find(it => it.status === 'in_progress');
-                                if (inProgressItem) {
-                                    updateDownloadHistoryStatus(inProgressItem.id, 'failed', '❌ اجرای گام ناموفق', `خطای گام سرور گیت‌هاب [${step.name}]`);
+                                if (targetHistoryId) {
+                                    updateDownloadHistoryStatus(targetHistoryId, 'failed', '❌ اجرای گام ناموفق', `خطای گام سرور گیت‌هاب [${step.name}]`);
                                 }
                             }
                         });
@@ -1032,13 +1089,11 @@
                         logDlDebug(`🏁 اجرای سرور به پایان رسید. نتیجه: ${isSuccess ? 'موفقیت‌آمیز ✅' : 'خطا ❌'}`);
                         logDebug(`🏁 پایان اجرای سرور. نتیجه: ${latestRun.conclusion}`);
 
-                        const history = getDownloadHistory();
-                        const inProgressItem = history.find(it => it.status === 'in_progress');
-                        if (inProgressItem) {
+                        if (targetHistoryId) {
                             if (isSuccess) {
-                                updateDownloadHistoryStatus(inProgressItem.id, 'completed', 'پردازش سرور تکمیل شد 📥');
+                                updateDownloadHistoryStatus(targetHistoryId, 'completed', 'دانلود و ارسال تکمیل شد 📥');
                             } else {
-                                updateDownloadHistoryStatus(inProgressItem.id, 'failed', '❌ خطا در دانلود / اجرای ناموفق', 'اجرای سرور گیت‌هاب با خطا مواجه شد. لطفاً پنل دیاگ یا تلگرام را چک فرمایید.');
+                                updateDownloadHistoryStatus(targetHistoryId, 'failed', '❌ خطا در دانلود / اجرای ناموفق', 'اجرای سرور گیت‌هاب با خطا مواجه شد. لطفاً پنل دیاگ یا تلگرام را چک فرمایید.');
                             }
                         }
 
@@ -1091,15 +1146,15 @@
                 } catch (err) {
                     console.error("Error polling server logs:", err);
                 }
-            }, 5000);
+            }, 4000);
         }
 
         // صدور دستور شروع سرور یا دانلود یا سرچ
-        async function triggerWorkflow(downloadLink = null) {
+        async function triggerWorkflow(downloadLink = null, targetHistoryId = null) {
             const owner = sanitizeString(document.getElementById('ghOwner').value);
             const repo = sanitizeString(document.getElementById('ghRepo').value);
             const pat = sanitizeString(document.getElementById('ghPat').value);
-            const branch = sanitizeString(document.getElementById('ghBranch').value) || '81';
+            const branch = sanitizeString(document.getElementById('ghBranch').value) || '100';
 
             const tgApiId = sanitizeString(document.getElementById('tgApiId').value);
             const tgApiHash = sanitizeString(document.getElementById('tgApiHash').value);
@@ -1143,8 +1198,12 @@
                 }
             }
 
+            // گرفتن آیدی اجرای قبلی جهت تمایز دقیق اجرای جدید
+            const beforeRunId = await getLatestWorkflowRunId(owner, repo, pat);
+            const dispatchTime = Date.now();
+
             // شروع استعلام زنده لاگ‌های اجرای سرور (Live Server Actions Logs)
-            pollServerLogs(owner, repo, pat);
+            pollServerLogs(owner, repo, pat, targetHistoryId, beforeRunId, dispatchTime);
 
             try {
                 const workflowId = "restricted_bot.yml";
@@ -1616,10 +1675,8 @@
                 const isNewUnique = registerUniqueLink(link);
                 const historyId = addDownloadHistoryItem(link, isNewUnique);
 
-                const dispatchSuccess = await triggerWorkflow(link);
-                if (dispatchSuccess) {
-                    updateDownloadHistoryStatus(historyId, 'in_progress', '⚡ در حال پردازش در سرور...');
-                } else {
+                const dispatchSuccess = await triggerWorkflow(link, historyId);
+                if (!dispatchSuccess) {
                     updateDownloadHistoryStatus(historyId, 'failed', '❌ عدم موفقیت در ارسال درخواست به گیت‌هاب', 'ارسال درخواست به گیت‌هاب با خطا مواجه شد. لطفاً توکن PAT و تنظیمات گیت‌هاب را بررسی کنید.');
                 }
 
