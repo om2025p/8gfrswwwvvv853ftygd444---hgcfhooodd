@@ -1,6 +1,6 @@
 #Github.com-Vasusen-code
 
-import asyncio, time, os, inspect, math
+import asyncio, time, os, inspect, math, re, tempfile, urllib.request
 
 from .. import bot as Drone
 from main.plugins.progress import progress_for_pyrogram
@@ -346,7 +346,6 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
 
             if not msg or getattr(msg, 'empty', True):
                 print("DEBUG: Userbot/Bot message fetching returned empty/None. Attempting Web Page Extraction Fallback...")
-                import urllib.request, re, tempfile, os
                 web_urls = [
                     f"https://t.me/s/{chat}/{msg_id}",
                     f"https://t.me/{chat}/{msg_id}",
