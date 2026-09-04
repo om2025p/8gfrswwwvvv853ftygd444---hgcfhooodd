@@ -1170,6 +1170,35 @@
     </div>
 </div>
 
+<!-- Fullscreen Timer Modal -->
+<div id="fullscreenTimerModal" class="ai-modal" style="z-index: 4000; background: var(--bg-color);">
+    <div class="ai-modal-header">
+        <div class="ai-modal-title" style="color: var(--primary-color);">
+            <span>⏱️</span>
+            <span id="fsTimerTitle">تایمر تمرین</span>
+        </div>
+        <button class="ai-modal-close" onclick="closeFullscreenTimer()">✕</button>
+    </div>
+    <div class="ai-modal-body" style="justify-content: center; align-items: center; text-align: center; padding: 20px 15px;">
+        <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; color: var(--secondary-color);" id="fsTimerSubTitle">شمارش معکوس</div>
+        <div style="display: flex; justify-content: center; align-items: center; margin: 15px 0;">
+            <input type="number" id="fsTimerDisplay" value="60" style="width: 240px; font-family: monospace; font-size: 4.8rem; font-weight: bold; text-align: center; border: 3px dashed var(--primary-color); border-radius: 20px; background: var(--card-bg); color: var(--primary-color); padding: 15px; box-shadow: var(--shadow);">
+        </div>
+        <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin: 20px 0;">
+            <button class="btn-submit" style="width: auto; min-width: 120px; padding: 14px 28px; margin: 0; font-size: 1.2rem;" onclick="startFsTimer()" id="fsStartBtn"><span class="icon">▶️</span> شروع</button>
+            <button class="btn-submit" style="width: auto; min-width: 120px; padding: 14px 28px; margin: 0; font-size: 1.2rem; background: var(--danger-color); display: none;" onclick="stopFsTimer()" id="fsStopBtn"><span class="icon">⏹️</span> توقف</button>
+            <button class="backup-btns" style="padding: 12px 20px; font-size: 1rem; border-radius: 10px;" onclick="resetFsTimer()"><span class="icon">🔄</span> بازنشانی</button>
+            <button class="backup-btns" style="padding: 12px 20px; font-size: 1rem; border-radius: 10px;" onclick="testSound()"><span class="icon">🔊</span> تست صدا</button>
+        </div>
+        <div class="sound-modes" style="max-width: 380px; width: 100%; text-align: right; background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); margin-top: 10px;">
+            <label class="sound-mode-option" style="font-size: 0.95rem; font-weight: 500;"><input type="radio" name="fsSoundMode" value="accelerate" checked> ⚡ بوق شتاب‌دهنده (هیجانی)</label>
+            <label class="sound-mode-option" style="font-size: 0.95rem; font-weight: 500;"><input type="radio" name="fsSoundMode" value="continuous"> 🔊 بوق ممتد</label>
+            <label class="sound-mode-option" style="font-size: 0.95rem; font-weight: 500;"><input type="radio" name="fsSoundMode" value="music" onchange="document.getElementById('fsMusicInput').style.display = this.checked ? 'block' : 'none'"> 🎵 آهنگ دلخواه</label>
+            <input type="file" id="fsMusicInput" style="display:none; font-size:0.8rem; margin-top:8px; width:100%;" accept="audio/*" onchange="handleMusicUpload(event)">
+        </div>
+    </div>
+</div>
+
 <!-- Fullscreen AI Coach Modal -->
 <div id="aiCoachModal" class="ai-modal">
     <div class="ai-modal-header">
@@ -1483,7 +1512,7 @@
                     <div class="side-row">
                         <span>👉 راست:</span>
                         <div class="input-with-check">
-                            ${isSeconds ? `<button class="timer-btn" onclick="toggleTimerPanel('${ex.id}-r', ${ex.target})">⏱️</button>` : ''}
+                            ${isSeconds ? `<button class="timer-btn" onclick="openFullscreenTimer('${ex.id}-r', '${escapeHtml(ex.name)} (راست)', ${ex.target})">⏱️</button>` : ''}
                             <input type="number" id="ex-${ex.id}-r-val" value="${sessionState[rKey].value}" oninput="updateSessionValue(${ex.id}, 'r', this.value)">
                             <button class="check-btn ${sessionState[rKey].done ? 'active' : ''}" id="ex-${ex.id}-r-btn" onclick="toggleCheck(${ex.id}, 'r')">✓</button>
                         </div>
@@ -1495,7 +1524,7 @@
                     <div class="side-row">
                         <span>👈 چپ:</span>
                         <div class="input-with-check">
-                            ${isSeconds ? `<button class="timer-btn" onclick="toggleTimerPanel('${ex.id}-l', ${ex.target})">⏱️</button>` : ''}
+                            ${isSeconds ? `<button class="timer-btn" onclick="openFullscreenTimer('${ex.id}-l', '${escapeHtml(ex.name)} (چپ)', ${ex.target})">⏱️</button>` : ''}
                             <input type="number" id="ex-${ex.id}-l-val" value="${sessionState[lKey].value}" oninput="updateSessionValue(${ex.id}, 'l', this.value)">
                             <button class="check-btn ${sessionState[lKey].done ? 'active' : ''}" id="ex-${ex.id}-l-btn" onclick="toggleCheck(${ex.id}, 'l')">✓</button>
                         </div>
@@ -1513,7 +1542,7 @@
                     <div class="exercise-header">
                         <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${escapeHtml(ex.unit)})</div>
                         <div class="input-with-check">
-                            ${isSeconds ? `<button class="timer-btn" onclick="toggleTimerPanel('${ex.id}', ${ex.target})">⏱️</button>` : ''}
+                            ${isSeconds ? `<button class="timer-btn" onclick="openFullscreenTimer('${ex.id}', '${escapeHtml(ex.name)}', ${ex.target})">⏱️</button>` : ''}
                             <input type="number" id="ex-${ex.id}-val" value="${sessionState[key].value}" oninput="updateSessionValue(${ex.id}, null, this.value)">
                             <button class="check-btn ${sessionState[key].done ? 'active' : ''}" id="ex-${ex.id}-btn" onclick="toggleCheck(${ex.id})">✓</button>
                         </div>
@@ -1662,24 +1691,74 @@
         playBeep(1000, 0.8, 0.3);
     }
 
+    let fsTimerTarget = 60;
+    let fsTimerKey = null;
+
+    function openFullscreenTimer(key, exName, target) {
+        fsTimerKey = key;
+        fsTimerTarget = target || 60;
+        document.getElementById('fsTimerTitle').innerText = exName || 'تایمر تمرین';
+        document.getElementById('fsTimerSubTitle').innerText = `هدف: ${toPersianDigits(fsTimerTarget)} ثانیه`;
+        const timerDisplay = document.getElementById('fsTimerDisplay');
+        if (timerDisplay) {
+            timerDisplay.value = fsTimerTarget;
+            timerDisplay.disabled = false;
+        }
+        document.getElementById('fsStartBtn').style.display = 'inline-block';
+        document.getElementById('fsStopBtn').style.display = 'none';
+        document.getElementById('fullscreenTimerModal').classList.add('active');
+        initAudio();
+    }
+
+    function closeFullscreenTimer() {
+        stopExerciseTimer();
+        document.getElementById('fullscreenTimerModal').classList.remove('active');
+    }
+
+    function startFsTimer() {
+        if (!fsTimerKey) fsTimerKey = 'fs-default';
+        startExerciseTimer(fsTimerKey, true);
+    }
+
+    function stopFsTimer() {
+        stopExerciseTimer();
+    }
+
+    function resetFsTimer() {
+        stopExerciseTimer();
+        const display = document.getElementById('fsTimerDisplay');
+        if (display) {
+            display.value = fsTimerTarget;
+            display.disabled = false;
+        }
+    }
+
     let beepTimeout;
-    function startExerciseTimer(key) {
+    function startExerciseTimer(key, isFullscreen = false) {
         initAudio();
         if (timerRunning) stopExerciseTimer();
 
-        const timerInput = document.getElementById(`display-${key}`);
+        const timerInput = isFullscreen ? document.getElementById('fsTimerDisplay') : (document.getElementById(`display-${key}`) || document.getElementById('fsTimerDisplay'));
+        if (!timerInput) return;
+
         let totalSeconds = parseInt(timerInput.value) || 0;
         if (totalSeconds <= 0) return;
 
         timerRunning = true;
         currentTimerId = key;
         let remaining = totalSeconds;
-        const mode = document.querySelector(`input[name="sound-${key}"]:checked`).value;
+
+        let soundModeEl = isFullscreen ? document.querySelector('input[name="fsSoundMode"]:checked') : document.querySelector(`input[name="sound-${key}"]:checked`);
+        if (!soundModeEl) soundModeEl = document.querySelector('input[name="fsSoundMode"]:checked');
+        const mode = soundModeEl ? soundModeEl.value : 'accelerate';
 
         timerInput.disabled = true;
 
-        document.getElementById(`start-${key}`).style.display = 'none';
-        document.getElementById(`stop-${key}`).style.display = 'inline-block';
+        const startBtn = isFullscreen ? document.getElementById('fsStartBtn') : document.getElementById(`start-${key}`);
+        const stopBtn = isFullscreen ? document.getElementById('fsStopBtn') : document.getElementById(`stop-${key}`);
+
+        if (startBtn) startBtn.style.display = 'none';
+        if (stopBtn) stopBtn.style.display = 'inline-block';
 
         if (mode === 'music' && customAudioFile) {
             const reader = new FileReader();
@@ -1700,15 +1779,14 @@
 
             if (mode === 'accelerate') {
                 const progress = (totalSeconds - remaining) / totalSeconds;
-                const freq = 880 + (progress * 880); // Higher frequency range (880Hz to 1760Hz)
-                const vol = 0.3 + (progress * 0.5); // Louder (0.3 to 0.8)
+                const freq = 880 + (progress * 880);
+                const vol = 0.3 + (progress * 0.5);
                 playBeep(freq, vol, 0.1);
 
-                // Calculate next beep delay: starts at 1000ms, ends at 150ms
                 const delay = Math.max(150, 1000 - (progress * 850));
                 beepTimeout = setTimeout(runBeeps, delay);
             } else if (mode === 'continuous') {
-                playBeep(1200, 0.6, 0.8); // Piercing high beep
+                playBeep(1200, 0.6, 0.8);
                 beepTimeout = setTimeout(runBeeps, 1000);
             }
         };
@@ -1721,7 +1799,7 @@
 
             if (remaining <= 0) {
                 stopExerciseTimer();
-                playBeep(2000, 0.9, 2.0); // Very loud and long final beep
+                playBeep(2000, 0.9, 2.0);
                 setTimeout(() => alert('🏁 زمان تمام شد!'), 100);
             }
         }, 1000);
@@ -1743,6 +1821,13 @@
             if (stopBtn) stopBtn.style.display = 'none';
             if (timerInput) timerInput.disabled = false;
         }
+
+        const fsStartBtn = document.getElementById('fsStartBtn');
+        const fsStopBtn = document.getElementById('fsStopBtn');
+        const fsTimerDisplay = document.getElementById('fsTimerDisplay');
+        if (fsStartBtn) fsStartBtn.style.display = 'inline-block';
+        if (fsStopBtn) fsStopBtn.style.display = 'none';
+        if (fsTimerDisplay) fsTimerDisplay.disabled = false;
     }
 
     function resetExerciseTimer(key, totalSeconds) {
