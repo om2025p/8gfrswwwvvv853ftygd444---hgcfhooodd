@@ -1327,17 +1327,61 @@
         localStorage.setItem(STORAGE_KEYS.BASE_DATA, JSON.stringify(workoutData));
     }
 
+    function syncDOMToSessionState() {
+        if (!sessionState) sessionState = {};
+
+        const warmupNoteEl = document.getElementById('warmup-note');
+        if (warmupNoteEl && sessionState.warmup) {
+            sessionState.warmup.note = warmupNoteEl.value;
+        }
+
+        const typeEl = document.getElementById('workoutType');
+        const type = typeEl ? typeEl.value : 'heavy';
+        const exercises = workoutData[type] || [];
+
+        exercises.forEach(ex => {
+            if (ex.side) {
+                const rKey = `${ex.id}-r`;
+                const lKey = `${ex.id}-l`;
+                const rValEl = document.getElementById(`ex-${ex.id}-r-val`);
+                const rNoteEl = document.getElementById(`ex-${ex.id}-r-note`);
+                const lValEl = document.getElementById(`ex-${ex.id}-l-val`);
+                const lNoteEl = document.getElementById(`ex-${ex.id}-l-note`);
+
+                if (sessionState[rKey]) {
+                    if (rValEl) sessionState[rKey].value = rValEl.value;
+                    if (rNoteEl) sessionState[rKey].note = rNoteEl.value;
+                }
+                if (sessionState[lKey]) {
+                    if (lValEl) sessionState[lKey].value = lValEl.value;
+                    if (lNoteEl) sessionState[lKey].note = lNoteEl.value;
+                }
+            } else {
+                const key = ex.id;
+                const valEl = document.getElementById(`ex-${ex.id}-val`);
+                const noteEl = document.getElementById(`ex-${ex.id}-note`);
+
+                if (sessionState[key]) {
+                    if (valEl) sessionState[key].value = valEl.value;
+                    if (noteEl) sessionState[key].note = noteEl.value;
+                }
+            }
+        });
+    }
+
     function saveDraft() {
         try {
-            const type = document.getElementById('workoutType').value;
+            syncDOMToSessionState();
+            const typeEl = document.getElementById('workoutType');
+            const type = typeEl ? typeEl.value : 'heavy';
             const draft = {
                 type: type,
                 sessionState: sessionState || {},
                 ratings: ratings || {},
                 nutrition: {
-                    eggs: document.getElementById('nut-eggs').value,
-                    soy: document.getElementById('nut-soy').value,
-                    potatoes: document.getElementById('nut-potatoes').value,
+                    eggs: document.getElementById('nut-eggs') ? document.getElementById('nut-eggs').value : 0,
+                    soy: document.getElementById('nut-soy') ? document.getElementById('nut-soy').value : 0,
+                    potatoes: document.getElementById('nut-potatoes') ? document.getElementById('nut-potatoes').value : 0,
                     notes: nutritionEditor ? nutritionEditor.getContent() : ''
                 },
                 notes: notesEditor ? notesEditor.getContent() : ''
@@ -1501,6 +1545,7 @@
                     <button class="backup-btns" onclick="startExerciseTimer('${key}')" id="start-${key}"><span class="icon">▶️</span> شروع</button>
                     <button class="backup-btns" onclick="stopExerciseTimer()" style="display:none" id="stop-${key}"><span class="icon">⏹️</span> توقف</button>
                     <button class="backup-btns" onclick="resetExerciseTimer('${key}', ${target})"><span class="icon">🔄</span> بازنشانی</button>
+                    <button class="backup-btns" onclick="testSound()"><span class="icon">🔊</span> تست صدا</button>
                 </div>
                 <div class="sound-modes">
                     <label class="sound-mode-option"><input type="radio" name="sound-${key}" value="accelerate" checked> ⚡ بوق شتاب‌دهنده (هیجانی)</label>
@@ -1516,18 +1561,37 @@
         customAudioFile = event.target.files[0];
     }
 
+    function initAudio() {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    }
+
     function playBeep(freq, vol, duration) {
-        if (!audioContext) initAudio();
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(vol, audioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioContext.destination);
-        osc.start();
-        osc.stop(audioContext.currentTime + duration);
+        initAudio();
+        try {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            const safeVol = Math.max(0.01, vol);
+            gain.gain.setValueAtTime(safeVol, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            osc.start();
+            osc.stop(audioContext.currentTime + duration);
+        } catch(e) {
+            console.warn("Audio playback error:", e);
+        }
+    }
+
+    function testSound() {
+        initAudio();
+        playBeep(1000, 0.5, 0.3);
     }
 
     let beepTimeout;
@@ -2647,29 +2711,32 @@
     }
 
     function archiveExercise(index) {
+        saveDraft();
         const heavyEx = workoutData.heavy[index];
         const lightEx = workoutData.light[index];
         workoutData.archived.push({ heavy: heavyEx, light: lightEx });
         workoutData.heavy.splice(index, 1);
         workoutData.light.splice(index, 1);
         saveWorkoutData();
-        initWorkout();
+        loadDraft();
         renderExerciseManager();
     }
 
     function restoreExercise(index) {
+        saveDraft();
         const item = workoutData.archived[index];
         workoutData.heavy.push(item.heavy);
         workoutData.light.push(item.light);
         workoutData.archived.splice(index, 1);
         saveWorkoutData();
-        initWorkout();
+        loadDraft();
         renderExerciseManager();
     }
 
     function deleteExercisePermanently(index, fromArchive) {
         const name = fromArchive ? workoutData.archived[index].heavy.name : workoutData.heavy[index].name;
         if (confirm(`⚠️ آیا از حذف دائمی حرکت "${name}" مطمئن هستید؟ این عمل غیرقابل بازگشت است.`)) {
+            saveDraft();
             if (fromArchive) {
                 workoutData.archived.splice(index, 1);
             } else {
@@ -2677,26 +2744,28 @@
                 workoutData.light.splice(index, 1);
             }
             saveWorkoutData();
-            initWorkout();
+            loadDraft();
             renderExerciseManager();
         }
     }
 
     function updateExerciseName(index, newName) {
         if (!newName.trim()) return;
+        saveDraft();
         workoutData.heavy[index].name = newName.trim();
         workoutData.light[index].name = newName.trim();
         saveWorkoutData();
-        initWorkout();
+        loadDraft();
     }
 
     function moveExercise(index, direction) {
         const newIndex = index + direction;
         if (newIndex < 0 || newIndex >= workoutData.heavy.length) return;
+        saveDraft();
         [workoutData.heavy[index], workoutData.heavy[newIndex]] = [workoutData.heavy[newIndex], workoutData.heavy[index]];
         [workoutData.light[index], workoutData.light[newIndex]] = [workoutData.light[newIndex], workoutData.light[index]];
         saveWorkoutData();
-        initWorkout();
+        loadDraft();
         renderExerciseManager();
     }
 
