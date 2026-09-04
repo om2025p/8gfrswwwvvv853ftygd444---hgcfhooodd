@@ -345,7 +345,62 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                     print(f"DEBUG: client.get_messages failed for public chat {target_chat}: {e_cl}")
 
             if not msg or getattr(msg, 'empty', True):
-                print("DEBUG: Message was empty or unavailable.")
+                print("DEBUG: Userbot/Bot message fetching returned empty/None. Attempting Web Page Extraction Fallback...")
+                import urllib.request, re, tempfile, os
+                web_urls = [
+                    f"https://t.me/s/{chat}/{msg_id}",
+                    f"https://t.me/{chat}/{msg_id}",
+                    f"https://t.me/{chat}/{msg_id}?embed=1"
+                ]
+                html_web = ""
+                web_headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
+                for w_url in web_urls:
+                    try:
+                        req_w = urllib.request.Request(w_url, headers=web_headers)
+                        with urllib.request.urlopen(req_w, timeout=10) as resp_w:
+                            html_web = resp_w.read().decode('utf-8', errors='ignore')
+                            if html_web and ('og:image' in html_web or 'og:video' in html_web):
+                                break
+                    except Exception as e_w:
+                        print(f"DEBUG: Web page fetch error for {w_url}: {e_w}")
+
+                if html_web:
+                    og_vids = re.findall(r'<meta[^>]+(?:property|name)=[\"\'](?:og:video|og:video:secure_url)[\"\'][^>]+content=[\"\']([^\"\']+)[\"\']', html_web, re.I)
+                    og_imgs = re.findall(r'<meta[^>]+(?:property|name)=[\"\'](?:og:image)[\"\'][^>]+content=[\"\']([^\"\']+)[\"\']', html_web, re.I)
+                    og_titles = re.findall(r'<meta[^>]+(?:property|name)=[\"\'](?:og:title|twitter:title)[\"\'][^>]+content=[\"\']([^\"\']+)[\"\']', html_web, re.I)
+
+                    media_web_url = None
+                    ext_web = '.jpg'
+                    if og_vids:
+                        media_web_url = og_vids[0].replace('&amp;', '&')
+                        ext_web = '.mp4'
+                    elif og_imgs:
+                        media_web_url = og_imgs[0].replace('&amp;', '&')
+                        ext_web = '.jpg'
+
+                    cap_web = og_titles[0] if og_titles else None
+
+                    if media_web_url:
+                        try:
+                            temp_dir_web = tempfile.mkdtemp(prefix="tg_web_")
+                            file_web_path = os.path.join(temp_dir_web, f"telegram_web_{msg_id}{ext_web}")
+                            req_dl_w = urllib.request.Request(media_web_url, headers=web_headers)
+                            with urllib.request.urlopen(req_dl_w, timeout=20) as resp_dl_w, open(file_web_path, 'wb') as out_f_w:
+                                out_f_w.write(resp_dl_w.read())
+
+                            if os.path.exists(file_web_path) and os.path.getsize(file_web_path) > 0:
+                                await safe_edit_message(sender, edit, '⬆️ *محتوای پست عمومی تلگرام استخراج شد! در حال ارسال به چت شما...*')
+                                await send_media_to_destinations(file_web_path, cap_web, sender)
+                                try:
+                                    os.remove(file_web_path)
+                                except Exception:
+                                    pass
+                                await safe_edit_message(sender, edit, "✅ *دانلود و ارسال فایل عمومی تلگرام با موفقیت پایان یافت!*")
+                                return True
+                        except Exception as ex_w_dl:
+                            print(f"DEBUG: Failed downloading web extracted media: {ex_w_dl}")
+
+                print("DEBUG: Message was empty or unavailable via both API and Web fallback.")
                 await safe_edit_message(sender, edit, f"❌ *رئیس بزرگ، پیام یا محتوای مورد نظر در پست @{chat}/{msg_id} دریافت نشد یا حذف شده است.*")
                 return False
 
