@@ -930,7 +930,7 @@
                         if (status === 'queued') persianStatus = "در صف انتظار ⏳";
                         else if (status === 'in_progress') persianStatus = "در حال دانلود / پردازش ⚡";
                         else if (status === 'completed') {
-                            persianStatus = conclusion === 'success' ? "دانلود با موفقیت انجام شد ✅" : "آماده به کار (خاموش) 🚀";
+                            persianStatus = conclusion === 'success' ? "دانلود با موفقیت انجام شد ✅" : "اجرای قبلی ناموفق ❌";
                         }
 
                         updateUI(dotClass, persianStatus);
@@ -1110,13 +1110,13 @@
             if (!owner || !repo || !pat) {
                 showToast("⚠️ لطفاً اطلاعات دسترسی گیت‌هاب را در تب تنظیمات وارد کنید!");
                 logDebug("خطای اعتبارسنجی: اطلاعات دسترسی گیت‌هاب خالی است.", "error");
-                return;
+                return false;
             }
 
             if (!tgApiId || !tgApiHash || !tgBotToken || !tgSession || !tgOwner) {
                 showToast("⚠️ لطفا تمام شناسه‌های تلگرام ربات را در تب تنظیمات پر کنید!");
                 logDebug("خطای اعتبارسنجی: شناسه‌های تلگرام تکمیل نیستند.", "error");
-                return;
+                return false;
             }
 
             const isSearch = downloadLink && downloadLink.startsWith("search:");
@@ -1179,12 +1179,14 @@
                     showToast(successToast);
                     logDebug(`ورک‌فلو گیت‌هاب با موفقیت فعال شد. کد وضعیت HTTP 204.`, 'success');
                     setTimeout(fetchGitHubStatus, 3000);
+                    return true;
                 } else {
                     const errText = await response.text().catch(() => '');
                     logDebug(`پاسخ خطا از سمت گیت‌هاب دریافت شد. وضعیت: ${response.status} (${response.statusText}). متن خطا: ${errText}`, 'error');
                     let errData = {};
                     try { errData = JSON.parse(errText); } catch(e){}
                     showToast("❌ خطا در اجرای ورک‌فلو: " + (errData.message || response.statusText));
+                    return false;
                 }
             } catch (err) {
                 logDebug(`خطای مهلک در حین ارسال درخواست دیسپچ: ${err.message}`, 'error');
