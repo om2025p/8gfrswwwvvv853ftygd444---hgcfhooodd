@@ -1173,28 +1173,17 @@ async def main_download():
         except Exception as ex:
             print(f"DEBUG: Warning resolving owner_id with userbot: {ex}")
 
-        # Check if link is social media / web link (Instagram, TikTok, WhatsApp, YouTube, Twitter, etc.)
-        link_str = str(link).strip()
+        # Check if single raw link is social media or search
+        first_raw_link = extracted_links[0] if extracted_links else str(raw_input_link)
+        link_str = str(first_raw_link).strip()
         link_lower = link_str.lower()
         from urllib.parse import urlparse
         parsed_domain = urlparse(link_lower).netloc
         is_telegram_link = 't.me' in parsed_domain or 'telegram.me' in parsed_domain
 
-        is_social = any(domain in link_lower for domain in [
-            'instagram.com', 'instagr.am', 'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
-            'whatsapp.com', 'chat.whatsapp.com', 'wa.me', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com',
-            'xhamster.com', 'xvideos.com', 'pornhub.com'
-        ]) or (link_lower.startswith(('http://', 'https://')) and not is_telegram_link)
-
-        if is_social and not link_lower.startswith("search:"):
-            print(f"Starting social media download for: {link_str} to owner: {owner_id}")
-            msg = await safe_send_message(owner_id, f"🎬 *تشخیص لینک شبکه اجتماعی (اینستاگرام / تیک‌تاک / واتساپ):*\n`{link_str}`\n\n🕒 لطفا صبور باشید...")
-            await process_social_media_download(link_str, owner_id, msg)
-            return
-
         # Check if this is a deep Telegram search request
-        if isinstance(link, str) and link.startswith("search:"):
-            query = link[7:].strip()
+        if link_str.startswith("search:"):
+            query = link_str[7:].strip()
             print(f"Starting deep Telegram search for: {query} for owner: {owner_id}")
 
             # Send starting message to owner
@@ -1452,8 +1441,9 @@ async def main_download():
                 else:
                     msg = await safe_send_message(owner_id, f"📥 *شروع دانلود لینک تلگرام ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
                     edit_id = msg.id if (msg and hasattr(msg, 'id')) else 0
-                    await get_msg(userbot, Bot, bot, owner_id, edit_id, target_link_str, 0)
-                    await safe_send_message(owner_id, f"✅ *دانلود و ارسال لینک {link_idx} با موفقیت پایان یافت!*")
+                    success = await get_msg(userbot, Bot, bot, owner_id, edit_id, target_link_str, 0)
+                    if success:
+                        await safe_send_message(owner_id, f"✅ *دانلود و ارسال لینک {link_idx} با موفقیت پایان یافت!*")
             except Exception as e:
                 print(f"Error during execution for link {target_link_str}: {e}")
                 err_msg_type = "شبکه اجتماعی (تیک‌تاک / اینستاگرام)" if is_social else "تلگرام"

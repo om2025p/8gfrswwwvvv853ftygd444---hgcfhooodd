@@ -160,7 +160,7 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                     except Exception:
                         await bot.send_message(sender, msg.text.markdown)
                     await safe_delete_object(edit)
-                    return
+                    return True
             if not msg.media:
                 if msg.text:
                     edit = await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "Cloning.")
@@ -169,7 +169,7 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                     except Exception:
                         await bot.send_message(sender, msg.text.markdown)
                     await safe_delete_object(edit)
-                    return
+                    return True
             edit = await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "Trying to Download.")
             file = await userbot.download_media(
                 msg,
@@ -249,10 +249,11 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
             except Exception:
                 pass
             await safe_delete_object(edit)
+            return True
         except (ChannelBanned, ChannelInvalid, ChannelPrivate, ChatIdInvalid, ChatInvalid) as ce:
             print(f"DEBUG: Channel joining/permission error: {ce}")
             await safe_edit_msg_pyroplug(client, bot, sender, edit_id, "Have you joined the channel?")
-            return
+            return False
         except PeerIdInvalid as pie:
             print(f"DEBUG: PeerIdInvalid error: {pie}")
             chat = clean_link.split("/")[-3]
@@ -286,28 +287,22 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                         await bot.send_file(sender, uploader, caption=caption, thumb=thumb_path, force_document=True)
                     if os.path.isfile(file) == True:
                         os.remove(file)
+                    return True
                 except Exception as e:
                     print(e)
                     await safe_edit_msg_pyroplug(client, bot, sender, edit_id, f'Failed to save: `{msg_link}`\n\nError: {str(e)}')
                     try:
                         os.remove(file)
                     except Exception:
-                        return
-                    return
+                        pass
+                    return False
             else:
                 await safe_edit_msg_pyroplug(client, bot, sender, edit_id, f'Failed to save: `{msg_link}`\n\nError: {str(e)}')
                 try:
                     os.remove(file)
                 except Exception:
-                    return
-                return
-        try:
-            os.remove(file)
-            if os.path.isfile(file) == True:
-                os.remove(file)
-        except Exception:
-            pass
-        await safe_delete_object(edit)
+                    pass
+                return False
     else:
         # Public Channel Link
         print(f"DEBUG: Link classified as PUBLIC. Chat extracted: {msg_link}")
@@ -320,35 +315,39 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
         edit = await safe_edit_message(sender, edit_id, f"📥 *در حال ارتباط با سرور و استخراج پست تلگرام از @{chat}...*")
 
         try:
-            # Pre-resolve chat with userbot to populate peer cache
+            chat_obj = None
             if getattr(userbot, 'is_connected', False):
                 try:
                     print(f"DEBUG: Pre-resolving chat @{chat} with userbot...")
-                    await userbot.get_chat(chat)
+                    try:
+                        chat_obj = await userbot.get_chat(chat)
+                    except Exception:
+                        chat_obj = await userbot.get_chat(f"@{chat}")
                 except Exception as e_gc:
                     print(f"DEBUG: userbot.get_chat(@{chat}) failed: {e_gc}")
                     try:
-                        await userbot.join_chat(chat)
+                        chat_obj = await userbot.join_chat(chat)
                         print(f"DEBUG: Successfully joined public channel @{chat}")
                     except Exception as e_jc:
                         print(f"DEBUG: userbot.join_chat(@{chat}) notice: {e_jc}")
 
-            print(f"DEBUG: Fetching message {msg_id} from public channel {chat}...")
+            target_chat = chat_obj.id if chat_obj and hasattr(chat_obj, 'id') else chat
+            print(f"DEBUG: Fetching message {msg_id} from public channel {target_chat}...")
             msg = None
             try:
-                msg = await asyncio.wait_for(userbot.get_messages(chat, msg_id), timeout=15)
+                msg = await asyncio.wait_for(userbot.get_messages(target_chat, msg_id), timeout=20)
             except Exception as e_ub:
-                print(f"DEBUG: userbot.get_messages failed for public chat {chat}: {e_ub}")
+                print(f"DEBUG: userbot.get_messages failed for public chat {target_chat}: {e_ub}")
                 try:
                     if getattr(client, 'is_connected', False):
-                        msg = await asyncio.wait_for(client.get_messages(chat, msg_id), timeout=15)
+                        msg = await asyncio.wait_for(client.get_messages(target_chat, msg_id), timeout=20)
                 except Exception as e_cl:
-                    print(f"DEBUG: client.get_messages failed for public chat {chat}: {e_cl}")
+                    print(f"DEBUG: client.get_messages failed for public chat {target_chat}: {e_cl}")
 
             if not msg or getattr(msg, 'empty', True):
                 print("DEBUG: Message was empty or unavailable.")
                 await safe_edit_message(sender, edit, f"❌ *رئیس بزرگ، پیام یا محتوای مورد نظر در پست @{chat}/{msg_id} دریافت نشد یا حذف شده است.*")
-                return
+                return False
 
             if msg.media and msg.media != MessageMediaType.WEB_PAGE:
                 edit = await safe_edit_message(sender, edit, f"⚡ *در حال دانلود محتوای رسانه‌ای پست @{chat}/{msg_id}...*")
@@ -394,18 +393,23 @@ async def get_msg(userbot, client, bot, sender, edit_id, msg_link, i):
                     except Exception:
                         pass
                     await safe_edit_message(sender, edit, "✅ *دانلود و ارسال فایل با موفقیت پایان یافت!*")
+                    return True
                 else:
                     await safe_edit_message(sender, edit, "❌ *خطا در دانلود فایل رسانه‌ای تلگرام. حجم فایل صفر یا دریافت ناموفق بود.*")
+                    return False
             elif msg.text or (msg.media == MessageMediaType.WEB_PAGE and msg.text):
                 await safe_edit_message(sender, edit, "📥 *در حال ارسال متن پیام...*")
                 caption_text = msg.text.markdown if hasattr(msg.text, 'markdown') else str(msg.text)
                 await safe_send_message(sender, caption_text)
                 await safe_edit_message(sender, edit, "✅ *ارسال متن پیام با موفقیت پایان یافت!*")
+                return True
             else:
                 await safe_edit_message(sender, edit, "❌ *پیام انتخابی فاقد محتوای رسانه‌ای قابل دانلود می‌باشد.*")
+                return False
         except Exception as e:
             print(f"DEBUG: Error processing public link {msg_link}: {e}")
             await safe_edit_message(sender, edit, f'❌ *خطا در دریافت پست عمومی تلگرام:* `{msg_link}`\n\n`{str(e)}`')
+            return False
 
 async def get_bulk_msg(userbot, client, sender, msg_link, i):
     x = await client.send_message(sender, "Processing!")
