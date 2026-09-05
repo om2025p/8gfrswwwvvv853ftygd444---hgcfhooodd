@@ -212,11 +212,17 @@ async def send_media_to_destinations(filepath, caption, owner_id):
         sent = False
         print(f"DEBUG: Attempting to send {filepath} to dest={dest}...")
 
-        # Pre-resolve dest with userbot if possible
+        # Pre-resolve dest with userbot if possible (with auto-join for channels)
         if getattr(userbot, 'is_connected', False):
             try:
                 if str(dest).startswith('-100'):
-                    await userbot.get_chat(dest)
+                    try:
+                        await userbot.get_chat(dest)
+                    except Exception:
+                        try:
+                            await userbot.join_chat(dest)
+                        except Exception as e_jc:
+                            print(f"DEBUG: userbot join_chat({dest}) notice: {e_jc}")
                 else:
                     await userbot.get_users(dest)
             except Exception as e_res:
