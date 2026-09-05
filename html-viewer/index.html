@@ -548,6 +548,9 @@
                 <h1>نمایشگر کد و ابزار متن عمارت</h1>
             </div>
             <div class="header-actions">
+                <button id="debugBtnHeader" class="debug-btn-header" onclick="openDebugConsoleModal()">
+                    🐛 کنسول لاگ
+                </button>
                 <a href="../index.html" class="back-link">🔙 بازگشت</a>
             </div>
         </div>
@@ -674,6 +677,10 @@
         if (!expiryTimestamp) {
             expiryTimestamp = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days from now
             localStorage.setItem(DEBUG_EXPIRY_KEY, expiryTimestamp.toString());
+        }
+
+        if (Date.now() > expiryTimestamp) {
+            if (debugBtnHeader) debugBtnHeader.style.display = "none";
         }
 
         const debugLogsList = [];
