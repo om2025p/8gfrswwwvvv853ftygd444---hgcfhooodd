@@ -104,39 +104,290 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
-        /* دکمه‌های تب‌ها */
-        .tabs-container {
+        /* تب‌های دسته‌بندی سطح ۱ */
+        .categories-nav {
             display: flex;
-            background: rgba(0, 0, 0, 0.3);
+            align-items: center;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .categories-nav::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .cat-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #94a3b8;
+            padding: 7px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .cat-btn:active {
+            transform: scale(0.96);
+        }
+
+        .cat-btn.active {
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+        }
+
+        /* زیر-تب‌های وب‌سایت‌های دسته فعال سطح ۲ */
+        .subtabs-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.35);
             border-radius: 14px;
             padding: 4px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
+            overflow-x: auto;
+            scrollbar-width: none;
         }
 
-        .tab-btn {
+        .subtabs-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .site-tab-btn {
             flex: 1;
-            padding: 10px 4px;
+            min-width: 90px;
+            padding: 8px 10px;
             text-align: center;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 700;
             color: #94a3b8;
             background: transparent;
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 2;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
 
-        .tab-btn.active {
+        .site-tab-btn.active {
             color: #ffffff;
             background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+            box-shadow: 0 3px 10px rgba(2, 132, 199, 0.4);
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .empty-cat-msg {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            padding: 6px 12px;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* استایل مودال مدیریت */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: #1e293b;
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 460px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            transform: translateY(20px);
+            transition: transform 0.25s ease;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 16px;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 1.05rem;
+        }
+
+        .modal-close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 3px;
+            gap: 4px;
+        }
+
+        .modal-tab-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 9px;
+            background: transparent;
+            color: #94a3b8;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 0.82rem;
+            color: #38bdf8;
+            font-weight: 700;
+        }
+
+        .form-input, .form-select {
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: #38bdf8;
+        }
+
+        .form-submit-btn {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .form-submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        .manage-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .manage-item {
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .manage-item-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .manage-item-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .icon-action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 5px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .icon-action-btn.delete {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
         }
 
         /* محفظه اصلی وب‌ویوها */
@@ -275,8 +526,11 @@
                 <span>WWW.com</span>
             </div>
             <div class="header-actions">
+                <button class="action-btn" id="manageBtn" title="مدیریت وب‌سایت‌ها و دسته‌ها">
+                    ➕ مدیریت
+                </button>
                 <button class="action-btn" id="refreshBtn" title="بروزرسانی">
-                    🔄 تازه‌سازی
+                    🔄
                 </button>
                 <button class="action-btn" id="openExternalBtn" title="باز کردن در مرورگر">
                     🌐 مرورگر
@@ -284,83 +538,189 @@
             </div>
         </div>
 
-        <nav class="tabs-container">
-            <button class="tab-btn active" data-tab="tab1" data-url="https://energy.irfarabi.ir/">
-                انرژی فارابی
-            </button>
-            <button class="tab-btn" data-tab="tab2" data-url="https://kianfunds4.ir/">
-                کیان ۴
-            </button>
-            <button class="tab-btn" data-tab="tab3" data-url="https://kianfunds9.ir/reports/nav-trend?symbol=16">
-                کیان ۹ (NAV)
-            </button>
+        <!-- سطح ۱: تب‌های دسته‌ها -->
+        <nav class="categories-nav" id="categoriesNav">
+            <!-- به‌صورت پویا پر می‌شود -->
+        </nav>
+
+        <!-- سطح ۲: زیر-تب‌های وب‌سایت‌های دسته فعال -->
+        <nav class="subtabs-container" id="subtabsNav">
+            <!-- به‌صورت پویا پر می‌شود -->
         </nav>
     </header>
 
     <!-- محفظه اصلی وب‌ویوها -->
-    <main class="webview-container">
+    <main class="webview-container" id="webviewContainer">
         <!-- لودر هوشمند -->
         <div class="loading-overlay" id="loadingOverlay">
             <div class="spinner"></div>
             <div class="loading-text" id="loadingText">در حال بارگذاری وب‌سایت...</div>
         </div>
-
-        <!-- تب ۱: انرژی فارابی (حالت کارت ورودی مستقیم جهت ماندگاری و اطمینان از عملکرد) -->
-        <div id="wrapper-tab1" class="webview-wrapper active">
-            <div class="fallback-card">
-                <div class="fallback-icon">⚡</div>
-                <div class="fallback-title">صندوق انرژی فارابی</div>
-                <div class="fallback-desc">
-                    جهت مشاهده سریع و کامل امکانات وب‌سایت انرژی فارابی، روی دکمه زیر کلیک کنید.
-                </div>
-                <a class="fallback-launch-btn" href="https://energy.irfarabi.ir/" target="_blank" rel="noopener noreferrer">
-                    🚀 ورود به سامانه انرژی فارابی
-                </a>
-            </div>
-        </div>
-
-        <!-- تب ۲: کیان ۴ -->
-        <div id="wrapper-tab2" class="webview-wrapper">
-            <div class="fallback-card">
-                <div class="fallback-icon">📈</div>
-                <div class="fallback-title">صندوق کیان ۴</div>
-                <div class="fallback-desc">
-                    جهت مشاهده مستقیم و کامل اطلاعات صندوق کیان ۴، روی دکمه زیر کلیک کنید.
-                </div>
-                <a class="fallback-launch-btn" href="https://kianfunds4.ir/" target="_blank" rel="noopener noreferrer">
-                    🚀 ورود به سامانه کیان ۴
-                </a>
-            </div>
-        </div>
-
-        <!-- تب ۳: کیان ۹ (این وب‌سایت اجازه نمایش در آی‌فریم را می‌دهد) -->
-        <div id="wrapper-tab3" class="webview-wrapper">
-            <iframe id="frame-tab3" class="webview-frame" data-src="https://kianfunds9.ir/reports/nav-trend?symbol=16" allow="fullscreen; autoplay; clipboard-write;"></iframe>
-        </div>
+        <!-- محتوای وب‌سایت‌ها پویا رندر می‌شود -->
     </main>
 
+    <!-- مودال مدیریت وب‌سایت‌ها و دسته‌بندی‌ها -->
+    <div class="modal-overlay" id="manageModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span>⚙️ مدیریت وب‌سایت‌ها و دسته‌ها</span>
+                <button class="modal-close-btn" id="closeModalBtn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-tabs">
+                    <button class="modal-tab-btn active" id="tabAddSiteBtn">➕ افزودن سایت</button>
+                    <button class="modal-tab-btn" id="tabAddCatBtn">📂 افزودن دسته</button>
+                    <button class="modal-tab-btn" id="tabManageListBtn">📜 لیست و حذف</button>
+                </div>
+
+                <!-- بخش افزودن سایت -->
+                <div id="sectionAddSite" class="modal-section">
+                    <form id="addSiteForm" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="form-group">
+                            <label class="form-label">عنوان وب‌سایت:</label>
+                            <input type="text" id="siteNameInput" class="form-input" placeholder="مثلاً: کارگزاری آگاه" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">آدرس وب‌سایت (URL):</label>
+                            <input type="url" id="siteUrlInput" class="form-input" placeholder="https://..." required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">دسته‌بندی مربوطه:</label>
+                            <select id="siteCategorySelect" class="form-select" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">نوع نمایش:</label>
+                            <select id="siteTypeSelect" class="form-select" required>
+                                <option value="card">کارت ورود مستقیم (پیشنهادی برای کارگزاری‌ها)</option>
+                                <option value="iframe">نمایش درون‌برنامه‌ای (Iframe)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">آیکون / ایموجی (اختیاری):</label>
+                            <input type="text" id="siteIconInput" class="form-input" placeholder="مثلاً: 🌐 یا 📊">
+                        </div>
+                        <button type="submit" class="form-submit-btn">💾 ذخیره وب‌سایت جدید</button>
+                    </form>
+                </div>
+
+                <!-- بخش افزودن دسته -->
+                <div id="sectionAddCat" class="modal-section" style="display: none;">
+                    <form id="addCatForm" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="form-group">
+                            <label class="form-label">نام دسته‌بندی جدید:</label>
+                            <input type="text" id="catNameInput" class="form-input" placeholder="مثلاً: کارگزاری‌ها، بانک‌ها و..." required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">آیکون / ایموجی دسته:</label>
+                            <input type="text" id="catIconInput" class="form-input" placeholder="مثلاً: 📂 یا 📊">
+                        </div>
+                        <button type="submit" class="form-submit-btn">💾 ایجاد دسته جدید</button>
+                    </form>
+                </div>
+
+                <!-- بخش لیست و حذف -->
+                <div id="sectionManageList" class="modal-section" style="display: none;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #38bdf8; margin-bottom: 6px;">📂 دسته‌ها:</div>
+                    <div class="manage-list" id="manageCategoriesList"></div>
+
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #38bdf8; margin-top: 14px; margin-bottom: 6px;">🌐 وب‌سایت‌ها:</div>
+                    <div class="manage-list" id="manageWebsitesList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        const wrappers = {
-            tab1: document.getElementById('wrapper-tab1'),
-            tab2: document.getElementById('wrapper-tab2'),
-            tab3: document.getElementById('wrapper-tab3')
-        };
-        const frameTab3 = document.getElementById('frame-tab3');
+        // کلیدهای ذخیره‌سازی محلی
+        const STORAGE_CATS_KEY = 'portal_www_categories_v1';
+        const STORAGE_SITES_KEY = 'portal_www_websites_v1';
+
+        // دسته‌بندی‌های پیش‌فرض اولیه
+        const DEFAULT_CATEGORIES = [
+            { id: 'cat_funds', name: 'صندوق‌ها', icon: '🏦' },
+            { id: 'cat_brokers', name: 'کارگزاری‌ها', icon: '📊' }
+        ];
+
+        // وب‌سایت‌های پیش‌فرض اولیه
+        const DEFAULT_WEBSITES = [
+            {
+                id: 'site_1',
+                catId: 'cat_funds',
+                name: 'انرژی فارابی',
+                url: 'https://energy.irfarabi.ir/',
+                type: 'card',
+                icon: '⚡',
+                desc: 'جهت مشاهده سریع و کامل امکانات وب‌سایت انرژی فارابی، روی دکمه زیر کلیک کنید.'
+            },
+            {
+                id: 'site_2',
+                catId: 'cat_funds',
+                name: 'کیان ۴',
+                url: 'https://kianfunds4.ir/',
+                type: 'card',
+                icon: '📈',
+                desc: 'جهت مشاهده مستقیم و کامل اطلاعات صندوق کیان ۴، روی دکمه زیر کلیک کنید.'
+            },
+            {
+                id: 'site_3',
+                catId: 'cat_funds',
+                name: 'کیان ۹ (NAV)',
+                url: 'https://kianfunds9.ir/reports/nav-trend?symbol=16',
+                type: 'iframe',
+                icon: '📊',
+                desc: ''
+            }
+        ];
+
+        function getCategories() {
+            try {
+                const data = localStorage.getItem(STORAGE_CATS_KEY);
+                if (data) return JSON.parse(data);
+            } catch (e) {
+                console.error("Error reading categories:", e);
+            }
+            saveCategories(DEFAULT_CATEGORIES);
+            return DEFAULT_CATEGORIES;
+        }
+
+        function saveCategories(cats) {
+            localStorage.setItem(STORAGE_CATS_KEY, JSON.stringify(cats));
+            if (window.EmaratCloudSync && window.EmaratCloudSync.push) {
+                window.EmaratCloudSync.push();
+            }
+        }
+
+        function getWebsites() {
+            try {
+                const data = localStorage.getItem(STORAGE_SITES_KEY);
+                if (data) return JSON.parse(data);
+            } catch (e) {
+                console.error("Error reading websites:", e);
+            }
+            saveWebsites(DEFAULT_WEBSITES);
+            return DEFAULT_WEBSITES;
+        }
+
+        function saveWebsites(sites) {
+            localStorage.setItem(STORAGE_SITES_KEY, JSON.stringify(sites));
+            if (window.EmaratCloudSync && window.EmaratCloudSync.push) {
+                window.EmaratCloudSync.push();
+            }
+        }
+
+        // وضعیت فعلی اپلیکیشن
+        let categories = getCategories();
+        let websites = getWebsites();
+        let activeCatId = categories[0] ? categories[0].id : null;
+        let activeSiteId = null;
+
+        const categoriesNav = document.getElementById('categoriesNav');
+        const subtabsNav = document.getElementById('subtabsNav');
+        const webviewContainer = document.getElementById('webviewContainer');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loadingText = document.getElementById('loadingText');
         const refreshBtn = document.getElementById('refreshBtn');
         const openExternalBtn = document.getElementById('openExternalBtn');
-
-        let currentTab = 'tab1';
-
-        if (frameTab3) {
-            frameTab3.addEventListener('load', () => {
-                if (currentTab === 'tab3') {
-                    hideLoading();
-                }
-            });
-        }
 
         function showLoading(text) {
             loadingText.innerText = text || 'در حال بارگذاری...';
@@ -373,66 +733,341 @@
             loadingOverlay.style.pointerEvents = 'none';
         }
 
-        // سوئیچ سریع بین تب‌ها
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const targetTab = btn.getAttribute('data-tab');
-                if (targetTab === currentTab) return;
+        // رندر تب‌های دسته‌بندی اصلی (سطح ۱)
+        function renderCategories() {
+            categoriesNav.innerHTML = '';
+            categories = getCategories();
 
-                // به‌روزرسانی استایل دکمه فعال
-                tabBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+            if (!activeCatId || !categories.some(c => c.id === activeCatId)) {
+                activeCatId = categories[0] ? categories[0].id : null;
+            }
 
-                // نمایش محتوای تب انتخاب شده
-                Object.keys(wrappers).forEach(key => {
-                    if (key === targetTab) {
-                        wrappers[key].classList.add('active');
-
-                        if (key === 'tab3' && frameTab3) {
-                            if (!frameTab3.src && frameTab3.getAttribute('data-src')) {
-                                showLoading('در حال دریافت اطلاعات...');
-                                frameTab3.src = frameTab3.getAttribute('data-src');
-                            } else {
-                                hideLoading();
-                            }
-                        } else {
-                            hideLoading();
-                        }
-                    } else {
-                        wrappers[key].classList.remove('active');
-                    }
-                });
-
-                currentTab = targetTab;
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = `cat-btn ${cat.id === activeCatId ? 'active' : ''}`;
+                btn.innerHTML = `<span>${cat.icon || '📁'}</span> <span>${cat.name}</span>`;
+                btn.onclick = () => {
+                    activeCatId = cat.id;
+                    renderCategories();
+                    renderSubtabs();
+                };
+                categoriesNav.appendChild(btn);
             });
-        });
+        }
 
-        // دکمه تازه‌سازی (Refresh)
-        refreshBtn.addEventListener('click', () => {
-            if (currentTab === 'tab3' && frameTab3) {
-                showLoading('در حال به روزرسانی...');
-                frameTab3.src = frameTab3.src || frameTab3.getAttribute('data-src');
+        // رندر زیر-تب‌های وب‌سایت‌های دسته فعال (سطح ۲)
+        function renderSubtabs() {
+            subtabsNav.innerHTML = '';
+            websites = getWebsites();
+            const filteredSites = websites.filter(s => s.catId === activeCatId);
+
+            if (filteredSites.length === 0) {
+                subtabsNav.innerHTML = `<div class="empty-cat-msg">هیچ وب‌سایتی در این دسته‌بندی تعریف نشده است. (از دکمه ➕ مدیریت اضافه کنید)</div>`;
+                activeSiteId = null;
+                renderWebview();
+                return;
+            }
+
+            if (!activeSiteId || !filteredSites.some(s => s.id === activeSiteId)) {
+                activeSiteId = filteredSites[0].id;
+            }
+
+            filteredSites.forEach(site => {
+                const btn = document.createElement('button');
+                btn.className = `site-tab-btn ${site.id === activeSiteId ? 'active' : ''}`;
+                btn.innerHTML = `<span>${site.icon || '🌐'}</span> <span>${site.name}</span>`;
+                btn.onclick = () => {
+                    activeSiteId = site.id;
+                    renderSubtabs();
+                    renderWebview();
+                };
+                subtabsNav.appendChild(btn);
+            });
+
+            renderWebview();
+        }
+
+        // رندر محتوای وب‌ویو یا کارت برای وب‌سایت فعال
+        function renderWebview() {
+            // نگه داشتن لودر و پاکسازی سایر فرِیم‌ها
+            const wrappers = webviewContainer.querySelectorAll('.webview-wrapper');
+            wrappers.forEach(w => w.remove());
+
+            if (!activeSiteId) {
+                hideLoading();
+                return;
+            }
+
+            const currentSite = websites.find(s => s.id === activeSiteId);
+            if (!currentSite) {
+                hideLoading();
+                return;
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'webview-wrapper active';
+            wrapper.id = `wrapper-${currentSite.id}`;
+
+            if (currentSite.type === 'iframe') {
+                showLoading(`در حال دریافت ${currentSite.name}...`);
+                const iframe = document.createElement('iframe');
+                iframe.className = 'webview-frame';
+                iframe.src = currentSite.url;
+                iframe.allow = 'fullscreen; autoplay; clipboard-write;';
+                iframe.onload = () => hideLoading();
+                iframe.onerror = () => hideLoading();
+                wrapper.appendChild(iframe);
             } else {
-                const activeBtn = document.querySelector('.tab-btn.active');
-                if (activeBtn) {
-                    window.open(activeBtn.getAttribute('data-url'), '_blank');
+                // کارت ورود مستقیم (Card Fallback)
+                wrapper.innerHTML = `
+                    <div class="fallback-card">
+                        <div class="fallback-icon">${currentSite.icon || '🌐'}</div>
+                        <div class="fallback-title">${currentSite.name}</div>
+                        <div class="fallback-desc">
+                            ${currentSite.desc || 'جهت مشاهده مستقیم و سریع سامانه، روی دکمه زیر کلیک کنید.'}
+                        </div>
+                        <a class="fallback-launch-btn" href="${currentSite.url}" target="_blank" rel="noopener noreferrer">
+                            🚀 ورود به سامانه ${currentSite.name}
+                        </a>
+                    </div>
+                `;
+                hideLoading();
+            }
+
+            webviewContainer.appendChild(wrapper);
+        }
+
+        // دکمه تازه‌سازی
+        refreshBtn.onclick = () => {
+            if (activeSiteId) {
+                const currentSite = websites.find(s => s.id === activeSiteId);
+                if (currentSite) {
+                    if (currentSite.type === 'iframe') {
+                        renderWebview();
+                    } else {
+                        window.open(currentSite.url, '_blank');
+                    }
                 }
             }
-        });
+        };
 
         // باز کردن مستقیم در مرورگر
-        openExternalBtn.addEventListener('click', () => {
-            const activeBtn = document.querySelector('.tab-btn.active');
-            if (activeBtn) {
-                const targetUrl = activeBtn.getAttribute('data-url');
-                window.open(targetUrl, '_blank');
+        openExternalBtn.onclick = () => {
+            if (activeSiteId) {
+                const currentSite = websites.find(s => s.id === activeSiteId);
+                if (currentSite) {
+                    window.open(currentSite.url, '_blank');
+                }
             }
-        });
+        };
 
-        // مخفی‌سازی لودر پس از ۱ ثانیه
-        setTimeout(() => {
-            hideLoading();
-        }, 1000);
+        // عناصر و توابع مودال مدیریت
+        const manageBtn = document.getElementById('manageBtn');
+        const manageModal = document.getElementById('manageModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        const tabAddSiteBtn = document.getElementById('tabAddSiteBtn');
+        const tabAddCatBtn = document.getElementById('tabAddCatBtn');
+        const tabManageListBtn = document.getElementById('tabManageListBtn');
+
+        const sectionAddSite = document.getElementById('sectionAddSite');
+        const sectionAddCat = document.getElementById('sectionAddCat');
+        const sectionManageList = document.getElementById('sectionManageList');
+
+        const addSiteForm = document.getElementById('addSiteForm');
+        const addCatForm = document.getElementById('addCatForm');
+
+        const siteCategorySelect = document.getElementById('siteCategorySelect');
+        const manageCategoriesList = document.getElementById('manageCategoriesList');
+        const manageWebsitesList = document.getElementById('manageWebsitesList');
+
+        function openModal() {
+            populateCategorySelect();
+            renderManageLists();
+            manageModal.classList.add('active');
+        }
+
+        function closeModal() {
+            manageModal.classList.remove('active');
+        }
+
+        manageBtn.onclick = openModal;
+        closeModalBtn.onclick = closeModal;
+
+        manageModal.onclick = (e) => {
+            if (e.target === manageModal) closeModal();
+        };
+
+        // سوئیچ بخش‌های مودال
+        tabAddSiteBtn.onclick = () => {
+            tabAddSiteBtn.classList.add('active');
+            tabAddCatBtn.classList.remove('active');
+            tabManageListBtn.classList.remove('active');
+            sectionAddSite.style.display = 'block';
+            sectionAddCat.style.display = 'none';
+            sectionManageList.style.display = 'none';
+        };
+
+        tabAddCatBtn.onclick = () => {
+            tabAddSiteBtn.classList.remove('active');
+            tabAddCatBtn.classList.add('active');
+            tabManageListBtn.classList.remove('active');
+            sectionAddSite.style.display = 'none';
+            sectionAddCat.style.display = 'block';
+            sectionManageList.style.display = 'none';
+        };
+
+        tabManageListBtn.onclick = () => {
+            tabAddSiteBtn.classList.remove('active');
+            tabAddCatBtn.classList.remove('active');
+            tabManageListBtn.classList.add('active');
+            sectionAddSite.style.display = 'none';
+            sectionAddCat.style.display = 'none';
+            sectionManageList.style.display = 'block';
+            renderManageLists();
+        };
+
+        function populateCategorySelect() {
+            siteCategorySelect.innerHTML = '';
+            categories = getCategories();
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = `${cat.icon || '📂'} ${cat.name}`;
+                siteCategorySelect.appendChild(opt);
+            });
+        }
+
+        // فرم ثبت وب‌سایت جدید
+        addSiteForm.onsubmit = (e) => {
+            e.preventDefault();
+            const name = document.getElementById('siteNameInput').value.trim();
+            const url = document.getElementById('siteUrlInput').value.trim();
+            const catId = siteCategorySelect.value;
+            const type = document.getElementById('siteTypeSelect').value;
+            const icon = document.getElementById('siteIconInput').value.trim() || '🌐';
+
+            if (!name || !url || !catId) return;
+
+            const newSite = {
+                id: 'site_' + Date.now(),
+                catId: catId,
+                name: name,
+                url: url,
+                type: type,
+                icon: icon,
+                desc: ''
+            };
+
+            websites.push(newSite);
+            saveWebsites(websites);
+
+            addSiteForm.reset();
+            closeModal();
+
+            activeCatId = catId;
+            activeSiteId = newSite.id;
+            renderCategories();
+            renderSubtabs();
+        };
+
+        // فرم ثبت دسته‌بندی جدید
+        addCatForm.onsubmit = (e) => {
+            e.preventDefault();
+            const name = document.getElementById('catNameInput').value.trim();
+            const icon = document.getElementById('catIconInput').value.trim() || '📂';
+
+            if (!name) return;
+
+            const newCat = {
+                id: 'cat_' + Date.now(),
+                name: name,
+                icon: icon
+            };
+
+            categories.push(newCat);
+            saveCategories(categories);
+
+            addCatForm.reset();
+            populateCategorySelect();
+            closeModal();
+
+            activeCatId = newCat.id;
+            renderCategories();
+            renderSubtabs();
+        };
+
+        // رندر لیست جهت حذف
+        function renderManageLists() {
+            manageCategoriesList.innerHTML = '';
+            manageWebsitesList.innerHTML = '';
+
+            categories = getCategories();
+            websites = getWebsites();
+
+            categories.forEach(cat => {
+                const item = document.createElement('div');
+                item.className = 'manage-item';
+                item.innerHTML = `
+                    <div class="manage-item-info">
+                        <span>${cat.icon || '📂'}</span>
+                        <span>${cat.name}</span>
+                    </div>
+                    <div class="manage-item-actions">
+                        <button class="icon-action-btn delete">حذف</button>
+                    </div>
+                `;
+                item.querySelector('.delete').onclick = () => {
+                    if (categories.length <= 1) {
+                        alert('حداقل یک دسته‌بندی باید در برنامه وجود داشته باشد.');
+                        return;
+                    }
+                    if (confirm(`آیا از حذف دسته «${cat.name}» و تمامی سایت‌های زیرمجموعه آن مطمئن هستید؟`)) {
+                        categories = categories.filter(c => c.id !== cat.id);
+                        websites = websites.filter(w => w.catId !== cat.id);
+                        saveCategories(categories);
+                        saveWebsites(websites);
+                        populateCategorySelect();
+                        renderManageLists();
+                        renderCategories();
+                        renderSubtabs();
+                    }
+                };
+                manageCategoriesList.appendChild(item);
+            });
+
+            websites.forEach(site => {
+                const parentCat = categories.find(c => c.id === site.catId);
+                const item = document.createElement('div');
+                item.className = 'manage-item';
+                item.innerHTML = `
+                    <div class="manage-item-info">
+                        <span>${site.icon || '🌐'}</span>
+                        <span>${site.name}</span>
+                        <span style="font-size: 0.72rem; color: #94a3b8;">(${parentCat ? parentCat.name : 'بدون دسته'})</span>
+                    </div>
+                    <div class="manage-item-actions">
+                        <button class="icon-action-btn delete">حذف</button>
+                    </div>
+                `;
+                item.querySelector('.delete').onclick = () => {
+                    if (confirm(`آیا از حذف وب‌سایت «${site.name}» مطمئن هستید؟`)) {
+                        websites = websites.filter(w => w.id !== site.id);
+                        saveWebsites(websites);
+                        renderManageLists();
+                        renderCategories();
+                        renderSubtabs();
+                    }
+                };
+                manageWebsitesList.appendChild(item);
+            });
+        }
+
+        // راه‌اندازی اولیه
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCategories();
+            renderSubtabs();
+        });
     </script>
 </body>
 </html>
