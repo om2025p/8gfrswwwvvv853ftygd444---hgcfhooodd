@@ -464,6 +464,22 @@
                         }
                     }
                 });
+
+                // Auto-repair any erroneous future 1406 dates created by previous string sorting bugs
+                list.sort((a,b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
+                for (let i = 0; i < list.length; i++) {
+                    if (i > 0) {
+                        let prevDate = list[i-1].date;
+                        let currDate = list[i].date;
+                        if (prevDate.startsWith("1405.") && currDate.startsWith("1406.06.")) {
+                            list[i].date = getNextPersianDate(prevDate);
+                            changed = true;
+                        }
+                    }
+                }
+
+                list.sort((a,b) => normalizeDate(a.date).localeCompare(normalizeDate(b.date)) || (new Date(a.timestamp) - new Date(b.timestamp)));
+
                 if (changed) {
                     localStorage.setItem(STORAGE_PRICES, JSON.stringify(list));
                 }
