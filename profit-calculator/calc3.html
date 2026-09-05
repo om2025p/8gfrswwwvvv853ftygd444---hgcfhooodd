@@ -17,12 +17,48 @@
         body {
             font-family: 'Segoe UI', Tahoma, sans-serif;
             background: #f0ebe5;
+            color: #1a3a5e;
             min-height: 100vh;
             padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
+            transition: background 0.3s, color 0.3s;
         }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .theme-toggle-btn {
+            padding: 10px 18px;
+            border-radius: 20px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            background: #2e86c1;
+            color: white;
+            transition: 0.3s;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .theme-toggle-btn:hover {
+            transform: scale(1.05);
+        }
+        .theme-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
+        input {
+            font-weight: bold !important;
+        }
+
         .container {
             max-width: 1100px;
             width: 100%;
@@ -31,6 +67,7 @@
             border-radius: 32px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
             border: 1px solid #e0d8d0;
+            transition: background 0.3s, border-color 0.3s;
         }
 
         h1 {
@@ -44,7 +81,7 @@
             color: #7a6a5a;
             font-size: 14px;
             padding-right: 22px;
-            margin-bottom: 20px;
+            margin-bottom: 0;
         }
 
         /* ========== بخش‌های کشویی (آکاردئون) ========== */
@@ -109,6 +146,7 @@
             border: 2px solid #d5c8b8;
             border-radius: 12px;
             font-size: 18px;
+            font-weight: bold;
             font-family: 'Courier New', monospace;
             direction: ltr;
             text-align: right;
@@ -123,6 +161,7 @@
         .input-group input::placeholder {
             color: #bbb;
             font-size: 14px;
+            font-weight: normal;
         }
 
         .expense-grid {
@@ -156,6 +195,7 @@
             border: 2px solid #d5c8b8;
             border-radius: 10px;
             font-size: 16px;
+            font-weight: bold;
             font-family: 'Courier New', monospace;
             direction: ltr;
             text-align: right;
@@ -170,6 +210,7 @@
         .expense-box input::placeholder {
             color: #bbb;
             font-size: 13px;
+            font-weight: normal;
         }
         .expense-box .icon {
             font-size: 28px;
@@ -240,6 +281,7 @@
             border: 2px solid #d5c8b8;
             border-radius: 8px;
             font-size: 16px;
+            font-weight: bold;
             font-family: 'Courier New', monospace;
             direction: ltr;
             text-align: right;
@@ -252,6 +294,7 @@
         .profit-section .profit-row .profit-box input::placeholder {
             color: #bbb;
             font-size: 13px;
+            font-weight: normal;
         }
         .profit-section .profit-row .profit-box .unit {
             font-size: 12px;
@@ -392,6 +435,7 @@
             border: 2px solid #d5c8b8;
             border-radius: 12px;
             font-size: 16px;
+            font-weight: bold;
             font-family: 'Courier New', monospace;
             direction: ltr;
             text-align: right;
@@ -405,6 +449,7 @@
         .future-box .future-row input::placeholder {
             color: #bbb;
             font-size: 13px;
+            font-weight: normal;
         }
         .future-box .future-row .btn {
             flex: 0.5;
@@ -442,6 +487,7 @@
             border: 2px solid #d5c8b8;
             border-radius: 12px;
             font-size: 16px;
+            font-weight: bold;
             font-family: 'Courier New', monospace;
             direction: ltr;
             text-align: right;
@@ -455,6 +501,7 @@
         .target-section .target-row input::placeholder {
             color: #bbb;
             font-size: 13px;
+            font-weight: normal;
         }
         .target-section .target-row .btn {
             flex: 1;
@@ -558,6 +605,190 @@
             font-size: 14px;
         }
 
+        /* ========== حالت تم تاریک خاکستری (Dark Grey Theme) - اعمال کامل و نهایی ========== */
+        body.dark-mode {
+            background: #121214 !important;
+            color: #f4f4f5 !important;
+        }
+        body.dark-mode .container {
+            background: #1c1c21 !important;
+            border-color: #2f2f36 !important;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+        }
+        body.dark-mode h1 {
+            color: #60a5fa !important;
+            border-right-color: #3b82f6 !important;
+        }
+        body.dark-mode .subtitle {
+            color: #a1a1aa !important;
+        }
+        body.dark-mode .accordion {
+            border-color: #2f2f36 !important;
+        }
+        body.dark-mode .accordion-header {
+            background: #27272e !important;
+            color: #f4f4f5 !important;
+        }
+        body.dark-mode .accordion-header:hover {
+            background: #32323a !important;
+        }
+        body.dark-mode .accordion-body {
+            background: #1c1c21 !important;
+        }
+        body.dark-mode .input-group {
+            background: #27272e !important;
+            border-right-color: #3b82f6 !important;
+        }
+        body.dark-mode .input-group label {
+            color: #93c5fd !important;
+        }
+        body.dark-mode .input-group input,
+        body.dark-mode .expense-box input,
+        body.dark-mode .profit-section .profit-row .profit-box input,
+        body.dark-mode .future-box .future-row input,
+        body.dark-mode .target-section .target-row input {
+            background: #121214 !important;
+            color: #ffffff !important;
+            border-color: #3f3f46 !important;
+            font-weight: bold !important;
+        }
+        body.dark-mode .input-group input::placeholder,
+        body.dark-mode .expense-box input::placeholder,
+        body.dark-mode .profit-section .profit-row .profit-box input::placeholder,
+        body.dark-mode .future-box .future-row input::placeholder,
+        body.dark-mode .target-section .target-row input::placeholder {
+            color: #71717a !important;
+        }
+        body.dark-mode .expense-box {
+            background: #27272e !important;
+            border-color: #3f3f46 !important;
+        }
+        body.dark-mode .expense-box label {
+            color: #93c5fd !important;
+        }
+        body.dark-mode .convert-row .item {
+            background: #121214 !important;
+            color: #e4e4e7 !important;
+        }
+        body.dark-mode .convert-row .item .label {
+            color: #a1a1aa !important;
+        }
+        body.dark-mode .convert-row .item .val {
+            color: #60a5fa !important;
+        }
+        body.dark-mode .profit-section {
+            background: #143823 !important;
+            border-right-color: #22c55e !important;
+        }
+        body.dark-mode .profit-section h3 {
+            color: #4ade80 !important;
+        }
+        body.dark-mode .profit-section .profit-row .profit-box {
+            background: #1f2923 !important;
+            border-color: #2e4a36 !important;
+        }
+        body.dark-mode .profit-section .profit-row .profit-box label {
+            color: #4ade80 !important;
+        }
+        body.dark-mode .profit-section .profit-row .profit-box .unit {
+            color: #a1a1aa !important;
+        }
+        body.dark-mode #combinedProfitDisplay {
+            color: #4ade80 !important;
+        }
+        body.dark-mode .future-box {
+            background: #1b2a38 !important;
+            border-right-color: #3b82f6 !important;
+        }
+        body.dark-mode .future-box h3 {
+            color: #60a5fa !important;
+        }
+        body.dark-mode .future-result {
+            background: #121214 !important;
+            border-color: #2f2f36 !important;
+            color: #f4f4f5 !important;
+        }
+        body.dark-mode .target-section {
+            background: #2c1b38 !important;
+            border-right-color: #a855f7 !important;
+        }
+        body.dark-mode .target-section h3 {
+            color: #c084fc !important;
+        }
+        body.dark-mode .target-result {
+            background: #121214 !important;
+            border-color: #2f2f36 !important;
+            color: #f4f4f5 !important;
+        }
+        body.dark-mode .target-result .highlight {
+            color: #c084fc !important;
+        }
+        body.dark-mode .result-box {
+            background: #1b2a38 !important;
+            border-color: #3b82f6 !important;
+        }
+        body.dark-mode .result-box .big-number {
+            color: #60a5fa !important;
+        }
+        body.dark-mode .result-box .sub-text {
+            color: #e4e4e7 !important;
+        }
+        body.dark-mode .result-item {
+            background: #27272e !important;
+            border-color: #3f3f46 !important;
+        }
+        body.dark-mode .result-item .label {
+            color: #a1a1aa !important;
+        }
+        body.dark-mode .result-item .value {
+            color: #60a5fa !important;
+        }
+        body.dark-mode .result-item[style*="background:#f0faf0"] {
+            background: #143823 !important;
+            border-color: #22c55e !important;
+        }
+        body.dark-mode .result-item[style*="background:#eaf4fa"] {
+            background: #1b2a38 !important;
+            border-color: #3b82f6 !important;
+        }
+        body.dark-mode .advice-box {
+            background: #382d18 !important;
+            border-right-color: #f59e0b !important;
+        }
+        body.dark-mode .advice-box .title {
+            color: #fbbf24 !important;
+        }
+        body.dark-mode .advice-box .text {
+            color: #fef3c7 !important;
+        }
+        body.dark-mode .history-box {
+            background: #27272e !important;
+            border-color: #3f3f46 !important;
+        }
+        body.dark-mode .history-box .entry {
+            border-bottom-color: #3f3f46 !important;
+            color: #e4e4e7 !important;
+        }
+        body.dark-mode .history-box .entry .date {
+            color: #a1a1aa !important;
+        }
+        body.dark-mode .history-box .entry .amount {
+            color: #60a5fa !important;
+        }
+        body.dark-mode .history-box::-webkit-scrollbar-track {
+            background: #1c1c21 !important;
+        }
+        body.dark-mode .history-box::-webkit-scrollbar-thumb {
+            background: #3f3f46 !important;
+        }
+        body.dark-mode h3 {
+            color: #f4f4f5 !important;
+        }
+        body.dark-mode footer {
+            border-top-color: #2f2f36 !important;
+            color: #a1a1aa !important;
+        }
+
         @media (max-width: 900px) {
             .result-grid {
                 grid-template-columns: 1fr 1fr 1fr;
@@ -635,8 +866,13 @@
 
 <div class="container">
 
-    <h1>💰 ابزار نهایی دوام پول</h1>
-    <div class="subtitle">محاسبه دوام سرمایه + تبدیل خودکار هزینه‌ها + سود + آینده</div>
+    <div class="header-row">
+        <div>
+            <h1>💰 ابزار نهایی دوام پول</h1>
+            <div class="subtitle">محاسبه دوام سرمایه + تبدیل خودکار هزینه‌ها + سود + آینده</div>
+        </div>
+        <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()">🌙 تم شب</button>
+    </div>
 
     <!-- ========== بخش کشویی ۱: اطلاعات مالی ========== -->
     <div class="accordion">
@@ -839,15 +1075,37 @@
 </div>
 
 <script>
+    // ========== مدیریت تم شب / روز (Dark Grey Theme) ==========
+    function initTheme() {
+        const isDark = localStorage.getItem('calc3_theme_mode') === 'dark';
+        const btn = document.getElementById('themeToggleBtn');
+        if (isDark) {
+            document.body.classList.add('dark-mode');
+            if (btn) btn.innerHTML = '☀️ تم روشن';
+        } else {
+            document.body.classList.remove('dark-mode');
+            if (btn) btn.innerHTML = '🌙 تم شب';
+        }
+    }
+
+    function toggleTheme() {
+        const btn = document.getElementById('themeToggleBtn');
+        if (document.body.classList.contains('dark-mode')) {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('calc3_theme_mode', 'light');
+            if (btn) btn.innerHTML = '🌙 تم شب';
+        } else {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('calc3_theme_mode', 'dark');
+            if (btn) btn.innerHTML = '☀️ تم روشن';
+        }
+    }
+
     // ========== توابع کشویی (آکاردئون) ==========
     function toggleAccordion(header) {
         const body = header.nextElementSibling;
         const arrow = header.querySelector('.arrow');
         const isOpen = body.classList.contains('open');
-
-        // بستن همه بخش‌ها (اختیاری - برای باز کردن فقط یکی)
-        // document.querySelectorAll('.accordion-body').forEach(b => b.classList.remove('open'));
-        // document.querySelectorAll('.accordion .arrow').forEach(a => a.classList.remove('open'));
 
         if (isOpen) {
             body.classList.remove('open');
@@ -1242,6 +1500,7 @@
     }
 
     // ========== بارگذاری اولیه ==========
+    initTheme();
     loadFromLocalStorage();
     renderHistory();
     updateCombinedProfitDisplay();
@@ -1252,7 +1511,7 @@
         }
     });
 
-    console.log('💰 ابزار نهایی دوام پول – با بخش‌های کشویی');
+    console.log('💰 ابزار نهایی دوام پول – با بخش‌های کشویی و تم شب/روز');
     console.log('📂 هر بخش قابل باز و بسته شدن است');
 </script>
 
