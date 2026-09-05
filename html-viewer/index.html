@@ -948,7 +948,7 @@ ${cleanText}`;
 
         function checkAndRegisterUniqueDownload(content) {
             if (!content || !content.trim()) return false;
-            const normalized = content.trim().replace(/\r\n/g, '\n');
+            const normalized = content.trim().replace(/\r\n/g, '\n').replace(/\s+/g, ' ');
             let hashList = [];
             try {
                 hashList = JSON.parse(localStorage.getItem('html_viewer_downloaded_hashes') || '[]');
@@ -1113,14 +1113,14 @@ ${cleanText}`;
                 aiTitle = await generateSmartPersianTitle(text);
             }
 
+            let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
             const isUnique = checkAndRegisterUniqueDownload(text);
             if (isUnique) {
-                let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
                 currentCount += 1;
                 localStorage.setItem('html_viewer_download_count', currentCount.toString());
                 updateDownloadCounterBadge();
             } else {
-                showToast('⚠️ این متن تکراری است و در شمارنده محسوب نشد');
+                showToast('⚠️ این متن تکراری است و در شمارنده دانلودها محسوب نشد');
             }
 
             const jalaliDateStr = getJalaliDateString();
@@ -1157,14 +1157,14 @@ ${cleanText}`;
                 aiTitle = await generateSmartPersianTitle(code);
             }
 
+            let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
             const isUnique = checkAndRegisterUniqueDownload(code);
             if (isUnique) {
-                let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
                 currentCount += 1;
                 localStorage.setItem('html_viewer_download_count', currentCount.toString());
                 updateDownloadCounterBadge();
             } else {
-                showToast('⚠️ این کد تکراری است و در شمارنده محسوب نشد');
+                showToast('⚠️ این کد تکراری است و در شمارنده دانلودها محسوب نشد');
             }
 
             const jalaliDateStr = getJalaliDateString();
