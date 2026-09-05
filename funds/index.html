@@ -997,7 +997,7 @@
             renderSubtabs();
         };
 
-        // رندر لیست جهت حذف
+        // رندر لیست جهت ویرایش و حذف
         function renderManageLists() {
             manageCategoriesList.innerHTML = '';
             manageWebsitesList.innerHTML = '';
@@ -1014,9 +1014,29 @@
                         <span>${cat.name}</span>
                     </div>
                     <div class="manage-item-actions">
-                        <button class="icon-action-btn delete">حذف</button>
+                        <button class="icon-action-btn edit">✏️ ویرایش</button>
+                        <button class="icon-action-btn delete">🗑️ حذف</button>
                     </div>
                 `;
+
+                // دکمه ویرایش دسته‌بندی
+                item.querySelector('.edit').onclick = () => {
+                    const newName = prompt('نام جدید برای این دسته‌بندی را وارد کنید:', cat.name);
+                    if (newName !== null && newName.trim() !== '') {
+                        const newIcon = prompt('آیکون / ایموجی جدید (اختیاری):', cat.icon || '📂');
+                        cat.name = newName.trim();
+                        if (newIcon !== null && newIcon.trim() !== '') {
+                            cat.icon = newIcon.trim();
+                        }
+                        saveCategories(categories);
+                        populateCategorySelect();
+                        renderManageLists();
+                        renderCategories();
+                        renderSubtabs();
+                    }
+                };
+
+                // دکمه حذف دسته‌بندی
                 item.querySelector('.delete').onclick = () => {
                     if (categories.length <= 1) {
                         alert('حداقل یک دسته‌بندی باید در برنامه وجود داشته باشد.');
@@ -1047,9 +1067,28 @@
                         <span style="font-size: 0.72rem; color: #94a3b8;">(${parentCat ? parentCat.name : 'بدون دسته'})</span>
                     </div>
                     <div class="manage-item-actions">
-                        <button class="icon-action-btn delete">حذف</button>
+                        <button class="icon-action-btn edit">✏️ ویرایش</button>
+                        <button class="icon-action-btn delete">🗑️ حذف</button>
                     </div>
                 `;
+
+                // دکمه ویرایش وب‌سایت
+                item.querySelector('.edit').onclick = () => {
+                    const newName = prompt('نام جدید برای وب‌سایت را وارد کنید:', site.name);
+                    if (newName !== null && newName.trim() !== '') {
+                        const newUrl = prompt('آدرس جدید وب‌سایت (URL):', site.url);
+                        if (newUrl !== null && newUrl.trim() !== '') {
+                            site.name = newName.trim();
+                            site.url = newUrl.trim();
+                            saveWebsites(websites);
+                            renderManageLists();
+                            renderCategories();
+                            renderSubtabs();
+                        }
+                    }
+                };
+
+                // دکمه حذف وب‌سایت
                 item.querySelector('.delete').onclick = () => {
                     if (confirm(`آیا از حذف وب‌سایت «${site.name}» مطمئن هستید؟`)) {
                         websites = websites.filter(w => w.id !== site.id);
