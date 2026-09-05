@@ -270,7 +270,8 @@
     }
 
     function getPersianDate() {
-        return new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+        const raw = new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+        return toEnglishNumber(raw).replace(/\//g, ".");
     }
 
     function getCurrentPersianYearMonth() {
@@ -279,9 +280,9 @@
         const parts = formatter.formatToParts(now);
         let year = 1403, month = 1, day = 1;
         for(let p of parts) {
-            if(p.type === "year") year = parseInt(p.value, 10);
-            if(p.type === "month") month = parseInt(p.value, 10);
-            if(p.type === "day") day = parseInt(p.value, 10);
+            if(p.type === "year") year = parseInt(toEnglishNumber(p.value), 10) || 1403;
+            if(p.type === "month") month = parseInt(toEnglishNumber(p.value), 10) || 1;
+            if(p.type === "day") day = parseInt(toEnglishNumber(p.value), 10) || 1;
         }
         return { year, month, day };
     }
@@ -353,7 +354,7 @@
     function showCalendarForItem(itemId, currentDateStr) {
         currentEditingItemId = itemId;
 
-        let parts = currentDateStr?.split("/") || [];
+        let parts = (currentDateStr ? toEnglishNumber(currentDateStr).split(/[\/\.]/) : []);
         if(parts.length === 3) {
             let y = parseInt(parts[0], 10);
             let m = parseInt(parts[1], 10);
@@ -395,12 +396,12 @@
             closeCalendar();
             return;
         }
-        const newDateStr = `${currentYear}/${currentMonth.toString().padStart(2,'0')}/${selectedDay.toString().padStart(2,'0')}`;
+        const newDateStr = `${currentYear}.${currentMonth.toString().padStart(2,'0')}.${selectedDay.toString().padStart(2,'0')}`;
         let prices = getPrices();
         const item = prices.find(p => p.id == currentEditingItemId);
         if(item) {
             item.date = newDateStr;
-            prices.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+            prices.sort((a,b) => (a.date || '').localeCompare(b.date || '') || (new Date(a.timestamp) - new Date(b.timestamp)));
             savePrices(prices);
             showMessage(`📅 تاریخ به ${newDateStr} تغییر کرد`);
         } else {

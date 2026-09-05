@@ -21,7 +21,8 @@
         .price-list { background: #0f172a; border-radius: 20px; padding: 10px; max-height: 280px; overflow-y: auto; }
         .price-item { background: #1e293b; margin: 6px 0; padding: 8px 12px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
         .price-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 2; }
-        .date-badge { background: #334155; padding: 3px 8px; border-radius: 25px; font-size: 0.65rem; font-family: monospace; cursor: pointer; }
+        .date-badge { background: #334155; padding: 3px 8px; border-radius: 25px; font-size: 0.65rem; font-family: monospace; cursor: pointer; transition: 0.1s; }
+        .date-badge:hover { background: #8b5cf6; }
         .value-badge { font-weight: bold; font-size: 0.9rem; direction: ltr; cursor: pointer; }
         .percent-badge { background: #0f172a; padding: 2px 6px; border-radius: 20px; font-size: 0.6rem; font-weight: bold; direction: ltr; }
         .percent-positive { color: #34d399; }
@@ -30,6 +31,19 @@
         .icon-btn { background: #475569; padding: 4px 10px; font-size: 0.7rem; margin: 0; border-radius: 25px; }
         .icon-btn.edit-btn { background: #3b82f6; }
         .icon-btn.delete-btn { background: #ef4444; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10001; justify-content: center; align-items: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: #1e293b; border-radius: 28px; padding: 18px; width: 300px; border: 2px solid #8b5cf6; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 5px; flex-wrap: wrap; }
+        .calendar-header button { background: #8b5cf6; padding: 6px 12px; font-size: 0.75rem; margin: 0; }
+        .calendar-month-year { font-weight: bold; background: #0f172a; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; color: #c084fc; }
+        .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; margin-bottom: 8px; font-size: 0.65rem; color: #c084fc; }
+        .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .calendar-day { background: #0f172a; text-align: center; padding: 8px 0; border-radius: 12px; font-size: 0.7rem; cursor: pointer; transition: 0.1s; }
+        .calendar-day:hover { background: #8b5cf6; color: #fff; }
+        .calendar-day.empty { background: transparent; cursor: default; }
+        .modal-actions { display: flex; justify-content: space-between; margin-top: 15px; gap: 8px; }
+        .modal-actions button { flex: 1; margin: 0; }
         .stats { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-top: 12px; }
         .stat-card { background: #1e293b; padding: 8px 10px; border-radius: 16px; flex: 1; text-align: center; border-top: 2px solid #8b5cf6; font-size: 0.75rem; }
         .stat-card span { font-size: 1rem; font-weight: bold; display: block; margin-top: 4px; }
@@ -63,6 +77,7 @@
         .formula-badge { background: #1e293b; border-radius: 12px; padding: 5px 8px; font-size: 0.6rem; text-align: center; margin-top: 8px; color: #94a3b8; }
         .flex-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
         .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #000000cc; backdrop-filter: blur(12px); color: #38bdf8; padding: 6px 16px; border-radius: 40px; font-size: 0.75rem; opacity: 0; transition: 0.2s; pointer-events: none; z-index: 10000; }
+        @media (max-width: 600px) { .container { padding: 8px; } .price-item { flex-direction: column; align-items: stretch; } .growth-table th, .growth-table td { font-size: 0.6rem; padding: 4px 2px; } .modal-content { width: 90%; } }
     </style>
 </head>
 <body>
@@ -93,6 +108,7 @@
         <div class="chart-scroll-container" id="chartScrollContainer">
             <svg id="priceChart" width="100%" height="180" viewBox="0 0 600 180" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
+        <div class="small-note" style="font-size:0.6rem; text-align:center; margin-top:6px;">📊 هر نقطه = یک ثبت | دوبار کلیک روی تاریخ = تغییر تاریخ</div>
     </div>
     <div class="growth-table-section">
         <div class="growth-table-header">
@@ -116,6 +132,26 @@
 </div>
 <div id="toastMsg" class="toast">✅ انجام شد</div>
 
+<div id="calendarModal" class="modal">
+    <div class="modal-content">
+        <div class="calendar-header">
+            <button id="calYearPrev">&lt;&lt;</button>
+            <button id="calMonthPrev">&lt;</button>
+            <span id="calMonthYear" class="calendar-month-year"></span>
+            <button id="calMonthNext">&gt;</button>
+            <button id="calYearNext">&gt;&gt;</button>
+        </div>
+        <div class="calendar-weekdays">
+            <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
+        </div>
+        <div id="calendarDays" class="calendar-days"></div>
+        <div class="modal-actions">
+            <button id="cancelCalendarBtn" class="btn-outline">انصراف</button>
+            <button id="confirmCalendarBtn" class="apply-milestone-btn">تأیید</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const STORAGE_PRICES = "ahang_kian_prices_v1";
     const priceInput = document.getElementById("todayPrice");
@@ -135,20 +171,34 @@
     const growthTableContainer = document.getElementById("growthTableContainer");
     const forecastBtn = document.getElementById("forecastBtn");
     const forecastDaysInput = document.getElementById("forecastDays");
+    const calendarModal = document.getElementById("calendarModal");
+    const calYearPrev = document.getElementById("calYearPrev");
+    const calMonthPrev = document.getElementById("calMonthPrev");
+    const calMonthNext = document.getElementById("calMonthNext");
+    const calYearNext = document.getElementById("calYearNext");
+    const calMonthYearSpan = document.getElementById("calMonthYear");
+    const calendarDaysDiv = document.getElementById("calendarDays");
+    const cancelCalendarBtn = document.getElementById("cancelCalendarBtn");
+    const confirmCalendarBtn = document.getElementById("confirmCalendarBtn");
 
     let lastAvgPercent = 0;
+    let currentYear = 1403;
+    let currentMonth = 1;
+    let selectedDay = null;
+    let currentEditingItemId = null;
 
-    function showMessage(msg) {
+    function showMessage(msg, isError = false) {
         toastMsgDiv.textContent = msg;
         toastMsgDiv.style.opacity = "1";
+        toastMsgDiv.style.background = isError ? "#ef4444cc" : "#000000cc";
         setTimeout(() => { toastMsgDiv.style.opacity = "0"; }, 2000);
     }
 
     function toEnglishNumber(input) {
         if (!input && input !== 0) return "";
         const str = String(input);
-        const map = { '۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9' };
-        return str.replace(/[۰-۹]/g, m => map[m] || m);
+        const map = { '۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9', '٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9' };
+        return str.replace(/[۰-۹٠-٩]/g, m => map[m] || m);
     }
 
     function parsePrice(raw) {
@@ -163,8 +213,151 @@
         return Math.round(x).toLocaleString("en-US");
     }
 
+    function formatPercent(percent) {
+        if (percent === null || isNaN(percent)) return "—";
+        const sign = percent >= 0 ? "+" : "";
+        return `${sign}${percent.toFixed(2)}%`;
+    }
+
     function getPersianDate() {
-        return new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+        const raw = new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+        return toEnglishNumber(raw).replace(/\//g, ".");
+    }
+
+    function getCurrentPersianYearMonth() {
+        const now = new Date();
+        const formatter = new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "numeric", day: "numeric" });
+        const parts = formatter.formatToParts(now);
+        let year = 1403, month = 1, day = 1;
+        for(let p of parts) {
+            if(p.type === "year") year = parseInt(toEnglishNumber(p.value), 10) || 1403;
+            if(p.type === "month") month = parseInt(toEnglishNumber(p.value), 10) || 1;
+            if(p.type === "day") day = parseInt(toEnglishNumber(p.value), 10) || 1;
+        }
+        return { year, month, day };
+    }
+
+    function getPersianMonthDays(year, month) {
+        if(month < 1 || month > 12) return 30;
+        if(month <= 6) return 31;
+        if(month <= 11) return 30;
+        const isLeap = (year % 33 === 1 || year % 33 === 2 || year % 33 === 3);
+        return isLeap ? 30 : 29;
+    }
+
+    function getWeekdayOfFirstDay(year, month) {
+        const refYear = 1403, refMonth = 1, refWeekday = 5;
+        let totalMonthsDiff = (year - refYear) * 12 + (month - refMonth);
+        let totalDaysDiff = 0;
+        let y = refYear, m = refMonth;
+        if(totalMonthsDiff > 0) {
+            for(let i = 0; i < totalMonthsDiff; i++) {
+                totalDaysDiff += getPersianMonthDays(y, m);
+                m++;
+                if(m > 12) { m = 1; y++; }
+            }
+        } else if(totalMonthsDiff < 0) {
+            for(let i = 0; i < -totalMonthsDiff; i++) {
+                m--;
+                if(m < 1) { m = 12; y--; }
+                totalDaysDiff -= getPersianMonthDays(y, m);
+            }
+        }
+        let firstWeekday = (refWeekday + totalDaysDiff) % 7;
+        if(firstWeekday < 0) firstWeekday += 7;
+        return firstWeekday;
+    }
+
+    function renderCalendar(year, month) {
+        if (isNaN(year) || year < 1300) year = 1403;
+        if (isNaN(month) || month < 1 || month > 12) month = 1;
+
+        const daysCount = getPersianMonthDays(year, month);
+        const firstWeekday = getWeekdayOfFirstDay(year, month);
+        calMonthYearSpan.innerText = `${year} / ${month.toString().padStart(2,'0')}`;
+        calendarDaysDiv.innerHTML = "";
+        let totalCells = Math.ceil((firstWeekday + daysCount) / 7) * 7;
+        for(let i = 0; i < totalCells; i++) {
+            const dayNumber = i - firstWeekday + 1;
+            const div = document.createElement("div");
+            div.className = "calendar-day";
+            if(dayNumber >= 1 && dayNumber <= daysCount) {
+                div.innerText = dayNumber;
+                if(selectedDay === dayNumber) {
+                    div.style.background = "#8b5cf6";
+                }
+                div.addEventListener("click", (function(day) {
+                    return function() {
+                        document.querySelectorAll(".calendar-days .calendar-day").forEach(d => d.style.background = "");
+                        this.style.background = "#8b5cf6";
+                        selectedDay = day;
+                    };
+                })(dayNumber));
+            } else {
+                div.innerText = "";
+                div.classList.add("empty");
+            }
+            calendarDaysDiv.appendChild(div);
+        }
+    }
+
+    function showCalendarForItem(itemId, currentDateStr) {
+        currentEditingItemId = itemId;
+
+        let parts = (currentDateStr ? toEnglishNumber(currentDateStr).split(/[\/\.]/) : []);
+        if(parts.length === 3) {
+            let y = parseInt(parts[0], 10);
+            let m = parseInt(parts[1], 10);
+            let d = parseInt(parts[2], 10);
+
+            if (!isNaN(y) && !isNaN(m) && !isNaN(d) && y > 1300 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                currentYear = y;
+                currentMonth = m;
+                selectedDay = d;
+            } else {
+                const now = getCurrentPersianYearMonth();
+                currentYear = now.year;
+                currentMonth = now.month;
+                selectedDay = now.day;
+            }
+        } else {
+            const now = getCurrentPersianYearMonth();
+            currentYear = now.year;
+            currentMonth = now.month;
+            selectedDay = now.day;
+        }
+
+        if (isNaN(currentYear) || currentYear < 1300) currentYear = 1403;
+        if (isNaN(currentMonth) || currentMonth < 1 || currentMonth > 12) currentMonth = 1;
+        if (isNaN(selectedDay) || selectedDay < 1) selectedDay = 1;
+
+        renderCalendar(currentYear, currentMonth);
+        calendarModal.classList.add("show");
+    }
+
+    function closeCalendar() {
+        calendarModal.classList.remove("show");
+        currentEditingItemId = null;
+        selectedDay = null;
+    }
+
+    function confirmCalendarChange() {
+        if(currentEditingItemId === null || selectedDay === null) {
+            closeCalendar();
+            return;
+        }
+        const newDateStr = `${currentYear}.${currentMonth.toString().padStart(2,'0')}.${selectedDay.toString().padStart(2,'0')}`;
+        let prices = getPrices();
+        const item = prices.find(p => p.id == currentEditingItemId);
+        if(item) {
+            item.date = newDateStr;
+            prices.sort((a,b) => (a.date || '').localeCompare(b.date || '') || (new Date(a.timestamp) - new Date(b.timestamp)));
+            savePrices(prices);
+            showMessage(`📅 تاریخ به ${newDateStr} تغییر کرد`);
+        } else {
+            showMessage("❌ خطا در یافتن آیتم", true);
+        }
+        closeCalendar();
     }
 
     function getPrices() {
@@ -178,6 +371,11 @@
         renderAll();
     }
 
+    function calculateChangePercent(currentPrice, previousPrice) {
+        if (!previousPrice || previousPrice === 0) return null;
+        return ((currentPrice - previousPrice) / previousPrice) * 100;
+    }
+
     function calculateStats(prices) {
         if (!prices.length) {
             dailySpan.innerText = "—"; totalSpan.innerText = "—"; avgSpan.innerText = "—";
@@ -189,7 +387,7 @@
             const prevPrice = prices[prices.length - 2].price;
             const diff = lastPrice - prevPrice;
             const dailyPercent = (diff / prevPrice) * 100;
-            dailySpan.innerHTML = `<span class="${dailyPercent>=0?'positive':'negative'}">${dailyPercent.toFixed(2)}%</span>`;
+            dailySpan.innerHTML = `<span class="${dailyPercent>=0?'positive':'negative'}">${dailyPercent >= 0 ? '📈' : '📉'} ${dailyPercent.toFixed(2)}%</span>`;
         } else {
             dailySpan.innerHTML = `<span class="neutral">📅 اولین ثبت</span>`;
         }
@@ -247,6 +445,36 @@
         chartSvg.innerHTML = `<polyline points="${points.trim()}" fill="none" stroke="#8b5cf6" stroke-width="2" />${circles}`;
     }
 
+    function editPriceItem(id) {
+        const prices = getPrices();
+        const item = prices.find(p => p.id == id);
+        if (!item) return;
+        const newPriceRaw = prompt(
+            `✏️ ویرایش قیمت ${item.date}\n` +
+            `قیمت فعلی: ${formatWithCommas(item.price)}\n` +
+            `عدد جدید را وارد کن (تاریخ و جایگاه تغییر نمی‌کنه):`,
+            item.price
+        );
+        if (newPriceRaw === null) return;
+        const newPrice = parsePrice(newPriceRaw);
+        if (isNaN(newPrice) || newPrice <= 0) {
+            showMessage("❌ عدد معتبر وارد کن", true);
+            return;
+        }
+        item.price = newPrice;
+        prices.sort((a, b) => (a.date || '').localeCompare(b.date || '') || (new Date(a.timestamp) - new Date(b.timestamp)));
+        savePrices(prices);
+        showMessage(`✏️ قیمت ${formatWithCommas(newPrice)} تومان در همون جایگاه ذخیره شد`);
+    }
+
+    function deletePriceItem(id) {
+        if (!confirm("🗑 حذف شود؟")) return;
+        let prices = getPrices();
+        prices = prices.filter(p => p.id != id);
+        savePrices(prices);
+        showMessage(`🗑 حذف شد`);
+    }
+
     function renderHistoryAndStats() {
         const prices = getPrices();
         if (!prices.length) {
@@ -257,17 +485,51 @@
         }
 
         const reversed = [...prices].reverse();
-        priceListDiv.innerHTML = reversed.map((item) => `
-            <div class="price-item">
+        priceListDiv.innerHTML = reversed.map((item, idx) => {
+            let percentChange = null;
+            if (idx < reversed.length - 1) {
+                percentChange = calculateChangePercent(item.price, reversed[idx + 1].price);
+            }
+            const percentHtml = percentChange !== null
+                ? `<span class="percent-badge ${percentChange >= 0 ? 'percent-positive' : 'percent-negative'}">${percentChange >= 0 ? '📈' : '📉'} ${formatPercent(percentChange)}</span>`
+                : `<span class="percent-badge">—</span>`;
+
+            return `
+            <div class="price-item" data-id="${item.id}">
                 <div class="price-info">
-                    <span class="date-badge">📅 ${item.date}</span>
-                    <span class="value-badge">💰 ${formatWithCommas(item.price)} تومان</span>
+                    <span class="date-badge" data-id="${item.id}" data-date="${item.date}">📅 ${item.date}</span>
+                    <span class="value-badge" data-price="${item.price}">💰 ${formatWithCommas(item.price)} تومان</span>
+                    ${percentHtml}
                 </div>
                 <div class="item-actions">
-                    <button class="icon-btn delete-btn" onclick="deletePriceItem(${item.id})">❌</button>
+                    <button class="icon-btn edit-btn" data-id="${item.id}" data-action="edit">✏️</button>
+                    <button class="icon-btn delete-btn" data-id="${item.id}" data-action="delete">❌</button>
                 </div>
             </div>
-        `).join("");
+        `}).join("");
+
+        document.querySelectorAll(".value-badge").forEach(el => {
+            el.addEventListener("click", () => {
+                const priceVal = parseFloat(el.dataset.price);
+                if (!isNaN(priceVal)) priceInput.value = formatWithCommas(priceVal);
+            });
+        });
+
+        document.querySelectorAll(".date-badge").forEach(el => {
+            el.addEventListener("dblclick", (e) => {
+                e.stopPropagation();
+                const itemId = parseInt(el.dataset.id);
+                const currentDate = el.dataset.date;
+                showCalendarForItem(itemId, currentDate);
+            });
+        });
+
+        document.querySelectorAll(".edit-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => { e.stopPropagation(); editPriceItem(parseInt(btn.dataset.id)); });
+        });
+        document.querySelectorAll(".delete-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => { e.stopPropagation(); deletePriceItem(parseInt(btn.dataset.id)); });
+        });
 
         calculateStats(prices);
         drawChart(prices);
@@ -309,13 +571,6 @@
         renderGrowthTable(lastPrice, lastAvgPercent, forecastDays);
     }
 
-    window.deletePriceItem = function(id) {
-        if (!confirm("🗑 حذف شود؟")) return;
-        let prices = getPrices();
-        prices = prices.filter(p => p.id != id);
-        savePrices(prices);
-    };
-
     function renderAll() {
         renderHistoryAndStats();
         refreshGrowthTable();
@@ -323,13 +578,21 @@
 
     function handleSave() {
         const numPrice = parsePrice(priceInput.value);
-        if (isNaN(numPrice) || numPrice <= 0) { showMessage("❌ قیمت معتبر وارد کن"); return; }
+        if (isNaN(numPrice) || numPrice <= 0) { showMessage("❌ قیمت معتبر وارد کن", true); return; }
         const prices = getPrices();
         prices.push({ id: Date.now(), date: getPersianDate(), timestamp: new Date().toISOString(), price: numPrice });
+        prices.sort((a,b) => (a.date || '').localeCompare(b.date || '') || (new Date(a.timestamp) - new Date(b.timestamp)));
         savePrices(prices);
         priceInput.value = "";
         showMessage("✅ ثبت شد");
     }
+
+    calYearPrev.addEventListener("click", () => { currentYear--; renderCalendar(currentYear, currentMonth); });
+    calMonthPrev.addEventListener("click", () => { currentMonth--; if(currentMonth < 1) { currentMonth = 12; currentYear--; } renderCalendar(currentYear, currentMonth); });
+    calMonthNext.addEventListener("click", () => { currentMonth++; if(currentMonth > 12) { currentMonth = 1; currentYear++; } renderCalendar(currentYear, currentMonth); });
+    calYearNext.addEventListener("click", () => { currentYear++; renderCalendar(currentYear, currentMonth); });
+    cancelCalendarBtn.addEventListener("click", closeCalendar);
+    confirmCalendarBtn.addEventListener("click", confirmCalendarChange);
 
     saveBtn.addEventListener("click", handleSave);
     backupBtn.addEventListener("click", () => {
@@ -354,7 +617,7 @@
                         renderAll();
                         showMessage("✅ بازیابی شد");
                     }
-                } catch(err) { showMessage("❌ فایل نامعتبر"); }
+                } catch(err) { showMessage("❌ فایل نامعتبر", true); }
             };
             reader.readAsText(e.target.files[0]);
         };
