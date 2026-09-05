@@ -266,7 +266,7 @@
             transform: scale(0.98);
         }
 
-        /* قفل زمان ۴۸ ساعته */
+        /* قفل زمان ۳ روزه */
         .lock-container {
             display: none;
             text-align: center;
@@ -543,11 +543,11 @@
         </div>
     </header>
 
-    <!-- قفل زمان ۴۸ ساعته -->
+    <!-- قفل زمان ۳ روزه -->
     <div id="lockPanel" class="card lock-container">
         <div class="lock-icon">🧖‍♀️✨</div>
         <div class="lock-title">کرم‌های مرطوب‌کننده در حال جذب شدن هستند!</div>
-        <div style="font-size: 0.9rem; color: var(--text-muted);">پوست شما در وضعیت تعادل و طراوت کامل است. تا نوبت بعدی استفاده، صبور باشید:</div>
+        <div style="font-size: 0.9rem; color: var(--text-muted);" id="lockSubTitle">پوست شما در وضعیت تعادل و طراوت کامل است. تا نوبت بعدی استفاده، صبور باشید:</div>
         <div><span id="countdown" class="countdown-timer">۰۰:۰۰:۰۰</span></div>
         <div id="humorQuote" class="humor-container"></div>
     </div>
@@ -623,7 +623,7 @@
         </div>
 
         <!-- دکمه ثبت نهایی -->
-        <button class="btn-submit" onclick="finalizeSession()">✅ ثبت نهایی و کوک کردن زمان (۴۸ ساعت)</button>
+        <button class="btn-submit" onclick="finalizeSession()">✅ ثبت نهایی و کوک کردن زمان (۳ روز)</button>
     </div>
 
     <!-- تاریخچه مراقبت‌های قبلی -->
@@ -678,7 +678,7 @@
         stomach: { label: 'شکم 🤰', cream: 'Vitalayer' }
     };
 
-    // نقل‌قول‌های طنزآمیز برای دوره ۴۸ ساعته
+    // نقل‌قول‌های طنزآمیز برای دوره ۳ روزه (۷۲ ساعته)
     const HUMOROUS_QUOTES = [
         "پوستت الان از برگ گل هم لطیف‌تره! بذار کرم‌ها کارشونو بکنن پهلوان! 🌸",
         "کرم نیودرم و ویتالایر دارن با سلول‌های پوستت سمفونی لطافت می‌نوازن! دست به ریست نزن! 🎶",
@@ -862,7 +862,17 @@
         triggerGithubUpload();
     }
 
-    // بررسی و اعمال وضعیت ۴۸ ساعته
+    function getRestEndTime(lastSessionTime) {
+        const d = new Date(lastSessionTime);
+        const midnightStart = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0, 0).getTime();
+        const restPeriod = 72 * 60 * 60 * 1000;
+        return {
+            midnightStart: midnightStart,
+            restEndTime: midnightStart + restPeriod
+        };
+    }
+
+    // بررسی و اعمال وضعیت ۳ روزه با منطق شروع از ۱۲ شب
     function checkLockStatus() {
         if (history.length === 0) {
             hideLockPanel();
@@ -871,17 +881,16 @@
 
         const lastSession = history[0];
         const now = Date.now();
-        const diff = now - lastSession.timestamp;
-        const fortyEightHours = 48 * 60 * 60 * 1000;
+        const { midnightStart, restEndTime } = getRestEndTime(lastSession.timestamp);
 
-        if (diff < fortyEightHours) {
-            showLockPanel(fortyEightHours - diff);
+        if (now < restEndTime) {
+            showLockPanel(midnightStart, restEndTime);
         } else {
             hideLockPanel();
         }
     }
 
-    function showLockPanel(remainingMs) {
+    function showLockPanel(midnightStart, restEndTime) {
         document.getElementById('lockPanel').classList.add('active');
         document.getElementById('mainForm').classList.add('blocked');
 
@@ -890,17 +899,24 @@
         document.getElementById('humorQuote').innerText = randomQuote;
 
         clearInterval(countdownInterval);
-        updateTimerDisplay(remainingMs);
 
-        countdownInterval = setInterval(() => {
-            remainingMs -= 1000;
-            if (remainingMs <= 0) {
+        const tick = () => {
+            const now = Date.now();
+            const lockSubTitle = document.getElementById('lockSubTitle');
+            if (now < midnightStart) {
+                if (lockSubTitle) lockSubTitle.innerText = 'زمان استراحت پوست (شروع شمارش معکوس ۳ روزه از ۱۲ شب):';
+                updateTimerDisplay(72 * 60 * 60 * 1000);
+            } else if (now < restEndTime) {
+                if (lockSubTitle) lockSubTitle.innerText = 'پوست شما در وضعیت تعادل و طراوت کامل است. تا نوبت بعدی استفاده، صبور باشید:';
+                updateTimerDisplay(restEndTime - now);
+            } else {
                 clearInterval(countdownInterval);
                 hideLockPanel();
-            } else {
-                updateTimerDisplay(remainingMs);
             }
-        }, 1000);
+        };
+
+        tick();
+        countdownInterval = setInterval(tick, 1000);
     }
 
     function hideLockPanel() {
