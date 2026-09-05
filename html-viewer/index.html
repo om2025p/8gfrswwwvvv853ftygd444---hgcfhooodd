@@ -84,6 +84,12 @@
             font-weight: 700;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -101,6 +107,25 @@
         .back-link:hover {
             background: #e2e8f0;
             color: #0f172a;
+        }
+
+        .debug-btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #dc2626;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .debug-btn-header:hover {
+            background: #fee2e2;
         }
 
         /* Navigation Tabs Header */
@@ -308,6 +333,157 @@
             color: #0f172a;
         }
 
+        /* Debug Console Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(6px);
+            z-index: 999999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 700px;
+            max-height: 85vh;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            color: #f8fafc;
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-close-btn {
+            background: #334155;
+            border: none;
+            color: #94a3b8;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: #475569;
+            color: #ffffff;
+        }
+
+        .modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.82rem;
+            direction: ltr;
+            text-align: left;
+            line-height: 1.5;
+            background: #020617;
+            color: #e2e8f0;
+        }
+
+        .log-entry {
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #0f172a;
+            border-left: 4px solid #3b82f6;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+
+        .log-entry.error {
+            border-left-color: #ef4444;
+            background: #1e1010;
+            color: #fca5a5;
+        }
+
+        .log-entry.success {
+            border-left-color: #10b981;
+            background: #062016;
+            color: #6ee7b7;
+        }
+
+        .log-entry.info {
+            border-left-color: #f59e0b;
+            background: #1f190a;
+            color: #fde047;
+        }
+
+        .modal-footer {
+            padding: 14px 20px;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .btn-copy-logs {
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-copy-logs:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-clear-logs {
+            background: #334155;
+            color: #94a3b8;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .btn-clear-logs:hover {
+            background: #475569;
+            color: #ffffff;
+        }
+
         /* Fullscreen Preview Layer */
         #previewLayer {
             position: fixed;
@@ -371,7 +547,12 @@
                 <img src="icon-192.png" alt="نمایشگر کد">
                 <h1>نمایشگر کد و ابزار متن عمارت</h1>
             </div>
-            <a href="../index.html" class="back-link">🔙 بازگشت</a>
+            <div class="header-actions">
+                <button id="debugBtnHeader" class="debug-btn-header" onclick="openDebugConsoleModal()">
+                    🐛 کنسول لاگ
+                </button>
+                <a href="../index.html" class="back-link">🔙 بازگشت</a>
+            </div>
         </div>
 
         <!-- Navigation Tabs Switcher -->
@@ -447,6 +628,29 @@
         </div>
     </div>
 
+    <!-- Debug Console Modal -->
+    <div id="debugModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    🐛 کنسول عیب‌یابی و لاگ‌های زنده API (موقت ۷ روزه)
+                </div>
+                <button class="modal-close-btn" onclick="closeDebugConsoleModal()">✖ بستن</button>
+            </div>
+            <div class="modal-body" id="debugLogsContainer">
+                <div class="log-entry info">System initialized. Debug console active for 7 days.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-copy-logs" onclick="copyDebugLogsReport()">
+                    📋 کپی کامل گزارش خطا
+                </button>
+                <button class="btn-clear-logs" onclick="clearDebugLogs()">
+                    🗑️ پاکسازی لاگ‌ها
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Fullscreen Preview Overlay -->
     <div id="previewLayer">
         <iframe id="previewIframe" title="پیش‌نمایش کد"
@@ -463,6 +667,62 @@
         const previewLayer = document.getElementById('previewLayer');
         const previewIframe = document.getElementById('previewIframe');
         const downloadCountBadge = document.getElementById('downloadCountBadge');
+        const debugModal = document.getElementById('debugModal');
+        const debugLogsContainer = document.getElementById('debugLogsContainer');
+        const debugBtnHeader = document.getElementById('debugBtnHeader');
+
+        // Check 7-day expiration timer for debug console button
+        const DEBUG_EXPIRY_KEY = "html_viewer_debug_expiry";
+        let expiryTimestamp = parseInt(localStorage.getItem(DEBUG_EXPIRY_KEY) || '0', 10);
+        if (!expiryTimestamp) {
+            expiryTimestamp = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days from now
+            localStorage.setItem(DEBUG_EXPIRY_KEY, expiryTimestamp.toString());
+        }
+
+        if (Date.now() > expiryTimestamp) {
+            if (debugBtnHeader) debugBtnHeader.style.display = "none";
+        }
+
+        const debugLogsList = [];
+
+        function appendLog(message, type = 'info') {
+            const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const logText = `[${timeStr}] [${type.toUpperCase()}] ${message}`;
+            debugLogsList.push(logText);
+
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerText = logText;
+            debugLogsContainer.appendChild(entry);
+            debugLogsContainer.scrollTop = debugLogsContainer.scrollHeight;
+        }
+
+        function openDebugConsoleModal() {
+            debugModal.style.display = 'flex';
+        }
+
+        function closeDebugConsoleModal() {
+            debugModal.style.display = 'none';
+        }
+
+        function clearDebugLogs() {
+            debugLogsList.length = 0;
+            debugLogsContainer.innerHTML = `<div class="log-entry info">Logs cleared. Ready for next request.</div>`;
+        }
+
+        async function copyDebugLogsReport() {
+            const report = debugLogsList.join("\n") || "No logs captured yet.";
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(report);
+                    showToast('📋 گزارش کامل لاگ‌ها کپی شد');
+                } else {
+                    showToast('امکان کپی خودکار نیست. لاگ‌ها را دستی کپی کنید.');
+                }
+            } catch (err) {
+                showToast('خطا در کپی لاگ‌ها');
+            }
+        }
 
         let currentActiveTab = 'html';
 
@@ -564,7 +824,10 @@
 
         async function generateSmartPersianTitle(snippetText) {
             const token = getGeminiToken();
-            if (!token || !snippetText || !snippetText.trim()) return "";
+            if (!token || !snippetText || !snippetText.trim()) {
+                appendLog("Skipped AI title generation: Empty token or text.", "info");
+                return "";
+            }
 
             const cleanText = snippetText.slice(0, 3500).replace(/\s+/g, ' ');
             const prompt = `موضوع اصلی این متن یا کد را بخوان و فقط و فقط یک عبارت خلاصه روان فارسی بگو بدون هیچ مقدمه یا کلمات اضافه (مثلاً: شناخت هویت ایمانا و موانع پیش رو).
@@ -588,7 +851,10 @@ ${cleanText}`;
             const cfProxyBase = getCloudflareProxyUrl().replace(/\/$/, "");
             const cfBearer = getCloudflareToken();
 
+            appendLog(`Starting Gemini AI call. Token len: ${token.length}, CF Proxy: ${cfProxyBase}`, "info");
+
             for (const model of models) {
+                appendLog(`Testing model: ${model}`, "info");
                 const payload = JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }]
                 });
@@ -598,6 +864,7 @@ ${cleanText}`;
                 if (!isDirectConnectionBlocked) {
                     const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(token)}`;
                     try {
+                        appendLog(`Attempting direct URL: models/${model}`, "info");
                         const controller = new AbortController();
                         const timeoutId = setTimeout(() => controller.abort(), 800);
 
@@ -608,10 +875,16 @@ ${cleanText}`;
                             signal: controller.signal
                         });
                         clearTimeout(timeoutId);
+
+                        appendLog(`Direct Response HTTP Status: ${response.status} ${response.statusText}`, response.ok ? "success" : "error");
+
                         if (!response.ok) {
+                            const errBody = await response.text();
+                            appendLog(`Direct Response Error Body: ${errBody}`, "error");
                             isDirectConnectionBlocked = true;
                         }
                     } catch (directErr) {
+                        appendLog(`Direct Connection failed/blocked: ${directErr.message}`, "error");
                         isDirectConnectionBlocked = true;
                         response = null;
                     }
@@ -620,6 +893,7 @@ ${cleanText}`;
                 if (!response || !response.ok) {
                     const cfUrl = `${cfProxyBase}/v1beta/models/${model}:generateContent?key=${encodeURIComponent(token)}`;
                     try {
+                        appendLog(`Attempting Cloudflare Proxy: ${cfUrl}`, "info");
                         const headers = { 'Content-Type': 'application/json' };
                         if (cfBearer) {
                             headers['Authorization'] = `Bearer ${cfBearer}`;
@@ -629,8 +903,15 @@ ${cleanText}`;
                             headers: headers,
                             body: payload
                         });
+
+                        appendLog(`Cloudflare Response HTTP Status: ${response.status} ${response.statusText}`, response.ok ? "success" : "error");
+
+                        if (!response.ok) {
+                            const cfErrBody = await response.text();
+                            appendLog(`Cloudflare Error Body: ${cfErrBody}`, "error");
+                        }
                     } catch (cfErr) {
-                        console.warn(`Cloudflare proxy fetch failed for ${model}:`, cfErr);
+                        appendLog(`Cloudflare Proxy Fetch Exception: ${cfErr.message}`, "error");
                         continue;
                     }
                 }
@@ -639,6 +920,8 @@ ${cleanText}`;
                     try {
                         const data = await response.json();
                         let aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+                        appendLog(`Raw AI Output: "${aiText.trim()}"`, "success");
 
                         aiText = aiText.trim()
                             .replace(/^این فایل\s*:\s*/gi, '')
@@ -654,12 +937,16 @@ ${cleanText}`;
                             .trim()
                             .slice(0, 80);
 
-                        if (aiText) return aiText;
+                        if (aiText) {
+                            appendLog(`Final Sanitized AI Title: "${aiText}"`, "success");
+                            return aiText;
+                        }
                     } catch (e) {
-                        console.warn(`Error parsing JSON response for ${model}:`, e);
+                        appendLog(`Error parsing JSON response for ${model}: ${e.message}`, "error");
                     }
                 }
             }
+            appendLog("All AI models failed to generate content.", "error");
             return "";
         }
 
