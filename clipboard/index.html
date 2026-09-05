@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>کلیپ بورد - سیو هوشمند متون</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --surface-variant: #334155;
+            --primary-color: #38bdf8;
+            --primary-variant: #0284c7;
+            --accent-color: #818cf8;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --danger-color: #f87171;
+            --warning-color: #fbbf24;
+            --success-color: #34d399;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 22px;
+            --shadow-elevation: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 80px; /* Space for Bottom Navigation */
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* Top App Bar */
+        .app-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .app-branding {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+        }
+
+        .app-logo img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .app-title-group h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .app-title-group span {
+            font-size: 0.75rem;
+            color: var(--primary-color);
+        }
+
+        .app-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.92);
+            background: var(--surface-variant);
+        }
+
+        /* Container Layout */
+        .main-container {
+            width: 100%;
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Search Bar Collapsible */
+        .search-box {
+            display: none;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 8px 14px;
+            align-items: center;
+            gap: 10px;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .search-box.active {
+            display: flex;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            width: 100%;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Input Android Card */
+        .card-input {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            box-shadow: var(--shadow-elevation);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+
+        .card-input-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-input-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-paste {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.2));
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-paste:active {
+            transform: scale(0.95);
+            background: var(--primary-color);
+            color: #0f172a;
+        }
+
+        .textarea-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        textarea.input-text {
+            width: 100%;
+            min-height: 90px;
+            max-height: 220px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            user-select: text;
+        }
+
+        textarea.input-text:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
+
+        .card-input-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .folder-select-pill {
+            background: var(--surface-variant);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .folder-select-pill select {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            width: 100%;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .folder-select-pill select option {
+            background: var(--surface-color);
+            color: var(--text-primary);
+        }
+
+        .quick-options {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-variant));
+            color: #0f172a;
+            border: none;
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .btn-save:active {
+            transform: scale(0.95);
+            opacity: 0.9;
+        }
+
+        /* Folder Filter Chips Bar */
+        .folder-chips-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+        }
+
+        .folder-chips-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .chip {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .chip.active {
+            background: var(--primary-color);
+            color: #0f172a;
+            border-color: var(--primary-color);
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+        }
+
+        .chip-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-size: 0.72rem;
+        }
+
+        /* Items Section */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 4px;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .empty-icon {
+            font-size: 2.8rem;
+            opacity: 0.6;
+        }
+
+        /* Material Item Card */
+        .item-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            animation: slideUp 0.25s ease forwards;
+        }
+
+        .item-card.pinned {
+            border-color: rgba(251, 191, 36, 0.5);
+            background: linear-gradient(180deg, rgba(251, 191, 36, 0.05) 0%, var(--surface-color) 100%);
+        }
+
+        .item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .item-badges {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge-folder {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--primary-color);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .badge-pin {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--warning-color);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .item-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            direction: ltr;
+        }
+
+        .item-content {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-break: break-word;
+            user-select: text;
+        }
+
+        .item-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 8px;
+        }
+
+        .action-btn {
+            background: var(--surface-variant);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:active {
+            transform: scale(0.92);
+        }
+
+        .action-btn.copy-btn {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--primary-color);
+            border-color: rgba(56, 189, 248, 0.3);
+            font-weight: 700;
+        }
+
+        .action-btn.copy-btn:active {
+            background: var(--primary-color);
+            color: #0f172a;
+        }
+
+        .action-btn.danger-btn {
+            color: var(--danger-color);
+        }
+
+        .action-btn.danger-btn:active {
+            background: var(--danger-color);
+            color: #ffffff;
+        }
+
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 0;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.72rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            width: 25%;
+            text-align: center;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .nav-icon {
+            font-size: 1.3rem;
+        }
+
+        /* Floating Action Button (FAB) */
+        .fab {
+            position: fixed;
+            bottom: 75px;
+            left: 20px;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 20px rgba(56, 189, 248, 0.4);
+            border: none;
+            cursor: pointer;
+            z-index: 90;
+            transition: transform 0.2s ease;
+        }
+
+        .fab:active {
+            transform: scale(0.9);
+        }
+
+        /* Toast Message Notification */
+        .toast-container {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 200;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid var(--primary-color);
+            padding: 10px 18px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Modal Sheets */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 300;
+            align-items: flex-end;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-sheet {
+            background: var(--surface-color);
+            border-top-left-radius: var(--radius-lg);
+            border-top-right-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: sheetUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .modal-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-input {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .modal-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .modal-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .btn-secondary {
+            background: var(--surface-variant);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: #0f172a;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+
+        /* Folder List Items in Manager Modal */
+        .folder-manage-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-color);
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes sheetUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top App Bar -->
+    <header class="app-bar">
+        <div class="app-branding">
+            <div class="app-logo">
+                <img src="icon-192.png" alt="کلیپ بورد">
+            </div>
+            <div class="app-title-group">
+                <h1>کلیپ بورد</h1>
+                <span id="appItemCounter">۰ متن ذخیره شده</span>
+            </div>
+        </div>
+        <div class="app-bar-actions">
+            <button class="icon-btn" onclick="toggleSearch()" title="جستجو">🔍</button>
+            <button class="icon-btn" onclick="openFolderManagerModal()" title="مدیریت پوشه‌ها">📁</button>
+            <button class="icon-btn" onclick="openSettingsModal()" title="تنظیمات و بکاپ">⚙️</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+
+        <!-- Search Bar -->
+        <div class="search-box" id="searchBox">
+            <span>🔍</span>
+            <input type="text" id="searchInput" placeholder="جستجو در متون ذخیره‌شده..." oninput="handleSearch()">
+            <button class="icon-btn" style="width:28px; height:28px; font-size:0.8rem;" onclick="toggleSearch()">✕</button>
+        </div>
+
+        <!-- Input Android Card -->
+        <div class="card-input" id="inputCard">
+            <div class="card-input-header">
+                <span class="card-input-title">📝 متن جدید برای ذخیره</span>
+                <button class="btn-paste" onclick="pasteFromClipboard()">
+                    📋 چسباندن از کلیپ‌بورد
+                </button>
+            </div>
+            <div class="textarea-wrapper">
+                <textarea id="mainTextarea" class="input-text" placeholder="متن کپی‌شده یا جدید را اینجا بگذارید..."></textarea>
+            </div>
+            <div class="card-input-controls">
+                <div class="folder-select-pill">
+                    <span>📁</span>
+                    <select id="inputFolderSelect">
+                        <option value="general">بدون پوشه (همه متون)</option>
+                    </select>
+                </div>
+                <div class="quick-options">
+                    <label style="display:flex; align-items:center; gap:4px; font-size:0.82rem; color:var(--text-secondary); cursor:pointer;">
+                        <input type="checkbox" id="inputPinCheckbox" style="accent-color: var(--warning-color);">
+                        📌 پین شود
+                    </label>
+                    <button class="btn-save" onclick="saveNewText()">
+                        💾 ذخیره
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Folder Filter Chips -->
+        <div class="folder-chips-container" id="folderChipsBar">
+            <!-- Dynamic Chipsrendered here -->
+        </div>
+
+        <!-- Section Header -->
+        <div class="section-header">
+            <span class="section-title" id="sectionTitleLabel">📜 متون ذخیره شده</span>
+            <button class="icon-btn" style="width:30px; height:30px; font-size:0.85rem;" onclick="openClearAllModal()" title="حذف همه متون">🗑️</button>
+        </div>
+
+        <!-- Items Container List -->
+        <div id="itemsContainer" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Rendered Items -->
+        </div>
+
+    </div>
+
+    <!-- Floating Action Button (Scroll to top/input) -->
+    <button class="fab" onclick="scrollToInput()" title="افزودن متن جدید">
+        ✏️
+    </button>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" id="navAll" onclick="switchNavTab('all')">
+            <span class="nav-icon">📋</span>
+            <span>همه متون</span>
+        </div>
+        <div class="nav-item" id="navPinned" onclick="switchNavTab('pinned')">
+            <span class="nav-icon">📌</span>
+            <span>پین‌شده‌ها</span>
+        </div>
+        <div class="nav-item" id="navFolders" onclick="openFolderManagerModal()">
+            <span class="nav-icon">📁</span>
+            <span>پوشه‌ها</span>
+        </div>
+        <div class="nav-item" id="navSettings" onclick="openSettingsModal()">
+            <span class="nav-icon">⚙️</span>
+            <span>تنظیمات</span>
+        </div>
+    </nav>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Folder Manager Modal Sheet -->
+    <div class="modal-overlay" id="folderModalOverlay">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <span class="modal-title">📁 مدیریت و ساخت پوشه‌ها</span>
+                <button class="icon-btn" style="width:32px; height:32px;" onclick="closeModal('folderModalOverlay')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="newFolderNameInput" class="modal-input" placeholder="نام پوشه جدید (مثلا: کارت خوان)" style="flex:1;">
+                    <input type="text" id="newFolderIconInput" class="modal-input" placeholder="آیکون" value="📁" style="width:60px; text-anchor:middle; text-align:center;">
+                    <button class="btn-primary" onclick="addNewFolder()">افزودن</button>
+                </div>
+                <div style="margin-top:10px; font-size:0.85rem; color:var(--text-secondary); font-weight:600;">لیست پوشه‌های فعلی:</div>
+                <div id="folderManageList" style="display:flex; flex-direction:column; gap:8px; max-height:200px; overflow-y:auto;">
+                    <!-- Dynamic Folders -->
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeModal('folderModalOverlay')">بستن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Item Modal Sheet -->
+    <div class="modal-overlay" id="editModalOverlay">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <span class="modal-title">✏️ ویرایش متن</span>
+                <button class="icon-btn" style="width:32px; height:32px;" onclick="closeModal('editModalOverlay')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editItemId">
+                <textarea id="editTextarea" class="input-text" style="min-height:120px;"></textarea>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px;">
+                    <div class="folder-select-pill">
+                        <span>📁</span>
+                        <select id="editFolderSelect">
+                            <option value="general">بدون پوشه (همه متون)</option>
+                        </select>
+                    </div>
+                    <label style="display:flex; align-items:center; gap:4px; font-size:0.85rem; color:var(--text-secondary); cursor:pointer;">
+                        <input type="checkbox" id="editPinCheckbox" style="accent-color: var(--warning-color);">
+                        📌 پین شود
+                    </label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeModal('editModalOverlay')">انصراف</button>
+                <button class="btn-primary" onclick="saveEditedText()">ثبت تغییرات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings & Backup Modal Sheet -->
+    <div class="modal-overlay" id="settingsModalOverlay">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <span class="modal-title">⚙️ تنظیمات و پشتیبان‌گیری</span>
+                <button class="icon-btn" style="width:32px; height:32px;" onclick="closeModal('settingsModalOverlay')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.88rem; color:var(--text-secondary); line-height:1.5;">
+                    تمامی متون شما به‌صورت امن و ۱۰۰٪ آفلاین در حافظه داخلی مرورگر ذخیره می‌شوند. برای اطمینان می‌توانید از تمام متون خود فایل بکاپ JSON دانلود یا بازیابی کنید.
+                </p>
+                <button class="btn-primary" style="display:flex; align-items:center; justify-content:center; gap:8px;" onclick="exportBackupData()">
+                    💾 دانلود بکاپ کامل (JSON)
+                </button>
+                <label class="btn-secondary" style="display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
+                    📂 بازیابی بکاپ از فایل
+                    <input type="file" id="importBackupFileInput" accept=".json" style="display:none;" onchange="importBackupData(event)">
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeModal('settingsModalOverlay')">بستن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear All Confirm Modal Sheet -->
+    <div class="modal-overlay" id="clearAllModalOverlay">
+        <div class="modal-sheet">
+            <div class="modal-header">
+                <span class="modal-title" style="color:var(--danger-color);">⚠️ پاکسازی کل متون</span>
+                <button class="icon-btn" style="width:32px; height:32px;" onclick="closeModal('clearAllModalOverlay')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.9rem; color:var(--text-primary);">
+                    آیا مطمئن هستید که می‌خواهید **تمام متون ذخیره‌شده** را پاکسازی کنید؟ این عمل غیرقابل بازگشت است.
+                </p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeModal('clearAllModalOverlay')">انصراف</button>
+                <button class="btn-primary" style="background:var(--danger-color); color:#fff;" onclick="confirmClearAll()">بله، پاکسازی کامل</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Default System Folders
+        const DEFAULT_FOLDERS = [
+            { id: 'general', name: 'عمومی / همه متون', icon: '📋' },
+            { id: 'work', name: 'کاری', icon: '💼' },
+            { id: 'personal', name: 'شخصی', icon: '👤' },
+            { id: 'cards', name: 'شماره کارت‌ها', icon: '💳' },
+            { id: 'links', name: 'لینک‌ها', icon: '🔗' },
+            { id: 'codes', name: 'کدها و رمزها', icon: '💻' }
+        ];
+
+        let state = {
+            items: [],
+            folders: [],
+            activeFilter: 'all', // 'all', 'pinned', or folderId
+            searchQuery: ''
+        };
+
+        // Initialize App
+        function initApp() {
+            loadFromStorage();
+            renderFolderSelects();
+            renderFolderChips();
+            renderItems();
+            updateAppHeader();
+        }
+
+        // Storage Operations
+        function loadFromStorage() {
+            try {
+                const savedItems = localStorage.getItem('clipboard_app_items_v1');
+                state.items = savedItems ? JSON.parse(savedItems) : [];
+
+                const savedFolders = localStorage.getItem('clipboard_app_folders_v1');
+                state.folders = savedFolders ? JSON.parse(savedFolders) : DEFAULT_FOLDERS;
+            } catch (e) {
+                console.error("Storage load error:", e);
+                state.items = [];
+                state.folders = DEFAULT_FOLDERS;
+            }
+        }
+
+        function saveToStorage() {
+            try {
+                localStorage.setItem('clipboard_app_items_v1', JSON.stringify(state.items));
+                localStorage.setItem('clipboard_app_folders_v1', JSON.stringify(state.folders));
+            } catch (e) {
+                console.error("Storage save error:", e);
+            }
+        }
+
+        // Exact Jalali Date & Time Formatter
+        function getJalaliDateTimeString() {
+            const now = new Date();
+            const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            const parts = formatter.formatToParts(now);
+            let y, m, d, hh, mm, ss;
+            parts.forEach(p => {
+                if (p.type === 'year') y = p.value;
+                if (p.type === 'month') m = p.value;
+                if (p.type === 'day') d = p.value;
+                if (p.type === 'hour') hh = p.value;
+                if (p.type === 'minute') mm = p.value;
+                if (p.type === 'second') ss = p.value;
+            });
+            return `${y}/${m}/${d} - ${hh}:${mm}:${ss}`;
+        }
+
+        // Auto Paste from Clipboard
+        async function pasteFromClipboard() {
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    const text = await navigator.clipboard.readText();
+                    if (text) {
+                        const textarea = document.getElementById('mainTextarea');
+                        textarea.value = text;
+                        textarea.focus();
+                        showToast("متن از کلیپ‌بورد چسبانده شد! 📋");
+                    } else {
+                        showToast("کلیپ‌بورد خالی است!");
+                    }
+                } else {
+                    document.getElementById('mainTextarea').focus();
+                    showToast("لطفاً متن را دستی در کادر بپسبانید.");
+                }
+            } catch (err) {
+                document.getElementById('mainTextarea').focus();
+                showToast("برای چسباندن، کادر متنی را لمس و Paste کنید.");
+            }
+        }
+
+        // Save New Text Item
+        function saveNewText() {
+            const textarea = document.getElementById('mainTextarea');
+            const text = textarea.value.trim();
+            if (!text) {
+                showToast("لطفاً ابتدا متنی وارد یا چسبانید!");
+                return;
+            }
+
+            const folderSelect = document.getElementById('inputFolderSelect');
+            const pinCheckbox = document.getElementById('inputPinCheckbox');
+
+            const newItem = {
+                id: 'clip_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+                text: text,
+                folderId: folderSelect.value || 'general',
+                isPinned: pinCheckbox.checked,
+                createdAt: Date.now(),
+                jalaliDate: getJalaliDateTimeString()
+            };
+
+            state.items.unshift(newItem); // Add to top
+            saveToStorage();
+
+            // Reset Input
+            textarea.value = '';
+            pinCheckbox.checked = false;
+
+            renderFolderChips();
+            renderItems();
+            updateAppHeader();
+            showToast("متن با موفقیت ذخیره شد! 💾");
+        }
+
+        // Render Folder Select Dropdowns
+        function renderFolderSelects() {
+            const inputSelect = document.getElementById('inputFolderSelect');
+            const editSelect = document.getElementById('editFolderSelect');
+
+            let html = '';
+            state.folders.forEach(f => {
+                html += `<option value="${f.id}">${f.icon} ${f.name}</option>`;
+            });
+
+            inputSelect.innerHTML = html;
+            editSelect.innerHTML = html;
+        }
+
+        // Render Horizontal Folder Chips
+        function renderFolderChips() {
+            const chipsBar = document.getElementById('folderChipsBar');
+            let html = '';
+
+            // All Chip
+            const allActive = state.activeFilter === 'all' ? 'active' : '';
+            html += `<div class="chip ${allActive}" onclick="setFolderFilter('all')">
+                <span>📋 همه متون</span>
+                <span class="chip-count">${state.items.length}</span>
+            </div>`;
+
+            // Pinned Chip
+            const pinnedCount = state.items.filter(i => i.isPinned).length;
+            const pinnedActive = state.activeFilter === 'pinned' ? 'active' : '';
+            html += `<div class="chip ${pinnedActive}" onclick="setFolderFilter('pinned')">
+                <span>📌 پین‌شده‌ها</span>
+                <span class="chip-count">${pinnedCount}</span>
+            </div>`;
+
+            // Dynamic Custom Folders Chips
+            state.folders.forEach(f => {
+                if (f.id === 'general') return;
+                const count = state.items.filter(i => i.folderId === f.id).length;
+                const active = state.activeFilter === f.id ? 'active' : '';
+                html += `<div class="chip ${active}" onclick="setFolderFilter('${f.id}')">
+                    <span>${f.icon} ${f.name}</span>
+                    <span class="chip-count">${count}</span>
+                </div>`;
+            });
+
+            chipsBar.innerHTML = html;
+        }
+
+        // Set Active Filter
+        function setFolderFilter(filterId) {
+            state.activeFilter = filterId;
+            renderFolderChips();
+            renderItems();
+            updateNavActive();
+        }
+
+        // Render Items List
+        function renderItems() {
+            const container = document.getElementById('itemsContainer');
+            let filtered = [...state.items];
+
+            // Apply Active Filter
+            if (state.activeFilter === 'pinned') {
+                filtered = filtered.filter(i => i.isPinned);
+            } else if (state.activeFilter !== 'all') {
+                filtered = filtered.filter(i => i.folderId === state.activeFilter);
+            }
+
+            // Apply Search Query
+            if (state.searchQuery) {
+                const q = state.searchQuery.toLowerCase();
+                filtered = filtered.filter(i => i.text.toLowerCase().includes(q));
+            }
+
+            // Sort: Pinned first, then by createdAt desc
+            filtered.sort((a, b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                return b.createdAt - a.createdAt;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-icon">📂</span>
+                        <div style="font-weight:700;">هیچ متنی یافت نشد!</div>
+                        <div style="font-size:0.8rem;">متن جدیدی بچسبانید یا ذخیره کنید.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(item => {
+                const folderObj = state.folders.find(f => f.id === item.folderId) || { icon: '📁', name: 'عمومی' };
+                const pinnedClass = item.isPinned ? 'pinned' : '';
+
+                html += `
+                    <div class="item-card ${pinnedClass}" id="card_${item.id}">
+                        <div class="item-header">
+                            <div class="item-badges">
+                                <span class="badge badge-folder">${folderObj.icon} ${folderObj.name}</span>
+                                ${item.isPinned ? `<span class="badge badge-pin">📌 پین‌شده</span>` : ''}
+                            </div>
+                            <span class="item-date">${item.jalaliDate}</span>
+                        </div>
+                        <div class="item-content">${escapeHTML(item.text)}</div>
+                        <div class="item-actions">
+                            <button class="action-btn copy-btn" onclick="copyTextToClipboard('${item.id}')">
+                                📋 کپی
+                            </button>
+                            <button class="action-btn" onclick="togglePinItem('${item.id}')">
+                                ${item.isPinned ? '📍 آن‌پین' : '📌 پین'}
+                            </button>
+                            <button class="action-btn" onclick="openEditItemModal('${item.id}')">
+                                ✏️ ویرایش
+                            </button>
+                            <button class="action-btn" onclick="shareItem('${item.id}')">
+                                📲 اشتراک
+                            </button>
+                            <button class="action-btn danger-btn" onclick="deleteItem('${item.id}')">
+                                🗑️ حذف
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Copy Text using strictly copy button
+        async function copyTextToClipboard(itemId) {
+            const item = state.items.find(i => i.id === itemId);
+            if (!item) return;
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(item.text);
+                } else {
+                    const el = document.createElement('textarea');
+                    el.value = item.text;
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+                }
+                showToast("متن با موفقیت کپی شد! 📋");
+            } catch (err) {
+                showToast("خطا در کپی متن!");
+            }
+        }
+
+        // Toggle Pin Status
+        function togglePinItem(itemId) {
+            const item = state.items.find(i => i.id === itemId);
+            if (item) {
+                item.isPinned = !item.isPinned;
+                saveToStorage();
+                renderFolderChips();
+                renderItems();
+                showToast(item.isPinned ? "متن پین شد! 📌" : "متن از پین خارج شد.");
+            }
+        }
+
+        // Delete Item
+        function deleteItem(itemId) {
+            state.items = state.items.filter(i => i.id !== itemId);
+            saveToStorage();
+            renderFolderChips();
+            renderItems();
+            updateAppHeader();
+            showToast("متن حذف شد. 🗑️");
+        }
+
+        // Share Item
+        function shareItem(itemId) {
+            const item = state.items.find(i => i.id === itemId);
+            if (!item) return;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'متن کلیپ بورد',
+                    text: item.text
+                }).catch(() => {});
+            } else {
+                copyTextToClipboard(itemId);
+            }
+        }
+
+        // Open Edit Modal
+        function openEditItemModal(itemId) {
+            const item = state.items.find(i => i.id === itemId);
+            if (!item) return;
+
+            document.getElementById('editItemId').value = item.id;
+            document.getElementById('editTextarea').value = item.text;
+            document.getElementById('editFolderSelect').value = item.folderId;
+            document.getElementById('editPinCheckbox').checked = item.isPinned;
+
+            document.getElementById('editModalOverlay').classList.add('active');
+        }
+
+        // Save Edited Item
+        function saveEditedText() {
+            const itemId = document.getElementById('editItemId').value;
+            const text = document.getElementById('editTextarea').value.trim();
+            if (!text) {
+                showToast("متن نمی‌تواند خالی باشد!");
+                return;
+            }
+
+            const item = state.items.find(i => i.id === itemId);
+            if (item) {
+                item.text = text;
+                item.folderId = document.getElementById('editFolderSelect').value;
+                item.isPinned = document.getElementById('editPinCheckbox').checked;
+                saveToStorage();
+                closeModal('editModalOverlay');
+                renderFolderChips();
+                renderItems();
+                showToast("تغییرات ذخیره شد. ✨");
+            }
+        }
+
+        // Folder Manager Modal Sheet
+        function openFolderManagerModal() {
+            renderFolderManageList();
+            document.getElementById('folderModalOverlay').classList.add('active');
+        }
+
+        function renderFolderManageList() {
+            const container = document.getElementById('folderManageList');
+            let html = '';
+            state.folders.forEach(f => {
+                const isDefault = DEFAULT_FOLDERS.some(df => df.id === f.id);
+                html += `
+                    <div class="folder-manage-item">
+                        <span style="font-size:0.9rem; font-weight:600; display:flex; align-items:center; gap:6px;">
+                            ${f.icon} ${f.name}
+                        </span>
+                        ${!isDefault ? `<button class="action-btn danger-btn" onclick="removeFolder('${f.id}')">حذف</button>` : `<span style="font-size:0.75rem; color:var(--text-muted);">پیش‌فرض</span>`}
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function addNewFolder() {
+            const nameInput = document.getElementById('newFolderNameInput');
+            const iconInput = document.getElementById('newFolderIconInput');
+            const name = nameInput.value.trim();
+            const icon = iconInput.value.trim() || '📁';
+
+            if (!name) {
+                showToast("نام پوشه را وارد کنید!");
+                return;
+            }
+
+            const newFolder = {
+                id: 'folder_' + Date.now(),
+                name: name,
+                icon: icon
+            };
+
+            state.folders.push(newFolder);
+            saveToStorage();
+            nameInput.value = '';
+            renderFolderSelects();
+            renderFolderChips();
+            renderFolderManageList();
+            showToast("پوشه جدید افزوده شد! 📁");
+        }
+
+        function removeFolder(folderId) {
+            // Reassign items in this folder to general
+            state.items.forEach(i => {
+                if (i.folderId === folderId) i.folderId = 'general';
+            });
+            state.folders = state.folders.filter(f => f.id !== folderId);
+            saveToStorage();
+            renderFolderSelects();
+            renderFolderChips();
+            renderFolderManageList();
+            renderItems();
+            showToast("پوشه حذف شد.");
+        }
+
+        // Search Handlers
+        function toggleSearch() {
+            const box = document.getElementById('searchBox');
+            box.classList.toggle('active');
+            if (box.classList.contains('active')) {
+                document.getElementById('searchInput').focus();
+            } else {
+                state.searchQuery = '';
+                document.getElementById('searchInput').value = '';
+                renderItems();
+            }
+        }
+
+        function handleSearch() {
+            state.searchQuery = document.getElementById('searchInput').value;
+            renderItems();
+        }
+
+        // Clear All Modal
+        function openClearAllModal() {
+            document.getElementById('clearAllModalOverlay').classList.add('active');
+        }
+
+        function confirmClearAll() {
+            state.items = [];
+            saveToStorage();
+            closeModal('clearAllModalOverlay');
+            renderFolderChips();
+            renderItems();
+            updateAppHeader();
+            showToast("تمامی متون پاکسازی شدند.");
+        }
+
+        // Settings Modal
+        function openSettingsModal() {
+            document.getElementById('settingsModalOverlay').classList.add('active');
+        }
+
+        // Export Backup
+        function exportBackupData() {
+            const backup = {
+                version: 1,
+                items: state.items,
+                folders: state.folders,
+                exportedAt: new Date().toISOString()
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            const dateStr = new Date().toISOString().split('T')[0];
+            dlAnchor.setAttribute("download", `emarat_clipboard_backup_${dateStr}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            showToast("فایل بکاپ دانلود شد! 💾");
+        }
+
+        // Import Backup
+        function importBackupData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const backup = JSON.parse(evt.target.result);
+                    if (backup && backup.items) {
+                        state.items = backup.items;
+                        if (backup.folders) state.folders = backup.folders;
+                        saveToStorage();
+                        renderFolderSelects();
+                        renderFolderChips();
+                        renderItems();
+                        updateAppHeader();
+                        closeModal('settingsModalOverlay');
+                        showToast("پشتیبان با موفقیت بازیابی شد! 🎉");
+                    } else {
+                        showToast("فرمت فایل بکاپ نامعتبر است.");
+                    }
+                } catch (err) {
+                    showToast("خطا در خوندن فایل بکاپ!");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // UI Helpers
+        function updateAppHeader() {
+            const count = state.items.length;
+            document.getElementById('appItemCounter').innerText = `${count} متن ذخیره شده`;
+        }
+
+        function switchNavTab(tab) {
+            if (tab === 'all') setFolderFilter('all');
+            if (tab === 'pinned') setFolderFilter('pinned');
+        }
+
+        function updateNavActive() {
+            document.getElementById('navAll').classList.remove('active');
+            document.getElementById('navPinned').classList.remove('active');
+
+            if (state.activeFilter === 'all') document.getElementById('navAll').classList.add('active');
+            if (state.activeFilter === 'pinned') document.getElementById('navPinned').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function scrollToInput() {
+            document.getElementById('inputCard').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('mainTextarea').focus();
+        }
+
+        function showToast(msg) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = msg;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        function escapeHTML(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Initialize on Load
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // Register Service Worker for offline PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('../sw.js')
+                    .then(reg => console.log('Clipboard SW registered!'))
+                    .catch(err => console.error('SW failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>

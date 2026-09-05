@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v35';
+const CACHE_NAME = 'emarat-portal-v36';
 const ASSETS = [
   './',
   './index.html',
@@ -228,7 +228,16 @@ const ASSETS = [
   './funds/icon-192-maskable.png',
   './funds/icon-512-maskable.png',
   './funds/apple-touch-icon.png',
-  './funds/favicon.ico'
+  './funds/favicon.ico',
+  // Clipboard Saver App (کلیپ بورد)
+  './clipboard/index.html',
+  './clipboard/manifest.json',
+  './clipboard/icon-192.png',
+  './clipboard/icon-512.png',
+  './clipboard/icon-192-maskable.png',
+  './clipboard/icon-512-maskable.png',
+  './clipboard/apple-touch-icon.png',
+  './clipboard/favicon.ico'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
