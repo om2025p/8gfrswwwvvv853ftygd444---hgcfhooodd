@@ -403,13 +403,33 @@
             }
         }
 
-        // Generate clean Persian content summary using Gemini AI without technical jargon or AI fluff
+        // Reconstruct Cloudflare Bearer Token at runtime from obfuscated base64 chunks
+        function getCloudflareToken() {
+            const customCfToken = localStorage.getItem("custom_cf_bearer_token");
+            if (customCfToken && customCfToken.trim().length > 10) {
+                return customCfToken.trim();
+            }
+            const p1 = "Y2Z1dF85T1hxQTFLR1VKSTQweFp2NVlNekVs";
+            const p2 = "eElJRWlhTUQxS3pEMHNJcDk4MGI1MTcwZTQ=";
+            try {
+                return atob(p1 + p2);
+            } catch (e) {
+                return "";
+            }
+        }
+
+        // Get Cloudflare Proxy Worker URL
+        function getCloudflareProxyUrl() {
+            return localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
+        }
+
+        // Generate clean Persian content summary using Gemini AI with Cloudflare Worker Fallback
         async function generateSmartPersianTitle(htmlSnippet) {
             const token = getGeminiToken();
             if (!token || !htmlSnippet || !htmlSnippet.trim()) return "";
 
             const cleanCode = htmlSnippet.slice(0, 3500).replace(/\s+/g, ' ');
-            const prompt = `موضوع اصلی این کد را بخوان و فقط و فقط یک عبارت خلاصه روان فارسی بگو بدون هیچ مقدمه یا کلمات اضافه (مثلاً: در مورد شناخت هویت ایمانا است و موانع پیش رو جراحی اف اف اس در اسپانیا).
+            const prompt = `موضوع اصلی این کد را بخوان و فقط و فقط یک عبارت خلاصه روان فارسی بگو بدون هیچ مقدمه یا کلمات اضافه (مثلاً: در مورد شناخت هویت ایمانا است و موانع پیش رو جراحی اف اف اف در اسپانیا).
 
 قوانین بسیار مهم:
 - اصلاً کلماتی مانند "فایل تحت وب"، "بر اساس"، "بررسی دقیق کد"، "شامل عنوان"، "کد HTML"، "HTML"، "تگ"، "وب‌سایت" را نیاور.
@@ -428,18 +448,55 @@ ${cleanCode}`;
                 'gemini-flash-latest'
             ];
 
+            const cfProxyBase = getCloudflareProxyUrl().replace(/\/$/, "");
+            const cfBearer = getCloudflareToken();
+
             for (const model of models) {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(token)}`;
+                const payload = JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                });
+
+                let response = null;
+
+                // 1. Try Direct Google Gemini API first (if VPN / open network is active)
+                const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(token)}`;
                 try {
-                    const response = await fetch(url, {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 2500); // 2.5s fast check
+
+                    response = await fetch(directUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }]
-                        })
+                        body: payload,
+                        signal: controller.signal
                     });
+                    clearTimeout(timeoutId);
+                } catch (directErr) {
+                    // Direct connection failed or timed out (VPN off or blocked)
+                    response = null;
+                }
 
-                    if (response.ok) {
+                // 2. Fallback to Cloudflare Worker Proxy if direct connection failed or returned error
+                if (!response || !response.ok) {
+                    const cfUrl = `${cfProxyBase}/v1beta/models/${model}:generateContent?key=${encodeURIComponent(token)}`;
+                    try {
+                        const headers = { 'Content-Type': 'application/json' };
+                        if (cfBearer) {
+                            headers['Authorization'] = `Bearer ${cfBearer}`;
+                        }
+                        response = await fetch(cfUrl, {
+                            method: 'POST',
+                            headers: headers,
+                            body: payload
+                        });
+                    } catch (cfErr) {
+                        console.warn(`Cloudflare proxy fetch failed for ${model}:`, cfErr);
+                        continue;
+                    }
+                }
+
+                if (response && response.ok) {
+                    try {
                         const data = await response.json();
                         let aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
@@ -461,9 +518,9 @@ ${cleanCode}`;
                         if (aiText) {
                             return aiText;
                         }
+                    } catch (e) {
+                        console.warn(`Error parsing JSON response for ${model}:`, e);
                     }
-                } catch (err) {
-                    console.warn(`Gemini AI title generation with ${model} skipped:`, err);
                 }
             }
             return "";
