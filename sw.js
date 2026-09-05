@@ -298,6 +298,9 @@ self.addEventListener('notificationclick', (event) => {
     notification.close();
   }
 
+  const baseUrl = new URL('/restricted/index.html', self.location.origin).href;
+  const actionUrl = new URL('/restricted/index.html?action=paste_download', self.location.origin).href;
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       let matchingClient = null;
@@ -310,16 +313,17 @@ self.addEventListener('notificationclick', (event) => {
 
       if (action === 'paste_download') {
         if (matchingClient) {
-          matchingClient.focus();
-          matchingClient.postMessage({ action: 'PASTE_AND_DOWNLOAD' });
-        } else {
-          clients.openWindow('./restricted/index.html?action=paste_download');
+          return matchingClient.focus().then(() => {
+            matchingClient.postMessage({ action: 'PASTE_AND_DOWNLOAD' });
+          });
+        } else if (clients.openWindow) {
+          return clients.openWindow(actionUrl);
         }
       } else {
         if (matchingClient) {
-          matchingClient.focus();
-        } else {
-          clients.openWindow('./restricted/index.html');
+          return matchingClient.focus();
+        } else if (clients.openWindow) {
+          return clients.openWindow(baseUrl);
         }
       }
     })

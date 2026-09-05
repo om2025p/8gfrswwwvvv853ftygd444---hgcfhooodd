@@ -979,8 +979,10 @@
         }
         updateNotificationBtnUI();
 
-        // دریافت پیام‌ها از Service Worker هنگام کلیک روی دکمه اکشن اعلان
+        // ثبت سرویس‌ورکر مرکزی در صورت عدم وجود
         if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('../sw.js').catch(err => console.error("SW registration error:", err));
+
             navigator.serviceWorker.addEventListener('message', async (event) => {
                 if (event.data && event.data.action === 'PASTE_AND_DOWNLOAD') {
                     handlePasteAndDownloadFromNotification();
