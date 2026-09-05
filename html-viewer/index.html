@@ -802,20 +802,6 @@
             }
         }
 
-        function getCloudflareToken() {
-            const customCfToken = localStorage.getItem("custom_cf_bearer_token");
-            if (customCfToken && customCfToken.trim().length > 10) {
-                return customCfToken.trim();
-            }
-            const p1 = "Y2Z1dF85T1hxQTFLR1VKSTQweFp2NVlNekVs";
-            const p2 = "eElJRWlhTUQxS3pEMHNJcDk4MGI1MTcwZTQ=";
-            try {
-                return atob(p1 + p2);
-            } catch (e) {
-                return "";
-            }
-        }
-
         function getCloudflareProxyUrl() {
             return localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
         }
@@ -849,7 +835,6 @@ ${cleanText}`;
             ];
 
             const cfProxyBase = getCloudflareProxyUrl().replace(/\/$/, "");
-            const cfBearer = getCloudflareToken();
 
             appendLog(`Starting Gemini AI call. Token len: ${token.length}, CF Proxy: ${cfProxyBase}`, "info");
 
@@ -895,9 +880,6 @@ ${cleanText}`;
                     try {
                         appendLog(`Attempting Cloudflare Proxy: ${cfUrl}`, "info");
                         const headers = { 'Content-Type': 'application/json' };
-                        if (cfBearer) {
-                            headers['Authorization'] = `Bearer ${cfBearer}`;
-                        }
                         response = await fetch(cfUrl, {
                             method: 'POST',
                             headers: headers,
