@@ -269,14 +269,30 @@
         return `${sign}${percent.toFixed(2)}%`;
     }
 
+    function normalizeDate(dateStr) {
+        if (!dateStr) return "";
+        let clean = toEnglishNumber(dateStr);
+        let parts = clean.split(/[\/\.]/);
+        if (parts.length === 3) {
+            let y = parseInt(parts[0], 10);
+            let m = parseInt(parts[1], 10);
+            let d = parseInt(parts[2], 10);
+            if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+                return `${y}.${m.toString().padStart(2, '0')}.${d.toString().padStart(2, '0')}`;
+            }
+        }
+        return clean;
+    }
+
     function getPersianDate() {
         const raw = new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-        return toEnglishNumber(raw).replace(/\//g, ".");
+        return normalizeDate(raw);
     }
 
     function getNextPersianDate(dateStr) {
-        if (!dateStr) return getPersianDate();
-        let parts = toEnglishNumber(dateStr).replace(/\//g, ".").split(".");
+        let norm = normalizeDate(dateStr);
+        if (!norm) return getPersianDate();
+        let parts = norm.split(".");
         if (parts.length !== 3) return getPersianDate();
         let y = parseInt(parts[0], 10);
         let m = parseInt(parts[1], 10);
@@ -423,7 +439,7 @@
         const item = prices.find(p => p.id == currentEditingItemId);
         if(item) {
             item.date = newDateStr;
-            prices.sort((a,b) => (a.date || '').localeCompare(b.date || '') || (new Date(a.timestamp) - new Date(b.timestamp)));
+            prices.sort((a,b) => normalizeDate(a.date).localeCompare(normalizeDate(b.date)) || (new Date(a.timestamp) - new Date(b.timestamp)));
             savePrices(prices);
             showMessage(`📅 تاریخ به ${newDateStr} تغییر کرد`);
         } else {
@@ -435,7 +451,26 @@
     function getPrices() {
         const raw = localStorage.getItem(STORAGE_PRICES);
         if (!raw) return [];
-        try { return JSON.parse(raw); } catch(e) { return []; }
+        try {
+            let list = JSON.parse(raw);
+            if (Array.isArray(list)) {
+                let changed = false;
+                list.forEach(p => {
+                    if (p && p.date) {
+                        let norm = normalizeDate(p.date);
+                        if (norm !== p.date) {
+                            p.date = norm;
+                            changed = true;
+                        }
+                    }
+                });
+                if (changed) {
+                    localStorage.setItem(STORAGE_PRICES, JSON.stringify(list));
+                }
+                return list;
+            }
+            return [];
+        } catch(e) { return []; }
     }
 
     function savePrices(pricesArray) {
@@ -671,7 +706,7 @@
             return;
         }
         item.price = newPrice;
-        prices.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        prices.sort((a, b) => normalizeDate(a.date).localeCompare(normalizeDate(b.date)) || (new Date(a.timestamp) - new Date(b.timestamp)));
         savePrices(prices);
         showMessage(`✏️ قیمت ${formatWithCommas(newPrice)} تومان در همون جایگاه ذخیره شد`);
     }
@@ -760,7 +795,7 @@
             }
         }
         prices.push({ id: Date.now(), date: dateToUse, timestamp: new Date().toISOString(), price: priceValue });
-        prices.sort((a,b) => (a.date || '').localeCompare(b.date || '') || (new Date(a.timestamp) - new Date(b.timestamp)));
+        prices.sort((a,b) => normalizeDate(a.date).localeCompare(normalizeDate(b.date)) || (new Date(a.timestamp) - new Date(b.timestamp)));
         savePrices(prices);
         showMessage(`✅ ${formatWithCommas(priceValue)} تومان ثبت شد (${dateToUse})`);
         return true;
