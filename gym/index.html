@@ -1018,7 +1018,28 @@
             </details>
 
             <details id="sec-manage" class="card">
-                <summary>🛠️ مدیریت حرکات</summary>
+                <summary>🛠️ مدیریت حرکات و تنظیمات ست‌ها</summary>
+                <div style="margin-top: 15px; border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; margin-bottom: 15px;">
+                    <label style="font-size: 0.95rem; margin-bottom: 12px; display: block; color: var(--primary-color);">⚙️ تنظیمات عمومی ست‌ها:</label>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                            <label style="font-size: 0.85rem; margin: 0;">تعداد ست پیش‌فرض:</label>
+                            <input type="number" id="settingDefaultSetCount" min="1" max="10" value="3" style="width: 80px; padding: 6px; text-align: center;" onchange="updateGlobalSettings()">
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                            <label style="font-size: 0.85rem; margin: 0;">شکل نمایش مجموع کل:</label>
+                            <select id="settingSumDisplayStyle" style="width: 160px; padding: 6px; font-size: 0.85rem;" onchange="updateGlobalSettings()">
+                                <option value="fraction">کسری (۱۴ / ۲۰)</option>
+                                <option value="text">متن کامل (۱۴ از ۲۰)</option>
+                                <option value="simple">عدد ساده (۱۴ تکرار)</option>
+                            </select>
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                            <input type="checkbox" id="settingEnableTimeMultiSet" style="width: auto;" onchange="updateGlobalSettings()"> فعال‌سازی ست‌بندی برای حرکات زمانی (ثانیه‌ای)
+                        </label>
+                    </div>
+                </div>
+
                 <div style="margin-top: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px;">
                     <label style="font-size: 0.9rem; margin-bottom: 10px; display: block; color: var(--primary-color);">➕ افزودن حرکت جدید:</label>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -1027,9 +1048,12 @@
                             <input type="number" id="newExTarget" placeholder="تعداد هدف" style="flex: 1;">
                             <input type="text" id="newExUnit" placeholder="واحد (تکرار/ثانیه)" style="flex: 1;">
                         </div>
-                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
-                            <input type="checkbox" id="newExSide" style="width: auto;"> حرکت دوطرفه (راست و چپ جدا)
-                        </label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="number" id="newExSetCount" placeholder="تعداد ست (پیش‌فرض: ۳)" min="1" max="10" style="flex: 1;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; flex: 1;">
+                                <input type="checkbox" id="newExSide" style="width: auto;"> دوطرفه (راست و چپ)
+                            </label>
+                        </div>
                         <button onclick="addNewExercise()" class="btn-submit" style="margin-top: 5px; padding: 10px;">افزودن به لیست</button>
                     </div>
                 </div>
@@ -1240,8 +1264,56 @@
         NEXT_TYPE: 'workout_new_next_type_v2',
         THEME: 'workout_new_theme_v2',
         DRAFT: 'workout_new_draft_v2',
-        AI_DATA: 'workout_ai_coach_v1'
+        AI_DATA: 'workout_ai_coach_v1',
+        SETTINGS: 'workout_new_settings_v1'
     };
+
+    const DEFAULT_SETTINGS = {
+        defaultSetCount: 3,
+        sumDisplayStyle: 'fraction', // 'fraction' (14 / 20), 'text' (مجموع: 14 از 20 تکرار), 'simple' (14 تکرار)
+        enableTimeMultiSet: false
+    };
+
+    function getSettings() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+            return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : { ...DEFAULT_SETTINGS };
+        } catch (e) {
+            return { ...DEFAULT_SETTINGS };
+        }
+    }
+
+    function saveSettings(newSettings) {
+        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(newSettings));
+    }
+
+    function getExerciseSetCount(ex) {
+        const settings = getSettings();
+        if (ex && ex.setCount !== undefined && ex.setCount !== null) {
+            return Math.max(1, parseInt(ex.setCount) || 1);
+        }
+        if (ex && ex.unit === 'ثانیه' && !settings.enableTimeMultiSet) {
+            return 1;
+        }
+        return Math.max(1, settings.defaultSetCount || 3);
+    }
+
+    function getDistributedSetTargets(target, setCount) {
+        const total = parseInt(target) || 0;
+        const numSets = Math.max(1, parseInt(setCount) || 1);
+        const base = Math.floor(total / numSets);
+        let remainder = total % numSets;
+        const result = [];
+        for (let i = 0; i < numSets; i++) {
+            let val = base;
+            if (remainder > 0) {
+                val += 1;
+                remainder--;
+            }
+            result.push(val);
+        }
+        return result;
+    }
 
     // =======================================================
     // برنامه تمرینی جدید - فقط ۱۰ حرکت با ۹۵٪ کاهش
@@ -1462,6 +1534,23 @@
         }
     }
 
+    function renderTotalSumText(completedSum, target, unit) {
+        const settings = getSettings();
+        const style = settings.sumDisplayStyle || 'fraction';
+        const pCompleted = toPersianDigits(completedSum);
+        const pTarget = toPersianDigits(target);
+        const pUnit = escapeHtml(unit || 'تکرار');
+
+        if (style === 'text') {
+            return `مجموع: ${pCompleted} از ${pTarget} ${pUnit}`;
+        } else if (style === 'simple') {
+            return `${pCompleted} ${pUnit}`;
+        } else {
+            // 'fraction' (default)
+            return `${pCompleted} / ${pTarget} ${pUnit}`;
+        }
+    }
+
     function initWorkout(isLoadingDraft = false) {
         const type = document.getElementById('workoutType').value;
         const exercises = workoutData[type] || [];
@@ -1500,61 +1589,225 @@
             card.className = 'card exercise-item';
 
             const isSeconds = ex.unit === 'ثانیه';
+            const numSets = getExerciseSetCount(ex);
 
             if (ex.side) {
                 const rKey = `${ex.id}-r`;
                 const lKey = `${ex.id}-l`;
-                if (!sessionState[rKey]) sessionState[rKey] = { done: false, value: ex.target, time: null, rawTime: null, note: "" };
-                if (!sessionState[lKey]) sessionState[lKey] = { done: false, value: ex.target, time: null, rawTime: null, note: "" };
+                initExerciseSessionState(rKey, ex.target, numSets);
+                initExerciseSessionState(lKey, ex.target, numSets);
 
-                card.innerHTML = `
-                    <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${escapeHtml(ex.unit)})</div>
-                    <div class="side-row">
-                        <span>👉 راست:</span>
-                        <div class="input-with-check">
-                            ${isSeconds ? `<button class="timer-btn" onclick="openFullscreenTimer('${ex.id}-r', '${escapeHtml(ex.name)} (راست)', ${ex.target})">⏱️</button>` : ''}
-                            <input type="number" id="ex-${ex.id}-r-val" value="${sessionState[rKey].value}" oninput="updateSessionValue(${ex.id}, 'r', this.value)">
-                            <button class="check-btn ${sessionState[rKey].done ? 'active' : ''}" id="ex-${ex.id}-r-btn" onclick="toggleCheck(${ex.id}, 'r')">✓</button>
-                        </div>
-                    </div>
-                    <div style="margin-top: 4px; padding-right: 15px;">
-                        <input type="text" id="ex-${ex.id}-r-note" placeholder="📝 یادداشت سمت راست..." value="${sessionState[rKey].note || ''}" oninput="updateSessionNote(${ex.id}, 'r', this.value)" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); width: calc(100% - 15px);">
-                    </div>
-                    <div id="timer-panel-${ex.id}-r" class="exercise-timer-panel"></div>
-                    <div class="side-row">
-                        <span>👈 چپ:</span>
-                        <div class="input-with-check">
-                            ${isSeconds ? `<button class="timer-btn" onclick="openFullscreenTimer('${ex.id}-l', '${escapeHtml(ex.name)} (چپ)', ${ex.target})">⏱️</button>` : ''}
-                            <input type="number" id="ex-${ex.id}-l-val" value="${sessionState[lKey].value}" oninput="updateSessionValue(${ex.id}, 'l', this.value)">
-                            <button class="check-btn ${sessionState[lKey].done ? 'active' : ''}" id="ex-${ex.id}-l-btn" onclick="toggleCheck(${ex.id}, 'l')">✓</button>
-                        </div>
-                    </div>
-                    <div style="margin-top: 4px; padding-right: 15px; margin-bottom: 8px;">
-                        <input type="text" id="ex-${ex.id}-l-note" placeholder="📝 یادداشت سمت چپ..." value="${sessionState[lKey].note || ''}" oninput="updateSessionNote(${ex.id}, 'l', this.value)" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); width: calc(100% - 15px);">
-                    </div>
-                    <div id="timer-panel-${ex.id}-l" class="exercise-timer-panel"></div>
-                `;
+                card.innerHTML = renderSideExerciseCard(ex, rKey, lKey, numSets, isSeconds);
             } else {
                 const key = ex.id;
-                if (!sessionState[key]) sessionState[key] = { done: false, value: ex.target, time: null, rawTime: null, note: "" };
+                initExerciseSessionState(key, ex.target, numSets);
 
-                card.innerHTML = `
-                    <div class="exercise-header">
-                        <div class="exercise-name">${escapeHtml(ex.name)} (${toPersianDigits(ex.target)} ${escapeHtml(ex.unit)})</div>
-                        <div class="input-with-check">
-                            ${isSeconds ? `<button class="timer-btn" onclick="openFullscreenTimer('${ex.id}', '${escapeHtml(ex.name)}', ${ex.target})">⏱️</button>` : ''}
-                            <input type="number" id="ex-${ex.id}-val" value="${sessionState[key].value}" oninput="updateSessionValue(${ex.id}, null, this.value)">
-                            <button class="check-btn ${sessionState[key].done ? 'active' : ''}" id="ex-${ex.id}-btn" onclick="toggleCheck(${ex.id})">✓</button>
-                        </div>
-                    </div>
-                    <div style="margin-top: 4px;">
-                        <input type="text" id="ex-${ex.id}-note" placeholder="📝 یادداشت این حرکت..." value="${sessionState[key].note || ''}" oninput="updateSessionNote(${ex.id}, null, this.value)" style="padding: 6px 10px; font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">
-                    </div>
-                    <div id="timer-panel-${ex.id}" class="exercise-timer-panel"></div>
-                `;
+                card.innerHTML = renderSingleExerciseCard(ex, key, numSets, isSeconds);
             }
             listDiv.appendChild(card);
+            updateExerciseTotalDisplay(ex.id, ex.side, ex.target, ex.unit);
         });
+    }
+
+    function initExerciseSessionState(key, totalTarget, numSets) {
+        if (!sessionState[key]) {
+            const distributed = getDistributedSetTargets(totalTarget, numSets);
+            const setsArr = distributed.map(t => ({ done: false, value: t, time: null, rawTime: null }));
+            sessionState[key] = {
+                done: false,
+                value: totalTarget,
+                sets: setsArr,
+                time: null,
+                rawTime: null,
+                note: ""
+            };
+        } else {
+            // ساختاردهی همگام برای بارهای قبلی یا لود لایو
+            if (!sessionState[key].sets || sessionState[key].sets.length !== numSets) {
+                const distributed = getDistributedSetTargets(totalTarget, numSets);
+                const oldSets = sessionState[key].sets || [];
+                const newSets = [];
+                for (let i = 0; i < numSets; i++) {
+                    if (oldSets[i]) {
+                        newSets.push(oldSets[i]);
+                    } else {
+                        newSets.push({ done: false, value: distributed[i] || 0, time: null, rawTime: null });
+                    }
+                }
+                sessionState[key].sets = newSets;
+            }
+        }
+    }
+
+    function renderSingleExerciseCard(ex, key, numSets, isSeconds) {
+        const state = sessionState[key];
+
+        let setsHtml = '';
+        for (let s = 0; s < numSets; s++) {
+            const setObj = state.sets[s] || { done: false, value: 0 };
+            setsHtml += `
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                    <span style="font-size: 0.7rem; color: var(--secondary-color);">ست ${toPersianDigits(s + 1)}</span>
+                    <input type="number" id="ex-${ex.id}-set-${s}-val" value="${setObj.value}" oninput="updateSetTargetValue(${ex.id}, null, ${s}, this.value, ${ex.target}, '${escapeHtml(ex.unit)}')" style="width: 55px; padding: 6px 2px; text-align: center; font-size: 0.85rem;">
+                    <button class="check-btn ${setObj.done ? 'active' : ''}" id="ex-${ex.id}-set-${s}-btn" onclick="toggleCheckSet(${ex.id}, null, ${s}, ${ex.target}, '${escapeHtml(ex.unit)}')" style="width: 36px; height: 36px; font-size: 1rem;">✓</button>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="exercise-header" style="flex-wrap: wrap; gap: 10px;">
+                <div class="exercise-name" style="flex: 1; min-width: 150px;">
+                    ${escapeHtml(ex.name)}
+                    <span style="font-size:0.85rem; color: var(--secondary-color); font-weight: normal;"> (${toPersianDigits(ex.target)} ${escapeHtml(ex.unit)}${numSets > 1 ? ` - ${toPersianDigits(numSets)} ست` : ''})</span>
+                </div>
+                <div class="input-with-check" style="flex-wrap: wrap; justify-content: flex-end;">
+                    ${isSeconds ? `<button class="timer-btn" onclick="openFullscreenTimer('${ex.id}', '${escapeHtml(ex.name)}', ${ex.target})">⏱️</button>` : ''}
+                    <div style="display: flex; gap: 6px; align-items: center; background: var(--row-bg); padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border-color);">
+                        ${setsHtml}
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.85rem; font-weight: bold; color: var(--primary-color);">
+                <span id="ex-${ex.id}-total-display">...</span>
+            </div>
+            <div style="margin-top: 6px;">
+                <input type="text" id="ex-${ex.id}-note" placeholder="📝 یادداشت این حرکت..." value="${state.note || ''}" oninput="updateSessionNote(${ex.id}, null, this.value)" style="padding: 6px 10px; font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">
+            </div>
+            <div id="timer-panel-${ex.id}" class="exercise-timer-panel"></div>
+        `;
+    }
+
+    function renderSideExerciseCard(ex, rKey, lKey, numSets, isSeconds) {
+        const rState = sessionState[rKey];
+        const lState = sessionState[lKey];
+
+        const renderSideSets = (sideChar) => {
+            const sideState = sideChar === 'r' ? rState : lState;
+            let html = '';
+            for (let s = 0; s < numSets; s++) {
+                const setObj = sideState.sets[s] || { done: false, value: 0 };
+                html += `
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                        <span style="font-size: 0.7rem; color: var(--secondary-color);">ست ${toPersianDigits(s + 1)}</span>
+                        <input type="number" id="ex-${ex.id}-${sideChar}-set-${s}-val" value="${setObj.value}" oninput="updateSetTargetValue(${ex.id}, '${sideChar}', ${s}, this.value, ${ex.target}, '${escapeHtml(ex.unit)}')" style="width: 55px; padding: 6px 2px; text-align: center; font-size: 0.85rem;">
+                        <button class="check-btn ${setObj.done ? 'active' : ''}" id="ex-${ex.id}-${sideChar}-set-${s}-btn" onclick="toggleCheckSet(${ex.id}, '${sideChar}', ${s}, ${ex.target}, '${escapeHtml(ex.unit)}')" style="width: 36px; height: 36px; font-size: 1rem;">✓</button>
+                    </div>
+                `;
+            }
+            return html;
+        };
+
+        return `
+            <div class="exercise-name" style="margin-bottom: 8px;">
+                ${escapeHtml(ex.name)}
+                <span style="font-size:0.85rem; color: var(--secondary-color); font-weight: normal;"> (${toPersianDigits(ex.target)} ${escapeHtml(ex.unit)}${numSets > 1 ? ` - ${toPersianDigits(numSets)} ست` : ''})</span>
+            </div>
+            <div class="side-row" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold;">👉 راست:</span>
+                    <div class="input-with-check">
+                        ${isSeconds ? `<button class="timer-btn" onclick="openFullscreenTimer('${ex.id}-r', '${escapeHtml(ex.name)} (راست)', ${ex.target})">⏱️</button>` : ''}
+                        <div style="display: flex; gap: 6px; align-items: center; background: var(--card-bg); padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border-color);">
+                            ${renderSideSets('r')}
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; color: var(--primary-color);">
+                    <span id="ex-${ex.id}-r-total-display">...</span>
+                </div>
+                <input type="text" id="ex-${ex.id}-r-note" placeholder="📝 یادداشت سمت راست..." value="${rState.note || ''}" oninput="updateSessionNote(${ex.id}, 'r', this.value)" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); width: 100%;">
+            </div>
+            <div id="timer-panel-${ex.id}-r" class="exercise-timer-panel"></div>
+
+            <div class="side-row" style="flex-direction: column; align-items: stretch; gap: 8px; margin-top: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold;">👈 چپ:</span>
+                    <div class="input-with-check">
+                        ${isSeconds ? `<button class="timer-btn" onclick="openFullscreenTimer('${ex.id}-l', '${escapeHtml(ex.name)} (چپ)', ${ex.target})">⏱️</button>` : ''}
+                        <div style="display: flex; gap: 6px; align-items: center; background: var(--card-bg); padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border-color);">
+                            ${renderSideSets('l')}
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; color: var(--primary-color);">
+                    <span id="ex-${ex.id}-l-total-display">...</span>
+                </div>
+                <input type="text" id="ex-${ex.id}-l-note" placeholder="📝 یادداشت سمت چپ..." value="${lState.note || ''}" oninput="updateSessionNote(${ex.id}, 'l', this.value)" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); width: 100%;">
+            </div>
+            <div id="timer-panel-${ex.id}-l" class="exercise-timer-panel"></div>
+        `;
+    }
+
+    function toggleCheckSet(id, side, setIndex, target, unit) {
+        const key = side ? `${id}-${side}` : id;
+        const btnId = side ? `ex-${id}-${side}-set-${setIndex}-btn` : `ex-${id}-set-${setIndex}-btn`;
+        const valId = side ? `ex-${id}-${side}-set-${setIndex}-val` : `ex-${id}-set-${setIndex}-val`;
+
+        const btn = document.getElementById(btnId);
+        const valInput = document.getElementById(valId);
+        const val = parseInt(valInput ? valInput.value : 0) || 0;
+
+        const setObj = sessionState[key].sets[setIndex];
+        setObj.done = !setObj.done;
+        setObj.value = val;
+
+        if (setObj.done) {
+            setObj.rawTime = Date.now();
+            setObj.time = toPersianDigits(new Date().toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'}));
+            btn.classList.add('active');
+        } else {
+            setObj.rawTime = null;
+            setObj.time = null;
+            btn.classList.remove('active');
+        }
+
+        // بررسی اینکه آیا تمام ست‌ها تیک خورده‌اند
+        const anyDone = sessionState[key].sets.some(s => s.done);
+        sessionState[key].done = anyDone;
+        if (anyDone) {
+            sessionState[key].rawTime = sessionState[key].sets.find(s => s.done)?.rawTime || Date.now();
+            sessionState[key].time = sessionState[key].sets.find(s => s.done)?.time || null;
+        } else {
+            sessionState[key].rawTime = null;
+            sessionState[key].time = null;
+        }
+
+        updateExerciseTotalDisplay(id, side ? true : false, target, unit);
+        saveDraft();
+    }
+
+    function updateSetTargetValue(id, side, setIndex, val, target, unit) {
+        const key = side ? `${id}-${side}` : id;
+        const numVal = parseInt(val) || 0;
+        if (sessionState[key] && sessionState[key].sets[setIndex]) {
+            sessionState[key].sets[setIndex].value = numVal;
+        }
+        updateExerciseTotalDisplay(id, side ? true : false, target, unit);
+        saveDraft();
+    }
+
+    function updateExerciseTotalDisplay(id, isSide, target, unit) {
+        if (isSide) {
+            ['r', 'l'].forEach(s => {
+                const key = `${id}-${s}`;
+                const displayEl = document.getElementById(`ex-${id}-${s}-total-display`);
+                if (displayEl && sessionState[key]) {
+                    const completedSum = sessionState[key].sets
+                        .filter(st => st.done)
+                        .reduce((sum, st) => sum + (parseInt(st.value) || 0), 0);
+                    displayEl.innerText = renderTotalSumText(completedSum, target, unit);
+                }
+            });
+        } else {
+            const key = id;
+            const displayEl = document.getElementById(`ex-${id}-total-display`);
+            if (displayEl && sessionState[key]) {
+                const completedSum = sessionState[key].sets
+                    .filter(st => st.done)
+                    .reduce((sum, st) => sum + (parseInt(st.value) || 0), 0);
+                displayEl.innerText = renderTotalSumText(completedSum, target, unit);
+            }
+        }
     }
 
     function toggleTimerPanel(key, target) {
@@ -2124,28 +2377,47 @@
 
         exercises.forEach(ex => {
             if (ex.side) {
-                const rDone = sessionState[`${ex.id}-r`].done;
-                const lDone = sessionState[`${ex.id}-l`].done;
-                if (rDone || lDone) {
+                const rState = sessionState[`${ex.id}-r`];
+                const lState = sessionState[`${ex.id}-l`];
+                const rAnyDone = rState && rState.sets && rState.sets.some(s => s.done);
+                const lAnyDone = lState && lState.sets && lState.sets.some(s => s.done);
+
+                if (rAnyDone || lAnyDone) {
+                    const rCompletedSum = rState.sets.filter(s => s.done).reduce((sum, s) => sum + (parseInt(s.value) || 0), 0);
+                    const lCompletedSum = lState.sets.filter(s => s.done).reduce((sum, s) => sum + (parseInt(s.value) || 0), 0);
+
+                    const rSetDetails = rState.sets.map((s, idx) => `ست ${toPersianDigits(idx + 1)}: ${s.done ? toPersianDigits(s.value) : '❌'}`).join(' | ');
+                    const lSetDetails = lState.sets.map((s, idx) => `ست ${toPersianDigits(idx + 1)}: ${s.done ? toPersianDigits(s.value) : '❌'}`).join(' | ');
+
                     record.exercises.push({
                         name: ex.name,
-                        r: rDone ? sessionState[`${ex.id}-r`].value : '-',
-                        rTime: sessionState[`${ex.id}-r`].time,
-                        rNote: rDone ? sessionState[`${ex.id}-r`].note : '',
-                        l: lDone ? sessionState[`${ex.id}-l`].value : '-',
-                        lTime: sessionState[`${ex.id}-l`].time,
-                        lNote: lDone ? sessionState[`${ex.id}-l`].note : '',
+                        target: ex.target,
+                        r: rAnyDone ? toPersianDigits(rCompletedSum) : '-',
+                        rSetDetails: rSetDetails,
+                        rTime: rState.time,
+                        rNote: rAnyDone ? rState.note : '',
+                        l: lAnyDone ? toPersianDigits(lCompletedSum) : '-',
+                        lSetDetails: lSetDetails,
+                        lTime: lState.time,
+                        lNote: lAnyDone ? lState.note : '',
                         unit: ex.unit
                     });
                 }
             } else {
-                if (sessionState[ex.id].done) {
+                const state = sessionState[ex.id];
+                const anyDone = state && state.sets && state.sets.some(s => s.done);
+                if (anyDone) {
+                    const completedSum = state.sets.filter(s => s.done).reduce((sum, s) => sum + (parseInt(s.value) || 0), 0);
+                    const setDetails = state.sets.map((s, idx) => `ست ${toPersianDigits(idx + 1)}: ${s.done ? toPersianDigits(s.value) : '❌'}`).join(' | ');
+
                     record.exercises.push({
                         name: ex.name,
-                        value: sessionState[ex.id].value,
-                        time: sessionState[ex.id].time,
+                        target: ex.target,
+                        value: toPersianDigits(completedSum),
+                        setDetails: setDetails,
+                        time: state.time,
                         unit: ex.unit,
-                        note: sessionState[ex.id].note || ''
+                        note: state.note || ''
                     });
                 }
             }
@@ -2239,12 +2511,15 @@
 
             let exListHtml = rec.exercises.map(ex => {
                 if (ex.r !== undefined) {
+                    let rSetHtml = ex.rSetDetails ? `<span style="display:block; font-size:0.75rem; color:var(--secondary-color); margin-right:10px;">📊 جزئیات ست راست: ${ex.rSetDetails}</span>` : '';
+                    let lSetHtml = ex.lSetDetails ? `<span style="display:block; font-size:0.75rem; color:var(--secondary-color); margin-right:10px;">📊 جزئیات ست چپ: ${ex.lSetDetails}</span>` : '';
                     let rNoteHtml = ex.rNote ? `<span style="display:block; font-size:0.8rem; color:var(--secondary-color); margin-right:15px;">📝 ${escapeHtml(ex.rNote)}</span>` : '';
                     let lNoteHtml = ex.lNote ? `<span style="display:block; font-size:0.8rem; color:var(--secondary-color); margin-right:15px;">📝 ${escapeHtml(ex.lNote)}</span>` : '';
-                    return `<div class="ex-row"><b>${escapeHtml(ex.name)}</b><br/>${ex.r !== '-' ? `👉 راست: ${ex.r} ${ex.unit} (${ex.rTime || ''})${rNoteHtml}` : ''}${ex.l !== '-' ? `<br/>👈 چپ: ${ex.l} ${ex.unit} (${ex.lTime || ''})${lNoteHtml}` : ''}</div>`;
+                    return `<div class="ex-row"><b>${escapeHtml(ex.name)}</b><br/>${ex.r !== '-' ? `👉 راست: مجموع ${ex.r} ${ex.unit} (${ex.rTime || ''})${rSetHtml}${rNoteHtml}` : ''}${ex.l !== '-' ? `<br/>👈 چپ: مجموع ${ex.l} ${ex.unit} (${ex.lTime || ''})${lSetHtml}${lNoteHtml}` : ''}</div>`;
                 }
+                let setDetailsHtml = ex.setDetails ? `<span style="display:block; font-size:0.75rem; color:var(--secondary-color); margin-right:10px;">📊 جزئیات ست‌ها: ${ex.setDetails}</span>` : '';
                 let noteHtml = ex.note ? `<span style="display:block; font-size:0.8rem; color:var(--secondary-color); margin-right:10px;">📝 ${escapeHtml(ex.note)}</span>` : '';
-                return `<div class="ex-row"><b>${escapeHtml(ex.name)}</b>: ${ex.value} ${ex.unit} (${ex.time || ''})${noteHtml}</div>`;
+                return `<div class="ex-row"><b>${escapeHtml(ex.name)}</b>: مجموع ${ex.value} ${ex.unit} (${ex.time || ''})${setDetailsHtml}${noteHtml}</div>`;
             }).join('');
 
             card.innerHTML = `
@@ -2780,10 +3055,33 @@
         container.innerHTML = svgContent;
     }
 
+    function updateGlobalSettings() {
+        const defaultSetCount = parseInt(document.getElementById('settingDefaultSetCount').value) || 3;
+        const sumDisplayStyle = document.getElementById('settingSumDisplayStyle').value || 'fraction';
+        const enableTimeMultiSet = document.getElementById('settingEnableTimeMultiSet').checked;
+
+        saveSettings({ defaultSetCount, sumDisplayStyle, enableTimeMultiSet });
+        saveDraft();
+        initWorkout(true);
+    }
+
+    function initGlobalSettingsUI() {
+        const settings = getSettings();
+        const defCountEl = document.getElementById('settingDefaultSetCount');
+        const styleEl = document.getElementById('settingSumDisplayStyle');
+        const timeSetEl = document.getElementById('settingEnableTimeMultiSet');
+
+        if (defCountEl) defCountEl.value = settings.defaultSetCount;
+        if (styleEl) styleEl.value = settings.sumDisplayStyle;
+        if (timeSetEl) timeSetEl.checked = settings.enableTimeMultiSet;
+    }
+
     function addNewExercise() {
         const name = document.getElementById('newExName').value.trim();
         const target = parseInt(document.getElementById('newExTarget').value) || 0;
         const unit = document.getElementById('newExUnit').value.trim() || 'تکرار';
+        const setCountVal = parseInt(document.getElementById('newExSetCount').value);
+        const setCount = (!isNaN(setCountVal) && setCountVal > 0) ? setCountVal : null;
         const side = document.getElementById('newExSide').checked;
 
         if (!name) {
@@ -2795,8 +3093,8 @@
         saveDraft();
 
         const newId = Date.now();
-        const newExHeavy = { id: newId, name, target, unit, side };
-        const newExLight = { id: newId, name, target: Math.ceil(target / 2) || 1, unit, side };
+        const newExHeavy = { id: newId, name, target, unit, side, setCount };
+        const newExLight = { id: newId, name, target: Math.ceil(target / 2) || 1, unit, side, setCount };
 
         workoutData.heavy.push(newExHeavy);
         workoutData.light.push(newExLight);
@@ -2810,6 +3108,7 @@
         document.getElementById('newExName').value = '';
         document.getElementById('newExTarget').value = '';
         document.getElementById('newExUnit').value = '';
+        document.getElementById('newExSetCount').value = '';
         document.getElementById('newExSide').checked = false;
 
         alert(`✅ حرکت "${name}" با موفقیت اضافه شد.`);
@@ -2823,24 +3122,38 @@
     }
 
     function renderExerciseManager() {
+        initGlobalSettingsUI();
         const container = document.getElementById('exerciseManagerList');
         container.innerHTML = '';
         workoutData.heavy.forEach((ex, index) => {
+            const currentSets = getExerciseSetCount(ex);
             const div = document.createElement('div');
             div.className = 'manage-item';
+            div.style.flexDirection = 'column';
+            div.style.alignItems = 'stretch';
             div.innerHTML = `
-                <input type="text" value="${escapeHtml(ex.name)}" onchange="updateExerciseName(${index}, this.value)">
-                <div class="manage-controls">
-                    <button class="manage-btn" onclick="moveExercise(${index}, -1)" title="بالا">↑</button>
-                    <button class="manage-btn" onclick="moveExercise(${index}, 1)" title="پایین">↓</button>
-                    <div class="ex-dropdown" id="ex-menu-${ex.id}">
-                        <button class="manage-btn" onclick="toggleExMenu('${ex.id}')">☰</button>
-                        <div class="ex-dropdown-content">
-                            <button onclick="archiveExercise(${index})"><span class="icon">📦</span> بایگانی</button>
-                            <button onclick="deleteExercisePermanently(${index}, false)" style="color:var(--danger-color)"><span class="icon">🗑️</span> حذف کامل</button>
+                <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
+                    <input type="text" value="${escapeHtml(ex.name)}" onchange="updateExerciseName(${index}, this.value)">
+                    <div class="manage-controls">
+                        <button class="manage-btn" onclick="moveExercise(${index}, -1)" title="بالا">↑</button>
+                        <button class="manage-btn" onclick="moveExercise(${index}, 1)" title="پایین">↓</button>
+                        <div class="ex-dropdown" id="ex-menu-${ex.id}">
+                            <button class="manage-btn" onclick="toggleExMenu('${ex.id}')">☰</button>
+                            <div class="ex-dropdown-content">
+                                <button onclick="archiveExercise(${index})"><span class="icon">📦</span> بایگانی</button>
+                                <button onclick="deleteExercisePermanently(${index}, false)" style="color:var(--danger-color)"><span class="icon">🗑️</span> حذف کامل</button>
+                            </div>
                         </div>
                     </div>
-                </div>`;
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; font-size: 0.8rem; color: var(--secondary-color);">
+                    <span>تعداد ست‌های این حرکت:</span>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <input type="number" value="${currentSets}" min="1" max="10" style="width: 60px; padding: 4px; text-align: center; font-size: 0.85rem;" onchange="updateExerciseSetCount(${index}, this.value)">
+                        <span>ست</span>
+                    </div>
+                </div>
+            `;
             container.appendChild(div);
         });
 
@@ -2862,6 +3175,17 @@
                 archivedContainer.appendChild(div);
             });
         }
+    }
+
+    function updateExerciseSetCount(index, newCountVal) {
+        const count = parseInt(newCountVal);
+        if (isNaN(count) || count <= 0) return;
+        saveDraft();
+        workoutData.heavy[index].setCount = count;
+        workoutData.light[index].setCount = count;
+        saveWorkoutData();
+        loadDraft();
+        renderExerciseManager();
     }
 
     function archiveExercise(index) {
@@ -3131,9 +3455,9 @@
             prompt += `لیست حرکات و یادداشت‌های ثبت شده:\n`;
             latestRecord.exercises.forEach(ex => {
                 if (ex.r !== undefined) {
-                    prompt += `- ${ex.name}: راست=${ex.r} (${ex.rNote || 'بدون یادداشت'}) | چپ=${ex.l} (${ex.lNote || 'بدون یادداشت'})\n`;
+                    prompt += `- ${ex.name}: راست=${ex.r} (ست‌ها: ${ex.rSetDetails || '-'}) (${ex.rNote || 'بدون یادداشت'}) | چپ=${ex.l} (ست‌ها: ${ex.lSetDetails || '-'}) (${ex.lNote || 'بدون یادداشت'})\n`;
                 } else {
-                    prompt += `- ${ex.name}: مقدار=${ex.value} ${ex.unit} (${ex.note || 'بدون یادداشت'})\n`;
+                    prompt += `- ${ex.name}: مجموع=${ex.value} ${ex.unit} (ست‌ها: ${ex.setDetails || '-'}) (${ex.note || 'بدون یادداشت'})\n`;
                 }
             });
 
