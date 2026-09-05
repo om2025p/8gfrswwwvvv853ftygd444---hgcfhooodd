@@ -1398,8 +1398,16 @@
                     logDebug(`پاسخ خطا از سمت گیت‌هاب دریافت شد. وضعیت: ${response.status} (${response.statusText}). متن خطا: ${errText}`, 'error');
                     let errData = {};
                     try { errData = JSON.parse(errText); } catch(e){}
-                    showToast("❌ خطا در اجرای ورک‌فلو: " + (errData.message || response.statusText));
-                    return false;
+                    let detailedMsg = `خطای HTTP ${response.status} (${response.statusText})`;
+                    if (response.status === 429) {
+                        detailedMsg = "محدودیت تعداد درخواست گیت‌هاب (HTTP 429 Too Many Requests - لطفاً کمی صبر کنید)";
+                    } else if (response.status === 422) {
+                        detailedMsg = "درخواست تکراری یا در حال پردازش در سرور (HTTP 422 Unprocessable Entity)";
+                    } else if (errData.message) {
+                        detailedMsg = errData.message;
+                    }
+                    showToast("❌ خطا در اجرای ورک‌فلو: " + detailedMsg);
+                    return { success: false, errorMessage: detailedMsg, statusCode: response.status };
                 }
             } catch (err) {
                 logDebug(`خطای مهلک در حین ارسال درخواست دیسپچ: ${err.message}`, 'error');
@@ -1829,14 +1837,19 @@
                 const isNewUnique = registerUniqueLink(link);
                 const historyId = addDownloadHistoryItem(link, isNewUnique);
 
-                const dispatchSuccess = await triggerWorkflow(link, historyId);
-                if (!dispatchSuccess) {
-                    updateDownloadHistoryStatus(historyId, 'failed', '❌ عدم موفقیت در ارسال درخواست به گیت‌هاب', 'ارسال درخواست به گیت‌هاب با خطا مواجه شد. لطفاً توکن PAT و تنظیمات گیت‌هاب را بررسی کنید.');
+                const dispatchResult = await triggerWorkflow(link, historyId);
+                const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
+
+                if (!isSuccess) {
+                    const errDetail = (dispatchResult && dispatchResult.errorMessage)
+                        ? dispatchResult.errorMessage
+                        : 'ارسال درخواست به گیت‌هاب با خطا مواجه شد. لطفاً توکن PAT و تنظیمات گیت‌هاب را بررسی کنید.';
+                    updateDownloadHistoryStatus(historyId, 'failed', '❌ عدم موفقیت در ارسال به گیت‌هاب', errDetail);
                 }
 
-                // وقفه کوتاه بین درخواست‌ها جهت حفظ ترتیب صف
+                // وقفه هوشمند ۱۰ ثانیه‌ای بین ارسال‌های متوالی جهت جلوگیری از محدودیت Rate Limit گیت‌هاب (HTTP 429 / 422)
                 if (i < links.length - 1) {
-                    await new Promise(r => setTimeout(r, 400));
+                    await new Promise(r => setTimeout(r, 10000));
                 }
             }
 
