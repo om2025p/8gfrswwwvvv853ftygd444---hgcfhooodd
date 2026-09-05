@@ -300,11 +300,12 @@
             <div class="editor-toolbar">
                 <span class="editor-label">📝 کدهای تحت وب HTML را وارد یا کپی کنید:</span>
                 <div class="quick-actions">
-                    <button class="btn-small" onclick="pasteFromClipboard()">📋 چسباندن</button>
+                    <button class="btn-small" onclick="copyPlainText()">📋 کپی متن</button>
+                    <button class="btn-small" onclick="pasteFromClipboard()">📥 چسباندن</button>
                     <button class="btn-small" onclick="clearEditor()" style="color: #ef4444;">🗑️ پاکسازی</button>
                 </div>
             </div>
-            <textarea id="codeEditor" placeholder=" کدهای HTML خود را اینجا بگذارید..." spellcheck="false"></textarea>
+            <textarea id="codeEditor" placeholder=" کدهای HTML یا متون خود را اینجا بگذارید..." spellcheck="false"></textarea>
         </div>
 
         <div class="button-group">
@@ -312,7 +313,16 @@
                 🖥️ نمایش کد (تمام‌صفحه)
             </button>
             <button class="btn-main btn-download" onclick="downloadHtmlFile()">
-                📥 دانلود فایل تحت وب
+                📥 دانلود فایل HTML
+            </button>
+        </div>
+
+        <div class="button-group" style="margin-top: -4px;">
+            <button class="btn-main" onclick="copyPlainText()" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
+                📋 کپی متن ساده
+            </button>
+            <button class="btn-main" onclick="downloadTxtFile()" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+                📄 ذخیره فایل TXT
             </button>
         </div>
 
@@ -558,6 +568,27 @@ ${cleanCode}`;
             }, 3000);
         }
 
+        async function copyPlainText() {
+            const text = editor.value;
+            if (!text || text.trim() === '') {
+                showToast('⚠️ کادری برای کپی کردن وجود ندارد!');
+                return;
+            }
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    showToast('📋 متن با موفقیت کپی شد');
+                } else {
+                    editor.select();
+                    document.execCommand('copy');
+                    showToast('📋 متن کپی شد');
+                }
+            } catch (err) {
+                editor.select();
+                showToast('📋 متن را به صورت دستی کپی کنید');
+            }
+        }
+
         async function pasteFromClipboard() {
             try {
                 if (navigator.clipboard && navigator.clipboard.readText) {
@@ -566,7 +597,7 @@ ${cleanCode}`;
                         editor.value = text;
                         localStorage.setItem('html_viewer_saved_code', text);
                         triggerBackgroundAiTitle();
-                        showToast('📋 کد با موفقیت جای‌گذاری شد');
+                        showToast('📥 متن با موفقیت جای‌گذاری شد');
                     } else {
                         showToast('حافظه کپی خالی است!');
                     }
@@ -574,7 +605,7 @@ ${cleanCode}`;
                     showToast('دسترسی کپی دستی را در مرورگر فعال کنید');
                 }
             } catch (err) {
-                showToast('کد را مستقیماً داخل کادرPaste (جای‌گذاری) کنید');
+                showToast('کد را مستقیماً داخل کادر Paste (جای‌گذاری) کنید');
             }
         }
 
@@ -652,6 +683,51 @@ ${cleanCode}`;
                 hidePreviewUI();
             }
         });
+
+        // Download Plain Text (.txt) file formatted as: این فایل - [محتوای خلاصه] - [تاریخ خورشیدی].txt
+        async function downloadTxtFile() {
+            const code = editor.value;
+            if (!code || code.trim() === '') {
+                showToast('⚠️ لطفاً ابتدا متنی وارد نمایید!');
+                return;
+            }
+
+            let aiTitle = cachedAiTitle;
+            if (!aiTitle && aiTitlePromise) {
+                showToast('🤖 در حال دریافت عنوان هوشمند از هوش مصنوعی...');
+                aiTitle = await aiTitlePromise;
+            }
+            if (!aiTitle) {
+                showToast('🤖 در حال ساخت عنوان هوشمند با هوش مصنوعی...');
+                aiTitle = await generateSmartPersianTitle(code);
+            }
+
+            // Get & Increment Download Counter
+            let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
+            currentCount += 1;
+            localStorage.setItem('html_viewer_download_count', currentCount.toString());
+            updateDownloadCounterBadge();
+
+            const jalaliDateStr = getJalaliDateString();
+
+            let fileName = "";
+            if (aiTitle) {
+                fileName = `این فایل - ${aiTitle} - ${jalaliDateStr}.txt`;
+            } else {
+                fileName = `این فایل - یادداشت متنی - ${jalaliDateStr}.txt`;
+            }
+
+            const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+            showToast(`📄 ${fileName} ذخیره شد`);
+        }
 
         // Instant download HTML file formatted as: این فایل - [محتوای خلاصه] - [تاریخ خورشیدی].html
         async function downloadHtmlFile() {
