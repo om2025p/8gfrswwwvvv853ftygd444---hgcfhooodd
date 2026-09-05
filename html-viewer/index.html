@@ -946,6 +946,33 @@ ${cleanText}`;
             }
         }
 
+        function checkAndRegisterUniqueDownload(content) {
+            if (!content || !content.trim()) return false;
+            const normalized = content.trim().replace(/\r\n/g, '\n');
+            let hashList = [];
+            try {
+                hashList = JSON.parse(localStorage.getItem('html_viewer_downloaded_hashes') || '[]');
+            } catch (e) {
+                hashList = [];
+            }
+
+            let hash = 0;
+            for (let i = 0; i < normalized.length; i++) {
+                hash = ((hash << 5) - hash) + normalized.charCodeAt(i);
+                hash |= 0;
+            }
+            const hashKey = `${normalized.length}_${hash}`;
+
+            if (hashList.includes(hashKey)) {
+                return false;
+            }
+
+            hashList.push(hashKey);
+            if (hashList.length > 500) hashList.shift();
+            localStorage.setItem('html_viewer_downloaded_hashes', JSON.stringify(hashList));
+            return true;
+        }
+
         function updateDownloadCounterBadge() {
             const count = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
             downloadCountBadge.innerText = `${toPersianDigits(count)} فایل`;
@@ -1086,10 +1113,15 @@ ${cleanText}`;
                 aiTitle = await generateSmartPersianTitle(text);
             }
 
-            let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
-            currentCount += 1;
-            localStorage.setItem('html_viewer_download_count', currentCount.toString());
-            updateDownloadCounterBadge();
+            const isUnique = checkAndRegisterUniqueDownload(text);
+            if (isUnique) {
+                let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
+                currentCount += 1;
+                localStorage.setItem('html_viewer_download_count', currentCount.toString());
+                updateDownloadCounterBadge();
+            } else {
+                showToast('⚠️ این متن تکراری است و در شمارنده محسوب نشد');
+            }
 
             const jalaliDateStr = getJalaliDateString();
 
@@ -1125,10 +1157,15 @@ ${cleanText}`;
                 aiTitle = await generateSmartPersianTitle(code);
             }
 
-            let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
-            currentCount += 1;
-            localStorage.setItem('html_viewer_download_count', currentCount.toString());
-            updateDownloadCounterBadge();
+            const isUnique = checkAndRegisterUniqueDownload(code);
+            if (isUnique) {
+                let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
+                currentCount += 1;
+                localStorage.setItem('html_viewer_download_count', currentCount.toString());
+                updateDownloadCounterBadge();
+            } else {
+                showToast('⚠️ این کد تکراری است و در شمارنده محسوب نشد');
+            }
 
             const jalaliDateStr = getJalaliDateString();
 
