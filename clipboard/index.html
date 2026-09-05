@@ -449,6 +449,15 @@
             direction: ltr;
         }
 
+        .item-title {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
         .item-content {
             font-size: 0.95rem;
             line-height: 1.5;
@@ -763,6 +772,9 @@
                     📋 چسباندن از کلیپ‌بورد
                 </button>
             </div>
+            <div>
+                <input type="text" id="inputTitleInput" class="modal-input" placeholder="عنوان متن (اختیاری - مثلاً: شماره کارت اصلی)..." style="width: 100%; background: rgba(15, 23, 42, 0.6); font-size: 0.88rem;">
+            </div>
             <div class="textarea-wrapper">
                 <textarea id="mainTextarea" class="input-text" placeholder="متن کپی‌شده یا جدید را اینجا بگذارید..."></textarea>
             </div>
@@ -864,6 +876,7 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editItemId">
+                <input type="text" id="editTitleInput" class="modal-input" placeholder="عنوان متن (اختیاری)...">
                 <textarea id="editTextarea" class="input-text" style="min-height:120px;"></textarea>
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px;">
                     <div class="folder-select-pill">
@@ -1037,11 +1050,14 @@
                 return;
             }
 
+            const titleInput = document.getElementById('inputTitleInput');
+            const title = titleInput ? titleInput.value.trim() : '';
             const folderSelect = document.getElementById('inputFolderSelect');
             const pinCheckbox = document.getElementById('inputPinCheckbox');
 
             const newItem = {
                 id: 'clip_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+                title: title,
                 text: text,
                 folderId: folderSelect.value || 'general',
                 isPinned: pinCheckbox.checked,
@@ -1054,6 +1070,7 @@
 
             // Reset Input
             textarea.value = '';
+            if (titleInput) titleInput.value = '';
             pinCheckbox.checked = false;
 
             renderFolderChips();
@@ -1133,7 +1150,7 @@
             // Apply Search Query
             if (state.searchQuery) {
                 const q = state.searchQuery.toLowerCase();
-                filtered = filtered.filter(i => i.text.toLowerCase().includes(q));
+                filtered = filtered.filter(i => i.text.toLowerCase().includes(q) || (i.title && i.title.toLowerCase().includes(q)));
             }
 
             // Sort: Pinned first, then by createdAt desc
@@ -1168,6 +1185,7 @@
                             </div>
                             <span class="item-date">${item.jalaliDate}</span>
                         </div>
+                        ${item.title ? `<div class="item-title">🏷️ ${escapeHTML(item.title)}</div>` : ''}
                         <div class="item-content">${escapeHTML(item.text)}</div>
                         <div class="item-actions">
                             <button class="action-btn copy-btn" onclick="copyTextToClipboard('${item.id}')">
@@ -1258,6 +1276,7 @@
             if (!item) return;
 
             document.getElementById('editItemId').value = item.id;
+            document.getElementById('editTitleInput').value = item.title || '';
             document.getElementById('editTextarea').value = item.text;
             document.getElementById('editFolderSelect').value = item.folderId;
             document.getElementById('editPinCheckbox').checked = item.isPinned;
@@ -1276,6 +1295,7 @@
 
             const item = state.items.find(i => i.id === itemId);
             if (item) {
+                item.title = document.getElementById('editTitleInput').value.trim();
                 item.text = text;
                 item.folderId = document.getElementById('editFolderSelect').value;
                 item.isPinned = document.getElementById('editPinCheckbox').checked;

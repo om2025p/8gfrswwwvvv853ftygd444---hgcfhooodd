@@ -1,75 +1,63 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Background Gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0f172a" />
-      <stop offset="50%" stop-color="#1e293b" />
-      <stop offset="100%" stop-color="#0f172a" />
-    </linearGradient>
+    <!-- Soft Drop Shadow Filter -->
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#0284c7" flood-opacity="0.35"/>
+    </filter>
 
-    <!-- Outer Ring Gradient -->
-    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Vibrant Cyan & Blue Gradients -->
+    <linearGradient id="cyan3d" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#38bdf8" />
-      <stop offset="50%" stop-color="#818cf8" />
-      <stop offset="100%" stop-color="#c084fc" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
     </linearGradient>
 
-    <!-- Clipboard Board Gradient -->
-    <linearGradient id="boardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#334155" />
-      <stop offset="100%" stop-color="#1e293b" />
-    </linearGradient>
-
-    <!-- Paper Sheet Gradient -->
-    <linearGradient id="paperGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="100%" stop-color="#f1f5f9" />
+    <linearGradient id="blue3d" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#4f46e5" />
     </linearGradient>
 
     <!-- Metallic Clip Gradient -->
     <linearGradient id="clipGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#cbd5e1" />
-      <stop offset="50%" stop-color="#94a3b8" />
-      <stop offset="100%" stop-color="#64748b" />
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="50%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#94a3b8" />
     </linearGradient>
 
-    <!-- Cyan Accent Line Gradient -->
-    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#06b6d4" />
-      <stop offset="100%" stop-color="#3b82f6" />
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f0f9ff" />
     </linearGradient>
-
-    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="12" flood-color="#000000" flood-opacity="0.5"/>
-    </filter>
   </defs>
 
-  <!-- Container Base -->
+  <!-- Solid White Container Box with Rounded Corners and Bold Cyan/Blue Double Border -->
   <rect width="512" height="512" rx="110" fill="url(#bgGrad)" />
-  <rect width="496" height="496" x="8" y="8" rx="102" fill="none" stroke="url(#borderGrad)" stroke-width="8" opacity="0.9" />
+  <rect width="496" height="496" x="8" y="8" rx="102" fill="none" stroke="#0284c7" stroke-width="12" />
+  <rect width="476" height="476" x="18" y="18" rx="92" fill="none" stroke="#38bdf8" stroke-width="6" opacity="0.9" />
 
-  <!-- Main Board with Drop Shadow -->
-  <g filter="url(#dropShadow)">
-    <rect x="116" y="90" width="280" height="360" rx="28" fill="url(#boardGrad)" stroke="#475569" stroke-width="4" />
+  <!-- Main Large 3D Clipboard Element in Center -->
+  <g filter="url(#cardShadow)">
+    <!-- Clipboard Board Backing -->
+    <rect x="116" y="80" width="280" height="370" rx="32" fill="url(#blue3d)" />
 
     <!-- Paper Sheet -->
-    <rect x="136" y="130" width="240" height="300" rx="16" fill="url(#paperGrad)" />
+    <rect x="136" y="125" width="240" height="305" rx="20" fill="#ffffff" stroke="#e2e8f0" stroke-width="4" />
 
-    <!-- Text Lines on Paper -->
-    <rect x="166" y="180" width="180" height="18" rx="9" fill="url(#lineGrad)" />
-    <rect x="166" y="218" width="140" height="14" rx="7" fill="#94a3b8" />
-    <rect x="166" y="250" width="160" height="14" rx="7" fill="#cbd5e1" />
+    <!-- Document Content Lines (Cyan/Blue Accent) -->
+    <rect x="166" y="170" width="180" height="22" rx="11" fill="url(#cyan3d)" />
+    <rect x="166" y="212" width="140" height="16" rx="8" fill="#94a3b8" />
+    <rect x="166" y="244" width="160" height="16" rx="8" fill="#cbd5e1" />
 
-    <!-- Folder Badge Symbol on Paper -->
-    <rect x="166" y="290" width="180" height="110" rx="14" fill="#e2e8f0" />
-    <rect x="180" y="310" width="100" height="14" rx="7" fill="#0284c7" />
-    <rect x="180" y="338" width="140" height="10" rx="5" fill="#64748b" />
-    <rect x="180" y="360" width="120" height="10" rx="5" fill="#94a3b8" />
-    <rect x="180" y="382" width="80" height="10" rx="5" fill="#38bdf8" />
+    <!-- Folder/Storage Box Illustration on Paper -->
+    <rect x="166" y="285" width="180" height="115" rx="16" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2" />
+    <rect x="182" y="305" width="100" height="16" rx="8" fill="#0284c7" />
+    <rect x="182" y="333" width="140" height="12" rx="6" fill="#64748b" />
+    <rect x="182" y="355" width="120" height="12" rx="6" fill="#94a3b8" />
+    <rect x="182" y="377" width="80" height="10" rx="5" fill="#38bdf8" />
 
-    <!-- Metallic Clip Holder -->
-    <rect x="206" y="66" width="100" height="44" rx="12" fill="url(#clipGrad)" stroke="#f8fafc" stroke-width="2" />
-    <circle cx="256" cy="88" r="12" fill="#0f172a" />
-    <circle cx="256" cy="88" r="6" fill="#38bdf8" />
+    <!-- 3D Metallic Clip Top Binder -->
+    <rect x="196" y="55" width="120" height="50" rx="14" fill="url(#clipGrad)" stroke="#0284c7" stroke-width="3" />
+    <circle cx="256" cy="80" r="14" fill="#0f172a" />
+    <circle cx="256" cy="80" r="7" fill="#38bdf8" />
   </g>
 </svg>
