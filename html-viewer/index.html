@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" href="favicon.ico">
-    <title>نمایشگر کد عمارت</title>
+    <title>نمایشگر کد و ابزار متن عمارت</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -103,6 +103,80 @@
             color: #0f172a;
         }
 
+        /* Navigation Tabs Header */
+        .tab-navigation {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            background: #e2e8f0;
+            padding: 5px;
+            border-radius: 16px;
+        }
+
+        .tab-btn {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            background: transparent;
+            color: #64748b;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--primary);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Tab Content Panels */
+        .tab-panel {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .tab-panel.active {
+            display: flex;
+        }
+
+        /* Top Bar Header for Text Tool */
+        .tool-banner-bar {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #ffffff;
+            padding: 12px 18px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+        }
+
+        .tool-banner-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #38bdf8;
+        }
+
+        .tool-banner-badge {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #38bdf8;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
         .editor-section {
             display: flex;
             flex-direction: column;
@@ -132,12 +206,12 @@
         .btn-small {
             background: #f8fafc;
             border: 1px solid #cbd5e1;
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 8px;
             font-size: 0.8rem;
             cursor: pointer;
             color: #334155;
-            font-weight: 500;
+            font-weight: 600;
             transition: all 0.2s;
         }
 
@@ -147,20 +221,29 @@
 
         textarea {
             width: 100%;
-            height: 320px;
+            height: 300px;
             padding: 14px;
             border: 2px solid #cbd5e1;
             border-radius: 16px;
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 0.95rem;
-            direction: ltr;
-            text-align: left;
             resize: vertical;
             outline: none;
             background: #f8fafc;
             color: #0f172a;
             line-height: 1.5;
             transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        textarea.code-mode {
+            direction: ltr;
+            text-align: left;
+        }
+
+        textarea.text-mode {
+            direction: rtl;
+            text-align: right;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         textarea:focus {
@@ -196,20 +279,16 @@
             transform: scale(0.97);
         }
 
-        .btn-preview {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        }
-
-        .btn-preview:hover {
-            background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
-        }
-
-        .btn-download {
+        .btn-download-html {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
 
-        .btn-download:hover {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        .btn-download-txt {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .btn-copy {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         }
 
         .stats-badge {
@@ -248,7 +327,6 @@
             border: none;
             background: #ffffff;
         }
-
 
         /* Toast Notifications */
         .toast {
@@ -291,30 +369,76 @@
         <div class="header">
             <div class="header-title">
                 <img src="icon-192.png" alt="نمایشگر کد">
-                <h1>نمایشگر و دانلود کدهای HTML</h1>
+                <h1>نمایشگر کد و ابزار متن عمارت</h1>
             </div>
             <a href="../index.html" class="back-link">🔙 بازگشت</a>
         </div>
 
-        <div class="editor-section">
-            <div class="editor-toolbar">
-                <span class="editor-label">📝 کدهای تحت وب HTML را وارد یا کپی کنید:</span>
-                <div class="quick-actions">
-                    <button class="btn-small" onclick="openFullScreenPreview()" style="color: #2563eb; font-weight: 700;">🖥️ پیش‌نمایش</button>
-                    <button class="btn-small" onclick="pasteFromClipboard()">📥 چسباندن</button>
-                    <button class="btn-small" onclick="clearEditor()" style="color: #ef4444;">🗑️ پاکسازی</button>
-                </div>
-            </div>
-            <textarea id="codeEditor" placeholder=" کدهای HTML یا متون خود را اینجا بگذارید..." spellcheck="false"></textarea>
+        <!-- Navigation Tabs Switcher -->
+        <div class="tab-navigation">
+            <button class="tab-btn active" id="tabBtnHtml" onclick="switchTab('html')">
+                🖥️ نمایشگر HTML
+            </button>
+            <button class="tab-btn" id="tabBtnText" onclick="switchTab('text')">
+                📄 ابزار متن ساده
+            </button>
         </div>
 
-        <div class="button-group">
-            <button class="btn-main btn-download" onclick="downloadHtmlFile()">
-                📥 دانلود فایل
-            </button>
-            <button class="btn-main" onclick="copyPlainText()" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
-                📋 کپی متن
-            </button>
+        <!-- TAB 1: HTML Viewer Panel -->
+        <div class="tab-panel active" id="panelHtml">
+            <div class="editor-section">
+                <div class="editor-toolbar">
+                    <span class="editor-label">📝 کدهای تحت وب HTML را وارد یا کپی کنید:</span>
+                    <div class="quick-actions">
+                        <button class="btn-small" onclick="openFullScreenPreview()" style="color: #2563eb; font-weight: 700;">🖥️ پیش‌نمایش</button>
+                        <button class="btn-small" onclick="pasteFromClipboard('codeEditor')">📥 چسباندن</button>
+                        <button class="btn-small" onclick="clearEditor('codeEditor')" style="color: #ef4444;">🗑️ پاکسازی</button>
+                    </div>
+                </div>
+                <textarea id="codeEditor" class="code-mode" placeholder=" کدهای HTML خود را اینجا بگذارید..." spellcheck="false"></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-main btn-download-html" onclick="downloadHtmlFile()">
+                    📥 دانلود فایل HTML
+                </button>
+                <button class="btn-main btn-copy" onclick="copyPlainText('codeEditor')">
+                    📋 کپی کدها
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB 2: Plain Text Tool Panel -->
+        <div class="tab-panel" id="panelText">
+            <!-- Top Bar Header for Text Tool -->
+            <div class="tool-banner-bar">
+                <div class="tool-banner-title">
+                    📌 ابزار متن ساده
+                </div>
+                <div class="tool-banner-badge">
+                    نسخه ویژه متون روان
+                </div>
+            </div>
+
+            <div class="editor-section">
+                <div class="editor-toolbar">
+                    <span class="editor-label">📝 متون ساده و یادداشت‌های خود را وارد کنید:</span>
+                    <div class="quick-actions">
+                        <button class="btn-small" onclick="pasteFromClipboard('textEditor')">📥 چسباندن</button>
+                        <button class="btn-small" onclick="clearEditor('textEditor')" style="color: #ef4444;">🗑️ پاکسازی</button>
+                    </div>
+                </div>
+                <textarea id="textEditor" class="text-mode" placeholder=" متون، یادداشت‌ها یا مقالات خود را اینجا بنویسید یا کپی کنید..." spellcheck="false"></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-main btn-download-txt" onclick="downloadTxtFile()">
+                    📄 دانلود متن ساده (.txt)
+                </button>
+                <button class="btn-main btn-copy" onclick="copyPlainText('textEditor')">
+                    📋 کپی متن
+                </button>
+            </div>
         </div>
 
         <div class="stats-badge">
@@ -334,43 +458,58 @@
     <div id="toast" class="toast"></div>
 
     <script>
-        const editor = document.getElementById('codeEditor');
+        const codeEditor = document.getElementById('codeEditor');
+        const textEditor = document.getElementById('textEditor');
         const previewLayer = document.getElementById('previewLayer');
         const previewIframe = document.getElementById('previewIframe');
         const downloadCountBadge = document.getElementById('downloadCountBadge');
 
-        // Restore saved code & counter on startup
+        let currentActiveTab = 'html';
+
+        function switchTab(tabName) {
+            currentActiveTab = tabName;
+            document.getElementById('tabBtnHtml').classList.toggle('active', tabName === 'html');
+            document.getElementById('tabBtnText').classList.toggle('active', tabName === 'text');
+            document.getElementById('panelHtml').classList.toggle('active', tabName === 'html');
+            document.getElementById('panelText').classList.toggle('active', tabName === 'text');
+            localStorage.setItem('html_viewer_active_tab', tabName);
+        }
+
+        // Restore saved code, text & active tab on startup
         window.addEventListener('DOMContentLoaded', () => {
             const savedCode = localStorage.getItem('html_viewer_saved_code');
-            if (savedCode) {
-                editor.value = savedCode;
+            if (savedCode) codeEditor.value = savedCode;
+
+            const savedText = localStorage.getItem('html_viewer_saved_text');
+            if (savedText) textEditor.value = savedText;
+
+            const savedTab = localStorage.getItem('html_viewer_active_tab');
+            if (savedTab && (savedTab === 'html' || savedTab === 'text')) {
+                switchTab(savedTab);
             }
+
             updateDownloadCounterBadge();
         });
 
-        let cachedAiTitle = "";
-        let aiTitleTimer = null;
-        let aiTitlePromise = null;
+        let cachedAiTitleHtml = "";
+        let cachedAiTitleText = "";
+        let aiTitleTimerHtml = null;
+        let aiTitleTimerText = null;
 
-        // Save code changes to LocalStorage & wake up AI in background immediately
-        editor.addEventListener('input', () => {
-            localStorage.setItem('html_viewer_saved_code', editor.value);
-            triggerBackgroundAiTitle();
+        codeEditor.addEventListener('input', () => {
+            localStorage.setItem('html_viewer_saved_code', codeEditor.value);
+            triggerBackgroundAiTitle('html');
         });
 
-        // Trigger AI on page load if saved code exists
-        window.addEventListener('load', () => {
-            if (editor.value.trim()) {
-                triggerBackgroundAiTitle();
-            }
+        textEditor.addEventListener('input', () => {
+            localStorage.setItem('html_viewer_saved_text', textEditor.value);
+            triggerBackgroundAiTitle('text');
         });
 
-        // Convert English numbers to Persian digits
         function toPersianDigits(num) {
             return String(num).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
         }
 
-        // Get current Jalali Date in Persian digits without leading zero padding (e.g., ۱۴۰۵.۶.۸)
         function getJalaliDateString() {
             try {
                 const now = new Date();
@@ -389,7 +528,6 @@
             return toPersianDigits(new Date().toLocaleDateString('fa-IR'));
         }
 
-        // Reconstruct Gemini API Token at runtime from chunks or localStorage override
         function getGeminiToken() {
             const customKey = localStorage.getItem("custom_gemini_api_key") || localStorage.getItem("gemini_api_key");
             if (customKey && customKey.trim().length > 10) {
@@ -404,7 +542,6 @@
             }
         }
 
-        // Reconstruct Cloudflare Bearer Token at runtime from obfuscated base64 chunks
         function getCloudflareToken() {
             const customCfToken = localStorage.getItem("custom_cf_bearer_token");
             if (customCfToken && customCfToken.trim().length > 10) {
@@ -419,35 +556,32 @@
             }
         }
 
-        // Get Cloudflare Proxy Worker URL
         function getCloudflareProxyUrl() {
             return localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
         }
 
         let isDirectConnectionBlocked = false;
 
-        // Generate clean Persian content summary using Gemini AI with Cloudflare Worker Fallback
-        async function generateSmartPersianTitle(htmlSnippet) {
+        async function generateSmartPersianTitle(snippetText) {
             const token = getGeminiToken();
-            if (!token || !htmlSnippet || !htmlSnippet.trim()) return "";
+            if (!token || !snippetText || !snippetText.trim()) return "";
 
-            const cleanCode = htmlSnippet.slice(0, 3500).replace(/\s+/g, ' ');
-            const prompt = `موضوع اصلی این کد را بخوان و فقط و فقط یک عبارت خلاصه روان فارسی بگو بدون هیچ مقدمه یا کلمات اضافه (مثلاً: در مورد شناخت هویت ایمانا است و موانع پیش رو جراحی اف اف اف در اسپانیا).
+            const cleanText = snippetText.slice(0, 3500).replace(/\s+/g, ' ');
+            const prompt = `موضوع اصلی این متن یا کد را بخوان و فقط و فقط یک عبارت خلاصه روان فارسی بگو بدون هیچ مقدمه یا کلمات اضافه (مثلاً: شناخت هویت ایمانا و موانع پیش رو).
 
 قوانین بسیار مهم:
-- اصلاً کلماتی مانند "فایل تحت وب"، "بر اساس"، "بررسی دقیق کد"، "شامل عنوان"، "کد HTML"، "HTML"، "تگ"، "وب‌سایت" را نیاور.
+- اصلاً کلماتی مانند "فایل تحت وب"، "بر اساس"، "بررسی دقیق کد"، "شامل عنوان"، "کد HTML"، "HTML"، "تگ"، "وب‌سایت"، "متن" را نیاور.
 - هیچ علامت غیرمجاز نام فایل مثل / \\ : * ? " < > | را نیاور.
 - فقط خلاصه موضوع انسانی را بنویس.
 
-کد:
-${cleanCode}`;
+متن/کد:
+${cleanText}`;
 
             const models = [
+                'gemini-3.6-flash',
                 'gemini-3.5-flash',
                 'gemini-3.5-flash-lite',
-                'gemini-3.6-flash',
                 'gemini-3.1-flash-lite',
-                'gemini-2.5-pro',
                 'gemini-flash-latest'
             ];
 
@@ -461,12 +595,11 @@ ${cleanCode}`;
 
                 let response = null;
 
-                // 1. Try Direct Google Gemini API first if not known to be blocked
                 if (!isDirectConnectionBlocked) {
                     const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(token)}`;
                     try {
                         const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 800); // Fast 800ms check
+                        const timeoutId = setTimeout(() => controller.abort(), 800);
 
                         response = await fetch(directUrl, {
                             method: 'POST',
@@ -479,13 +612,11 @@ ${cleanCode}`;
                             isDirectConnectionBlocked = true;
                         }
                     } catch (directErr) {
-                        // Direct connection failed or timed out (VPN off or blocked)
                         isDirectConnectionBlocked = true;
                         response = null;
                     }
                 }
 
-                // 2. Fallback to Cloudflare Worker Proxy if direct connection failed or returned error
                 if (!response || !response.ok) {
                     const cfUrl = `${cfProxyBase}/v1beta/models/${model}:generateContent?key=${encodeURIComponent(token)}`;
                     try {
@@ -509,7 +640,6 @@ ${cleanCode}`;
                         const data = await response.json();
                         let aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-                        // Clean unwanted meta phrases if AI generated them
                         aiText = aiText.trim()
                             .replace(/^این فایل\s*:\s*/gi, '')
                             .replace(/فایل تحت وب\s*\d*\s*-?\s*/gi, '')
@@ -524,9 +654,7 @@ ${cleanCode}`;
                             .trim()
                             .slice(0, 80);
 
-                        if (aiText) {
-                            return aiText;
-                        }
+                        if (aiText) return aiText;
                     } catch (e) {
                         console.warn(`Error parsing JSON response for ${model}:`, e);
                     }
@@ -535,22 +663,22 @@ ${cleanCode}`;
             return "";
         }
 
-        // Trigger background AI pre-processing as soon as code changes or is pasted
-        function triggerBackgroundAiTitle() {
-            if (aiTitleTimer) clearTimeout(aiTitleTimer);
-            const code = editor.value;
-            if (!code || !code.trim()) {
-                cachedAiTitle = "";
-                aiTitlePromise = null;
-                return;
+        function triggerBackgroundAiTitle(type) {
+            if (type === 'html') {
+                if (aiTitleTimerHtml) clearTimeout(aiTitleTimerHtml);
+                const code = codeEditor.value;
+                if (!code || !code.trim()) { cachedAiTitleHtml = ""; return; }
+                aiTitleTimerHtml = setTimeout(() => {
+                    generateSmartPersianTitle(code).then(t => { cachedAiTitleHtml = t; });
+                }, 300);
+            } else {
+                if (aiTitleTimerText) clearTimeout(aiTitleTimerText);
+                const text = textEditor.value;
+                if (!text || !text.trim()) { cachedAiTitleText = ""; return; }
+                aiTitleTimerText = setTimeout(() => {
+                    generateSmartPersianTitle(text).then(t => { cachedAiTitleText = t; });
+                }, 300);
             }
-
-            aiTitleTimer = setTimeout(() => {
-                aiTitlePromise = generateSmartPersianTitle(code).then(title => {
-                    cachedAiTitle = title;
-                    return title;
-                });
-            }, 300); // 300ms debounce
         }
 
         function updateDownloadCounterBadge() {
@@ -567,8 +695,9 @@ ${cleanCode}`;
             }, 3000);
         }
 
-        async function copyPlainText() {
-            const text = editor.value;
+        async function copyPlainText(targetId) {
+            const target = document.getElementById(targetId);
+            const text = target.value;
             if (!text || text.trim() === '') {
                 showToast('⚠️ کادری برای کپی کردن وجود ندارد!');
                 return;
@@ -578,24 +707,30 @@ ${cleanCode}`;
                     await navigator.clipboard.writeText(text);
                     showToast('📋 متن با موفقیت کپی شد');
                 } else {
-                    editor.select();
+                    target.select();
                     document.execCommand('copy');
                     showToast('📋 متن کپی شد');
                 }
             } catch (err) {
-                editor.select();
+                target.select();
                 showToast('📋 متن را به صورت دستی کپی کنید');
             }
         }
 
-        async function pasteFromClipboard() {
+        async function pasteFromClipboard(targetId) {
+            const target = document.getElementById(targetId);
             try {
                 if (navigator.clipboard && navigator.clipboard.readText) {
                     const text = await navigator.clipboard.readText();
                     if (text) {
-                        editor.value = text;
-                        localStorage.setItem('html_viewer_saved_code', text);
-                        triggerBackgroundAiTitle();
+                        target.value = text;
+                        if (targetId === 'codeEditor') {
+                            localStorage.setItem('html_viewer_saved_code', text);
+                            triggerBackgroundAiTitle('html');
+                        } else {
+                            localStorage.setItem('html_viewer_saved_text', text);
+                            triggerBackgroundAiTitle('text');
+                        }
                         showToast('📥 متن با موفقیت جای‌گذاری شد');
                     } else {
                         showToast('حافظه کپی خالی است!');
@@ -604,32 +739,34 @@ ${cleanCode}`;
                     showToast('دسترسی کپی دستی را در مرورگر فعال کنید');
                 }
             } catch (err) {
-                showToast('کد را مستقیماً داخل کادر Paste (جای‌گذاری) کنید');
+                showToast('کد را مستقیماً داخل کادر Paste کنید');
             }
         }
 
-        function clearEditor() {
-            if (editor.value.trim() === '') return;
-            if (confirm('آیا از پاک کردن کامل کد مطمئن هستید؟')) {
-                editor.value = '';
-                localStorage.removeItem('html_viewer_saved_code');
-                showToast('🗑️ کد پاکسازی شد');
+        function clearEditor(targetId) {
+            const target = document.getElementById(targetId);
+            if (target.value.trim() === '') return;
+            if (confirm('آیا از پاک کردن کامل کادر مطمئن هستید؟')) {
+                target.value = '';
+                if (targetId === 'codeEditor') {
+                    localStorage.removeItem('html_viewer_saved_code');
+                } else {
+                    localStorage.removeItem('html_viewer_saved_text');
+                }
+                showToast('🗑️ پاکسازی شد');
             }
         }
 
-        // Open Full Screen Preview with Advanced Dynamic Live Webview Capabilities
         function openFullScreenPreview() {
-            const code = editor.value;
+            const code = codeEditor.value;
             if (!code || code.trim() === '') {
                 showToast('⚠️ لطفاً ابتدا کد HTML را وارد یا کپی نمایید!');
                 return;
             }
 
-            // Render content inside iframe safely using srcdoc or document blob stream for full live Web Audio API & script execution
             previewLayer.style.display = 'flex';
 
             try {
-                // Ensure audio context unlock helper script is injected if Web Audio API is used
                 let processedCode = code;
                 if (!processedCode.toLowerCase().includes('<base ')) {
                     const baseTag = `<base href="${window.location.href}">\n`;
@@ -646,20 +783,17 @@ ${cleanCode}`;
                 const blobUrl = URL.createObjectURL(blob);
                 previewIframe.src = blobUrl;
             } catch (err) {
-                // Fallback to direct document write
                 const doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
                 doc.open();
                 doc.write(code);
                 doc.close();
             }
 
-            // Push History State so Phone's Hardware Back Button closes full-screen mode
             history.pushState({ fullScreen: true }, '');
         }
 
         function hidePreviewUI() {
             previewLayer.style.display = 'none';
-            // Clear iframe content and revoke blob URL
             try {
                 if (previewIframe.src && previewIframe.src.startsWith('blob:')) {
                     URL.revokeObjectURL(previewIframe.src);
@@ -668,40 +802,25 @@ ${cleanCode}`;
             } catch (e) {}
         }
 
-        function exitFullScreenPreview() {
-            if (history.state && history.state.fullScreen) {
-                history.back();
-            } else {
-                hidePreviewUI();
-            }
-        }
-
-        // Listen for phone's hardware/browser Back Button push (popstate)
         window.addEventListener('popstate', (e) => {
             if (previewLayer.style.display === 'flex') {
                 hidePreviewUI();
             }
         });
 
-        // Download Plain Text (.txt) file formatted as: این فایل - [محتوای خلاصه] - [تاریخ خورشیدی].txt
         async function downloadTxtFile() {
-            const code = editor.value;
-            if (!code || code.trim() === '') {
+            const text = textEditor.value;
+            if (!text || text.trim() === '') {
                 showToast('⚠️ لطفاً ابتدا متنی وارد نمایید!');
                 return;
             }
 
-            let aiTitle = cachedAiTitle;
-            if (!aiTitle && aiTitlePromise) {
-                showToast('🤖 در حال دریافت عنوان هوشمند از هوش مصنوعی...');
-                aiTitle = await aiTitlePromise;
-            }
+            let aiTitle = cachedAiTitleText;
             if (!aiTitle) {
-                showToast('🤖 در حال ساخت عنوان هوشمند با هوش مصنوعی...');
-                aiTitle = await generateSmartPersianTitle(code);
+                showToast('🤖 در حال ساخت عنوان هوشمند...');
+                aiTitle = await generateSmartPersianTitle(text);
             }
 
-            // Get & Increment Download Counter
             let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
             currentCount += 1;
             localStorage.setItem('html_viewer_download_count', currentCount.toString());
@@ -716,7 +835,7 @@ ${cleanCode}`;
                 fileName = `این فایل - یادداشت متنی - ${jalaliDateStr}.txt`;
             }
 
-            const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = fileName;
@@ -728,25 +847,19 @@ ${cleanCode}`;
             showToast(`📄 ${fileName} ذخیره شد`);
         }
 
-        // Instant download HTML file formatted as: این فایل - [محتوای خلاصه] - [تاریخ خورشیدی].html
         async function downloadHtmlFile() {
-            const code = editor.value;
+            const code = codeEditor.value;
             if (!code || code.trim() === '') {
                 showToast('⚠️ لطفاً ابتدا کد HTML را وارد یا کپی نمایید!');
                 return;
             }
 
-            let aiTitle = cachedAiTitle;
-            if (!aiTitle && aiTitlePromise) {
-                showToast('🤖 در حال دریافت عنوان هوشمند از هوش مصنوعی...');
-                aiTitle = await aiTitlePromise;
-            }
+            let aiTitle = cachedAiTitleHtml;
             if (!aiTitle) {
-                showToast('🤖 در حال ساخت عنوان هوشمند با هوش مصنوعی...');
+                showToast('🤖 در حال ساخت عنوان هوشمند...');
                 aiTitle = await generateSmartPersianTitle(code);
             }
 
-            // Get & Increment Download Counter
             let currentCount = parseInt(localStorage.getItem('html_viewer_download_count') || '0', 10);
             currentCount += 1;
             localStorage.setItem('html_viewer_download_count', currentCount.toString());
@@ -762,8 +875,6 @@ ${cleanCode}`;
             }
 
             const countFa = toPersianDigits(currentCount);
-
-            // Inject download sequence & app metadata into the HTML content
             const metadataInjection = `<!-- این فایل ${countFa}مین فایلی است که از اپلیکیشن نمایشگر کد پلتفرم عمارت دانلود شده است -->\n<meta name="platform-download-sequence" content="${countFa}">\n<meta name="download-source" content="اپلیکیشن نمایشگر کد - پلتفرم عمارت">\n`;
 
             let finalCode = code;
@@ -787,7 +898,6 @@ ${cleanCode}`;
             showToast(`📥 ${fileName} دانلود شد`);
         }
 
-        // Register Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('../sw.js').catch(err => console.error(err));
         }
