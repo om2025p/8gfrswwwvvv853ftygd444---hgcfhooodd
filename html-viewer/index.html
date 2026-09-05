@@ -548,9 +548,6 @@
                 <h1>نمایشگر کد و ابزار متن عمارت</h1>
             </div>
             <div class="header-actions">
-                <button id="debugBtnHeader" class="debug-btn-header" onclick="openDebugConsoleModal()">
-                    🐛 کنسول لاگ
-                </button>
                 <a href="../index.html" class="back-link">🔙 بازگشت</a>
             </div>
         </div>
@@ -679,22 +676,21 @@
             localStorage.setItem(DEBUG_EXPIRY_KEY, expiryTimestamp.toString());
         }
 
-        if (Date.now() > expiryTimestamp) {
-            if (debugBtnHeader) debugBtnHeader.style.display = "none";
-        }
-
         const debugLogsList = [];
 
         function appendLog(message, type = 'info') {
+            if (Date.now() > expiryTimestamp) return; // Logic disabled after 7 days
             const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
             const logText = `[${timeStr}] [${type.toUpperCase()}] ${message}`;
             debugLogsList.push(logText);
 
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${type}`;
-            entry.innerText = logText;
-            debugLogsContainer.appendChild(entry);
-            debugLogsContainer.scrollTop = debugLogsContainer.scrollHeight;
+            if (debugLogsContainer) {
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.innerText = logText;
+                debugLogsContainer.appendChild(entry);
+                debugLogsContainer.scrollTop = debugLogsContainer.scrollHeight;
+            }
         }
 
         function openDebugConsoleModal() {
