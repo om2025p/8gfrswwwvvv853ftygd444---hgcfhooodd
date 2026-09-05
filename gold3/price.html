@@ -274,6 +274,28 @@
         return toEnglishNumber(raw).replace(/\//g, ".");
     }
 
+    function getNextPersianDate(dateStr) {
+        if (!dateStr) return getPersianDate();
+        let parts = toEnglishNumber(dateStr).replace(/\//g, ".").split(".");
+        if (parts.length !== 3) return getPersianDate();
+        let y = parseInt(parts[0], 10);
+        let m = parseInt(parts[1], 10);
+        let d = parseInt(parts[2], 10);
+        if (isNaN(y) || isNaN(m) || isNaN(d)) return getPersianDate();
+
+        let maxDays = getPersianMonthDays(y, m);
+        d += 1;
+        if (d > maxDays) {
+            d = 1;
+            m += 1;
+            if (m > 12) {
+                m = 1;
+                y += 1;
+            }
+        }
+        return `${y}.${m.toString().padStart(2, '0')}.${d.toString().padStart(2, '0')}`;
+    }
+
     function getCurrentPersianYearMonth() {
         const now = new Date();
         const formatter = new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "numeric", day: "numeric" });
@@ -730,10 +752,17 @@
     function addNewPrice(priceValue) {
         if (isNaN(priceValue) || priceValue <= 0) { showMessage("❌ عدد معتبر", true); return false; }
         const prices = getPrices();
-        prices.push({ id: Date.now(), date: getPersianDate(), timestamp: new Date().toISOString(), price: priceValue });
-        prices.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+        let dateToUse = getPersianDate();
+        if (prices.length > 0) {
+            const lastEntry = prices[prices.length - 1];
+            if (lastEntry && lastEntry.date) {
+                dateToUse = getNextPersianDate(lastEntry.date);
+            }
+        }
+        prices.push({ id: Date.now(), date: dateToUse, timestamp: new Date().toISOString(), price: priceValue });
+        prices.sort((a,b) => (a.date || '').localeCompare(b.date || '') || (new Date(a.timestamp) - new Date(b.timestamp)));
         savePrices(prices);
-        showMessage(`✅ ${formatWithCommas(priceValue)} تومان ثبت شد`);
+        showMessage(`✅ ${formatWithCommas(priceValue)} تومان ثبت شد (${dateToUse})`);
         return true;
     }
 
