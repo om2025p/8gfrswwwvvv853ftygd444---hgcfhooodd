@@ -200,6 +200,10 @@ async def send_media_to_destinations(filepath, caption, owner_id):
     if chat_id and chat_id not in destinations:
         destinations.append(chat_id)
 
+    # Strictly enforce Telegram's 1024 media caption character limit (safe buffer at 980 chars)
+    if caption and len(str(caption)) > 980:
+        caption = str(caption)[:975] + "..."
+
     print(f"DEBUG: send_media_to_destinations starting for file={filepath}, size={os.path.getsize(filepath) if os.path.exists(filepath) else 0} bytes, destinations={destinations}")
 
     for dest in destinations:
@@ -224,15 +228,34 @@ async def send_media_to_destinations(filepath, caption, owner_id):
                 if getattr(Bot, 'is_connected', False):
                     print(f"DEBUG: Trying Pyrogram Bot to send to {dest}...")
                     if ext in ['.mp4', '.mkv', '.webm', '.mov']:
-                        await Bot.send_video(chat_id=dest, video=filepath, caption=caption)
+                        try:
+                            await Bot.send_video(chat_id=dest, video=filepath, caption=caption)
+                        except Exception as e_vid:
+                            print(f"DEBUG: Pyrogram Bot send_video failed ({e_vid}), trying send_document fallback...")
+                            await Bot.send_document(chat_id=dest, document=filepath, caption=caption)
                     elif ext in ['.jpg', '.jpeg', '.png', '.webp']:
-                        await Bot.send_photo(chat_id=dest, photo=filepath, caption=caption)
+                        try:
+                            await Bot.send_photo(chat_id=dest, photo=filepath, caption=caption)
+                        except Exception as e_pic:
+                            print(f"DEBUG: Pyrogram Bot send_photo failed ({e_pic}), trying send_document fallback...")
+                            await Bot.send_document(chat_id=dest, document=filepath, caption=caption)
                     else:
                         await Bot.send_document(chat_id=dest, document=filepath, caption=caption)
                     sent = True
                     print(f"DEBUG: Pyrogram Bot successfully sent to {dest}")
             except Exception as e_pbot:
                 print(f"DEBUG: Pyrogram Bot send to {dest} failed: {e_pbot}")
+                if caption:
+                    try:
+                        print("DEBUG: Retrying Pyrogram Bot send without caption fallback...")
+                        if ext in ['.mp4', '.mkv', '.webm', '.mov']:
+                            await Bot.send_video(chat_id=dest, video=filepath)
+                        else:
+                            await Bot.send_document(chat_id=dest, document=filepath)
+                        sent = True
+                        print(f"DEBUG: Pyrogram Bot (no caption fallback) successfully sent to {dest}")
+                    except Exception as e_pbot_nocap:
+                        print(f"DEBUG: Pyrogram Bot no caption send failed: {e_pbot_nocap}")
 
         # 2. Try Telethon Bot
         if not sent:
@@ -244,6 +267,14 @@ async def send_media_to_destinations(filepath, caption, owner_id):
                     print(f"DEBUG: Telethon Bot successfully sent to {dest}")
             except Exception as e_tbot:
                 print(f"DEBUG: Telethon Bot send to {dest} failed: {e_tbot}")
+                if caption:
+                    try:
+                        print("DEBUG: Retrying Telethon Bot send without caption fallback...")
+                        await bot.send_file(dest, filepath)
+                        sent = True
+                        print(f"DEBUG: Telethon Bot (no caption fallback) successfully sent to {dest}")
+                    except Exception as e_tbot_nocap:
+                        print(f"DEBUG: Telethon Bot no caption send failed: {e_tbot_nocap}")
 
         # 3. Try Pyrogram Userbot
         if not sent:
@@ -251,15 +282,34 @@ async def send_media_to_destinations(filepath, caption, owner_id):
                 if getattr(userbot, 'is_connected', False):
                     print(f"DEBUG: Trying Pyrogram Userbot to send to {dest}...")
                     if ext in ['.mp4', '.mkv', '.webm', '.mov']:
-                        await userbot.send_video(chat_id=dest, video=filepath, caption=caption)
+                        try:
+                            await userbot.send_video(chat_id=dest, video=filepath, caption=caption)
+                        except Exception as e_ub_vid:
+                            print(f"DEBUG: Pyrogram Userbot send_video failed ({e_ub_vid}), trying send_document fallback...")
+                            await userbot.send_document(chat_id=dest, document=filepath, caption=caption)
                     elif ext in ['.jpg', '.jpeg', '.png', '.webp']:
-                        await userbot.send_photo(chat_id=dest, photo=filepath, caption=caption)
+                        try:
+                            await userbot.send_photo(chat_id=dest, photo=filepath, caption=caption)
+                        except Exception as e_ub_pic:
+                            print(f"DEBUG: Pyrogram Userbot send_photo failed ({e_ub_pic}), trying send_document fallback...")
+                            await userbot.send_document(chat_id=dest, document=filepath, caption=caption)
                     else:
                         await userbot.send_document(chat_id=dest, document=filepath, caption=caption)
                     sent = True
                     print(f"DEBUG: Pyrogram Userbot successfully sent to {dest}")
             except Exception as e_ubot:
                 print(f"DEBUG: Pyrogram Userbot send to {dest} failed: {e_ubot}")
+                if caption:
+                    try:
+                        print("DEBUG: Retrying Pyrogram Userbot send without caption fallback...")
+                        if ext in ['.mp4', '.mkv', '.webm', '.mov']:
+                            await userbot.send_video(chat_id=dest, video=filepath)
+                        else:
+                            await userbot.send_document(chat_id=dest, document=filepath)
+                        sent = True
+                        print(f"DEBUG: Pyrogram Userbot (no caption fallback) successfully sent to {dest}")
+                    except Exception as e_ub_nocap:
+                        print(f"DEBUG: Pyrogram Userbot no caption send failed: {e_ub_nocap}")
 
         # 4. Try Direct Bot API HTTP multipart upload via curl
         if not sent:
@@ -283,6 +333,13 @@ async def send_media_to_destinations(filepath, caption, owner_id):
                     if '"ok":true' in res.stdout:
                         sent = True
                         print(f"DEBUG: Direct Bot API HTTP upload to {dest} succeeded.")
+                    elif caption:
+                        print("DEBUG: Curl failed with caption, retrying curl without caption...")
+                        cmd_nocap = ["curl", "-s", "-F", f"chat_id={dest}", "-F", f"{field}=@{filepath}", url]
+                        res_nocap = subprocess.run(cmd_nocap, capture_output=True, text=True, timeout=120)
+                        if '"ok":true' in res_nocap.stdout:
+                            sent = True
+                            print(f"DEBUG: Direct Bot API HTTP upload (no caption) to {dest} succeeded.")
             except Exception as e_http:
                 print(f"DEBUG: Direct Bot API multipart HTTP upload to {dest} failed: {e_http}")
 
