@@ -436,12 +436,20 @@
         <!-- ==================== تب ۱: مینی‌مال و سفید (پیش‌فرض) ==================== -->
         <div class="tab-content active" id="tabContent1">
             <div class="white-card" style="padding: 28px 22px;">
-                <!-- وضعیت زنده سرور -->
-                <div class="status-panel">
-                    <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">وضعیت موتور دانلود:</span>
-                    <div class="status-badge" id="workflowStatus1">
-                        <span class="status-dot idle"></span>
-                        <span id="statusText1">در حال دریافت وضعیت...</span>
+                <!-- وضعیت زنده سرور و اعلان دائمی نوار وضعیت -->
+                <div class="status-panel" style="flex-direction: column; gap: 10px; align-items: stretch;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">وضعیت موتور دانلود:</span>
+                        <div class="status-badge" id="workflowStatus1">
+                            <span class="status-dot idle"></span>
+                            <span id="statusText1">در حال دریافت وضعیت...</span>
+                        </div>
+                    </div>
+                    <div style="border-top: 1px dashed #e2e8f0; pt-2; margin-top: 4px; padding-top: 8px; display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 0.82rem; font-weight: 700; color: #475569;">🔔 اعلان دائمی در نوار وضعیت گوشی:</span>
+                        <button class="action-btn secondary" id="btnTogglePersistentNotification" style="width: auto; padding: 6px 14px; font-size: 0.8rem; border-radius: 12px; background: #eff6ff; color: #2563eb; border-color: #bfdbfe;">
+                            ⚡ فعال‌سازی اعلان دائمی
+                        </button>
                     </div>
                 </div>
 
@@ -878,6 +886,142 @@
             }, 3000);
         }
 
+        // ==================== سیستم اعلان‌های دائمی و نوار وضعیت سیستم (Persistent Notification Bar) ====================
+        let persistentNotificationEnabled = localStorage.getItem('restricted_persistent_notif_enabled') === 'true';
+
+        function updateNotificationBtnUI() {
+            const btn = document.getElementById('btnTogglePersistentNotification');
+            if (!btn) return;
+            if (persistentNotificationEnabled && Notification.permission === 'granted') {
+                btn.innerText = '🟢 اعلان دائمی فعال است';
+                btn.style.background = '#f0fdf4';
+                btn.style.color = '#16a34a';
+                btn.style.borderColor = '#bbf7d0';
+            } else {
+                btn.innerText = '⚡ فعال‌سازی اعلان دائمی';
+                btn.style.background = '#eff6ff';
+                btn.style.color = '#2563eb';
+                btn.style.borderColor = '#bfdbfe';
+            }
+        }
+
+        async function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                showToast("⚠️ مرورگر شما از سیستم اعلان‌ها پشتیبانی نمی‌کند!");
+                return false;
+            }
+            if (Notification.permission === 'granted') return true;
+            if (Notification.permission !== 'denied') {
+                const permission = await Notification.requestPermission();
+                return permission === 'granted';
+            }
+            showToast("⚠️ اجازه دسترسی به اعلان‌ها صادر نشده است!");
+            return false;
+        }
+
+        async function showPersistentNotification(title, body, tag = 'download_shield_persistent') {
+            if (!persistentNotificationEnabled) return;
+            const hasPerm = await requestNotificationPermission();
+            if (!hasPerm) return;
+
+            const notifOptions = {
+                body: body,
+                icon: 'icon-192.png',
+                badge: 'icon-192.png',
+                tag: tag,
+                renotify: true,
+                requireInteraction: true, // ماندگار بودن اعلان در نوار وضعیت
+                actions: [
+                    { action: 'paste_download', title: '📋 چسباندن و دانلود سریع' },
+                    { action: 'open_app', title: '📱 باز کردن برنامه' }
+                ],
+                data: { url: window.location.href }
+            };
+
+            if ('serviceWorker' in navigator) {
+                const reg = await navigator.serviceWorker.ready;
+                if (reg && reg.showNotification) {
+                    reg.showNotification(title, notifOptions);
+                    return;
+                }
+            }
+            try {
+                new Notification(title, notifOptions);
+            } catch (e) {
+                console.error("Error creating Notification object:", e);
+            }
+        }
+
+        const btnTogglePersistentNotif = document.getElementById('btnTogglePersistentNotification');
+        if (btnTogglePersistentNotif) {
+            btnTogglePersistentNotif.onclick = async () => {
+                if (persistentNotificationEnabled) {
+                    persistentNotificationEnabled = false;
+                    localStorage.setItem('restricted_persistent_notif_enabled', 'false');
+                    showToast("🔴 اعلان دائمی نوار وضعیت غیرفعال شد.");
+                    updateNotificationBtnUI();
+                } else {
+                    const granted = await requestNotificationPermission();
+                    if (granted) {
+                        persistentNotificationEnabled = true;
+                        localStorage.setItem('restricted_persistent_notif_enabled', 'true');
+                        showToast("🟢 اعلان دائمی نوار وضعیت فعال گردید!");
+                        updateNotificationBtnUI();
+                        showPersistentNotification(
+                            "🛡️ سپر دانلود عمارت آماده به‌کار است",
+                            "برای دانلود سریع فیلم‌ها، فقط روی «📋 چسباندن و دانلود سریع» بزنید!"
+                        );
+                    } else {
+                        showToast("⚠️ اجازه دسترسی به اعلان‌ها توسط مرورگر تایید نشد!");
+                    }
+                }
+            };
+        }
+        updateNotificationBtnUI();
+
+        // دریافت پیام‌ها از Service Worker هنگام کلیک روی دکمه اکشن اعلان
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', async (event) => {
+                if (event.data && event.data.action === 'PASTE_AND_DOWNLOAD') {
+                    handlePasteAndDownloadFromNotification();
+                }
+            });
+        }
+
+        // بررسی پارامتر URL برای زمانی که صفحه جدیداً باز می‌شود
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('action') === 'paste_download') {
+                handlePasteAndDownloadFromNotification();
+            }
+        });
+
+        async function handlePasteAndDownloadFromNotification() {
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    const text = await navigator.clipboard.readText();
+                    if (text && text.trim()) {
+                        const cleaned = sanitizeString(text);
+                        document.getElementById('dlLink').value = cleaned;
+                        showToast("📋 متن از کلیپ‌بورد خوانده شد... در حال ارسال به صف دانلود!");
+                        logDlDebug("پیوند از دکمه اکشن نوتیفیکیشن دریافت و وارد فرآیند دانلود شد.");
+
+                        // اجرای خودکار دانلود
+                        const btnDl = document.getElementById('btnDownload');
+                        if (btnDl) btnDl.click();
+                    } else {
+                        showToast("⚠️ هیچ متن یا پیوندی در کلیپ‌بورد سیستم یافت نشد!");
+                        showPersistentNotification("⚠️ کلیپ‌بورد خالی است", "لطفاً ابتدا لینک فیلم یا عکس را کپی کنید!");
+                    }
+                } else {
+                    showToast("⚠️ دسترسی به کلیپ‌بورد توسط مرورگر تایید نشد!");
+                }
+            } catch (err) {
+                showToast("⚠️ لطفاً اجازه دسترسی به کلیپ‌بورد را در مرورگر تایید فرمایید!");
+                logDlDebug("خطای خواندن کلیپ‌بورد از نوتیفیکیشن: " + err.message, "error");
+            }
+        }
+
         // دریافت وضعیت گیت هاب به صورت داینامیک
         async function fetchGitHubStatus() {
             const owner = sanitizeString(document.getElementById('ghOwner').value);
@@ -1044,10 +1188,12 @@
                     if (latestRun.status === 'queued') {
                         if (targetHistoryId) {
                             updateDownloadHistoryStatus(targetHistoryId, 'in_progress', '⏳ در صف اجرای سرور...');
+                            showPersistentNotification("⏳ دانلود در صف سرور", "درخواست دانلود به صف سرور اضافه شد.");
                         }
                     } else if (latestRun.status === 'in_progress') {
                         if (targetHistoryId) {
                             updateDownloadHistoryStatus(targetHistoryId, 'in_progress', '⚡ در حال دانلود و پردازش در سرور...');
+                            showPersistentNotification("⚡ در حال دانلود و استخراج", "سرور در حال دانلود و ارسال رسانه است...");
                         }
                     }
 
@@ -1092,8 +1238,10 @@
                         if (targetHistoryId) {
                             if (isSuccess) {
                                 updateDownloadHistoryStatus(targetHistoryId, 'completed', 'دانلود و ارسال تکمیل شد 📥');
+                                showPersistentNotification("✅ دانلود با موفقیت انجام شد!", "فایل با موفقیت استخراج و به تلگرام ارسال گردید.");
                             } else {
                                 updateDownloadHistoryStatus(targetHistoryId, 'failed', '❌ خطا در دانلود / اجرای ناموفق', 'اجرای سرور گیت‌هاب با خطا مواجه شد. لطفاً پنل دیاگ یا تلگرام را چک فرمایید.');
+                                showPersistentNotification("❌ خطا در دانلود رسانه", "دانلود فیلم با خطا مواجه شد. جهت جزئیات برنامه را باز کنید.");
                             }
                         }
 

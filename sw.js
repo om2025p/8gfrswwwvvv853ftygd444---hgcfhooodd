@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v34';
+const CACHE_NAME = 'emarat-portal-v35';
 const ASSETS = [
   './',
   './index.html',
@@ -288,10 +288,40 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// مدیریت اعلان‌ها (برای یادآوری تمرین و غیره)
+// مدیریت اعلان‌ها (برای یادآوری تمرین، دانلود سریع و نوار وضعیت)
 self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
+  const notification = event.notification;
+  const action = event.action;
+
+  // اگر اکشن چسباندن نبود، اعلان بسته می‌شود
+  if (action !== 'paste_download') {
+    notification.close();
+  }
+
   event.waitUntil(
-    clients.openWindow('./index.html')
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      let matchingClient = null;
+      for (const client of clientList) {
+        if (client.url.includes('/restricted/')) {
+          matchingClient = client;
+          break;
+        }
+      }
+
+      if (action === 'paste_download') {
+        if (matchingClient) {
+          matchingClient.focus();
+          matchingClient.postMessage({ action: 'PASTE_AND_DOWNLOAD' });
+        } else {
+          clients.openWindow('./restricted/index.html?action=paste_download');
+        }
+      } else {
+        if (matchingClient) {
+          matchingClient.focus();
+        } else {
+          clients.openWindow('./restricted/index.html');
+        }
+      }
+    })
   );
 });
