@@ -3187,52 +3187,62 @@ ${dayBlocksHtml}
                 });
             } catch(e) {}
 
-            // ۲. کلیدهای نگاشت ۷ اپلیکیشن ثبت درصد
-            const appNoteKeys = [
-                { key: 'gold_notes', name: 'ثبت درصد ۱ (طلا)' },
-                { key: 'fixedIncome_notes', name: 'ثبت درصد ۲ (درآمد ثابت)' },
-                { key: 'stock_notes', name: 'ثبت درصد ۳ (سهام)' },
-                { key: 'pension_notes', name: 'ثبت درصد ۴ (بازنشستگی)' },
-                { key: 'sinergy_notes', name: 'ثبت درصد ۵ (سینرژی)' },
-                { key: 'cement_notes', name: 'ثبت درصد ۶ (سیمان)' },
-                { key: 'ahang_kian_notes', name: 'ثبت درصد ۷ (آهنگ کیان)' }
+            // ۲. کلیدهای نگاشت ۷ اپلیکیشن ثبت درصد (کلیدهای مستقیم و کلیدهای شیء یکپارچه)
+            const appNoteSources = [
+                { keys: ['notes', 'gold_notes'], name: 'ثبت درصد ۱ (طلا)' },
+                { keys: ['kian_notes', 'fixedIncome_notes'], name: 'ثبت درصد ۲ (درآمد ثابت)' },
+                { keys: ['stock____________tas9yl_new_unified', 'stock_notes'], name: 'ثبت درصد ۳ (سهام)', isUnifiedObj: true },
+                { keys: ['mofid_atie_notes', 'pension_notes'], name: 'ثبت درصد ۴ (بازنشستگی)' },
+                { keys: ['energy_fund_synergy', 'sinergy_notes'], name: 'ثبت درصد ۵ (سینرژی)', isUnifiedObj: true },
+                { keys: ['cement_factory_percents', 'cement_notes'], name: 'ثبت درصد ۶ (سیمان)', isUnifiedObj: true },
+                { keys: ['ahang_kian_percents', 'ahang_kian_notes'], name: 'ثبت درصد ۷ (آهنگ کیان)', isUnifiedObj: true }
             ];
 
-            appNoteKeys.forEach(app => {
-                let raw = localStorage.getItem(app.key);
-                if (!raw) return;
-                try {
-                    let notes = JSON.parse(raw);
-                    if (Array.isArray(notes)) {
-                        notes.forEach(n => {
-                            let textContent = '';
-                            if (typeof n === 'string') {
-                                textContent = n;
-                            } else if (n && typeof n === 'object') {
-                                textContent = n.content || n.text || n.htmlContent || '';
-                            }
+            appNoteSources.forEach(app => {
+                app.keys.forEach(key => {
+                    let raw = localStorage.getItem(key);
+                    if (!raw) return;
+                    try {
+                        let parsed = JSON.parse(raw);
+                        let notesArray = [];
 
-                            if (textContent) {
-                                textContent = textContent.replace(/<br\s*[\/]?>/gi, '\n').replace(/<[^>]+>/g, '');
-                                let ts = (n && n.createdAt) || (n && n.id) || Date.now();
-                                let dtStr = getExactJalaliDateTimeString();
-                                if (ts) {
-                                    const dt = formatPersianDateTime(ts);
-                                    if (dt && dt.date) {
-                                        dtStr = `${dt.date} - ${dt.time || '12:00:00'}`;
-                                    }
+                        if (Array.isArray(parsed)) {
+                            notesArray = parsed;
+                        } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.notes)) {
+                            notesArray = parsed.notes;
+                        }
+
+                        if (Array.isArray(notesArray) && notesArray.length > 0) {
+                            notesArray.forEach(n => {
+                                let textContent = '';
+                                if (typeof n === 'string') {
+                                    textContent = n;
+                                } else if (n && typeof n === 'object') {
+                                    textContent = n.content || n.text || n.htmlContent || '';
                                 }
-                                combinedNotes.push({
-                                    id: (n && n.id) || ts,
-                                    source: app.name,
-                                    content: textContent,
-                                    dateTimeStr: dtStr,
-                                    timestamp: ts
-                                });
-                            }
-                        });
-                    }
-                } catch(e) {}
+
+                                if (textContent) {
+                                    textContent = textContent.replace(/<br\s*[\/]?>/gi, '\n').replace(/<[^>]+>/g, '');
+                                    let ts = (n && n.createdAt) || (n && n.id) || Date.now();
+                                    let dtStr = getExactJalaliDateTimeString();
+                                    if (ts) {
+                                        const dt = formatPersianDateTime(ts);
+                                        if (dt && dt.date) {
+                                            dtStr = `${dt.date} - ${dt.time || '12:00:00'}`;
+                                        }
+                                    }
+                                    combinedNotes.push({
+                                        id: (n && n.id) || ts,
+                                        source: app.name,
+                                        content: textContent,
+                                        dateTimeStr: dtStr,
+                                        timestamp: ts
+                                    });
+                                }
+                            });
+                        }
+                    } catch(e) {}
+                });
             });
 
             // مرتب‌سازی بر اساس تازه‌ترین به قدیمی‌ترین
