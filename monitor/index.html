@@ -734,6 +734,10 @@
         <div class="hamburger-container">
             <button id="hamburgerBtn" class="hamburger-btn" onclick="toggleHamburgerMenu(event)" title="منوی امکانات">☰</button>
             <div id="hamburgerDropdown" class="hamburger-dropdown">
+                <button class="menu-item-btn" onclick="openImportantNoteModal(); closeHamburgerMenu();">
+                    <span>📌</span>
+                    <span>یادداشت مهم</span>
+                </button>
                 <button class="menu-item-btn" onclick="exportFullBackup(); closeHamburgerMenu();">
                     <span>💾</span>
                     <span>دانلود بکاپ کامل</span>
@@ -860,6 +864,60 @@
             <div class="history-content" id="monthly-pdf-history-content" style="display: block;">
                 <div id="monthly-pdf-list" style="padding: 15px; display: flex; flex-direction: column; gap: 10px;">
                     <!-- لیست ۱۲ ماه به صورت پویا رندر می‌شود -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال یادداشت مهم فوق حرفه‌ای -->
+    <div id="importantNoteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); z-index: 999999; justify-content: center; align-items: center; padding: 12px; box-sizing: border-box; animation: fadeIn 0.25s ease forwards;">
+        <div class="note-modal-card" style="width: 100%; max-width: 500px; height: 92vh; max-height: 680px; background: var(--card-bg); border: 2px solid var(--primary-light); border-radius: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; position: relative; overflow: hidden; transition: all 0.3s ease;">
+
+            <!-- کشوی تاریخچه از سمت چپ باز می‌شود -->
+            <div id="noteHistoryDrawer" style="position: absolute; top: 0; left: -100%; width: 85%; height: 100%; background: var(--card-bg); border-right: 2px solid #f59e0b; box-shadow: 10px 0 30px rgba(0,0,0,0.4); z-index: 100; transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: var(--history-sub-bg); border-bottom: 1px solid var(--card-border);">
+                    <div style="font-size: 1.05rem; font-weight: 800; color: #f59e0b; display: flex; align-items: center; gap: 8px;">
+                        <span>📜</span>
+                        <span>تاریخچه یادداشت‌ها</span>
+                    </div>
+                    <button onclick="closeNoteHistoryDrawer()" style="background: transparent; border: none; color: var(--text-color); font-size: 1.3rem; cursor: pointer; font-weight: bold;">✕</button>
+                </div>
+                <div id="noteHistoryList" style="flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+                    <!-- آیتم‌های همگام‌شده تاریخچه پویا رندر می‌شوند -->
+                </div>
+            </div>
+
+            <!-- هدر یادداشت مهم -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--card-border); background: var(--history-sub-bg);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.5rem;">📌</span>
+                    <span style="font-size: 1.2rem; font-weight: 800; color: var(--text-color);">یادداشت مهم</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <!-- دکمه باز کردن تاریخچه در پنل سمت چپ -->
+                    <button onclick="openNoteHistoryDrawer()" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #f59e0b; padding: 6px 14px; border-radius: 12px; font-weight: bold; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                        <span>📂</span>
+                        <span>تاریخچه</span>
+                    </button>
+                    <button onclick="closeImportantNoteModal()" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-color); width: 34px; height: 34px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</button>
+                </div>
+            </div>
+
+            <!-- بدنه محتوای یادداشت -->
+            <div style="flex: 1; padding: 18px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--history-sub-bg); padding: 8px 14px; border-radius: 14px; border: 1px solid var(--card-border);">
+                    <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: bold;">⏱️ تاریخ و زمان خورشیدی:</span>
+                    <span id="notePersianDateTime" style="font-size: 0.88rem; font-weight: bold; color: var(--primary-light); direction: ltr; font-family: monospace;">1405.06.15 - 14:30:25</span>
+                </div>
+
+                <textarea id="importantNoteTextarea" style="flex: 1; width: 100%; background: var(--history-sub-bg); border: 1.5px solid var(--card-border); border-radius: 18px; padding: 16px; color: var(--text-color); font-size: 1.3rem; font-weight: 800; line-height: 1.8; box-sizing: border-box; outline: none; resize: none; font-family: inherit; transition: border-color 0.2s;" placeholder="متن یادداشت مهم خود را اینجا بنویسید (حروف درشت و پررنگ)..." oninput="handleNoteInputChange()"></textarea>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
+                    <span id="noteAutoSaveStatus" style="font-size: 0.8rem; color: var(--positive-color); font-weight: bold; display: flex; align-items: center; gap: 4px;">⚡ ذخیره خودکار آنی (ذخیره‌شده ✅)</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="copyImportantNoteText()" style="background: var(--history-sub-bg); border: 1px solid var(--card-border); color: var(--text-color); padding: 8px 12px; border-radius: 12px; font-weight: bold; font-size: 0.82rem; cursor: pointer;" title="کپی متن">📋 کپی</button>
+                        <button onclick="saveCurrentNoteToHistory()" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">➕ ثبت در تاریخچه</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3005,6 +3063,265 @@ ${dayBlocksHtml}
         function triggerImportFullBackup() {
             const input = document.getElementById('fullBackupFileInput');
             if (input) input.click();
+        }
+
+        // ===== مدیریت کامل مودال یادداشت مهم و کشوی تاریخچه همگام‌شده =====
+        let liveNoteClockInterval = null;
+
+        function getExactJalaliDateTimeString() {
+            const now = new Date();
+            const formatterYear = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', { year: 'numeric' });
+            const formatterMonth = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', { month: '2-digit' });
+            const formatterDay = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', { day: '2-digit' });
+
+            const year = formatterYear.format(now);
+            const month = formatterMonth.format(now);
+            const day = formatterDay.format(now);
+
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            return `${year}.${month}.${day} - ${hours}:${minutes}:${seconds}`;
+        }
+
+        function updateNoteLiveClock() {
+            const clockEl = document.getElementById('notePersianDateTime');
+            if (clockEl) {
+                clockEl.innerText = getExactJalaliDateTimeString();
+            }
+        }
+
+        function openImportantNoteModal() {
+            const modal = document.getElementById('importantNoteModal');
+            const textarea = document.getElementById('importantNoteTextarea');
+            if (!modal) return;
+
+            modal.style.display = 'flex';
+
+            // لود یادداشت جاری متنی از LocalStorage
+            const savedDraft = localStorage.getItem('monitor_important_note_draft') || '';
+            if (textarea) {
+                textarea.value = savedDraft;
+            }
+
+            updateNoteLiveClock();
+            if (liveNoteClockInterval) clearInterval(liveNoteClockInterval);
+            liveNoteClockInterval = setInterval(updateNoteLiveClock, 1000);
+
+            const statusEl = document.getElementById('noteAutoSaveStatus');
+            if (statusEl) {
+                statusEl.innerHTML = '⚡ ذخیره خودکار آنی (ذخیره‌شده ✅)';
+                statusEl.style.color = 'var(--positive-color)';
+            }
+        }
+
+        function closeImportantNoteModal() {
+            const modal = document.getElementById('importantNoteModal');
+            if (modal) modal.style.display = 'none';
+            if (liveNoteClockInterval) clearInterval(liveNoteClockInterval);
+            closeNoteHistoryDrawer();
+        }
+
+        function handleNoteInputChange() {
+            const textarea = document.getElementById('importantNoteTextarea');
+            const statusEl = document.getElementById('noteAutoSaveStatus');
+            if (!textarea) return;
+
+            const text = textarea.value;
+            localStorage.setItem('monitor_important_note_draft', text);
+
+            if (statusEl) {
+                statusEl.innerHTML = '⚡ ذخیره خودکار آنی (ذخیره‌شده ✅)';
+                statusEl.style.color = 'var(--positive-color)';
+            }
+        }
+
+        function copyImportantNoteText() {
+            const textarea = document.getElementById('importantNoteTextarea');
+            if (!textarea || !textarea.value.trim()) {
+                alert('⚠️ متنی برای کپی وجود ندارد.');
+                return;
+            }
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                const statusEl = document.getElementById('noteAutoSaveStatus');
+                if (statusEl) {
+                    statusEl.innerHTML = '📋 متن یادداشت در کلیپ‌بورد کپی شد!';
+                    statusEl.style.color = 'var(--primary-light)';
+                }
+            }).catch(() => {
+                alert('متن کپی شد!');
+            });
+        }
+
+        function openNoteHistoryDrawer() {
+            const drawer = document.getElementById('noteHistoryDrawer');
+            if (drawer) {
+                renderSyncedNoteHistory();
+                drawer.style.left = '0';
+            }
+        }
+
+        function closeNoteHistoryDrawer() {
+            const drawer = document.getElementById('noteHistoryDrawer');
+            if (drawer) {
+                drawer.style.left = '-100%';
+            }
+        }
+
+        function getSyncedNotesList() {
+            let combinedNotes = [];
+
+            // ۱. دریافت تاریخچه یادداشت‌های اختصاصی دیدبان
+            let monitorNotesRaw = localStorage.getItem('monitor_important_notes_history');
+            try {
+                let mNotes = JSON.parse(monitorNotesRaw) || [];
+                mNotes.forEach(n => {
+                    combinedNotes.push({
+                        id: n.id || Date.now(),
+                        source: 'دیدبان درصدها',
+                        content: n.content || n.text || '',
+                        dateTimeStr: n.dateTimeStr || '1405.06.15',
+                        timestamp: n.timestamp || Date.now()
+                    });
+                });
+            } catch(e) {}
+
+            // ۲. کلیدهای نگاشت ۷ اپلیکیشن ثبت درصد
+            const appNoteKeys = [
+                { key: 'gold_notes', name: 'ثبت درصد ۱ (طلا)' },
+                { key: 'fixedIncome_notes', name: 'ثبت درصد ۲ (درآمد ثابت)' },
+                { key: 'stock_notes', name: 'ثبت درصد ۳ (سهام)' },
+                { key: 'pension_notes', name: 'ثبت درصد ۴ (بازنشستگی)' },
+                { key: 'sinergy_notes', name: 'ثبت درصد ۵ (سینرژی)' },
+                { key: 'cement_notes', name: 'ثبت درصد ۶ (سیمان)' },
+                { key: 'ahang_kian_notes', name: 'ثبت درصد ۷ (آهنگ کیان)' }
+            ];
+
+            appNoteKeys.forEach(app => {
+                let raw = localStorage.getItem(app.key);
+                if (!raw) return;
+                try {
+                    let notes = JSON.parse(raw);
+                    if (Array.isArray(notes)) {
+                        notes.forEach(n => {
+                            let textContent = '';
+                            if (typeof n === 'string') {
+                                textContent = n;
+                            } else if (n && typeof n === 'object') {
+                                textContent = n.content || n.text || n.htmlContent || '';
+                            }
+
+                            if (textContent) {
+                                textContent = textContent.replace(/<br\s*[\/]?>/gi, '\n').replace(/<[^>]+>/g, '');
+                                let ts = (n && n.createdAt) || (n && n.id) || Date.now();
+                                let dtStr = getExactJalaliDateTimeString();
+                                if (ts) {
+                                    const dt = formatPersianDateTime(ts);
+                                    if (dt && dt.date) {
+                                        dtStr = `${dt.date} - ${dt.time || '12:00:00'}`;
+                                    }
+                                }
+                                combinedNotes.push({
+                                    id: (n && n.id) || ts,
+                                    source: app.name,
+                                    content: textContent,
+                                    dateTimeStr: dtStr,
+                                    timestamp: ts
+                                });
+                            }
+                        });
+                    }
+                } catch(e) {}
+            });
+
+            // مرتب‌سازی بر اساس تازه‌ترین به قدیمی‌ترین
+            combinedNotes.sort((a, b) => b.timestamp - a.timestamp);
+            return combinedNotes;
+        }
+
+        function renderSyncedNoteHistory() {
+            const listEl = document.getElementById('noteHistoryList');
+            if (!listEl) return;
+
+            const notes = getSyncedNotesList();
+            if (notes.length === 0) {
+                listEl.innerHTML = `
+                    <div style="text-align: center; padding: 40px 10px; color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
+                        📭 هیچ یادداشتی در تاریخچه یافت نشد.<br>
+                        با زدن دکمه «➕ ثبت در تاریخچه» اولین یادداشت خود را ثبت کنید.
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = notes.map((item, idx) => {
+                const cleanContent = item.content.trim().replace(/\n/g, ' ');
+                const previewText = cleanContent.length > 70 ? cleanContent.substring(0, 70) + '...' : cleanContent;
+
+                return `
+                    <div style="background: var(--history-sub-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; cursor: pointer; transition: all 0.2s;" onclick="loadNoteFromHistory(${idx})">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 0.78rem; background: rgba(37, 99, 235, 0.15); color: var(--primary-light); padding: 3px 8px; border-radius: 8px; font-weight: bold;">📍 ${item.source}</span>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: bold; direction: ltr; font-family: monospace;">⏱️ ${item.dateTimeStr}</span>
+                        </div>
+                        <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-color); line-height: 1.6; word-break: break-word;">
+                            ${previewText}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadNoteFromHistory(index) {
+            const notes = getSyncedNotesList();
+            if (notes[index]) {
+                const textarea = document.getElementById('importantNoteTextarea');
+                if (textarea) {
+                    textarea.value = notes[index].content;
+                    handleNoteInputChange();
+                }
+                closeNoteHistoryDrawer();
+                const statusEl = document.getElementById('noteAutoSaveStatus');
+                if (statusEl) {
+                    statusEl.innerHTML = `📂 یادداشت از (${notes[index].source}) فراخوانی شد ✅`;
+                    statusEl.style.color = 'var(--primary-light)';
+                }
+            }
+        }
+
+        function saveCurrentNoteToHistory() {
+            const textarea = document.getElementById('importantNoteTextarea');
+            if (!textarea || !textarea.value.trim()) {
+                alert('⚠️ لطفاً ابتدا متنی برای یادداشت وارد کنید.');
+                return;
+            }
+
+            const currentText = textarea.value.trim();
+            const now = Date.now();
+            const dtStr = getExactJalaliDateTimeString();
+
+            let monitorNotesHistory = [];
+            try {
+                monitorNotesHistory = JSON.parse(localStorage.getItem('monitor_important_notes_history')) || [];
+            } catch(e) {}
+
+            monitorNotesHistory.unshift({
+                id: now,
+                content: currentText,
+                dateTimeStr: dtStr,
+                timestamp: now
+            });
+
+            localStorage.setItem('monitor_important_notes_history', JSON.stringify(monitorNotesHistory));
+
+            const statusEl = document.getElementById('noteAutoSaveStatus');
+            if (statusEl) {
+                statusEl.innerHTML = '🎉 یادداشت جدید با موفقیت در تاریخچه ثبت گردید!';
+                statusEl.style.color = 'var(--positive-color)';
+            }
+
+            renderSyncedNoteHistory();
         }
 
         function importFullBackup(event) {
