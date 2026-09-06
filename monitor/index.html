@@ -870,8 +870,8 @@
     </div>
 
     <!-- مودال یادداشت مهم فوق حرفه‌ای -->
-    <div id="importantNoteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); z-index: 999999; justify-content: center; align-items: center; padding: 12px; box-sizing: border-box; animation: fadeIn 0.25s ease forwards;">
-        <div class="note-modal-card" style="width: 100%; max-width: 500px; height: 92vh; max-height: 680px; background: var(--card-bg); border: 2px solid var(--primary-light); border-radius: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; position: relative; overflow: hidden; transition: all 0.3s ease;">
+    <div id="importantNoteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); z-index: 999999; justify-content: center; align-items: center; padding: 12px; box-sizing: border-box; animation: fadeIn 0.25s ease forwards;">
+        <div class="note-modal-card" style="width: 100%; max-width: 500px; height: 100%; max-height: 680px; background: var(--card-bg); border: 2px solid var(--primary-light); border-radius: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; position: relative; overflow: hidden; transition: all 0.3s ease;">
 
             <!-- کشوی تاریخچه از سمت چپ باز می‌شود -->
             <div id="noteHistoryDrawer" style="position: absolute; top: 0; left: -100%; width: 85%; height: 100%; background: var(--card-bg); border-right: 2px solid #f59e0b; box-shadow: 10px 0 30px rgba(0,0,0,0.4); z-index: 100; transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column;">
@@ -881,6 +881,10 @@
                         <span>تاریخچه یادداشت‌ها</span>
                     </div>
                     <button onclick="closeNoteHistoryDrawer()" style="background: transparent; border: none; color: var(--text-color); font-size: 1.3rem; cursor: pointer; font-weight: bold;">✕</button>
+                </div>
+                <!-- کادر جستجوی پیشرفته -->
+                <div style="padding: 10px 14px; background: var(--history-sub-bg); border-bottom: 1px solid var(--card-border);">
+                    <input type="text" id="noteSearchInput" placeholder="🔍 جستجو در متن، عنوان یا منبع..." style="width: 100%; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 8px 12px; color: var(--text-color); font-size: 0.88rem; font-weight: bold; outline: none; box-sizing: border-box; font-family: inherit;" oninput="renderSyncedNoteHistory()">
                 </div>
                 <div id="noteHistoryList" style="flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
                     <!-- آیتم‌های همگام‌شده تاریخچه پویا رندر می‌شوند -->
@@ -899,7 +903,7 @@
                         <span>📂</span>
                         <span>تاریخچه</span>
                     </button>
-                    <button onclick="closeImportantNoteModal()" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-color); width: 34px; height: 34px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</button>
+                    <button id="closeNoteModalBtn" onclick="closeImportantNoteModal()" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-color); width: 34px; height: 34px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</button>
                 </div>
             </div>
 
@@ -909,6 +913,9 @@
                     <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: bold;">⏱️ تاریخ و زمان خورشیدی:</span>
                     <span id="notePersianDateTime" style="font-size: 0.88rem; font-weight: bold; color: var(--primary-light); direction: ltr; font-family: monospace;">1405.06.15 - 14:30:25</span>
                 </div>
+
+                <!-- ورودی عنوان یادداشت -->
+                <input type="text" id="importantNoteTitleInput" style="width: 100%; background: var(--history-sub-bg); border: 1.5px solid var(--card-border); border-radius: 14px; padding: 12px 16px; color: var(--text-color); font-size: 1.15rem; font-weight: 800; box-sizing: border-box; outline: none; font-family: inherit; transition: border-color 0.2s;" placeholder="🏷️ عنوان یادداشت را اینجا وارد کنید..." oninput="handleNoteInputChange()">
 
                 <textarea id="importantNoteTextarea" style="flex: 1; width: 100%; background: var(--history-sub-bg); border: 1.5px solid var(--card-border); border-radius: 18px; padding: 16px; color: var(--text-color); font-size: 1.3rem; font-weight: 800; line-height: 1.8; box-sizing: border-box; outline: none; resize: none; font-family: inherit; transition: border-color 0.2s;" placeholder="متن یادداشت مهم خود را اینجا بنویسید (حروف درشت و پررنگ)..." oninput="handleNoteInputChange()"></textarea>
 
@@ -3094,16 +3101,23 @@ ${dayBlocksHtml}
 
         function openImportantNoteModal() {
             const modal = document.getElementById('importantNoteModal');
+            const titleInput = document.getElementById('importantNoteTitleInput');
             const textarea = document.getElementById('importantNoteTextarea');
             if (!modal) return;
 
+            // قفل کردن اسکرول صفحه اصلی هنگام باز بودن مودال در گوشی
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
+            document.body.style.touchAction = 'none';
+
             modal.style.display = 'flex';
 
-            // لود یادداشت جاری متنی از LocalStorage
+            // لود عنوان و متن پیش‌نویس جاری از LocalStorage
+            const savedTitle = localStorage.getItem('monitor_important_note_title_draft') || '';
             const savedDraft = localStorage.getItem('monitor_important_note_draft') || '';
-            if (textarea) {
-                textarea.value = savedDraft;
-            }
+
+            if (titleInput) titleInput.value = savedTitle;
+            if (textarea) textarea.value = savedDraft;
 
             updateNoteLiveClock();
             if (liveNoteClockInterval) clearInterval(liveNoteClockInterval);
@@ -3119,16 +3133,25 @@ ${dayBlocksHtml}
         function closeImportantNoteModal() {
             const modal = document.getElementById('importantNoteModal');
             if (modal) modal.style.display = 'none';
+
+            // بازگرداندن اسکرول صفحه اصلی
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+            document.body.style.touchAction = '';
+
             if (liveNoteClockInterval) clearInterval(liveNoteClockInterval);
             closeNoteHistoryDrawer();
         }
 
         function handleNoteInputChange() {
+            const titleInput = document.getElementById('importantNoteTitleInput');
             const textarea = document.getElementById('importantNoteTextarea');
             const statusEl = document.getElementById('noteAutoSaveStatus');
-            if (!textarea) return;
 
-            const text = textarea.value;
+            const title = titleInput ? titleInput.value : '';
+            const text = textarea ? textarea.value : '';
+
+            localStorage.setItem('monitor_important_note_title_draft', title);
             localStorage.setItem('monitor_important_note_draft', text);
 
             if (statusEl) {
@@ -3138,15 +3161,23 @@ ${dayBlocksHtml}
         }
 
         function copyImportantNoteText() {
+            const titleInput = document.getElementById('importantNoteTitleInput');
             const textarea = document.getElementById('importantNoteTextarea');
-            if (!textarea || !textarea.value.trim()) {
+
+            const title = titleInput ? titleInput.value.trim() : '';
+            const text = textarea ? textarea.value.trim() : '';
+
+            if (!text && !title) {
                 alert('⚠️ متنی برای کپی وجود ندارد.');
                 return;
             }
-            navigator.clipboard.writeText(textarea.value).then(() => {
+
+            const fullCopyText = title ? `📌 ${title}\n\n${text}` : text;
+
+            navigator.clipboard.writeText(fullCopyText).then(() => {
                 const statusEl = document.getElementById('noteAutoSaveStatus');
                 if (statusEl) {
-                    statusEl.innerHTML = '📋 متن یادداشت در کلیپ‌بورد کپی شد!';
+                    statusEl.innerHTML = '📋 یادداشت در کلیپ‌بورد کپی شد!';
                     statusEl.style.color = 'var(--primary-light)';
                 }
             }).catch(() => {
@@ -3180,6 +3211,7 @@ ${dayBlocksHtml}
                     combinedNotes.push({
                         id: n.id || Date.now(),
                         source: 'دیدبان درصدها',
+                        title: n.title || '',
                         content: n.content || n.text || '',
                         dateTimeStr: n.dateTimeStr || '1405.06.15',
                         timestamp: n.timestamp || Date.now()
@@ -3252,29 +3284,55 @@ ${dayBlocksHtml}
 
         function renderSyncedNoteHistory() {
             const listEl = document.getElementById('noteHistoryList');
+            const searchInput = document.getElementById('noteSearchInput');
             if (!listEl) return;
 
-            const notes = getSyncedNotesList();
+            const allNotes = getSyncedNotesList();
+            let notes = [...allNotes];
+            const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+            if (query) {
+                notes = notes.filter(item => {
+                    const titleMatch = item.title && item.title.toLowerCase().includes(query);
+                    const contentMatch = item.content && item.content.toLowerCase().includes(query);
+                    const sourceMatch = item.source && item.source.toLowerCase().includes(query);
+                    const dateMatch = item.dateTimeStr && item.dateTimeStr.toLowerCase().includes(query);
+                    return titleMatch || contentMatch || sourceMatch || dateMatch;
+                });
+            }
+
             if (notes.length === 0) {
-                listEl.innerHTML = `
-                    <div style="text-align: center; padding: 40px 10px; color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
-                        📭 هیچ یادداشتی در تاریخچه یافت نشد.<br>
-                        با زدن دکمه «➕ ثبت در تاریخچه» اولین یادداشت خود را ثبت کنید.
-                    </div>
-                `;
+                if (query) {
+                    listEl.innerHTML = `
+                        <div style="text-align: center; padding: 40px 10px; color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
+                            🔍 هیچ یادداشتی با عبارت «<strong>${query}</strong>» پیدا نشد.
+                        </div>
+                    `;
+                } else {
+                    listEl.innerHTML = `
+                        <div style="text-align: center; padding: 40px 10px; color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
+                            📭 هیچ یادداشتی در تاریخچه یافت نشد.<br>
+                            با زدن دکمه «➕ ثبت در تاریخچه» اولین یادداشت خود را ثبت کنید.
+                        </div>
+                    `;
+                }
                 return;
             }
 
-            listEl.innerHTML = notes.map((item, idx) => {
+            listEl.innerHTML = notes.map((item) => {
                 const cleanContent = item.content.trim().replace(/\n/g, ' ');
                 const previewText = cleanContent.length > 70 ? cleanContent.substring(0, 70) + '...' : cleanContent;
+                const titleHtml = item.title ? `<div style="font-size: 1.05rem; font-weight: 900; color: var(--primary-light); margin-bottom: 4px;">🏷️ ${item.title}</div>` : '';
+
+                const originalIndex = allNotes.findIndex(n => n.id === item.id);
 
                 return `
-                    <div style="background: var(--history-sub-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; cursor: pointer; transition: all 0.2s;" onclick="loadNoteFromHistory(${idx})">
+                    <div style="background: var(--history-sub-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; cursor: pointer; transition: all 0.2s;" onclick="loadNoteFromHistory(${originalIndex >= 0 ? originalIndex : 0})">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                             <span style="font-size: 0.78rem; background: rgba(37, 99, 235, 0.15); color: var(--primary-light); padding: 3px 8px; border-radius: 8px; font-weight: bold;">📍 ${item.source}</span>
                             <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: bold; direction: ltr; font-family: monospace;">⏱️ ${item.dateTimeStr}</span>
                         </div>
+                        ${titleHtml}
                         <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-color); line-height: 1.6; word-break: break-word;">
                             ${previewText}
                         </div>
@@ -3286,12 +3344,15 @@ ${dayBlocksHtml}
         function loadNoteFromHistory(index) {
             const notes = getSyncedNotesList();
             if (notes[index]) {
+                const titleInput = document.getElementById('importantNoteTitleInput');
                 const textarea = document.getElementById('importantNoteTextarea');
-                if (textarea) {
-                    textarea.value = notes[index].content;
-                    handleNoteInputChange();
-                }
+
+                if (titleInput) titleInput.value = notes[index].title || '';
+                if (textarea) textarea.value = notes[index].content || '';
+
+                handleNoteInputChange();
                 closeNoteHistoryDrawer();
+
                 const statusEl = document.getElementById('noteAutoSaveStatus');
                 if (statusEl) {
                     statusEl.innerHTML = `📂 یادداشت از (${notes[index].source}) فراخوانی شد ✅`;
@@ -3301,13 +3362,17 @@ ${dayBlocksHtml}
         }
 
         function saveCurrentNoteToHistory() {
+            const titleInput = document.getElementById('importantNoteTitleInput');
             const textarea = document.getElementById('importantNoteTextarea');
-            if (!textarea || !textarea.value.trim()) {
-                alert('⚠️ لطفاً ابتدا متنی برای یادداشت وارد کنید.');
+
+            const currentTitle = titleInput ? titleInput.value.trim() : '';
+            const currentText = textarea ? textarea.value.trim() : '';
+
+            if (!currentText && !currentTitle) {
+                alert('⚠️ لطفاً ابتدا عنوان یا متنی برای یادداشت وارد کنید.');
                 return;
             }
 
-            const currentText = textarea.value.trim();
             const now = Date.now();
             const dtStr = getExactJalaliDateTimeString();
 
@@ -3318,6 +3383,7 @@ ${dayBlocksHtml}
 
             monitorNotesHistory.unshift({
                 id: now,
+                title: currentTitle,
                 content: currentText,
                 dateTimeStr: dtStr,
                 timestamp: now
@@ -3327,7 +3393,7 @@ ${dayBlocksHtml}
 
             const statusEl = document.getElementById('noteAutoSaveStatus');
             if (statusEl) {
-                statusEl.innerHTML = '🎉 یادداشت جدید با موفقیت در تاریخچه ثبت گردید!';
+                statusEl.innerHTML = '🎉 یادداشت جدید با عنوان و متن در تاریخچه ثبت گردید!';
                 statusEl.style.color = 'var(--positive-color)';
             }
 
