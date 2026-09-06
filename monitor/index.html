@@ -919,9 +919,10 @@
 
                 <textarea id="importantNoteTextarea" style="flex: 1; width: 100%; background: var(--history-sub-bg); border: 1.5px solid var(--card-border); border-radius: 18px; padding: 16px; color: var(--text-color); font-size: 1.3rem; font-weight: 800; line-height: 1.8; box-sizing: border-box; outline: none; resize: none; font-family: inherit; transition: border-color 0.2s;" placeholder="متن یادداشت مهم خود را اینجا بنویسید (حروف درشت و پررنگ)..." oninput="handleNoteInputChange()"></textarea>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px; flex-wrap: wrap; gap: 8px;">
                     <span id="noteAutoSaveStatus" style="font-size: 0.8rem; color: var(--positive-color); font-weight: bold; display: flex; align-items: center; gap: 4px;">⚡ ذخیره خودکار آنی (ذخیره‌شده ✅)</span>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <button onclick="createNewImportantNote()" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: var(--positive-color); padding: 8px 12px; border-radius: 12px; font-weight: bold; font-size: 0.82rem; cursor: pointer;" title="نوشتن یادداشت جدید">📝 یادداشت جدید</button>
                         <button onclick="copyImportantNoteText()" style="background: var(--history-sub-bg); border: 1px solid var(--card-border); color: var(--text-color); padding: 8px 12px; border-radius: 12px; font-weight: bold; font-size: 0.82rem; cursor: pointer;" title="کپی متن">📋 کپی</button>
                         <button onclick="saveCurrentNoteToHistory()" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">➕ ثبت در تاریخچه</button>
                     </div>
@@ -3141,6 +3142,29 @@ ${dayBlocksHtml}
 
             if (liveNoteClockInterval) clearInterval(liveNoteClockInterval);
             closeNoteHistoryDrawer();
+        }
+
+        function createNewImportantNote() {
+            const titleInput = document.getElementById('importantNoteTitleInput');
+            const textarea = document.getElementById('importantNoteTextarea');
+            const statusEl = document.getElementById('noteAutoSaveStatus');
+
+            if (titleInput) titleInput.value = '';
+            if (textarea) textarea.value = '';
+
+            localStorage.removeItem('monitor_important_note_title_draft');
+            localStorage.removeItem('monitor_important_note_draft');
+
+            if (statusEl) {
+                statusEl.innerHTML = '✨ فرم آماده تایپ یادداشت جدید است!';
+                statusEl.style.color = 'var(--positive-color)';
+            }
+
+            if (titleInput) {
+                titleInput.focus();
+            } else if (textarea) {
+                textarea.focus();
+            }
         }
 
         function handleNoteInputChange() {
