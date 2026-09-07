@@ -1974,7 +1974,20 @@
             const isGoldenTomanMode = isOnlyPositivesMode && effectiveTabName === 'live';
 
             const rawHistory = [...calculateDailyHistory()].reverse();
-            const history = rawHistory.map(item => {
+            const filteredHistory = isGoldenTomanMode ? rawHistory.filter(item => {
+                let dayPosSum = 0;
+                appsInfo.forEach(app => {
+                    const appTomanProfit = (dailyTomanProfitAppMap[item.dayString] && dailyTomanProfitAppMap[item.dayString][app.id]) || 0;
+                    const appDetails = (dailyTomanProfitAppDetailsMap[item.dayString] && dailyTomanProfitAppDetailsMap[item.dayString][app.id]) || null;
+                    const appStatus = appDetails ? appDetails.status : (appTomanProfit > 0 ? 'increase' : (appTomanProfit < 0 ? 'decrease' : 'none'));
+                    if (appTomanProfit > 0 && appStatus !== 'recovering') {
+                        dayPosSum += appTomanProfit;
+                    }
+                });
+                return dayPosSum > 0;
+            }) : rawHistory;
+
+            const history = filteredHistory.map(item => {
                 let valueToUse = 0;
                 if (isGoldenTomanMode) {
                     appsInfo.forEach(app => {
