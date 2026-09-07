@@ -794,8 +794,14 @@
                     <!-- به صورت پویا پر می‌شود -->
                 </div>
                 <div class="chart-container-inner">
-                    <span class="chart-title">📈 نمودار رشد مجموع درصدها</span>
-                    <div class="chart-canvas-wrapper">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px;">
+                        <span class="chart-title">📈 نمودار رشد مجموع درصدها</span>
+                        <button onclick="openLargeChartModal('live')" style="background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.3); color: var(--primary-light); padding: 4px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="نمایش در صفحه بزرگ">
+                            <span>🖥️</span>
+                            <span>نمودار بزرگ</span>
+                        </button>
+                    </div>
+                    <div class="chart-canvas-wrapper" style="overflow-x: auto; width: 100%;">
                         <canvas id="live-growth-canvas" class="growth-canvas"></canvas>
                     </div>
                 </div>
@@ -931,6 +937,24 @@
         </div>
     </div>
 
+    <!-- مودال بزرگ‌نمایی نمودار در صفحه اختصاصی -->
+    <div id="largeChartModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); z-index: 999999; justify-content: center; align-items: center; padding: 12px; box-sizing: border-box; animation: fadeIn 0.25s ease forwards;">
+        <div style="width: 100%; max-width: 900px; height: 90vh; background: var(--card-bg); border: 2px solid var(--primary-light); border-radius: 28px; box-shadow: 0 25px 60px rgba(0,0,0,0.6); display: flex; flex-direction: column; overflow: hidden; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; background: var(--history-sub-bg); border-bottom: 1px solid var(--card-border);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.6rem;">🖥️</span>
+                    <span id="largeChartModalTitle" style="font-size: 1.25rem; font-weight: 800; color: var(--text-color);">نمودار رشد در ابعاد بزرگ</span>
+                </div>
+                <button onclick="closeLargeChartModal()" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-color); width: 38px; height: 38px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</button>
+            </div>
+            <div style="flex: 1; padding: 20px; overflow-x: auto; overflow-y: hidden; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; box-sizing: border-box; position: relative;">
+                <div id="largeChartCanvasWrapper" style="min-width: 100%; height: 100%; position: relative;">
+                    <canvas id="large-growth-canvas" style="display: block; width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- تب ۲: آنالیز میانگین‌ها -->
     <div id="analysis-tab" class="content-section">
         <div class="stats-summary-card">
@@ -960,8 +984,14 @@
                     <!-- به صورت پویا پر می‌شود -->
                 </div>
                 <div class="chart-container-inner">
-                    <span class="chart-title">📈 نمودار رشد میانگین درصدها</span>
-                    <div class="chart-canvas-wrapper">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px;">
+                        <span class="chart-title">📈 نمودار رشد میانگین درصدها</span>
+                        <button onclick="openLargeChartModal('analysis')" style="background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.3); color: var(--primary-light); padding: 4px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="نمایش در صفحه بزرگ">
+                            <span>🖥️</span>
+                            <span>نمودار بزرگ</span>
+                        </button>
+                    </div>
+                    <div class="chart-canvas-wrapper" style="overflow-x: auto; width: 100%;">
                         <canvas id="analysis-growth-canvas" class="growth-canvas"></canvas>
                     </div>
                 </div>
@@ -1775,13 +1805,16 @@
                                 const pulseClass = (isPositive && appStatus === 'increase') ? 'gold-pulse-card' : '';
                                 const extraStyle = `padding: 8px 12px; font-weight: bold; color: ${colorHex};`;
 
+                                const isRecovering = appStatus === 'recovering';
+                                const statusTag = isRecovering ? ' <span style="font-size:0.75rem; color:var(--recovering-color); font-weight:600;">(جبران ضرر 🟠)</span>' : '';
+
                                 appsHtml += `
                                     <div class="history-sub-item ${pulseClass}" style="${extraStyle}">
-                                        <span>${app.title}</span>
+                                        <span>${app.title}${statusTag}</span>
                                         <span class="${colorClass}" style="direction: ltr; font-weight: 800; color: ${colorHex};">${valueSign}${appTomanProfit.toLocaleString('en-US')} تومان</span>
                                     </div>
                                 `;
-                                if (isPositive) {
+                                if (isPositive && !isRecovering) {
                                     hasAnyPositive = true;
                                     dayPositiveTomanSum += appTomanProfit;
                                 }
@@ -1808,7 +1841,9 @@
                         history.forEach(dayItem => {
                             appsInfo.forEach(app => {
                                 const appTomanProfit = (dailyTomanProfitAppMap[dayItem.dayString] && dailyTomanProfitAppMap[dayItem.dayString][app.id]) || 0;
-                                if (appTomanProfit > 0) {
+                                const appDetails = (dailyTomanProfitAppDetailsMap[dayItem.dayString] && dailyTomanProfitAppDetailsMap[dayItem.dayString][app.id]) || null;
+                                const appStatus = appDetails ? appDetails.status : (appTomanProfit > 0 ? 'increase' : (appTomanProfit < 0 ? 'decrease' : 'none'));
+                                if (appTomanProfit > 0 && appStatus !== 'recovering') {
                                     totalGoldenProfit += appTomanProfit;
                                 }
                             });
@@ -1893,16 +1928,50 @@
             });
         }
 
-        // رسم نمودار رشد سبک روی HTML Canvas
+        let activeLargeChartTab = 'live';
+
+        function openLargeChartModal(tabName) {
+            activeLargeChartTab = tabName;
+            const modal = document.getElementById('largeChartModal');
+            const titleEl = document.getElementById('largeChartModalTitle');
+            if (!modal) return;
+
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
+
+            if (titleEl) {
+                if (tabName === 'live') {
+                    titleEl.innerText = isOnlyPositivesMode ? "🖥️ نمودار بزرگ تاریخچه زرین سودهای مثبت" : "🖥️ نمودار بزرگ مجموع درصدها";
+                } else {
+                    titleEl.innerText = "🖥️ نمودار بزرگ میانگین درصدها";
+                }
+            }
+
+            modal.style.display = 'flex';
+            renderGrowthChart('large');
+        }
+
+        function closeLargeChartModal() {
+            const modal = document.getElementById('largeChartModal');
+            if (modal) modal.style.display = 'none';
+
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+        }
+
+        // رسم نمودار رشد سبک روی HTML Canvas با افزایش فاصله نقاط
         function renderGrowthChart(tabName) {
-            const canvas = document.getElementById(`${tabName}-growth-canvas`);
+            const isLarge = tabName === 'large';
+            const effectiveTabName = isLarge ? activeLargeChartTab : tabName;
+            const canvasId = isLarge ? 'large-growth-canvas' : `${tabName}-growth-canvas`;
+            const canvas = document.getElementById(canvasId);
             if (!canvas) return;
 
             const ctx = canvas.getContext('2d');
-            const isTabAnalysis = tabName === 'analysis';
+            const isTabAnalysis = effectiveTabName === 'analysis';
             const appsInfo = getAppPercentData();
 
-            const isGoldenTomanMode = isOnlyPositivesMode && tabName === 'live';
+            const isGoldenTomanMode = isOnlyPositivesMode && effectiveTabName === 'live';
 
             const rawHistory = [...calculateDailyHistory()].reverse();
             const history = rawHistory.map(item => {
@@ -1910,7 +1979,9 @@
                 if (isGoldenTomanMode) {
                     appsInfo.forEach(app => {
                         const appTomanProfit = (dailyTomanProfitAppMap[item.dayString] && dailyTomanProfitAppMap[item.dayString][app.id]) || 0;
-                        if (appTomanProfit > 0) {
+                        const appDetails = (dailyTomanProfitAppDetailsMap[item.dayString] && dailyTomanProfitAppDetailsMap[item.dayString][app.id]) || null;
+                        const appStatus = appDetails ? appDetails.status : (appTomanProfit > 0 ? 'increase' : (appTomanProfit < 0 ? 'decrease' : 'none'));
+                        if (appTomanProfit > 0 && appStatus !== 'recovering') {
                             valueToUse += appTomanProfit;
                         }
                     });
@@ -1923,13 +1994,27 @@
                 };
             });
 
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width * (window.devicePixelRatio || 1);
-            canvas.height = rect.height * (window.devicePixelRatio || 1);
+            // تنظیم فاصله نقاط (نقطه به نقطه با فاصله دلخواه و عالی)
+            const minPointSpacing = isLarge ? 60 : 45;
+            const parentWrapper = canvas.parentElement;
+            let calcWidth = parentWrapper ? parentWrapper.clientWidth : 350;
+
+            if (history.length > 1) {
+                const requiredWidth = (history.length - 1) * minPointSpacing + 80;
+                if (requiredWidth > calcWidth) {
+                    calcWidth = requiredWidth;
+                }
+            }
+
+            canvas.style.width = calcWidth + 'px';
+
+            const rectHeight = parentWrapper ? parentWrapper.clientHeight : (isLarge ? 400 : 150);
+            canvas.width = calcWidth * (window.devicePixelRatio || 1);
+            canvas.height = rectHeight * (window.devicePixelRatio || 1);
             ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
 
-            const width = rect.width;
-            const height = rect.height;
+            const width = calcWidth;
+            const height = rectHeight;
 
             ctx.clearRect(0, 0, width, height);
 
@@ -1939,13 +2024,13 @@
 
             if (history.length < 2) {
                 ctx.fillStyle = canvasTextColor;
-                ctx.font = '11px Segoe UI, Tahoma';
+                ctx.font = '12px Segoe UI, Tahoma';
                 ctx.textAlign = 'center';
                 ctx.fillText('اطلاعات کافی برای رسم نمودار وجود ندارد', width / 2, height / 2);
                 return;
             }
 
-            const padding = { top: 15, bottom: 20, left: 45, right: 15 };
+            const padding = { top: 25, bottom: 30, left: 55, right: 25 };
             const chartW = width - padding.left - padding.right;
             const chartH = height - padding.top - padding.bottom;
 
@@ -1969,7 +2054,7 @@
             const points = history.map((item, i) => {
                 const x = padding.left + (i / (history.length - 1)) * chartW;
                 const y = padding.top + chartH - ((item.value - minVal) / yRange) * chartH;
-                return { x, y, value: item.value };
+                return { x, y, value: item.value, dateStr: item.dayString };
             });
 
             const grad = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
@@ -1992,7 +2077,7 @@
             const strokeColor = isGoldenTomanMode ? '#10b981' : (isDark ? '#60a5fa' : '#2563eb');
             ctx.beginPath();
             ctx.strokeStyle = strokeColor;
-            ctx.lineWidth = 2.5;
+            ctx.lineWidth = 3;
             ctx.lineJoin = 'round';
             points.forEach((p, i) => {
                 if (i === 0) ctx.moveTo(p.x, p.y);
@@ -2001,22 +2086,28 @@
             ctx.stroke();
 
             points.forEach((p, i) => {
-                if (i === 0 || i === points.length - 1 || p.value === maxVal || p.value === minVal) {
-                    ctx.beginPath();
-                    ctx.fillStyle = strokeColor;
-                    ctx.arc(p.x, p.y, 4, 0, 2 * Math.PI);
-                    ctx.fill();
+                ctx.beginPath();
+                ctx.fillStyle = strokeColor;
+                ctx.arc(p.x, p.y, isLarge ? 5 : 4, 0, 2 * Math.PI);
+                ctx.fill();
 
-                    ctx.beginPath();
-                    ctx.strokeStyle = isDark ? '#1f2937' : '#ffffff';
-                    ctx.lineWidth = 1;
-                    ctx.arc(p.x, p.y, 4, 0, 2 * Math.PI);
-                    ctx.stroke();
+                ctx.beginPath();
+                ctx.strokeStyle = isDark ? '#1f2937' : '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.arc(p.x, p.y, isLarge ? 5 : 4, 0, 2 * Math.PI);
+                ctx.stroke();
+
+                if (isLarge || i === 0 || i === points.length - 1 || p.value === maxVal || p.value === minVal) {
+                    ctx.fillStyle = canvasTextColor;
+                    ctx.font = '10px Segoe UI, Tahoma';
+                    ctx.textAlign = 'center';
+                    let valText = isGoldenTomanMode ? `${Math.round(p.value).toLocaleString('en-US')}ت` : `${p.value.toFixed(isTabAnalysis ? 2 : 1)}%`;
+                    ctx.fillText(valText, p.x, p.y - 8);
                 }
             });
 
             ctx.fillStyle = canvasTextColor;
-            ctx.font = '10px Segoe UI, Tahoma';
+            ctx.font = '11px Segoe UI, Tahoma';
             ctx.textAlign = 'right';
 
             if (isGoldenTomanMode) {
@@ -2024,17 +2115,17 @@
                     if (v >= 1000) return `${Math.round(v/1000)}k`;
                     return Math.round(v);
                 };
-                ctx.fillText(formatLabel(maxVal), padding.left - 6, padding.top + 8);
-                ctx.fillText(formatLabel(minVal), padding.left - 6, height - padding.bottom);
+                ctx.fillText(formatLabel(maxVal), padding.left - 8, padding.top + 8);
+                ctx.fillText(formatLabel(minVal), padding.left - 8, height - padding.bottom);
             } else {
-                ctx.fillText(`${maxVal.toFixed(isTabAnalysis ? 3 : 1)}%`, padding.left - 6, padding.top + 8);
-                ctx.fillText(`${minVal.toFixed(isTabAnalysis ? 3 : 1)}%`, padding.left - 6, height - padding.bottom);
+                ctx.fillText(`${maxVal.toFixed(isTabAnalysis ? 3 : 1)}%`, padding.left - 8, padding.top + 8);
+                ctx.fillText(`${minVal.toFixed(isTabAnalysis ? 3 : 1)}%`, padding.left - 8, height - padding.bottom);
             }
 
-            ctx.textAlign = 'left';
-            ctx.fillText(formatHistoryDate(history[0].dayString), padding.left, height - 4);
-            ctx.textAlign = 'right';
-            ctx.fillText(formatHistoryDate(history[history.length - 1].dayString), width - padding.right, height - 4);
+            ctx.textAlign = 'center';
+            points.forEach((p) => {
+                ctx.fillText(formatHistoryDate(p.dateStr), p.x, height - 6);
+            });
         }
 
         async function triggerGeminiAI(forceRetry = false) {
@@ -2636,6 +2727,10 @@
                     const posItems = [];
                     appsInfo.forEach(app => {
                         const appTomanProfit = (dailyTomanProfitAppMap[dayStr] && dailyTomanProfitAppMap[dayStr][app.id]) || 0;
+                        const appDetails = (dailyTomanProfitAppDetailsMap[dayStr] && dailyTomanProfitAppDetailsMap[dayStr][app.id]) || null;
+                        const appStatus = appDetails ? appDetails.status : (appTomanProfit > 0 ? 'increase' : (appTomanProfit < 0 ? 'decrease' : 'none'));
+                        const isRecovering = appStatus === 'recovering';
+
                         if (appTomanProfit > 0) {
                             let appPercentVal = 0;
                             if (app.data) {
@@ -2649,24 +2744,27 @@
                             }
 
                             posItems.push({
-                                title: app.title,
+                                title: app.title + (isRecovering ? ' (جبران ضرر 🟠)' : ''),
                                 percent: appPercentVal,
-                                toman: appTomanProfit
+                                toman: appTomanProfit,
+                                isRecovering: isRecovering
                             });
 
-                            if (fundMonthlySums[app.id]) {
-                                fundMonthlySums[app.id].percentSum += appPercentVal;
-                                fundMonthlySums[app.id].tomanSum += appTomanProfit;
-                            }
+                            if (!isRecovering) {
+                                if (fundMonthlySums[app.id]) {
+                                    fundMonthlySums[app.id].percentSum += appPercentVal;
+                                    fundMonthlySums[app.id].tomanSum += appTomanProfit;
+                                }
 
-                            totalMonthPercent += appPercentVal;
-                            totalMonthToman += appTomanProfit;
+                                totalMonthPercent += appPercentVal;
+                                totalMonthToman += appTomanProfit;
+                            }
                         }
                     });
 
                     if (posItems.length > 0) {
                         activeDaysCount++;
-                        const dayTotalToman = posItems.reduce((acc, curr) => acc + curr.toman, 0);
+                        const dayTotalToman = posItems.filter(item => !item.isRecovering).reduce((acc, curr) => acc + curr.toman, 0);
 
                         const dateStrFormatted = `${rYear}/${String(rMonth).padStart(2, '0')}/${String(rDay).padStart(2, '0')}`;
                         const timeStrFormatted = d.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
