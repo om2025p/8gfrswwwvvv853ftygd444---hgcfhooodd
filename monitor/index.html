@@ -1987,6 +1987,7 @@
                 return dayPosSum > 0;
             }) : rawHistory;
 
+            let runningCumulativeValue = 0;
             const history = filteredHistory.map(item => {
                 let valueToUse = 0;
                 if (isGoldenTomanMode) {
@@ -1999,7 +2000,9 @@
                         }
                     });
                 } else {
-                    valueToUse = isTabAnalysis ? (item.value / 6) : item.value;
+                    const dailyVal = isTabAnalysis ? (item.value / 7) : item.value;
+                    runningCumulativeValue += dailyVal;
+                    valueToUse = runningCumulativeValue;
                 }
                 return {
                     ...item,
