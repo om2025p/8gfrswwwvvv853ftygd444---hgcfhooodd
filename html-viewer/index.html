@@ -967,7 +967,7 @@
             <button class="tab-btn" id="tabBtnText" onclick="switchTab('text')">
                 📄 ابزار متن ساده
             </button>
-            <a href="chat.html" class="tab-btn" style="text-decoration: none; color: inherit;">
+            <a href="chat.html" class="tab-btn" id="tabBtnChat" style="text-decoration: none; color: inherit;">
                 💬 نمایشگر چت (AI Studio) ↗
             </a>
         </div>
@@ -1204,13 +1204,21 @@
 
         function switchTab(tabName) {
             currentActiveTab = tabName;
-            document.getElementById('tabBtnHtml').classList.toggle('active', tabName === 'html');
-            document.getElementById('tabBtnText').classList.toggle('active', tabName === 'text');
-            document.getElementById('tabBtnChat').classList.toggle('active', tabName === 'chat');
+            const btnHtml = document.getElementById('tabBtnHtml');
+            const btnText = document.getElementById('tabBtnText');
+            const btnChat = document.getElementById('tabBtnChat');
 
-            document.getElementById('panelHtml').classList.toggle('active', tabName === 'html');
-            document.getElementById('panelText').classList.toggle('active', tabName === 'text');
-            document.getElementById('panelChat').classList.toggle('active', tabName === 'chat');
+            if (btnHtml) btnHtml.classList.toggle('active', tabName === 'html');
+            if (btnText) btnText.classList.toggle('active', tabName === 'text');
+            if (btnChat) btnChat.classList.toggle('active', tabName === 'chat');
+
+            const panelHtml = document.getElementById('panelHtml');
+            const panelText = document.getElementById('panelText');
+            const panelChat = document.getElementById('panelChat');
+
+            if (panelHtml) panelHtml.classList.toggle('active', tabName === 'html');
+            if (panelText) panelText.classList.toggle('active', tabName === 'text');
+            if (panelChat) panelChat.classList.toggle('active', tabName === 'chat');
 
             if (mainContainer) {
                 mainContainer.classList.toggle('chat-mode', tabName === 'chat');
