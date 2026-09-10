@@ -453,6 +453,10 @@
                 <i class="fa-solid fa-file-code"></i> چت نمونه
             </button>
 
+            <button class="btn" style="background-color: #0284c7;" onclick="copyFullChat()">
+                <i class="fa-solid fa-copy"></i> کپی کل چت
+            </button>
+
             <button class="btn" id="btnToggleThought" onclick="toggleThought()">
                 <i class="fa-solid fa-brain"></i> افکار (فعال)
             </button>
@@ -774,13 +778,83 @@
             wrapper.innerHTML = html;
         }
 
-        async function copyText(index) {
-            if (!parsedMessages[index]) return;
+        function copyToClipboardFallback(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            ta.style.top = '-9999px';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            let success = false;
             try {
-                await navigator.clipboard.writeText(parsedMessages[index].text);
-                showToast('📋 پیام کپی شد');
+                success = document.execCommand('copy');
             } catch (e) {
-                showToast('خطا در کپی');
+                success = false;
+            }
+            document.body.removeChild(ta);
+            return success;
+        }
+
+        async function copyText(index) {
+            if (!parsedMessages || !parsedMessages[index]) return;
+            const textToCopy = parsedMessages[index].text || "";
+            if (!textToCopy) return;
+
+            let copied = false;
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(textToCopy);
+                    copied = true;
+                } catch (e) {}
+            }
+
+            if (!copied) {
+                copied = copyToClipboardFallback(textToCopy);
+            }
+
+            if (copied) {
+                showToast('📋 پیام کپی شد');
+            } else {
+                showToast('❌ خطا در کپی کردن متن');
+            }
+        }
+
+        async function copyFullChat() {
+            if (!parsedMessages || parsedMessages.length === 0) {
+                showToast('⚠️ چتی برای کپی کردن وجود ندارد');
+                return;
+            }
+
+            let fullText = "";
+            parsedMessages.forEach(msg => {
+                let roleTitle = 'کاربر';
+                if (msg.role === 'model' || msg.role === 'assistant' || msg.role === 'ai') roleTitle = 'مدل (AI)';
+                else if (msg.role === 'system') roleTitle = 'دستور سیستم';
+                if (msg.meta && msg.meta.isThought) roleTitle = 'فکر و استدلال مدل';
+
+                fullText += `--- [${roleTitle}] ---\n${msg.text}\n\n`;
+            });
+
+            fullText = fullText.trim();
+            let copied = false;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(fullText);
+                    copied = true;
+                } catch (e) {}
+            }
+
+            if (!copied) {
+                copied = copyToClipboardFallback(fullText);
+            }
+
+            if (copied) {
+                showToast('📋 کل چت با موفقیت کپی شد');
+            } else {
+                showToast('❌ خطا در کپی کل چت');
             }
         }
 
