@@ -2,13 +2,14 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#2563eb">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" href="favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <title>نمایشگر کد و ابزار متن عمارت</title>
     <style>
         :root {
@@ -20,6 +21,7 @@
             --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1e1b4b 100%);
             --card-bg: rgba(255, 255, 255, 0.95);
             --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            --chat-font-scale: 1;
         }
 
         * {
@@ -44,7 +46,7 @@
 
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             background: var(--card-bg);
             border-radius: 24px;
             box-shadow: var(--shadow-lg);
@@ -55,6 +57,11 @@
             margin-top: 10px;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
+            transition: max-width 0.3s ease;
+        }
+
+        .container.chat-mode {
+            max-width: 1000px;
         }
 
         .header {
@@ -131,7 +138,7 @@
         /* Navigation Tabs Header */
         .tab-navigation {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             background: #e2e8f0;
             padding: 5px;
@@ -139,10 +146,10 @@
         }
 
         .tab-btn {
-            padding: 10px 14px;
+            padding: 10px 10px;
             border: none;
             border-radius: 12px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 700;
             cursor: pointer;
             background: transparent;
@@ -151,7 +158,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
+            white-space: nowrap;
         }
 
         .tab-btn.active {
@@ -171,7 +179,7 @@
             display: flex;
         }
 
-        /* Top Bar Header for Text Tool */
+        /* Top Bar Header for Text & Chat Tools */
         .tool-banner-bar {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             color: #ffffff;
@@ -181,6 +189,8 @@
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .tool-banner-title {
@@ -212,6 +222,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .editor-label {
@@ -226,6 +238,7 @@
         .quick-actions {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
         .btn-small {
@@ -238,6 +251,9 @@
             color: #334155;
             font-weight: 600;
             transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .btn-small:hover {
@@ -331,6 +347,390 @@
         .stats-badge span {
             font-weight: 700;
             color: #0f172a;
+        }
+
+        /* ============ CHAT VIEWER SPECIFIC STYLES ============ */
+        .chat-controls-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .chat-toolbar-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .zoom-controls-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .zoom-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        .zoom-badge {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #0284c7;
+            min-width: 42px;
+            text-align: center;
+        }
+
+        .btn-zoom {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #0f172a;
+            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-zoom:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-zoom-reset {
+            background: #e0f2fe;
+            border: 1px solid #7dd3fc;
+            color: #0369a1;
+            border-radius: 8px;
+            padding: 3px 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-zoom-reset:hover {
+            background: #bae6fd;
+        }
+
+        .chat-stats-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-top: 6px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .chat-chips {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .chat-chip {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 3px 8px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .chat-chip strong {
+            color: #0f172a;
+        }
+
+        .chat-search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 180px;
+            max-width: 320px;
+        }
+
+        .chat-search-box input {
+            width: 100%;
+            padding: 6px 12px 6px 32px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.82rem;
+            outline: none;
+            background: #ffffff;
+            transition: border-color 0.2s;
+        }
+
+        .chat-search-box input:focus {
+            border-color: var(--primary);
+        }
+
+        .chat-search-box .clear-search-btn {
+            position: absolute;
+            left: 8px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        /* Chat Viewer Box Container */
+        .chat-viewer-wrapper {
+            position: relative;
+            background: #0d1117;
+            color: #e6edf3;
+            border-radius: 18px;
+            border: 1px solid #30363d;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+            min-height: 420px;
+            max-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-scroll {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px;
+            scroll-behavior: smooth;
+            touch-action: pan-y pinch-zoom;
+        }
+
+        .chat-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-scroll::-webkit-scrollbar-track {
+            background: #161b22;
+        }
+        .chat-scroll::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+
+        .chat-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            font-size: calc(0.92rem * var(--chat-font-scale));
+            line-height: 1.6;
+            transition: font-size 0.15s ease-out;
+        }
+
+        .placeholder-chat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: #8b949e;
+            text-align: center;
+            gap: 12px;
+            font-size: calc(0.95rem * var(--chat-font-scale));
+        }
+
+        .placeholder-chat i {
+            font-size: 2.5rem;
+            color: #58a6ff;
+        }
+
+        /* Message Bubbles */
+        .msg-card {
+            display: flex;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: #161b22;
+            border: 1px solid #21262d;
+            align-items: flex-start;
+            position: relative;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .msg-card.user {
+            background: #172554;
+            border-color: #1e40af;
+        }
+
+        .msg-card.model {
+            background: #062016;
+            border-color: #115e59;
+        }
+
+        .msg-card.system {
+            background: #2a1b02;
+            border-color: #78350f;
+        }
+
+        .msg-card.thought {
+            background: #1f1d2b;
+            border-color: #4c1d95;
+            opacity: 0.9;
+        }
+
+        .msg-avatar {
+            width: calc(28px * var(--chat-font-scale));
+            height: calc(28px * var(--chat-font-scale));
+            min-width: 24px;
+            min-height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: calc(0.75rem * var(--chat-font-scale));
+            flex-shrink: 0;
+            color: #ffffff;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        .msg-card.user .msg-avatar { background: #2563eb; }
+        .msg-card.model .msg-avatar { background: #10b981; }
+        .msg-card.system .msg-avatar { background: #d97706; }
+        .msg-card.thought .msg-avatar { background: #8b5cf6; }
+
+        .msg-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .msg-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: calc(0.75rem * var(--chat-font-scale));
+            color: #8b949e;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 4px;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .msg-author {
+            font-weight: 700;
+            color: #f0f6fc;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .msg-tag {
+            font-size: calc(0.68rem * var(--chat-font-scale));
+            padding: 1px 6px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .msg-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .msg-copy-btn {
+            background: rgba(255,255,255,0.08);
+            border: none;
+            color: #c9d1d9;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: calc(0.7rem * var(--chat-font-scale));
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .msg-copy-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: #ffffff;
+        }
+
+        .msg-text {
+            color: #e6edf3;
+            white-space: pre-wrap;
+            line-height: 1.65;
+            font-size: calc(0.9rem * var(--chat-font-scale));
+        }
+
+        .bold-green {
+            color: #4ade80;
+            font-weight: 700;
+        }
+
+        mark.search-highlight {
+            background: #f59e0b;
+            color: #0f172a;
+            border-radius: 3px;
+            padding: 0 3px;
+            font-weight: bold;
+        }
+
+        .msg-code-block {
+            direction: ltr;
+            text-align: left;
+            background: #011627;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 6px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: calc(0.82rem * var(--chat-font-scale));
+            overflow-x: auto;
+            color: #a5d6ff;
+        }
+
+        /* Floating Zoom Indicator Toast inside Chat Container */
+        .zoom-toast-overlay {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9);
+            color: #38bdf8;
+            border: 1px solid #0284c7;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            z-index: 10;
+        }
+
+        .zoom-toast-overlay.show {
+            opacity: 1;
         }
 
         /* Debug Console Modal Overlay */
@@ -530,18 +930,22 @@
             opacity: 1;
         }
 
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            .container { padding: 16px; gap: 12px; }
+        @media (max-width: 650px) {
+            body { padding: 8px; }
+            .container { padding: 14px; gap: 10px; }
+            .tab-navigation { grid-template-columns: 1fr; gap: 4px; }
+            .tab-btn { font-size: 0.85rem; padding: 8px; }
             .button-group { grid-template-columns: 1fr; }
-            textarea { height: 260px; }
-            .header-title h1 { font-size: 1.1rem; }
+            textarea { height: 240px; }
+            .header-title h1 { font-size: 1.05rem; }
+            .chat-controls-bar { padding: 8px; }
+            .chat-search-box { max-width: 100%; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="container" id="mainContainer">
         <div class="header">
             <div class="header-title">
                 <img src="icon-192.png" alt="نمایشگر کد">
@@ -562,6 +966,9 @@
             </button>
             <button class="tab-btn" id="tabBtnText" onclick="switchTab('text')">
                 📄 ابزار متن ساده
+            </button>
+            <button class="tab-btn" id="tabBtnChat" onclick="switchTab('chat')">
+                💬 نمایشگر چت (AI Studio)
             </button>
         </div>
 
@@ -622,6 +1029,66 @@
             </div>
         </div>
 
+        <!-- TAB 3: Chat Viewer Panel (Google AI Studio) -->
+        <div class="tab-panel" id="panelChat">
+            <div class="tool-banner-bar">
+                <div class="tool-banner-title">
+                    💬 نمایشگر چت و Google AI Studio
+                </div>
+                <div class="tool-banner-badge">
+                    تحلیل چت و افکار AI
+                </div>
+            </div>
+
+            <div class="chat-controls-bar">
+                <div class="chat-toolbar-row">
+                    <div class="quick-actions">
+                        <label class="btn-small" style="cursor: pointer; background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; font-weight: 700;">
+                            📥 آپلود چت (.json / .txt)
+                            <input type="file" id="chatFileInput" accept=".json,.txt" style="display: none;" onchange="handleChatFileUpload(event)">
+                        </label>
+                        <button class="btn-small" onclick="loadSampleChat()" style="color: #059669; font-weight: 700;">📝 بارگذاری نمونه</button>
+                        <button class="btn-small" onclick="clearChatEditor()" style="color: #ef4444;">🗑️ پاکسازی</button>
+                        <button class="btn-small" id="chatToggleThoughtBtn" onclick="toggleThoughtVisibility()">🧠 افکار مدل: نمایان</button>
+                    </div>
+
+                    <div class="zoom-controls-wrap">
+                        <span class="zoom-label">🔍 زوم:</span>
+                        <button class="btn-zoom" onclick="adjustChatZoom(-0.10)">➖</button>
+                        <span id="chatZoomValueBadge" class="zoom-badge">۱۰۰٪</span>
+                        <button class="btn-zoom" onclick="adjustChatZoom(0.10)">➕</button>
+                        <button class="btn-zoom-reset" onclick="resetChatZoom()">↻ ۱۰۰٪</button>
+                    </div>
+                </div>
+
+                <div class="chat-stats-row">
+                    <div class="chat-chips">
+                        <span class="chat-chip">💬 کل: <strong id="chatMsgCount">۰</strong></span>
+                        <span class="chat-chip">👤 کاربر: <strong id="chatUserCount">۰</strong></span>
+                        <span class="chat-chip">🤖 مدل: <strong id="chatModelCount">۰</strong></span>
+                        <span class="chat-chip">📦 حجم: <strong id="chatSizeInfo">۰ KB</strong></span>
+                    </div>
+
+                    <div class="chat-search-box">
+                        <input type="text" id="chatSearchInput" placeholder="🔎 جستجو در پیام‌های چت..." oninput="onChatSearchInput()">
+                        <button id="chatClearSearchBtn" class="clear-search-btn" onclick="clearChatSearch()" style="display: none;">✖</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-viewer-wrapper" id="chatViewerWrapper">
+                <div class="chat-scroll" id="chatScroll">
+                    <div class="chat-content" id="chatContent">
+                        <div class="placeholder-chat">
+                            <i class="fas fa-comments"></i>
+                            فایل چت JSON یا TXT را آپلود کنید یا دکمه «بارگذاری نمونه» را بزنید.
+                        </div>
+                    </div>
+                </div>
+                <div class="zoom-toast-overlay" id="zoomToastOverlay">زوم: ۱۰۰٪</div>
+            </div>
+        </div>
+
         <div class="stats-badge">
             <span>📊 تعداد فایل‌های دانلود شده:</span>
             <span id="downloadCountBadge">۰ فایل</span>
@@ -670,6 +1137,7 @@
         const debugModal = document.getElementById('debugModal');
         const debugLogsContainer = document.getElementById('debugLogsContainer');
         const debugBtnHeader = document.getElementById('debugBtnHeader');
+        const mainContainer = document.getElementById('mainContainer');
 
         // Check 7-day expiration timer for debug console button
         const DEBUG_EXPIRY_KEY = "html_viewer_debug_expiry";
@@ -686,7 +1154,7 @@
         const debugLogsList = [];
 
         function appendLog(message, type = 'info') {
-            if (Date.now() > expiryTimestamp) return; // Logic disabled after 7 days
+            if (Date.now() > expiryTimestamp) return;
             const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
             const logText = `[${timeStr}] [${type.toUpperCase()}] ${message}`;
             debugLogsList.push(logText);
@@ -733,8 +1201,16 @@
             currentActiveTab = tabName;
             document.getElementById('tabBtnHtml').classList.toggle('active', tabName === 'html');
             document.getElementById('tabBtnText').classList.toggle('active', tabName === 'text');
+            document.getElementById('tabBtnChat').classList.toggle('active', tabName === 'chat');
+
             document.getElementById('panelHtml').classList.toggle('active', tabName === 'html');
             document.getElementById('panelText').classList.toggle('active', tabName === 'text');
+            document.getElementById('panelChat').classList.toggle('active', tabName === 'chat');
+
+            if (mainContainer) {
+                mainContainer.classList.toggle('chat-mode', tabName === 'chat');
+            }
+
             localStorage.setItem('html_viewer_active_tab', tabName);
         }
 
@@ -747,11 +1223,19 @@
             if (savedText) textEditor.value = savedText;
 
             const savedTab = localStorage.getItem('html_viewer_active_tab');
-            if (savedTab && (savedTab === 'html' || savedTab === 'text')) {
+            if (savedTab && (savedTab === 'html' || savedTab === 'text' || savedTab === 'chat')) {
                 switchTab(savedTab);
             }
 
+            const savedChatData = localStorage.getItem('html_viewer_saved_chat');
+            if (savedChatData) {
+                rawChatText = savedChatData;
+                parsedChatMessages = parseChatHistory(savedChatData);
+                renderChatMessages(parsedChatMessages, '');
+            }
+
             updateDownloadCounterBadge();
+            initChatZoomListeners();
         });
 
         let cachedAiTitleHtml = "";
@@ -823,7 +1307,7 @@
 
 قوانین بسیار مهم:
 - اصلاً کلماتی مانند "فایل تحت وب"، "بر اساس"، "بررسی دقیق کد"، "شامل عنوان"، "کد HTML"، "HTML"، "تگ"، "وب‌سایت"، "متن" را نیاور.
-- هیچ علامت غیرمجاز نام فایل مثل / \\ : * ? " < > | را نیاور.
+- هیچ علامت غیرمجاز نام فایل مثل / \ : * ? " < > | را نیاور.
 - فقط خلاصه موضوع انسانی را بنویس.
 
 متن/کد:
@@ -918,8 +1402,7 @@ ${cleanText}`;
                             .replace(/\(شامل عنوان/gi, '')
                             .replace(/شامل عنوان/gi, '')
                             .replace(/کد HTML/gi, '')
-                            .replace(/["'\n\r\\/:\*\?<>\|]/g, '')
-                            .trim()
+                            .replace(/["'\/:\*\?<>\|]/g, '')
                             .slice(0, 80);
 
                         if (aiText) {
@@ -955,7 +1438,7 @@ ${cleanText}`;
 
         function checkAndRegisterUniqueDownload(content) {
             if (!content || !content.trim()) return false;
-            const normalized = content.trim().replace(/\r\n/g, '\n').replace(/\s+/g, ' ');
+            const normalized = content.trim().replace(/\r?\n/g, '\n').replace(/\s+/g, ' ');
             let hashList = [];
             try {
                 hashList = JSON.parse(localStorage.getItem('html_viewer_downloaded_hashes') || '[]');
@@ -1068,7 +1551,8 @@ ${cleanText}`;
             try {
                 let processedCode = code;
                 if (!processedCode.toLowerCase().includes('<base ')) {
-                    const baseTag = `<base href="${window.location.href}">\n`;
+                    const baseTag = `<base href="${window.location.href}">
+`;
                     if (processedCode.includes('<head>')) {
                         processedCode = processedCode.replace('<head>', '<head>\n' + baseTag);
                     } else if (/<html[^>]*>/i.test(processedCode)) {
@@ -1184,7 +1668,10 @@ ${cleanText}`;
             }
 
             const countFa = toPersianDigits(currentCount);
-            const metadataInjection = `<!-- این فایل ${countFa}مین فایلی است که از اپلیکیشن نمایشگر کد پلتفرم عمارت دانلود شده است -->\n<meta name="platform-download-sequence" content="${countFa}">\n<meta name="download-source" content="اپلیکیشن نمایشگر کد - پلتفرم عمارت">\n`;
+            const metadataInjection = `<!-- این فایل ${countFa}مین فایلی است که از اپلیکیشن نمایشگر کد پلتفرم عمارت دانلود شده است -->
+<meta name="platform-download-sequence" content="${countFa}">
+<meta name="download-source" content="اپلیکیشن نمایشگر کد - پلتفرم عمارت">
+`;
 
             let finalCode = code;
             if (finalCode.includes('<head>')) {
@@ -1205,6 +1692,401 @@ ${cleanText}`;
             URL.revokeObjectURL(link.href);
 
             showToast(`📥 ${fileName} دانلود شد`);
+        }
+
+        /* =========================================================
+           CHAT VIEWER ENGINE & GOOGLE AI STUDIO SMART ZOOM LOGIC
+           ========================================================= */
+        let rawChatText = "";
+        let parsedChatMessages = [];
+        let showThoughts = true;
+        let chatFontScale = 1.0;
+        const MIN_CHAT_SCALE = 0.70;
+        const MAX_CHAT_SCALE = 2.20;
+        let zoomToastTimeout = null;
+
+        function updateChatZoomUI() {
+            const pctVal = Math.round(chatFontScale * 100);
+            const pctStr = toPersianDigits(pctVal) + '٪';
+
+            const badge = document.getElementById('chatZoomValueBadge');
+            if (badge) badge.innerText = pctStr;
+
+            const chatContent = document.getElementById('chatContent');
+            if (chatContent) {
+                chatContent.style.setProperty('--chat-font-scale', chatFontScale.toString());
+            }
+
+            const overlay = document.getElementById('zoomToastOverlay');
+            if (overlay) {
+                overlay.innerText = 'زوم: ' + pctStr;
+                overlay.classList.add('show');
+                if (zoomToastTimeout) clearTimeout(zoomToastTimeout);
+                zoomToastTimeout = setTimeout(() => {
+                    overlay.classList.remove('show');
+                }, 1000);
+            }
+        }
+
+        function adjustChatZoom(delta) {
+            let newScale = chatFontScale + delta;
+            newScale = Math.min(MAX_CHAT_SCALE, Math.max(MIN_CHAT_SCALE, newScale));
+            if (Math.abs(newScale - chatFontScale) < 0.01) return;
+            chatFontScale = newScale;
+            updateChatZoomUI();
+        }
+
+        function resetChatZoom() {
+            chatFontScale = 1.0;
+            updateChatZoomUI();
+            showToast('🔍 زوم به ۱۰۰٪ بازنشانی شد');
+        }
+
+        function initChatZoomListeners() {
+            const scrollContainer = document.getElementById('chatScroll');
+            if (!scrollContainer) return;
+
+            // Wheel listener for desktop zoom (Ctrl + Wheel or standard scroll zoom)
+            scrollContainer.addEventListener('wheel', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    const delta = e.deltaY < 0 ? 0.08 : -0.08;
+                    adjustChatZoom(delta);
+                }
+            }, { passive: false });
+
+            // Touch Pinch-to-zoom for Mobile devices
+            let touchStartDist = 0;
+            let startScale = 1.0;
+
+            scrollContainer.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    touchStartDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    startScale = chatFontScale;
+                }
+            }, { passive: true });
+
+            scrollContainer.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && touchStartDist > 0) {
+                    const currentDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    if (currentDist > 0) {
+                        const scaleRatio = currentDist / touchStartDist;
+                        let targetScale = startScale * scaleRatio;
+                        targetScale = Math.min(MAX_CHAT_SCALE, Math.max(MIN_CHAT_SCALE, targetScale));
+                        chatFontScale = targetScale;
+                        updateChatZoomUI();
+                    }
+                }
+            }, { passive: true });
+
+            scrollContainer.addEventListener('touchend', (e) => {
+                if (e.touches.length < 2) touchStartDist = 0;
+            }, { passive: true });
+        }
+
+        function parseChatHistory(text) {
+            const parsed = [];
+            if (!text || !text.trim()) return parsed;
+
+            try {
+                const json = JSON.parse(text);
+
+                // 1. Google AI Studio System Instructions
+                if (json.systemInstruction && json.systemInstruction.text) {
+                    parsed.push({
+                        role: 'system',
+                        text: json.systemInstruction.text,
+                        meta: {}
+                    });
+                }
+
+                // 2. Google AI Studio Chunked Prompt
+                if (json.chunkedPrompt && Array.isArray(json.chunkedPrompt.chunks)) {
+                    json.chunkedPrompt.chunks.forEach(chunk => {
+                        if (chunk.role && chunk.text) {
+                            parsed.push({
+                                role: chunk.role,
+                                text: chunk.text,
+                                meta: {
+                                    tokenCount: chunk.tokenCount || '',
+                                    isThought: !!chunk.isThought,
+                                    finishReason: chunk.finishReason || ''
+                                }
+                            });
+                        }
+                    });
+                } else if (json.messages && Array.isArray(json.messages)) {
+                    // 3. ChatGPT or standard JSON messages array
+                    json.messages.forEach(m => {
+                        const contentText = typeof m.content === 'string' ? m.content : (m.text || '');
+                        if (m.role && contentText) {
+                            parsed.push({ role: m.role, text: contentText, meta: {} });
+                        }
+                    });
+                } else {
+                    // 4. Generic JSON key-value array
+                    for (const key in json) {
+                        const val = json[key];
+                        if (val && typeof val === 'object' && val.role && (val.text || val.content)) {
+                            parsed.push({ role: val.role, text: val.text || val.content, meta: {} });
+                        }
+                    }
+                }
+
+                if (parsed.length > 0) return parsed;
+            } catch (e) {
+                appendLog(`JSON parse error in chat file: ${e.message}`, "info");
+            }
+
+            // Fallback: Plain text line parser
+            const lines = text.split(/\r?\n/);
+            let currentRole = 'user';
+            let currentText = [];
+            let inThought = false;
+
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                const roleMatch = trimmed.match(/^(role|کاربر|مدل|سیستم)\s*[:：]\s*(\w+)/i);
+                if (roleMatch) {
+                    if (currentText.length > 0) {
+                        parsed.push({ role: currentRole, text: currentText.join('\n'), meta: { isThought: inThought } });
+                    }
+                    currentRole = roleMatch[2].toLowerCase();
+                    currentText = [];
+                    inThought = false;
+                    return;
+                }
+                if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+                    inThought = true;
+                }
+                currentText.push(line);
+            });
+
+            if (currentText.length > 0) {
+                parsed.push({ role: currentRole, text: currentText.join('\n'), meta: { isThought: inThought } });
+            }
+
+            return parsed.filter(m => m.text && m.text.trim().length > 0);
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatMessageText(text) {
+            if (!text) return '';
+            let escaped = escapeHtml(text);
+
+            // Green bold text formatting (**text**)
+            escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<span class="bold-green">$1</span>');
+
+            // Format code blocks (```code```)
+            escaped = escaped.replace(/```([a-zA-Z0-9]*)\n?([\s\S]*?)```/g, (match, lang, code) => {
+                return `<pre class="msg-code-block"><code>${code.trim()}</code></pre>`;
+            });
+
+            return escaped;
+        }
+
+        function renderChatMessages(msgs, searchQuery = '') {
+            const chatContent = document.getElementById('chatContent');
+            const chatMsgCount = document.getElementById('chatMsgCount');
+            const chatUserCount = document.getElementById('chatUserCount');
+            const chatModelCount = document.getElementById('chatModelCount');
+            const chatSizeInfo = document.getElementById('chatSizeInfo');
+
+            if (!msgs || msgs.length === 0) {
+                chatContent.innerHTML = `
+                    <div class="placeholder-chat">
+                        <i class="fas fa-comments"></i>
+                        پیامی یافت نشد. یک فایل چت JSON یا TXT بارگذاری کنید.
+                    </div>`;
+                if (chatMsgCount) chatMsgCount.innerText = '۰';
+                if (chatUserCount) chatUserCount.innerText = '۰';
+                if (chatModelCount) chatModelCount.innerText = '۰';
+                if (chatSizeInfo) chatSizeInfo.innerText = '۰ KB';
+                return;
+            }
+
+            let filtered = msgs;
+            if (!showThoughts) {
+                filtered = msgs.filter(m => !m.meta || !m.meta.isThought);
+            }
+
+            const userCount = filtered.filter(m => m.role === 'user' || m.role === 'human').length;
+            const modelCount = filtered.filter(m => m.role === 'model' || m.role === 'assistant' || m.role === 'ai').length;
+
+            if (chatMsgCount) chatMsgCount.innerText = toPersianDigits(filtered.length);
+            if (chatUserCount) chatUserCount.innerText = toPersianDigits(userCount);
+            if (chatModelCount) chatModelCount.innerText = toPersianDigits(modelCount);
+            if (chatSizeInfo) {
+                const kb = (rawChatText.length / 1024).toFixed(1);
+                chatSizeInfo.innerText = `${toPersianDigits(kb)} KB`;
+            }
+
+            const queryLower = searchQuery.trim().toLowerCase();
+
+            let html = '';
+            filtered.forEach((msg, idx) => {
+                const role = msg.role || 'unknown';
+                const text = msg.text || '';
+                const meta = msg.meta || {};
+
+                let cardClass = 'user';
+                let authorTitle = 'کاربر';
+                let iconClass = 'fa-user';
+
+                if (role === 'model' || role === 'assistant' || role === 'ai') {
+                    cardClass = 'model';
+                    authorTitle = 'مدل (AI)';
+                    iconClass = 'fa-robot';
+                } else if (role === 'system') {
+                    cardClass = 'system';
+                    authorTitle = 'دستور سیستم';
+                    iconClass = 'fa-cog';
+                }
+
+                if (meta.isThought) {
+                    cardClass = 'thought';
+                    authorTitle = 'فکر و استدلال مدل';
+                    iconClass = 'fa-brain';
+                }
+
+                let formattedBody = formatMessageText(text);
+
+                if (queryLower) {
+                    const reg = new RegExp(`(${searchQuery.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`, 'gi');
+                    formattedBody = formattedBody.replace(reg, '<mark class="search-highlight">$1</mark>');
+                }
+
+                const tokenBadge = meta.tokenCount ? `<span class="msg-tag">🔢 ${toPersianDigits(meta.tokenCount)} توکن</span>` : '';
+                const finishBadge = meta.finishReason ? `<span class="msg-tag">🏁 ${meta.finishReason}</span>` : '';
+
+                html += `
+                <div class="msg-card ${cardClass}" id="msgCard_${idx}">
+                    <div class="msg-avatar">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                    <div class="msg-body">
+                        <div class="msg-header">
+                            <div class="msg-author">
+                                ${authorTitle}
+                                ${tokenBadge}
+                                ${finishBadge}
+                            </div>
+                            <div class="msg-actions">
+                                <button class="msg-copy-btn" onclick="copyChatMessageText(${idx})">
+                                    <i class="fas fa-copy"></i> کپی
+                                </button>
+                            </div>
+                        </div>
+                        <div class="msg-text">${formattedBody}</div>
+                    </div>
+                </div>`;
+            });
+
+            chatContent.innerHTML = html;
+        }
+
+        async function copyChatMessageText(index) {
+            if (!parsedChatMessages || !parsedChatMessages[index]) return;
+            const text = parsedChatMessages[index].text;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    showToast('📋 متن پیام کپی شد');
+                } else {
+                    showToast('کپی انجام شد');
+                }
+            } catch (err) {
+                showToast('خطا در کپی پیام');
+            }
+        }
+
+        function handleChatFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                rawChatText = content;
+                localStorage.setItem('html_viewer_saved_chat', content);
+                parsedChatMessages = parseChatHistory(content);
+                renderChatMessages(parsedChatMessages, '');
+                showToast(`💬 چت ${file.name} بارگذاری شد`);
+                appendLog(`Loaded chat file: ${file.name} (${content.length} chars)`, "success");
+            };
+            reader.readAsText(file, 'UTF-8');
+            event.target.value = '';
+        }
+
+        function loadSampleChat() {
+            const sample = {
+                "runSettings": { "temperature": 1.0, "model": "models/gemini-2.5-pro" },
+                "systemInstruction": { "text": "بخش ۱: هویت و دستور اصلی (Prime Directive)\n• هویت مطلق تو: تو یک دستیار هوشمند و تحلیل‌گر حرفه‌ای پلتفرم عمارت هستی." },
+                "chunkedPrompt": {
+                    "chunks": [
+                        { "text": "لطفاً عملکرد برنامه و منطق زوم جدید چت را بررسی کن.", "role": "user", "tokenCount": 12 },
+                        { "text": "**تحلیل دقیق مسئله**\nدر سیستم قبلی زوم با transform scale انجام می‌شد که باعث به‌هم‌ریختگی layout می‌گردید. اکنون منطق زوم بر پایه Dynamic Font Scaling پیاده‌سازی شد.", "role": "model", "tokenCount": 280, "isThought": true },
+                        { "text": "منطق زوم هوشمند جدید چت با موفقیت فعال شد! اکنون متن‌ها در تمام ابعاد موبایل و دسکتاپ خوانا، روان و بدون اسکرول افقی اضافی نمایش داده می‌شوند.", "role": "model", "finishReason": "STOP", "tokenCount": 45 }
+                    ]
+                }
+            };
+            const jsonStr = JSON.stringify(sample, null, 2);
+            rawChatText = jsonStr;
+            localStorage.setItem('html_viewer_saved_chat', jsonStr);
+            parsedChatMessages = parseChatHistory(jsonStr);
+            renderChatMessages(parsedChatMessages, '');
+            showToast('📝 چت نمونه بارگذاری شد');
+        }
+
+        function clearChatEditor() {
+            if (!rawChatText) return;
+            if (confirm('آیا از پاکسازی تمام پیام‌های چت اطمینان دارید؟')) {
+                rawChatText = "";
+                parsedChatMessages = [];
+                localStorage.removeItem('html_viewer_saved_chat');
+                renderChatMessages([], '');
+                showToast('🗑️ چت پاکسازی شد');
+            }
+        }
+
+        function toggleThoughtVisibility() {
+            showThoughts = !showThoughts;
+            const btn = document.getElementById('chatToggleThoughtBtn');
+            if (btn) {
+                btn.innerText = showThoughts ? '🧠 افکار مدل: نمایان' : '🧠 افکار مدل: پنهان';
+                btn.style.color = showThoughts ? '#10b981' : '#64748b';
+            }
+            renderChatMessages(parsedChatMessages, document.getElementById('chatSearchInput')?.value || '');
+        }
+
+        function onChatSearchInput() {
+            const input = document.getElementById('chatSearchInput');
+            const clearBtn = document.getElementById('chatClearSearchBtn');
+            const val = input ? input.value : '';
+            if (clearBtn) clearBtn.style.display = val ? 'inline-block' : 'none';
+            renderChatMessages(parsedChatMessages, val);
+        }
+
+        function clearChatSearch() {
+            const input = document.getElementById('chatSearchInput');
+            if (input) input.value = '';
+            const clearBtn = document.getElementById('chatClearSearchBtn');
+            if (clearBtn) clearBtn.style.display = 'none';
+            renderChatMessages(parsedChatMessages, '');
         }
 
         if ('serviceWorker' in navigator) {
