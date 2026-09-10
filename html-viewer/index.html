@@ -967,9 +967,9 @@
             <button class="tab-btn" id="tabBtnText" onclick="switchTab('text')">
                 📄 ابزار متن ساده
             </button>
-            <button class="tab-btn" id="tabBtnChat" onclick="switchTab('chat')">
-                💬 نمایشگر چت (AI Studio)
-            </button>
+            <a href="chat.html" class="tab-btn" style="text-decoration: none; color: inherit;">
+                💬 نمایشگر چت (AI Studio) ↗
+            </a>
         </div>
 
         <!-- TAB 1: HTML Viewer Panel -->
@@ -1035,8 +1035,13 @@
                 <div class="tool-banner-title">
                     💬 نمایشگر چت و Google AI Studio
                 </div>
-                <div class="tool-banner-badge">
-                    تحلیل چت و افکار AI
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <a href="chat.html" target="_blank" class="btn-small" style="background: #38bdf8; color: #0f172a; font-weight: bold; text-decoration: none; padding: 6px 14px; border-radius: 10px;">
+                        🖥️ باز کردن در صفحه مجزا و کامل
+                    </a>
+                    <div class="tool-banner-badge">
+                        تحلیل چت و افکار AI
+                    </div>
                 </div>
             </div>
 

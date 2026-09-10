@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" href="favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>نمایشگر چت گوگل استودیو و ChatGPT - عمارت</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-user: #2563eb;
+            --accent-model: #10b981;
+            --accent-thought: #8b5cf6;
+            --border-color: #334155;
+            --code-bg: #020617;
+            --chat-font-scale: 1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* هدر و نوار ابزار اصلی */
+        header {
+            background-color: #1e293b;
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #38bdf8;
+        }
+
+        .logo-title img {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: #334155;
+            color: var(--text-main);
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background-color: #475569;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-user);
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-sample {
+            background-color: #059669;
+        }
+        .btn-sample:hover {
+            background-color: #047857;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-back {
+            background-color: #475569;
+        }
+        .btn-back:hover {
+            background-color: #64748b;
+        }
+
+        /* نشانگر وضعیت زوم گوگل استودیو (بدون دکمه‌های +- ) */
+        .zoom-indicator-box {
+            display: flex;
+            align-items: center;
+            background-color: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 4px 10px;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .zoom-level {
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+        /* بخش جستجو */
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            min-width: 180px;
+        }
+
+        .search-box input {
+            background-color: #0f172a;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 30px 6px 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: #38bdf8;
+        }
+
+        .search-box i.search-icon {
+            position: absolute;
+            right: 10px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            pointer-events: none;
+        }
+
+        .search-box .clear-btn {
+            position: absolute;
+            left: 8px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        /* نوار آمار */
+        .stats-bar {
+            background-color: #0f172a;
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 20px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-value {
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+        /* کانتینر اصلی چت و زوم */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            touch-action: pan-y pinch-zoom;
+        }
+
+        .chat-wrapper {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            font-size: calc(0.95rem * var(--chat-font-scale));
+            line-height: 1.65;
+            transition: font-size 0.12s ease-out;
+        }
+
+        /* کارت‌های پیام */
+        .message-card {
+            background-color: var(--card-bg);
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 8px;
+            font-size: calc(0.82rem * var(--chat-font-scale));
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .role-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+        }
+
+        .role-user { color: #60a5fa; }
+        .role-model { color: #34d399; }
+        .role-thought { color: #c084fc; }
+        .role-system { color: #f2b00f; }
+
+        .meta-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: calc(0.75rem * var(--chat-font-scale));
+            color: var(--text-muted);
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: calc(0.78rem * var(--chat-font-scale));
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #38bdf8;
+        }
+
+        .message-body {
+            line-height: 1.65;
+            white-space: pre-wrap;
+            color: #e2e8f0;
+        }
+
+        /* هایلایت‌ها و فرمت متن */
+        .bold-green {
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        .search-highlight {
+            background-color: #f59e0b;
+            color: #000;
+            padding: 0 3px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: calc(0.85rem * var(--chat-font-scale));
+            margin: 8px 0;
+            color: #38bdf8;
+        }
+
+        /* کارت فکر (Thought) */
+        .message-card.thought-card {
+            border-right: 4px solid var(--accent-thought);
+            background-color: #171e2e;
+        }
+
+        .message-card.system-card {
+            border-right: 4px solid #f2b00f;
+            background-color: #211c10;
+        }
+
+        /* پیام خالی */
+        .empty-state {
+            text-align: center;
+            margin: auto;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #334155;
+        }
+
+        /* ورودی فایل مخفی */
+        #fileInput {
+            display: none;
+        }
+
+        /* Zoom Floating Overlay Toast */
+        .zoom-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            color: #38bdf8;
+            border: 1px solid #0284c7;
+            padding: 8px 20px;
+            border-radius: 24px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+        }
+
+        .zoom-toast.show {
+            opacity: 1;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 50%;
+            transform: translateX(50%) translateY(100px);
+            background: #1e293b;
+            color: #ffffff;
+            border: 1px solid #3b82f6;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            z-index: 100001;
+            opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+            pointer-events: none;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(50%) translateY(0);
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            header { padding: 10px 14px; gap: 8px; }
+            .toolbar { width: 100%; justify-content: space-between; }
+            .search-box { flex: 1; min-width: 140px; }
+            .stats-bar { padding: 6px 14px; gap: 10px; font-size: 0.75rem; }
+            .chat-container { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- هدر اصلی -->
+    <header>
+        <div class="logo-title">
+            <img src="icon-192.png" alt="آیکون چت">
+            <span>نمایشگر چت گوگل استودیو</span>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                <i class="fa-solid fa-file-import"></i> بارگذاری فایل JSON/TXT
+            </button>
+            <input type="file" id="fileInput" accept=".json,.txt" onchange="handleFileUpload(event)">
+
+            <button class="btn btn-sample" onclick="loadSampleChat()">
+                <i class="fa-solid fa-file-code"></i> چت نمونه
+            </button>
+
+            <button class="btn" id="btnToggleThought" onclick="toggleThought()">
+                <i class="fa-solid fa-brain"></i> افکار (فعال)
+            </button>
+
+            <button class="btn btn-danger" onclick="clearData()">
+                <i class="fa-solid fa-trash"></i> پاکسازی
+            </button>
+
+            <!-- نشانگر زوم گوگل استودیو بدون دکمه‌های +- -->
+            <div class="zoom-indicator-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>زوم:</span>
+                <span class="zoom-level" id="zoomVal">100%</span>
+            </div>
+
+            <!-- جستجو -->
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="searchInput" placeholder="جستجو در متن..." oninput="filterMessages()">
+                <button id="clearSearchBtn" class="clear-btn" onclick="clearSearch()">✖</button>
+            </div>
+
+            <a href="index.html" class="btn btn-back">
+                <i class="fa-solid fa-arrow-left"></i> بازگشت
+            </a>
+        </div>
+    </header>
+
+    <!-- نوار آمار -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <span>تعداد کل پیام‌ها:</span>
+            <span class="stat-value" id="totalMsgs">۰</span>
+        </div>
+        <div class="stat-item">
+            <span>کاربر:</span>
+            <span class="stat-value" id="userMsgs">۰</span>
+        </div>
+        <div class="stat-item">
+            <span>مدل:</span>
+            <span class="stat-value" id="modelMsgs">۰</span>
+        </div>
+        <div class="stat-item">
+            <span>حجم کل فایل:</span>
+            <span class="stat-value" id="fileSize">۰ KB</span>
+        </div>
+    </div>
+
+    <!-- کانتینر اصلی نمایش چت -->
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-wrapper" id="chatWrapper">
+            <div class="empty-state">
+                <i class="fa-solid fa-folder-open"></i>
+                <p>لطفاً یک فایل تاریخچه چت (JSON یا TXT) بارگذاری کنید یا دکمه «چت نمونه» را بزنید.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zoom Toast Overlay -->
+    <div class="zoom-toast" id="zoomToast">زوم: ۱۰۰٪</div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let rawContent = "";
+        let parsedMessages = [];
+        let showThoughtMode = true;
+        let fontScale = 1.0;
+        const MIN_SCALE = 0.70;
+        const MAX_SCALE = 2.20;
+        let zoomToastTimer = null;
+
+        function toPersianDigits(num) {
+            return String(num).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function updateZoomUI() {
+            const pct = Math.round(fontScale * 100);
+            const pctStr = toPersianDigits(pct) + '%';
+            document.getElementById('zoomVal').innerText = pctStr;
+
+            const wrapper = document.getElementById('chatWrapper');
+            if (wrapper) {
+                wrapper.style.setProperty('--chat-font-scale', fontScale.toString());
+            }
+
+            const toast = document.getElementById('zoomToast');
+            if (toast) {
+                toast.innerText = 'زوم: ' + pctStr;
+                toast.classList.add('show');
+                if (zoomToastTimer) clearTimeout(zoomToastTimer);
+                zoomToastTimer = setTimeout(() => toast.classList.remove('show'), 1000);
+            }
+        }
+
+        function changeZoom(delta) {
+            let next = fontScale + delta;
+            next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, next));
+            if (Math.abs(next - fontScale) < 0.01) return;
+            fontScale = next;
+            updateZoomUI();
+        }
+
+        function initZoomEvents() {
+            const container = document.getElementById('chatContainer');
+            if (!container) return;
+
+            container.addEventListener('wheel', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    changeZoom(e.deltaY < 0 ? 0.08 : -0.08);
+                }
+            }, { passive: false });
+
+            let touchStartDist = 0;
+            let startScale = 1.0;
+
+            container.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    touchStartDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    startScale = fontScale;
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && touchStartDist > 0) {
+                    const currentDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    if (currentDist > 0) {
+                        let target = startScale * (currentDist / touchStartDist);
+                        target = Math.min(MAX_SCALE, Math.max(MIN_SCALE, target));
+                        fontScale = target;
+                        updateZoomUI();
+                    }
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchend', (e) => {
+                if (e.touches.length < 2) touchStartDist = 0;
+            }, { passive: true });
+        }
+
+        function parseChatData(text) {
+            const list = [];
+            if (!text || !text.trim()) return list;
+
+            try {
+                const json = JSON.parse(text);
+
+                // 1. System Instruction
+                if (json.systemInstruction && json.systemInstruction.text) {
+                    list.push({ role: 'system', text: json.systemInstruction.text, meta: {} });
+                }
+
+                // 2. Google AI Studio Prompt
+                if (json.chunkedPrompt && Array.isArray(json.chunkedPrompt.chunks)) {
+                    json.chunkedPrompt.chunks.forEach(c => {
+                        if (c.role && c.text) {
+                            list.push({
+                                role: c.role,
+                                text: c.text,
+                                meta: { tokenCount: c.tokenCount, isThought: !!c.isThought, finishReason: c.finishReason }
+                            });
+                        }
+                    });
+                } else if (json.messages && Array.isArray(json.messages)) {
+                    // 3. ChatGPT
+                    json.messages.forEach(m => {
+                        const content = typeof m.content === 'string' ? m.content : (m.text || '');
+                        if (m.role && content) {
+                            list.push({ role: m.role, text: content, meta: {} });
+                        }
+                    });
+                } else {
+                    for (const k in json) {
+                        const v = json[k];
+                        if (v && typeof v === 'object' && v.role && (v.text || v.content)) {
+                            list.push({ role: v.role, text: v.text || v.content, meta: {} });
+                        }
+                    }
+                }
+
+                if (list.length > 0) return list;
+            } catch (e) {}
+
+            // Fallback plain text lines
+            const lines = text.split(/\r?\n/);
+            let role = 'user';
+            let buf = [];
+            let inThought = false;
+
+            lines.forEach(l => {
+                const trimmed = l.trim();
+                const m = trimmed.match(/^(role|کاربر|مدل|سیستم)\s*[:：]\s*(\w+)/i);
+                if (m) {
+                    if (buf.length > 0) list.push({ role, text: buf.join('\n'), meta: { isThought: inThought } });
+                    role = m[2].toLowerCase();
+                    buf = [];
+                    inThought = false;
+                    return;
+                }
+                if (trimmed.startsWith('**') && trimmed.endsWith('**')) inThought = true;
+                buf.push(l);
+            });
+
+            if (buf.length > 0) list.push({ role, text: buf.join('\n'), meta: { isThought: inThought } });
+            return list.filter(m => m.text && m.text.trim().length > 0);
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function formatBody(text) {
+            if (!text) return '';
+            let html = escapeHtml(text);
+            html = html.replace(/\*\*(.*?)\*\*/g, '<span class="bold-green">$1</span>');
+            html = html.replace(/```([a-zA-Z0-9]*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+            return html;
+        }
+
+        function renderMessages(query = '') {
+            const wrapper = document.getElementById('chatWrapper');
+            if (!parsedMessages || parsedMessages.length === 0) {
+                wrapper.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <p>هیچ پیامی برای نمایش وجود ندارد.</p>
+                    </div>`;
+                document.getElementById('totalMsgs').innerText = '۰';
+                document.getElementById('userMsgs').innerText = '۰';
+                document.getElementById('modelMsgs').innerText = '۰';
+                document.getElementById('fileSize').innerText = '۰ KB';
+                return;
+            }
+
+            let filtered = parsedMessages;
+            if (!showThoughtMode) {
+                filtered = filtered.filter(m => !m.meta || !m.meta.isThought);
+            }
+
+            const userCount = filtered.filter(m => m.role === 'user' || m.role === 'human').length;
+            const modelCount = filtered.filter(m => m.role === 'model' || m.role === 'assistant' || m.role === 'ai').length;
+
+            document.getElementById('totalMsgs').innerText = toPersianDigits(filtered.length);
+            document.getElementById('userMsgs').innerText = toPersianDigits(userCount);
+            document.getElementById('modelMsgs').innerText = toPersianDigits(modelCount);
+            document.getElementById('fileSize').innerText = toPersianDigits((rawContent.length / 1024).toFixed(1)) + ' KB';
+
+            const qLower = query.trim().toLowerCase();
+            let html = '';
+
+            filtered.forEach((msg, idx) => {
+                const role = msg.role || 'user';
+                const meta = msg.meta || {};
+
+                let cardClass = '';
+                let roleClass = 'role-user';
+                let roleName = 'کاربر';
+                let iconClass = 'fa-user';
+
+                if (role === 'model' || role === 'assistant' || role === 'ai') {
+                    roleClass = 'role-model';
+                    roleName = 'مدل (AI)';
+                    iconClass = 'fa-robot';
+                } else if (role === 'system') {
+                    cardClass = 'system-card';
+                    roleClass = 'role-system';
+                    roleName = 'دستور سیستم';
+                    iconClass = 'fa-cog';
+                }
+
+                if (meta.isThought) {
+                    cardClass = 'thought-card';
+                    roleClass = 'role-thought';
+                    roleName = 'فکر و استدلال مدل';
+                    iconClass = 'fa-brain';
+                }
+
+                let bodyHtml = formatBody(msg.text);
+                if (qLower) {
+                    const reg = new RegExp(`(${query.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`, 'gi');
+                    bodyHtml = bodyHtml.replace(reg, '<mark class="search-highlight">$1</mark>');
+                }
+
+                const tokenTag = meta.tokenCount ? `<span>🔢 ${toPersianDigits(meta.tokenCount)} توکن</span>` : '';
+
+                html += `
+                <div class="message-card ${cardClass}">
+                    <div class="message-header">
+                        <div class="role-badge ${roleClass}">
+                            <i class="fa-solid ${iconClass}"></i>
+                            <span>${roleName}</span>
+                        </div>
+                        <div class="meta-info">
+                            ${tokenTag}
+                            <button class="copy-btn" onclick="copyText(${idx})">
+                                <i class="fa-solid fa-copy"></i> کپی
+                            </button>
+                        </div>
+                    </div>
+                    <div class="message-body">${bodyHtml}</div>
+                </div>`;
+            });
+
+            wrapper.innerHTML = html;
+        }
+
+        async function copyText(index) {
+            if (!parsedMessages[index]) return;
+            try {
+                await navigator.clipboard.writeText(parsedMessages[index].text);
+                showToast('📋 پیام کپی شد');
+            } catch (e) {
+                showToast('خطا در کپی');
+            }
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                rawContent = e.target.result;
+                localStorage.setItem('html_viewer_saved_chat', rawContent);
+                parsedMessages = parseChatData(rawContent);
+                renderMessages('');
+                showToast(`💬 چت ${file.name} با موفقیت بارگذاری شد`);
+            };
+            reader.readAsText(file, 'UTF-8');
+            event.target.value = '';
+        }
+
+        function loadSampleChat() {
+            const sample = {
+                "systemInstruction": { "text": "بخش ۱: هویت اصلی - تو دستیار هوشمند و تحلیل‌گر ارشد پلتفرم عمارت هستی." },
+                "chunkedPrompt": {
+                    "chunks": [
+                        { "text": "سلام! لطفاً عملکرد صفحه مجزای چت را بررسی کن.", "role": "user", "tokenCount": 12 },
+                        { "text": "**بررسی ساختار مجزا**\nصفحه مجزای چت با هدر کامل، دکمه‌های کنترلی، تم تاریک کامل (#0f172a) و زوم هوشمند گوگل استودیو طراحی شد.", "role": "model", "tokenCount": 210, "isThought": true },
+                        { "text": "صفحه مجزا و عریض چت با موفقیت آماده شد! زوم نرم گوگل استودیو بدون نیاز به دکمه‌های +- و صرفاً با ژست لمسی دو انگشتی یا چرخ موس فعال است.", "role": "model", "tokenCount": 35 }
+                    ]
+                }
+            };
+            rawContent = JSON.stringify(sample, null, 2);
+            localStorage.setItem('html_viewer_saved_chat', rawContent);
+            parsedMessages = parseChatData(rawContent);
+            renderMessages('');
+            showToast('📝 چت نمونه بارگذاری شد');
+        }
+
+        function clearData() {
+            if (!rawContent) return;
+            if (confirm('آیا از پاکسازی چت مطمئن هستید؟')) {
+                rawContent = "";
+                parsedMessages = [];
+                localStorage.removeItem('html_viewer_saved_chat');
+                renderMessages('');
+                showToast('🗑️ چت پاکسازی شد');
+            }
+        }
+
+        function toggleThought() {
+            showThoughtMode = !showThoughtMode;
+            const btn = document.getElementById('btnToggleThought');
+            btn.innerHTML = showThoughtMode ? '<i class="fa-solid fa-brain"></i> افکار (فعال)' : '<i class="fa-solid fa-brain"></i> افکار (مخفی)';
+            renderMessages(document.getElementById('searchInput').value);
+        }
+
+        function filterMessages() {
+            const val = document.getElementById('searchInput').value;
+            document.getElementById('clearSearchBtn').style.display = val ? 'block' : 'none';
+            renderMessages(val);
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearSearchBtn').style.display = 'none';
+            renderMessages('');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initZoomEvents();
+            const saved = localStorage.getItem('html_viewer_saved_chat');
+            if (saved) {
+                rawContent = saved;
+                parsedMessages = parseChatData(saved);
+                renderMessages('');
+            }
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('../sw.js').catch(err => console.error(err));
+        }
+    </script>
+</body>
+</html>
