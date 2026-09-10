@@ -722,7 +722,8 @@
             const qLower = query.trim().toLowerCase();
             let html = '';
 
-            filtered.forEach((msg, idx) => {
+            filtered.forEach((msg) => {
+                const realIndex = parsedMessages.indexOf(msg);
                 const role = msg.role || 'user';
                 const meta = msg.meta || {};
 
@@ -766,7 +767,7 @@
                         </div>
                         <div class="meta-info">
                             ${tokenTag}
-                            <button class="copy-btn" onclick="copyText(${idx})">
+                            <button class="copy-btn" onclick="copyText(${realIndex})">
                                 <i class="fa-solid fa-copy"></i> کپی
                             </button>
                         </div>
@@ -827,8 +828,13 @@
                 return;
             }
 
+            let filtered = parsedMessages;
+            if (!showThoughtMode) {
+                filtered = filtered.filter(m => !m.meta || !m.meta.isThought);
+            }
+
             let fullText = "";
-            parsedMessages.forEach(msg => {
+            filtered.forEach(msg => {
                 let roleTitle = 'کاربر';
                 if (msg.role === 'model' || msg.role === 'assistant' || msg.role === 'ai') roleTitle = 'مدل (AI)';
                 else if (msg.role === 'system') roleTitle = 'دستور سیستم';
