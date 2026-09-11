@@ -941,14 +941,17 @@
             outputContent.innerText = "در حال ارتباط با API رسمی https://jules.googleapis.com/v1alpha/sessions ...";
 
             const payload = {
-                prompt: promptText,
-                sourceContext: {
+                prompt: promptText
+            };
+
+            if (repoVal) {
+                payload.sourceContext = {
                     source: repoVal,
                     githubRepoContext: {
-                        startingBranch: branchVal
+                        startingBranch: branchVal || "main"
                     }
-                }
-            };
+                };
+            }
 
             try {
                 const response = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
@@ -984,7 +987,13 @@
             } catch (err) {
                 console.error("Create Session Error:", err);
                 outputTitleText.innerText = "🔴 خطای ارتباط با سرور جولز";
-                outputContent.innerText = `خطا: ${err.message}\n\nاطلاعات ارسال شده:\n` + JSON.stringify(payload, null, 2);
+
+                let friendlyHelp = "";
+                if (err.message && err.message.includes("Requested entity was not found")) {
+                    friendlyHelp = "\n\n💡 **راهنما:** خطای «Requested entity was not found» به این معنی است که مخزن (Source) وارد شده در اکانت جولز گوگل شما یافت نشد. لطفاً ابتدا در سایت رسمی jules.google.com مخزن گیت‌هاب خود را متصل کنید یا فیلد مخزن را برای درخواست‌های عمومی خالی بگذارید.";
+                }
+
+                outputContent.innerText = `خطا: ${err.message}${friendlyHelp}\n\nاطلاعات ارسال شده:\n` + JSON.stringify(payload, null, 2);
 
                 // ذخیره جلسه محلی حالت خطا
                 saveLocalSession({
