@@ -904,6 +904,35 @@
             background: #ffffff;
         }
 
+        /* Editor Stats Bar Styles */
+        .editor-stats-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            padding: 6px 14px;
+            margin-top: -10px;
+            font-size: 0.8rem;
+            color: #475569;
+            font-weight: 600;
+            flex-wrap: wrap;
+        }
+
+        .editor-stat-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .editor-stat-item strong {
+            color: #0f172a;
+            font-weight: 800;
+        }
+
         /* Format Selector Dropdown Styles */
         .format-selector-container {
             position: relative;
@@ -1146,6 +1175,11 @@
                     </div>
                 </div>
                 <textarea id="codeEditor" class="code-mode" placeholder=" کدهای HTML خود را اینجا بگذارید..." spellcheck="false"></textarea>
+                <div class="editor-stats-bar" id="htmlEditorStats">
+                    <span class="editor-stat-item">📏 کاراکتر: <strong id="htmlCharCount">۰</strong></span>
+                    <span class="editor-stat-item">📝 کلمات: <strong id="htmlWordCount">۰</strong></span>
+                    <span class="editor-stat-item">📦 حجم: <strong id="htmlByteSize">۰ B</strong></span>
+                </div>
             </div>
 
             <div class="button-group">
@@ -1179,6 +1213,11 @@
                     </div>
                 </div>
                 <textarea id="textEditor" class="text-mode" placeholder=" متون، یادداشت‌ها یا مقالات خود را اینجا بنویسید یا کپی کنید..." spellcheck="false"></textarea>
+                <div class="editor-stats-bar" id="textEditorStats">
+                    <span class="editor-stat-item">📏 کاراکتر: <strong id="textCharCount">۰</strong></span>
+                    <span class="editor-stat-item">📝 کلمات: <strong id="textWordCount">۰</strong></span>
+                    <span class="editor-stat-item">📦 حجم: <strong id="textByteSize">۰ B</strong></span>
+                </div>
             </div>
 
             <!-- Format Selector with Live Search Dropdown -->
@@ -1424,6 +1463,9 @@
             const savedText = localStorage.getItem('html_viewer_saved_text');
             if (savedText) textEditor.value = savedText;
 
+            updateEditorStats('html');
+            updateEditorStats('text');
+
             const savedTab = localStorage.getItem('html_viewer_active_tab');
             if (savedTab && (savedTab === 'html' || savedTab === 'text' || savedTab === 'chat')) {
                 switchTab(savedTab);
@@ -1446,13 +1488,65 @@
         let aiTitleTimerHtml = null;
         let aiTitleTimerText = null;
 
+        function calculateUtf8Bytes(str) {
+            if (!str) return 0;
+            return new Blob([str]).size;
+        }
+
+        function formatByteSize(bytes) {
+            if (bytes === 0) return '۰ B';
+            if (bytes < 1024) return `${toPersianDigits(bytes)} B`;
+            const kb = (bytes / 1024).toFixed(1);
+            if (bytes < 1024 * 1024) return `${toPersianDigits(kb)} KB`;
+            const mb = (bytes / (1024 * 1024)).toFixed(1);
+            return `${toPersianDigits(mb)} MB`;
+        }
+
+        function countWords(str) {
+            if (!str || !str.trim()) return 0;
+            const words = str.trim().split(/\s+/);
+            return words.filter(w => w.length > 0).length;
+        }
+
+        function updateEditorStats(type) {
+            if (type === 'html') {
+                const text = codeEditor.value || '';
+                const charCount = text.length;
+                const wordCount = countWords(text);
+                const byteSize = calculateUtf8Bytes(text);
+
+                const charEl = document.getElementById('htmlCharCount');
+                const wordEl = document.getElementById('htmlWordCount');
+                const byteEl = document.getElementById('htmlByteSize');
+
+                if (charEl) charEl.innerText = toPersianDigits(charCount);
+                if (wordEl) wordEl.innerText = toPersianDigits(wordCount);
+                if (byteEl) byteEl.innerText = formatByteSize(byteSize);
+            } else {
+                const text = textEditor.value || '';
+                const charCount = text.length;
+                const wordCount = countWords(text);
+                const byteSize = calculateUtf8Bytes(text);
+
+                const charEl = document.getElementById('textCharCount');
+                const wordEl = document.getElementById('textWordCount');
+                const byteEl = document.getElementById('textByteSize');
+
+                if (charEl) charEl.innerText = toPersianDigits(charCount);
+                if (wordEl) wordEl.innerText = toPersianDigits(wordCount);
+                if (byteEl) byteEl.innerText = formatByteSize(byteSize);
+            }
+        }
+
         codeEditor.addEventListener('input', () => {
             localStorage.setItem('html_viewer_saved_code', codeEditor.value);
+            updateEditorStats('html');
             triggerBackgroundAiTitle('html');
         });
 
         textEditor.addEventListener('input', () => {
             localStorage.setItem('html_viewer_saved_text', textEditor.value);
+            updateEditorStats('text');
             triggerBackgroundAiTitle('text');
         });
 
@@ -1711,9 +1805,11 @@ ${cleanText}`;
                         target.value = text;
                         if (targetId === 'codeEditor') {
                             localStorage.setItem('html_viewer_saved_code', text);
+                            updateEditorStats('html');
                             triggerBackgroundAiTitle('html');
                         } else {
                             localStorage.setItem('html_viewer_saved_text', text);
+                            updateEditorStats('text');
                             triggerBackgroundAiTitle('text');
                         }
                         showToast('📥 متن با موفقیت جای‌گذاری شد');
@@ -1735,8 +1831,10 @@ ${cleanText}`;
                 target.value = '';
                 if (targetId === 'codeEditor') {
                     localStorage.removeItem('html_viewer_saved_code');
+                    updateEditorStats('html');
                 } else {
                     localStorage.removeItem('html_viewer_saved_text');
+                    updateEditorStats('text');
                 }
                 showToast('🗑️ پاکسازی شد');
             }
