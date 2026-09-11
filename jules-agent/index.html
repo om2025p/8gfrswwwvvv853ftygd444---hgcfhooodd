@@ -515,7 +515,7 @@
         const julesApiKeyInput = document.getElementById("julesApiKeyInput");
 
         settingsBtn.onclick = () => {
-            julesApiKeyInput.value = localStorage.getItem("jules_custom_api_key") || JULES_HARDCODED_KEY;
+            julesApiKeyInput.value = localStorage.getItem("jules_custom_api_key") || getJulesKey();
             settingsModal.style.display = "flex";
         };
 
@@ -816,15 +816,37 @@
                 if (detectedUrls || userText.includes("صدا") || userText.includes("gemini") || userText.includes("دانلود") || userText.includes("سایت")) {
                     const optCard = document.createElement("div");
                     optCard.className = "automation-card";
-                    optCard.innerHTML = `
-                        <div class="automation-card-title">🌐 ابزار اتوماسیون وب باز شد (شناسایی ۳ فرمت دانلود)</div>
-                        <p style="font-size: 0.88rem; color: #cbd5e1;">رئیس جان، متن شما در کادر برنامه قرار گرفت. این ابزار دارای ۳ فرمت خروجی صوت می‌باشد. کدام فرمت را برایتان آماده و دانلود کنم؟</p>
-                        <div class="format-options">
-                            <button class="format-btn" onclick="processAudioGeneration('mp3', '${userText.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">🎵 فرمت MP3 (کیفیت عالی)</button>
-                            <button class="format-btn" onclick="processAudioGeneration('wav', '${userText.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">🔊 فرمت WAV (کیفیت اورجینال)</button>
-                            <button class="format-btn" onclick="processAudioGeneration('ogg', '${userText.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">🎶 فرمت OGG (حجم کم)</button>
-                        </div>
-                    `;
+
+                    const titleDiv = document.createElement("div");
+                    titleDiv.className = "automation-card-title";
+                    titleDiv.innerText = "🌐 ابزار اتوماسیون وب باز شد (شناسایی ۳ فرمت دانلود)";
+
+                    const descP = document.createElement("p");
+                    descP.style.cssText = "font-size: 0.88rem; color: #cbd5e1;";
+                    descP.innerText = "رئیس جان، متن شما در کادر برنامه قرار گرفت. این ابزار دارای ۳ فرمت خروجی صوت می‌باشد. کدام فرمت را برایتان آماده و دانلود کنم؟";
+
+                    const optsDiv = document.createElement("div");
+                    optsDiv.className = "format-options";
+
+                    const formats = [
+                        { fmt: "mp3", label: "🎵 فرمت MP3 (کیفیت عالی)" },
+                        { fmt: "wav", label: "🔊 فرمت WAV (کیفیت اورجینال)" },
+                        { fmt: "ogg", label: "🎶 فرمت OGG (حجم کم)" }
+                    ];
+
+                    formats.forEach(f => {
+                        const btn = document.createElement("button");
+                        btn.className = "format-btn";
+                        btn.innerText = f.label;
+                        btn.addEventListener("click", function() {
+                            window.processAudioGeneration(f.fmt, userText);
+                        });
+                        optsDiv.appendChild(btn);
+                    });
+
+                    optCard.appendChild(titleDiv);
+                    optCard.appendChild(descP);
+                    optCard.appendChild(optsDiv);
                     bubbleNode.appendChild(optCard);
                 }
 
@@ -841,7 +863,7 @@
                 const errRow = createMessageElement("model", "اطاعت رئیس! 🤖 من برنامه وب و لینک درخواست شده شما را روی سرور تحلیل کردم.");
                 const bubbleNode = errRow.querySelector(".message-bubble");
 
-                if (detectedUrls || userText.includes("صدا") || userText.includes("gemini") || userText.includes("دانلود") || userText.includes("سایت") || true) {
+                if (detectedUrls || userText.includes("صدا") || userText.includes("gemini") || userText.includes("دانلود") || userText.includes("سایت")) {
                     const optCard = document.createElement("div");
                     optCard.className = "automation-card";
 
