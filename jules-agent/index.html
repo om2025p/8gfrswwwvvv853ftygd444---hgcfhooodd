@@ -454,8 +454,8 @@
         <!-- پیام خوش‌آمدگویی هوشمند جولز -->
         <div class="message-row ai">
             <div class="message-bubble">
-                <p>سلام رئیس عزیز! 👋🤖 من **جولز (Jules)** هستم، دستیار هوشمند اتوماسیون و پردازش سرور شما.</p>
-                <p>کافیه به من یک **لینک وب‌سایت** (مثل ابزارهای تبدیل متن به صدا، برنامه‌های Gemini Share یا هر سایت دیگه) به همراه **متن یا دستور مورد نظرتون** رو بدید!</p>
+                <p>سلام رئیس عزیز! 👋🤖 من <strong>جولز (Jules)</strong> هستم، دستیار هوشمند اتوماسیون و پردازش سرور شما.</p>
+                <p>کافیه به من یک <strong>لینک وب‌سایت</strong> (مثل ابزارهای تبدیل متن به صدا، برنامه‌های Gemini Share یا هر سایت دیگه) به همراه <strong>متن یا دستور مورد نظرتون</strong> رو بدید!</p>
                 <p>من سایت رو روی سرور باز می‌کنم، متن شما رو داخل کادر قرار می‌دم و کارهای لازم رو انجام می‌دم. اگر سایت گزینه‌های مختلفی (مثل چندین فرمت دانلود صوت MP3/WAV/OGG) داشته باشه، ابتدا از شما نظرسنجی می‌کنم و سپس فایل آماده شده رو براتون می‌فرستم! ⚡</p>
                 <span class="message-time">الان</span>
             </div>
@@ -614,7 +614,7 @@
             return row;
         }
 
-        // تابع تعاملی انتخاب فرمت صوتی و ساخت فایل صوتی آماده قابل دانلود
+        // پخش و تبدیل واقعی متن به صدا با استفاده از موتور واقعی گوینده مرورگر (SpeechSynthesis)
         window.processAudioGeneration = function(format, textSnippet) {
             const row = document.createElement("div");
             row.className = "message-row ai";
@@ -622,101 +622,51 @@
             const bubble = document.createElement("div");
             bubble.className = "message-bubble";
 
+            if (!('speechSynthesis' in window)) {
+                bubble.innerHTML = `<p style="color: #f87171;">⚠️ مرورگر شما از قابلیت خوانش صوتی (Text-To-Speech) پشتیبانی نمی‌کند.</p>`;
+                chatContainer.appendChild(row);
+                scrollToBottom();
+                return;
+            }
+
+            // لغو صداهای قبلی در حال پخش
+            window.speechSynthesis.cancel();
+
+            const cleanText = (textSnippet || "").replace(/(https?:\/\/[^\s]+)/g, "").trim() || textSnippet;
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.lang = "fa-IR";
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+
             bubble.innerHTML = `
-                <p>اطاعت رئیس! 🫡 در حال باز کردن برنامه اتوماسیون، قرار دادن متن در کادر ورودی و استخراج فایل صوتی با فرمت **${format.toUpperCase()}**...</p>
-                <div class="typing-indicator" id="genLoader">
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
+                <p>🔊 **در حال پخش واقعی متن به صدا با گوینده هوشمند...**</p>
+
+                <div class="automation-card" style="margin-top: 8px;">
+                    <div class="automation-card-title">🎧 متن صوتی شده با فرمت واقعی ${format.toUpperCase()}:</div>
+                    <p style="font-size: 0.88rem; color: #cbd5e1; direction: rtl; text-align: right;">«${cleanText}»</p>
+                    <div style="display: flex; gap: 10px; margin-top: 6px;">
+                        <button id="stopAudioBtn" class="format-btn" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">
+                            ⏹️ توقف پخش
+                        </button>
+                    </div>
                 </div>
             `;
+
             chatContainer.appendChild(row);
             scrollToBottom();
 
-            // شبیه‌سازی دقیق و واقعی باز کردن سایت و استخراج صوت با Web Audio WAV/MP3 Blob generator
-            setTimeout(() => {
-                const loader = bubble.querySelector('#genLoader');
-                if (loader) loader.remove();
+            // شروع پخش واقعی
+            window.speechSynthesis.speak(utterance);
 
-                // ساخت داتا-آدیوی استاندارد واقعی در مرورگر (Wave Synthetic Audio Blob)
-                const audioBlob = createSyntheticAudioBlob(textSnippet || "درخواست شما با موفقیت پردازش شد");
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const filename = `jules_tts_${Date.now()}.${format.toLowerCase()}`;
-
-                const resultContainer = document.createElement("div");
-                resultContainer.className = "automation-card";
-                resultContainer.innerHTML = `
-                    <div class="automation-card-title">🎉 فایل صوتی ${format.toUpperCase()} با موفقیت استخراج و آماده شد!</div>
-                    <div class="audio-player-wrapper">
-                        <audio controls src="${audioUrl}"></audio>
-                        <a href="${audioUrl}" download="${filename}" class="download-btn">
-                            📥 دانلود مستقیم فایل صوتی (${format.toUpperCase()})
-                        </a>
-                    </div>
-                `;
-
-                bubble.appendChild(resultContainer);
-                scrollToBottom();
-
-                // پخش صوتی آنلاین هوشمند (SpeechSynthesis) برای تجربه صوتی بی‌نظیر
-                if ('speechSynthesis' in window) {
-                    const utterance = new SpeechSynthesisUtterance(textSnippet || "درخواست شما با موفقیت انجام شد رئیس");
-                    utterance.lang = "fa-IR";
-                    speechSynthesis.speak(utterance);
-                }
-            }, 2000);
-        };
-
-        // تولید واقعی WAV Audio Blob
-        function createSyntheticAudioBlob(text) {
-            const sampleRate = 22050;
-            const duration = 3; // 3 ثانیه صوت نمونه
-            const numSamples = sampleRate * duration;
-            const buffer = new Int16Array(numSamples);
-
-            for (let i = 0; i < numSamples; i++) {
-                const t = i / sampleRate;
-                // موج صوتی خوش‌صدا با فرکانس 440Hz و 880Hz
-                buffer[i] = Math.sin(2 * Math.PI * 440 * t) * 8000 + Math.sin(2 * Math.PI * 880 * t) * 4000;
+            const stopBtn = bubble.querySelector("#stopAudioBtn");
+            if (stopBtn) {
+                stopBtn.onclick = () => {
+                    window.speechSynthesis.cancel();
+                    stopBtn.innerText = "⏹️ متوقف شد";
+                    stopBtn.disabled = true;
+                };
             }
-
-            const wavHeader = createWavHeader(numSamples * 2, sampleRate);
-            return new Blob([wavHeader, buffer], { type: 'audio/wav' });
-        }
-
-        function createWavHeader(dataSize, sampleRate) {
-            const header = new ArrayBuffer(44);
-            const view = new DataView(header);
-
-            /* RIFF identifier */
-            view.setUint32(0, 0x52494646, false);
-            /* file length */
-            view.setUint32(4, 36 + dataSize, true);
-            /* RIFF type */
-            view.setUint32(8, 0x57415645, false);
-            /* format chunk identifier */
-            view.setUint32(12, 0x666d7420, false);
-            /* format chunk length */
-            view.setUint32(16, 16, true);
-            /* sample format (raw) */
-            view.setUint16(20, 1, true);
-            /* channel count (mono) */
-            view.setUint16(22, 1, true);
-            /* sample rate */
-            view.setUint32(24, sampleRate, true);
-            /* byte rate (sampleRate * blockAlign) */
-            view.setUint32(28, sampleRate * 2, true);
-            /* block align (channel count * bytes per sample) */
-            view.setUint16(32, 2, true);
-            /* bits per sample */
-            view.setUint16(34, 16, true);
-            /* data chunk identifier */
-            view.setUint32(36, 0x64617461, false);
-            /* data chunk length */
-            view.setUint32(40, dataSize, true);
-
-            return header;
-        }
+        };
 
         async function handleSendMessage() {
             const userText = chatInput.value.trim();
@@ -759,53 +709,41 @@
 همیشه خاضعانه، باادب، فرز و هوشمندانه پاسخ بده.`;
 
             try {
-                const activeModel = "gemini-flash-latest";
-                const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
                 const julesApiKey = getJulesKey();
+                const activeModel = "gemini-flash-latest";
 
-                let aiText = "";
-                try {
-                    const directEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${julesApiKey}`;
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 4000);
+                let response;
+                const directEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${julesApiKey}`;
 
-                    const response = await fetch(directEndpoint, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            contents: chatHistory,
-                            systemInstruction: { parts: [{ text: systemInstruction }] },
-                            generationConfig: { maxOutputTokens: 2048 }
-                        }),
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
-                            aiText = data.candidates[0].content.parts[0].text;
-                        }
-                    }
-                } catch (julesErr) {
-                    console.log("Direct AI connection failed, using smart offline response engine...");
-                }
+                response = await fetch(directEndpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: chatHistory,
+                        systemInstruction: { parts: [{ text: systemInstruction }] },
+                        generationConfig: { maxOutputTokens: 2048 }
+                    })
+                });
 
                 const typingNode = document.getElementById("typingRow");
                 if (typingNode) typingNode.remove();
 
-                if (!aiText) {
-                    if (detectedUrls || userText.includes("صدا") || userText.includes("صوت") || userText.includes("تبدیل") || userText.includes("دانلود") || userText.includes("سایت") || userText.includes("نتیجه")) {
-                        aiText = "اطاعت رئیس! 🤖 من برنامه وب و لینک درخواست شده شما را روی سرور باز کرده، متن را در کادر قرار دادم و فایل صوتی را آماده کردم.";
-                    } else {
-                        aiText = "اطاعت رئیس! 🫡 من دستورات و متن شما را روی سرور تحلیل کردم. هرگونه اتوماسیون، تبدیل متن به صدا، باز کردن سایت یا استخراج فایل صوتی بخواهید در خدمت شماست.";
-                    }
+                if (!response.ok) {
+                    throw new Error(`خطای ارتباط مستقیم با سرور هوش مصنوعی (کد ${response.status})`);
+                }
+
+                const data = await response.json();
+                let aiText = "پاسخی از سرور دریافت نشد.";
+
+                if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+                    aiText = data.candidates[0].content.parts[0].text;
                 }
 
                 const aiRow = createMessageElement("model", aiText);
                 const bubbleNode = aiRow.querySelector(".message-bubble");
 
-                // بررسی لزوم نمایش کارت اتوماسیون و تولید صوت
-                const isAutomationRequest = detectedUrls || userText.includes("صدا") || userText.includes("صوت") || userText.includes("تبدیل") || userText.includes("دانلود") || userText.includes("سایت") || userText.includes("نتیجه") || userText.length > 30;
+                // کارت ابزار صوتی و اتوماسیون بدون کدهای شبیه‌سازی
+                const isAutomationRequest = detectedUrls || userText.includes("صدا") || userText.includes("صوت") || userText.includes("تبدیل") || userText.includes("دانلود") || userText.includes("سایت");
 
                 if (isAutomationRequest) {
                     const optCard = document.createElement("div");
@@ -813,55 +751,25 @@
 
                     const titleDiv = document.createElement("div");
                     titleDiv.className = "automation-card-title";
-                    titleDiv.innerText = "🌐 ابزار اتوماسیون وب و تولید صوت (آماده خروجی)";
+                    titleDiv.innerText = "🌐 ابزار تبدیل واقعی متن به صدا (Goyande)";
 
                     const descP = document.createElement("p");
                     descP.style.cssText = "font-size: 0.88rem; color: #cbd5e1;";
-                    descP.innerText = "رئیس جان، متن شما در کادر برنامه اتوماسیون قرار گرفت. می‌توانید صوتی تولید شده را بشنوید یا فرمت دلخواه را برای دانلود انتخاب کنید:";
+                    descP.innerText = "رئیس، برای شنیدن و خوانش واقعی متن با کیفیت اصلی جهت تبدیل به صوت، کلیک کنید:";
 
                     const optsDiv = document.createElement("div");
                     optsDiv.className = "format-options";
 
-                    const formats = [
-                        { fmt: "mp3", label: "🎵 دانلود MP3" },
-                        { fmt: "wav", label: "🔊 دانلود WAV" },
-                        { fmt: "ogg", label: "🎶 دانلود OGG" }
-                    ];
-
-                    formats.forEach(f => {
-                        const btn = document.createElement("button");
-                        btn.className = "format-btn";
-                        btn.innerText = f.label;
-                        btn.addEventListener("click", function() {
-                            window.processAudioGeneration(f.fmt, userText);
-                        });
-                        optsDiv.appendChild(btn);
-                    });
-
-                    // ایجاد تولید و پخش مستقیم صوتی
-                    const audioBlob = createSyntheticAudioBlob(userText);
-                    const audioUrl = URL.createObjectURL(audioBlob);
-
-                    const playerDiv = document.createElement("div");
-                    playerDiv.className = "audio-player-wrapper";
-                    playerDiv.style.marginTop = "8px";
-                    playerDiv.innerHTML = `
-                        <div style="font-size: 0.85rem; color: #38bdf8; font-weight: bold;">▶️ پخش مستقیم آنلاین صوت استخراج شده:</div>
-                        <audio controls src="${audioUrl}" style="width: 100%; height: 38px;"></audio>
-                    `;
+                    const btn = document.createElement("button");
+                    btn.className = "format-btn";
+                    btn.innerText = "▶️ پخش و خوانش واقعی متن با گوینده";
+                    btn.onclick = () => window.processAudioGeneration("audio", userText);
+                    optsDiv.appendChild(btn);
 
                     optCard.appendChild(titleDiv);
                     optCard.appendChild(descP);
-                    optCard.appendChild(playerDiv);
                     optCard.appendChild(optsDiv);
                     bubbleNode.appendChild(optCard);
-
-                    // پخش صوتی آنلاین هوشمند (SpeechSynthesis)
-                    if ('speechSynthesis' in window) {
-                        const utterance = new SpeechSynthesisUtterance(userText.substring(0, 150));
-                        utterance.lang = "fa-IR";
-                        speechSynthesis.speak(utterance);
-                    }
                 }
 
                 chatContainer.appendChild(aiRow);
@@ -924,7 +832,10 @@
 
         chatInput.onkeydown = (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-                // کلید Enter برای ایجاد خط جدید (ایجاد سطر/زیرخط) استفاده می‌شود و پیام ارسال نمی‌گردد.
+                e.preventDefault();
+                if (!sendBtn.disabled && !isGenerating) {
+                    handleSendMessage();
+                }
             }
         };
     </script>
