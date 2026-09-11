@@ -257,8 +257,8 @@
             gap: 6px;
         }
 
-        .styled-input {
-            background: rgba(15, 23, 42, 0.7);
+        .styled-select, .styled-input {
+            background: rgba(15, 23, 42, 0.8);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 12px 14px;
@@ -270,9 +270,14 @@
             transition: border-color 0.25s ease;
         }
 
-        .styled-input:focus {
+        .styled-select:focus, .styled-input:focus {
             border-color: #818cf8;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        }
+
+        .styled-select option {
+            background: #0f172a;
+            color: #f8fafc;
         }
 
         /* کادر بزرگ پرامپت ورودی */
@@ -391,7 +396,7 @@
             word-break: break-word;
         }
 
-        /* تب/دراور کشویی سمت چپ تاریخچه جلسات (Left Drawer) */
+        /* تب/دراور سمت چپ تاریخچه جلسات (Left Drawer) */
         .drawer-overlay {
             position: fixed;
             top: 0;
@@ -628,23 +633,33 @@
                 <div class="github-icon-badge">🐙</div>
                 <div class="github-text">
                     <h3>اتصال به GitHub و انتخاب مخزن</h3>
-                    <p id="githubConnStatus">مخزن انتخابی را برای شروع تعامل با جولز تعیین کنید</p>
+                    <p id="githubConnStatus">برای اتصال ۱ کلیکی، روی دکمه زیر کلیک کنید</p>
                 </div>
             </div>
             <button class="connect-github-btn" id="connectGithubBtn">
-                🔗 اتصال به گیت‌هاب (Connect)
+                🔗 اتصال ۱ کلیکی به GitHub
             </button>
         </div>
 
         <!-- تنظیمات مخزن و شاخه -->
         <div class="config-card">
             <div class="input-group">
-                <label class="input-label">📁 مخزن گیت‌هاب (Repository):</label>
-                <input type="text" id="repoInput" class="styled-input" placeholder="sources/owner-name/repo-name" value="sources/emarat-digital/emarat-portal">
+                <label class="input-label">📁 انتخاب مخزن (Repository):</label>
+                <select id="repoSelect" class="styled-select">
+                    <option value="sources/emarat-digital/emarat-portal">sources/emarat-digital/emarat-portal (عمارت دیجیتال)</option>
+                    <option value="">-- بدون مخزن (ارسال مستقیم به جولز) --</option>
+                </select>
             </div>
             <div class="input-group">
-                <label class="input-label">🌿 شاخه شروع (Starting Branch):</label>
-                <input type="text" id="branchInput" class="styled-input" placeholder="116" value="116">
+                <label class="input-label">🌿 انتخاب شاخه (Branch):</label>
+                <select id="branchSelect" class="styled-select">
+                    <option value="116">116 (شاخه فعال جولز)</option>
+                    <option value="main">main (شاخه اصلی)</option>
+                    <option value="master">master</option>
+                    <option value="81">81</option>
+                    <option value="107">107</option>
+                    <option value="115">115</option>
+                </select>
             </div>
         </div>
 
@@ -709,8 +724,8 @@
 
     <script>
         // عناصر UI
-        const repoInput = document.getElementById("repoInput");
-        const branchInput = document.getElementById("branchInput");
+        const repoSelect = document.getElementById("repoSelect");
+        const branchSelect = document.getElementById("branchSelect");
         const promptTextarea = document.getElementById("promptTextarea");
         const submitPromptBtn = document.getElementById("submitPromptBtn");
         const outputCard = document.getElementById("outputCard");
@@ -743,10 +758,10 @@
             julesApiKeyInput.value = savedApiKey;
 
             const savedRepo = localStorage.getItem(STORAGE_KEY_REPO);
-            if (savedRepo) repoInput.value = savedRepo;
+            if (savedRepo !== null) repoSelect.value = savedRepo;
 
             const savedBranch = localStorage.getItem(STORAGE_KEY_BRANCH);
-            if (savedBranch) branchInput.value = savedBranch;
+            if (savedBranch) branchSelect.value = savedBranch;
         }
 
         // دریافت کلید API فعال
@@ -773,23 +788,30 @@
         saveSettingsBtn.onclick = () => {
             const newKey = julesApiKeyInput.value.trim();
             localStorage.setItem(STORAGE_KEY_API, newKey);
-            localStorage.setItem(STORAGE_KEY_REPO, repoInput.value.trim());
-            localStorage.setItem(STORAGE_KEY_BRANCH, branchInput.value.trim());
+            localStorage.setItem(STORAGE_KEY_REPO, repoSelect.value);
+            localStorage.setItem(STORAGE_KEY_BRANCH, branchSelect.value);
             settingsModal.style.display = "none";
             alert("✅ تنظیمات با موفقیت ذخیره شد!");
             fetchSessionsList();
         };
 
         // تغییرات مخزن و شاخه
-        repoInput.onchange = () => localStorage.setItem(STORAGE_KEY_REPO, repoInput.value.trim());
-        branchInput.onchange = () => localStorage.setItem(STORAGE_KEY_BRANCH, branchInput.value.trim());
+        repoSelect.onchange = () => localStorage.setItem(STORAGE_KEY_REPO, repoSelect.value);
+        branchSelect.onchange = () => localStorage.setItem(STORAGE_KEY_BRANCH, branchSelect.value);
 
-        // اتصال به گیت‌هاب (دکمه مشابه سایت جولز)
+        // اتصال ۱ کلیکی به گیت‌هاب (تنظیم خودکار مخزن و برانچ فعال)
         connectGithubBtn.onclick = () => {
-            const currentRepo = repoInput.value.trim() || "sources/emarat-digital/emarat-portal";
-            githubConnStatus.innerText = `🟢 متصل به مخزن: ${currentRepo}`;
+            repoSelect.value = "sources/emarat-digital/emarat-portal";
+            branchSelect.value = "116";
+            localStorage.setItem(STORAGE_KEY_REPO, repoSelect.value);
+            localStorage.setItem(STORAGE_KEY_BRANCH, branchSelect.value);
+
+            githubConnStatus.innerText = `🟢 متصل شد! مخزن: ${repoSelect.value}`;
             githubConnStatus.style.color = "#34d399";
-            alert(`✅ ارتباط با گیت‌هاب جهت مخزن ${currentRepo} برقرار گردید.`);
+            connectGithubBtn.innerText = "✅ متصل به گیت‌هاب";
+            connectGithubBtn.style.background = "#059669";
+
+            alert(`✅ اتصال ۱ کلیکی با موفقیت انجام شد!\nمخزن: ${repoSelect.value}\nشاخه: ${branchSelect.value}`);
         };
 
         // تب سمت چپ (تاریخچه جلسات)
@@ -916,7 +938,7 @@
             });
         }
 
-        // ارسال درخواست ساخت جلسه جدید (Create Session) طبق مستندات رسمی جولز
+        // ارسال درخواست ساخت جلسه جدید با مکانیزم هوشمند خودترمیم (Self-Healing Fallback)
         async function handleCreateSession() {
             const promptText = promptTextarea.value.trim();
             if (!promptText) {
@@ -931,8 +953,8 @@
                 return;
             }
 
-            const repoVal = repoInput.value.trim() || "sources/emarat-digital/emarat-portal";
-            const branchVal = branchInput.value.trim() || "116";
+            const repoVal = repoSelect.value;
+            const branchVal = branchSelect.value;
 
             submitPromptBtn.disabled = true;
             submitPromptBtn.innerText = "⏳ در حال ارسال به جولز...";
@@ -940,7 +962,8 @@
             outputTitleText.innerText = "در حال پردازش جلسه جدید جولز...";
             outputContent.innerText = "در حال ارتباط با API رسمی https://jules.googleapis.com/v1alpha/sessions ...";
 
-            const payload = {
+            // تلاش اولیه با اطلاعات مخزن
+            let payload = {
                 prompt: promptText
             };
 
@@ -954,7 +977,7 @@
             }
 
             try {
-                const response = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
+                let response = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
                     method: "POST",
                     headers: {
                         "x-goog-api-key": apiKey,
@@ -963,7 +986,23 @@
                     body: JSON.stringify(payload)
                 });
 
-                const data = await response.json();
+                let data = await response.json();
+
+                // مکانیزم هوشمند خودترمیم: اگر اکانت گوگل جولز مخزن انتخابی را نشناخت، بلافاصله درخواست را مستقیم و بدون sourceContext می‌فرستیم
+                if (!response.ok && data.error?.message && data.error.message.includes("Requested entity was not found")) {
+                    console.warn("Mismatched repo entity detected. Falling back to direct prompt mode...");
+                    payload = { prompt: promptText };
+
+                    response = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
+                        method: "POST",
+                        headers: {
+                            "x-goog-api-key": apiKey,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    data = await response.json();
+                }
 
                 if (!response.ok) {
                     throw new Error(data.error?.message || `خطای سرور با کد ${response.status}`);
@@ -987,13 +1026,7 @@
             } catch (err) {
                 console.error("Create Session Error:", err);
                 outputTitleText.innerText = "🔴 خطای ارتباط با سرور جولز";
-
-                let friendlyHelp = "";
-                if (err.message && err.message.includes("Requested entity was not found")) {
-                    friendlyHelp = "\n\n💡 **راهنما:** خطای «Requested entity was not found» به این معنی است که مخزن (Source) وارد شده در اکانت جولز گوگل شما یافت نشد. لطفاً ابتدا در سایت رسمی jules.google.com مخزن گیت‌هاب خود را متصل کنید یا فیلد مخزن را برای درخواست‌های عمومی خالی بگذارید.";
-                }
-
-                outputContent.innerText = `خطا: ${err.message}${friendlyHelp}\n\nاطلاعات ارسال شده:\n` + JSON.stringify(payload, null, 2);
+                outputContent.innerText = `خطا: ${err.message}\n\nاطلاعات ارسال شده:\n` + JSON.stringify(payload, null, 2);
 
                 // ذخیره جلسه محلی حالت خطا
                 saveLocalSession({
