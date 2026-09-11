@@ -850,7 +850,14 @@
             localStorage.setItem(STORAGE_KEY_LOCAL_SESSIONS, JSON.stringify(list));
         }
 
-        // دریافت لیست جلسات از REST API گوگل جولز
+        const CLOUDFLARE_WORKER_URL = "https://emarat-jules-proxy.iman1995-3-11.workers.dev";
+
+        // اتصال به گیت‌هاب جهت لایسنس و معرفی مخازن
+        connectGithubBtn.onclick = () => {
+            window.open("https://jules.google.com/settings", "_blank");
+        };
+
+        // دریافت لیست جلسات از REST API گوگل جولز یا ورکر کلودفلر
         async function fetchSessionsList() {
             const apiKey = getActiveApiKey();
             sessionsList.innerHTML = `<div style="text-align: center; color: #94a3b8; font-size: 0.88rem; padding: 20px;">در حال فراخوانی جلسات از سرور جولز...</div>`;
@@ -859,7 +866,8 @@
 
             if (apiKey) {
                 try {
-                    const res = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
+                    const endpoint = `${CLOUDFLARE_WORKER_URL}/v1alpha/sessions`;
+                    const res = await fetch(endpoint, {
                         headers: {
                             "x-goog-api-key": apiKey
                         }
@@ -977,7 +985,9 @@
             }
 
             try {
-                let response = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
+                const endpoint = `${CLOUDFLARE_WORKER_URL}/v1alpha/sessions`;
+
+                let response = await fetch(endpoint, {
                     method: "POST",
                     headers: {
                         "x-goog-api-key": apiKey,
@@ -993,7 +1003,7 @@
                     console.warn("Mismatched repo entity detected. Falling back to direct prompt mode...");
                     payload = { prompt: promptText };
 
-                    response = await fetch("https://jules.googleapis.com/v1alpha/sessions", {
+                    response = await fetch(endpoint, {
                         method: "POST",
                         headers: {
                             "x-goog-api-key": apiKey,
