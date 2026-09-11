@@ -923,7 +923,7 @@
                 iframe.className = 'webview-frame';
                 iframe.src = currentSite.url;
                 iframe.allow = 'fullscreen; autoplay; clipboard-write;';
-                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals');
+                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-modals');
                 iframe.onload = () => hideLoading();
                 iframe.onerror = () => hideLoading();
                 wrapper.appendChild(iframe);
