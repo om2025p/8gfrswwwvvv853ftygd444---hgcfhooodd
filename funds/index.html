@@ -122,7 +122,7 @@
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.15);
             color: #94a3b8;
-            padding: 7px 14px;
+            padding: 8px 16px;
             border-radius: 12px;
             font-size: 0.85rem;
             font-weight: 700;
@@ -132,6 +132,8 @@
             align-items: center;
             gap: 6px;
             transition: all 0.2s ease;
+            flex: 0 0 auto;
+            width: max-content;
         }
 
         .cat-btn:active {
@@ -149,13 +151,14 @@
         .subtabs-container {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             background: rgba(0, 0, 0, 0.35);
             border-radius: 14px;
-            padding: 4px;
+            padding: 6px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             overflow-x: auto;
             scrollbar-width: none;
+            scroll-behavior: smooth;
         }
 
         .subtabs-container::-webkit-scrollbar {
@@ -163,11 +166,11 @@
         }
 
         .site-tab-btn {
-            flex: 1;
-            min-width: 90px;
-            padding: 8px 10px;
+            flex: 0 0 auto;
+            width: max-content;
+            padding: 8px 14px;
             text-align: center;
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             font-weight: 700;
             color: #94a3b8;
             background: transparent;
@@ -176,12 +179,11 @@
             cursor: pointer;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            overflow: visible;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 6px;
         }
 
         .site-tab-btn.active {
@@ -496,8 +498,8 @@
         }
 
         .spinner {
-            width: 44px;
-            height: 44px;
+            width: 48px;
+            height: 48px;
             border: 4px solid rgba(56, 189, 248, 0.2);
             border-top-color: var(--accent-cyan);
             border-radius: 50%;
@@ -509,9 +511,42 @@
         }
 
         .loading-text {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: var(--accent-cyan);
-            font-weight: 600;
+            font-weight: 700;
+        }
+
+        .countdown-badge {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            color: #38bdf8;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
+            animation: pulse-badge 1.5s infinite;
+        }
+
+        @keyframes pulse-badge {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.04); opacity: 0.85; }
+        }
+
+        .countdown-num {
+            background: var(--primary);
+            color: #ffffff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            font-weight: 900;
         }
 
     </style>
@@ -551,10 +586,13 @@
 
     <!-- محفظه اصلی وب‌ویوها -->
     <main class="webview-container" id="webviewContainer">
-        <!-- لودر هوشمند -->
+        <!-- لودر هوشمند با نشانگر شمارش معکوس اتصال زنده -->
         <div class="loading-overlay" id="loadingOverlay">
             <div class="spinner"></div>
-            <div class="loading-text" id="loadingText">در حال بارگذاری وب‌سایت...</div>
+            <div class="loading-text" id="loadingText">در حال دریافت و آماده‌سازی...</div>
+            <div class="countdown-badge" id="countdownBadge" style="display: none;">
+                ⚡ در حال اتصال به سرور زنده: <span class="countdown-num" id="countdownNum">5</span>
+            </div>
         </div>
         <!-- محتوای وب‌سایت‌ها پویا رندر می‌شود -->
     </main>
@@ -634,6 +672,7 @@
         // کلیدهای ذخیره‌سازی محلی
         const STORAGE_CATS_KEY = 'portal_www_categories_v1';
         const STORAGE_SITES_KEY = 'portal_www_websites_v1';
+        const STORAGE_ACTIVE_STATE_KEY = 'portal_www_active_state_v1';
 
         // دسته‌بندی‌های پیش‌فرض اولیه
         const DEFAULT_CATEGORIES = [
@@ -708,27 +747,84 @@
             }
         }
 
+        function getSavedActiveState() {
+            try {
+                const data = localStorage.getItem(STORAGE_ACTIVE_STATE_KEY);
+                if (data) return JSON.parse(data);
+            } catch (e) {
+                console.error("Error reading active state:", e);
+            }
+            return {};
+        }
+
+        function saveActiveState(catId, siteId) {
+            try {
+                localStorage.setItem(STORAGE_ACTIVE_STATE_KEY, JSON.stringify({ catId, siteId }));
+            } catch (e) {
+                console.error("Error saving active state:", e);
+            }
+        }
+
         // وضعیت فعلی اپلیکیشن
         let categories = getCategories();
         let websites = getWebsites();
-        let activeCatId = categories[0] ? categories[0].id : null;
-        let activeSiteId = null;
+        const savedState = getSavedActiveState();
+        let activeCatId = savedState.catId || (categories[0] ? categories[0].id : null);
+        let activeSiteId = savedState.siteId || null;
 
         const categoriesNav = document.getElementById('categoriesNav');
         const subtabsNav = document.getElementById('subtabsNav');
         const webviewContainer = document.getElementById('webviewContainer');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loadingText = document.getElementById('loadingText');
+        const countdownBadge = document.getElementById('countdownBadge');
+        const countdownNum = document.getElementById('countdownNum');
         const refreshBtn = document.getElementById('refreshBtn');
         const openExternalBtn = document.getElementById('openExternalBtn');
 
-        function showLoading(text) {
+        let countdownTimer = null;
+
+        function startServerCountdown(seconds = 5, onFinished) {
+            if (countdownTimer) clearInterval(countdownTimer);
+            let timeLeft = seconds;
+            if (countdownBadge && countdownNum) {
+                countdownNum.innerText = timeLeft;
+                countdownBadge.style.display = 'inline-flex';
+            }
+
+            countdownTimer = setInterval(() => {
+                timeLeft--;
+                if (countdownNum) countdownNum.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(countdownTimer);
+                    countdownTimer = null;
+                    if (onFinished) onFinished();
+                }
+            }, 1000);
+        }
+
+        function showLoading(text, showCountdown = true) {
             loadingText.innerText = text || 'در حال بارگذاری...';
             loadingOverlay.style.opacity = '1';
             loadingOverlay.style.pointerEvents = 'auto';
+
+            if (showCountdown) {
+                startServerCountdown(5, () => {
+                    hideLoading();
+                });
+            } else if (countdownBadge) {
+                countdownBadge.style.display = 'none';
+            }
         }
 
         function hideLoading() {
+            if (countdownTimer) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+            }
+            if (countdownBadge) {
+                countdownBadge.style.display = 'none';
+            }
             loadingOverlay.style.opacity = '0';
             loadingOverlay.style.pointerEvents = 'none';
         }
@@ -748,11 +844,13 @@
                 btn.innerHTML = `<span>${cat.icon || '📁'}</span> <span>${cat.name}</span>`;
                 btn.onclick = () => {
                     activeCatId = cat.id;
+                    saveActiveState(activeCatId, activeSiteId);
                     renderCategories();
                     renderSubtabs();
                 };
                 categoriesNav.appendChild(btn);
             });
+            saveActiveState(activeCatId, activeSiteId);
         }
 
         // رندر زیر-تب‌های وب‌سایت‌های دسته فعال (سطح ۲)
@@ -764,6 +862,7 @@
             if (filteredSites.length === 0) {
                 subtabsNav.innerHTML = `<div class="empty-cat-msg">هیچ وب‌سایتی در این دسته‌بندی تعریف نشده است. (از دکمه ➕ مدیریت اضافه کنید)</div>`;
                 activeSiteId = null;
+                saveActiveState(activeCatId, activeSiteId);
                 renderWebview();
                 return;
             }
@@ -778,12 +877,14 @@
                 btn.innerHTML = `<span>${site.icon || '🌐'}</span> <span>${site.name}</span>`;
                 btn.onclick = () => {
                     activeSiteId = site.id;
+                    saveActiveState(activeCatId, activeSiteId);
                     renderSubtabs();
                     renderWebview();
                 };
                 subtabsNav.appendChild(btn);
             });
 
+            saveActiveState(activeCatId, activeSiteId);
             renderWebview();
         }
 
@@ -809,11 +910,12 @@
             wrapper.id = `wrapper-${currentSite.id}`;
 
             if (currentSite.type === 'iframe') {
-                showLoading(`در حال دریافت ${currentSite.name}...`);
+                showLoading(`در حال دریافت ${currentSite.name}...`, true);
                 const iframe = document.createElement('iframe');
                 iframe.className = 'webview-frame';
                 iframe.src = currentSite.url;
                 iframe.allow = 'fullscreen; autoplay; clipboard-write;';
+                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals');
                 iframe.onload = () => hideLoading();
                 iframe.onerror = () => hideLoading();
                 wrapper.appendChild(iframe);
