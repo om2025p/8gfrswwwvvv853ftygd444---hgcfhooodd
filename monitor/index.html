@@ -211,23 +211,32 @@
             margin: 10px 0 20px;
             box-sizing: border-box;
             border: 1px solid var(--card-border);
+            overflow-x: auto;
+            scrollbar-width: none;
+            gap: 4px;
+        }
+
+        .tab-container::-webkit-scrollbar {
+            display: none;
         }
 
         .tab-btn {
-            flex: 1;
+            flex: 1 0 auto;
+            width: max-content;
             background: transparent;
             border: none;
             color: var(--tab-btn-text);
-            padding: 12px;
+            padding: 10px 14px;
             border-radius: 16px;
             font-size: 0.9rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
+            white-space: nowrap;
         }
 
         .tab-btn.active {

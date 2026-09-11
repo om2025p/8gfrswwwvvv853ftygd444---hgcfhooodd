@@ -281,13 +281,20 @@
             display: flex;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 12px;
-            padding: 3px;
-            gap: 4px;
+            padding: 4px;
+            gap: 6px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .modal-tabs::-webkit-scrollbar {
+            display: none;
         }
 
         .modal-tab-btn {
-            flex: 1;
-            padding: 8px;
+            flex: 1 0 auto;
+            width: max-content;
+            padding: 8px 14px;
             border: none;
             border-radius: 9px;
             background: transparent;
@@ -296,6 +303,7 @@
             font-size: 0.85rem;
             cursor: pointer;
             transition: all 0.2s ease;
+            white-space: nowrap;
         }
 
         .modal-tab-btn.active {
