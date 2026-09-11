@@ -904,6 +904,168 @@
             background: #ffffff;
         }
 
+        /* Format Selector Dropdown Styles */
+        .format-selector-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .format-selector-label {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .format-trigger-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #0f172a;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .format-trigger-btn:hover {
+            border-color: var(--primary);
+            background: #f8fafc;
+        }
+
+        .format-dropdown-panel {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 14px;
+            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.15);
+            margin-bottom: 6px;
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 320px;
+        }
+
+        .format-dropdown-panel.show {
+            display: flex;
+        }
+
+        .format-search-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .format-search-input {
+            width: 100%;
+            padding: 8px 12px 8px 32px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+            background: #f8fafc;
+        }
+
+        .format-search-input:focus {
+            border-color: var(--primary);
+            background: #ffffff;
+        }
+
+        .format-search-icon {
+            position: absolute;
+            left: 10px;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+
+        .format-list-scroll {
+            overflow-y: auto;
+            max-height: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .format-list-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .format-list-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .format-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #334155;
+            transition: background 0.15s;
+        }
+
+        .format-item:hover, .format-item.selected {
+            background: #eff6ff;
+            color: var(--primary);
+        }
+
+        .format-item-ext {
+            font-family: 'Consolas', monospace;
+            direction: ltr;
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .format-item:hover .format-item-ext, .format-item.selected .format-item-ext {
+            background: #bfdbfe;
+            color: #1e40af;
+        }
+
+        .custom-ext-wrap {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding-top: 6px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .custom-ext-input {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            direction: ltr;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .custom-ext-input:focus {
+            border-color: var(--primary);
+        }
+
         /* Toast Notifications */
         .toast {
             position: fixed;
@@ -1019,9 +1181,36 @@
                 <textarea id="textEditor" class="text-mode" placeholder=" متون، یادداشت‌ها یا مقالات خود را اینجا بنویسید یا کپی کنید..." spellcheck="false"></textarea>
             </div>
 
+            <!-- Format Selector with Live Search Dropdown -->
+            <div class="format-selector-container">
+                <div class="format-selector-label">
+                    <span>🏷️ انتخاب فرمت ذخیره‌سازی فایل:</span>
+                </div>
+                <button type="button" class="format-trigger-btn" id="formatTriggerBtn" onclick="toggleFormatDropdown(event)">
+                    <span id="selectedFormatDisplay">📄 متن ساده (Plain Text)</span>
+                    <span class="format-item-ext" id="selectedFormatExtBadge">.txt</span>
+                </button>
+
+                <div class="format-dropdown-panel" id="formatDropdownPanel">
+                    <div class="format-search-wrap">
+                        <input type="text" id="formatSearchInput" class="format-search-input" placeholder="🔎 جستجو در فرمت‌ها (مثال: json, md, py, پایتون)..." oninput="filterFormatsList()">
+                        <i class="fas fa-search format-search-icon"></i>
+                    </div>
+
+                    <div class="format-list-scroll" id="formatListScroll">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+
+                    <div class="custom-ext-wrap" id="customExtWrap">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: #475569;">پسوند سفارشی:</span>
+                        <input type="text" id="customExtInput" class="custom-ext-input" placeholder="مثال: myext" oninput="onCustomExtInput()">
+                    </div>
+                </div>
+            </div>
+
             <div class="button-group">
-                <button class="btn-main btn-download-txt" onclick="downloadTxtFile()">
-                    📄 دانلود متن ساده (.txt)
+                <button class="btn-main btn-download-txt" id="downloadTxtBtn" onclick="downloadTxtFile()">
+                    📄 دانلود فایل متنی (<span id="downloadBtnExtLabel">.txt</span>)
                 </button>
                 <button class="btn-main btn-copy" onclick="copyPlainText('textEditor')">
                     📋 کپی متن
@@ -1249,6 +1438,7 @@
 
             updateDownloadCounterBadge();
             initChatZoomListeners();
+            initTextFormatSelector();
         });
 
         let cachedAiTitleHtml = "";
@@ -1604,6 +1794,166 @@ ${cleanText}`;
             }
         });
 
+        /* =========================================================
+           TEXT FILE FORMAT SELECTOR ENGINE
+           ========================================================= */
+        const TEXT_FORMAT_OPTIONS = [
+            { ext: 'txt', name: 'متن ساده (Plain Text)', mime: 'text/plain', keywords: 'متن ساده plain text txt' },
+            { ext: 'md', name: 'مارک‌داون (Markdown)', mime: 'text/markdown', keywords: 'مارک داون markdown md یادداشت' },
+            { ext: 'json', name: 'جی‌سان (JSON)', mime: 'application/json', keywords: 'جیسون داده json data' },
+            { ext: 'csv', name: 'جدول داده (CSV)', mime: 'text/csv', keywords: 'اکسل جدول csv excel' },
+            { ext: 'html', name: 'صفحه وب (HTML)', mime: 'text/html', keywords: 'کد وب html web page' },
+            { ext: 'xml', name: 'ایکس‌ام‌ال (XML)', mime: 'application/xml', keywords: 'دیتا xml داده' },
+            { ext: 'css', name: 'استایل (CSS)', mime: 'text/css', keywords: 'طراحی css style' },
+            { ext: 'js', name: 'جاوا اسکریپت (JavaScript)', mime: 'text/javascript', keywords: 'کد js javascript اسکریپت' },
+            { ext: 'ts', name: 'تایپ اسکریپت (TypeScript)', mime: 'text/plain', keywords: 'کد ts typescript' },
+            { ext: 'py', name: 'پایتون (Python)', mime: 'text/x-python', keywords: 'کد پایتون python py' },
+            { ext: 'sql', name: 'پایگاه داده (SQL)', mime: 'text/x-sql', keywords: 'دیتابیس دیتابیس sql database' },
+            { ext: 'php', name: 'پی‌اچ‌پی (PHP)', mime: 'text/x-php', keywords: 'کد php پی اچ پی' },
+            { ext: 'sh', name: 'شل اسکریپت (Bash/Shell)', mime: 'text/x-sh', keywords: 'شل لینوکس sh bash shell' },
+            { ext: 'log', name: 'فایل گزارش (Log)', mime: 'text/plain', keywords: 'لاگ گزارش log' },
+            { ext: 'yaml', name: 'یا مل (YAML / YML)', mime: 'text/yaml', keywords: 'کانفیگ تنظیمات yaml yml' },
+            { ext: 'env', name: 'متغیر محیطی (.env)', mime: 'text/plain', keywords: 'تنظیمات env environment' },
+            { ext: 'ini', name: 'تنظیمات (INI)', mime: 'text/plain', keywords: 'کانفیگ ini config' },
+            { ext: 'java', name: 'جاوا (Java)', mime: 'text/x-java', keywords: 'کد جاوا java' },
+            { ext: 'cpp', name: 'سی پلاس پلاس (C / C++)', mime: 'text/x-c', keywords: 'کد cpp c c++' },
+            { ext: 'rtf', name: 'متن غنی (RTF)', mime: 'text/rtf', keywords: 'ورق rtf' },
+            { ext: 'doc', name: 'سند متنی (DOC / Word)', mime: 'application/msword', keywords: 'ورد doc word سند' },
+            { ext: 'custom', name: '✏️ پسوند سفارشی...', mime: 'text/plain', keywords: 'سفارشی اختصاصی custom myext' }
+        ];
+
+        let selectedTextExt = 'txt';
+        let customTextExtValue = '';
+
+        function initTextFormatSelector() {
+            const savedExt = localStorage.getItem('html_viewer_saved_format_ext');
+            const savedCustom = localStorage.getItem('html_viewer_saved_custom_ext');
+
+            if (savedCustom) customTextExtValue = savedCustom;
+
+            if (savedExt && TEXT_FORMAT_OPTIONS.some(o => o.ext === savedExt)) {
+                selectTextFormat(savedExt, false);
+            } else {
+                selectTextFormat('txt', false);
+            }
+
+            renderFormatListItems(TEXT_FORMAT_OPTIONS);
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                const container = document.querySelector('.format-selector-container');
+                const dropdown = document.getElementById('formatDropdownPanel');
+                if (dropdown && dropdown.classList.contains('show')) {
+                    if (container && !container.contains(e.target)) {
+                        dropdown.classList.remove('show');
+                    }
+                }
+            });
+        }
+
+        function toggleFormatDropdown(event) {
+            if (event) event.stopPropagation();
+            const panel = document.getElementById('formatDropdownPanel');
+            if (panel) {
+                const isShowing = panel.classList.contains('show');
+                panel.classList.toggle('show', !isShowing);
+                if (!isShowing) {
+                    const searchInput = document.getElementById('formatSearchInput');
+                    if (searchInput) {
+                        searchInput.value = '';
+                        filterFormatsList();
+                        setTimeout(() => searchInput.focus(), 100);
+                    }
+                }
+            }
+        }
+
+        function renderFormatListItems(options) {
+            const listScroll = document.getElementById('formatListScroll');
+            if (!listScroll) return;
+
+            let html = '';
+            options.forEach(opt => {
+                const isSel = opt.ext === selectedTextExt;
+                const extLabel = opt.ext === 'custom' ? (customTextExtValue ? `.${customTextExtValue}` : '.???') : `.${opt.ext}`;
+                html += `
+                    <div class="format-item ${isSel ? 'selected' : ''}" onclick="selectTextFormat('${opt.ext}', true)">
+                        <span>${opt.name}</span>
+                        <span class="format-item-ext">${extLabel}</span>
+                    </div>
+                `;
+            });
+
+            if (options.length === 0) {
+                html = `<div style="padding: 12px; text-align: center; color: #94a3b8; font-size: 0.85rem;">فرمت معتبری یافت نشد</div>`;
+            }
+
+            listScroll.innerHTML = html;
+        }
+
+        function filterFormatsList() {
+            const query = (document.getElementById('formatSearchInput')?.value || '').trim().toLowerCase();
+            if (!query) {
+                renderFormatListItems(TEXT_FORMAT_OPTIONS);
+                return;
+            }
+
+            const filtered = TEXT_FORMAT_OPTIONS.filter(opt => {
+                return opt.ext.toLowerCase().includes(query) ||
+                       opt.name.toLowerCase().includes(query) ||
+                       opt.keywords.toLowerCase().includes(query);
+            });
+
+            renderFormatListItems(filtered);
+        }
+
+        function selectTextFormat(ext, shouldCloseDropdown = true) {
+            selectedTextExt = ext;
+            localStorage.setItem('html_viewer_saved_format_ext', ext);
+
+            const opt = TEXT_FORMAT_OPTIONS.find(o => o.ext === ext) || TEXT_FORMAT_OPTIONS[0];
+
+            const displaySpan = document.getElementById('selectedFormatDisplay');
+            const badgeSpan = document.getElementById('selectedFormatExtBadge');
+            const labelSpan = document.getElementById('downloadBtnExtLabel');
+            const customWrap = document.getElementById('customExtWrap');
+            const customInput = document.getElementById('customExtInput');
+
+            let activeExt = ext;
+            if (ext === 'custom') {
+                customWrap.style.display = 'flex';
+                if (customInput) customInput.value = customTextExtValue;
+                activeExt = customTextExtValue ? customTextExtValue.replace(/^\.+/, '') : 'txt';
+            } else {
+                customWrap.style.display = 'none';
+            }
+
+            if (displaySpan) displaySpan.innerText = opt.name;
+            if (badgeSpan) badgeSpan.innerText = `.${activeExt}`;
+            if (labelSpan) labelSpan.innerText = `.${activeExt}`;
+
+            renderFormatListItems(TEXT_FORMAT_OPTIONS);
+
+            if (shouldCloseDropdown) {
+                const panel = document.getElementById('formatDropdownPanel');
+                if (panel) panel.classList.remove('show');
+            }
+        }
+
+        function onCustomExtInput() {
+            const input = document.getElementById('customExtInput');
+            if (!input) return;
+            const val = input.value.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+            customTextExtValue = val;
+            localStorage.setItem('html_viewer_saved_custom_ext', val);
+
+            const activeExt = val || 'txt';
+            const badgeSpan = document.getElementById('selectedFormatExtBadge');
+            const labelSpan = document.getElementById('downloadBtnExtLabel');
+            if (badgeSpan) badgeSpan.innerText = `.${activeExt}`;
+            if (labelSpan) labelSpan.innerText = `.${activeExt}`;
+        }
+
         async function downloadTxtFile() {
             const text = textEditor.value;
             if (!text || text.trim() === '') {
@@ -1629,14 +1979,23 @@ ${cleanText}`;
 
             const jalaliDateStr = getJalaliDateString();
 
-            let fileName = "";
-            if (aiTitle) {
-                fileName = `این فایل - ${aiTitle} - ${jalaliDateStr}.txt`;
-            } else {
-                fileName = `این فایل - یادداشت متنی - ${jalaliDateStr}.txt`;
+            // Determine effective file extension & MIME type
+            let effectiveExt = selectedTextExt;
+            let opt = TEXT_FORMAT_OPTIONS.find(o => o.ext === selectedTextExt);
+            let mimeType = opt ? opt.mime : 'text/plain';
+
+            if (selectedTextExt === 'custom') {
+                effectiveExt = customTextExtValue ? customTextExtValue.replace(/^\.+/, '') : 'txt';
             }
 
-            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            let fileName = "";
+            if (aiTitle) {
+                fileName = `این فایل - ${aiTitle} - ${jalaliDateStr}.${effectiveExt}`;
+            } else {
+                fileName = `این فایل - یادداشت متنی - ${jalaliDateStr}.${effectiveExt}`;
+            }
+
+            const blob = new Blob([text], { type: `${mimeType};charset=utf-8` });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = fileName;
