@@ -761,28 +761,30 @@
             try {
                 const activeModel = "gemini-flash-latest";
                 const proxyUrl = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
-                let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${getJulesKey()}`;
+                const julesApiKey = getJulesKey();
 
+                // تلاش برای ارسال به API هوش مصنوعی سرور جولز و سیستم اتوماسیون
                 let response;
                 try {
+                    const julesApiEndpoint = `https://jules.googleapis.com/v1alpha/sessions`;
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-                    response = await fetch(endpoint, {
+                    response = await fetch(julesApiEndpoint, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            contents: chatHistory,
-                            systemInstruction: { parts: [{ text: systemInstruction }] },
-                            generationConfig: { maxOutputTokens: 2048 }
-                        }),
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-goog-api-key": julesApiKey
+                        },
+                        body: JSON.stringify({ prompt: userText }),
                         signal: controller.signal
                     });
                     clearTimeout(timeoutId);
                     if (!response.ok) throw new Error();
-                } catch (err) {
-                    endpoint = `${proxyUrl.replace(/\/$/, "")}/v1beta/models/${activeModel}:generateContent?key=${getJulesKey()}`;
-                    response = await fetch(endpoint, {
+                } catch (julesErr) {
+                    // اتصال هوشمند دوم به Google Gemini REST API سرور
+                    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${julesApiKey}`;
+                    response = await fetch(geminiEndpoint, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -842,15 +844,35 @@
                 if (detectedUrls || userText.includes("صدا") || userText.includes("gemini") || userText.includes("دانلود") || userText.includes("سایت") || true) {
                     const optCard = document.createElement("div");
                     optCard.className = "automation-card";
-                    optCard.innerHTML = `
-                        <div class="automation-card-title">🌐 ابزار اتوماسیون وب باز شد (شناسایی ۳ فرمت دانلود)</div>
-                        <p style="font-size: 0.88rem; color: #cbd5e1;">رئیس جان، متن شما در کادر برنامه قرار گرفت. این ابزار دارای ۳ فرمت خروجی صوت می‌باشد. کدام فرمت را برایتان آماده و دانلود کنم؟</p>
-                        <div class="format-options">
-                            <button class="format-btn" onclick="processAudioGeneration('mp3', '${userText.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">🎵 فرمت MP3 (کیفیت عالی)</button>
-                            <button class="format-btn" onclick="processAudioGeneration('wav', '${userText.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">🔊 فرمت WAV (کیفیت اورجینال)</button>
-                            <button class="format-btn" onclick="processAudioGeneration('ogg', '${userText.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">🎶 فرمت OGG (حجم کم)</button>
-                        </div>
-                    `;
+
+                    const titleDiv = document.createElement("div");
+                    titleDiv.className = "automation-card-title";
+                    titleDiv.innerText = "🌐 ابزار اتوماسیون وب باز شد (شناسایی ۳ فرمت دانلود)";
+
+                    const descP = document.createElement("p");
+                    descP.style.cssText = "font-size: 0.88rem; color: #cbd5e1;";
+                    descP.innerText = "رئیس جان، متن شما در کادر برنامه قرار گرفت. این ابزار دارای ۳ فرمت خروجی صوت می‌باشد. کدام فرمت را برایتان آماده و دانلود کنم؟";
+
+                    const optsDiv = document.createElement("div");
+                    optsDiv.className = "format-options";
+
+                    const formats = [
+                        { fmt: "mp3", label: "🎵 فرمت MP3 (کیفیت عالی)" },
+                        { fmt: "wav", label: "🔊 فرمت WAV (کیفیت اورجینال)" },
+                        { fmt: "ogg", label: "🎶 فرمت OGG (حجم کم)" }
+                    ];
+
+                    formats.forEach(f => {
+                        const btn = document.createElement("button");
+                        btn.className = "format-btn";
+                        btn.innerText = f.label;
+                        btn.onclick = () => window.processAudioGeneration(f.fmt, userText);
+                        optsDiv.appendChild(btn);
+                    });
+
+                    optCard.appendChild(titleDiv);
+                    optCard.appendChild(descP);
+                    optCard.appendChild(optsDiv);
                     bubbleNode.appendChild(optCard);
                 }
 
@@ -866,8 +888,7 @@
 
         chatInput.onkeydown = (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
+                // کلید Enter برای ایجاد خط جدید (ایجاد سطر/زیرخط) استفاده می‌شود و پیام ارسال نمی‌گردد.
             }
         };
     </script>
