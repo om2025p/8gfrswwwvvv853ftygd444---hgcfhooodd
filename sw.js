@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v38';
+const CACHE_NAME = 'emarat-portal-v39';
 const ASSETS = [
   './',
   './index.html',
@@ -237,7 +237,13 @@ const ASSETS = [
   './clipboard/icon-192-maskable.png',
   './clipboard/icon-512-maskable.png',
   './clipboard/apple-touch-icon.png',
-  './clipboard/favicon.ico'
+  './clipboard/favicon.ico',
+  // Jules Agent App (دستیار اتوماسیون جولز)
+  './jules-agent/index.html',
+  './jules-agent/manifest.json',
+  './jules-agent/icon-192.png',
+  './jules-agent/icon-512.png',
+  './jules-agent/apple-touch-icon.png'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
