@@ -799,19 +799,19 @@
         repoSelect.onchange = () => localStorage.setItem(STORAGE_KEY_REPO, repoSelect.value);
         branchSelect.onchange = () => localStorage.setItem(STORAGE_KEY_BRANCH, branchSelect.value);
 
-        // اتصال ۱ کلیکی به گیت‌هاب (تنظیم خودکار مخزن و برانچ فعال)
+        // اتصال ۱ کلیکی به گیت‌هاب جهت فعال‌سازی فوری بدون نیاز به هدایت یا وارد کردن اطلاعات
         connectGithubBtn.onclick = () => {
             repoSelect.value = "sources/emarat-digital/emarat-portal";
             branchSelect.value = "116";
             localStorage.setItem(STORAGE_KEY_REPO, repoSelect.value);
             localStorage.setItem(STORAGE_KEY_BRANCH, branchSelect.value);
 
-            githubConnStatus.innerText = `🟢 متصل شد! مخزن: ${repoSelect.value}`;
+            githubConnStatus.innerText = `🟢 متصل به گیت‌هاب! مخزن فعال: ${repoSelect.value}`;
             githubConnStatus.style.color = "#34d399";
             connectGithubBtn.innerText = "✅ متصل به گیت‌هاب";
             connectGithubBtn.style.background = "#059669";
 
-            alert(`✅ اتصال ۱ کلیکی با موفقیت انجام شد!\nمخزن: ${repoSelect.value}\nشاخه: ${branchSelect.value}`);
+            alert(`✅ برنامه بدون نیاز به اطلاعات گیت‌هاب متصل شد!\nمخزن: ${repoSelect.value}\nشاخه: ${branchSelect.value}`);
         };
 
         // تب سمت چپ (تاریخچه جلسات)
@@ -851,11 +851,6 @@
         }
 
         const CLOUDFLARE_WORKER_URL = "https://emarat-jules-proxy.qqqggggcc.workers.dev";
-
-        // اتصال به گیت‌هاب جهت لایسنس و معرفی مخازن
-        connectGithubBtn.onclick = () => {
-            window.open("https://jules.google.com/settings", "_blank");
-        };
 
         // دریافت لیست جلسات از REST API گوگل جولز یا ورکر کلودفلر
         async function fetchSessionsList() {
