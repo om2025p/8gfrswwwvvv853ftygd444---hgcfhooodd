@@ -119,6 +119,12 @@
       "timestamp": 1789226700430,
       "source": "automation",
       "auto": true
+    },
+    {
+      "value": 1.39,
+      "timestamp": 1789310720535,
+      "source": "automation",
+      "auto": true
     }
   ],
   "trash": [],
@@ -127,8 +133,21 @@
   "periodTarget": null,
   "achievedPeriods": [],
   "notes": [],
-  "baseNumber": 298772208,
+  "baseNumber": 302937600,
   "history": [
+    {
+      "id": 1789310720535,
+      "base": "298,772,208",
+      "new": "302,937,600",
+      "percent": "1.39",
+      "type": "increase",
+      "rawBase": 298772208.0,
+      "rawNew": 302937600.0,
+      "timestamp": "2026-09-13T14:45:20.535851Z",
+      "persianDate": "1405/06/22 14:45:20",
+      "source": "automation",
+      "auto": true
+    },
     {
       "id": 1789226700430,
       "base": "298,772,208",
