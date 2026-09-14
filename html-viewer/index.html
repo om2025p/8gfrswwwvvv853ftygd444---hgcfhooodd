@@ -919,27 +919,6 @@
             overflow: hidden;
         }
 
-        .text-preview-header {
-            background: #1e293b;
-            border-bottom: 1px solid #334155;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            flex-shrink: 0;
-        }
-
-        .text-preview-header-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #38bdf8;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
         .text-preview-scroll-body {
             flex: 1;
             overflow-y: auto;
@@ -1483,21 +1462,8 @@
             sandbox="allow-scripts allow-same-origin allow-modals allow-popups allow-forms allow-downloads allow-pointer-lock allow-orientation-lock allow-presentation"></iframe>
     </div>
 
-    <!-- Fullscreen Text & Markdown Preview Layer (Identical to HTML Preview) -->
+    <!-- Fullscreen Text & Markdown Preview Layer (No Top Bar - Controlled by Physical Back Button) -->
     <div id="textPreviewLayer">
-        <div class="text-preview-header">
-            <div class="text-preview-header-title">
-                👁️ پیش‌نمایش فول‌اسکرین متون و مارک‌داون (.md)
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <button class="btn-copy-logs" onclick="copyPlainText('textEditor')" style="padding: 6px 14px; font-size: 0.85rem;">
-                    📋 کپی متن اصلی
-                </button>
-                <button class="modal-close-btn" onclick="closeTextPreviewModal()" style="padding: 6px 14px; background: #ef4444; color: #ffffff;">
-                    ✖ خروج از پیش‌نمایش
-                </button>
-            </div>
-        </div>
         <div class="text-preview-scroll-body">
             <div class="text-preview-content" id="textPreviewBody">
                 <!-- Dynamic standard formatted content -->
