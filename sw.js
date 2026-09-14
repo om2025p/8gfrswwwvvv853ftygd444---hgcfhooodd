@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v41';
+const CACHE_NAME = 'emarat-portal-v42';
 const ASSETS = [
   './',
   './index.html',
@@ -243,7 +243,16 @@ const ASSETS = [
   './jules-agent/manifest.json',
   './jules-agent/icon-192.png',
   './jules-agent/icon-512.png',
-  './jules-agent/apple-touch-icon.png'
+  './jules-agent/apple-touch-icon.png',
+  // Liquidity App (محاسبه نقدشوندگی)
+  './liquidity/index.html',
+  './liquidity/manifest.json',
+  './liquidity/icon-192.png',
+  './liquidity/icon-512.png',
+  './liquidity/icon-192-maskable.png',
+  './liquidity/icon-512-maskable.png',
+  './liquidity/apple-touch-icon.png',
+  './liquidity/favicon.ico'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
