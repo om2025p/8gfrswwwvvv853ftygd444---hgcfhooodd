@@ -12,7 +12,13 @@
     <!-- نسخه نهایی: با منوی کشویی انتخاب صندوق -->
 <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>نقدشوندگی صندوق‌های کیان</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -762,6 +768,11 @@
                 <span id="themeLabel">تم تاریک</span>
             </button>
         </div>
+
+        <button id="pwaInstallBtn" style="display:none; background: var(--bg-amount); border: 1px solid var(--border-color); border-radius: 40px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: #2563eb; cursor: pointer; align-items: center; gap: 5px; white-space: nowrap;">
+            <span>📱</span>
+            <span>نصب برنامه</span>
+        </button>
 
         <div class="symbol-select-wrap">
             <select id="symbolSelect">
@@ -1654,6 +1665,39 @@
             applyCustomSymbol();
         }
     });
+
+    // ============================================================
+    // PWA & Service Worker Registration
+    // ============================================================
+    let deferredPrompt;
+    const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('../sw.js')
+                .then(reg => console.log('Liquidity SW registered!'))
+                .catch(err => console.error('SW registration failed:', err));
+        });
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (pwaInstallBtn) pwaInstallBtn.style.display = 'inline-flex';
+    });
+
+    if (pwaInstallBtn) {
+        pwaInstallBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    pwaInstallBtn.style.display = 'none';
+                }
+                deferredPrompt = null;
+            }
+        });
+    }
 
     // ============================================================
     // اجرا
