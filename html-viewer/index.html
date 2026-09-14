@@ -884,7 +884,7 @@
             color: #ffffff;
         }
 
-        /* Fullscreen Preview Layer */
+        /* Fullscreen Preview Layer for HTML */
         #previewLayer {
             position: fixed;
             top: 0;
@@ -902,6 +902,49 @@
             height: 100%;
             border: none;
             background: #ffffff;
+        }
+
+        /* Fullscreen Text & Markdown Preview Layer (Same as HTML Preview) */
+        #textPreviewLayer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #0f172a;
+            color: #f8fafc;
+            z-index: 99999;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .text-preview-header {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
+        }
+
+        .text-preview-header-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .text-preview-scroll-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            -webkit-overflow-scrolling: touch;
         }
 
         /* Editor Stats Bar Styles */
@@ -1440,25 +1483,24 @@
             sandbox="allow-scripts allow-same-origin allow-modals allow-popups allow-forms allow-downloads allow-pointer-lock allow-orientation-lock allow-presentation"></iframe>
     </div>
 
-    <!-- Text & Markdown Preview Modal Overlay -->
-    <div id="textPreviewModal" class="modal-overlay">
-        <div class="modal-card" style="max-width: 950px; height: 90vh;">
-            <div class="modal-header">
-                <div class="modal-title" style="color: #38bdf8;">
-                    👁️ پیش‌نمایش استاندارد متون و مارک‌داون (.md)
-                </div>
-                <button class="modal-close-btn" onclick="closeTextPreviewModal()">✖ بستن</button>
+    <!-- Fullscreen Text & Markdown Preview Layer (Identical to HTML Preview) -->
+    <div id="textPreviewLayer">
+        <div class="text-preview-header">
+            <div class="text-preview-header-title">
+                👁️ پیش‌نمایش فول‌اسکرین متون و مارک‌داون (.md)
             </div>
-            <div class="modal-body text-preview-content" id="textPreviewBody">
-                <!-- Dynamic standard formatted content -->
-            </div>
-            <div class="modal-footer">
-                <button class="btn-copy-logs" onclick="copyPlainText('textEditor')">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button class="btn-copy-logs" onclick="copyPlainText('textEditor')" style="padding: 6px 14px; font-size: 0.85rem;">
                     📋 کپی متن اصلی
                 </button>
-                <button class="btn-clear-logs" onclick="closeTextPreviewModal()">
-                    بستن پنجره
+                <button class="modal-close-btn" onclick="closeTextPreviewModal()" style="padding: 6px 14px; background: #ef4444; color: #ffffff;">
+                    ✖ خروج از پیش‌نمایش
                 </button>
+            </div>
+        </div>
+        <div class="text-preview-scroll-body">
+            <div class="text-preview-content" id="textPreviewBody">
+                <!-- Dynamic standard formatted content -->
             </div>
         </div>
     </div>
@@ -1995,9 +2037,9 @@ ${cleanText}`;
             if (previewLayer.style.display === 'flex') {
                 hidePreviewUI();
             }
-            const modal = document.getElementById('textPreviewModal');
-            if (modal && modal.style.display === 'flex') {
-                modal.style.display = 'none';
+            const textLayer = document.getElementById('textPreviewLayer');
+            if (textLayer && textLayer.style.display === 'flex') {
+                textLayer.style.display = 'none';
             }
         });
 
@@ -2088,7 +2130,7 @@ ${cleanText}`;
                 if (headerMatch) {
                     if (inList) { outputHtml.push(`</${listType}>`); inList = false; }
                     const level = headerMatch[1].length;
-                    const titleText = headerMatch[2];
+                    const titleText = escapeHtml(headerMatch[2]);
                     outputHtml.push(`<h${level}>${titleText}</h${level}>`);
                     return;
                 }
@@ -2096,7 +2138,7 @@ ${cleanText}`;
                 // Blockquote (> text)
                 if (trimmedLine.startsWith('> ')) {
                     if (inList) { outputHtml.push(`</${listType}>`); inList = false; }
-                    outputHtml.push(`<blockquote>${trimmedLine.slice(2)}</blockquote>`);
+                    outputHtml.push(`<blockquote>${escapeHtml(trimmedLine.slice(2))}</blockquote>`);
                     return;
                 }
 
@@ -2109,7 +2151,7 @@ ${cleanText}`;
                         inList = true;
                         listType = 'ul';
                     }
-                    outputHtml.push(`<li>${ulMatch[1]}</li>`);
+                    outputHtml.push(`<li>${escapeHtml(ulMatch[1])}</li>`);
                     return;
                 }
 
@@ -2122,7 +2164,7 @@ ${cleanText}`;
                         inList = true;
                         listType = 'ol';
                     }
-                    outputHtml.push(`<li>${olMatch[1]}</li>`);
+                    outputHtml.push(`<li>${escapeHtml(olMatch[1])}</li>`);
                     return;
                 }
 
@@ -2174,22 +2216,24 @@ ${cleanText}`;
                 return;
             }
 
-            const modal = document.getElementById('textPreviewModal');
+            const layer = document.getElementById('textPreviewLayer');
             const body = document.getElementById('textPreviewBody');
 
             if (body) {
                 body.innerHTML = renderFormattedTextContent(text, selectedTextExt);
             }
 
-            if (modal) {
-                modal.style.display = 'flex';
+            if (layer) {
+                layer.style.display = 'flex';
             }
+
+            history.pushState({ textFullScreen: true }, '');
         }
 
         function closeTextPreviewModal() {
-            const modal = document.getElementById('textPreviewModal');
-            if (modal) {
-                modal.style.display = 'none';
+            const layer = document.getElementById('textPreviewLayer');
+            if (layer) {
+                layer.style.display = 'none';
             }
         }
 
