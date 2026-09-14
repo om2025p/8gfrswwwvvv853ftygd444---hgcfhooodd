@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Soft Drop Shadow Filter -->
+    <filter id="liquidityShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#0284c7" flood-opacity="0.4"/>
+    </filter>
+
+    <!-- Vibrant 3D Gradients -->
+    <linearGradient id="goldCoins" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <linearGradient id="waterFlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f0f9ff" />
+    </linearGradient>
+
+    <linearGradient id="dropGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7dd3fc" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+  </defs>
+
+  <!-- Container Box -->
+  <rect width="512" height="512" rx="110" fill="url(#bgGrad)" />
+  <rect width="496" height="496" x="8" y="8" rx="102" fill="none" stroke="#0284c7" stroke-width="12" />
+  <rect width="476" height="476" x="18" y="18" rx="92" fill="none" stroke="#38bdf8" stroke-width="6" opacity="0.9" />
+
+  <!-- Main 3D Liquidity Concept Illustration -->
+  <g filter="url(#liquidityShadow)">
+    <!-- Liquid Wave Dynamic Flow -->
+    <path d="M 80 340 Q 180 280, 256 340 T 432 340 L 432 410 Q 330 430, 256 410 T 80 410 Z" fill="url(#waterFlow)" opacity="0.85" />
+    <path d="M 80 360 Q 170 320, 256 360 T 432 360 L 432 420 Q 330 440, 256 420 T 80 420 Z" fill="url(#waterFlow)" />
+
+    <!-- Stack of Shiny Golden Coins emerging from liquid -->
+    <!-- Coin 1 (Bottom Left) -->
+    <ellipse cx="170" cy="330" rx="45" ry="22" fill="url(#goldCoins)" stroke="#b45309" stroke-width="3" />
+    <ellipse cx="170" cy="324" rx="45" ry="22" fill="#fef08a" opacity="0.4" />
+
+    <!-- Coin 2 (Bottom Right) -->
+    <ellipse cx="330" cy="320" rx="45" ry="22" fill="url(#goldCoins)" stroke="#b45309" stroke-width="3" />
+
+    <!-- Coin 3 (Center Top High Water Mark) -->
+    <ellipse cx="256" cy="270" rx="55" ry="26" fill="url(#goldCoins)" stroke="#b45309" stroke-width="4" />
+    <ellipse cx="256" cy="263" rx="45" ry="20" fill="none" stroke="#fef08a" stroke-width="3" opacity="0.8" />
+    <text x="256" y="278" font-family="Arial, sans-serif" font-weight="bold" font-size="28" fill="#78350f" text-anchor="middle">﷼</text>
+
+    <!-- Glowing Water Drop of Liquidity -->
+    <path d="M 256 90 C 256 90, 190 180, 190 220 C 190 256, 219 285, 256 285 C 293 285, 322 256, 322 220 C 322 180, 256 90, 256 90 Z" fill="url(#dropGrad)" opacity="0.9" stroke="#0284c7" stroke-width="4" />
+    <!-- Drop Highlight -->
+    <ellipse cx="235" cy="200" rx="14" ry="28" fill="#ffffff" opacity="0.6" transform="rotate(-25 235 200)" />
+  </g>
+</svg>

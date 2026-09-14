@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <!-- این فایل ۲۲۰مین فایلی است که از اپلیکیشن نمایشگر کد پلتفرم عمارت دانلود شده است -->
+<meta name="platform-download-sequence" content="۲۲۰">
+<meta name="download-source" content="اپلیکیشن نمایشگر کد - پلتفرم عمارت">
+
+    <!-- این فایل ۱۹۴مین فایلی است که از اپلیکیشن نمایشگر کد پلتفرم عمارت دانلود شده است -->
+<meta name="platform-download-sequence" content="۱۹۴">
+<meta name="download-source" content="اپلیکیشن نمایشگر کد - پلتفرم عمارت">
+
+    <!-- نسخه نهایی: با منوی کشویی انتخاب صندوق -->
+<meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نقدشوندگی صندوق‌های کیان</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg-body: linear-gradient(145deg, #f0f4fa 0%, #dce3ed 100%);
+            --bg-card: #ffffff;
+            --bg-amount: #f8faff;
+            --bg-impact: #f8faff;
+            --bg-order: linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 100%);
+            --bg-param: #ffffff;
+            --bg-range: linear-gradient(135deg, #eef4fa 0%, #e8edf6 100%);
+            --bg-status: #f0f4fa;
+            --text-primary: #0b1a33;
+            --text-secondary: #5b6e8c;
+            --text-muted: #8a9bb5;
+            --text-light: #6f82a0;
+            --border-color: #eef2f8;
+            --border-order: #d4e2f5;
+            --border-range: #dce5ef;
+            --shadow: 0 20px 60px rgba(0, 20, 50, 0.12);
+            --badge-bg: #2563eb;
+            --badge-color: #fff;
+            --badge-live-bg: #e6edf8;
+            --badge-live-color: #6f82a0;
+            --input-bg: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+            --bg-card: #1e293b;
+            --bg-amount: #0f172a;
+            --bg-impact: #0f172a;
+            --bg-order: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            --bg-param: #1e293b;
+            --bg-range: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            --bg-status: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #334155;
+            --border-order: #334155;
+            --border-range: #334155;
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            --badge-bg: #3b82f6;
+            --badge-color: #fff;
+            --badge-live-bg: #334155;
+            --badge-live-color: #94a3b8;
+            --input-bg: #1e293b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-body);
+            padding: 14px;
+            transition: background 0.3s ease;
+        }
+        .card {
+            background: var(--bg-card);
+            border-radius: 26px;
+            padding: 26px 22px 24px;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* ===== نوار بالا: تم + dropdown + refresh ===== */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .theme-toggle button {
+            background: var(--bg-amount);
+            border: 1px solid var(--border-color);
+            border-radius: 40px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        .theme-toggle button:hover { background: var(--border-color); }
+        .theme-toggle button .icon { font-size: 15px; }
+
+        /* ===== منوی کشویی ===== */
+        .symbol-select-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 150px;
+        }
+        .symbol-select-wrap::after {
+            content: '▼';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            font-size: 10px;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+        .symbol-select-wrap select {
+            width: 100%;
+            padding: 9px 14px 9px 30px;
+            background: var(--bg-amount);
+            border: 1px solid var(--border-color);
+            border-radius: 40px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s, background 0.3s ease, color 0.3s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            text-align: right;
+        }
+        .symbol-select-wrap select:hover { border-color: #2563eb; }
+        .symbol-select-wrap select:focus { border-color: #2563eb; }
+        .symbol-select-wrap select option {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            padding: 8px;
+            color: var(--text-primary);
+            background: var(--bg-card);
+        }
+
+        /* ===== input نماد دستی (وقتی «سایر» انتخاب شه) ===== */
+        .custom-symbol-wrap {
+            display: none;
+            width: 100%;
+            margin-top: 8px;
+            gap: 6px;
+            align-items: center;
+        }
+        .custom-symbol-wrap.active { display: flex; }
+        .custom-symbol-wrap input {
+            flex: 1;
+            padding: 9px 14px;
+            background: var(--bg-amount);
+            border: 2px solid var(--border-color);
+            border-radius: 40px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+            outline: none;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+        .custom-symbol-wrap input:focus { border-color: #2563eb; }
+        .custom-symbol-wrap button {
+            padding: 9px 16px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 40px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .custom-symbol-wrap button:hover { background: #1d4ed8; }
+
+        /* ===== دکمه refresh ===== */
+        .refresh-btn {
+            background: var(--bg-amount);
+            border: 1px solid var(--border-color);
+            border-radius: 40px;
+            padding: 8px 14px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .refresh-btn:hover { background: var(--border-color); }
+        .refresh-btn.spinning { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .label {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-align: center;
+            line-height: 1.4;
+        }
+        .label i { color: #2563eb; font-size: 20px; }
+
+        .amount-wrapper {
+            background: var(--bg-amount);
+            border-radius: 18px;
+            padding: 18px 14px 14px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .amount-number {
+            font-family: 'Inter', 'Courier New', monospace;
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.2;
+            direction: ltr;
+            unicode-bidi: plaintext;
+            word-break: break-word;
+        }
+        .amount-number .currency {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-right: 5px;
+            font-family: 'Inter', sans-serif;
+        }
+        .amount-words {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-top: 8px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border-color);
+            word-break: break-word;
+            line-height: 1.7;
+        }
+        .amount-words .highlight { color: #2563eb; font-weight: 600; }
+
+        .impact-box {
+            background: var(--bg-impact);
+            border-radius: 16px;
+            padding: 16px 14px 18px;
+            margin: 6px 0 12px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .impact-label {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .impact-label i { color: #8b5cf6; }
+
+        .impact-input-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .impact-input-row input {
+            flex: 1;
+            min-width: 120px;
+            max-width: 220px;
+            padding: 10px 14px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Inter', 'Courier New', monospace;
+            direction: ltr;
+            text-align: center;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            transition: border-color 0.2s, background 0.3s ease, color 0.3s ease;
+            outline: none;
+        }
+        .impact-input-row input:focus { border-color: #2563eb; }
+        .impact-input-row input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+            font-size: 13px;
+        }
+        .impact-input-row .unit {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .manual-price-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .manual-price-row label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .manual-price-row input {
+            width: 130px;
+            padding: 8px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Inter', 'Courier New', monospace;
+            text-align: center;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            transition: border-color 0.2s, background 0.3s ease, color 0.3s ease;
+            outline: none;
+        }
+        .manual-price-row input:focus { border-color: #8b5cf6; }
+        .manual-price-row .unit-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+        .manual-price-row .reset-btn {
+            font-size: 16px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.2s;
+            padding: 4px 8px;
+            border-radius: 50%;
+        }
+        .manual-price-row .reset-btn:hover { color: #2563eb; background: rgba(37,99,235,0.1); }
+
+        .dual-price {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 12px;
+            padding: 12px 14px;
+            background: var(--bg-range);
+            border-radius: 12px;
+            border: 1px solid var(--border-range);
+            font-size: 14px;
+            flex-wrap: wrap;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .dual-price .item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .dual-price .item .lbl {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .dual-price .item .val {
+            font-weight: 800;
+            color: var(--text-primary);
+            font-family: 'Inter', 'Courier New', monospace;
+            direction: ltr;
+            unicode-bidi: plaintext;
+            font-size: 16px;
+        }
+        .dual-price .item .val .unit {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-right: 3px;
+        }
+        .dual-price .item .val.pc { color: #2563eb; }
+        .dual-price .item .val.pl { color: #8b5cf6; }
+        .dual-price .sep {
+            color: var(--text-muted);
+            font-weight: 300;
+            font-size: 16px;
+        }
+
+        .order-book {
+            margin-top: 14px;
+            padding: 16px 14px;
+            background: var(--bg-order);
+            border-radius: 16px;
+            border: 1px solid var(--border-order);
+            text-align: center;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .order-book-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .order-book-header .title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .order-book-header .live-badge {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--badge-live-color);
+            background: var(--badge-live-bg);
+            padding: 3px 10px;
+            border-radius: 40px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .order-book-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .order-book-item {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 12px 10px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s ease, border-color 0.3s ease;
+            overflow: hidden;
+        }
+        .order-book-item .label-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-light);
+            line-height: 1.4;
+        }
+        .order-book-item .value {
+            font-size: 18px;
+            font-weight: 800;
+            font-family: 'Inter', 'Courier New', monospace;
+            direction: ltr;
+            unicode-bidi: plaintext;
+            margin-top: 4px;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .order-book-item .value.buy { color: #10b981; }
+        .order-book-item .value.sell { color: #ef4444; }
+        .order-book-item .sub-info {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .order-book-best {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .best-item {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 10px 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .best-item .best-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .best-item .best-price {
+            font-size: 15px;
+            font-weight: 800;
+            font-family: 'Inter', 'Courier New', monospace;
+            direction: ltr;
+            unicode-bidi: plaintext;
+            margin-top: 4px;
+        }
+        .best-item .best-price.buy { color: #10b981; }
+        .best-item .best-price.sell { color: #ef4444; }
+        .best-item .best-vol {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .market-status {
+            margin-top: 12px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .market-status.open {
+            background: #d1fae5;
+            color: #0b6b4a;
+        }
+        .market-status.closed {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        [data-theme="dark"] .market-status.open {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+        [data-theme="dark"] .market-status.closed {
+            background: #78350f;
+            color: #fcd34d;
+        }
+
+        .params-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-color);
+            transition: border-color 0.3s ease;
+        }
+        .param-item {
+            background: var(--bg-param);
+            border-radius: 12px;
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .param-item .value {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--text-primary);
+            font-family: 'Inter', 'Courier New', monospace;
+            direction: ltr;
+            unicode-bidi: plaintext;
+        }
+        .param-item .value.green { color: #10b981; }
+        .param-item .value.orange { color: #f59e0b; }
+        .param-item .value.red { color: #ef4444; }
+        .param-item .desc {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-top: 4px;
+            line-height: 1.3;
+        }
+
+        .impact-result {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-color);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            transition: border-color 0.3s ease;
+        }
+        .impact-item {
+            background: var(--bg-param);
+            border-radius: 12px;
+            padding: 12px 10px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .impact-item .value {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-primary);
+            font-family: 'Inter', 'Courier New', monospace;
+        }
+        .impact-item .value.high { color: #ef4444; }
+        .impact-item .value.medium { color: #f59e0b; }
+        .impact-item .value.low { color: #10b981; }
+        .impact-item .desc {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .impact-status {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: var(--bg-status);
+            color: var(--text-secondary);
+            line-height: 1.7;
+            transition: background 0.3s ease, color 0.3s ease;
+            white-space: pre-line;
+        }
+        .impact-status.good { background: #d1fae5; color: #0b6b4a; }
+        .impact-status.warning { background: #fef3c7; color: #92400e; }
+        .impact-status.danger { background: #fde8e8; color: #a11c1c; }
+        .impact-status.perfect { background: #dbeafe; color: #1a56a8; }
+        [data-theme="dark"] .impact-status.good { background: #064e3b; color: #6ee7b7; }
+        [data-theme="dark"] .impact-status.warning { background: #78350f; color: #fcd34d; }
+        [data-theme="dark"] .impact-status.danger { background: #7f1d1d; color: #fca5a5; }
+        [data-theme="dark"] .impact-status.perfect { background: #1e3a5f; color: #93c5fd; }
+
+        .trade-status-box {
+            margin-top: 14px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: var(--bg-param);
+            border: 2px solid var(--border-color);
+            text-align: center;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .trade-status-box .trade-icon { font-size: 26px; display: block; margin-bottom: 4px; }
+        .trade-status-box .trade-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .trade-status-box .trade-detail {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.7;
+            white-space: pre-line;
+        }
+        .trade-status-box .trade-detail strong { color: var(--text-primary); }
+
+        .range-guide {
+            margin-top: 12px;
+            padding: 12px 14px;
+            background: var(--bg-range);
+            border-radius: 14px;
+            font-size: 13px;
+            color: var(--text-primary);
+            text-align: center;
+            line-height: 1.7;
+            border: 1px solid var(--border-range);
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        .range-guide .big-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+        .range-guide .highlight-number {
+            font-weight: 800;
+            color: var(--text-primary);
+            font-family: 'Inter', 'Courier New', monospace;
+            direction: ltr;
+            unicode-bidi: plaintext;
+        }
+        .range-guide .highlight-number.blue { color: #2563eb; }
+        .range-guide .highlight-number.green { color: #10b981; }
+        .range-guide .separator { color: var(--text-muted); margin: 0 4px; }
+        .range-guide .small-note { display: block; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+        .sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 10px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            transition: border-color 0.3s ease, color 0.3s ease;
+        }
+        .badge {
+            background: var(--badge-bg);
+            color: var(--badge-color);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 5px 14px;
+            border-radius: 40px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        .badge i { font-size: 8px; }
+        .loading { animation: pulse 1.5s ease-in-out infinite; }
+        .error-text { color: #ef4444; font-size: 14px; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        @media (max-width: 420px) {
+            .card { padding: 18px 14px 16px; border-radius: 22px; }
+            .amount-number { font-size: 24px; }
+            .amount-number .currency { font-size: 14px; }
+            .amount-wrapper { padding: 14px 10px 12px; }
+            .params-grid { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+            .param-item .value { font-size: 14px; }
+            .param-item .desc { font-size: 10px; }
+            .impact-result { grid-template-columns: 1fr 1fr; gap: 6px; }
+            .impact-item .value { font-size: 16px; }
+            .impact-input-row input { font-size: 14px; padding: 8px 10px; min-width: 80px; max-width: 160px; }
+            .range-guide { font-size: 12px; padding: 10px; }
+            .range-guide .highlight-number { font-size: 12px; }
+            .impact-status { font-size: 13px; padding: 10px; }
+            .dual-price { font-size: 12px; padding: 10px; }
+            .dual-price .item .val { font-size: 14px; }
+            .order-book-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+            .order-book-item .value { font-size: 15px; }
+            .order-book-item .label-text { font-size: 11px; }
+            .manual-price-row input { width: 100px; font-size: 13px; }
+            .trade-status-box .trade-title { font-size: 14px; }
+            .trade-status-box .trade-detail { font-size: 12px; }
+            .order-book-item .sub-info { font-size: 11px; }
+            .best-item .best-price { font-size: 13px; }
+            .theme-toggle button { font-size: 12px; padding: 7px 10px; }
+            .symbol-select-wrap select { font-size: 12px; padding: 8px 10px 8px 26px; }
+            .label { font-size: 16px; }
+            .label i { font-size: 18px; }
+            .impact-label { font-size: 14px; }
+        }
+        @media (max-width: 340px) {
+            .amount-number { font-size: 20px; }
+            .amount-number .currency { font-size: 12px; }
+            .params-grid { grid-template-columns: 1fr 1fr; }
+            .impact-result { grid-template-columns: 1fr; }
+            .order-book-grid { grid-template-columns: 1fr; }
+            .order-book-best { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="card" id="app">
+    <div class="top-bar">
+        <div class="theme-toggle">
+            <button id="themeToggleBtn">
+                <span class="icon" id="themeIcon">🌙</span>
+                <span id="themeLabel">تم تاریک</span>
+            </button>
+        </div>
+
+        <div class="symbol-select-wrap">
+            <select id="symbolSelect">
+                <option value="دوایکس" selected>⭐ دوایکس — صندوق اهرمی شاخصی کیان</option>
+                <option value="کیان">کیان — صندوق درآمد ثابت کیان</option>
+                <option value="گوهر">گوهر — صندوق کالای کیان</option>
+                <option value="سیمان">سیمان — صندوق بخشی کیان ۳</option>
+                <option value="یوتیلیتی">یوتیلیتی — صندوق بخشی کیان ۲</option>
+                <option value="هم وزن">هم وزن — صندوق شاخصی کیان</option>
+                <option value="رشدی کیان">رشدی کیان — صندوق آوای سهام کیان</option>
+                <option value="فارما کیان">فارما کیان — صندوق بخشی کیان ۱</option>
+                <option value="__custom__">✏️ سایر (نماد دلخواه)...</option>
+            </select>
+        </div>
+
+        <button class="refresh-btn" id="refreshBtn" title="به‌روزرسانی">🔄</button>
+    </div>
+
+    <!-- input نماد دستی -->
+    <div class="custom-symbol-wrap" id="customSymbolWrap">
+        <input type="text" id="customSymbolInput" placeholder="نماد دلخواه را تایپ کن..." />
+        <button id="customSymbolBtn">بگرد</button>
+    </div>
+
+    <div class="label">
+        <i class="fas fa-coins"></i>
+        نقدشوندگی <span id="symbolTitle">صندوق اهرمی شاخصی کیان</span>
+    </div>
+
+    <div class="amount-wrapper">
+        <div class="amount-number" id="liquidityDisplay">
+            <span class="loading">...</span>
+        </div>
+        <div class="amount-words" id="wordsDisplay">
+            <span style="color:var(--text-muted);">در حال دریافت آخرین داده...</span>
+        </div>
+    </div>
+
+    <div class="impact-box">
+        <div class="impact-label">
+            <i class="fas fa-scale-balanced"></i>
+            تأثیر معامله‌ی شما
+        </div>
+
+        <div class="impact-input-row">
+            <input type="text" id="tradeAmountInput" placeholder="مثلاً 500,000,000" />
+            <span class="unit">تومان</span>
+        </div>
+
+        <div class="manual-price-row">
+            <label>✏️ قیمت دستی:</label>
+            <input type="text" id="manualPriceInput" placeholder="قیمت به ریال" />
+            <span class="unit-label">ریال</span>
+            <span class="reset-btn" id="resetPriceBtn" title="بازگشت به قیمت API">↺</span>
+        </div>
+
+        <div class="dual-price">
+            <div class="item">
+                <span class="lbl">⚡ لحظه‌ای:</span>
+                <span class="val pl" id="plDisplay">...</span>
+            </div>
+            <span class="sep">|</span>
+            <div class="item">
+                <span class="lbl">💰 پایانی:</span>
+                <span class="val pc" id="pcDisplay">...</span>
+            </div>
+        </div>
+
+        <div class="order-book">
+            <div class="order-book-header">
+                <span class="title">📊 صف خرید و فروش</span>
+                <span class="live-badge" id="dataBadge">📌 آخرین داده</span>
+            </div>
+            <div class="order-book-grid">
+                <div class="order-book-item">
+                    <div class="label-text">🟢 ارزش صف خرید (مجموع ۵ سطر)</div>
+                    <div class="value buy" id="buyQueueValue">...</div>
+                    <div class="sub-info">تومان</div>
+                </div>
+                <div class="order-book-item">
+                    <div class="label-text">🔴 ارزش صف فروش (مجموع ۵ سطر)</div>
+                    <div class="value sell" id="sellQueueValue">...</div>
+                    <div class="sub-info">تومان</div>
+                </div>
+            </div>
+
+            <div class="order-book-best">
+                <div class="best-item">
+                    <div class="best-label">🟢 بهترین خرید</div>
+                    <div class="best-price buy" id="bestBuyPrice">...</div>
+                    <div class="best-vol" id="bestBuyVol">...</div>
+                </div>
+                <div class="best-item">
+                    <div class="best-label">🔴 بهترین فروش</div>
+                    <div class="best-price sell" id="bestSellPrice">...</div>
+                    <div class="best-vol" id="bestSellVol">...</div>
+                </div>
+            </div>
+
+            <div class="market-status" id="marketStatus">
+                در حال دریافت آخرین داده...
+            </div>
+        </div>
+
+        <div class="params-grid">
+            <div class="param-item">
+                <div class="value" id="marketDepth">...</div>
+                <div class="desc">عمق بازار (صف)</div>
+            </div>
+            <div class="param-item">
+                <div class="value" id="avgVolume">...</div>
+                <div class="desc">حجم امروز (تقریبی)</div>
+            </div>
+            <div class="param-item">
+                <div class="value" id="tradeCount">...</div>
+                <div class="desc">تعداد معاملات روز</div>
+            </div>
+        </div>
+
+        <div class="range-guide" id="rangeGuide">
+            <span class="big-icon">💡</span>
+            <div>
+                با توجه به نقدشوندگی امروز،
+                می‌توانید
+                <span class="highlight-number blue" id="minToman">...</span>
+                تا
+                <span class="highlight-number blue" id="maxToman">...</span>
+                تومان
+                <span class="separator">|</span>
+                <span class="highlight-number green" id="minUnit">...</span>
+                تا
+                <span class="highlight-number green" id="maxUnit">...</span>
+                واحد
+                <span class="small-note">✨ بدون تأثیر محسوس روی قیمت</span>
+            </div>
+        </div>
+
+        <div class="impact-result" id="impactResult">
+            <div class="impact-item">
+                <div class="value" id="percentOfDaily">--</div>
+                <div class="desc">درصد از نقدشوندگی روز</div>
+            </div>
+            <div class="impact-item">
+                <div class="value" id="impactLevel">--</div>
+                <div class="desc">تأثیر روی قیمت</div>
+            </div>
+            <div class="impact-status" id="impactStatus">
+                😊 مقدار معامله را وارد کنید
+            </div>
+        </div>
+
+        <div class="trade-status-box" id="tradeStatusBox">
+            <span class="trade-icon" id="tradeIcon">📊</span>
+            <div class="trade-title" id="tradeTitle">مقدار معامله را وارد کنید</div>
+            <div class="trade-detail" id="tradeDetail">تا بتوانیم وضعیت را بررسی کنیم</div>
+        </div>
+    </div>
+
+    <div class="sub">
+        <span class="badge">
+            <i class="fas fa-history"></i> آخرین به‌روزرسانی
+        </span>
+        <span id="updateTime">--</span>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+
+<script>
+    // ============================================================
+    // CONFIG - BrsApi
+    // ============================================================
+    const API_KEY = 'BJMPB79CukYE8bzAXLZPWhXVVXUXkxBm';
+    const API_BASE = 'https://Api.BrsApi.ir/Tsetmc/AllSymbols.php';
+
+    // لیست صندوق‌های کیان (برای نمایش نام کامل)
+    const SYMBOL_NAMES = {
+        'دوایکس': 'صندوق اهرمی شاخصی کیان',
+        'کیان': 'صندوق درآمد ثابت کیان',
+        'گوهر': 'صندوق کالای کیان',
+        'سیمان': 'صندوق بخشی کیان ۳',
+        'یوتیلیتی': 'صندوق بخشی کیان ۲',
+        'هم وزن': 'صندوق شاخصی کیان',
+        'رشدی کیان': 'صندوق آوای سهام کیان',
+        'فارما کیان': 'صندوق بخشی کیان ۱'
+    };
+
+    // ============================================================
+    // DOM refs
+    // ============================================================
+    const liquidityDisplay = document.getElementById('liquidityDisplay');
+    const wordsDisplay = document.getElementById('wordsDisplay');
+    const updateTime = document.getElementById('updateTime');
+    const tradeInput = document.getElementById('tradeAmountInput');
+    const percentOfDaily = document.getElementById('percentOfDaily');
+    const impactLevel = document.getElementById('impactLevel');
+    const impactStatus = document.getElementById('impactStatus');
+    const minUnit = document.getElementById('minUnit');
+    const maxUnit = document.getElementById('maxUnit');
+    const minToman = document.getElementById('minToman');
+    const maxToman = document.getElementById('maxToman');
+    const marketDepth = document.getElementById('marketDepth');
+    const avgVolume = document.getElementById('avgVolume');
+    const tradeCount = document.getElementById('tradeCount');
+    const buyQueueValue = document.getElementById('buyQueueValue');
+    const sellQueueValue = document.getElementById('sellQueueValue');
+    const bestBuyPrice = document.getElementById('bestBuyPrice');
+    const bestBuyVol = document.getElementById('bestBuyVol');
+    const bestSellPrice = document.getElementById('bestSellPrice');
+    const bestSellVol = document.getElementById('bestSellVol');
+    const marketStatus = document.getElementById('marketStatus');
+    const dataBadge = document.getElementById('dataBadge');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeIcon');
+    const themeLabel = document.getElementById('themeLabel');
+    const manualPriceInput = document.getElementById('manualPriceInput');
+    const resetPriceBtn = document.getElementById('resetPriceBtn');
+    const tradeStatusBox = document.getElementById('tradeStatusBox');
+    const tradeIcon = document.getElementById('tradeIcon');
+    const tradeTitle = document.getElementById('tradeTitle');
+    const tradeDetail = document.getElementById('tradeDetail');
+    const pcDisplay = document.getElementById('pcDisplay');
+    const plDisplay = document.getElementById('plDisplay');
+    const symbolSelect = document.getElementById('symbolSelect');
+    const symbolTitle = document.getElementById('symbolTitle');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const customSymbolWrap = document.getElementById('customSymbolWrap');
+    const customSymbolInput = document.getElementById('customSymbolInput');
+    const customSymbolBtn = document.getElementById('customSymbolBtn');
+
+    // ============================================================
+    // متغیرها
+    // ============================================================
+    let dailyLiquidityToman = 0;
+    let currentPriceRials = 0;
+    let apiPriceRials = 0;
+    let lastPriceRials = 0;
+    let todayVolume = 0;
+    let tradeNumber = 0;
+    let priceRials = 0;
+    let lastTradeDate = '';
+    let currentTheme = 'light';
+    let isUsingManualPrice = false;
+    let currentSymbol = 'دوایکس';
+
+    let buyQueueRaw = 0;
+    let sellQueueRaw = 0;
+    let bestBuyPriceRials = 0;
+    let bestSellPriceRials = 0;
+    let bestBuyVolRaw = 0;
+    let bestSellVolRaw = 0;
+
+    // ============================================================
+    // مدیریت تم
+    // ============================================================
+    function toggleTheme() {
+        if (currentTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            currentTheme = 'dark';
+            themeIcon.textContent = '☀️';
+            themeLabel.textContent = 'تم روشن';
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            currentTheme = 'light';
+            themeIcon.textContent = '🌙';
+            themeLabel.textContent = 'تم تاریک';
+        }
+        localStorage.setItem('theme', currentTheme);
+    }
+
+    function loadTheme() {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            currentTheme = 'dark';
+            themeIcon.textContent = '☀️';
+            themeLabel.textContent = 'تم روشن';
+        }
+    }
+
+    themeToggleBtn.addEventListener('click', toggleTheme);
+    loadTheme();
+
+    // ============================================================
+    // تبدیل عدد به حروف
+    // ============================================================
+    function numberToWords(num) {
+        if (num === 0) return 'صفر';
+        if (num < 0) return 'منفی ' + numberToWords(Math.abs(num));
+
+        const ones = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه',
+            'ده', 'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده', 'هفده', 'هجده', 'نوزده'];
+        const tens = ['', '', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
+        const hundreds = ['', 'یکصد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
+        const scales = [
+            { divisor: 1e12, name: 'تریلیون' },
+            { divisor: 1e9, name: 'میلیارد' },
+            { divisor: 1e6, name: 'میلیون' },
+            { divisor: 1e3, name: 'هزار' }
+        ];
+
+        function convertChunk(n) {
+            if (n === 0) return '';
+            const h = Math.floor(n / 100);
+            const t = Math.floor((n % 100) / 10);
+            const o = n % 10;
+            let result = '';
+            if (h > 0) result += hundreds[h] + ' ';
+            if (t === 1) result += ones[o + 10] + ' ';
+            else {
+                if (t > 1) result += tens[t] + ' ';
+                if (o > 0) result += ones[o] + ' ';
+            }
+            return result.trim();
+        }
+
+        let result = '';
+        let remaining = num;
+        for (const scale of scales) {
+            const count = Math.floor(remaining / scale.divisor);
+            if (count > 0) {
+                result += convertChunk(count) + ' ' + scale.name + ' ';
+                remaining -= count * scale.divisor;
+            }
+        }
+        if (remaining > 0) result += convertChunk(remaining);
+        return result.trim();
+    }
+
+    function formatEnglishNumber(n) {
+        return n.toLocaleString('en-US');
+    }
+
+    function formatShortNumber(n) {
+        if (n === undefined || n === null || isNaN(n) || n === 0) return '۰';
+        const absN = Math.abs(n);
+        if (absN >= 1e12) return (n / 1e12).toFixed(1) + ' تریلیون';
+        if (absN >= 1e9) return (n / 1e9).toFixed(1) + ' میلیارد';
+        if (absN >= 1e6) return (n / 1e6).toFixed(1) + ' میلیون';
+        if (absN >= 1e3) return (n / 1e3).toFixed(1) + ' هزار';
+        return n.toString();
+    }
+
+    function parseCommaNumber(str) {
+        if (!str) return 0;
+        const clean = String(str).replace(/[^0-9.]/g, '');
+        return parseFloat(clean) || 0;
+    }
+
+    function getJalaliDateTime(hhmm) {
+        try {
+            const now = new Date();
+            const dateStr = new Intl.DateTimeFormat('fa-IR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }).format(now);
+
+            if (hhmm && hhmm !== '--') {
+                const parts = String(hhmm).split(':');
+                const shortTime = parts[0] + ':' + parts[1];
+                return dateStr + ' - ' + shortTime;
+            }
+            return dateStr;
+        } catch (e) {
+            return hhmm || '--';
+        }
+    }
+
+    function getMarketStatusText() {
+        const now = new Date();
+        const day = now.getDay();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+
+        if (day === 5) return '⛔ پنج‌شنبه - بازار تعطیل';
+        if (day === 6) return '⛔ جمعه - بازار تعطیل';
+        if (hours < 9 || (hours === 12 && minutes > 30) || hours > 12) {
+            return '⛔ خارج از ساعات معاملاتی (۹ تا ۱۲:۳۰)';
+        }
+        return '✅ بازار باز است';
+    }
+
+    function getEffectivePrice() {
+        const manual = parseCommaNumber(manualPriceInput.value);
+        if (manual > 0) {
+            isUsingManualPrice = true;
+            return manual;
+        }
+        isUsingManualPrice = false;
+        return apiPriceRials;
+    }
+
+    // ============================================================
+    // صف خرید/فروش
+    // ============================================================
+    function updateOrderBook(data) {
+        if (!data || !data.pl) {
+            buyQueueValue.textContent = '...';
+            sellQueueValue.textContent = '...';
+            bestBuyPrice.textContent = '...';
+            bestSellPrice.textContent = '...';
+            bestBuyVol.textContent = '...';
+            bestSellVol.textContent = '...';
+            marketStatus.textContent = 'در حال دریافت آخرین داده...';
+            marketStatus.className = 'market-status closed';
+            return;
+        }
+
+        let buyTotalRials = 0;
+        for (let i = 1; i <= 5; i++) {
+            const vol = Number(data['qd' + i]) || 0;
+            const price = Number(data['pd' + i]) || 0;
+            buyTotalRials += vol * price;
+        }
+        buyQueueRaw = Math.round(buyTotalRials / 10);
+
+        let sellTotalRials = 0;
+        for (let i = 1; i <= 5; i++) {
+            const vol = Number(data['qo' + i]) || 0;
+            const price = Number(data['po' + i]) || 0;
+            sellTotalRials += vol * price;
+        }
+        sellQueueRaw = Math.round(sellTotalRials / 10);
+
+        bestBuyPriceRials = Number(data.pd1) || 0;
+        bestSellPriceRials = Number(data.po1) || 0;
+        bestBuyVolRaw = Number(data.qd1) || 0;
+        bestSellVolRaw = Number(data.qo1) || 0;
+
+        buyQueueValue.textContent = formatShortNumber(buyQueueRaw);
+        sellQueueValue.textContent = formatShortNumber(sellQueueRaw);
+
+        bestBuyPrice.textContent = bestBuyPriceRials > 0
+            ? formatEnglishNumber(bestBuyPriceRials) + ' ریال'
+            : '—';
+        bestSellPrice.textContent = bestSellPriceRials > 0
+            ? formatEnglishNumber(bestSellPriceRials) + ' ریال'
+            : '—';
+
+        bestBuyVol.textContent = bestBuyVolRaw > 0
+            ? formatEnglishNumber(bestBuyVolRaw) + ' واحد'
+            : '—';
+        bestSellVol.textContent = bestSellVolRaw > 0
+            ? formatEnglishNumber(bestSellVolRaw) + ' واحد'
+            : '—';
+
+        const statusText = getMarketStatusText();
+        const isOpen = statusText.includes('بازار باز است');
+        marketStatus.textContent = statusText;
+        marketStatus.className = isOpen ? 'market-status open' : 'market-status closed';
+
+        dataBadge.textContent = '📌 آخرین داده';
+    }
+
+    // ============================================================
+    // وضعیت معامله
+    // ============================================================
+    function getTradeStatus(tradeValueToman) {
+        const tradeRials = tradeValueToman * 10;
+        const buyRials = buyQueueRaw * 10;
+        const sellRials = sellQueueRaw * 10;
+
+        if (buyRials === 0 && sellRials === 0) {
+            return {
+                icon: '⚠️',
+                title: '⚠️ داده‌های صف در دسترس نیست',
+                detail: 'لطفاً بعداً دوباره تلاش کنید.',
+                class: 'warning'
+            };
+        }
+
+        const buyCoverage = buyRials > 0 ? (tradeRials / buyRials * 100) : Infinity;
+        const sellCoverage = sellRials > 0 ? (tradeRials / sellRials * 100) : Infinity;
+
+        const canBuy = buyRials > 0 && tradeRials <= buyRials;
+        const canSell = sellRials > 0 && tradeRials <= sellRials;
+        const tradeUnits = apiPriceRials > 0 ? Math.floor(tradeRials / apiPriceRials) : 0;
+
+        if (tradeValueToman <= 0) {
+            return {
+                icon: '📊',
+                title: 'مقدار معامله را وارد کنید',
+                detail: 'تا بتوانیم وضعیت را بررسی کنیم',
+                class: ''
+            };
+        }
+
+        if (canBuy && canSell) {
+            return {
+                icon: '✅',
+                title: '✅ معامله قابل انجام است',
+                detail: `معامله‌ی ${formatShortNumber(tradeValueToman)} تومانی (حدود ${formatEnglishNumber(tradeUnits)} واحد) هم در سمت خرید و هم در سمت فروش قابل انجام است.\n` +
+                       `🟢 صف خرید ${Math.round(Math.min(buyCoverage, 100))}% از معامله شما را پوشش می‌دهد.\n` +
+                       `🔴 صف فروش ${Math.round(Math.min(sellCoverage, 100))}% از معامله شما را پوشش می‌دهد.`,
+                class: 'good'
+            };
+        } else if (canBuy) {
+            return {
+                icon: '🟢',
+                title: '🟢 معامله خرید قابل انجام است',
+                detail: `معامله‌ی ${formatShortNumber(tradeValueToman)} تومانی (حدود ${formatEnglishNumber(tradeUnits)} واحد) در سمت خرید قابل انجام است.\n` +
+                       `🟢 صف خرید ${Math.round(Math.min(buyCoverage, 100))}% از معامله شما را پوشش می‌دهد.\n` +
+                       `⚠️ توجه: صف فروش برای این حجم کافی نیست (${Math.round(Math.min(sellCoverage, 100))}%).`,
+                class: 'good'
+            };
+        } else if (canSell) {
+            return {
+                icon: '🔴',
+                title: '🔴 معامله فروش قابل انجام است',
+                detail: `معامله‌ی ${formatShortNumber(tradeValueToman)} تومانی (حدود ${formatEnglishNumber(tradeUnits)} واحد) در سمت فروش قابل انجام است.\n` +
+                       `🔴 صف فروش ${Math.round(Math.min(sellCoverage, 100))}% از معامله شما را پوشش می‌دهد.\n` +
+                       `⚠️ توجه: صف خرید برای این حجم کافی نیست (${Math.round(Math.min(buyCoverage, 100))}%).`,
+                class: 'good'
+            };
+        } else {
+            let suggestion = '';
+            if (buyRials > 0 && sellRials > 0) {
+                const maxTrade = Math.min(buyRials, sellRials) / 10;
+                const maxUnits = apiPriceRials > 0 ? Math.floor(maxTrade / (apiPriceRials / 10)) : 0;
+                suggestion = `\n💡 پیشنهاد: حداکثر می‌توانید ${formatShortNumber(maxTrade)} تومان (حدود ${formatEnglishNumber(maxUnits)} واحد) معامله کنید.`;
+            }
+            return {
+                icon: '⚠️',
+                title: '⚠️ معامله قابل انجام نیست',
+                detail: `معامله‌ی ${formatShortNumber(tradeValueToman)} تومانی (حدود ${formatEnglishNumber(tradeUnits)} واحد) از ظرفیت صف‌ها بیشتر است.\n` +
+                       `🟢 صف خرید ${Math.round(Math.min(buyCoverage, 100))}% از معامله را پوشش می‌دهد.\n` +
+                       `🔴 صف فروش ${Math.round(Math.min(sellCoverage, 100))}% از معامله را پوشش می‌دهد.${suggestion}`,
+                class: 'danger'
+            };
+        }
+    }
+
+    function getHeavyTradeStatus(percent, depth, avgRatio) {
+        let score = 0;
+        if (percent <= 1) score += 3;
+        else if (percent <= 5) score += 2;
+        else if (percent <= 20) score += 1;
+        else score -= 2;
+
+        if (depth > 100) score += 2;
+        else if (depth > 30) score += 1;
+        else score -= 1;
+
+        if (avgRatio >= 0.8) score += 2;
+        else if (avgRatio >= 0.5) score += 1;
+        else score -= 1;
+
+        if (score >= 6) {
+            return {
+                status: '✅ معامله سنگین انجام می‌شود',
+                class: 'perfect',
+                detail: 'همه‌چیز عالیست! نقدشوندگی بالا، عمق بازار مناسب و حجم معاملات خوب است.'
+            };
+        } else if (score >= 3) {
+            return {
+                status: '⚠️ احتمال انجام معامله وجود دارد',
+                class: 'warning',
+                detail: 'شرایط نسبتاً خوب است ولی کمی احتیاط کنید. بهتر است معامله را در چند مرحله انجام دهید.'
+            };
+        } else if (score >= 0) {
+            return {
+                status: '⚠️ با احتیاط انجام شود',
+                class: 'warning',
+                detail: 'نقدشوندگی یا عمق بازار پایین است. معامله را به چند بخش کوچک تقسیم کنید.'
+            };
+        } else {
+            return {
+                status: '❌ معامله سنگین توصیه نمی‌شود',
+                class: 'danger',
+                detail: 'نقدشوندگی و عمق بازار مناسب نیست. معامله‌ی سنگین می‌تواند قیمت را به‌شدت تحت تأثیر قرار دهد.'
+            };
+        }
+    }
+
+    // ============================================================
+    // محاسبه impact
+    // ============================================================
+    function calculateImpact() {
+        const effectivePrice = getEffectivePrice();
+
+        if (dailyLiquidityToman === 0 || effectivePrice === 0) {
+            percentOfDaily.textContent = '--';
+            impactLevel.textContent = '--';
+            impactStatus.textContent = '⏳ منتظر دریافت داده...';
+            impactStatus.className = 'impact-status';
+            minUnit.textContent = '...';
+            maxUnit.textContent = '...';
+            minToman.textContent = '...';
+            maxToman.textContent = '...';
+            tradeIcon.textContent = '📊';
+            tradeTitle.textContent = 'مقدار معامله را وارد کنید';
+            tradeDetail.textContent = 'تا بتوانیم وضعیت را بررسی کنیم';
+            tradeStatusBox.className = 'trade-status-box';
+            return;
+        }
+
+        updateDualPriceDisplay();
+
+        const pricePerUnitRials = effectivePrice;
+        const minPercent = 0.01;
+        const maxPercent = 0.05;
+
+        const minTomanValue = Math.floor(dailyLiquidityToman * minPercent);
+        const maxTomanValue = Math.floor(dailyLiquidityToman * maxPercent);
+        const minUnitValue = Math.floor((minTomanValue * 10) / pricePerUnitRials);
+        const maxUnitValue = Math.floor((maxTomanValue * 10) / pricePerUnitRials);
+
+        minToman.textContent = formatEnglishNumber(Math.max(1, minTomanValue));
+        maxToman.textContent = formatEnglishNumber(Math.max(1, maxTomanValue));
+        minUnit.textContent = formatEnglishNumber(Math.max(1, minUnitValue));
+        maxUnit.textContent = formatEnglishNumber(Math.max(1, maxUnitValue));
+
+        const depthEstimate = Math.min(100, Math.floor(todayVolume / 5000));
+        const avgRatio = 1;
+
+        marketDepth.textContent = formatEnglishNumber(Math.max(1, depthEstimate));
+        avgVolume.textContent = formatEnglishNumber(todayVolume);
+        tradeCount.textContent = formatEnglishNumber(tradeNumber);
+
+        const tradeValueToman = parseCommaNumber(tradeInput.value);
+
+        if (tradeValueToman <= 0) {
+            percentOfDaily.textContent = '--';
+            impactLevel.textContent = '--';
+            impactStatus.textContent = '😊 مقدار معامله را وارد کن ببینم چطوره';
+            impactStatus.className = 'impact-status';
+            tradeIcon.textContent = '📊';
+            tradeTitle.textContent = 'مقدار معامله را وارد کنید';
+            tradeDetail.textContent = 'تا بتوانیم وضعیت را بررسی کنیم';
+            tradeStatusBox.className = 'trade-status-box';
+            return;
+        }
+
+        const percent = (tradeValueToman / dailyLiquidityToman) * 100;
+        const displayPercent = percent.toFixed(2);
+        const tradeUnits = Math.floor((tradeValueToman * 10) / pricePerUnitRials);
+
+        percentOfDaily.textContent = displayPercent + '%';
+
+        const tradeStatus = getTradeStatus(tradeValueToman);
+        tradeIcon.textContent = tradeStatus.icon;
+        tradeTitle.textContent = tradeStatus.title;
+        tradeDetail.textContent = tradeStatus.detail;
+        tradeStatusBox.className = 'trade-status-box ' + (tradeStatus.class || '');
+
+        let levelText, statusText, statusClass, emoji;
+        const heavyStatus = getHeavyTradeStatus(percent, depthEstimate, avgRatio);
+
+        if (percent >= 20) {
+            emoji = '🤔';
+            levelText = '🔴 خیلی زیاد';
+            statusText = `${emoji} معامله‌ی ${formatShortNumber(tradeValueToman)} تومانی (حدود ${formatEnglishNumber(tradeUnits)} واحد) بیش از ۲۰٪ نقدشوندگی روزه.\n${heavyStatus.detail}\n💡 پیشنهاد: معامله رو به چند بخش کوچیک‌تر تقسیم کن تا تأثیرش کمتر بشه.`;
+            statusClass = 'impact-status danger';
+        } else if (percent >= 5) {
+            emoji = '🙂';
+            levelText = '🟠 نسبتاً زیاد';
+            statusText = `${emoji} معامله‌ی ${formatShortNumber(tradeValueToman)} تومانی (حدود ${formatEnglishNumber(tradeUnits)} واحد) بین ۵ تا ۲۰٪ نقدشوندگی روزه.\n${heavyStatus.detail}\n💡 اگه می‌تونی، مقدار رو کمی کمتر کن یا در چند مرحله انجام بده.`;
+            statusClass = 'impact-status warning';
+        } else if (percent >= 1) {
+            emoji = '😊';
+            levelText = '🟡 متوسط';
+            statusText = `${emoji} عالیه! معامله‌ی ${formatShortNumber(tradeValueToman)} تومانی (حدود ${formatEnglishNumber(tradeUnits)} واحد) کمتر از ۵٪ نقدشوندگی روزه.\n${heavyStatus.detail}`;
+            statusClass = 'impact-status good';
+        } else {
+            emoji = '😍';
+            levelText = '🟢 کم';
+            statusText = `${emoji} عالی! معامله‌ی ${formatShortNumber(tradeValueToman)} تومانی (حدود ${formatEnglishNumber(tradeUnits)} واحد) کمتر از ۱٪ نقدشوندگی روزه.\n${heavyStatus.detail}`;
+            statusClass = 'impact-status good';
+        }
+
+        impactLevel.textContent = levelText;
+        impactStatus.textContent = statusText;
+        impactStatus.className = statusClass;
+
+        const valueEl = percentOfDaily.parentElement.querySelector('.value');
+        if (valueEl) {
+            valueEl.className = 'value';
+            if (percent >= 20) valueEl.classList.add('high');
+            else if (percent >= 5) valueEl.classList.add('medium');
+            else if (percent >= 1) valueEl.classList.add('low');
+        }
+
+        const depthEl = marketDepth.parentElement.querySelector('.value');
+        if (depthEl) {
+            depthEl.className = 'value';
+            if (depthEstimate >= 80) depthEl.classList.add('green');
+            else if (depthEstimate >= 40) depthEl.classList.add('orange');
+            else depthEl.classList.add('red');
+        }
+    }
+
+    function updateDualPriceDisplay() {
+        if (isUsingManualPrice) {
+            const manual = parseCommaNumber(manualPriceInput.value);
+            plDisplay.innerHTML = `${formatEnglishNumber(manual)} <span class="unit">ریال</span>`;
+            plDisplay.style.opacity = '0.6';
+            pcDisplay.textContent = '—';
+            return;
+        }
+        plDisplay.style.opacity = '1';
+
+        if (apiPriceRials > 0) {
+            plDisplay.innerHTML = `${formatEnglishNumber(apiPriceRials)} <span class="unit">ریال</span>`;
+        } else {
+            plDisplay.innerHTML = `<span class="loading">...</span>`;
+        }
+
+        if (lastPriceRials > 0) {
+            pcDisplay.innerHTML = `${formatEnglishNumber(lastPriceRials)} <span class="unit">ریال</span>`;
+        } else {
+            pcDisplay.textContent = '—';
+        }
+    }
+
+    // ============================================================
+    // دریافت داده از BrsApi
+    // ============================================================
+    async function fetchLatestData() {
+        try {
+            refreshBtn.classList.add('spinning');
+            liquidityDisplay.innerHTML = '<span class="loading">...</span>';
+            wordsDisplay.innerHTML = '<span style="color:var(--text-muted);">در حال دریافت آخرین داده...</span>';
+
+            const url = `${API_BASE}?key=${API_KEY}&type=1`;
+            const response = await fetch(url, {
+                headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+                }
+            });
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const allSymbols = await response.json();
+
+            if (!Array.isArray(allSymbols) || allSymbols.length === 0) {
+                throw new Error('داده‌ای یافت نشد');
+            }
+
+            // 🔍 جستجوی سه مرحله‌ای
+            let latestData = allSymbols.find(item => item.l18 === currentSymbol);
+
+            if (!latestData) {
+                latestData = allSymbols.find(item =>
+                    item.l18 && item.l18.includes(currentSymbol)
+                );
+            }
+
+            if (!latestData) {
+                latestData = allSymbols.find(item =>
+                    item.l30 && item.l30.includes(currentSymbol)
+                );
+            }
+
+            if (!latestData) {
+                throw new Error(`نماد «${currentSymbol}» یافت نشد`);
+            }
+
+            // نام کامل
+            const fullName = SYMBOL_NAMES[currentSymbol] || latestData.l30 || currentSymbol;
+            symbolTitle.textContent = fullName;
+
+            todayVolume   = Number(latestData.tvol) || 0;
+
+            apiPriceRials = Number(latestData.pl)   || 0;
+            if (apiPriceRials === 0) {
+                apiPriceRials = Number(latestData.pc) || 0;
+            }
+            priceRials = apiPriceRials;
+
+            lastPriceRials = Number(latestData.pc)  || 0;
+            tradeNumber   = Number(latestData.tno)  || 0;
+            lastTradeDate = latestData.time || '--';
+
+            if (!manualPriceInput.value || parseCommaNumber(manualPriceInput.value) === 0) {
+                currentPriceRials = apiPriceRials;
+            } else {
+                currentPriceRials = parseCommaNumber(manualPriceInput.value);
+            }
+
+            updateDualPriceDisplay();
+
+            const totalRials = todayVolume * priceRials;
+            dailyLiquidityToman = Math.round(totalRials / 10);
+
+            const formattedNumber = formatEnglishNumber(dailyLiquidityToman);
+            liquidityDisplay.innerHTML = `
+                ${formattedNumber}
+                <span class="currency">تومان</span>
+            `;
+
+            const words = numberToWords(dailyLiquidityToman);
+            wordsDisplay.innerHTML = `
+                <span class="highlight">${words}</span> تومان
+            `;
+
+            updateTime.textContent = getJalaliDateTime(lastTradeDate);
+
+            updateOrderBook(latestData);
+            calculateImpact();
+
+        } catch (err) {
+            console.error('Error:', err);
+            liquidityDisplay.innerHTML = `<span class="error-text">خطا</span>`;
+            wordsDisplay.innerHTML = `<span style="color:#ef4444;">${err.message}</span>`;
+            updateTime.textContent = '--';
+        } finally {
+            setTimeout(() => refreshBtn.classList.remove('spinning'), 500);
+        }
+    }
+
+    // ============================================================
+    // Event listeners
+    // ============================================================
+    tradeInput.addEventListener('input', function() {
+        let raw = this.value.replace(/[^0-9]/g, '');
+        if (raw) {
+            const num = parseInt(raw, 10);
+            this.value = num.toLocaleString('en-US');
+        } else {
+            this.value = '';
+        }
+        calculateImpact();
+    });
+
+    manualPriceInput.addEventListener('input', function() {
+        let raw = this.value.replace(/[^0-9]/g, '');
+        if (raw) {
+            const num = parseInt(raw, 10);
+            this.value = num.toLocaleString('en-US');
+        } else {
+            this.value = '';
+        }
+        calculateImpact();
+    });
+
+    resetPriceBtn.addEventListener('click', function() {
+        manualPriceInput.value = '';
+        isUsingManualPrice = false;
+        currentPriceRials = apiPriceRials;
+        updateDualPriceDisplay();
+        calculateImpact();
+    });
+
+    refreshBtn.addEventListener('click', function() {
+        fetchLatestData();
+    });
+
+    // ===== تغییر نماد از dropdown =====
+    symbolSelect.addEventListener('change', function() {
+        const val = this.value;
+
+        if (val === '__custom__') {
+            // نمایش input دستی
+            customSymbolWrap.classList.add('active');
+            customSymbolInput.value = '';
+            customSymbolInput.focus();
+            return;
+        }
+
+        // پنهان کردن input دستی
+        customSymbolWrap.classList.remove('active');
+
+        // تنظیم نماد جدید
+        currentSymbol = val;
+        tradeInput.value = '';
+        manualPriceInput.value = '';
+        fetchLatestData();
+    });
+
+    // ===== دکمه جستجوی نماد دستی =====
+    function applyCustomSymbol() {
+        const customVal = customSymbolInput.value.trim();
+        if (!customVal) {
+            alert('لطفاً یه نماد وارد کن');
+            return;
+        }
+        currentSymbol = customVal;
+        customSymbolWrap.classList.remove('active');
+        tradeInput.value = '';
+        manualPriceInput.value = '';
+        fetchLatestData();
+    }
+
+    customSymbolBtn.addEventListener('click', applyCustomSymbol);
+
+    customSymbolInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            applyCustomSymbol();
+        }
+    });
+
+    // ============================================================
+    // اجرا
+    // ============================================================
+    fetchLatestData();
+</script>
+
+</body>
+</html>
