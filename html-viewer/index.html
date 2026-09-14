@@ -1121,6 +1121,87 @@
             opacity: 1;
         }
 
+        /* Text Preview Styling */
+        .text-preview-content {
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        .text-preview-content h1, .text-preview-content h2, .text-preview-content h3, .text-preview-content h4 {
+            color: #38bdf8;
+            margin-top: 1.2em;
+            margin-bottom: 0.6em;
+            font-weight: 700;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 6px;
+        }
+        .text-preview-content h1 { font-size: 1.6rem; color: #60a5fa; }
+        .text-preview-content h2 { font-size: 1.35rem; color: #38bdf8; }
+        .text-preview-content h3 { font-size: 1.15rem; color: #34d399; }
+        .text-preview-content p { margin-bottom: 1em; }
+        .text-preview-content ul, .text-preview-content ol { margin-right: 24px; margin-bottom: 1em; }
+        .text-preview-content li { margin-bottom: 4px; }
+        .text-preview-content blockquote {
+            border-right: 4px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 10px 16px;
+            margin: 1em 0;
+            border-radius: 0 8px 8px 0;
+            color: #cbd5e1;
+            font-style: italic;
+        }
+        .text-preview-content code {
+            background: #1e293b;
+            color: #f43f5e;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9em;
+            direction: ltr;
+            display: inline-block;
+        }
+        .text-preview-content pre {
+            background: #020617;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 14px;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+            margin: 1em 0;
+        }
+        .text-preview-content pre code {
+            background: transparent;
+            color: #38bdf8;
+            padding: 0;
+            display: block;
+        }
+        .text-preview-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+            direction: rtl;
+        }
+        .text-preview-content th, .text-preview-content td {
+            border: 1px solid #334155;
+            padding: 10px 12px;
+            text-align: right;
+        }
+        .text-preview-content th {
+            background: #1e293b;
+            color: #38bdf8;
+        }
+        .text-preview-content tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .text-preview-content hr {
+            border: none;
+            border-top: 1px solid #334155;
+            margin: 1.5em 0;
+        }
+
         @media (max-width: 650px) {
             body { padding: 8px; }
             .container { padding: 14px; gap: 10px; }
@@ -1208,6 +1289,7 @@
                 <div class="editor-toolbar">
                     <span class="editor-label">📝 متون ساده و یادداشت‌های خود را وارد کنید:</span>
                     <div class="quick-actions">
+                        <button class="btn-small" onclick="openTextPreviewModal()" style="color: #2563eb; font-weight: 700;">👁️ پیش‌نمایش متون</button>
                         <button class="btn-small" onclick="pasteFromClipboard('textEditor')">📥 چسباندن</button>
                         <button class="btn-small" onclick="clearEditor('textEditor')" style="color: #ef4444;">🗑️ پاکسازی</button>
                     </div>
@@ -1356,6 +1438,29 @@
         <iframe id="previewIframe" title="پیش‌نمایش کد"
             allow="autoplay *; camera *; microphone *; clipboard-read *; clipboard-write *; encrypted-media *; fullscreen *; picture-in-picture *; display-capture *; geolocation *; accelerometer *; gyroscope *; magnetometer *; web-share *"
             sandbox="allow-scripts allow-same-origin allow-modals allow-popups allow-forms allow-downloads allow-pointer-lock allow-orientation-lock allow-presentation"></iframe>
+    </div>
+
+    <!-- Text & Markdown Preview Modal Overlay -->
+    <div id="textPreviewModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 950px; height: 90vh;">
+            <div class="modal-header">
+                <div class="modal-title" style="color: #38bdf8;">
+                    👁️ پیش‌نمایش استاندارد متون و مارک‌داون (.md)
+                </div>
+                <button class="modal-close-btn" onclick="closeTextPreviewModal()">✖ بستن</button>
+            </div>
+            <div class="modal-body text-preview-content" id="textPreviewBody">
+                <!-- Dynamic standard formatted content -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-copy-logs" onclick="copyPlainText('textEditor')">
+                    📋 کپی متن اصلی
+                </button>
+                <button class="btn-clear-logs" onclick="closeTextPreviewModal()">
+                    بستن پنجره
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Toast Notification -->
@@ -1890,7 +1995,203 @@ ${cleanText}`;
             if (previewLayer.style.display === 'flex') {
                 hidePreviewUI();
             }
+            const modal = document.getElementById('textPreviewModal');
+            if (modal && modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            }
         });
+
+        /* =========================================================
+           STANDARD TEXT & MARKDOWN (.md) PREVIEW ENGINE
+           ========================================================= */
+        function renderFormattedTextContent(rawText, formatExt = '') {
+            if (!rawText || !rawText.trim()) {
+                return `<div style="text-align: center; color: #94a3b8; padding: 40px;">متنی برای پیش‌نمایش وجود ندارد.</div>`;
+            }
+
+            const trimmed = rawText.trim();
+
+            // 1. JSON Auto-Detection & Formatting
+            if (formatExt === 'json' || (trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    const formattedJson = JSON.stringify(parsed, null, 2);
+                    return `<pre><code>${escapeHtml(formattedJson)}</code></pre>`;
+                } catch (e) {
+                    // Fall back to standard markdown/text parsing if invalid JSON
+                }
+            }
+
+            // 2. CSV Auto-Detection & Table Formatting
+            if (formatExt === 'csv' || (trimmed.includes(',') && trimmed.includes('\n') && !trimmed.includes('#'))) {
+                const lines = trimmed.split(/\r?\n/).filter(l => l.trim().length > 0);
+                if (lines.length > 1) {
+                    let tableHtml = '<table>';
+                    lines.forEach((line, idx) => {
+                        const cols = line.split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1'));
+                        tableHtml += '<tr>';
+                        cols.forEach(col => {
+                            if (idx === 0) {
+                                tableHtml += `<th>${escapeHtml(col)}</th>`;
+                            } else {
+                                tableHtml += `<td>${escapeHtml(col)}</td>`;
+                            }
+                        });
+                        tableHtml += '</tr>';
+                    });
+                    tableHtml += '</table>';
+                    return tableHtml;
+                }
+            }
+
+            // 3. Markdown (.md) and Standard Text Parser
+            // Protect code blocks first
+            const codeBlocks = [];
+            let processed = rawText.replace(/```([a-zA-Z0-9]*)\n?([\s\S]*?)```/g, (match, lang, code) => {
+                const id = `@@CODEBLOCK${codeBlocks.length}@@`;
+                codeBlocks.push(`<pre><code>${escapeHtml(code.trim())}</code></pre>`);
+                return id;
+            });
+
+            // Inline code `code`
+            const inlineCodes = [];
+            processed = processed.replace(/`([^`]+)`/g, (match, code) => {
+                const id = `@@INLINECODE${inlineCodes.length}@@`;
+                inlineCodes.push(`<code>${escapeHtml(code)}</code>`);
+                return id;
+            });
+
+            const lines = processed.split(/\r?\n/);
+            const outputHtml = [];
+            let inList = false;
+            let listType = 'ul';
+
+            lines.forEach((line) => {
+                let trimmedLine = line.trim();
+
+                // Code block placeholder check
+                if (trimmedLine.startsWith('@@CODEBLOCK') && trimmedLine.endsWith('@@')) {
+                    if (inList) { outputHtml.push(`</${listType}>`); inList = false; }
+                    outputHtml.push(trimmedLine);
+                    return;
+                }
+
+                // Horizontal Rule
+                if (/^(---|\*\*\*|___)$/.test(trimmedLine)) {
+                    if (inList) { outputHtml.push(`</${listType}>`); inList = false; }
+                    outputHtml.push('<hr>');
+                    return;
+                }
+
+                // Headers (# H1, ## H2, ### H3, #### H4)
+                const headerMatch = trimmedLine.match(/^(#{1,6})\s+(.+)$/);
+                if (headerMatch) {
+                    if (inList) { outputHtml.push(`</${listType}>`); inList = false; }
+                    const level = headerMatch[1].length;
+                    const titleText = headerMatch[2];
+                    outputHtml.push(`<h${level}>${titleText}</h${level}>`);
+                    return;
+                }
+
+                // Blockquote (> text)
+                if (trimmedLine.startsWith('> ')) {
+                    if (inList) { outputHtml.push(`</${listType}>`); inList = false; }
+                    outputHtml.push(`<blockquote>${trimmedLine.slice(2)}</blockquote>`);
+                    return;
+                }
+
+                // Unordered List (- item or * item)
+                const ulMatch = trimmedLine.match(/^[-*+]\s+(.+)$/);
+                if (ulMatch) {
+                    if (!inList || listType !== 'ul') {
+                        if (inList) outputHtml.push(`</${listType}>`);
+                        outputHtml.push('<ul>');
+                        inList = true;
+                        listType = 'ul';
+                    }
+                    outputHtml.push(`<li>${ulMatch[1]}</li>`);
+                    return;
+                }
+
+                // Ordered List (1. item)
+                const olMatch = trimmedLine.match(/^\d+\.\s+(.+)$/);
+                if (olMatch) {
+                    if (!inList || listType !== 'ol') {
+                        if (inList) outputHtml.push(`</${listType}>`);
+                        outputHtml.push('<ol>');
+                        inList = true;
+                        listType = 'ol';
+                    }
+                    outputHtml.push(`<li>${olMatch[1]}</li>`);
+                    return;
+                }
+
+                // If empty line, close any open list
+                if (trimmedLine === '') {
+                    if (inList) { outputHtml.push(`</${listType}>`); inList = false; }
+                    return;
+                }
+
+                // Regular Paragraph
+                if (inList) { outputHtml.push(`</${listType}>`); inList = false; }
+                outputHtml.push(`<p>${escapeHtml(line)}</p>`);
+            });
+
+            if (inList) {
+                outputHtml.push(`</${listType}>`);
+            }
+
+            let finalHtml = outputHtml.join('\n');
+
+            // Bold (**text** or __text__)
+            finalHtml = finalHtml.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            finalHtml = finalHtml.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+
+            // Italic (*text* or _text_)
+            finalHtml = finalHtml.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            finalHtml = finalHtml.replace(/_([^_]+)_/g, '<em>$1</em>');
+
+            // Markdown Links [title](url)
+            finalHtml = finalHtml.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #38bdf8; text-decoration: underline;">$1</a>');
+
+            // Restore inline code
+            inlineCodes.forEach((codeHtml, idx) => {
+                finalHtml = finalHtml.replace(`@@INLINECODE${idx}@@`, codeHtml);
+            });
+
+            // Restore code blocks
+            codeBlocks.forEach((codeBlockHtml, idx) => {
+                finalHtml = finalHtml.replace(`@@CODEBLOCK${idx}@@`, codeBlockHtml);
+            });
+
+            return finalHtml;
+        }
+
+        function openTextPreviewModal() {
+            const text = textEditor.value;
+            if (!text || text.trim() === '') {
+                showToast('⚠️ لطفاً ابتدا متنی در کادر وارد نمایید!');
+                return;
+            }
+
+            const modal = document.getElementById('textPreviewModal');
+            const body = document.getElementById('textPreviewBody');
+
+            if (body) {
+                body.innerHTML = renderFormattedTextContent(text, selectedTextExt);
+            }
+
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeTextPreviewModal() {
+            const modal = document.getElementById('textPreviewModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
 
         /* =========================================================
            TEXT FILE FORMAT SELECTOR ENGINE
