@@ -1,6 +1,6 @@
 /**
  * Cloudflare Worker: Telegram Bot for Google Jules AI Agent
- * Dynamic Repository & Branch Selector with Prompt Interaction
+ * Dynamic Repository & Branch Selector with Fast Memory Caching & Callback Data Compression
  */
 
 function decodeSecret(parts) {
@@ -14,11 +14,14 @@ function decodeSecret(parts) {
 // Fallback Chunked Secrets
 const BOT_TOKEN_PARTS = ["ODc0MzQ2OTA4NDpBQUVwaWF3R1ZO", "Zk41bm83TWFCT1BjVUpkTENFeWxweGtScw=="];
 const JULES_API_KEY_PARTS = ["QVEuQWI4Uk42SjlySjZ3dTcw", "TG4wMlhHMEdfTmpYMWs3dkpm", "SGtmeVZxNFdjNkZnekhUT0E="];
-const GH_PAT_PARTS = ["Z2hwX1ZBSWZSa3RFUVdWYkhj", "N3Z6b2wwRUdLSzRCbTNMcDRlNk40dA=="];
 
 const JULES_API_URL = "https://jules.googleapis.com/v1alpha/sessions";
 
-// State Stores (KV or Map)
+// Fast Global Sources Cache
+let cachedSources = null;
+let lastCacheTime = 0;
+
+// State Stores
 const userSessions = new Map();
 const userSelectedRepo = new Map();
 const userSelectedBranch = new Map();
@@ -116,20 +119,30 @@ async function setStoredState(chatId, keyPrefix, value, env) {
 }
 
 async function fetchUserSources(julesKey) {
+  const now = Date.now();
+  if (cachedSources && (now - lastCacheTime < 300000)) {
+    return cachedSources;
+  }
+
   const url = "https://jules.googleapis.com/v1alpha/sources";
   try {
     const res = await fetch(url, { headers: { "x-goog-api-key": julesKey } });
     const data = await res.json();
-    return data.sources || [];
-  } catch (e) {
+    if (data && data.sources) {
+      cachedSources = data.sources;
+      lastCacheTime = now;
+      return cachedSources;
+    }
     return [];
+  } catch (e) {
+    return cachedSources || [];
   }
 }
 
 async function fetchLatestAgentMessage(sessionId, julesKey) {
   const activitiesUrl = `https://jules.googleapis.com/v1alpha/${sessionId}/activities`;
-  for (let i = 0; i < 6; i++) {
-    await new Promise(r => setTimeout(r, 1500 + i * 500));
+  for (let i = 0; i < 4; i++) {
+    await new Promise(r => setTimeout(r, 1000));
     try {
       const res = await fetch(activitiesUrl, {
         headers: { "x-goog-api-key": julesKey }
@@ -158,22 +171,20 @@ async function handleTelegramMessage(message, env) {
 
   const julesKey = getJulesApiKey(env);
 
-  // Handle Commands
+  // Commands
   if (text === "/start" || text === "/help") {
     const activeRepo = await getStoredState(chatId, 'repo', env) || "انتخاب نشده ❌";
     const activeBranch = await getStoredState(chatId, 'branch', env) || "main";
 
     const welcomeMsg = `🤖 *به ربات هوش مصنوعی جولز خوش آمدید!*
 
-من دستیار هوشمند برنامه‌نویسی گوگل جولز هستم.
-
-📁 *مخزن فعال:* \`${activeRepo}\`
+📁 *مخزن فعال:* \`${activeRepo.replace("sources/github/", "")}\`
 🌿 *شاخه فعال:* \`${activeBranch}\`
 
-💡 *راهنمای ساده:*
-۱. ابتدا روی دکمه *📁 انتخاب مخزن* کلیک کنید تا مخزن و شاخه پروژه‌تان انتخاب شود.
-۲. درخواست کدنویسی یا ایده خود را ارسال کنید.
-۳. جولز کدهای شما را بررسی کرده و **سوالات شفاف‌کننده** از شما می‌پرسد!`;
+💡 *راهنمای سریع:*
+۱. ابتدا روی دکمه *📁 انتخاب مخزن* بزنید.
+۲. درخواست یا سفارش کدنویسی خود را بفرستید.
+۳. جولز ابتدا کدهای مخزن را تحلیل کرده و سوالات شفاف‌کننده از شما می‌پرسد!`;
 
     await sendTelegramMessage(chatId, welcomeMsg, getMainKeyboard(), env);
     return;
@@ -186,7 +197,7 @@ async function handleTelegramMessage(message, env) {
 
   if (text === "/new" || text === "🆕 جلسه جدید") {
     await setStoredState(chatId, 'session', null, env);
-    await sendTelegramMessage(chatId, "✨ *جلسه جدید پاکسازی شد!* \nاکنون درخواست یا ایده جدید خود را ارسال کنید.", getMainKeyboard(), env);
+    await sendTelegramMessage(chatId, "✨ *جلسه جدید پاکسازی شد!* \nدرخواست یا ایده جدید خود را ارسال کنید.", getMainKeyboard(), env);
     return;
   }
 
@@ -196,28 +207,28 @@ async function handleTelegramMessage(message, env) {
     const activeBranch = await getStoredState(chatId, 'branch', env) || "main";
 
     await sendTelegramMessage(chatId, `📌 *وضعیت سیستم:*
-📁 *مخزن:* \`${activeRepo}\`
+📁 *مخزن:* \`${activeRepo.replace("sources/github/", "")}\`
 🌿 *شاخه:* \`${activeBranch}\`
-🆔 *نشست فعال:* \`${activeSession || "بدون نشست"}\``, getMainKeyboard(), env);
+🆔 *نشست:* \`${activeSession || "بدون نشست"}\``, getMainKeyboard(), env);
     return;
   }
 
-  // Check if Repo is selected before processing prompt
+  // Ensure Repo selection
   const activeRepo = await getStoredState(chatId, 'repo', env);
   const activeBranch = await getStoredState(chatId, 'branch', env) || "main";
 
   if (!activeRepo) {
-    await sendTelegramMessage(chatId, "⚠️ *لطفاً ابتدا مخزن و شاخه پروژه را انتخاب کنید!*\n\nبرای شروع، از لیست زیر یکی از مخازن گیت‌هاب خود را انتخاب کنید 👇", null, env);
+    await sendTelegramMessage(chatId, "⚠️ *لطفاً ابتدا مخزن و شاخه پروژه را انتخاب کنید!*", null, env);
     await sendRepoSelectionMenu(chatId, julesKey, env);
     return;
   }
 
   // Handle Prompt Processing
-  const statusMsgId = await sendTelegramMessage(chatId, `🔍 *در حال بررسی مخزن \`${activeRepo.replace("sources/github/", "")}\` (شاخه ${activeBranch})...*\nلطفاً چند لحظه شکیبا باشید 🚀`, null, env);
+  const statusMsgId = await sendTelegramMessage(chatId, `🔍 *در حال استخراج کدهای مخزن \`${activeRepo.replace("sources/github/", "")}\` (شاخه ${activeBranch})...*\nلطفاً چند لحظه شکیبا باشید 🚀`, null, env);
 
   const activeSession = await getStoredState(chatId, 'session', env);
 
-  const formattedPrompt = `[دستورالعمل سیستمی مهم: ابتدا تمام کدهای مخزن و شاخه ${activeBranch} را بررسی و تحلیل کن. سپس قبل از هرگونه تغییر یا کدنویسی، چند سوال شفاف‌کننده و دقیق درباره این درخواست از من بپرس و منتظر پاسخ من بمان.]
+  const formattedPrompt = `[دستورالعمل سیستمی مهم: ابتدا تمام کدهای مخزن و شاخه ${activeBranch} را کاملاً بررسی و تحلیل کن. سپس قبل از هرگونه تغییر یا کدنویسی، چند سوال شفاف‌کننده و دقیق درباره این درخواست از من بپرس و منتظر پاسخ من بمان.]
 
 درخواست کاربر:
 ${text}`;
@@ -253,7 +264,6 @@ ${text}`;
         responseText = `❌ *خطا در اتصال به مخزن انتخاب‌شده:*\n\`\`\`json\n${JSON.stringify(data.error || data, null, 2)}\n\`\`\``;
       }
     } else {
-      // Send message to active session
       const msgUrl = `https://jules.googleapis.com/v1alpha/${activeSession}:sendMessage`;
       const msgRes = await fetch(msgUrl, {
         method: "POST",
@@ -280,7 +290,7 @@ ${text}`;
       await sendTelegramMessage(chatId, responseText, getMainKeyboard(), env);
     }
   } catch (err) {
-    const errText = `💥 *خطای غیرمنتظره:* \`${err.message}\``;
+    const errText = `💥 *خطا:* \`${err.message}\``;
     if (statusMsgId) {
       await editTelegramMessage(chatId, statusMsgId, errText, getMainKeyboard(), env);
     } else {
@@ -290,30 +300,25 @@ ${text}`;
 }
 
 async function sendRepoSelectionMenu(chatId, julesKey, env) {
-  const statusMsgId = await sendTelegramMessage(chatId, "⏳ *در حال دریافت لیست مخازن شما از گیت‌هاب...*", null, env);
   const sources = await fetchUserSources(julesKey);
 
   if (!sources || sources.length === 0) {
-    const msg = "❌ *هیچ مخزنی در اکانت جولز شما یافت نشد.*";
-    if (statusMsgId) await editTelegramMessage(chatId, statusMsgId, msg, getMainKeyboard(), env);
-    else await sendTelegramMessage(chatId, msg, getMainKeyboard(), env);
+    await sendTelegramMessage(chatId, "❌ *هیچ مخزنی در اکانت جولز شما یافت نشد.*", getMainKeyboard(), env);
     return;
   }
 
+  // Use short indexed callback_data to strictly respect Telegram's 64-byte limit!
+  const topSources = sources.slice(0, 10);
   const buttons = [];
-  sources.forEach((s) => {
+  topSources.forEach((s, idx) => {
     const repoName = s.name.replace("sources/github/", "");
-    buttons.push([{ text: `📁 ${repoName}`, callback_data: `sel_repo:${s.name}` }]);
+    buttons.push([{ text: `📁 ${repoName}`, callback_data: `r:${idx}` }]);
   });
 
   const keyboard = { inline_keyboard: buttons };
   const text = "📂 *لطفاً مخزن مورد نظر برای بررسی کدها را انتخاب کنید:*";
 
-  if (statusMsgId) {
-    await editTelegramMessage(chatId, statusMsgId, text, keyboard, env);
-  } else {
-    await sendTelegramMessage(chatId, text, keyboard, env);
-  }
+  await sendTelegramMessage(chatId, text, keyboard, env);
 }
 
 async function handleTelegramCallback(callbackQuery, env) {
@@ -335,20 +340,28 @@ async function handleTelegramCallback(callbackQuery, env) {
     return;
   }
 
-  if (data.indexOf("sel_repo:") === 0) {
-    const repoSource = data.replace("sel_repo:", "");
-    await setStoredState(chatId, 'repo', repoSource, env);
-
+  // Handle compressed repo index callback (e.g. r:0)
+  if (data.indexOf("r:") === 0) {
+    const repoIdx = parseInt(data.replace("r:", ""), 10);
     const sources = await fetchUserSources(julesKey);
-    const match = sources.find(s => s.name === repoSource);
-    const branches = match?.githubRepo?.branches || [{ displayName: "main" }, { displayName: "119" }];
+    const selectedSource = sources[repoIdx];
 
-    const branchButtons = branches.map(b => [{
+    if (!selectedSource) {
+      await sendTelegramMessage(chatId, "❌ *مخزن نامعتبر است.*", getMainKeyboard(), env);
+      return;
+    }
+
+    await setStoredState(chatId, 'repo', selectedSource.name, env);
+
+    const branches = selectedSource.githubRepo?.branches || [{ displayName: "main" }, { displayName: "119" }];
+
+    // Use short branch index callback (e.g. b:0)
+    const branchButtons = branches.slice(0, 8).map((b, idx) => [{
       text: `🌿 شاخه: ${b.displayName}`,
-      callback_data: `sel_branch:${b.displayName}`
+      callback_data: `b:${idx}`
     }]);
 
-    const repoDisplayName = repoSource.replace("sources/github/", "");
+    const repoDisplayName = selectedSource.name.replace("sources/github/", "");
     await editTelegramMessage(
       chatId,
       callbackQuery.message.message_id,
@@ -356,12 +369,18 @@ async function handleTelegramCallback(callbackQuery, env) {
       { inline_keyboard: branchButtons },
       env
     );
-  } else if (data.indexOf("sel_branch:") === 0) {
-    const branchName = data.replace("sel_branch:", "");
-    await setStoredState(chatId, 'branch', branchName, env);
-    await setStoredState(chatId, 'session', null, env); // Reset session to start fresh with new repo/branch
-
+  } else if (data.indexOf("b:") === 0) {
+    const branchIdx = parseInt(data.replace("b:", ""), 10);
     const repoSource = await getStoredState(chatId, 'repo', env) || "";
+    const sources = await fetchUserSources(julesKey);
+    const selectedSource = sources.find(s => s.name === repoSource) || sources[0];
+
+    const branches = selectedSource?.githubRepo?.branches || [{ displayName: "main" }, { displayName: "119" }];
+    const selectedBranch = branches[branchIdx] ? branches[branchIdx].displayName : "main";
+
+    await setStoredState(chatId, 'branch', selectedBranch, env);
+    await setStoredState(chatId, 'session', null, env);
+
     const repoDisplayName = repoSource.replace("sources/github/", "");
 
     await editTelegramMessage(
@@ -370,9 +389,9 @@ async function handleTelegramCallback(callbackQuery, env) {
       `🎯 *تنظیمات با موفقیت انجام شد!*
 
 📁 *مخزن:* \`${repoDisplayName}\`
-🌿 *شاخه:* \`${branchName}\`
+🌿 *شاخه:* \`${selectedBranch}\`
 
-اکنون درخواست کدنویسی خود را ارسال کنید. جولز ابتدا کدهای این مخزن را بررسی کرده و چند سوال شفاف‌کننده از شما خواهد پرسید! 🚀`,
+اکنون درخواست کدنویسی خود را بفرستید. جولز ابتدا کدهای این مخزن را بررسی کرده و سوالات شفاف‌کننده از شما می‌پرسد! 🚀`,
       getMainKeyboard(),
       env
     );
@@ -385,7 +404,7 @@ async function handleTelegramCallback(callbackQuery, env) {
     const activeBranch = await getStoredState(chatId, 'branch', env) || "main";
 
     await sendTelegramMessage(chatId, `📌 *وضعیت فعلی سیستم:*
-📁 *مخزن:* \`${activeRepo}\`
+📁 *مخزن:* \`${activeRepo.replace("sources/github/", "")}\`
 🌿 *شاخه:* \`${activeBranch}\`
 🆔 *نشست:* \`${activeSession || "بدون نشست"}\``, getMainKeyboard(), env);
   }
