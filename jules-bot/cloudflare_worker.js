@@ -111,6 +111,31 @@ async function deleteStoredSession(chatId, env) {
   memorySessions.delete(chatId);
 }
 
+async function fetchLatestAgentMessage(sessionId, julesKey) {
+  const activitiesUrl = `https://jules.googleapis.com/v1alpha/${sessionId}/activities`;
+  // Poll up to 5 times (1.5s delay) for agent response
+  for (let i = 0; i < 5; i++) {
+    await new Promise(r => setTimeout(r, 1500));
+    try {
+      const res = await fetch(activitiesUrl, {
+        headers: { "x-goog-api-key": julesKey }
+      });
+      const data = await res.json();
+      if (data && data.activities && Array.isArray(data.activities)) {
+        // Find latest agent message
+        const agentActs = data.activities.filter(a => a.originator === "agent" || a.agentMessaged);
+        if (agentActs.length > 0) {
+          const lastAct = agentActs[agentActs.length - 1];
+          if (lastAct.agentMessaged && lastAct.agentMessaged.agentMessage) {
+            return lastAct.agentMessaged.agentMessage;
+          }
+        }
+      }
+    } catch (e) {}
+  }
+  return null;
+}
+
 async function handleTelegramMessage(message, env) {
   const chatId = message.chat ? message.chat.id : null;
   const text = (message.text || "").trim();
@@ -174,7 +199,14 @@ async function handleTelegramMessage(message, env) {
 
       if (createRes.ok && data.name) {
         await setStoredSession(chatId, data.name, env);
-        responseText = `✅ *نشست جدید جولز با موفقیت ایجاد شد!* 🚀\n\n🆔 *شناسه جلسه:* \`${data.name}\`\n\n` + formatJulesData(data);
+
+        // Poll for initial agent reply if available
+        const agentReply = await fetchLatestAgentMessage(data.name, julesKey);
+        if (agentReply) {
+          responseText = `🤖 *پاسخ جولز:* \n\n${agentReply}`;
+        } else {
+          responseText = `✅ *نشست جدید جولز با موفقیت ایجاد شد!* 🚀\n\n🆔 *شناسه جلسه:* \`${data.name}\``;
+        }
       } else {
         responseText = `❌ *خطا در ایجاد جلسه جولز:*\n\`\`\`json\n${JSON.stringify(data.error || data, null, 2)}\n\`\`\``;
       }
@@ -192,7 +224,13 @@ async function handleTelegramMessage(message, env) {
       const data = await msgRes.json();
 
       if (msgRes.ok) {
-        responseText = `💬 *پاسخ جولز در نشست فعال:* \n\n` + formatJulesData(data);
+        // Poll for agent reply
+        const agentReply = await fetchLatestAgentMessage(activeSession, julesKey);
+        if (agentReply) {
+          responseText = `🤖 *پاسخ جولز:* \n\n${agentReply}`;
+        } else {
+          responseText = `✅ *پیام شما به جولز تحویل داده شد.* \nچند ثانیه دیگر جولز پاسخ خواهد داد.`;
+        }
       } else {
         responseText = `❌ *خطا در ارسال پیام به نشست جولز:*\n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
       }
