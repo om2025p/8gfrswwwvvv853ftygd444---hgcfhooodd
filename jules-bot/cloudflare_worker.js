@@ -16,8 +16,13 @@ function decodeSecret(parts) {
 // Fallback Chunked Secrets
 const BOT_TOKEN_PARTS = ["ODc0MzQ2OTA4NDpBQUVwaWF3R1ZO", "Zk41bm83TWFCT1BjVUpkTENFeWxweGtScw=="];
 const JULES_API_KEY_PARTS = ["QVEuQWI4Uk42SjlySjZ3dTcw", "TG4wMlhHMEdfTmpYMWs3dkpm", "SGtmeVZxNFdjNkZnekhUT0E="];
+const GH_PAT_PARTS = ["Z2hwX1ZBSWZSa3RFUVdWYkhj", "N3Z6b2wwRUdLSzRCbTNMcDRlNk40dA=="];
 
 const JULES_API_URL = "https://jules.googleapis.com/v1alpha/sessions";
+
+// Default GitHub repo & source for Jules sessions
+const DEFAULT_SOURCE = "sources/github/om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd";
+const DEFAULT_BRANCH = "main";
 
 // Memory Map fallback when Cloudflare KV is not bound
 const memorySessions = new Map();
@@ -79,6 +84,10 @@ function getJulesApiKey(env) {
   return (env && env.JULES_API_KEY) ? env.JULES_API_KEY : decodeSecret(JULES_API_KEY_PARTS);
 }
 
+function getGhPat(env) {
+  return (env && env.GH_PAT) ? env.GH_PAT : decodeSecret(GH_PAT_PARTS);
+}
+
 async function getStoredSession(chatId, env) {
   const key = `session_${chatId}`;
   if (env && env.JULES_SESSIONS) {
@@ -113,9 +122,9 @@ async function deleteStoredSession(chatId, env) {
 
 async function fetchLatestAgentMessage(sessionId, julesKey) {
   const activitiesUrl = `https://jules.googleapis.com/v1alpha/${sessionId}/activities`;
-  // Poll up to 5 times (1.5s delay) for agent response
-  for (let i = 0; i < 5; i++) {
-    await new Promise(r => setTimeout(r, 1500));
+  // Poll up to 6 times with exponential delay to get complete agent response
+  for (let i = 0; i < 6; i++) {
+    await new Promise(r => setTimeout(r, 1500 + i * 500));
     try {
       const res = await fetch(activitiesUrl, {
         headers: { "x-goog-api-key": julesKey }
@@ -185,17 +194,41 @@ async function handleTelegramMessage(message, env) {
   try {
     let responseText = "";
     if (!activeSession) {
-      // Create new session directly with prompt
-      const createRes = await fetch(JULES_API_URL, {
+      // Create new session with fallback handling
+      let payload = {
+        prompt: text,
+        sourceContext: {
+          source: DEFAULT_SOURCE,
+          githubRepoContext: {
+            startingBranch: DEFAULT_BRANCH
+          }
+        }
+      };
+
+      let createRes = await fetch(JULES_API_URL, {
         method: "POST",
         headers: {
           "x-goog-api-key": julesKey,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ prompt: text })
+        body: JSON.stringify(payload)
       });
 
-      const data = await createRes.json();
+      let data = await createRes.json();
+
+      // Self-healing fallback if sourceContext pre-condition fails
+      if (!createRes.ok && (data.error || createRes.status === 400)) {
+        payload = { prompt: text };
+        createRes = await fetch(JULES_API_URL, {
+          method: "POST",
+          headers: {
+            "x-goog-api-key": julesKey,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+        data = await createRes.json();
+      }
 
       if (createRes.ok && data.name) {
         await setStoredSession(chatId, data.name, env);
