@@ -287,6 +287,12 @@
       "timestamp": 1789485625063,
       "source": "automation",
       "auto": true
+    },
+    {
+      "value": 0.0,
+      "timestamp": 1789490821008,
+      "source": "automation",
+      "auto": true
     }
   ],
   "trash": [],
@@ -297,6 +303,19 @@
   "notes": [],
   "baseNumber": 137820506,
   "history": [
+    {
+      "id": 1789490821008,
+      "base": "137,820,506",
+      "new": "137,820,506",
+      "percent": "0.00",
+      "type": "neutral",
+      "rawBase": 137820506.0,
+      "rawNew": 137820506.0,
+      "timestamp": "2026-09-15T16:47:01.008870Z",
+      "persianDate": "1405/06/24 16:47:01",
+      "source": "automation",
+      "auto": true
+    },
     {
       "id": 1789485625063,
       "base": "141,075,520",
@@ -989,17 +1008,6 @@
       "rawNew": 102666552.0,
       "timestamp": "2026-08-11T20:35:14.704302Z",
       "persianDate": "1405/05/20 20:35:14"
-    },
-    {
-      "id": 1786477054491,
-      "base": "102,666,552",
-      "new": "102,666,552",
-      "percent": "0.00",
-      "type": "neutral",
-      "rawBase": 102666552.0,
-      "rawNew": 102666552.0,
-      "timestamp": "2026-08-11T19:37:34.491620Z",
-      "persianDate": "1405/05/20 19:37:34"
     }
   ]
 }
