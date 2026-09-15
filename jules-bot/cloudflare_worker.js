@@ -1,6 +1,6 @@
 /**
  * Cloudflare Worker: Telegram Bot for Google Jules AI Agent
- * Live Real-time Status Stream & Real Activity Polling
+ * Real-time Streaming, Proper Dynamic Prompts, and Polling for Agent Message ID Changes
  */
 
 function decodeSecret(parts) {
@@ -23,6 +23,7 @@ let lastCacheTime = 0;
 const userSessions = new Map();
 const userSelectedRepo = new Map();
 const userSelectedBranch = new Map();
+const lastRespondedActId = new Map(); // Tracks last sent agent activity ID per session
 
 export default {
   async fetch(request, env, ctx) {
@@ -91,6 +92,7 @@ async function getStoredState(chatId, keyPrefix, env) {
   if (keyPrefix === 'session') return userSessions.get(chatId) || null;
   if (keyPrefix === 'repo') return userSelectedRepo.get(chatId) || null;
   if (keyPrefix === 'branch') return userSelectedBranch.get(chatId) || null;
+  if (keyPrefix === 'last_act') return lastRespondedActId.get(chatId) || null;
   return null;
 }
 
@@ -113,6 +115,10 @@ async function setStoredState(chatId, keyPrefix, value, env) {
   if (keyPrefix === 'branch') {
     if (value === null) userSelectedBranch.delete(chatId);
     else userSelectedBranch.set(chatId, value);
+  }
+  if (keyPrefix === 'last_act') {
+    if (value === null) lastRespondedActId.delete(chatId);
+    else lastRespondedActId.set(chatId, value);
   }
 }
 
@@ -139,11 +145,11 @@ async function fetchUserSources(julesKey) {
 
 async function pollAndStreamAgentResponse(chatId, statusMsgId, sessionId, julesKey, env) {
   const activitiesUrl = `https://jules.googleapis.com/v1alpha/${sessionId}/activities`;
-  let lastProgressText = "";
+  const previousActId = await getStoredState(chatId, 'last_act', env);
 
-  // Poll for 25 seconds live (15 iterations x 1.5 sec)
+  // Poll for up to 30 seconds live (15 steps x 2.0s)
   for (let step = 1; step <= 15; step++) {
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 2000));
     try {
       const res = await fetch(activitiesUrl, { headers: { "x-goog-api-key": julesKey } });
       const data = await res.json();
@@ -153,33 +159,35 @@ async function pollAndStreamAgentResponse(chatId, statusMsgId, sessionId, julesK
 
         if (agentActs.length > 0) {
           const lastAct = agentActs[agentActs.length - 1];
-          if (lastAct.agentMessaged && lastAct.agentMessaged.agentMessage) {
+          const currentActId = lastAct.id || lastAct.name;
+
+          // Crucial check: Only consider NEW responses created AFTER our prompt!
+          if (currentActId !== previousActId && lastAct.agentMessaged && lastAct.agentMessaged.agentMessage) {
             const agentMsg = lastAct.agentMessaged.agentMessage;
-            const finalReply = `🤖 *پاسخ کامل عامل جولز:* \n\n${agentMsg}`;
+            await setStoredState(chatId, 'last_act', currentActId, env);
+
+            const finalReply = `🤖 *پاسخ عامل جولز:* \n\n${agentMsg}`;
             await editTelegramMessage(chatId, statusMsgId, finalReply, getMainKeyboard(), env);
             return agentMsg;
           }
         }
 
-        // Live Step Progress updates from real API state
-        const stepStatusText = `⚡ *گزارش زنده فعالیت جولز روی سرور گوگل (گام ${step}/۱۵):*\n\n` +
+        // Live Step Progress updates
+        const stepStatusText = `⚡ *گزارش در لحظه از سرور جولز (گام ${step}/۱۵):*\n\n` +
           `• 📁 *شناسه جلسه:* \`${sessionId}\`\n` +
-          `• 🔍 *وضعیت فعلی:* در حال آنالیز ساختار فایل‌ها، پردازش پرامپت و نگارش پاسخ... \n` +
-          `• 🕒 *زمان سپری‌شده:* ${step * 1.5} ثانیه`;
+          `• 🔍 *وضعیت:* در حال تحلیل پیام شما و نگارش پاسخ جدید... \n` +
+          `• 🕒 *زمان سپری‌شده:* ${step * 2} ثانیه`;
 
-        if (stepStatusText !== lastProgressText) {
-          lastProgressText = stepStatusText;
-          await editTelegramMessage(chatId, statusMsgId, stepStatusText, getMainKeyboard(), env);
-        }
+        await editTelegramMessage(chatId, statusMsgId, stepStatusText, getMainKeyboard(), env);
       }
     } catch (e) {}
   }
 
-  // If agent is still thinking after 25s
-  const pendingText = `⏳ *جولز همچنان در حال پردازش کدهای سنگین مخزن است...*\n\nپاسخ جولز آماده است؛ برای دریافت پاسخ نهایی دکمه *🔄 استعلام پاسخ* را کلیک کنید 👇`;
+  // If agent is still thinking after 30s
+  const pendingText = `⏳ *جولز همچنان در حال پردازش پاسخی جدید است...*\n\nبرای دریافت پاسخ جدید دکمه *🔄 استعلام پاسخ* را کلیک کنید 👇`;
   const keyboard = {
     inline_keyboard: [
-      [{ text: "🔄 استعلام آخرین پاسخ جولز", callback_data: `check_act:${sessionId}` }],
+      [{ text: "🔄 استعلام پاسخ جدید جولز", callback_data: `check_act:${sessionId}` }],
       [{ text: "📁 انتخاب مخزن", callback_data: "new_repo_select" }, { text: "🆕 جلسه جدید", callback_data: "new_session" }]
     ]
   };
@@ -206,9 +214,9 @@ async function handleTelegramMessage(message, env) {
 📁 *مخزن فعال:* \`${activeRepo.replace("sources/github/", "")}\`
 🌿 *شاخه فعال:* \`${activeBranch}\`
 
-💡 *راهنمای سریع:*
+💡 *راهنمای استفاده:*
 ۱. ابتدا روی دکمه *📁 انتخاب مخزن* بزنید.
-۲. درخواست یا سفارش کدنویسی خود را بفرستید.
+۲. درخواست یا سفارش کدنویسی خود را ارسال کنید.
 ۳. جولز ابتدا کدهای مخزن را تحلیل کرده و سوالات شفاف‌کننده از شما می‌پرسد!`;
 
     await sendTelegramMessage(chatId, welcomeMsg, getMainKeyboard(), env);
@@ -222,6 +230,7 @@ async function handleTelegramMessage(message, env) {
 
   if (text === "/new" || text === "🆕 جلسه جدید") {
     await setStoredState(chatId, 'session', null, env);
+    await setStoredState(chatId, 'last_act', null, env);
     await sendTelegramMessage(chatId, "✨ *جلسه جدید پاکسازی شد!* \nدرخواست یا ایده جدید خود را ارسال کنید.", getMainKeyboard(), env);
     return;
   }
@@ -249,19 +258,20 @@ async function handleTelegramMessage(message, env) {
   }
 
   // Handle Prompt Processing
-  const statusMsgId = await sendTelegramMessage(chatId, `🚀 *ارسال درخواست به جولز روی مخزن \`${activeRepo.replace("sources/github/", "")}\`...*\nدر حال ایجاد نشست لایو...`, null, env);
+  const statusMsgId = await sendTelegramMessage(chatId, `🚀 *ارسال درخواست به جولز روی مخزن \`${activeRepo.replace("sources/github/", "")}\`...*\nدر حال ثبت در سرور...`, null, env);
 
   const activeSession = await getStoredState(chatId, 'session', env);
 
-  const formattedPrompt = `[دستورالعمل سیستمی مهم: ابتدا تمام کدهای مخزن و شاخه ${activeBranch} را کاملاً بررسی و تحلیل کن. سپس قبل از هرگونه تغییر یا کدنویسی، چند سوال شفاف‌کننده و دقیق درباره این درخواست از من بپرس و منتظر پاسخ من بمان.]
+  try {
+    if (!activeSession) {
+      // First prompt in new session includes initial system instructions
+      const initialPrompt = `[دستورالعمل سیستمی مهم: ابتدا تمام کدهای مخزن و شاخه ${activeBranch} را کاملاً بررسی و تحلیل کن. سپس قبل از هرگونه تغییر یا کدنویسی، چند سوال شفاف‌کننده و دقیق درباره این درخواست از من بپرس و منتظر پاسخ من بمان.]
 
 درخواست کاربر:
 ${text}`;
 
-  try {
-    if (!activeSession) {
       let payload = {
-        prompt: formattedPrompt,
+        prompt: initialPrompt,
         sourceContext: {
           source: activeRepo,
           githubRepoContext: { startingBranch: activeBranch }
@@ -278,13 +288,13 @@ ${text}`;
 
       if (createRes.ok && data.name) {
         await setStoredState(chatId, 'session', data.name, env);
-        // Live stream real activities!
         await pollAndStreamAgentResponse(chatId, statusMsgId, data.name, julesKey, env);
       } else {
         const errText = `❌ *خطا در اتصال به مخزن انتخاب‌شده:*\n\`\`\`json\n${JSON.stringify(data.error || data, null, 2)}\n\`\`\``;
         await editTelegramMessage(chatId, statusMsgId, errText, getMainKeyboard(), env);
       }
     } else {
+      // Direct message to existing session WITHOUT overriding with initial instructions!
       const msgUrl = `https://jules.googleapis.com/v1alpha/${activeSession}:sendMessage`;
       const msgRes = await fetch(msgUrl, {
         method: "POST",
@@ -293,11 +303,11 @@ ${text}`;
       });
 
       if (msgRes.ok) {
-        // Live stream real activities!
+        // Poll for NEW response!
         await pollAndStreamAgentResponse(chatId, statusMsgId, activeSession, julesKey, env);
       } else {
         const data = await msgRes.json();
-        const errText = `❌ *خطا در ارسال پیام:* \n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
+        const errText = `❌ *خطا در ارسال پیام به جلسه جاری:* \n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
         await editTelegramMessage(chatId, statusMsgId, errText, getMainKeyboard(), env);
       }
     }
@@ -354,7 +364,7 @@ async function handleTelegramCallback(callbackQuery, env) {
   if (data.indexOf("check_act:") === 0) {
     const sessionId = data.replace("check_act:", "");
     const msgId = callbackQuery.message.message_id;
-    await editTelegramMessage(chatId, msgId, `🔄 *در حال استعلام آخرین وضعیت از سرور جولز...*`, null, env);
+    await editTelegramMessage(chatId, msgId, `🔄 *در حال دریافت آخرین پاسخ جدید جولز...*`, null, env);
     await pollAndStreamAgentResponse(chatId, msgId, sessionId, julesKey, env);
     return;
   }
@@ -397,6 +407,7 @@ async function handleTelegramCallback(callbackQuery, env) {
 
     await setStoredState(chatId, 'branch', selectedBranch, env);
     await setStoredState(chatId, 'session', null, env);
+    await setStoredState(chatId, 'last_act', null, env);
 
     const repoDisplayName = repoSource.replace("sources/github/", "");
 
@@ -414,6 +425,7 @@ async function handleTelegramCallback(callbackQuery, env) {
     );
   } else if (data === "new_session") {
     await setStoredState(chatId, 'session', null, env);
+    await setStoredState(chatId, 'last_act', null, env);
     await sendTelegramMessage(chatId, "✨ *جلسه جدید پاکسازی شد!* \nدرخواست جدید خود را بنویسید.", getMainKeyboard(), env);
   } else if (data === "session_status") {
     const activeSession = await getStoredState(chatId, 'session', env);
