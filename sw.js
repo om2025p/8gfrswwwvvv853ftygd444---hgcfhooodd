@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v42';
+const CACHE_NAME = 'emarat-portal-v43';
 const ASSETS = [
   './',
   './index.html',
@@ -244,6 +244,11 @@ const ASSETS = [
   './jules-agent/icon-192.png',
   './jules-agent/icon-512.png',
   './jules-agent/apple-touch-icon.png',
+  // Jules Bot Telegram App (ربات تلگرام عامل جولز)
+  './jules-bot/index.html',
+  './jules-bot/manifest.json',
+  './jules-bot/icon-192.png',
+  './jules-bot/icon-512.png',
   // Liquidity App (محاسبه نقدشوندگی)
   './liquidity/index.html',
   './liquidity/manifest.json',
