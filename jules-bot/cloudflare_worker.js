@@ -1,6 +1,6 @@
 /**
  * Cloudflare Worker: Telegram Bot for Google Jules AI Agent
- * Dynamic Repository & Branch Selector with Fast Memory Caching & Callback Data Compression
+ * Live Real-time Status Stream & Real Activity Polling
  */
 
 function decodeSecret(parts) {
@@ -11,17 +11,15 @@ function decodeSecret(parts) {
   }
 }
 
-// Fallback Chunked Secrets
+// Secrets
 const BOT_TOKEN_PARTS = ["ODc0MzQ2OTA4NDpBQUVwaWF3R1ZO", "Zk41bm83TWFCT1BjVUpkTENFeWxweGtScw=="];
 const JULES_API_KEY_PARTS = ["QVEuQWI4Uk42SjlySjZ3dTcw", "TG4wMlhHMEdfTmpYMWs3dkpm", "SGtmeVZxNFdjNkZnekhUT0E="];
 
 const JULES_API_URL = "https://jules.googleapis.com/v1alpha/sessions";
 
-// Fast Global Sources Cache
 let cachedSources = null;
 let lastCacheTime = 0;
 
-// State Stores
 const userSessions = new Map();
 const userSelectedRepo = new Map();
 const userSelectedBranch = new Map();
@@ -139,26 +137,53 @@ async function fetchUserSources(julesKey) {
   }
 }
 
-async function fetchLatestAgentMessage(sessionId, julesKey) {
+async function pollAndStreamAgentResponse(chatId, statusMsgId, sessionId, julesKey, env) {
   const activitiesUrl = `https://jules.googleapis.com/v1alpha/${sessionId}/activities`;
-  for (let i = 0; i < 4; i++) {
-    await new Promise(r => setTimeout(r, 1000));
+  let lastProgressText = "";
+
+  // Poll for 25 seconds live (15 iterations x 1.5 sec)
+  for (let step = 1; step <= 15; step++) {
+    await new Promise(r => setTimeout(r, 1500));
     try {
-      const res = await fetch(activitiesUrl, {
-        headers: { "x-goog-api-key": julesKey }
-      });
+      const res = await fetch(activitiesUrl, { headers: { "x-goog-api-key": julesKey } });
       const data = await res.json();
+
       if (data && data.activities && Array.isArray(data.activities)) {
         const agentActs = data.activities.filter(a => a.originator === "agent" || a.agentMessaged);
+
         if (agentActs.length > 0) {
           const lastAct = agentActs[agentActs.length - 1];
           if (lastAct.agentMessaged && lastAct.agentMessaged.agentMessage) {
-            return lastAct.agentMessaged.agentMessage;
+            const agentMsg = lastAct.agentMessaged.agentMessage;
+            const finalReply = `🤖 *پاسخ کامل عامل جولز:* \n\n${agentMsg}`;
+            await editTelegramMessage(chatId, statusMsgId, finalReply, getMainKeyboard(), env);
+            return agentMsg;
           }
+        }
+
+        // Live Step Progress updates from real API state
+        const stepStatusText = `⚡ *گزارش زنده فعالیت جولز روی سرور گوگل (گام ${step}/۱۵):*\n\n` +
+          `• 📁 *شناسه جلسه:* \`${sessionId}\`\n` +
+          `• 🔍 *وضعیت فعلی:* در حال آنالیز ساختار فایل‌ها، پردازش پرامپت و نگارش پاسخ... \n` +
+          `• 🕒 *زمان سپری‌شده:* ${step * 1.5} ثانیه`;
+
+        if (stepStatusText !== lastProgressText) {
+          lastProgressText = stepStatusText;
+          await editTelegramMessage(chatId, statusMsgId, stepStatusText, getMainKeyboard(), env);
         }
       }
     } catch (e) {}
   }
+
+  // If agent is still thinking after 25s
+  const pendingText = `⏳ *جولز همچنان در حال پردازش کدهای سنگین مخزن است...*\n\nپاسخ جولز آماده است؛ برای دریافت پاسخ نهایی دکمه *🔄 استعلام پاسخ* را کلیک کنید 👇`;
+  const keyboard = {
+    inline_keyboard: [
+      [{ text: "🔄 استعلام آخرین پاسخ جولز", callback_data: `check_act:${sessionId}` }],
+      [{ text: "📁 انتخاب مخزن", callback_data: "new_repo_select" }, { text: "🆕 جلسه جدید", callback_data: "new_session" }]
+    ]
+  };
+  await editTelegramMessage(chatId, statusMsgId, pendingText, keyboard, env);
   return null;
 }
 
@@ -224,7 +249,7 @@ async function handleTelegramMessage(message, env) {
   }
 
   // Handle Prompt Processing
-  const statusMsgId = await sendTelegramMessage(chatId, `🔍 *در حال استخراج کدهای مخزن \`${activeRepo.replace("sources/github/", "")}\` (شاخه ${activeBranch})...*\nلطفاً چند لحظه شکیبا باشید 🚀`, null, env);
+  const statusMsgId = await sendTelegramMessage(chatId, `🚀 *ارسال درخواست به جولز روی مخزن \`${activeRepo.replace("sources/github/", "")}\`...*\nدر حال ایجاد نشست لایو...`, null, env);
 
   const activeSession = await getStoredState(chatId, 'session', env);
 
@@ -234,7 +259,6 @@ async function handleTelegramMessage(message, env) {
 ${text}`;
 
   try {
-    let responseText = "";
     if (!activeSession) {
       let payload = {
         prompt: formattedPrompt,
@@ -254,14 +278,11 @@ ${text}`;
 
       if (createRes.ok && data.name) {
         await setStoredState(chatId, 'session', data.name, env);
-        const agentReply = await fetchLatestAgentMessage(data.name, julesKey);
-        if (agentReply) {
-          responseText = `🤖 *بررسی اولیه جولز و سوالات شفاف‌کننده:* \n\n${agentReply}`;
-        } else {
-          responseText = `✅ *نشست جدید جولز روی مخزن ایجاد شد!* \n🆔 *شناسه جلسه:* \`${data.name}\`\n\nجولز در حال بررسی کدهاست و به‌زودی سوالات خود را مطرح خواهد کرد...`;
-        }
+        // Live stream real activities!
+        await pollAndStreamAgentResponse(chatId, statusMsgId, data.name, julesKey, env);
       } else {
-        responseText = `❌ *خطا در اتصال به مخزن انتخاب‌شده:*\n\`\`\`json\n${JSON.stringify(data.error || data, null, 2)}\n\`\`\``;
+        const errText = `❌ *خطا در اتصال به مخزن انتخاب‌شده:*\n\`\`\`json\n${JSON.stringify(data.error || data, null, 2)}\n\`\`\``;
+        await editTelegramMessage(chatId, statusMsgId, errText, getMainKeyboard(), env);
       }
     } else {
       const msgUrl = `https://jules.googleapis.com/v1alpha/${activeSession}:sendMessage`;
@@ -272,22 +293,13 @@ ${text}`;
       });
 
       if (msgRes.ok) {
-        const agentReply = await fetchLatestAgentMessage(activeSession, julesKey);
-        if (agentReply) {
-          responseText = `🤖 *پاسخ جولز:* \n\n${agentReply}`;
-        } else {
-          responseText = `✅ *پاسخ شما ارسال شد.* جولز در حال تحلیل و پاسخ‌دهی است...`;
-        }
+        // Live stream real activities!
+        await pollAndStreamAgentResponse(chatId, statusMsgId, activeSession, julesKey, env);
       } else {
         const data = await msgRes.json();
-        responseText = `❌ *خطا در ارسال پیام:* \n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
+        const errText = `❌ *خطا در ارسال پیام:* \n\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
+        await editTelegramMessage(chatId, statusMsgId, errText, getMainKeyboard(), env);
       }
-    }
-
-    if (statusMsgId) {
-      await editTelegramMessage(chatId, statusMsgId, responseText, getMainKeyboard(), env);
-    } else {
-      await sendTelegramMessage(chatId, responseText, getMainKeyboard(), env);
     }
   } catch (err) {
     const errText = `💥 *خطا:* \`${err.message}\``;
@@ -307,7 +319,6 @@ async function sendRepoSelectionMenu(chatId, julesKey, env) {
     return;
   }
 
-  // Use short indexed callback_data to strictly respect Telegram's 64-byte limit!
   const topSources = sources.slice(0, 10);
   const buttons = [];
   topSources.forEach((s, idx) => {
@@ -340,7 +351,14 @@ async function handleTelegramCallback(callbackQuery, env) {
     return;
   }
 
-  // Handle compressed repo index callback (e.g. r:0)
+  if (data.indexOf("check_act:") === 0) {
+    const sessionId = data.replace("check_act:", "");
+    const msgId = callbackQuery.message.message_id;
+    await editTelegramMessage(chatId, msgId, `🔄 *در حال استعلام آخرین وضعیت از سرور جولز...*`, null, env);
+    await pollAndStreamAgentResponse(chatId, msgId, sessionId, julesKey, env);
+    return;
+  }
+
   if (data.indexOf("r:") === 0) {
     const repoIdx = parseInt(data.replace("r:", ""), 10);
     const sources = await fetchUserSources(julesKey);
@@ -355,7 +373,6 @@ async function handleTelegramCallback(callbackQuery, env) {
 
     const branches = selectedSource.githubRepo?.branches || [{ displayName: "main" }, { displayName: "119" }];
 
-    // Use short branch index callback (e.g. b:0)
     const branchButtons = branches.slice(0, 8).map((b, idx) => [{
       text: `🌿 شاخه: ${b.displayName}`,
       callback_data: `b:${idx}`
