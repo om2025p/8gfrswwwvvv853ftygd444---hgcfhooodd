@@ -161,6 +161,12 @@
       "timestamp": 1789571564077,
       "source": "automation",
       "auto": true
+    },
+    {
+      "value": 0.0,
+      "timestamp": 1789576788033,
+      "source": "automation",
+      "auto": true
     }
   ],
   "trash": [],
@@ -171,6 +177,19 @@
   "notes": [],
   "baseNumber": 321047748,
   "history": [
+    {
+      "id": 1789576788033,
+      "base": "321,047,748",
+      "new": "321,047,748",
+      "percent": "0.00",
+      "type": "neutral",
+      "rawBase": 321047748.0,
+      "rawNew": 321047748.0,
+      "timestamp": "2026-09-16T16:39:48.034006Z",
+      "persianDate": "1405/06/25 16:39:48",
+      "source": "automation",
+      "auto": true
+    },
     {
       "id": 1789571564077,
       "base": "319,296,024",
