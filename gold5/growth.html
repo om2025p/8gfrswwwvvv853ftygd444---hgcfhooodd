@@ -247,7 +247,21 @@
     background: #ffcdd2 !important;
   }
 
-  /* ============================================
+    .mini-calc-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 2px;
+    vertical-align: middle;
+    transition: transform 0.15s;
+    line-height: 1;
+  }
+  .mini-calc-btn:active {
+    transform: scale(1.25);
+  }
+
+/* ============================================
      برچسب سه‌بعدی — بدون هیچ پس‌زمینه/سایه
      ============================================ */
   .txt-3d {
@@ -858,7 +872,7 @@
       <thead>
         <tr>
           <th class="check-col">✔</th>
-          <th class="col-main">قیمت واحد</th>
+          <th class="col-main">قیمت واحد <button type="button" id="btnHeaderPriceMarkup" class="mini-calc-btn" title="محاسبه قیمت بالاتر">💡</button></th>
           <th class="col-main">تعداد واحد</th>
           <th class="col-main">مقدار پول</th>
         </tr>
@@ -1556,7 +1570,7 @@ function openPriceIncreaseModal(rawVal) {
     overlay.innerHTML = `
       <div class="modal-box">
         <div class="modal-title">⚠️ قیمت اولیه ثبت نشده</div>
-        <div class="modal-text">لطفاً ابتدا قیمتی در کادر وارد کنید، سپس روی آن دوبار کلیک کنید.</div>
+        <div class="modal-text">لطفاً ابتدا قیمتی در جدول وارد کنید.</div>
         <button class="modal-btn cancel" id="priceModalClose" style="width: 100%;">باشه</button>
       </div>
     `;
@@ -1929,30 +1943,7 @@ function createRowElement(row) {
   tr.appendChild(tdUnit);
   autoSizeInput(inpUnit);
 
-  let priceLongPressTimer = null;
 
-  function startPriceLongPress() {
-    clearTimeout(priceLongPressTimer);
-    priceLongPressTimer = setTimeout(() => {
-      if (navigator.vibrate) try { navigator.vibrate(80); } catch(e){}
-      const rawVal = cleanNumber(inpUnit.value);
-      openPriceIncreaseModal(rawVal);
-    }, 2500);
-  }
-
-  function cancelPriceLongPress() {
-    if (priceLongPressTimer) {
-      clearTimeout(priceLongPressTimer);
-      priceLongPressTimer = null;
-    }
-  }
-
-  inpUnit.addEventListener("pointerdown", startPriceLongPress);
-  inpUnit.addEventListener("pointerup", cancelPriceLongPress);
-  inpUnit.addEventListener("pointerleave", cancelPriceLongPress);
-  inpUnit.addEventListener("touchstart", startPriceLongPress);
-  inpUnit.addEventListener("touchend", cancelPriceLongPress);
-  inpUnit.addEventListener("touchcancel", cancelPriceLongPress);
 
   inpUnit.oninput = () => {
     const raw = cleanNumber(inpUnit.value);
@@ -2296,6 +2287,24 @@ cancelDeleteBtn.onclick = () => {
 };
 
 confirmDeleteBtn.onclick = performDeleteSelected;
+
+const btnHeaderPriceMarkup = document.getElementById("btnHeaderPriceMarkup");
+if (btnHeaderPriceMarkup) {
+  btnHeaderPriceMarkup.onclick = async (e) => {
+    e.stopPropagation();
+    const allRows = await getAllRows();
+    let foundPrice = "";
+    if (allRows && allRows.length > 0) {
+      for (const r of allRows) {
+        if (r.unitPrice && Number(removeCommas(String(r.unitPrice))) > 0) {
+          foundPrice = removeCommas(String(r.unitPrice));
+          break;
+        }
+      }
+    }
+    openPriceIncreaseModal(foundPrice);
+  };
+}
 
 init();
 </script>
