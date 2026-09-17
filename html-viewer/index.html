@@ -926,6 +926,33 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        /* Upload Progress Modal Styles */
+        .progress-bar-track {
+            width: 100%;
+            background: #1e293b;
+            border-radius: 12px;
+            height: 20px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #334155;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb 0%, #38bdf8 50%, #10b981 100%);
+            transition: width 0.1s ease-out;
+            border-radius: 12px;
+        }
+
+        /* Syntax Highlighted JSON Tree */
+        .json-syntax-key { color: #f43f5e; font-weight: 700; }
+        .json-syntax-string { color: #34d399; }
+        .json-syntax-number { color: #fbbf24; font-weight: 700; }
+        .json-syntax-boolean { color: #818cf8; font-weight: 700; }
+        .json-syntax-null { color: #94a3b8; font-style: italic; }
+
         /* Editor Stats Bar Styles */
         .editor-stats-bar {
             display: flex;
@@ -1272,6 +1299,10 @@
                 <div class="editor-toolbar">
                     <span class="editor-label">📝 کدهای تحت وب HTML را وارد یا کپی کنید:</span>
                     <div class="quick-actions">
+                        <label class="btn-small" style="cursor: pointer; background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; font-weight: 700;">
+                            📂 آپلود فایل
+                            <input type="file" id="htmlFileInput" accept=".html,.htm,.txt,.xhtml" style="display: none;" onchange="handleFileUpload(event, 'html')">
+                        </label>
                         <button class="btn-small" onclick="openFullScreenPreview()" style="color: #2563eb; font-weight: 700;">🖥️ پیش‌نمایش</button>
                         <button class="btn-small" onclick="pasteFromClipboard('codeEditor')">📥 چسباندن</button>
                         <button class="btn-small" onclick="clearEditor('codeEditor')" style="color: #ef4444;">🗑️ پاکسازی</button>
@@ -1311,6 +1342,10 @@
                 <div class="editor-toolbar">
                     <span class="editor-label">📝 متون ساده و یادداشت‌های خود را وارد کنید:</span>
                     <div class="quick-actions">
+                        <label class="btn-small" style="cursor: pointer; background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; font-weight: 700;">
+                            📂 آپلود فایل
+                            <input type="file" id="textFileInput" accept="*/*" style="display: none;" onchange="handleFileUpload(event, 'text')">
+                        </label>
                         <button class="btn-small" onclick="openTextPreviewModal()" style="color: #2563eb; font-weight: 700;">👁️ پیش‌نمایش متون</button>
                         <button class="btn-small" onclick="pasteFromClipboard('textEditor')">📥 چسباندن</button>
                         <button class="btn-small" onclick="clearEditor('textEditor')" style="color: #ef4444;">🗑️ پاکسازی</button>
@@ -1429,6 +1464,29 @@
         <div class="stats-badge">
             <span>📊 تعداد فایل‌های دانلود شده:</span>
             <span id="downloadCountBadge">۰ فایل</span>
+        </div>
+    </div>
+
+    <!-- File Upload Progress Modal -->
+    <div id="uploadProgressModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 480px; text-align: center; padding: 24px; align-items: center; gap: 16px;">
+            <div style="font-size: 2.2rem; color: #38bdf8;">
+                <i class="fas fa-file-upload fa-spin"></i>
+            </div>
+            <h3 style="font-size: 1.15rem; color: #f8fafc; font-weight: 700;">در حال خواندن و بارگذاری فایل...</h3>
+            <div id="uploadFileInfo" style="font-size: 0.88rem; color: #94a3b8; direction: ltr; word-break: break-all; font-family: monospace;">
+                filename.txt (0 MB)
+            </div>
+
+            <div class="progress-bar-track">
+                <div id="uploadProgressBarFill" class="progress-bar-fill"></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 0.85rem; color: #cbd5e1; font-weight: 700;">
+                <span id="uploadLoadedSize">۰ B</span>
+                <span id="uploadPercentBadge" style="color: #38bdf8; font-size: 1.1rem; font-weight: 800;">۰٪</span>
+                <span id="uploadTotalSize">۰ B</span>
+            </div>
         </div>
     </div>
 
@@ -2012,6 +2070,26 @@ ${cleanText}`;
         /* =========================================================
            STANDARD TEXT & MARKDOWN (.md) PREVIEW ENGINE
            ========================================================= */
+        function syntaxHighlightJson(jsonObj) {
+            let jsonStr = typeof jsonObj === 'string' ? jsonObj : JSON.stringify(jsonObj, null, 2);
+            let escaped = escapeHtml(jsonStr);
+            return escaped.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'json-syntax-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-syntax-key';
+                    } else {
+                        cls = 'json-syntax-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-syntax-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-syntax-null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
         function renderFormattedTextContent(rawText, formatExt = '') {
             if (!rawText || !rawText.trim()) {
                 return `<div style="text-align: center; color: #94a3b8; padding: 40px;">متنی برای پیش‌نمایش وجود ندارد.</div>`;
@@ -2019,12 +2097,22 @@ ${cleanText}`;
 
             const trimmed = rawText.trim();
 
-            // 1. JSON Auto-Detection & Formatting
+            // 1. JSON Auto-Detection & Beautiful Formatting
             if (formatExt === 'json' || (trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
                 try {
                     const parsed = JSON.parse(trimmed);
-                    const formattedJson = JSON.stringify(parsed, null, 2);
-                    return `<pre><code>${escapeHtml(formattedJson)}</code></pre>`;
+                    const highlighted = syntaxHighlightJson(parsed);
+                    const isArr = Array.isArray(parsed);
+                    const itemCount = isArr ? parsed.length : Object.keys(parsed).length;
+                    const typeLabel = isArr ? `لیست ساختاریافته (${toPersianDigits(itemCount)} آیتم)` : `شیء ساختاریافته (${toPersianDigits(itemCount)} کلید اصلی)`;
+
+                    return `
+                        <div style="margin-bottom: 12px; background: #1e293b; border: 1px solid #334155; padding: 10px 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                            <span style="color: #38bdf8; font-weight: 700; font-size: 0.9rem;">📊 داده ساختاریافته JSON</span>
+                            <span style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">${typeLabel}</span>
+                        </div>
+                        <pre style="background: #020617; border: 1px solid #334155; border-radius: 14px; padding: 16px; font-size: 0.9rem; line-height: 1.6; overflow-x: auto; direction: ltr; text-align: left;"><code>${highlighted}</code></pre>
+                    `;
                 } catch (e) {
                     // Fall back to standard markdown/text parsing if invalid JSON
                 }
@@ -2793,6 +2881,103 @@ ${cleanText}`;
             } catch (err) {
                 showToast('خطا در کپی پیام');
             }
+        }
+
+        /* =========================================================
+           LARGE FILE UPLOADER ENGINE WITH LIVE PROGRESS MODAL
+           ========================================================= */
+        const MAX_FILE_SIZE_BYTES = 121 * 1024 * 1024; // 121 MB
+
+        function handleFileUpload(event, targetType) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                showToast(`⚠️ حجم فایل (${formatByteSize(file.size)}) بیش از حد مجاز ۱۲۱ مگابایت است!`);
+                event.target.value = '';
+                return;
+            }
+
+            const modal = document.getElementById('uploadProgressModal');
+            const fileInfo = document.getElementById('uploadFileInfo');
+            const fill = document.getElementById('uploadProgressBarFill');
+            const loadedSizeEl = document.getElementById('uploadLoadedSize');
+            const totalSizeEl = document.getElementById('uploadTotalSize');
+            const percentBadge = document.getElementById('uploadPercentBadge');
+
+            const totalSizeStr = formatByteSize(file.size);
+            if (fileInfo) fileInfo.innerText = `${file.name} (${totalSizeStr})`;
+            if (totalSizeEl) totalSizeEl.innerText = totalSizeStr;
+            if (fill) fill.style.width = '0%';
+            if (percentBadge) percentBadge.innerText = '۰٪';
+            if (loadedSizeEl) loadedSizeEl.innerText = '۰ B';
+
+            if (modal) modal.style.display = 'flex';
+
+            const reader = new FileReader();
+
+            reader.onprogress = (e) => {
+                if (e.lengthComputable && e.total > 0) {
+                    const percent = Math.min(100, Math.round((e.loaded / e.total) * 100));
+                    const percentFa = toPersianDigits(percent) + '٪';
+                    if (fill) fill.style.width = `${percent}%`;
+                    if (percentBadge) percentBadge.innerText = percentFa;
+                    if (loadedSizeEl) loadedSizeEl.innerText = formatByteSize(e.loaded);
+                }
+            };
+
+            reader.onload = (e) => {
+                const content = e.target.result || '';
+
+                if (fill) fill.style.width = '100%';
+                if (percentBadge) percentBadge.innerText = '۱۰۰٪';
+                if (loadedSizeEl) loadedSizeEl.innerText = totalSizeStr;
+
+                setTimeout(() => {
+                    if (modal) modal.style.display = 'none';
+
+                    if (targetType === 'html') {
+                        codeEditor.value = content;
+                        // Avoid overloading localStorage for extremely huge files (> 15MB)
+                        if (file.size <= 10 * 1024 * 1024) {
+                            localStorage.setItem('html_viewer_saved_code', content);
+                        }
+                        updateEditorStats('html');
+                        triggerBackgroundAiTitle('html');
+                        showToast(`🖥️ فایل HTML با موفقیت بارگذاری شد (${toPersianDigits((file.size / (1024 * 1024)).toFixed(1))} MB)`);
+                    } else {
+                        textEditor.value = content;
+                        if (file.size <= 10 * 1024 * 1024) {
+                            localStorage.setItem('html_viewer_saved_text', content);
+                        }
+                        updateEditorStats('text');
+                        triggerBackgroundAiTitle('text');
+
+                        // Auto match file extension in selector if known extension
+                        const fileExt = file.name.split('.').pop().toLowerCase();
+                        if (fileExt && TEXT_FORMAT_OPTIONS.some(o => o.ext === fileExt)) {
+                            selectTextFormat(fileExt, false);
+                        } else if (fileExt) {
+                            customTextExtValue = fileExt;
+                            localStorage.setItem('html_viewer_saved_custom_ext', fileExt);
+                            selectTextFormat('custom', false);
+                        }
+
+                        showToast(`📄 فایل متنی با موفقیت بارگذاری شد (${toPersianDigits((file.size / (1024 * 1024)).toFixed(1))} MB)`);
+                    }
+
+                    appendLog(`Uploaded file ${file.name} (${file.size} bytes) to ${targetType} editor`, "success");
+                }, 200);
+            };
+
+            reader.onerror = (err) => {
+                if (modal) modal.style.display = 'none';
+                showToast('❌ خطا در خواندن فایل!');
+                appendLog(`Error reading file ${file.name}: ${err}`, "error");
+            };
+
+            reader.readAsText(file, 'UTF-8');
+            event.target.value = '';
         }
 
         function handleChatFileUpload(event) {
