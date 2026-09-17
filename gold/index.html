@@ -81,6 +81,7 @@
         <div class="tabs">
             <div class="tab active" onclick="switchTab(0)">📊 ثبت درصد</div>
             <div class="tab" onclick="switchTab(1)">🏆 محاسبه تغییرات</div>
+            <div class="tab" onclick="switchTab(2)">📈 مدیریت رشد</div>
         </div>
         <div class="tab-container">
             <div id="content0" class="tab-content active">
@@ -88,6 +89,9 @@
             </div>
             <div id="content1" class="tab-content">
                 <iframe src="calculator.html"></iframe>
+            </div>
+            <div id="content2" class="tab-content">
+                <iframe src="growth.html"></iframe>
             </div>
         </div>
     </div>
@@ -103,16 +107,18 @@
 
             // تغییر رنگ تم بر اساس تب انتخاب شده
             const themeColor = document.querySelector('meta[name="theme-color"]');
+            const tabsHeader = document.querySelector('.tabs');
             if (index === 1) {
                 themeColor.setAttribute('content', '#1a1a1a');
-                document.querySelector('.tabs').style.background = '#1a1a1a';
+                tabsHeader.style.background = '#1a1a1a';
+            } else if (index === 2) {
+                themeColor.setAttribute('content', '#0d5c9c');
+                tabsHeader.style.background = '#0d5c9c';
             } else {
                 themeColor.setAttribute('content', '#2196F3');
-                document.querySelector('.tabs').style.background = '#2196F3';
+                tabsHeader.style.background = '#2196F3';
             }
         }
-
-        // سرویس ورکر اکنون به صورت مرکزی از منوی اصلی مدیریت می‌شود
     </script>
 </body>
 </html>

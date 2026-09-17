@@ -82,6 +82,7 @@
         <div class="tabs">
             <div class="tab active" onclick="switchTab(0)">📊 ثبت درصد</div>
             <div class="tab" onclick="switchTab(1)">🏆 محاسبه تغییرات</div>
+            <div class="tab" onclick="switchTab(2)">📈 مدیریت رشد</div>
         </div>
         <div class="tab-container">
             <div id="content0" class="tab-content active">
@@ -89,6 +90,9 @@
             </div>
             <div id="content1" class="tab-content">
                 <iframe src="calculator.html"></iframe>
+            </div>
+            <div id="content2" class="tab-content">
+                <iframe src="growth.html"></iframe>
             </div>
         </div>
     </div>
@@ -112,6 +116,9 @@
             } else if (index === 1) {
                 themeColor.setAttribute('content', '#1976d2');
                 tabsHeader.style.background = '#1976d2';
+            } else if (index === 2) {
+                themeColor.setAttribute('content', '#0d5c9c');
+                tabsHeader.style.background = '#0d5c9c';
             }
         }
     </script>
