@@ -731,6 +731,26 @@
             font-size: 0.85rem;
             background: var(--history-sub-bg);
         }
+
+        /* استایل سویچ‌های فعال/غیرفعال اتوماسیون */
+        .toggle-switch-ui input:checked + .toggle-slider {
+            background-color: var(--positive-color) !important;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .toggle-switch-ui input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
     </style>
 </head>
 <body>
@@ -743,6 +763,10 @@
         <div class="hamburger-container">
             <button id="hamburgerBtn" class="hamburger-btn" onclick="toggleHamburgerMenu(event)" title="منوی امکانات">☰</button>
             <div id="hamburgerDropdown" class="hamburger-dropdown">
+                <button class="menu-item-btn" onclick="openAutomationSettingsModal(); closeHamburgerMenu();">
+                    <span>🤖</span>
+                    <span>تنظیمات اتوماسیون</span>
+                </button>
                 <button class="menu-item-btn" onclick="openImportantNoteModal(); closeHamburgerMenu();">
                     <span>📌</span>
                     <span>یادداشت مهم</span>
@@ -941,6 +965,86 @@
                         <button onclick="copyImportantNoteText()" style="background: var(--history-sub-bg); border: 1px solid var(--card-border); color: var(--text-color); padding: 8px 12px; border-radius: 12px; font-weight: bold; font-size: 0.82rem; cursor: pointer;" title="کپی متن">📋 کپی</button>
                         <button onclick="saveCurrentNoteToHistory()" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">➕ ثبت در تاریخچه</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال مستقل مدیریت اتوماسیون -->
+    <div id="automationSettingsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); z-index: 999999; justify-content: center; align-items: center; padding: 12px; box-sizing: border-box; animation: fadeIn 0.25s ease forwards;">
+        <div style="width: 100%; max-width: 500px; height: 100%; max-height: 680px; background: var(--card-bg); border: 2px solid var(--primary-light); border-radius: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; position: relative; overflow: hidden; transition: all 0.3s ease;">
+            <!-- هدر مودال اتوماسیون -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--card-border); background: var(--history-sub-bg);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.5rem;">🤖</span>
+                    <span style="font-size: 1.2rem; font-weight: 800; color: var(--text-color);">مدیریت اتوماسیون ثبت درصد</span>
+                </div>
+                <button onclick="closeAutomationSettingsModal()" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-color); width: 34px; height: 34px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</button>
+            </div>
+
+            <!-- بدنه محتوا -->
+            <div style="flex: 1; padding: 18px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; box-sizing: border-box;">
+                <!-- راهنما و توضیح -->
+                <div style="background: var(--history-sub-bg); border: 1px solid var(--card-border); border-radius: 18px; padding: 14px; font-size: 0.88rem; color: var(--text-color); line-height: 1.6;">
+                    ⚙️ در این صفحه می‌توانید وضعیت فعال یا غیرفعال بودن اتوماسیون خودکار ثبت درصدها (ایزی‌تریدر و همگام‌سازی ابری) را تنظیم کنید. با تغییر سویچ‌ها، وضعیت به صورت آنی ذخیره و در MantleDB ابری سینک می‌شود.
+                </div>
+
+                <!-- کلید اصلی (Master Switch) -->
+                <div style="background: var(--history-sub-bg); border: 2px solid var(--primary-light); border-radius: 20px; padding: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                    <div>
+                        <div style="font-size: 1rem; font-weight: 800; color: var(--text-color); display: flex; align-items: center; gap: 6px;">
+                            <span>⚡</span>
+                            <span>کلید اصلی اتوماسیون (Master Switch)</span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; font-weight: 600;">
+                            خاموش/روشن کردن کل فرآیند اتوماسیون روبات
+                        </div>
+                    </div>
+                    <label class="toggle-switch-ui" style="position: relative; display: inline-block; width: 54px; height: 30px; flex-shrink: 0;">
+                        <input type="checkbox" id="masterAutomationToggle" onchange="handleAutomationToggleChange()" style="opacity: 0; width: 0; height: 0;">
+                        <span class="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 30px;"></span>
+                    </label>
+                </div>
+
+                <!-- تنظیمات تفکیک شده صندوق‌ها -->
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: var(--primary-light); display: flex; align-items: center; gap: 6px;">
+                        <span>📊</span>
+                        <span>تنظیمات تفکیکی صندوق‌های اتوماتیک:</span>
+                    </div>
+
+                    <!-- صندوق ۴: آتیه / بازنشستگی -->
+                    <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 18px; padding: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <div>
+                            <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-color);">صندوق ۴ (آتیه / بازنشستگی مفید)</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; margin-top: 2px;">استخراج خودکار از ایزی‌تریدر ساعت ۱۵:۳۰</div>
+                        </div>
+                        <label class="toggle-switch-ui" style="position: relative; display: inline-block; width: 54px; height: 30px; flex-shrink: 0;">
+                            <input type="checkbox" id="fund4AutomationToggle" onchange="handleAutomationToggleChange()" style="opacity: 0; width: 0; height: 0;">
+                            <span class="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 30px;"></span>
+                        </label>
+                    </div>
+
+                    <!-- صندوق ۵: سینرژی -->
+                    <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 18px; padding: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <div>
+                            <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-color);">صندوق ۵ (سینرژی)</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; margin-top: 2px;">استخراج خودکار از ایزی‌تریدر ساعت ۱۵:۳۰</div>
+                        </div>
+                        <label class="toggle-switch-ui" style="position: relative; display: inline-block; width: 54px; height: 30px; flex-shrink: 0;">
+                            <input type="checkbox" id="fund5AutomationToggle" onchange="handleAutomationToggleChange()" style="opacity: 0; width: 0; height: 0;">
+                            <span class="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 30px;"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- وضعیت همگام‌سازی ابری و ذخیره‌سازی -->
+                <div style="margin-top: auto; padding-top: 10px; border-top: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <span id="automationSaveStatus" style="font-size: 0.82rem; color: var(--positive-color); font-weight: bold; display: flex; align-items: center; gap: 4px;">⚡ وضعیت: فعال و آماده به‌کار</span>
+                    <button onclick="syncAutomationSettingsToCloud(true)" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; padding: 8px 16px; border-radius: 12px; font-weight: bold; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); display: flex; align-items: center; gap: 6px;">
+                        <span>🔄</span>
+                        <span>همگام‌سازی ابری MantleDB</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -3581,6 +3685,110 @@ ${dayBlocksHtml}
                 }
             };
             reader.readAsText(file);
+        }
+
+        // ===== توابع مدیریت اتوماسیون ثبت درصدها =====
+        function getAutomationSettings() {
+            const raw = localStorage.getItem('emarat_automation_settings_v1');
+            if (raw) {
+                try {
+                    return JSON.parse(raw);
+                } catch(e) {}
+            }
+            return { master: false, fund4: false, fund5: false, updatedAt: Date.now() };
+        }
+
+        function saveAutomationSettings(settings) {
+            settings.updatedAt = Date.now();
+            const jsonStr = JSON.stringify(settings);
+            localStorage.setItem('emarat_automation_settings_v1', jsonStr);
+            localStorage.setItem('emarat_last_modified', settings.updatedAt.toString());
+
+            if (window.EmaratCloudSync && typeof window.EmaratCloudSync.push === 'function') {
+                window.EmaratCloudSync.push();
+            }
+        }
+
+        function loadAutomationUIFromStorage() {
+            const settings = getAutomationSettings();
+            const masterToggle = document.getElementById('masterAutomationToggle');
+            const fund4Toggle = document.getElementById('fund4AutomationToggle');
+            const fund5Toggle = document.getElementById('fund5AutomationToggle');
+
+            if (masterToggle) masterToggle.checked = settings.master !== false;
+            if (fund4Toggle) fund4Toggle.checked = settings.fund4 !== false;
+            if (fund5Toggle) fund5Toggle.checked = settings.fund5 !== false;
+
+            updateAutomationStatusText(settings);
+        }
+
+        function updateAutomationStatusText(settings) {
+            const statusEl = document.getElementById('automationSaveStatus');
+            if (!statusEl) return;
+
+            if (!settings.master) {
+                statusEl.innerHTML = '🔴 اتوماسیون کلاً غیرفعال است (Master Off)';
+                statusEl.style.color = 'var(--negative-color)';
+            } else if (!settings.fund4 && !settings.fund5) {
+                statusEl.innerHTML = '🟠 همه صندوق‌ها غیرفعال هستند';
+                statusEl.style.color = 'var(--recovering-color)';
+            } else if (settings.fund4 && settings.fund5) {
+                statusEl.innerHTML = '🟢 اتوماسیون کاملاً فعال و آماده به‌کار ✅';
+                statusEl.style.color = 'var(--positive-color)';
+            } else {
+                statusEl.innerHTML = '🟡 اتوماسیون به صورت جزئی فعال است';
+                statusEl.style.color = 'var(--recovering-color)';
+            }
+        }
+
+        function handleAutomationToggleChange() {
+            const masterToggle = document.getElementById('masterAutomationToggle');
+            const fund4Toggle = document.getElementById('fund4AutomationToggle');
+            const fund5Toggle = document.getElementById('fund5AutomationToggle');
+
+            const settings = {
+                master: masterToggle ? masterToggle.checked : true,
+                fund4: fund4Toggle ? fund4Toggle.checked : true,
+                fund5: fund5Toggle ? fund5Toggle.checked : true
+            };
+
+            saveAutomationSettings(settings);
+            updateAutomationStatusText(settings);
+        }
+
+        function syncAutomationSettingsToCloud(showToast = false) {
+            handleAutomationToggleChange();
+            if (showToast) {
+                const statusEl = document.getElementById('automationSaveStatus');
+                if (statusEl) {
+                    statusEl.innerHTML = '🔄 همگام‌سازی ابری با موفقیت انجام شد ✅';
+                    statusEl.style.color = 'var(--primary-light)';
+                    setTimeout(() => {
+                        updateAutomationStatusText(getAutomationSettings());
+                    }, 2000);
+                }
+            }
+        }
+
+        function openAutomationSettingsModal() {
+            const modal = document.getElementById('automationSettingsModal');
+            if (!modal) return;
+
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
+            document.body.style.touchAction = 'none';
+
+            loadAutomationUIFromStorage();
+            modal.style.display = 'flex';
+        }
+
+        function closeAutomationSettingsModal() {
+            const modal = document.getElementById('automationSettingsModal');
+            if (modal) modal.style.display = 'none';
+
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+            document.body.style.touchAction = '';
         }
 
         // لود اولیه تم و راه‌اندازی دیدبان

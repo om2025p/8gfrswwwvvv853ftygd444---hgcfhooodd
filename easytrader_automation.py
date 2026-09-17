@@ -670,6 +670,36 @@ def run_automation():
 
         log_event("[+] Merged live cloud state for App 4 and App 5 from MantleDB.")
 
+    # --- CHECK AUTOMATION ENABLED/DISABLED SETTINGS ---
+    auto_settings = {}
+    if cloud_state and "cloud_data_raw" in cloud_state:
+        raw_cloud_data = cloud_state.get("cloud_data_raw", {})
+        auto_settings_raw = raw_cloud_data.get("emarat_automation_settings_v1") or raw_cloud_data.get("emarat_automation_settings")
+        if auto_settings_raw:
+            try:
+                auto_settings = json.loads(auto_settings_raw) if isinstance(auto_settings_raw, str) else auto_settings_raw
+                log_event(f"[+] Retrieved automation settings from MantleDB: {auto_settings}")
+            except Exception as ex:
+                log_event(f"[-] Warning parsing automation settings: {ex}")
+
+    master_automation_enabled = auto_settings.get("master", False) if auto_settings else False
+    fund4_automation_enabled = auto_settings.get("fund4", False) if auto_settings else False
+    fund5_automation_enabled = auto_settings.get("fund5", False) if auto_settings else False
+
+    current_persian_date = get_current_persian_datetime().split()[0]
+
+    if not master_automation_enabled or (not fund4_automation_enabled and not fund5_automation_enabled):
+        log_event("[i] Master automation is currently DISABLED in Percent Monitor settings.", telegram_live=True)
+        halt_msg = (
+            f"<b>⛔ اتوماسیون ثبت درصد خودکار غیرفعال است</b>\n\n"
+            f"📅 <b>تاریخ امروز:</b> {current_persian_date}\n\n"
+            f"رئیس عزیز! طبق تنظیمات ثبت‌شده در «دیدبان درصدها»، کلید اتوماسیون خودکار در حال حاضر <b>خاموش (غیرفعال)</b> است.\n"
+            f"عملیات استخراج ایزی‌تریدر امروز متوقف شد. هر زمان مایل بودید می‌توانید از منوی دیدبان درصدها مجدداً آن را فعال کنید. ☕🌹"
+        )
+        send_telegram_message(halt_msg)
+        send_telegram_document(LOG_FILE_PATH, caption="📋 <b>فایل لاگ اجرای امروز (توقف اتوماسیون)</b>")
+        return True
+
     base_val_syn = local_state_syn.get("baseNumber", 100983803)
     history_list_syn = local_state_syn.get("history", [])
 
@@ -680,10 +710,16 @@ def run_automation():
     syn_recorded_today = is_already_recorded_today(history_list_syn, "Fund 5 (Synergy)")
     atie_recorded_today = is_already_recorded_today(history_list_atie, "Fund 4 (Atie)")
 
-    current_persian_date = get_current_persian_datetime().split()[0]
+    if not fund5_automation_enabled:
+        log_event("[i] Fund 5 (Synergy) automation is toggled OFF in settings. Skipping Fund 5.")
+        syn_recorded_today = True
+
+    if not fund4_automation_enabled:
+        log_event("[i] Fund 4 (Atie) automation is toggled OFF in settings. Skipping Fund 4.")
+        atie_recorded_today = True
 
     if syn_recorded_today and atie_recorded_today:
-        log_event("[+] Both Fund 4 and Fund 5 percents were already recorded today by user. Gracefully halting automation.", telegram_live=True)
+        log_event("[+] Both Fund 4 and Fund 5 are either recorded or disabled by user. Gracefully halting automation.", telegram_live=True)
         stop_msg = (
             f"<b>☕ رئیس جان خسته نباشید! ثبت درصد امروز قبلاً انجام شده است</b>\n\n"
             f"📅 <b>تاریخ امروز:</b> {current_persian_date}\n\n"
