@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" href="favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <title>نمایشگر کد و ابزار متن عمارت</title>
     <style>
         :root {
@@ -1472,7 +1473,7 @@
                     <div class="quick-actions">
                         <label class="btn-small" style="cursor: pointer; background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; font-weight: 700;">
                             📂 آپلود بکاپ DeepSeek (.json)
-                            <input type="file" id="deepseekFileInput" accept=".json,.txt" style="display: none;" onchange="handleDeepSeekFileUpload(event)">
+                            <input type="file" id="deepseekFileInput" accept=".json,.zip,.txt" style="display: none;" onchange="handleDeepSeekFileUpload(event)">
                         </label>
                         <button class="btn-small" onclick="loadSampleDeepSeekChat()" style="color: #059669; font-weight: 700;">📝 بارگذاری نمونه دیپ‌سیک</button>
                         <button class="btn-small" onclick="clearDeepSeekEditor()" style="color: #ef4444;">🗑️ پاکسازی</button>
@@ -3168,20 +3169,48 @@ ${cleanText}`;
             if (!jsonText || !jsonText.trim()) return;
 
             try {
-                let data = typeof jsonText === 'string' ? JSON.parse(jsonText) : jsonText;
-                if (!data) return;
+                let data = jsonText;
+                if (typeof jsonText === 'string') {
+                    try {
+                        data = JSON.parse(jsonText);
+                    } catch (e) {
+                        const lines = jsonText.split('\n').filter(l => l.trim().length > 0);
+                        if (lines.length > 0) {
+                            let msgs = lines.map(line => ({
+                                role: line.startsWith('User:') || line.startsWith('کاربر:') ? 'user' : 'assistant',
+                                content: line,
+                                thinking: ''
+                            }));
+                            deepseekConversations.push({ title: 'گفتگوی متنی (Plain Text Chat)', messages: msgs });
+                        }
+                    }
+                }
+                if (!data || typeof data !== 'object') return;
 
-                if (!Array.isArray(data) && typeof data === 'object') {
-                    if (Array.isArray(data.conversations)) data = data.conversations;
-                    else if (Array.isArray(data.chats)) data = data.chats;
-                    else if (Array.isArray(data.data)) data = data.data;
-                    else if (Array.isArray(data.history)) data = data.history;
-                    else if (data.chat_messages || data.messages || data.mapping || data.chatHistory) data = [data];
+                function findConversations(obj, list = [], depth = 0) {
+                    if (!obj || typeof obj !== 'object' || depth > 8) return list;
+                    if (Array.isArray(obj)) {
+                        obj.forEach(item => findConversations(item, list, depth + 1));
+                    } else {
+                        if (obj.chat_messages || obj.messages || obj.chatHistory || obj.mapping || obj.chats || obj.history) {
+                            list.push(obj);
+                        } else {
+                            Object.values(obj).forEach(val => {
+                                if (val && typeof val === 'object') {
+                                    findConversations(val, list, depth + 1);
+                                }
+                            });
+                        }
+                    }
+                    return list;
                 }
 
-                let rawList = Array.isArray(data) ? data : [data];
+                let convItems = findConversations(data);
+                if (convItems.length === 0 && typeof data === 'object') {
+                    convItems = [data];
+                }
 
-                rawList.forEach((item, index) => {
+                convItems.forEach((item, index) => {
                     if (!item || typeof item !== 'object') return;
                     let convTitle = item.title || item.name || item.topic || item.subject || `گفتگو ${toPersianDigits(index + 1)}`;
                     let messages = [];
@@ -3393,17 +3422,55 @@ ${cleanText}`;
             const file = event.target.files[0];
             if (!file) return;
 
+            const modal = document.getElementById('uploadProgressModal');
+            const fileInfo = document.getElementById('uploadFileInfo');
+            const fill = document.getElementById('uploadProgressBarFill');
+            const loadedSizeEl = document.getElementById('uploadLoadedSize');
+            const totalSizeEl = document.getElementById('uploadTotalSize');
+            const percentBadge = document.getElementById('uploadPercentBadge');
+
+            const totalSizeStr = formatByteSize(file.size);
+            if (fileInfo) fileInfo.innerText = `${file.name} (${totalSizeStr})`;
+            if (totalSizeEl) totalSizeEl.innerText = totalSizeStr;
+            if (fill) fill.style.width = '0%';
+            if (loadedSizeEl) loadedSizeEl.innerText = '0 B';
+            if (percentBadge) percentBadge.innerText = '0%';
+
+            if (modal) modal.style.display = 'flex';
+
             const reader = new FileReader();
+
+            reader.onprogress = (e) => {
+                if (e.lengthComputable && e.total > 0) {
+                    const percent = Math.min(100, Math.round((e.loaded / e.total) * 100));
+                    if (fill) fill.style.width = `${percent}%`;
+                    if (percentBadge) percentBadge.innerText = `${percent}%`;
+                    if (loadedSizeEl) loadedSizeEl.innerText = formatByteSize(e.loaded);
+                }
+            };
+
             reader.onload = (e) => {
                 const content = e.target.result;
                 rawDeepSeekText = content;
                 if (file.size <= 5 * 1024 * 1024) {
-                    localStorage.setItem('html_viewer_saved_deepseek', content);
+                    try {
+                        localStorage.setItem('html_viewer_saved_deepseek', content);
+                    } catch (err) {}
                 }
-                parseAndLoadDeepSeekBackup(content);
-                showToast(`🤖 بکاپ DeepSeek (${file.name}) بارگذاری شد`);
-                appendLog(`Loaded DeepSeek backup: ${file.name} (${content.length} chars)`, "success");
+
+                setTimeout(() => {
+                    parseAndLoadDeepSeekBackup(content);
+                    if (modal) modal.style.display = 'none';
+                    showToast(`🤖 بکاپ DeepSeek (${file.name}) بارگذاری شد`);
+                    appendLog(`Loaded DeepSeek backup: ${file.name} (${content.length} chars)`, "success");
+                }, 200);
             };
+
+            reader.onerror = () => {
+                if (modal) modal.style.display = 'none';
+                showToast('❌ خطا در خواندن فایل DeepSeek');
+            };
+
             reader.readAsText(file, 'UTF-8');
             event.target.value = '';
         }

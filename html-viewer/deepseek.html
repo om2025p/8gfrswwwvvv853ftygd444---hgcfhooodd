@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" href="favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <title>نمایشگر چت DeepSeek - پلتفرم عمارت</title>
     <style>
         :root {
@@ -503,7 +504,7 @@
             </button>
             <label class="btn btn-primary">
                 <i class="fa-solid fa-file-import"></i> آپلود بکاپ
-                <input type="file" id="fileInput" accept=".json,.txt" style="display: none;" onchange="handleFileUpload(event)">
+                <input type="file" id="fileInput" accept=".json,.zip,.txt" style="display: none;" onchange="handleFileUpload(event)">
             </label>
             <button class="btn btn-sample" onclick="loadSampleChat()">
                 <i class="fa-solid fa-wand-magic-sparkles"></i> چت نمونه
@@ -598,6 +599,7 @@
         let activeConvIndex = 0;
         let showReasoning = true;
         let fontScale = 1.0;
+        let currentRenderLimit = 100;
 
         function toPersianDigits(num) {
             const p = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
@@ -621,41 +623,74 @@
         }
 
         function parseDeepSeekJson(jsonStr) {
+            if (!jsonStr) return [];
             try {
-                let data = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr;
+                let data = jsonStr;
+                if (typeof jsonStr === 'string') {
+                    try {
+                        data = JSON.parse(jsonStr);
+                    } catch (e) {
+                        // Fallback A: Try parsing plain text or Markdown lines as a raw chat log
+                        const lines = jsonStr.split('\n').filter(l => l.trim().length > 0);
+                        if (lines.length > 0) {
+                            const messages = lines.map(line => ({
+                                role: line.startsWith('User:') || line.startsWith('کاربر:') ? 'user' : 'assistant',
+                                text: line,
+                                reasoning: ''
+                            }));
+                            return [{ title: 'گفتگوی متنی (Plain Text Chat)', messages }];
+                        }
+                        return [];
+                    }
+                }
                 if (!data) return [];
 
-                // Extract array if wrapped in root object (e.g. { conversations: [...] } or { chats: [...] })
-                if (!Array.isArray(data) && typeof data === 'object') {
-                    if (Array.isArray(data.conversations)) data = data.conversations;
-                    else if (Array.isArray(data.chats)) data = data.chats;
-                    else if (Array.isArray(data.data)) data = data.data;
-                    else if (Array.isArray(data.history)) data = data.history;
-                    else if (data.chat_messages || data.messages || data.mapping || data.chatHistory) data = [data];
+                // Helper: recursively find conversation items
+                function findConversations(obj, list = [], depth = 0) {
+                    if (!obj || typeof obj !== 'object' || depth > 8) return list;
+
+                    if (Array.isArray(obj)) {
+                        obj.forEach(item => findConversations(item, list, depth + 1));
+                    } else {
+                        // Check if obj itself contains message structures
+                        if (obj.chat_messages || obj.messages || obj.chatHistory || obj.mapping || obj.chats || obj.history) {
+                            list.push(obj);
+                        } else {
+                            Object.values(obj).forEach(val => {
+                                if (val && typeof val === 'object') {
+                                    findConversations(val, list, depth + 1);
+                                }
+                            });
+                        }
+                    }
+                    return list;
                 }
 
-                if (!Array.isArray(data)) return [];
+                let convItems = findConversations(data);
+                if (convItems.length === 0 && typeof data === 'object') {
+                    convItems = [data];
+                }
 
                 const result = [];
 
-                data.forEach((item, idx) => {
+                convItems.forEach((item, idx) => {
                     if (!item || typeof item !== 'object') return;
 
-                    const title = item.title || item.name || item.subject || `گفتگو ${idx + 1}`;
+                    const title = item.title || item.name || item.subject || item.topic || `گفتگو ${idx + 1}`;
                     const messages = [];
 
                     // Case A: Array of messages (chat_messages, messages, etc.)
-                    const rawMsgs = item.chat_messages || item.messages || item.chatHistory || [];
+                    const rawMsgs = item.chat_messages || item.messages || item.chatHistory || item.chats || item.history || [];
                     if (Array.isArray(rawMsgs)) {
                         rawMsgs.forEach(m => {
                             if (!m) return;
-                            let role = m.role || m.author?.role || (m.sender === 'user' ? 'user' : 'assistant');
-                            let text = m.content || m.text || '';
+                            let role = (m.role || m.author?.role || m.sender || 'user').toString().toLowerCase();
+                            let text = m.content || m.text || m.message || '';
                             if (typeof text === 'object' && text !== null) {
                                 if (Array.isArray(text.parts)) text = text.parts.join('\n');
                                 else text = text.text || text.content || JSON.stringify(text);
                             }
-                            let reasoning = m.thinking_content || m.reasoning_content || m.reasoning || m.thinking || '';
+                            let reasoning = m.thinking_content || m.reasoning_content || m.reasoning || m.thinking || m.thought || '';
                             if (typeof reasoning === 'object' && reasoning !== null) {
                                 reasoning = reasoning.text || JSON.stringify(reasoning);
                             }
@@ -678,7 +713,7 @@
                                 else if (Array.isArray(m.content.parts)) text = m.content.parts.filter(p => typeof p === 'string').join('\n');
                                 else if (m.content.text) text = m.content.text;
                             }
-                            let reasoning = m.thinking_content || m.reasoning_content || m.reasoning || m.thinking || '';
+                            let reasoning = m.thinking_content || m.reasoning_content || m.reasoning || m.thinking || m.thought || '';
                             if (typeof reasoning === 'object' && reasoning !== null) {
                                 reasoning = reasoning.text || JSON.stringify(reasoning);
                             }
@@ -745,16 +780,16 @@
             document.getElementById('statSize').innerText = toPersianDigits((rawContent.length / 1024).toFixed(1)) + ' KB';
 
             let html = '';
+            let filteredMsgs = messages;
+            if (qLower) {
+                filteredMsgs = messages.filter(m => (m.text || '').toLowerCase().includes(qLower) || (m.reasoning || '').toLowerCase().includes(qLower));
+            }
 
-            messages.forEach((msg, idx) => {
+            const visibleMsgs = filteredMsgs.slice(0, currentRenderLimit);
+
+            visibleMsgs.forEach((msg, idx) => {
                 const role = msg.role || 'user';
                 const isModel = (role === 'assistant' || role === 'model' || role === 'ai');
-
-                if (qLower) {
-                    const matchText = (msg.text || '').toLowerCase().includes(qLower);
-                    const matchReason = (msg.reasoning || '').toLowerCase().includes(qLower);
-                    if (!matchText && !matchReason) return;
-                }
 
                 let roleClass = isModel ? 'role-model' : 'role-user';
                 let roleTitle = isModel ? 'DeepSeek AI' : 'کاربر (User)';
@@ -798,6 +833,15 @@
                     <div class="message-body">${bodyText}</div>
                 </div>`;
             });
+
+            if (filteredMsgs.length > currentRenderLimit) {
+                html += `
+                <div style="text-align: center; padding: 20px 0;">
+                    <button class="btn btn-primary" onclick="loadMoreMessages()" style="margin: 0 auto; padding: 10px 24px; font-size: 0.95rem;">
+                        <i class="fa-solid fa-angles-down"></i> نمایش ۱۰۰ پیام بعدی (${toPersianDigits(filteredMsgs.length - currentRenderLimit)} پیام باقی مانده)
+                    </button>
+                </div>`;
+            }
 
             wrapper.innerHTML = html || `<div class="empty-state"><p>نتیجه‌ای برای جستجوی شما پیدا نشد.</p></div>`;
         }
@@ -878,8 +922,14 @@
             showToast(`💬 سوئیچ به: ${conversations[idx].title}`);
         }
 
+        function loadMoreMessages() {
+            currentRenderLimit += 100;
+            renderMessages(document.getElementById('searchInput')?.value || '');
+        }
+
         function onConversationChange(val) {
             activeConvIndex = parseInt(val, 10) || 0;
+            currentRenderLimit = 100;
             renderMessages(document.getElementById('searchInput').value);
             renderDrawerItems();
         }
@@ -891,7 +941,32 @@
             renderMessages(document.getElementById('searchInput').value);
         }
 
-        function handleFileUpload(e) {
+        async function processFileContent(content, fileName, modal) {
+            const statusEl = document.getElementById('procModalStatus');
+            if (statusEl) statusEl.innerText = 'در حال آنالیز و ساختاردهی چت‌ها...';
+
+            setTimeout(() => {
+                rawContent = content;
+                try {
+                    localStorage.setItem('html_viewer_saved_deepseek_chat', rawContent);
+                } catch (err) {
+                    console.warn("Storage quota limit reached for full save, retaining in memory.");
+                }
+                conversations = parseDeepSeekJson(rawContent);
+                activeConvIndex = 0;
+                renderConversationsDropdown();
+                renderMessages('');
+                if (modal) modal.style.display = 'none';
+
+                if (conversations.length === 0) {
+                    showToast(`⚠️ هیچ گفتگویی درون فایل ${fileName} یافت نشد!`);
+                } else {
+                    showToast(`💬 چت ${fileName} با موفقیت بارگذاری شد (${toPersianDigits(conversations.length)} گفتگو)`);
+                }
+            }, 200);
+        }
+
+        async function handleFileUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
 
@@ -911,6 +986,37 @@
                 percentText.innerText = '۰٪';
             }
 
+            // Check if file is ZIP archive
+            if (file.name.endsWith('.zip') || file.type === 'application/zip' || file.type === 'application/x-zip-compressed') {
+                try {
+                    if (statusEl) statusEl.innerText = 'در حال استخراج آرشیو زیپ (ZIP)...';
+                    const zip = new JSZip();
+                    const zipData = await zip.loadAsync(file, {
+                        onUpdate: (metadata) => {
+                            const pct = Math.round(metadata.percent);
+                            if (pBar) pBar.style.width = pct + '%';
+                            if (percentText) percentText.innerText = toPersianDigits(pct) + '٪';
+                        }
+                    });
+
+                    // Search for conversations.json or any json inside zip
+                    let jsonFile = zipData.file(/conversations\.json$/i)[0] || zipData.file(/\.json$/i)[0];
+                    if (jsonFile) {
+                        const jsonText = await jsonFile.async('text');
+                        await processFileContent(jsonText, jsonFile.name, modal);
+                    } else {
+                        if (modal) modal.style.display = 'none';
+                        showToast('❌ هیچ فایل JSON ای در آرشیو زیپ یافت نشد');
+                    }
+                } catch (err) {
+                    console.error("ZIP Error:", err);
+                    if (modal) modal.style.display = 'none';
+                    showToast('❌ خطا در استخراج آرشیو زیپ');
+                }
+                e.target.value = '';
+                return;
+            }
+
             const reader = new FileReader();
             reader.onprogress = (evt) => {
                 if (evt.lengthComputable && evt.total > 0) {
@@ -923,22 +1029,8 @@
                 }
             };
 
-            reader.onload = (evt) => {
-                if (statusEl) statusEl.innerText = 'در حال آنالیز و ساختاردهی چت‌ها...';
-                setTimeout(() => {
-                    rawContent = evt.target.result;
-                    try {
-                        localStorage.setItem('html_viewer_saved_deepseek_chat', rawContent);
-                    } catch (err) {
-                        console.warn("Storage quota limit reached for full save, retaining in memory.");
-                    }
-                    conversations = parseDeepSeekJson(rawContent);
-                    activeConvIndex = 0;
-                    renderConversationsDropdown();
-                    renderMessages('');
-                    if (modal) modal.style.display = 'none';
-                    showToast(`💬 چت ${file.name} با موفقیت بارگذاری شد`);
-                }, 200);
+            reader.onload = async (evt) => {
+                await processFileContent(evt.target.result, file.name, modal);
             };
 
             reader.onerror = () => {
