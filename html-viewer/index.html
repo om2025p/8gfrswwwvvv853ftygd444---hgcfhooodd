@@ -1659,6 +1659,13 @@
         let aiTitleTimerHtml = null;
         let aiTitleTimerText = null;
 
+        let loadedFullHtmlContent = null;
+        let loadedFullTextContent = null;
+        let fullHtmlByteSize = 0;
+        let fullTextByteSize = 0;
+
+        const SAFE_TEXTAREA_MAX_CHARS = 500000; // 500K chars limit for DOM textarea safety
+
         function calculateUtf8Bytes(str) {
             if (!str) return 0;
             return new Blob([str]).size;
@@ -1674,17 +1681,19 @@
         }
 
         function countWords(str) {
-            if (!str || !str.trim()) return 0;
-            const words = str.trim().split(/\s+/);
-            return words.filter(w => w.length > 0).length;
+            if (!str) return 0;
+            // High performance regex word counter avoiding huge array allocations
+            const match = str.match(/\S+/g);
+            return match ? match.length : 0;
         }
 
         function updateEditorStats(type) {
             if (type === 'html') {
-                const text = codeEditor.value || '';
-                const charCount = text.length;
-                const wordCount = countWords(text);
-                const byteSize = calculateUtf8Bytes(text);
+                const isHeavy = loadedFullHtmlContent !== null && fullHtmlByteSize > SAFE_TEXTAREA_MAX_CHARS;
+                const effectiveText = isHeavy ? loadedFullHtmlContent : (codeEditor.value || '');
+                const charCount = effectiveText.length;
+                const wordCount = isHeavy ? Math.round(charCount / 6) : countWords(effectiveText);
+                const byteSize = isHeavy ? fullHtmlByteSize : calculateUtf8Bytes(effectiveText);
 
                 const charEl = document.getElementById('htmlCharCount');
                 const wordEl = document.getElementById('htmlWordCount');
@@ -1694,10 +1703,11 @@
                 if (wordEl) wordEl.innerText = toPersianDigits(wordCount);
                 if (byteEl) byteEl.innerText = formatByteSize(byteSize);
             } else {
-                const text = textEditor.value || '';
-                const charCount = text.length;
-                const wordCount = countWords(text);
-                const byteSize = calculateUtf8Bytes(text);
+                const isHeavy = loadedFullTextContent !== null && fullTextByteSize > SAFE_TEXTAREA_MAX_CHARS;
+                const effectiveText = isHeavy ? loadedFullTextContent : (textEditor.value || '');
+                const charCount = effectiveText.length;
+                const wordCount = isHeavy ? Math.round(charCount / 6) : countWords(effectiveText);
+                const byteSize = isHeavy ? fullTextByteSize : calculateUtf8Bytes(effectiveText);
 
                 const charEl = document.getElementById('textCharCount');
                 const wordEl = document.getElementById('textWordCount');
@@ -1710,13 +1720,21 @@
         }
 
         codeEditor.addEventListener('input', () => {
-            localStorage.setItem('html_viewer_saved_code', codeEditor.value);
+            loadedFullHtmlContent = null;
+            fullHtmlByteSize = 0;
+            if (codeEditor.value.length <= SAFE_TEXTAREA_MAX_CHARS) {
+                localStorage.setItem('html_viewer_saved_code', codeEditor.value);
+            }
             updateEditorStats('html');
             triggerBackgroundAiTitle('html');
         });
 
         textEditor.addEventListener('input', () => {
-            localStorage.setItem('html_viewer_saved_text', textEditor.value);
+            loadedFullTextContent = null;
+            fullTextByteSize = 0;
+            if (textEditor.value.length <= SAFE_TEXTAREA_MAX_CHARS) {
+                localStorage.setItem('html_viewer_saved_text', textEditor.value);
+            }
             updateEditorStats('text');
             triggerBackgroundAiTitle('text');
         });
@@ -1997,13 +2015,17 @@ ${cleanText}`;
 
         function clearEditor(targetId) {
             const target = document.getElementById(targetId);
-            if (target.value.trim() === '') return;
+            if (target.value.trim() === '' && !loadedFullHtmlContent && !loadedFullTextContent) return;
             if (confirm('آیا از پاک کردن کامل کادر مطمئن هستید؟')) {
                 target.value = '';
                 if (targetId === 'codeEditor') {
+                    loadedFullHtmlContent = null;
+                    fullHtmlByteSize = 0;
                     localStorage.removeItem('html_viewer_saved_code');
                     updateEditorStats('html');
                 } else {
+                    loadedFullTextContent = null;
+                    fullTextByteSize = 0;
                     localStorage.removeItem('html_viewer_saved_text');
                     updateEditorStats('text');
                 }
@@ -2012,7 +2034,7 @@ ${cleanText}`;
         }
 
         function openFullScreenPreview() {
-            const code = codeEditor.value;
+            const code = loadedFullHtmlContent || codeEditor.value;
             if (!code || code.trim() === '') {
                 showToast('⚠️ لطفاً ابتدا کد HTML را وارد یا کپی نمایید!');
                 return;
@@ -2264,7 +2286,7 @@ ${cleanText}`;
         }
 
         function openTextPreviewModal() {
-            const text = textEditor.value;
+            const text = loadedFullTextContent || textEditor.value;
             if (!text || text.trim() === '') {
                 showToast('⚠️ لطفاً ابتدا متنی در کادر وارد نمایید!');
                 return;
@@ -2452,7 +2474,7 @@ ${cleanText}`;
         }
 
         async function downloadTxtFile() {
-            const text = textEditor.value;
+            const text = loadedFullTextContent || textEditor.value;
             if (!text || text.trim() === '') {
                 showToast('⚠️ لطفاً ابتدا متنی وارد نمایید!');
                 return;
@@ -2505,7 +2527,7 @@ ${cleanText}`;
         }
 
         async function downloadHtmlFile() {
-            const code = codeEditor.value;
+            const code = loadedFullHtmlContent || codeEditor.value;
             if (!code || code.trim() === '') {
                 showToast('⚠️ لطفاً ابتدا کد HTML را وارد یا کپی نمایید!');
                 return;
@@ -2937,18 +2959,31 @@ ${cleanText}`;
                     if (modal) modal.style.display = 'none';
 
                     if (targetType === 'html') {
-                        codeEditor.value = content;
-                        // Avoid overloading localStorage for extremely huge files (> 15MB)
-                        if (file.size <= 10 * 1024 * 1024) {
-                            localStorage.setItem('html_viewer_saved_code', content);
+                        fullHtmlByteSize = file.size;
+                        if (content.length > SAFE_TEXTAREA_MAX_CHARS) {
+                            loadedFullHtmlContent = content;
+                            codeEditor.value = content.slice(0, SAFE_TEXTAREA_MAX_CHARS) + `\n\n/* ⚠️ فایل سنگین (${totalSizeStr}): به دلیل حجم بالای فایل، ۵۰۰ هزار کاراکتر اول در کادر نمایش داده شد. تمام فایل جهت دانلود و پیش‌نمایش کاملاً محفوظ است. */`;
+                        } else {
+                            loadedFullHtmlContent = null;
+                            codeEditor.value = content;
+                            if (file.size <= 2 * 1024 * 1024) {
+                                localStorage.setItem('html_viewer_saved_code', content);
+                            }
                         }
                         updateEditorStats('html');
                         triggerBackgroundAiTitle('html');
-                        showToast(`🖥️ فایل HTML با موفقیت بارگذاری شد (${toPersianDigits((file.size / (1024 * 1024)).toFixed(1))} MB)`);
+                        showToast(`🖥️ فایل HTML بارگذاری شد (${totalSizeStr})`);
                     } else {
-                        textEditor.value = content;
-                        if (file.size <= 10 * 1024 * 1024) {
-                            localStorage.setItem('html_viewer_saved_text', content);
+                        fullTextByteSize = file.size;
+                        if (content.length > SAFE_TEXTAREA_MAX_CHARS) {
+                            loadedFullTextContent = content;
+                            textEditor.value = content.slice(0, SAFE_TEXTAREA_MAX_CHARS) + `\n\n[ ⚠️ فایل سنگین (${totalSizeStr}): به دلیل حجم بالای فایل، ۵۰۰ هزار کاراکتر اول در کادر نمایش داده شد. تمام فایل جهت دانلود و پیش‌نمایش کاملاً محفوظ است. ]`;
+                        } else {
+                            loadedFullTextContent = null;
+                            textEditor.value = content;
+                            if (file.size <= 2 * 1024 * 1024) {
+                                localStorage.setItem('html_viewer_saved_text', content);
+                            }
                         }
                         updateEditorStats('text');
                         triggerBackgroundAiTitle('text');
@@ -2963,7 +2998,7 @@ ${cleanText}`;
                             selectTextFormat('custom', false);
                         }
 
-                        showToast(`📄 فایل متنی با موفقیت بارگذاری شد (${toPersianDigits((file.size / (1024 * 1024)).toFixed(1))} MB)`);
+                        showToast(`📄 فایل متنی بارگذاری شد (${totalSizeStr})`);
                     }
 
                     appendLog(`Uploaded file ${file.name} (${file.size} bytes) to ${targetType} editor`, "success");
