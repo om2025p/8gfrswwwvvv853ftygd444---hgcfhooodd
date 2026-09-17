@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" href="favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>نمایشگر چت DeepSeek - پلتفرم عمارت</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-user: #2563eb;
+            --accent-model: #9333ea;
+            --accent-thought: #a855f7;
+            --border-color: #334155;
+            --code-bg: #020617;
+            --chat-font-scale: 1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* هدر اصلی */
+        header {
+            background-color: #1e293b;
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #c084fc;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: #334155;
+            color: var(--text-main);
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background-color: #475569;
+        }
+
+        .btn-primary {
+            background-color: #9333ea;
+        }
+        .btn-primary:hover {
+            background-color: #7e22ce;
+        }
+
+        .btn-sample {
+            background-color: #059669;
+        }
+        .btn-sample:hover {
+            background-color: #047857;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        /* نوار کنترل ثانویه */
+        .controls-bar {
+            background-color: #0f172a;
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            z-index: 9;
+        }
+
+        .conv-select-wrap {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .conv-select {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background-color: #1e293b;
+            color: #f8fafc;
+            border: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            font-weight: bold;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .stats-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background-color: #1e293b;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 220px;
+            max-width: 350px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 36px 8px 12px;
+            border-radius: 8px;
+            background-color: #1e293b;
+            color: #f8fafc;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .clear-search {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: none;
+        }
+
+        /* منطقه اصلی چت */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+
+        .messages-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transform-origin: top center;
+            transition: transform 0.1s ease-out;
+        }
+
+        /* کارت پیام */
+        .message-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .role-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .role-user {
+            background-color: rgba(37, 99, 235, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(37, 99, 235, 0.4);
+        }
+
+        .role-model {
+            background-color: rgba(147, 51, 234, 0.2);
+            color: #c084fc;
+            border: 1px solid rgba(147, 51, 234, 0.4);
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .message-body {
+            line-height: 1.7;
+            font-size: calc(0.95rem * var(--chat-font-scale));
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* استدلال DeepSeek R1 Thinking */
+        .ds-reasoning-block {
+            background-color: #171527;
+            border: 1px solid #5b21b6;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            font-size: calc(0.88rem * var(--chat-font-scale));
+            color: #d8b4fe;
+        }
+
+        .ds-reasoning-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            color: #e9d5ff;
+        }
+
+        .ds-reasoning-body {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: #ddd6fe;
+            border-top: 1px dashed rgba(216, 180, 254, 0.3);
+            padding-top: 10px;
+            margin-top: 8px;
+        }
+
+        /* هایلایت جستجو */
+        mark.search-highlight {
+            background-color: #f59e0b;
+            color: #000;
+            border-radius: 3px;
+            padding: 0 3px;
+        }
+
+        /* توست */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: #3b82f6;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* خالی بودن */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 3.5rem;
+            margin-bottom: 16px;
+            color: #475569;
+        }
+
+        @media (max-width: 768px) {
+            header { padding: 10px 12px; }
+            .toolbar { width: 100%; justify-content: space-between; }
+            .search-box { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-title">
+            <a href="index.html" class="btn" title="بازگشت به برنامه اصلی">
+                <i class="fa-solid fa-arrow-right"></i> خروج
+            </a>
+            <span>🤖 نمایشگر چت DeepSeek</span>
+        </div>
+
+        <div class="toolbar">
+            <label class="btn btn-primary">
+                <i class="fa-solid fa-file-import"></i> آپلود بکاپ
+                <input type="file" id="fileInput" accept=".json,.txt" style="display: none;" onchange="handleFileUpload(event)">
+            </label>
+            <button class="btn btn-sample" onclick="loadSampleChat()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> چت نمونه
+            </button>
+            <button class="btn" onclick="copyFullChat()">
+                <i class="fa-solid fa-copy"></i> کپی کل چت
+            </button>
+            <button class="btn" id="btnToggleReasoning" onclick="toggleReasoningVisibility()">
+                <i class="fa-solid fa-brain"></i> استدلال (نمایان)
+            </button>
+            <button class="btn btn-danger" onclick="clearChat()">
+                <i class="fa-solid fa-trash-can"></i> پاکسازی
+            </button>
+        </div>
+    </header>
+
+    <div class="controls-bar">
+        <div class="conv-select-wrap">
+            <select id="convSelect" class="conv-select" onchange="onConversationChange(this.value)">
+                <option value="0">در حال بارگذاری گفتگوها...</option>
+            </select>
+        </div>
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="جستجو در پیام‌های دیپ‌سیک..." oninput="filterMessages()">
+            <button class="clear-search" id="clearSearchBtn" onclick="clearSearch()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-badge"><i class="fa-solid fa-comments"></i> گفتگوها: <strong id="statConvs">۰</strong></div>
+            <div class="stat-badge"><i class="fa-solid fa-envelope"></i> پیام‌ها: <strong id="statMsgs">۰</strong></div>
+            <div class="stat-badge"><i class="fa-solid fa-brain"></i> استدلال‌ها: <strong id="statReasoning">۰</strong></div>
+            <div class="stat-badge"><i class="fa-solid fa-hard-drive"></i> حجم: <strong id="statSize">۰ KB</strong></div>
+        </div>
+    </div>
+
+    <main id="mainContainer">
+        <div class="messages-wrapper" id="chatWrapper">
+            <div class="empty-state">
+                <i class="fa-solid fa-robot"></i>
+                <p>هیچ پیامی برای نمایش وجود ندارد.</p>
+                <p style="font-size: 0.85rem; margin-top: 8px;">فایل بکاپ JSON دیپ‌سیک را آپلود کرده یا روی «چت نمونه» کلیک کنید.</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast">اعلان</div>
+
+    <script>
+        let rawContent = "";
+        let conversations = [];
+        let activeConvIndex = 0;
+        let showReasoning = true;
+        let fontScale = 1.0;
+
+        function toPersianDigits(num) {
+            const p = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+            return String(num).replace(/\d/g, x => p[x]);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        function escapeHtml(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function parseDeepSeekJson(jsonStr) {
+            try {
+                const data = JSON.parse(jsonStr);
+                const result = [];
+
+                if (Array.isArray(data)) {
+                    data.forEach((item, idx) => {
+                        const title = item.title || item.name || `گفتگو ${idx + 1}`;
+                        const rawMsgs = item.chat_messages || item.messages || item.mapping || [];
+                        const messages = [];
+
+                        if (Array.isArray(rawMsgs)) {
+                            rawMsgs.forEach(m => {
+                                const role = m.role || (m.sender === 'user' ? 'user' : 'assistant');
+                                const text = m.content || m.text || (m.message && m.message.content) || '';
+                                const reasoning = m.thinking_content || m.reasoning_content || m.reasoning || '';
+                                if (text || reasoning) {
+                                    messages.push({ role, text, reasoning });
+                                }
+                            });
+                        }
+
+                        if (messages.length > 0) {
+                            result.push({ title, messages });
+                        }
+                    });
+                } else if (data && typeof data === 'object') {
+                    if (data.chat_messages || data.messages) {
+                        const title = data.title || 'گفتگوی بارگذاری شده';
+                        const rawMsgs = data.chat_messages || data.messages || [];
+                        const messages = [];
+                        rawMsgs.forEach(m => {
+                            const role = m.role || 'user';
+                            const text = m.content || m.text || '';
+                            const reasoning = m.thinking_content || m.reasoning_content || '';
+                            if (text || reasoning) messages.push({ role, text, reasoning });
+                        });
+                        if (messages.length > 0) result.push({ title, messages });
+                    }
+                }
+
+                return result;
+            } catch (e) {
+                console.error("DeepSeek Parse Error:", e);
+                return [];
+            }
+        }
+
+        function renderConversationsDropdown() {
+            const select = document.getElementById('convSelect');
+            if (!conversations || conversations.length === 0) {
+                select.innerHTML = `<option value="0">هیچ گفتگوئی یافت نشد</option>`;
+                return;
+            }
+
+            let opts = '';
+            conversations.forEach((c, idx) => {
+                const msgCount = c.messages.length;
+                opts += `<option value="${idx}">${idx + 1}. ${escapeHtml(c.title)} (${toPersianDigits(msgCount)} پیام)</option>`;
+            });
+            select.innerHTML = opts;
+            select.value = activeConvIndex;
+        }
+
+        function renderMessages(query = '') {
+            const wrapper = document.getElementById('chatWrapper');
+            if (!conversations || conversations.length === 0 || !conversations[activeConvIndex]) {
+                wrapper.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-robot"></i>
+                        <p>هیچ پیامی برای نمایش وجود ندارد.</p>
+                    </div>`;
+                document.getElementById('statConvs').innerText = '۰';
+                document.getElementById('statMsgs').innerText = '۰';
+                document.getElementById('statReasoning').innerText = '۰';
+                document.getElementById('statSize').innerText = '۰ KB';
+                return;
+            }
+
+            const currentConv = conversations[activeConvIndex];
+            const messages = currentConv.messages;
+            const qLower = query.trim().toLowerCase();
+
+            let totalMsgs = messages.length;
+            let reasoningCount = messages.filter(m => !!m.reasoning).length;
+
+            document.getElementById('statConvs').innerText = toPersianDigits(conversations.length);
+            document.getElementById('statMsgs').innerText = toPersianDigits(totalMsgs);
+            document.getElementById('statReasoning').innerText = toPersianDigits(reasoningCount);
+            document.getElementById('statSize').innerText = toPersianDigits((rawContent.length / 1024).toFixed(1)) + ' KB';
+
+            let html = '';
+
+            messages.forEach((msg, idx) => {
+                const role = msg.role || 'user';
+                const isModel = (role === 'assistant' || role === 'model' || role === 'ai');
+
+                if (qLower) {
+                    const matchText = (msg.text || '').toLowerCase().includes(qLower);
+                    const matchReason = (msg.reasoning || '').toLowerCase().includes(qLower);
+                    if (!matchText && !matchReason) return;
+                }
+
+                let roleClass = isModel ? 'role-model' : 'role-user';
+                let roleTitle = isModel ? 'DeepSeek AI' : 'کاربر (User)';
+                let iconClass = isModel ? 'fa-robot' : 'fa-user';
+
+                let reasoningHtml = '';
+                if (msg.reasoning && showReasoning) {
+                    let rText = escapeHtml(msg.reasoning);
+                    if (qLower) {
+                        const reg = new RegExp(`(${query.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`, 'gi');
+                        rText = rText.replace(reg, '<mark class="search-highlight">$1</mark>');
+                    }
+                    reasoningHtml = `
+                        <div class="ds-reasoning-block">
+                            <div class="ds-reasoning-header" onclick="toggleReasoningBlock(${idx})">
+                                <span>🧠 استدلال و افکار مدل (Thinking Process)</span>
+                                <span id="reasoningToggleIcon_${idx}">▼</span>
+                            </div>
+                            <div class="ds-reasoning-body" id="reasoningBody_${idx}">${rText}</div>
+                        </div>`;
+                }
+
+                let bodyText = escapeHtml(msg.text);
+                if (qLower) {
+                    const reg = new RegExp(`(${query.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`, 'gi');
+                    bodyText = bodyText.replace(reg, '<mark class="search-highlight">$1</mark>');
+                }
+
+                html += `
+                <div class="message-card">
+                    <div class="message-header">
+                        <div class="role-badge ${roleClass}">
+                            <i class="fa-solid ${iconClass}"></i>
+                            <span>${roleTitle}</span>
+                        </div>
+                        <button class="copy-btn" onclick="copyMessageText(${idx})">
+                            <i class="fa-solid fa-copy"></i> کپی
+                        </button>
+                    </div>
+                    ${reasoningHtml}
+                    <div class="message-body">${bodyText}</div>
+                </div>`;
+            });
+
+            wrapper.innerHTML = html || `<div class="empty-state"><p>نتیجه‌ای برای جستجوی شما پیدا نشد.</p></div>`;
+        }
+
+        function toggleReasoningBlock(idx) {
+            const body = document.getElementById(`reasoningBody_${idx}`);
+            const icon = document.getElementById(`reasoningToggleIcon_${idx}`);
+            if (body) {
+                if (body.style.display === 'none') {
+                    body.style.display = 'block';
+                    if (icon) icon.innerText = '▼';
+                } else {
+                    body.style.display = 'none';
+                    if (icon) icon.innerText = '◀';
+                }
+            }
+        }
+
+        function onConversationChange(val) {
+            activeConvIndex = parseInt(val, 10) || 0;
+            renderMessages(document.getElementById('searchInput').value);
+        }
+
+        function toggleReasoningVisibility() {
+            showReasoning = !showReasoning;
+            const btn = document.getElementById('btnToggleReasoning');
+            btn.innerHTML = showReasoning ? '<i class="fa-solid fa-brain"></i> استدلال (نمایان)' : '<i class="fa-solid fa-brain"></i> استدلال (مخفی)';
+            renderMessages(document.getElementById('searchInput').value);
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                rawContent = evt.target.result;
+                localStorage.setItem('html_viewer_saved_deepseek_chat', rawContent);
+                conversations = parseDeepSeekJson(rawContent);
+                activeConvIndex = 0;
+                renderConversationsDropdown();
+                renderMessages('');
+                showToast(`💬 چت ${file.name} بارگذاری شد`);
+            };
+            reader.readAsText(file, 'UTF-8');
+            e.target.value = '';
+        }
+
+        function loadSampleChat() {
+            const sampleData = [
+                {
+                    "title": "۱. تحلیل الگوریتم‌های هوش مصنوعی و بهینه‌سازی کلاینت",
+                    "chat_messages": [
+                        {
+                            "role": "user",
+                            "content": "چگونه می‌توانیم فایلهای سنگین ۱۲۱ مگابایتی را بدون کرش کردن مرورگر پردازش و نمایش دهیم؟"
+                        },
+                        {
+                            "role": "assistant",
+                            "thinking_content": "برای تحلیل این مسئله نیازمند بررسی تخصصی DOM و حافظه مرورگر هستیم:\n۱. نمایش مستقیم ۱۲۱ مگابایت متن درون <textarea> باعث ایجاد میلیون‌ها گره DOM و اشغال بیش از ۲ گیگابایت رم می‌شود.\n۲. راهکار بهینه: استفاده از تکنیک Virtual Viewport و Truncation است.\n۳. ۵۰۰ هزار کاراکتر اول برای پیش‌نمایش بارگذاری می‌شود و فایل ۱۲۱ مگابایتی به صورت کامل در حافظه Blob نگهداری می‌گردد تا دانلود و پردازش کامل انجام پذیرد.",
+                            "content": "برای پردازش فایلهای سنگین تا ۱۲۱ مگابایت بدون هنگ کردن مرورگر، بهترین تکنیک استفاده از Virtual Text Rendering است.\n\n### مزایای این روش:\n- **سرعت لحظه‌ای:** عدم کندی در اسکرول و تایپ.\n- **حفظ تمام فایل:** دانلود ۱۰۰٪ کامل فایل بدون کسر حتی یک بایت."
+                        }
+                    ]
+                }
+            ];
+
+            rawContent = JSON.stringify(sampleData, null, 2);
+            localStorage.setItem('html_viewer_saved_deepseek_chat', rawContent);
+            conversations = parseDeepSeekJson(rawContent);
+            activeConvIndex = 0;
+            renderConversationsDropdown();
+            renderMessages('');
+            showToast('📝 چت نمونه دیپ‌سیک بارگذاری شد');
+        }
+
+        function clearChat() {
+            if (!rawContent) return;
+            if (confirm('آیا از پاکسازی گفتگو مطمئن هستید؟')) {
+                rawContent = "";
+                conversations = [];
+                activeConvIndex = 0;
+                localStorage.removeItem('html_viewer_saved_deepseek_chat');
+                renderConversationsDropdown();
+                renderMessages('');
+                showToast('🗑️ چت پاکسازی شد');
+            }
+        }
+
+        async function copyMessageText(idx) {
+            if (!conversations[activeConvIndex]) return;
+            const msg = conversations[activeConvIndex].messages[idx];
+            if (!msg) return;
+
+            let textToCopy = msg.text;
+            if (msg.reasoning && showReasoning) {
+                textToCopy = `--- [استدلال DeepSeek] ---\n${msg.reasoning}\n\n--- [پاسخ] ---\n${msg.text}`;
+            }
+
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                showToast('📋 پیام کپی شد');
+            } catch (e) {
+                showToast('❌ خطا در کپی کردن متن');
+            }
+        }
+
+        async function copyFullChat() {
+            if (!conversations[activeConvIndex]) {
+                showToast('⚠️ چتی برای کپی کردن وجود ندارد');
+                return;
+            }
+
+            const messages = conversations[activeConvIndex].messages;
+            let fullText = `=== ${conversations[activeConvIndex].title} ===\n\n`;
+
+            messages.forEach(m => {
+                const roleTitle = (m.role === 'assistant' || m.role === 'model') ? 'DeepSeek AI' : 'کاربر';
+                if (m.reasoning && showReasoning) {
+                    fullText += `--- [${roleTitle} - استدلال] ---\n${m.reasoning}\n\n`;
+                }
+                fullText += `--- [${roleTitle}] ---\n${m.text}\n\n`;
+            });
+
+            try {
+                await navigator.clipboard.writeText(fullText.trim());
+                showToast('📋 کل گفتگو کپی شد');
+            } catch (e) {
+                showToast('❌ خطا در کپی');
+            }
+        }
+
+        function filterMessages() {
+            const val = document.getElementById('searchInput').value;
+            document.getElementById('clearSearchBtn').style.display = val ? 'block' : 'none';
+            renderMessages(val);
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearSearchBtn').style.display = 'none';
+            renderMessages('');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('html_viewer_saved_deepseek_chat');
+            if (saved) {
+                rawContent = saved;
+                conversations = parseDeepSeekJson(saved);
+                renderConversationsDropdown();
+                renderMessages('');
+            }
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('../sw.js').catch(err => console.error(err));
+        }
+    </script>
+</body>
+</html>
