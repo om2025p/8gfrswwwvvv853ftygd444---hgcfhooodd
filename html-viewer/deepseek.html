@@ -360,10 +360,130 @@
             color: #475569;
         }
 
+        /* کشوی جانبی تاریخچه گفتگوها */
+        .drawer-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 90;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .drawer-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .history-drawer {
+            position: fixed;
+            top: 0;
+            right: -320px;
+            width: 320px;
+            height: 100vh;
+            background-color: #1e293b;
+            border-left: 1px solid var(--border-color);
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .history-drawer.active {
+            right: 0;
+        }
+
+        .drawer-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #0f172a;
+        }
+
+        .drawer-title {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #c084fc;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .drawer-search-wrap {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #1e293b;
+        }
+
+        .drawer-search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background-color: #0f172a;
+            color: #fff;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .drawer-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .drawer-item {
+            padding: 12px;
+            border-radius: 10px;
+            background-color: #0f172a;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .drawer-item:hover {
+            border-color: #9333ea;
+            background-color: #171527;
+        }
+
+        .drawer-item.active {
+            border-color: #a855f7;
+            background-color: #2e1065;
+        }
+
+        .drawer-item-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #f8fafc;
+            line-height: 1.4;
+        }
+
+        .drawer-item-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
         @media (max-width: 768px) {
             header { padding: 10px 12px; }
             .toolbar { width: 100%; justify-content: space-between; }
             .search-box { max-width: 100%; }
+            .history-drawer { width: 290px; }
         }
     </style>
 </head>
@@ -378,6 +498,9 @@
         </div>
 
         <div class="toolbar">
+            <button class="btn" onclick="toggleHistoryDrawer()" style="background: #6b21a8; color: #fff;">
+                <i class="fa-solid fa-clock-rotate-left"></i> تاریخچه گفتگوها
+            </button>
             <label class="btn btn-primary">
                 <i class="fa-solid fa-file-import"></i> آپلود بکاپ
                 <input type="file" id="fileInput" accept=".json,.txt" style="display: none;" onchange="handleFileUpload(event)">
@@ -429,6 +552,25 @@
             </div>
         </div>
     </main>
+
+    <!-- کشوی تاریخچه جانبی -->
+    <div class="drawer-backdrop" id="drawerBackdrop" onclick="closeHistoryDrawer()"></div>
+    <div class="history-drawer" id="historyDrawer">
+        <div class="drawer-header">
+            <div class="drawer-title">
+                <i class="fa-solid fa-clock-rotate-left"></i> تاریخچه گفتگوها
+            </div>
+            <button class="btn btn-danger" onclick="closeHistoryDrawer()" style="padding: 4px 10px;">
+                ✖
+            </button>
+        </div>
+        <div class="drawer-search-wrap">
+            <input type="text" class="drawer-search-input" id="drawerSearchInput" placeholder="🔎 جستجو در عناوین چت..." oninput="renderDrawerItems()">
+        </div>
+        <div class="drawer-list" id="drawerList">
+            <!-- items rendered dynamically -->
+        </div>
+    </div>
 
     <div id="toast">اعلان</div>
 
@@ -623,9 +765,72 @@
             }
         }
 
+        function toggleHistoryDrawer() {
+            const drawer = document.getElementById('historyDrawer');
+            const backdrop = document.getElementById('drawerBackdrop');
+            if (drawer && backdrop) {
+                const isActive = drawer.classList.contains('active');
+                if (isActive) {
+                    closeHistoryDrawer();
+                } else {
+                    drawer.classList.add('active');
+                    backdrop.classList.add('active');
+                    renderDrawerItems();
+                }
+            }
+        }
+
+        function closeHistoryDrawer() {
+            const drawer = document.getElementById('historyDrawer');
+            const backdrop = document.getElementById('drawerBackdrop');
+            if (drawer) drawer.classList.remove('active');
+            if (backdrop) backdrop.classList.remove('active');
+        }
+
+        function renderDrawerItems() {
+            const list = document.getElementById('drawerList');
+            if (!list) return;
+
+            if (!conversations || conversations.length === 0) {
+                list.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-muted); font-size: 0.85rem;">هیچ گفتگویی یافت نشد.</div>`;
+                return;
+            }
+
+            const q = (document.getElementById('drawerSearchInput')?.value || '').trim().toLowerCase();
+            let html = '';
+
+            conversations.forEach((c, idx) => {
+                if (q && !c.title.toLowerCase().includes(q)) return;
+
+                const isActive = idx === activeConvIndex;
+                const msgCount = c.messages.length;
+
+                html += `
+                <div class="drawer-item ${isActive ? 'active' : ''}" onclick="selectConvFromDrawer(${idx})">
+                    <div class="drawer-item-title">${escapeHtml(c.title)}</div>
+                    <div class="drawer-item-meta">
+                        <span>💬 ${toPersianDigits(msgCount)} پیام</span>
+                        <span>گفتگو ${toPersianDigits(idx + 1)}</span>
+                    </div>
+                </div>`;
+            });
+
+            list.innerHTML = html || `<div style="text-align:center; padding: 20px; color: var(--text-muted); font-size: 0.85rem;">نتیجه‌ای یافت نشد.</div>`;
+        }
+
+        function selectConvFromDrawer(idx) {
+            activeConvIndex = idx;
+            document.getElementById('convSelect').value = idx;
+            renderMessages(document.getElementById('searchInput').value);
+            renderDrawerItems();
+            closeHistoryDrawer();
+            showToast(`💬 سوئیچ به: ${conversations[idx].title}`);
+        }
+
         function onConversationChange(val) {
             activeConvIndex = parseInt(val, 10) || 0;
             renderMessages(document.getElementById('searchInput').value);
+            renderDrawerItems();
         }
 
         function toggleReasoningVisibility() {
