@@ -622,48 +622,81 @@
 
         function parseDeepSeekJson(jsonStr) {
             try {
-                const data = JSON.parse(jsonStr);
+                let data = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr;
+                if (!data) return [];
+
+                // Extract array if wrapped in root object (e.g. { conversations: [...] } or { chats: [...] })
+                if (!Array.isArray(data) && typeof data === 'object') {
+                    if (Array.isArray(data.conversations)) data = data.conversations;
+                    else if (Array.isArray(data.chats)) data = data.chats;
+                    else if (Array.isArray(data.data)) data = data.data;
+                    else if (Array.isArray(data.history)) data = data.history;
+                    else if (data.chat_messages || data.messages || data.mapping || data.chatHistory) data = [data];
+                }
+
+                if (!Array.isArray(data)) return [];
+
                 const result = [];
 
-                if (Array.isArray(data)) {
-                    data.forEach((item, idx) => {
-                        const title = item.title || item.name || `گفتگو ${idx + 1}`;
-                        const rawMsgs = item.chat_messages || item.messages || item.mapping || [];
-                        const messages = [];
+                data.forEach((item, idx) => {
+                    if (!item || typeof item !== 'object') return;
 
-                        if (Array.isArray(rawMsgs)) {
-                            rawMsgs.forEach(m => {
-                                const role = m.role || (m.sender === 'user' ? 'user' : 'assistant');
-                                const text = m.content || m.text || (m.message && m.message.content) || '';
-                                const reasoning = m.thinking_content || m.reasoning_content || m.reasoning || '';
-                                if (text || reasoning) {
-                                    messages.push({ role, text, reasoning });
-                                }
-                            });
-                        }
+                    const title = item.title || item.name || item.subject || `گفتگو ${idx + 1}`;
+                    const messages = [];
 
-                        if (messages.length > 0) {
-                            result.push({ title, messages });
-                        }
-                    });
-                } else if (data && typeof data === 'object') {
-                    if (data.chat_messages || data.messages) {
-                        const title = data.title || 'گفتگوی بارگذاری شده';
-                        const rawMsgs = data.chat_messages || data.messages || [];
-                        const messages = [];
+                    // Case A: Array of messages (chat_messages, messages, etc.)
+                    const rawMsgs = item.chat_messages || item.messages || item.chatHistory || [];
+                    if (Array.isArray(rawMsgs)) {
                         rawMsgs.forEach(m => {
-                            const role = m.role || 'user';
-                            const text = m.content || m.text || '';
-                            const reasoning = m.thinking_content || m.reasoning_content || '';
-                            if (text || reasoning) messages.push({ role, text, reasoning });
+                            if (!m) return;
+                            let role = m.role || m.author?.role || (m.sender === 'user' ? 'user' : 'assistant');
+                            let text = m.content || m.text || '';
+                            if (typeof text === 'object' && text !== null) {
+                                if (Array.isArray(text.parts)) text = text.parts.join('\n');
+                                else text = text.text || text.content || JSON.stringify(text);
+                            }
+                            let reasoning = m.thinking_content || m.reasoning_content || m.reasoning || m.thinking || '';
+                            if (typeof reasoning === 'object' && reasoning !== null) {
+                                reasoning = reasoning.text || JSON.stringify(reasoning);
+                            }
+
+                            if (text || reasoning) {
+                                messages.push({ role, text: String(text), reasoning: String(reasoning) });
+                            }
                         });
-                        if (messages.length > 0) result.push({ title, messages });
                     }
-                }
+
+                    // Case B: Mapping Object Tree (e.g. { mapping: { "uuid-1": { message: ... } } })
+                    if (messages.length === 0 && item.mapping && typeof item.mapping === 'object') {
+                        Object.values(item.mapping).forEach(node => {
+                            if (!node || !node.message) return;
+                            const m = node.message;
+                            let role = m.author?.role || m.role || 'assistant';
+                            let text = '';
+                            if (m.content) {
+                                if (typeof m.content === 'string') text = m.content;
+                                else if (Array.isArray(m.content.parts)) text = m.content.parts.filter(p => typeof p === 'string').join('\n');
+                                else if (m.content.text) text = m.content.text;
+                            }
+                            let reasoning = m.thinking_content || m.reasoning_content || m.reasoning || m.thinking || '';
+                            if (typeof reasoning === 'object' && reasoning !== null) {
+                                reasoning = reasoning.text || JSON.stringify(reasoning);
+                            }
+
+                            if (text || reasoning) {
+                                messages.push({ role, text: String(text), reasoning: String(reasoning) });
+                            }
+                        });
+                    }
+
+                    if (messages.length > 0) {
+                        result.push({ title, messages });
+                    }
+                });
 
                 return result;
             } catch (e) {
-                console.error("DeepSeek Parse Error:", e);
+                console.error("DeepSeek Smart Parser Error:", e);
                 return [];
             }
         }
