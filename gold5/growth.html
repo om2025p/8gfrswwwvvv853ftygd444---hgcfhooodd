@@ -1929,26 +1929,30 @@ function createRowElement(row) {
   tr.appendChild(tdUnit);
   autoSizeInput(inpUnit);
 
-  let lastPriceClickTime = 0;
-  function handlePriceDblClick() {
-    const rawVal = cleanNumber(inpUnit.value);
-    openPriceIncreaseModal(rawVal);
+  let priceLongPressTimer = null;
+
+  function startPriceLongPress() {
+    clearTimeout(priceLongPressTimer);
+    priceLongPressTimer = setTimeout(() => {
+      if (navigator.vibrate) try { navigator.vibrate(80); } catch(e){}
+      const rawVal = cleanNumber(inpUnit.value);
+      openPriceIncreaseModal(rawVal);
+    }, 2500);
   }
 
-  inpUnit.addEventListener("click", () => {
-    const now = Date.now();
-    if (now - lastPriceClickTime < 350) {
-      handlePriceDblClick();
-      lastPriceClickTime = 0;
-    } else {
-      lastPriceClickTime = now;
+  function cancelPriceLongPress() {
+    if (priceLongPressTimer) {
+      clearTimeout(priceLongPressTimer);
+      priceLongPressTimer = null;
     }
-  });
+  }
 
-  inpUnit.ondblclick = (e) => {
-    e.preventDefault();
-    handlePriceDblClick();
-  };
+  inpUnit.addEventListener("pointerdown", startPriceLongPress);
+  inpUnit.addEventListener("pointerup", cancelPriceLongPress);
+  inpUnit.addEventListener("pointerleave", cancelPriceLongPress);
+  inpUnit.addEventListener("touchstart", startPriceLongPress);
+  inpUnit.addEventListener("touchend", cancelPriceLongPress);
+  inpUnit.addEventListener("touchcancel", cancelPriceLongPress);
 
   inpUnit.oninput = () => {
     const raw = cleanNumber(inpUnit.value);
