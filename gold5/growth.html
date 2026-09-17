@@ -1544,6 +1544,79 @@ function openAssignRowToDateModal(targetDateKey, allRows, calOverlay) {
 }
 
 /* ============================================================
+   8.6) مودال محاسبه قیمت 10% یا 50% بالاتر با دوبار کلیک
+   ============================================================ */
+function openPriceIncreaseModal(rawVal) {
+  const basePrice = Number(rawVal || 0);
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  document.body.appendChild(overlay);
+
+  if (!basePrice || basePrice <= 0) {
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <div class="modal-title">⚠️ قیمت اولیه ثبت نشده</div>
+        <div class="modal-text">لطفاً ابتدا قیمتی در کادر وارد کنید، سپس روی آن دوبار کلیک کنید.</div>
+        <button class="modal-btn cancel" id="priceModalClose" style="width: 100%;">باشه</button>
+      </div>
+    `;
+    overlay.querySelector("#priceModalClose").onclick = () => overlay.remove();
+    return;
+  }
+
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title">💡 محاسبه قیمت بالاتر</div>
+      <div class="modal-text" style="font-weight: bold; margin-bottom: 12px;">
+        قیمت فعلی: <span style="color: #1976d2;">${formatWithCommas(String(basePrice))} تومان</span>
+      </div>
+      <div style="font-size: 14px; margin-bottom: 16px; color: #555;">
+        می‌خواهی چند درصد قیمت بالاتر را ببینی؟
+      </div>
+      <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+        <button class="modal-btn" id="btn10Pct" style="flex: 1; background: #42a5f5; color: #fff;">➕ ۱۰٪ بالاتر</button>
+        <button class="modal-btn" id="btn50Pct" style="flex: 1; background: #2e7d32; color: #fff;">🚀 ۵۰٪ بالاتر</button>
+      </div>
+      <div id="priceResultBox" style="display: none; background: #eef7ff; border-radius: 10px; padding: 12px; text-align: center; margin-bottom: 16px;">
+        <div style="font-size: 13px; color: #666; margin-bottom: 6px;" id="resultTitle">قیمت جدید:</div>
+        <div style="font-size: 22px; font-weight: bold; color: #0d5c9c; margin-bottom: 10px;" id="resultVal">0 تومان</div>
+        <button class="modal-btn" id="btnCopyPrice" style="width: 100%; background: #00897b; color: #fff; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          📋 کپی قیمت جدید
+        </button>
+      </div>
+      <button class="modal-btn cancel" id="priceModalClose" style="width: 100%;">بستن</button>
+    </div>
+  `;
+
+  const resBox = overlay.querySelector("#priceResultBox");
+  const resTitle = overlay.querySelector("#resultTitle");
+  const resVal = overlay.querySelector("#resultVal");
+  const btnCopy = overlay.querySelector("#btnCopyPrice");
+  let calcPriceNum = 0;
+
+  function calcAndShow(pct) {
+    calcPriceNum = Math.round(basePrice * (1 + pct / 100));
+    resTitle.textContent = `قیمت ${pct}٪ بالاتر:`;
+    resVal.textContent = `${formatWithCommas(String(calcPriceNum))} تومان`;
+    resBox.style.display = "block";
+  }
+
+  overlay.querySelector("#btn10Pct").onclick = () => calcAndShow(10);
+  overlay.querySelector("#btn50Pct").onclick = () => calcAndShow(50);
+
+  btnCopy.onclick = () => {
+    if (calcPriceNum > 0) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(String(calcPriceNum));
+      }
+      showToast("✅ قیمت جدید در کلیپ‌بورد کپی شد", "success");
+    }
+  };
+
+  overlay.querySelector("#priceModalClose").onclick = () => overlay.remove();
+}
+
+/* ============================================================
    9) مودال لیست ردیف‌های یک روز
    ============================================================ */
 function openDayRows(dateKey, rows) {
@@ -1855,6 +1928,27 @@ function createRowElement(row) {
   tdUnit.appendChild(inpUnit);
   tr.appendChild(tdUnit);
   autoSizeInput(inpUnit);
+
+  let lastPriceClickTime = 0;
+  function handlePriceDblClick() {
+    const rawVal = cleanNumber(inpUnit.value);
+    openPriceIncreaseModal(rawVal);
+  }
+
+  inpUnit.addEventListener("click", () => {
+    const now = Date.now();
+    if (now - lastPriceClickTime < 350) {
+      handlePriceDblClick();
+      lastPriceClickTime = 0;
+    } else {
+      lastPriceClickTime = now;
+    }
+  });
+
+  inpUnit.ondblclick = (e) => {
+    e.preventDefault();
+    handlePriceDblClick();
+  };
 
   inpUnit.oninput = () => {
     const raw = cleanNumber(inpUnit.value);
