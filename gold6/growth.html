@@ -858,6 +858,7 @@
     <h1>🌱 مدیریت رشد</h1>
     <button class="menu-toggle" id="menuToggle">☰</button>
     <div class="dropdown-menu" id="dropdownMenu">
+      <button class="dropdown-item" id="addRowBtn">➕ افزودن ردیف جدید</button>
       <button class="dropdown-item" id="backupBtn">💾 پشتیبان‌گیری</button>
       <button class="dropdown-item" id="restoreBtn">📂 بازیابی</button>
       <button class="dropdown-item" id="calendarBtn">📅 تقویم</button>
@@ -881,8 +882,6 @@
       <tbody id="tableBody"></tbody>
     </table>
   </div>
-
-  <button class="add-btn" id="addRowBtn">+</button>
 </div>
 
 <script>
@@ -1549,7 +1548,7 @@ function openAssignRowToDateModal(targetDateKey, allRows, calOverlay) {
 
         tableBody.innerHTML = "";
         const updatedRows = await getAllRows();
-        updatedRows.forEach(r => appendRowPair(r));
+        updatedRows.forEach(r => prependRowPair(r));
         recolorCheckedRows();
 
         scrollToRowAndPulse(targetRow.id);
@@ -2243,11 +2242,18 @@ const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
 const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
 const calendarBtn = document.getElementById("calendarBtn");
 
-function appendRowPair(row) {
+function prependRowPair(row) {
   const pair = createRowElement(row);
-  if (pair.headerRow) tableBody.appendChild(pair.headerRow);
-  tableBody.appendChild(pair.mainRow);
-  tableBody.appendChild(pair.descRow);
+  const first = tableBody.firstChild;
+  if (first) {
+    if (pair.headerRow) tableBody.insertBefore(pair.headerRow, first);
+    tableBody.insertBefore(pair.mainRow, first);
+    tableBody.insertBefore(pair.descRow, first);
+  } else {
+    if (pair.headerRow) tableBody.appendChild(pair.headerRow);
+    tableBody.appendChild(pair.mainRow);
+    tableBody.appendChild(pair.descRow);
+  }
 }
 
 async function init() {
@@ -2259,7 +2265,7 @@ async function init() {
   if (rows.length === 0) {
     await addNewRow();
   } else {
-    rows.forEach(r => appendRowPair(r));
+    rows.forEach(r => prependRowPair(r));
     recolorCheckedRows();
   }
 }
@@ -2278,10 +2284,13 @@ async function addNewRow() {
   };
   const id = await addRowToDB(newRow);
   newRow.id = id;
-  appendRowPair(newRow);
+  prependRowPair(newRow);
 }
 
-addRowBtn.onclick = addNewRow;
+addRowBtn.onclick = async () => {
+  closeDropdown();
+  await addNewRow();
+};
 
 capitalInput.addEventListener("input", () => {
   const raw = cleanNumber(capitalInput.value);
@@ -2332,7 +2341,7 @@ restoreInput.onchange = async (e) => {
     if (rows.length === 0) {
       await addNewRow();
     } else {
-      rows.forEach(r => appendRowPair(r));
+      rows.forEach(r => prependRowPair(r));
       recolorCheckedRows();
     }
   } catch (e) {
