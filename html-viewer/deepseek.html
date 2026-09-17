@@ -553,6 +553,24 @@
         </div>
     </main>
 
+    <!-- مدال لودینگ پردازش فایل -->
+    <div id="processingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); z-index: 200; justify-content: center; align-items: center; flex-direction: column; gap: 20px;">
+        <div style="background: #1e293b; border: 1px solid #334155; padding: 30px; border-radius: 16px; text-align: center; max-width: 420px; width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div style="font-size: 3rem; color: #a855f7; margin-bottom: 15px;">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+            </div>
+            <h3 style="font-size: 1.2rem; margin-bottom: 10px; color: #f8fafc;" id="procModalTitle">در حال پردازش فایل چت...</h3>
+            <p style="font-size: 0.88rem; color: #94a3b8; margin-bottom: 20px;" id="procModalStatus">لطفاً شکیبا باشید...</p>
+            <div style="background: #0f172a; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 12px; border: 1px solid #334155;">
+                <div id="procProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #9333ea, #c084fc); transition: width 0.1s linear;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #cbd5e1; font-weight: bold;">
+                <span id="procByteText">۰ مگابایت</span>
+                <span id="procPercentText">۰٪</span>
+            </div>
+        </div>
+    </div>
+
     <!-- کشوی تاریخچه جانبی -->
     <div class="drawer-backdrop" id="drawerBackdrop" onclick="closeHistoryDrawer()"></div>
     <div class="history-drawer" id="historyDrawer">
@@ -844,16 +862,57 @@
             const file = e.target.files[0];
             if (!file) return;
 
+            const modal = document.getElementById('processingModal');
+            const titleEl = document.getElementById('procModalTitle');
+            const statusEl = document.getElementById('procModalStatus');
+            const pBar = document.getElementById('procProgressBar');
+            const byteText = document.getElementById('procByteText');
+            const percentText = document.getElementById('procPercentText');
+
+            if (modal) {
+                modal.style.display = 'flex';
+                titleEl.innerText = `در حال بارگذاری ${file.name}`;
+                statusEl.innerText = 'در حال خواندن محتوای فایل...';
+                pBar.style.width = '0%';
+                byteText.innerText = `۰ از ${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+                percentText.innerText = '۰٪';
+            }
+
             const reader = new FileReader();
-            reader.onload = (evt) => {
-                rawContent = evt.target.result;
-                localStorage.setItem('html_viewer_saved_deepseek_chat', rawContent);
-                conversations = parseDeepSeekJson(rawContent);
-                activeConvIndex = 0;
-                renderConversationsDropdown();
-                renderMessages('');
-                showToast(`💬 چت ${file.name} بارگذاری شد`);
+            reader.onprogress = (evt) => {
+                if (evt.lengthComputable && evt.total > 0) {
+                    const pct = Math.round((evt.loaded / evt.total) * 100);
+                    const loadedMb = (evt.loaded / (1024 * 1024)).toFixed(1);
+                    const totalMb = (evt.total / (1024 * 1024)).toFixed(1);
+                    if (pBar) pBar.style.width = pct + '%';
+                    if (percentText) percentText.innerText = toPersianDigits(pct) + '٪';
+                    if (byteText) byteText.innerText = `${toPersianDigits(loadedMb)} از ${toPersianDigits(totalMb)} MB`;
+                }
             };
+
+            reader.onload = (evt) => {
+                if (statusEl) statusEl.innerText = 'در حال آنالیز و ساختاردهی چت‌ها...';
+                setTimeout(() => {
+                    rawContent = evt.target.result;
+                    try {
+                        localStorage.setItem('html_viewer_saved_deepseek_chat', rawContent);
+                    } catch (err) {
+                        console.warn("Storage quota limit reached for full save, retaining in memory.");
+                    }
+                    conversations = parseDeepSeekJson(rawContent);
+                    activeConvIndex = 0;
+                    renderConversationsDropdown();
+                    renderMessages('');
+                    if (modal) modal.style.display = 'none';
+                    showToast(`💬 چت ${file.name} با موفقیت بارگذاری شد`);
+                }, 200);
+            };
+
+            reader.onerror = () => {
+                if (modal) modal.style.display = 'none';
+                showToast('❌ خطا در خواندن فایل');
+            };
+
             reader.readAsText(file, 'UTF-8');
             e.target.value = '';
         }
