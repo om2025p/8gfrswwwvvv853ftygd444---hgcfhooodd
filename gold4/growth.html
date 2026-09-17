@@ -1420,12 +1420,27 @@ function openBigCalendar() {
         types.forEach(t => {
           el.classList.add("has-" + t);
         });
-        el.onclick = () => {
-          // بستن تقویم و باز کردن لیست
-          overlay.remove();
-          openDayRows(dateKey, rowsByDate[dateKey]);
-        };
       }
+
+      let clickCount = 0;
+      let clickTimer = null;
+
+      el.onclick = () => {
+        clickCount++;
+        if (clickCount === 1) {
+          clickTimer = setTimeout(() => {
+            clickCount = 0;
+            if (rowsByDate[dateKey] && rowsByDate[dateKey].length > 0) {
+              overlay.remove();
+              openDayRows(dateKey, rowsByDate[dateKey]);
+            }
+          }, 450);
+        } else if (clickCount >= 3) {
+          clearTimeout(clickTimer);
+          clickCount = 0;
+          openAssignRowToDateModal(dateKey, rows, overlay);
+        }
+      };
 
       gridEl.appendChild(el);
     }
@@ -1449,6 +1464,83 @@ function openBigCalendar() {
   overlay.querySelector("#calClose").onclick = () => overlay.remove();
 
   loadAndRender();
+}
+
+/* ============================================================
+   8.5) مودال تغییر تاریخ ردیف به روز انتخاب‌شده تقویم
+   ============================================================ */
+function openAssignRowToDateModal(targetDateKey, allRows, calOverlay) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  document.body.appendChild(overlay);
+
+  if (!allRows || allRows.length === 0) {
+    overlay.innerHTML = `
+      <div class="modal-box wide">
+        <div class="modal-title calendar">📅 تغییر تاریخ ردیف</div>
+        <div class="modal-text">هیچ ردیفی برای تغییر تاریخ پیدا نشد.</div>
+        <button class="modal-btn cancel" id="assignClose" style="width: 100%;">بستن</button>
+      </div>
+    `;
+    overlay.querySelector("#assignClose").onclick = () => overlay.remove();
+    return;
+  }
+
+  let html = `
+    <div class="modal-box wide">
+      <div class="modal-title calendar">📅 تغییر تاریخ ردیف به ${targetDateKey}</div>
+      <div class="modal-text">یک ردیف را انتخاب کنید تا تاریخ آن به ${targetDateKey} تغییر یابد:</div>
+      <div class="day-rows-list">
+  `;
+
+  allRows.forEach((r, idx) => {
+    const typeLabel = r.desc || `ردیف ${idx + 1}`;
+    const typeCls = r.descType || "";
+    const amount = r.amount ? formatWithCommas(removeCommas(r.amount)) : "—";
+    const curDate = r.date ? ` (تاریخ فعلی: ${r.date})` : "";
+    html += `
+      <button class="day-row-item" data-id="${r.id}">
+        <span class="row-type ${typeCls}">${typeLabel}${curDate}</span>
+        <span class="row-amount">${amount}</span>
+      </button>
+    `;
+  });
+
+  html += `
+      </div>
+      <button class="modal-btn cancel" id="assignClose" style="width: 100%;">انصراف</button>
+    </div>
+  `;
+
+  overlay.innerHTML = html;
+  overlay.querySelector("#assignClose").onclick = () => overlay.remove();
+
+  overlay.querySelectorAll(".day-row-item").forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id ? Number(btn.dataset.id) : null;
+      const targetRow = allRows.find(r => r.id === id);
+      if (targetRow) {
+        const now = new Date();
+        const timeStr = formatTime(now);
+        targetRow.date = targetDateKey;
+        const stamp = `📅 ${targetDateKey} - ${timeStr}`;
+        targetRow.lastStamp = stamp;
+        targetRow.note = stamp;
+
+        if (targetRow.id) await updateRowInDB(targetRow);
+        showToast(`✅ تاریخ ردیف با موفقیت به ${targetDateKey} تغییر یافت`, "success");
+        overlay.remove();
+        if (calOverlay) calOverlay.remove();
+
+        tableBody.innerHTML = "";
+        const updatedRows = await getAllRows();
+        updatedRows.forEach(r => appendRowPair(r));
+        recolorCheckedRows();
+
+        scrollToRowAndPulse(targetRow.id);
+      }
+    };
+  });
 }
 
 /* ============================================================
