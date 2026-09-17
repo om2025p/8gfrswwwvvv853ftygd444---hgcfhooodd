@@ -243,8 +243,17 @@
   }
 
   tr.marked-for-delete,
+  tr.row-header.marked-for-delete,
   tr.marked-for-delete + tr.desc-row {
     background: #ffcdd2 !important;
+  }
+
+  tr.row-header th {
+    background: #eef7ff;
+    color: #0d5c9c;
+    font-size: 12px;
+    padding: 6px 3px;
+    border-bottom: 2px solid #b8d4ec;
   }
 
     .mini-calc-btn {
@@ -869,14 +878,6 @@
 
   <div class="table-wrap">
     <table id="mainTable">
-      <thead>
-        <tr>
-          <th class="check-col">✔</th>
-          <th class="col-main">قیمت واحد <button type="button" id="btnHeaderPriceMarkup" class="mini-calc-btn" title="محاسبه قیمت بالاتر">💡</button></th>
-          <th class="col-main">تعداد واحد</th>
-          <th class="col-main">مقدار پول</th>
-        </tr>
-      </thead>
       <tbody id="tableBody"></tbody>
     </table>
   </div>
@@ -1689,15 +1690,14 @@ function scrollToRowAndPulse(id) {
 
   setTimeout(() => {
     tr.classList.add("pulse-flash");
+    const prev = tr.previousElementSibling;
     const next = tr.nextElementSibling;
-    if (next && next.classList.contains("desc-row")) {
-      next.classList.add("pulse-flash");
-    }
+    if (prev && prev.classList.contains("row-header")) prev.classList.add("pulse-flash");
+    if (next && next.classList.contains("desc-row")) next.classList.add("pulse-flash");
     setTimeout(() => {
       tr.classList.remove("pulse-flash");
-      if (next && next.classList.contains("desc-row")) {
-        next.classList.remove("pulse-flash");
-      }
+      if (prev && prev.classList.contains("row-header")) prev.classList.remove("pulse-flash");
+      if (next && next.classList.contains("desc-row")) next.classList.remove("pulse-flash");
     }, 1600);
   }, 400);
 }
@@ -1711,11 +1711,18 @@ function recolorCheckedRows() {
 
   allRows.forEach(tr => {
     tr.classList.remove("checked-yellow", "checked-blue");
+    const prev = tr.previousElementSibling;
+    if (prev && prev.classList.contains("row-header")) {
+      prev.classList.remove("checked-yellow", "checked-blue");
+    }
 
     const cb = tr.querySelector(".check-col input.main-check");
     if (cb && cb.checked) {
       const cls = (count % 2 === 0) ? "checked-yellow" : "checked-blue";
       tr.classList.add(cls);
+      if (prev && prev.classList.contains("row-header")) {
+        prev.classList.add(cls);
+      }
       count++;
     }
   });
@@ -1743,12 +1750,21 @@ function enterDeleteMode() {
       delCheck.type = "checkbox";
       delCheck.className = "del-check";
       delCheck.onchange = () => {
-        tr.classList.toggle("marked-for-delete", delCheck.checked);
+        const isChecked = delCheck.checked;
+        tr.classList.toggle("marked-for-delete", isChecked);
+        const prev = tr.previousElementSibling;
+        if (prev && prev.classList.contains("row-header")) {
+          prev.classList.toggle("marked-for-delete", isChecked);
+        }
       };
       tdCheck.appendChild(delCheck);
     }
     delCheck.checked = false;
     tr.classList.remove("marked-for-delete");
+    const prev = tr.previousElementSibling;
+    if (prev && prev.classList.contains("row-header")) {
+      prev.classList.remove("marked-for-delete");
+    }
   });
 }
 
@@ -1765,6 +1781,10 @@ function exitDeleteMode() {
     const delCheck = tdCheck.querySelector(".del-check");
     if (delCheck) delCheck.remove();
     tr.classList.remove("marked-for-delete");
+    const prev = tr.previousElementSibling;
+    if (prev && prev.classList.contains("row-header")) {
+      prev.classList.remove("marked-for-delete");
+    }
   });
 }
 
@@ -1786,8 +1806,10 @@ async function performDeleteSelected() {
     for (const tr of toDelete) {
       const id = tr.dataset.id ? Number(tr.dataset.id) : null;
       if (id) await deleteRowFromDB(id);
+      const prev = tr.previousElementSibling;
       const next = tr.nextElementSibling;
       tr.remove();
+      if (prev && prev.classList.contains("row-header")) prev.remove();
       if (next && next.classList.contains("desc-row")) next.remove();
     }
     showToast(`✅ ${toDelete.length} ردیف حذف شد`, "success");
@@ -1897,6 +1919,39 @@ function confirmDeleteThreeStep(onConfirm) {
    14) ساخت ردیف
    ============================================================ */
 function createRowElement(row) {
+  const trHeader = document.createElement("tr");
+  trHeader.className = "row-header";
+  trHeader.dataset.parentId = row.id || "";
+
+  const thCheck = document.createElement("th");
+  thCheck.className = "check-col";
+  thCheck.textContent = "✔";
+
+  const thUnit = document.createElement("th");
+  thUnit.className = "col-main";
+  thUnit.innerHTML = 'قیمت واحد <button type="button" class="mini-calc-btn" title="محاسبه قیمت بالاتر">💡</button>';
+
+  const btnCalc = thUnit.querySelector(".mini-calc-btn");
+  if (btnCalc) {
+    btnCalc.onclick = (e) => {
+      e.stopPropagation();
+      openPriceIncreaseModal(row.unitPrice || "");
+    };
+  }
+
+  const thQty = document.createElement("th");
+  thQty.className = "col-main";
+  thQty.textContent = "تعداد واحد";
+
+  const thAmount = document.createElement("th");
+  thAmount.className = "col-main";
+  thAmount.textContent = "مقدار واحد";
+
+  trHeader.appendChild(thCheck);
+  trHeader.appendChild(thUnit);
+  trHeader.appendChild(thQty);
+  trHeader.appendChild(thAmount);
+
   const tr = document.createElement("tr");
   tr.className = "main-row";
   tr.dataset.id = row.id || "";
@@ -2059,7 +2114,7 @@ function createRowElement(row) {
   tdDescMain.appendChild(wrap);
   trDesc.appendChild(tdDescMain);
 
-  return { mainRow: tr, descRow: trDesc };
+  return { headerRow: trHeader, mainRow: tr, descRow: trDesc };
 }
 
 let saveTimers = {};
@@ -2190,6 +2245,7 @@ const calendarBtn = document.getElementById("calendarBtn");
 
 function appendRowPair(row) {
   const pair = createRowElement(row);
+  if (pair.headerRow) tableBody.appendChild(pair.headerRow);
   tableBody.appendChild(pair.mainRow);
   tableBody.appendChild(pair.descRow);
 }
@@ -2302,23 +2358,6 @@ cancelDeleteBtn.onclick = () => {
 
 confirmDeleteBtn.onclick = performDeleteSelected;
 
-const btnHeaderPriceMarkup = document.getElementById("btnHeaderPriceMarkup");
-if (btnHeaderPriceMarkup) {
-  btnHeaderPriceMarkup.onclick = async (e) => {
-    e.stopPropagation();
-    const allRows = await getAllRows();
-    let foundPrice = "";
-    if (allRows && allRows.length > 0) {
-      for (const r of allRows) {
-        if (r.unitPrice && Number(removeCommas(String(r.unitPrice))) > 0) {
-          foundPrice = removeCommas(String(r.unitPrice));
-          break;
-        }
-      }
-    }
-    openPriceIncreaseModal(foundPrice);
-  };
-}
 
 init();
 </script>
