@@ -1945,18 +1945,6 @@ function createRowElement(row) {
 
 
 
-  inpUnit.oninput = () => {
-    const raw = cleanNumber(inpUnit.value);
-    const formatted = formatWithCommas(raw);
-    const posFromEnd = inpUnit.value.length - inpUnit.selectionStart;
-    inpUnit.value = formatted;
-    const newPos = Math.max(0, formatted.length - posFromEnd);
-    inpUnit.setSelectionRange(newPos, newPos);
-    autoSizeInput(inpUnit);
-    row.unitPrice = raw;
-    saveRow(row);
-  };
-
   const tdQty = document.createElement("td");
   const inpQty = document.createElement("input");
   inpQty.type = "text";
@@ -1968,18 +1956,6 @@ function createRowElement(row) {
   tr.appendChild(tdQty);
   autoSizeInput(inpQty);
 
-  inpQty.oninput = () => {
-    const raw = cleanNumber(inpQty.value);
-    const formatted = formatWithCommas(raw);
-    const posFromEnd = inpQty.value.length - inpQty.selectionStart;
-    inpQty.value = formatted;
-    const newPos = Math.max(0, formatted.length - posFromEnd);
-    inpQty.setSelectionRange(newPos, newPos);
-    autoSizeInput(inpQty);
-    row.quantity = raw;
-    saveRow(row);
-  };
-
   const tdAmount = document.createElement("td");
   const inpAmount = document.createElement("input");
   inpAmount.type = "text";
@@ -1990,6 +1966,44 @@ function createRowElement(row) {
   tdAmount.appendChild(inpAmount);
   tr.appendChild(tdAmount);
   autoSizeInput(inpAmount);
+
+  const calculateAutoAmount = () => {
+    const u = parseFloat(row.unitPrice) || 0;
+    const q = parseFloat(row.quantity) || 0;
+    if (u > 0 && q > 0) {
+      const calcAmt = Math.round(u * q);
+      const rawAmt = String(calcAmt);
+      row.amount = rawAmt;
+      inpAmount.value = formatWithCommas(rawAmt);
+      autoSizeInput(inpAmount);
+    }
+  };
+
+  inpUnit.oninput = () => {
+    const raw = cleanNumber(inpUnit.value);
+    const formatted = formatWithCommas(raw);
+    const posFromEnd = inpUnit.value.length - inpUnit.selectionStart;
+    inpUnit.value = formatted;
+    const newPos = Math.max(0, formatted.length - posFromEnd);
+    inpUnit.setSelectionRange(newPos, newPos);
+    autoSizeInput(inpUnit);
+    row.unitPrice = raw;
+    calculateAutoAmount();
+    saveRow(row);
+  };
+
+  inpQty.oninput = () => {
+    const raw = cleanNumber(inpQty.value);
+    const formatted = formatWithCommas(raw);
+    const posFromEnd = inpQty.value.length - inpQty.selectionStart;
+    inpQty.value = formatted;
+    const newPos = Math.max(0, formatted.length - posFromEnd);
+    inpQty.setSelectionRange(newPos, newPos);
+    autoSizeInput(inpQty);
+    row.quantity = raw;
+    calculateAutoAmount();
+    saveRow(row);
+  };
 
   inpAmount.oninput = () => {
     const raw = cleanNumber(inpAmount.value);
