@@ -794,14 +794,19 @@
         }
 
         function parseDeepSeekJson(jsonStr) {
-            if (!jsonStr) return [];
+            if (!jsonStr) {
+                appendConsoleLog("ورودی محتوای فایل خالی است.", "warn");
+                return [];
+            }
+            appendConsoleLog(`شروع پارس محتوا (حجم: ${(jsonStr.length / 1024).toFixed(1)} KB)...`, "info");
             try {
                 let data = jsonStr;
                 if (typeof jsonStr === 'string') {
                     try {
                         data = JSON.parse(jsonStr);
+                        appendConsoleLog("✅ محتوای فایل با موفقیت به عنوان JSON پارس شد.", "success");
                     } catch (e) {
-                        // Fallback A: Try parsing plain text or Markdown lines as a raw chat log
+                        appendConsoleLog(`⚠️ ساختار JSON معتبر نیست (${e.message})، در حال تلاش برای پارس متنی...`, "warn");
                         const lines = jsonStr.split('\n').filter(l => l.trim().length > 0);
                         if (lines.length > 0) {
                             const messages = lines.map(line => ({
@@ -809,6 +814,7 @@
                                 text: line,
                                 reasoning: ''
                             }));
+                            appendConsoleLog(`✅ پارس متنی انجام شد (${messages.length} خط استخراج گردید).`, "success");
                             return [{ title: 'گفتگوی متنی (Plain Text Chat)', messages }];
                         }
                         return [];
@@ -816,15 +822,21 @@
                 }
                 if (!data) return [];
 
+                appendConsoleLog(`ریشه JSON شناسایی شد (نوع: ${Array.isArray(data) ? 'آرایه' : typeof data}).`, "info");
+
                 // Helper: recursively find conversation items
                 function findConversations(obj, list = [], depth = 0) {
                     if (!obj || typeof obj !== 'object' || depth > 8) return list;
 
                     if (Array.isArray(obj)) {
+                        appendConsoleLog(`[عمق ${depth}] پیمایش آرایه‌ای با ${obj.length} عضو...`, "info");
                         obj.forEach(item => findConversations(item, list, depth + 1));
                     } else {
-                        // Check if obj itself contains message structures
+                        const keys = Object.keys(obj);
+                        appendConsoleLog(`[عمق ${depth}] بررسی شیء با کلیدهای: ${keys.slice(0, 6).join(', ')}${keys.length > 6 ? '...' : ''}`, "info");
+
                         if (obj.chat_messages || obj.messages || obj.chatHistory || obj.mapping || obj.chats || obj.history) {
+                            appendConsoleLog(`🎯 آیتم گفتگو با ساختار پیام کشف شد (عنوان: ${obj.title || obj.name || 'بدون عنوان'}).`, "success");
                             list.push(obj);
                         } else {
                             Object.values(obj).forEach(val => {
@@ -838,7 +850,10 @@
                 }
 
                 let convItems = findConversations(data);
+                appendConsoleLog(`تعداد کل آیتم‌های گفتگو کشف شده: ${convItems.length}`, "info");
+
                 if (convItems.length === 0 && typeof data === 'object') {
+                    appendConsoleLog("هیچ ساختار پیام استانداردی یافت نشد، تلاش برای بررسی ریشه به‌عنوان تک گفتگو...", "warn");
                     convItems = [data];
                 }
 
@@ -850,10 +865,11 @@
                     const title = item.title || item.name || item.subject || item.topic || `گفتگو ${idx + 1}`;
                     const messages = [];
 
-                    // Case A: Array of messages (chat_messages, messages, etc.)
                     const rawMsgs = item.chat_messages || item.messages || item.chatHistory || item.chats || item.history || [];
+                    appendConsoleLog(`بررسی گفتگو ${idx + 1} (${title}): تعداد پیام‌های خام = ${Array.isArray(rawMsgs) ? rawMsgs.length : typeof rawMsgs}`, "info");
+
                     if (Array.isArray(rawMsgs)) {
-                        rawMsgs.forEach(m => {
+                        rawMsgs.forEach((m, mIdx) => {
                             if (!m) return;
                             let role = (m.role || m.author?.role || m.sender || 'user').toString().toLowerCase();
                             let text = m.content || m.text || m.message || '';
@@ -872,8 +888,9 @@
                         });
                     }
 
-                    // Case B: Mapping Object Tree (e.g. { mapping: { "uuid-1": { message: ... } } })
                     if (messages.length === 0 && item.mapping && typeof item.mapping === 'object') {
+                        const nodeKeys = Object.keys(item.mapping);
+                        appendConsoleLog(`تلاش برای استخراج از Mapping Tree (${nodeKeys.length} گره)...`, "info");
                         Object.values(item.mapping).forEach(node => {
                             if (!node || !node.message) return;
                             const m = node.message;
@@ -895,13 +912,18 @@
                         });
                     }
 
+                    appendConsoleLog(`نتیجه گفتگو ${idx + 1}: ${messages.length} پیام استخراج شد.`, messages.length > 0 ? "success" : "warn");
+
                     if (messages.length > 0) {
                         result.push({ title, messages });
                     }
                 });
 
+                appendConsoleLog(`✅ پایان پارس: مجموعاً ${result.length} گفتگوی آماده رندر استخرج گردید.`, result.length > 0 ? "success" : "error");
+
                 return result;
             } catch (e) {
+                appendConsoleLog(`❌ خطای غیرمنتظره در پارسر DeepSeek: ${e.message}`, "error");
                 console.error("DeepSeek Smart Parser Error:", e);
                 return [];
             }
