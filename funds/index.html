@@ -843,6 +843,15 @@
             return modes[siteId];
         }
 
+        function getAntiSanctionProxyUrl(rawUrl, siteType = 'iframe') {
+            if (!rawUrl) return '';
+            try {
+                return `https://emarat-proxy.qqqggggcc.workers.dev/?url=${encodeURIComponent(rawUrl)}`;
+            } catch (e) {
+                return `https://emarat-proxy.qqqggggcc.workers.dev/?url=${encodeURIComponent(rawUrl)}`;
+            }
+        }
+
         // وضعیت فعلی اپلیکیشن
         let categories = getCategories();
         let websites = getWebsites();
@@ -1006,7 +1015,7 @@
 
             const isCfActive = isCfModeEnabled(currentSite.id);
             const targetUrl = isCfActive
-                ? `https://corsproxy.io/?${encodeURIComponent(currentSite.url)}`
+                ? getAntiSanctionProxyUrl(currentSite.url, currentSite.type)
                 : currentSite.url;
 
             const wrapper = document.createElement('div');
@@ -1059,7 +1068,7 @@
                     } else {
                         const isCfActive = isCfModeEnabled(currentSite.id);
                         const targetUrl = isCfActive
-                            ? `https://corsproxy.io/?${encodeURIComponent(currentSite.url)}`
+                            ? getAntiSanctionProxyUrl(currentSite.url, 'card')
                             : currentSite.url;
                         window.open(targetUrl, '_blank');
                     }
@@ -1074,7 +1083,7 @@
                 if (currentSite) {
                     const isCfActive = isCfModeEnabled(currentSite.id);
                     const targetUrl = isCfActive
-                        ? `https://corsproxy.io/?${encodeURIComponent(currentSite.url)}`
+                        ? getAntiSanctionProxyUrl(currentSite.url, 'card')
                         : currentSite.url;
                     window.open(targetUrl, '_blank');
                 }
