@@ -734,6 +734,259 @@
             opacity: 1;
         }
 
+        /* Projects History Modal Specific Styles */
+        .projects-modal-card {
+            width: 100%;
+            max-width: 850px;
+            max-height: 85vh;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            color: #f8fafc;
+        }
+
+        .projects-modal-header {
+            padding: 16px 20px;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .projects-modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .projects-search-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #020617;
+            padding: 10px 16px;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .projects-search-input {
+            width: 100%;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #f8fafc;
+            font-size: 0.88rem;
+            outline: none;
+        }
+
+        .projects-search-input:focus {
+            border-color: #38bdf8;
+        }
+
+        .projects-modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            background: #020617;
+        }
+
+        .project-group-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1e293b;
+            padding: 8px 14px;
+            border-radius: 12px;
+            border-right: 4px solid #38bdf8;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #38bdf8;
+        }
+
+        .project-group-count {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .project-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+
+        .project-card:hover {
+            border-color: #38bdf8;
+        }
+
+        .project-card.pinned {
+            border: 1.5px solid #f59e0b;
+            background: #181926;
+        }
+
+        .project-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .project-card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #f8fafc;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .project-pin-badge {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid #f59e0b;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .project-card-preview {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            line-height: 1.4;
+            height: 38px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            font-family: 'Consolas', monospace;
+            direction: ltr;
+            text-align: left;
+            background: #020617;
+            padding: 6px;
+            border-radius: 6px;
+            word-break: break-all;
+        }
+
+        .project-card-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #64748b;
+            border-top: 1px dashed #1e293b;
+            padding-top: 6px;
+            margin-top: 2px;
+        }
+
+        .project-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+
+        .btn-card-action {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #f8fafc;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.15s;
+        }
+
+        .btn-card-action:hover {
+            background: #334155;
+        }
+
+        .btn-card-load {
+            background: #2563eb;
+            border-color: #1d4ed8;
+            color: #ffffff;
+        }
+
+        .btn-card-load:hover {
+            background: #1d4ed8;
+        }
+
+        .project-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .project-dropdown-menu {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            padding: 6px;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 100;
+            min-width: 140px;
+        }
+
+        .project-dropdown-menu.show {
+            display: flex;
+        }
+
+        .project-dropdown-item {
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            color: #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.15s;
+        }
+
+        .project-dropdown-item:hover {
+            background: #334155;
+            color: #38bdf8;
+        }
+
         /* Debug Console Modal Overlay */
         .modal-overlay {
             position: fixed;
@@ -1359,6 +1612,8 @@
                         <button class="btn-small" onclick="openFullScreenPreview()" style="color: #2563eb; font-weight: 700;">🖥️ پیش‌نمایش</button>
                         <button class="btn-small" onclick="pasteFromClipboard('codeEditor')">📥 چسباندن</button>
                         <button class="btn-small" onclick="clearEditor('codeEditor')" style="color: #ef4444;">🗑️ پاکسازی</button>
+                        <button class="btn-small" onclick="saveCurrentProject('html')" style="background: #10b981; color: #ffffff; border-color: #059669; font-weight: 700;">💾 ذخیره پروژه</button>
+                        <button class="btn-small" onclick="openProjectsModal('html')" style="background: #6366f1; color: #ffffff; border-color: #4f46e5; font-weight: 700;">📜 تاریخچه پروژه‌ها (<span id="htmlProjectCountBadge">۰</span>)</button>
                     </div>
                 </div>
                 <textarea id="codeEditor" class="code-mode" placeholder=" کدهای HTML خود را اینجا بگذارید..." spellcheck="false"></textarea>
@@ -1402,6 +1657,8 @@
                         <button class="btn-small" onclick="openTextPreviewModal()" style="color: #2563eb; font-weight: 700;">👁️ پیش‌نمایش متون</button>
                         <button class="btn-small" onclick="pasteFromClipboard('textEditor')">📥 چسباندن</button>
                         <button class="btn-small" onclick="clearEditor('textEditor')" style="color: #ef4444;">🗑️ پاکسازی</button>
+                        <button class="btn-small" onclick="saveCurrentProject('text')" style="background: #10b981; color: #ffffff; border-color: #059669; font-weight: 700;">💾 ذخیره پروژه</button>
+                        <button class="btn-small" onclick="openProjectsModal('text')" style="background: #6366f1; color: #ffffff; border-color: #4f46e5; font-weight: 700;">📜 تاریخچه پروژه‌ها (<span id="textProjectCountBadge">۰</span>)</button>
                     </div>
                 </div>
                 <textarea id="textEditor" class="text-mode" placeholder=" متون، یادداشت‌ها یا مقالات خود را اینجا بنویسید یا کپی کنید..." spellcheck="false"></textarea>
@@ -1616,6 +1873,31 @@
         </div>
     </div>
 
+    <!-- Projects History Modal Overlay -->
+    <div id="projectsModal" class="modal-overlay">
+        <div class="projects-modal-card">
+            <div class="projects-modal-header">
+                <div class="projects-modal-title" id="projectsModalTitle">
+                    📜 تاریخچه پروژه‌های ذخیره‌شده
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="btn-small" onclick="exportProjectsToZip('all')" style="background: #10b981; color: #ffffff; border-color: #059669; font-weight: 700;">
+                        📦 دانلود همه (ZIP)
+                    </button>
+                    <button class="modal-close-btn" onclick="closeProjectsModal()">✖ بستن</button>
+                </div>
+            </div>
+
+            <div class="projects-search-bar">
+                <input type="text" id="projectsSearchInput" class="projects-search-input" placeholder="🔎 جستجو در پروژه‌ها (بر اساس عنوان یا محتوا)..." oninput="onProjectsSearchInput()">
+            </div>
+
+            <div class="projects-modal-body" id="projectsModalBody">
+                <!-- Grouped Jalali Project Cards populated via JS -->
+            </div>
+        </div>
+    </div>
+
     <!-- Debug Console Modal -->
     <div id="debugModal" class="modal-overlay">
         <div class="modal-card">
@@ -1788,6 +2070,7 @@
             updateDownloadCounterBadge();
             initChatZoomListeners();
             initTextFormatSelector();
+            initProjectsDB();
         });
 
         let cachedAiTitleHtml = "";
@@ -3599,6 +3882,526 @@ ${cleanText}`;
             const clearBtn = document.getElementById('chatClearSearchBtn');
             if (clearBtn) clearBtn.style.display = 'none';
             renderChatMessages(parsedChatMessages, '');
+        }
+
+        /* =========================================================
+           INDEXEDDB STORAGE ENGINE & PROJECTS MANAGEMENT ENGINE
+           ========================================================= */
+        const DB_NAME = 'EmaratCodeViewerDB';
+        const DB_VERSION = 1;
+        const STORE_PROJECTS = 'projects';
+        let dbInstance = null;
+        let currentModalTabFilter = 'html';
+
+        function initProjectsDB() {
+            return new Promise((resolve, reject) => {
+                if (dbInstance) {
+                    resolve(dbInstance);
+                    return;
+                }
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_PROJECTS)) {
+                        const store = db.createObjectStore(STORE_PROJECTS, { keyPath: 'id' });
+                        store.createIndex('tabType', 'tabType', { unique: false });
+                        store.createIndex('pinned', 'pinned', { unique: false });
+                        store.createIndex('jalaliDate', 'jalaliDate', { unique: false });
+                        store.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
+                };
+
+                request.onsuccess = (event) => {
+                    dbInstance = event.target.result;
+                    updateProjectBadges();
+                    resolve(dbInstance);
+                };
+
+                request.onerror = (event) => {
+                    console.error('IndexedDB error:', event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        async function getAllProjectsFromDB() {
+            const db = await initProjectsDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_PROJECTS, 'readonly');
+                const store = tx.objectStore(STORE_PROJECTS);
+                const req = store.getAll();
+
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function saveProjectToDB(project) {
+            const db = await initProjectsDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_PROJECTS, 'readwrite');
+                const store = tx.objectStore(STORE_PROJECTS);
+                const req = store.put(project);
+
+                req.onsuccess = () => {
+                    updateProjectBadges();
+                    resolve(req.result);
+                };
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function deleteProjectFromDB(id) {
+            const db = await initProjectsDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_PROJECTS, 'readwrite');
+                const store = tx.objectStore(STORE_PROJECTS);
+                const req = store.delete(id);
+
+                req.onsuccess = () => {
+                    updateProjectBadges();
+                    resolve(true);
+                };
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function updateProjectBadges() {
+            try {
+                const projects = await getAllProjectsFromDB();
+                const htmlCount = projects.filter(p => p.tabType === 'html').length;
+                const textCount = projects.filter(p => p.tabType === 'text').length;
+
+                const htmlBadge = document.getElementById('htmlProjectCountBadge');
+                const textBadge = document.getElementById('textProjectCountBadge');
+
+                if (htmlBadge) htmlBadge.innerText = toPersianDigits(htmlCount);
+                if (textBadge) textBadge.innerText = toPersianDigits(textCount);
+            } catch (e) {
+                console.error('Error updating project badges:', e);
+            }
+        }
+
+        async function saveCurrentProject(tabType) {
+            let content = '';
+            if (tabType === 'html') {
+                content = loadedFullHtmlContent || codeEditor.value;
+            } else {
+                content = loadedFullTextContent || textEditor.value;
+            }
+
+            if (!content || !content.trim()) {
+                showToast('⚠️ کادر برای ذخیره‌سازی خالی است!');
+                return;
+            }
+
+            showToast('🤖 در حال ساخت عنوان و ذخیره پروژه...');
+
+            let aiTitle = tabType === 'html' ? cachedAiTitleHtml : cachedAiTitleText;
+            if (!aiTitle) {
+                aiTitle = await generateSmartPersianTitle(content);
+            }
+
+            const jalaliDateStr = getJalaliDateString();
+            const timeStr = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+
+            let effectiveExt = tabType === 'html' ? 'html' : selectedTextExt;
+            if (tabType === 'text' && selectedTextExt === 'custom') {
+                effectiveExt = customTextExtValue ? customTextExtValue.replace(/^\.+/, '') : 'txt';
+            }
+
+            if (!aiTitle) {
+                aiTitle = tabType === 'html' ? `پروژه کد تحت وب (${jalaliDateStr})` : `یادداشت متنی (${jalaliDateStr})`;
+            }
+
+            const projectObj = {
+                id: 'proj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                tabType: tabType,
+                title: aiTitle,
+                content: content,
+                pinned: false,
+                jalaliDate: jalaliDateStr,
+                timeStr: timeStr,
+                timestamp: Date.now(),
+                ext: effectiveExt,
+                byteSize: calculateUtf8Bytes(content)
+            };
+
+            try {
+                await saveProjectToDB(projectObj);
+                showToast(`💾 پروژه «${aiTitle}» ذخیره شد`);
+                appendLog(`Saved project "${aiTitle}" (${projectObj.byteSize} bytes) to IndexedDB`, "success");
+            } catch (err) {
+                showToast('❌ خطا در ذخیره‌سازی پروژه در حافظه مرورگر!');
+                appendLog(`Error saving project to IndexedDB: ${err.message}`, "error");
+            }
+        }
+
+        async function openProjectsModal(tabType) {
+            currentModalTabFilter = tabType;
+            const modal = document.getElementById('projectsModal');
+            const modalTitle = document.getElementById('projectsModalTitle');
+            const searchInput = document.getElementById('projectsSearchInput');
+
+            if (modalTitle) {
+                modalTitle.innerHTML = tabType === 'html' ?
+                    '🖥️ تاریخچه پروژه‌های کد HTML' :
+                    '📄 تاریخچه پروژه‌های متن ساده';
+            }
+
+            if (searchInput) searchInput.value = '';
+
+            if (modal) modal.style.display = 'flex';
+            await renderProjectsModalList();
+        }
+
+        function closeProjectsModal() {
+            const modal = document.getElementById('projectsModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function onProjectsSearchInput() {
+            renderProjectsModalList();
+        }
+
+        async function renderProjectsModalList() {
+            const body = document.getElementById('projectsModalBody');
+            if (!body) return;
+
+            const searchQuery = (document.getElementById('projectsSearchInput')?.value || '').trim().toLowerCase();
+
+            try {
+                const allProjects = await getAllProjectsFromDB();
+                let filtered = allProjects.filter(p => p.tabType === currentModalTabFilter);
+
+                if (searchQuery) {
+                    filtered = filtered.filter(p =>
+                        p.title.toLowerCase().includes(searchQuery) ||
+                        p.content.toLowerCase().includes(searchQuery) ||
+                        p.jalaliDate.includes(searchQuery)
+                    );
+                }
+
+                if (filtered.length === 0) {
+                    body.innerHTML = `
+                        <div style="text-align: center; color: #94a3b8; padding: 50px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                            <i class="fas fa-folder-open" style="font-size: 2.5rem; color: #334155;"></i>
+                            <span style="font-size: 1rem; font-weight: 700;">هیچ پروژه‌ای در این بخش پیدا نشد!</span>
+                        </div>`;
+                    return;
+                }
+
+                // Separate Pinned and Unpinned items
+                const pinnedList = filtered.filter(p => p.pinned).sort((a, b) => b.timestamp - a.timestamp);
+                const unpinnedList = filtered.filter(p => !p.pinned).sort((a, b) => b.timestamp - a.timestamp);
+
+                // Group unpinned items by Jalali Date
+                const dateGroups = {};
+                unpinnedList.forEach(p => {
+                    const dateKey = p.jalaliDate || 'تاریخ نامشخص';
+                    if (!dateGroups[dateKey]) dateGroups[dateKey] = [];
+                    dateGroups[dateKey].push(p);
+                });
+
+                let html = '';
+
+                // 1. Render Pinned Projects Section
+                if (pinnedList.length > 0) {
+                    html += `
+                        <div class="project-group-banner" style="border-right-color: #f59e0b; color: #fbbf24;">
+                            <span>📌 پروژه‌های سنجاق‌شده (Pin)</span>
+                            <span class="project-group-count" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">${toPersianDigits(pinnedList.length)} پروژه</span>
+                        </div>
+                        <div class="projects-grid">
+                            ${pinnedList.map(p => renderProjectCardHtml(p)).join('')}
+                        </div>
+                    `;
+                }
+
+                // 2. Render Jalali Date Groups
+                const todayStr = getJalaliDateString();
+                Object.keys(dateGroups).forEach(dateKey => {
+                    const groupItems = dateGroups[dateKey];
+                    let groupTitle = dateKey;
+                    if (dateKey === todayStr) {
+                        groupTitle = `امروز (${dateKey})`;
+                    }
+
+                    html += `
+                        <div class="project-group-banner">
+                            <span>📅 ${groupTitle}</span>
+                            <span class="project-group-count">${toPersianDigits(groupItems.length)} پروژه</span>
+                        </div>
+                        <div class="projects-grid">
+                            ${groupItems.map(p => renderProjectCardHtml(p)).join('')}
+                        </div>
+                    `;
+                });
+
+                body.innerHTML = html;
+            } catch (err) {
+                body.innerHTML = `<div style="color: #ef4444; padding: 20px; text-align: center;">خطا در دریافت لیست پروژه‌ها: ${err.message}</div>`;
+            }
+        }
+
+        function renderProjectCardHtml(project) {
+            const previewText = project.content.slice(0, 150).replace(/\s+/g, ' ');
+            const sizeStr = formatByteSize(project.byteSize || calculateUtf8Bytes(project.content));
+
+            return `
+                <div class="project-card ${project.pinned ? 'pinned' : ''}" id="projCard_${project.id}">
+                    <div class="project-card-header">
+                        <div class="project-card-title">${escapeHtml(project.title)}</div>
+                        ${project.pinned ? '<span class="project-pin-badge"><i class="fas fa-thumbtack"></i> سنجاق</span>' : ''}
+                    </div>
+
+                    <div class="project-card-preview">${escapeHtml(previewText)}</div>
+
+                    <div class="project-card-meta">
+                        <span>🕒 ${project.timeStr || ''}</span>
+                        <span>📦 ${sizeStr}</span>
+                    </div>
+
+                    <div class="project-card-actions">
+                        <button class="btn-card-action btn-card-load" onclick="loadProjectToEditor('${project.id}')">
+                            🚀 بارگذاری
+                        </button>
+
+                        <button class="btn-card-action" onclick="togglePinProject('${project.id}')" title="سنجاق کردن">
+                            ${project.pinned ? '📍 برداشتن سنجاق' : '📌 سنجاق'}
+                        </button>
+
+                        <button class="btn-card-action" onclick="exportProjectToZip('${project.id}')" style="color: #34d399;" title="دانلود فایل فشرده ZIP">
+                            📦 ZIP
+                        </button>
+
+                        <div class="project-dropdown">
+                            <button class="btn-card-action" onclick="toggleProjectDropdown(event, '${project.id}')">
+                                ⚙️ بیشتر
+                            </button>
+                            <div class="project-dropdown-menu" id="projDropdown_${project.id}">
+                                <div class="project-dropdown-item" onclick="renameProject('${project.id}')">
+                                    ✏️ تغییر نام
+                                </div>
+                                <div class="project-dropdown-item" onclick="copyProjectContent('${project.id}')">
+                                    📋 کپی متن پروژه
+                                </div>
+                                <div class="project-dropdown-item" onclick="deleteProjectItem('${project.id}')" style="color: #ef4444;">
+                                    🗑️ حذف پروژه
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleProjectDropdown(event, id) {
+            event.stopPropagation();
+            const allMenus = document.querySelectorAll('.project-dropdown-menu');
+            allMenus.forEach(m => {
+                if (m.id !== `projDropdown_${id}`) m.classList.remove('show');
+            });
+
+            const menu = document.getElementById(`projDropdown_${id}`);
+            if (menu) menu.classList.toggle('show');
+        }
+
+        document.addEventListener('click', () => {
+            const allMenus = document.querySelectorAll('.project-dropdown-menu');
+            allMenus.forEach(m => m.classList.remove('show'));
+        });
+
+        async function loadProjectToEditor(id) {
+            try {
+                const projects = await getAllProjectsFromDB();
+                const project = projects.find(p => p.id === id);
+                if (!project) return;
+
+                if (project.tabType === 'html') {
+                    if (project.content.length > SAFE_TEXTAREA_MAX_CHARS) {
+                        loadedFullHtmlContent = project.content;
+                        codeEditor.value = project.content.slice(0, SAFE_TEXTAREA_MAX_CHARS) + `\n\n/* ⚠️ پروژه سنگین بارگذاری شد */`;
+                    } else {
+                        loadedFullHtmlContent = null;
+                        codeEditor.value = project.content;
+                        localStorage.setItem('html_viewer_saved_code', project.content);
+                    }
+                    updateEditorStats('html');
+                    triggerBackgroundAiTitle('html');
+                    switchTab('html');
+                } else {
+                    if (project.content.length > SAFE_TEXTAREA_MAX_CHARS) {
+                        loadedFullTextContent = project.content;
+                        textEditor.value = project.content.slice(0, SAFE_TEXTAREA_MAX_CHARS) + `\n\n[ ⚠️ پروژه سنگین بارگذاری شد ]`;
+                    } else {
+                        loadedFullTextContent = null;
+                        textEditor.value = project.content;
+                        localStorage.setItem('html_viewer_saved_text', project.content);
+                    }
+                    updateEditorStats('text');
+                    triggerBackgroundAiTitle('text');
+                    switchTab('text');
+                }
+
+                closeProjectsModal();
+                showToast(`🚀 پروژه «${project.title}» در ادیتور بارگذاری شد`);
+            } catch (err) {
+                showToast('❌ خطا در بارگذاری پروژه!');
+            }
+        }
+
+        async function togglePinProject(id) {
+            try {
+                const projects = await getAllProjectsFromDB();
+                const project = projects.find(p => p.id === id);
+                if (!project) return;
+
+                project.pinned = !project.pinned;
+                await saveProjectToDB(project);
+                await renderProjectsModalList();
+                showToast(project.pinned ? '📌 پروژه سنجاق شد' : '📍 سنجاق پروژه برداشته شد');
+            } catch (err) {
+                showToast('❌ خطا در تغییر وضعیت سنجاق!');
+            }
+        }
+
+        async function renameProject(id) {
+            try {
+                const projects = await getAllProjectsFromDB();
+                const project = projects.find(p => p.id === id);
+                if (!project) return;
+
+                const newTitle = prompt('عنوان جدید پروژه را وارد نمایید:', project.title);
+                if (newTitle !== null && newTitle.trim() !== '') {
+                    project.title = newTitle.trim();
+                    await saveProjectToDB(project);
+                    await renderProjectsModalList();
+                    showToast('✏️ عنوان پروژه به‌روزرسانی شد');
+                }
+            } catch (err) {
+                showToast('❌ خطا در تغییر عنوان پروژه!');
+            }
+        }
+
+        async function copyProjectContent(id) {
+            try {
+                const projects = await getAllProjectsFromDB();
+                const project = projects.find(p => p.id === id);
+                if (!project) return;
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(project.content);
+                    showToast('📋 متن پروژه با موفقیت کپی شد');
+                } else {
+                    showToast('امکان کپی خودکار در این مرورگر فعال نیست');
+                }
+            } catch (err) {
+                showToast('خطا در کپی پروژه');
+            }
+        }
+
+        async function deleteProjectItem(id) {
+            try {
+                const projects = await getAllProjectsFromDB();
+                const project = projects.find(p => p.id === id);
+                if (!project) return;
+
+                if (confirm(`آیا از حذف پروژه «${project.title}» اطمینان دارید؟`)) {
+                    await deleteProjectFromDB(id);
+                    await renderProjectsModalList();
+                    showToast('🗑️ پروژه با موفقیت حذف شد');
+                }
+            } catch (err) {
+                showToast('❌ خطا در حذف پروژه!');
+            }
+        }
+
+        /* =========================================================
+           ZIP EXPORT ENGINE USING JSZIP
+           ========================================================= */
+        async function exportProjectToZip(id) {
+            try {
+                const projects = await getAllProjectsFromDB();
+                const project = projects.find(p => p.id === id);
+                if (!project) return;
+
+                if (typeof JSZip === 'undefined') {
+                    showToast('⚠️ کتابخانه JSZip در دسترس نیست!');
+                    return;
+                }
+
+                showToast('📦 در حال ساخت فایل فشرده ZIP...');
+                const zip = new JSZip();
+
+                const safeTitle = project.title.replace(/["'\/:\*\?<>\|]/g, '_');
+                const ext = project.ext || (project.tabType === 'html' ? 'html' : 'txt');
+                const fileName = `${safeTitle}.${ext}`;
+
+                zip.file(fileName, project.content);
+
+                const blob = await zip.generateAsync({ type: 'blob' });
+                const zipFileName = `${safeTitle} - ${project.jalaliDate}.zip`;
+
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = zipFileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+
+                showToast(`📦 ${zipFileName} دانلود شد`);
+            } catch (err) {
+                showToast('❌ خطا در خروجی ZIP پروژه!');
+                console.error(err);
+            }
+        }
+
+        async function exportProjectsToZip(scope = 'all') {
+            try {
+                const allProjects = await getAllProjectsFromDB();
+                const filtered = allProjects.filter(p => p.tabType === currentModalTabFilter);
+
+                if (filtered.length === 0) {
+                    showToast('⚠️ پروژه‌ای برای خروجی گرفتن وجود ندارد!');
+                    return;
+                }
+
+                if (typeof JSZip === 'undefined') {
+                    showToast('⚠️ کتابخانه JSZip در دسترس نیست!');
+                    return;
+                }
+
+                showToast('📦 در حال بسته‌بندی تمام پروژه‌ها در فایل ZIP...');
+                const zip = new JSZip();
+                const folderName = currentModalTabFilter === 'html' ? 'پروژه‌های_HTML' : 'پروژه‌های_متنی';
+                const folder = zip.folder(folderName);
+
+                filtered.forEach((project, idx) => {
+                    const safeTitle = project.title.replace(/["'\/:\*\?<>\|]/g, '_');
+                    const ext = project.ext || (project.tabType === 'html' ? 'html' : 'txt');
+                    const fileName = `${toPersianDigits(idx + 1)} - ${safeTitle} - ${project.jalaliDate}.${ext}`;
+                    folder.file(fileName, project.content);
+                });
+
+                const blob = await zip.generateAsync({ type: 'blob' });
+                const zipFileName = `مجموعه ${folderName} - ${getJalaliDateString()}.zip`;
+
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = zipFileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+
+                showToast(`📦 ${zipFileName} با موفقیت ایجاد و دانلود شد`);
+            } catch (err) {
+                showToast('❌ خطا در ایجاد فایل فشرده ZIP پروژه‌ها!');
+                console.error(err);
+            }
         }
 
         if ('serviceWorker' in navigator) {
