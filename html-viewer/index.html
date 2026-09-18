@@ -954,6 +954,7 @@
             position: absolute;
             bottom: 100%;
             left: 0;
+            right: auto;
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 10px;
@@ -964,6 +965,7 @@
             gap: 4px;
             z-index: 100;
             min-width: 140px;
+            margin-bottom: 6px;
         }
 
         .project-dropdown-menu.show {
@@ -1515,6 +1517,13 @@
             .header-title h1 { font-size: 1.05rem; }
             .chat-controls-bar { padding: 8px; }
             .chat-search-box { max-width: 100%; }
+            .projects-grid { grid-template-columns: 1fr; }
+            .projects-modal-card { max-height: 92vh; }
+            .projects-modal-header { padding: 12px 14px; }
+            .projects-modal-body { padding: 10px; gap: 12px; }
+            .project-card { padding: 10px 12px; }
+            .project-card-actions { gap: 4px; }
+            .btn-card-action { padding: 5px 8px; font-size: 0.75rem; }
         }
 
         /* ============ DEEPSEEK VIEWER SPECIFIC STYLES ============ */
