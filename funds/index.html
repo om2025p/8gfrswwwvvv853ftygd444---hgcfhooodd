@@ -165,17 +165,34 @@
             display: none;
         }
 
+        .site-tab-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 2px 4px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.2s ease;
+            flex: 0 0 auto;
+        }
+
+        .site-tab-item.active {
+            background: rgba(2, 132, 199, 0.25);
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
         .site-tab-btn {
             flex: 0 0 auto;
             width: max-content;
-            padding: 8px 14px;
+            padding: 8px 12px;
             text-align: center;
             font-size: 0.85rem;
             font-weight: 700;
             color: #94a3b8;
             background: transparent;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
@@ -186,11 +203,38 @@
             gap: 6px;
         }
 
-        .site-tab-btn.active {
+        .site-tab-item.active .site-tab-btn {
             color: #ffffff;
             background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
             box-shadow: 0 3px 10px rgba(2, 132, 199, 0.4);
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .cf-toggle-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #94a3b8;
+            padding: 5px 8px;
+            border-radius: 7px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .cf-toggle-btn:active {
+            transform: scale(0.92);
+        }
+
+        .cf-toggle-btn.active {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #ffffff;
+            border-color: rgba(253, 230, 138, 0.5);
+            box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4);
         }
 
         .empty-cat-msg {
@@ -681,6 +725,7 @@
         const STORAGE_CATS_KEY = 'portal_www_categories_v1';
         const STORAGE_SITES_KEY = 'portal_www_websites_v1';
         const STORAGE_ACTIVE_STATE_KEY = 'portal_www_active_state_v1';
+        const STORAGE_CF_MODES_KEY = 'portal_www_cf_modes_v1';
 
         // دسته‌بندی‌های پیش‌فرض اولیه
         const DEFAULT_CATEGORIES = [
@@ -771,6 +816,31 @@
             } catch (e) {
                 console.error("Error saving active state:", e);
             }
+        }
+
+        function getCfModes() {
+            try {
+                const data = localStorage.getItem(STORAGE_CF_MODES_KEY);
+                if (data) return JSON.parse(data);
+            } catch (e) {
+                console.error("Error reading CF modes:", e);
+            }
+            return {};
+        }
+
+        function isCfModeEnabled(siteId) {
+            const modes = getCfModes();
+            return !!modes[siteId];
+        }
+
+        function toggleCfMode(siteId) {
+            const modes = getCfModes();
+            modes[siteId] = !modes[siteId];
+            localStorage.setItem(STORAGE_CF_MODES_KEY, JSON.stringify(modes));
+            if (window.EmaratCloudSync && window.EmaratCloudSync.push) {
+                window.EmaratCloudSync.push();
+            }
+            return modes[siteId];
         }
 
         // وضعیت فعلی اپلیکیشن
@@ -880,16 +950,37 @@
             }
 
             filteredSites.forEach(site => {
-                const btn = document.createElement('button');
-                btn.className = `site-tab-btn ${site.id === activeSiteId ? 'active' : ''}`;
-                btn.innerHTML = `<span>${site.icon || '🌐'}</span> <span>${site.name}</span>`;
-                btn.onclick = () => {
+                const isCfActive = isCfModeEnabled(site.id);
+
+                const item = document.createElement('div');
+                item.className = `site-tab-item ${site.id === activeSiteId ? 'active' : ''}`;
+
+                const siteBtn = document.createElement('button');
+                siteBtn.className = 'site-tab-btn';
+                siteBtn.innerHTML = `<span>${site.icon || '🌐'}</span> <span>${site.name}</span>`;
+                siteBtn.onclick = () => {
                     activeSiteId = site.id;
                     saveActiveState(activeCatId, activeSiteId);
                     renderSubtabs();
                     renderWebview();
                 };
-                subtabsNav.appendChild(btn);
+
+                const cfBtn = document.createElement('button');
+                cfBtn.className = `cf-toggle-btn ${isCfActive ? 'active' : ''}`;
+                cfBtn.title = isCfActive ? 'کلودفلر فعال (عبور از تحریم)' : 'فعالسازی عبور از تحریم کلودفلر';
+                cfBtn.innerHTML = isCfActive ? '⚡ CF' : '☁️';
+                cfBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const newState = toggleCfMode(site.id);
+                    renderSubtabs();
+                    if (activeSiteId === site.id) {
+                        renderWebview();
+                    }
+                };
+
+                item.appendChild(siteBtn);
+                item.appendChild(cfBtn);
+                subtabsNav.appendChild(item);
             });
 
             saveActiveState(activeCatId, activeSiteId);
@@ -913,15 +1004,25 @@
                 return;
             }
 
+            const isCfActive = isCfModeEnabled(currentSite.id);
+            const targetUrl = isCfActive
+                ? `https://corsproxy.io/?${encodeURIComponent(currentSite.url)}`
+                : currentSite.url;
+
             const wrapper = document.createElement('div');
             wrapper.className = 'webview-wrapper active';
             wrapper.id = `wrapper-${currentSite.id}`;
 
             if (currentSite.type === 'iframe') {
-                showLoading(`در حال دریافت ${currentSite.name}...`, true);
+                showLoading(
+                    isCfActive
+                        ? `در حال دریافت ${currentSite.name} با کلودفلر (عبور از تحریم ⚡)...`
+                        : `در حال دریافت ${currentSite.name}...`,
+                    true
+                );
                 const iframe = document.createElement('iframe');
                 iframe.className = 'webview-frame';
-                iframe.src = currentSite.url;
+                iframe.src = targetUrl;
                 iframe.allow = 'fullscreen; autoplay; clipboard-write;';
                 iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-modals');
                 iframe.onload = () => hideLoading();
@@ -932,12 +1033,13 @@
                 wrapper.innerHTML = `
                     <div class="fallback-card">
                         <div class="fallback-icon">${currentSite.icon || '🌐'}</div>
-                        <div class="fallback-title">${currentSite.name}</div>
+                        <div class="fallback-title">${currentSite.name} ${isCfActive ? '<span style="color:#f59e0b; font-size: 0.85rem;">(⚡ کلودفلر)</span>' : ''}</div>
                         <div class="fallback-desc">
                             ${currentSite.desc || 'جهت مشاهده مستقیم و سریع سامانه، روی دکمه زیر کلیک کنید.'}
+                            ${isCfActive ? '<br><small style="color:#f59e0b;">حالت عبور از تحریم کلودفلر برای این سایت فعال است.</small>' : ''}
                         </div>
-                        <a class="fallback-launch-btn" href="${currentSite.url}" target="_blank" rel="noopener noreferrer">
-                            🚀 ورود به سامانه ${currentSite.name}
+                        <a class="fallback-launch-btn" href="${targetUrl}" target="_blank" rel="noopener noreferrer">
+                            🚀 ورود به سامانه ${currentSite.name} ${isCfActive ? '(از مسیر کلودفلر)' : ''}
                         </a>
                     </div>
                 `;
@@ -955,7 +1057,11 @@
                     if (currentSite.type === 'iframe') {
                         renderWebview();
                     } else {
-                        window.open(currentSite.url, '_blank');
+                        const isCfActive = isCfModeEnabled(currentSite.id);
+                        const targetUrl = isCfActive
+                            ? `https://corsproxy.io/?${encodeURIComponent(currentSite.url)}`
+                            : currentSite.url;
+                        window.open(targetUrl, '_blank');
                     }
                 }
             }
@@ -966,7 +1072,11 @@
             if (activeSiteId) {
                 const currentSite = websites.find(s => s.id === activeSiteId);
                 if (currentSite) {
-                    window.open(currentSite.url, '_blank');
+                    const isCfActive = isCfModeEnabled(currentSite.id);
+                    const targetUrl = isCfActive
+                        ? `https://corsproxy.io/?${encodeURIComponent(currentSite.url)}`
+                        : currentSite.url;
+                    window.open(targetUrl, '_blank');
                 }
             }
         };
