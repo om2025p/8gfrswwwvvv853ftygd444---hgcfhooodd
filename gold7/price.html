@@ -608,40 +608,130 @@
         drawChart(prices);
     }
 
-    function renderGrowthTable(basePrice, avgPercent, forecastDays) {
-        if (!basePrice || !avgPercent || forecastDays <= 0) {
-            growthTableContainer.innerHTML = '<div class="neutral" style="padding:15px;text-align:center;">📊 حداقل ۲ قیمت ثبت کنید</div>';
+    function renderGrowthTable(basePrice, avgPercent, forecastDays, milestoneValue = null) {
+        if (!basePrice || basePrice <= 0 || !avgPercent || avgPercent <= 0 || forecastDays <= 0) {
+            growthTableContainer.innerHTML = '<div class="neutral" style="padding:15px;text-align:center;">📊 حداقل ۲ قیمت ثبت کنید و تعداد روز پیش‌بینی را وارد کنید</div>';
             return;
         }
 
         const growthFactor = 1 + (avgPercent / 100);
         let currentAmount = basePrice;
-        let tableHtml = `<div class="table-wrapper"><table class="growth-table" dir="ltr"><thead><tr>
-            <th>💰 قیمت پایان روز</th>
-            <th>📊 درصد کل</th>
-            <th>📆 روز</th>
-        </tr></thead><tbody>`;
+        const rows = [];
+        let milestone = milestoneValue;
+        if (milestone === null) {
+            let m = parseFloat(milestoneInput.value.trim());
+            milestone = (isNaN(m) || m <= 0) ? null : m;
+        }
+
+        // سود مرکب چرخه‌ای واقعی (Compound Cycle)
+        // چرخه N زمانی محقق می‌شود که قیمت به basePrice * (1 + milestone/100)^N برسد
+        let currentCycle = 0;
+        const milestoneRatio = milestone ? (1 + milestone / 100) : null;
 
         for (let day = 1; day <= forecastDays; day++) {
-            const endAmount = currentAmount * growthFactor;
+            const startAmount = currentAmount;
+            const endAmount = startAmount * growthFactor;
             const cumPercent = ((endAmount / basePrice) - 1) * 100;
-            tableHtml += `<tr>
-                <td class="col-right">${formatWithCommas(Math.round(endAmount))} تومان</td>
-                <td class="col-center">${cumPercent.toFixed(2)}%</td>
-                <td class="col-day">${day}</td>
-             </tr>`;
+            let isHighlight = false;
+
+            if (milestoneRatio && milestoneRatio > 1) {
+                const targetForNextCycle = basePrice * Math.pow(milestoneRatio, currentCycle + 1);
+                if (endAmount >= targetForNextCycle) {
+                    isHighlight = true;
+                    currentCycle++;
+                }
+            }
+            rows.push({ day, startAmount, endAmount, cumPercent, isHighlight, cycle: isHighlight ? currentCycle : null });
             currentAmount = endAmount;
         }
-        tableHtml += `</tbody></table></div>`;
+
+        const yellowRows = rows.filter(r => r.isHighlight);
+
+        for (let i = 0; i < yellowRows.length; i++) {
+            const currentYellow = yellowRows[i];
+            const nextCycleTarget = basePrice * Math.pow(milestoneRatio, currentYellow.cycle + 1);
+            let daysNeeded = currentYellow.day;
+            let temp = basePrice * Math.pow(growthFactor, currentYellow.day);
+            while (temp < nextCycleTarget && daysNeeded <= forecastDays + 365) {
+                temp *= growthFactor;
+                daysNeeded++;
+            }
+            const distance = daysNeeded - currentYellow.day;
+            if (distance > 0 && distance < 10000) {
+                currentYellow.distanceToNext = distance + ' روز بعد';
+            } else {
+                currentYellow.distanceToNext = '-';
+            }
+        }
+
+        const yellowCount = yellowRows.length;
+        const distances = [];
+        for (let i = 0; i < yellowRows.length - 1; i++) {
+            distances.push(yellowRows[i+1].day - yellowRows[i].day);
+        }
+        const avgDist = distances.length ? (distances.reduce((a,b)=>a+b,0)/distances.length).toFixed(1) : '-';
+        const minDist = distances.length ? Math.min(...distances) : '-';
+        const maxDist = distances.length ? Math.max(...distances) : '-';
+        let nextPrediction = '-';
+        if (yellowRows.length && milestone) {
+            const lastYellow = yellowRows[yellowRows.length-1];
+            if (lastYellow.distanceToNext && lastYellow.distanceToNext !== '-') {
+                nextPrediction = lastYellow.distanceToNext;
+            }
+        }
+
+        let statsHtml = `<div class="stats-bar">
+            <div class="stat-item"><div class="stat-label">🔢 تعداد زردها</div><div class="stat-value">${yellowCount}</div></div>
+            <div class="stat-item"><div class="stat-label">⏱️ میانگین فاصله</div><div class="stat-value">${avgDist !== '-' ? avgDist+' روز' : '-'}</div></div>
+            <div class="stat-item"><div class="stat-label">⚡ کمترین فاصله</div><div class="stat-value">${minDist !== '-' ? minDist+' روز' : '-'}</div></div>
+            <div class="stat-item"><div class="stat-label">🐢 بیشترین فاصله</div><div class="stat-value">${maxDist !== '-' ? maxDist+' روز' : '-'}</div></div>
+            <div class="stat-item"><div class="stat-label">📍 زرد بعدی</div><div class="stat-value">${nextPrediction}</div></div>
+        </div>`;
+
+        let tableHtml = statsHtml + `<div class="table-wrapper"><table class="growth-table" dir="ltr"><thead><tr>
+            <th>💰 عدد دوم</th>
+            <th>📊 درصد کل</th>
+            <th>💵 عدد اول</th>
+            <th>📆 روز</th>
+            <th>⏱️ تا زرد بعدی</th>
+        </tr></thead><tbody>`;
+
+        for (let i = 0; i < rows.length; i++) {
+            const r = rows[i];
+            const highlightClass = r.isHighlight ? 'highlight' : '';
+            let distanceToNext = '-';
+            if (r.isHighlight) {
+                const yellowRow = yellowRows.find(y => y.day === r.day);
+                if (yellowRow && yellowRow.distanceToNext) {
+                    distanceToNext = yellowRow.distanceToNext;
+                }
+            }
+            tableHtml += `<tr class="${highlightClass}">
+                <td class="col-right">${formatWithCommas(Math.round(r.endAmount))} تومان</td>
+                <td class="col-center">${r.cumPercent.toFixed(2)}%</td>
+                <td class="col-left">${formatWithCommas(Math.round(r.startAmount))} تومان</td>
+                <td class="col-day">${r.day}</td>
+                <td class="col-center">${distanceToNext}</td>
+             </tr>`;
+        }
+        tableHtml += `</tbody></table></div>
+        <div class="formula-badge">📌 میانگین رشد روزانه واقعی: ${avgPercent.toFixed(2)}% | سود مرکب چرخه‌ای (${milestone || 10}٪ روی سود هر چرخه) | پیش‌بینی ${forecastDays} روز آینده</div>`;
         growthTableContainer.innerHTML = tableHtml;
     }
 
     function refreshGrowthTable() {
         const prices = getPrices();
-        if (prices.length < 2) return;
+        if (prices.length < 2) {
+            growthTableContainer.innerHTML = '<div class="neutral" style="padding:15px;text-align:center;">📊 حداقل ۲ قیمت ثبت کنید تا میانگین رشد محاسبه شود</div>';
+            return;
+        }
         const lastPrice = prices[prices.length-1].price;
-        let forecastDays = parseInt(forecastDaysInput.value) || 30;
-        renderGrowthTable(lastPrice, lastAvgPercent, forecastDays);
+        let forecastDays = parseInt(forecastDaysInput.value);
+        if (isNaN(forecastDays) || forecastDays <= 0) forecastDays = 30;
+        forecastDaysInput.value = forecastDays;
+        let milestone = parseFloat(milestoneInput.value.trim());
+        milestone = (isNaN(milestone) || milestone <= 0) ? null : milestone;
+        renderGrowthTable(lastPrice, lastAvgPercent, forecastDays, milestone);
     }
 
     function renderAll() {
