@@ -609,7 +609,7 @@
     }
 
     function renderGrowthTable(basePrice, avgPercent, forecastDays, milestoneValue = null) {
-        if (!basePrice || basePrice <= 0 || !avgPercent || avgPercent <= 0 || forecastDays <= 0) {
+        if (!basePrice || basePrice <= 0 || isNaN(avgPercent) || forecastDays <= 0) {
             growthTableContainer.innerHTML = '<div class="neutral" style="padding:15px;text-align:center;">📊 حداقل ۲ قیمت ثبت کنید و تعداد روز پیش‌بینی را وارد کنید</div>';
             return;
         }
@@ -619,14 +619,15 @@
         const rows = [];
         let milestone = milestoneValue;
         if (milestone === null) {
-            let m = parseFloat(milestoneInput.value.trim());
-            milestone = (isNaN(m) || m <= 0) ? null : m;
+            let cleanM = milestoneInput ? toEnglishNumber(milestoneInput.value || "").trim() : "";
+            let m = parseFloat(cleanM);
+            milestone = (!isNaN(m) && m > 0) ? m : 10;
         }
 
         // سود مرکب چرخه‌ای واقعی (Compound Cycle)
         // چرخه N زمانی محقق می‌شود که قیمت به basePrice * (1 + milestone/100)^N برسد
         let currentCycle = 0;
-        const milestoneRatio = milestone ? (1 + milestone / 100) : null;
+        const milestoneRatio = 1 + (milestone / 100);
 
         for (let day = 1; day <= forecastDays; day++) {
             const startAmount = currentAmount;
@@ -656,8 +657,8 @@
                 temp *= growthFactor;
                 daysNeeded++;
             }
-            const distance = daysNeeded - currentYellow.day;
-            if (distance > 0 && distance < 10000) {
+            if (temp >= nextCycleTarget) {
+                const distance = daysNeeded - currentYellow.day;
                 currentYellow.distanceToNext = distance + ' روز بعد';
             } else {
                 currentYellow.distanceToNext = '-';
@@ -725,12 +726,34 @@
             growthTableContainer.innerHTML = '<div class="neutral" style="padding:15px;text-align:center;">📊 حداقل ۲ قیمت ثبت کنید تا میانگین رشد محاسبه شود</div>';
             return;
         }
+
+        let calcAvg = 0;
+        let sumPercent = 0;
+        for (let i = 1; i < prices.length; i++) {
+            const prev = prices[i-1].price;
+            const curr = prices[i].price;
+            if (prev > 0) {
+                sumPercent += ((curr - prev) / prev) * 100;
+            }
+        }
+        calcAvg = sumPercent / (prices.length - 1);
+        lastAvgPercent = calcAvg;
+
         const lastPrice = prices[prices.length-1].price;
-        let forecastDays = parseInt(forecastDaysInput.value);
+        const forecastDaysEl = document.getElementById("forecastDays") || forecastDaysInput;
+        const milestoneEl = document.getElementById("milestone_percent") || milestoneInput;
+
+        let cleanDays = toEnglishNumber(forecastDaysEl ? forecastDaysEl.value : "").trim();
+        let forecastDays = parseInt(cleanDays, 10);
         if (isNaN(forecastDays) || forecastDays <= 0) forecastDays = 30;
-        forecastDaysInput.value = forecastDays;
-        let milestone = parseFloat(milestoneInput.value.trim());
-        milestone = (isNaN(milestone) || milestone <= 0) ? null : milestone;
+        if (forecastDaysEl) forecastDaysEl.value = forecastDays;
+
+        let milestone = null;
+        if (milestoneEl) {
+            let cleanM = toEnglishNumber(milestoneEl.value || "").trim();
+            let m = parseFloat(cleanM);
+            milestone = (isNaN(m) || m <= 0) ? null : m;
+        }
         renderGrowthTable(lastPrice, lastAvgPercent, forecastDays, milestone);
     }
 
@@ -764,7 +787,11 @@
     cancelCalendarBtn.addEventListener("click", closeCalendar);
     confirmCalendarBtn.addEventListener("click", confirmCalendarChange);
 
-    saveBtn.addEventListener("click", handleSave);
+    if (saveBtn) saveBtn.addEventListener("click", handleSave);
+    if (applyMilestoneBtn) applyMilestoneBtn.addEventListener("click", refreshGrowthTable);
+    if (forecastBtn) forecastBtn.addEventListener("click", refreshGrowthTable);
+    if (forecastDaysInput) forecastDaysInput.addEventListener("keypress", (e) => { if (e.key === "Enter") refreshGrowthTable(); });
+    if (milestoneInput) milestoneInput.addEventListener("keypress", (e) => { if (e.key === "Enter") refreshGrowthTable(); });
     backupBtn.addEventListener("click", () => {
         const dataStr = JSON.stringify(getPrices(), null, 2);
         const blob = new Blob([dataStr], {type: "application/json"});
