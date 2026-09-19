@@ -91,8 +91,29 @@ def apply_advanced_ai_pipeline(
     final_lab = cv2.merge((crisp_l, a, b))
     final_bgr = cv2.cvtColor(final_lab, cv2.COLOR_LAB2BGR)
 
-    # Step 5: Model-Specific Face Restoration or HDR boost
-    if ai_model == "codeformer_face" or face_enhance:
+    # Step 5: Model-Specific Special Effects (Document Scan, Face Restoration, HDR)
+    if ai_model == "document_scan":
+        print("Applying Document & Handwritten Text Scan Enhancement...")
+        # Convert to grayscale illumination correction to flatten shadows
+        gray = cv2.cvtColor(final_bgr, cv2.COLOR_BGR2GRAY)
+        dilated = cv2.dilate(gray, np.ones((7, 7), np.uint8))
+        bg = cv2.medianBlur(dilated, 21)
+        diff = 255 - cv2.absdiff(gray, bg)
+        norm_gray = cv2.normalize(diff, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
+
+        # Adaptive contrast boost for text ink lines
+        doc_clahe = cv2.createCLAHE(clipLimit=2.5 * sharp_factor, tileGridSize=(8, 8))
+        crisp_doc = doc_clahe.apply(norm_gray)
+
+        # Unsharp mask for crisp text stroke contours
+        gaussian_doc = cv2.GaussianBlur(crisp_doc, (0, 0), sigmaX=1.0)
+        sharpened_doc = cv2.addWeighted(crisp_doc, 1.5 * sharp_factor, gaussian_doc, -0.5 * sharp_factor, 0)
+        sharpened_doc = np.clip(sharpened_doc, 0, 255).astype(np.uint8)
+
+        # Convert back to BGR maintaining subtle ink tones
+        final_bgr = cv2.cvtColor(sharpened_doc, cv2.COLOR_GRAY2BGR)
+
+    elif ai_model == "codeformer_face" or face_enhance:
         print("Applying CodeFormer Face & Eye Detail Enhancement...")
         laplacian = cv2.Laplacian(final_bgr, cv2.CV_8U, ksize=3)
         final_bgr = cv2.addWeighted(final_bgr, 1.0, laplacian, 0.15 * sharp_factor, 0)
