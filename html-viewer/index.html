@@ -2751,10 +2751,32 @@ ${cleanText}`;
             });
         }
 
-        /* Lightweight RTF (Rich Text Format) to HTML Parser */
+        /* Lightweight RTF (Rich Text Format) to HTML Parser with Image & Formatting Support */
         function parseRtfToHtml(rtfStr) {
             if (!rtfStr) return '';
             let text = rtfStr;
+
+            // 1. Extract and convert embedded RTF images {\pict ...} to <img>
+            text = text.replace(/\{\\pict[\s\S]*?\\([a-z]+blip)\b\s*([0-9a-fA-F\s\r\n]+)\}/gi, (match, blipType, hexData) => {
+                const cleanHex = hexData.replace(/\s+/g, '');
+                if (!cleanHex) return '';
+                let mime = 'image/png';
+                if (blipType.toLowerCase().includes('jpeg') || blipType.toLowerCase().includes('jpg')) {
+                    mime = 'image/jpeg';
+                }
+                // Convert HEX to Base64
+                try {
+                    const bytes = new Uint8Array(cleanHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+                    let binary = '';
+                    for (let i = 0; i < bytes.byteLength; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    const base64 = btoa(binary);
+                    return `<div style="text-align: center; margin: 12px 0;"><img src="data:${mime};base64,${base64}" style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);" alt="تصویر پیوست RTF" onerror="this.onerror=null; this.parentElement.style.display='none';" /></div>`;
+                } catch(e) {
+                    return '';
+                }
+            });
 
             // Extract main document content by stripping fonttbl, colortbl, stylesheet, info groups
             text = text.replace(/\{\\\*(?:fonttbl|colortbl|stylesheet|info|listtable|listoverridetable)[\s\S]*?\}/gi, '');
@@ -2799,8 +2821,8 @@ ${cleanText}`;
 
             return `
                 <div style="margin-bottom: 12px; background: #1e1b4b; border: 1px solid #4338ca; padding: 10px 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                    <span style="color: #818cf8; font-weight: 700; font-size: 0.9rem;">📝 سند غنی RTF (Rich Text Format)</span>
-                    <span style="background: rgba(129, 140, 248, 0.15); border: 1px solid rgba(129, 140, 248, 0.4); color: #818cf8; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">شناسایی و رندر خودکار فرمت RTF</span>
+                    <span style="color: #818cf8; font-weight: 700; font-size: 0.9rem;">📝 سند غنی RTF همراه با تصویر و رسانه</span>
+                    <span style="background: rgba(129, 140, 248, 0.15); border: 1px solid rgba(129, 140, 248, 0.4); color: #818cf8; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">شناسایی و رندر هوشمند RTF</span>
                 </div>
                 <div style="background: #020617; border: 1px solid #334155; border-radius: 14px; padding: 20px; font-size: 0.95rem; line-height: 1.7; color: #f8fafc; overflow-x: auto;">
                     ${htmlBody}
@@ -2973,6 +2995,14 @@ ${cleanText}`;
             // Italic (*text* or _text_)
             finalHtml = finalHtml.replace(/\*([^*]+)\*/g, '<em>$1</em>');
             finalHtml = finalHtml.replace(/_([^_]+)_/g, '<em>$1</em>');
+
+            // Markdown Images ![alt](url)
+            finalHtml = finalHtml.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
+                return `<div style="text-align: center; margin: 16px 0;">
+                    <img src="${url}" alt="${alt || 'تصویر پیش‌نمایش'}" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);" onerror="this.onerror=null; this.outerHTML='<div style=\'padding: 12px; background: rgba(239,68,68,0.1); border: 1px solid #ef4444; color: #f87171; border-radius: 10px; font-size: 0.85rem;\'>⚠️ عدم امکان بارگذاری تصویر: ${escapeHtml(url)}</div>';" />
+                    ${alt ? `<div style="font-size: 0.8rem; color: #94a3b8; margin-top: 6px;">🖼️ ${escapeHtml(alt)}</div>` : ''}
+                </div>`;
+            });
 
             // Markdown Links [title](url)
             finalHtml = finalHtml.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #38bdf8; text-decoration: underline;">$1</a>');
