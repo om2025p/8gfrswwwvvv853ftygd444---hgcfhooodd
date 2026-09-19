@@ -591,6 +591,7 @@
             </div>
         </div>
         <div class="header-left">
+            <button class="icon-btn" id="consoleBtn" title="کنسول خطاها و لاگ‌ها">🐛</button>
             <button class="icon-btn" id="themeBtn" title="تغییر تم">🌙</button>
             <button class="icon-btn" id="settingsBtn" title="تنظیمات گیت‌هاب">⚙️</button>
         </div>
@@ -777,6 +778,29 @@
 
     </div>
 
+    <!-- Modal Console Log -->
+    <div class="modal-overlay" id="consoleModal">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3 style="display:flex;align-items:center;gap:8px;">🐛 کنسول خطاها و لاگ‌های سیستم</h3>
+                <button class="modal-close" id="closeConsoleBtn">&times;</button>
+            </div>
+            <div style="font-size:0.8rem;color:var(--text-muted);">
+                تمامی لاگ‌های زنده اجرا، درخواست‌های گیت‌هاب و خطاهای سیستم در این قسمت ذخیره می‌شوند.
+            </div>
+            <textarea id="consoleLogArea" class="input-text" style="height: 220px; font-family: monospace; font-size: 0.8rem; direction: ltr; text-align: left; white-space: pre; overflow-y: scroll;" readonly></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button class="primary-btn" id="copyConsoleLogsBtn" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <span>📋</span>
+                    <span>کپی کامل لاگ‌های خطا</span>
+                </button>
+                <button class="btn-sec" id="clearConsoleLogsBtn" style="width: auto;">
+                    <span>🗑️ پاکسازی</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Settings -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal-content">
@@ -814,6 +838,61 @@
         let enhancedImageBase64 = null;
 
         const DEFAULT_GH_TOKEN = '';
+
+        // System Logging Engine
+        let systemLogs = [];
+        function logToConsole(message, type = 'INFO') {
+            const timeStr = new Date().toLocaleTimeString('fa-IR');
+            const logLine = `[${timeStr}] [${type}] ${message}`;
+            systemLogs.push(logLine);
+            const area = document.getElementById('consoleLogArea');
+            if (area) {
+                area.value = systemLogs.join('\n');
+                area.scrollTop = area.scrollHeight;
+            }
+            try {
+                localStorage.setItem('ai_enhancer_console_logs', JSON.stringify(systemLogs.slice(-100)));
+            } catch (e) {}
+            console.log(logLine);
+        }
+
+        // Restore past console logs
+        try {
+            const savedLogs = JSON.parse(localStorage.getItem('ai_enhancer_console_logs') || '[]');
+            if (Array.isArray(savedLogs)) {
+                systemLogs = savedLogs;
+                const area = document.getElementById('consoleLogArea');
+                if (area) area.value = systemLogs.join('\n');
+            }
+        } catch(e) {}
+
+        // Console Modal Controls
+        const consoleBtn = document.getElementById('consoleBtn');
+        const consoleModal = document.getElementById('consoleModal');
+        const closeConsoleBtn = document.getElementById('closeConsoleBtn');
+        const copyConsoleLogsBtn = document.getElementById('copyConsoleLogsBtn');
+        const clearConsoleLogsBtn = document.getElementById('clearConsoleLogsBtn');
+
+        consoleBtn.onclick = () => consoleModal.style.display = 'flex';
+        closeConsoleBtn.onclick = () => consoleModal.style.display = 'none';
+
+        copyConsoleLogsBtn.onclick = () => {
+            const area = document.getElementById('consoleLogArea');
+            if (!area.value.trim()) {
+                alert('هیچ لاگی برای کپی وجود ندارد!');
+                return;
+            }
+            navigator.clipboard.writeText(area.value).then(() => {
+                alert('تمام لاگ‌های گزارش خطا با موفقیت کپی شدند!');
+            });
+        };
+
+        clearConsoleLogsBtn.onclick = () => {
+            systemLogs = [];
+            document.getElementById('consoleLogArea').value = '';
+            localStorage.removeItem('ai_enhancer_console_logs');
+            logToConsole('کنسول پاکسازی شد.', 'SYSTEM');
+        };
 
         // DOM elements
         const uploadZone = document.getElementById('uploadZone');
@@ -1013,13 +1092,23 @@
         async function runGitHubCloudProcessing(faceEnhance, denoise, sharpen, targetW, targetH) {
             statusTitle.innerText = 'در حال ارسال به سرور پردازش ابری گیت‌هاب...';
             statusDetail.innerText = 'آماده‌سازی ورک‌فلو و ارسال دیتا...';
+            logToConsole(`شروع فرآیند ارسال به سرور گیت‌هاب (کد جاب: ${currentJobId})...`, 'GITHUB_START');
 
             const token = localStorage.getItem('ai_enhancer_gh_token') || DEFAULT_GH_TOKEN;
             const repo = localStorage.getItem('ai_enhancer_gh_repo') || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
 
+            if (!token) {
+                const errMsg = 'توکن گیت‌هاب (PAT) وارد نشده است! لطفاً از بخش تنظیمات ⚙️ توکن خود را وارد کنید.';
+                logToConsole(errMsg, 'ERROR_NO_TOKEN');
+                statusTitle.innerText = '❌ خطای احراز هویت گیت‌هاب';
+                statusDetail.innerText = errMsg;
+                return;
+            }
+
             try {
-                // Send workflow_dispatch API request
                 const dispatchUrl = `https://api.github.com/repos/${repo}/actions/workflows/image_enhancer.yml/dispatches`;
+                logToConsole(`ارسال درخواست به آدرس: ${dispatchUrl}`, 'GITHUB_DISPATCH');
+
                 const response = await fetch(dispatchUrl, {
                     method: 'POST',
                     headers: {
@@ -1028,7 +1117,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        ref: '129', // Dispatch to branch 129 or current ref
+                        ref: '129',
                         inputs: {
                             IMAGE_DATA: originalBase64,
                             UPSCALE_FACTOR: selectedScale === 'custom' ? '2' : selectedScale,
@@ -1043,49 +1132,67 @@
                 });
 
                 if (response.status === 204 || response.ok) {
+                    logToConsole('درخواست با موفقیت در گیت‌هاب ثبت شد (HTTP 204 OK).', 'GITHUB_SUCCESS');
                     statusTitle.innerText = 'درخواست ارسال شد ⚡ در حال اجرا در ابر گیت‌هاب...';
                     statusDetail.innerText = 'هوش مصنوعی سرور در حال رتوش و افزایش کیفیت تصویر است...';
                     pollGitHubResult(repo, token);
                 } else {
                     const errText = await response.text();
-                    console.warn('GitHub Dispatch issue:', errText);
-                    statusTitle.innerText = 'جابجایی به موتور پشتیبان آنلاین...';
-                    await runOnlineAIProcessing(faceEnhance, denoise, sharpen, targetW, targetH);
+                    const fullErrStr = `خطا در فراخوانی API گیت‌هاب: کد کد ${response.status} (${response.statusText}) - جزئیات: ${errText}`;
+                    logToConsole(fullErrStr, 'GITHUB_API_ERROR');
+                    statusTitle.innerText = '❌ گزارش خطا در سرور گیت‌هاب';
+                    statusDetail.innerText = `کد خطا: ${response.status} - برای مشاهده و کپی کامل لاگ، دکمه 🐛 را بزنید.`;
                 }
             } catch (err) {
-                console.error('GitHub Cloud Dispatch Error:', err);
-                statusTitle.innerText = 'استفاده از موتور هوش مصنوعی آنلاین...';
-                await runOnlineAIProcessing(faceEnhance, denoise, sharpen, targetW, targetH);
+                const connErr = `خطای ارتباط با گیت‌هاب: ${err.message || err}`;
+                logToConsole(connErr, 'GITHUB_NETWORK_ERROR');
+                statusTitle.innerText = '❌ عدم برقراری ارتباط با سرور';
+                statusDetail.innerText = connErr;
             }
         }
 
         // Poll for output image result from GitHub repo output
         async function pollGitHubResult(repo, token) {
             let attempts = 0;
-            const maxAttempts = 20;
+            const maxAttempts = 25;
 
             const pollInterval = setInterval(async () => {
                 attempts++;
-                statusDetail.innerText = `در حال چک کردن نتیجه از سرور (تلاش ${attempts} از ${maxAttempts})...`;
+                statusDetail.innerText = `در حال دریافت خروجی از سرور (تلاش ${attempts} از ${maxAttempts})...`;
 
                 try {
-                    // Try fetching committed output image from raw GitHub or output directory
                     const outputUrl = `https://raw.githubusercontent.com/${repo}/129/image-enhancer/output/${currentJobId}.json?t=${Date.now()}`;
+                    logToConsole(`بررسی وضعیت خروجی سرور: ${outputUrl}`, 'GITHUB_POLL');
                     const res = await fetch(outputUrl);
+
                     if (res.ok) {
                         const data = await res.json();
-                        if (data && data.image_data_base64) {
+                        if (data && data.image_data_base64 && data.status === 'completed') {
+                            logToConsole(`خروجی معتبر دریافت شد! زمان پردازش سرور: ${data.processing_time_seconds} ثانیه`, 'GITHUB_RESULT_OK');
                             clearInterval(pollInterval);
                             displayResult(data.image_data_base64, data.target_width, data.target_height);
                             return;
+                        } else {
+                            const incompleteMsg = `دیتای دریافتی از گیت‌هاب ناقص یا نامعتبر است: ${JSON.stringify(data)}`;
+                            logToConsole(incompleteMsg, 'GITHUB_INCOMPLETE_DATA');
+                            clearInterval(pollInterval);
+                            statusTitle.innerText = '❌ اطلاعات دریافتی سرور گیت‌هاب ناقص است';
+                            statusDetail.innerText = 'دیتای تصویر یافت نشد. لاگ کامل در کنسول 🐛 ثبت شد.';
+                            return;
                         }
+                    } else if (res.status !== 404) {
+                        logToConsole(`پاسخ سرور در زمان بررسی وضعیت: HTTP ${res.status}`, 'GITHUB_POLL_WARN');
                     }
-                } catch (e) {}
+                } catch (e) {
+                    logToConsole(`خطا هنگام استعلام خروجی سرور: ${e.message}`, 'POLL_FETCH_ERROR');
+                }
 
                 if (attempts >= maxAttempts) {
                     clearInterval(pollInterval);
-                    statusTitle.innerText = 'زمان انتظار سرور به پایان رسید، در حال تولید با Canvas AI...';
-                    await runCanvasFastProcessing(true, true, true, 0, 0);
+                    const timeoutMsg = `زمان انتظار سرور گیت‌هاب بدون دریافت نتیجه پایان یافت (تعداد تلاش: ${maxAttempts}).`;
+                    logToConsole(timeoutMsg, 'GITHUB_TIMEOUT_ERROR');
+                    statusTitle.innerText = '❌ اتمام زمان انتظار سرور گیت‌هاب';
+                    statusDetail.innerText = 'سرور پاسخی در زمان مقرر ارسال نکرد. لاگ کامل را در کنسول 🐛 مشاهده و کپی کنید.';
                 }
             }, 3000);
         }
