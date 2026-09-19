@@ -859,6 +859,49 @@
 
         const DEFAULT_GH_TOKEN = '';
 
+        // Helper to compress Base64 payload for GitHub API (under 40 KB to prevent "inputs are too large" error)
+        function compressBase64ForDispatch(base64Str, maxBytes = 40000) {
+            return new Promise((resolve) => {
+                if (!base64Str || base64Str.length <= maxBytes) {
+                    resolve(base64Str);
+                    return;
+                }
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let scale = 0.5;
+                    let w = Math.max(100, Math.round(img.width * scale));
+                    let h = Math.max(100, Math.round(img.height * scale));
+
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    let quality = 0.7;
+                    let compressed = canvas.toDataURL('image/jpeg', quality);
+
+                    while (compressed.length > maxBytes && quality > 0.25) {
+                        quality -= 0.1;
+                        compressed = canvas.toDataURL('image/jpeg', quality);
+                    }
+
+                    if (compressed.length > maxBytes) {
+                        // Reduce dimensions further if still > 40KB
+                        canvas.width = Math.round(w * 0.7);
+                        canvas.height = Math.round(h * 0.7);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        compressed = canvas.toDataURL('image/jpeg', 0.5);
+                    }
+
+                    logToConsole(`حجم عکس برای گیت‌هاب فشرده شد: از ${Math.round(base64Str.length/1024)}KB به ${Math.round(compressed.length/1024)}KB`, 'PAYLOAD_COMPRESS');
+                    resolve(compressed);
+                };
+                img.onerror = () => resolve(base64Str);
+                img.src = base64Str;
+            });
+        }
+
         // Helper to sanitize Repository Name input
         function sanitizeRepoName(rawStr) {
             if (!rawStr) return 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
@@ -1162,6 +1205,10 @@
                 return;
             }
 
+            // Compress payload image string so it fits safely under GitHub's 65KB input limit
+            statusDetail.innerText = 'در حال فشرده‌سازی ورودی متنی برای ارسال به API گیت‌هاب...';
+            const compressedImageData = await compressBase64ForDispatch(originalBase64);
+
             // Fallback list of branches to try if 422 No Ref Found occurs
             const branchesToTry = [userBranch, 'main', '129', 'master'].filter((v, i, a) => a.indexOf(v) === i);
 
@@ -1181,7 +1228,7 @@
                         body: JSON.stringify({
                             ref: targetRef,
                             inputs: {
-                                IMAGE_DATA: originalBase64,
+                                IMAGE_DATA: compressedImageData,
                                 UPSCALE_FACTOR: selectedScale === 'custom' ? '2' : selectedScale,
                                 CUSTOM_WIDTH: targetW.toString(),
                                 CUSTOM_HEIGHT: targetH.toString(),
