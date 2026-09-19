@@ -793,7 +793,7 @@
             </div>
             <div>
                 <label style="font-size:0.8rem;color:var(--text-muted);">Repository Name (owner/repo):</label>
-                <input type="text" id="ghRepoInput" class="input-text" style="margin-top:4px;" value="qqqggggcc/emarat">
+                <input type="text" id="ghRepoInput" class="input-text" style="margin-top:4px;" value="om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd">
             </div>
             <button class="primary-btn" id="saveSettingsBtn" style="margin-top:10px;">ذخیره تنظیمات</button>
         </div>
@@ -860,7 +860,7 @@
         const ghRepoInput = document.getElementById('ghRepoInput');
 
         ghTokenInput.value = localStorage.getItem('ai_enhancer_gh_token') || DEFAULT_GH_TOKEN;
-        ghRepoInput.value = localStorage.getItem('ai_enhancer_gh_repo') || 'qqqggggcc/emarat';
+        ghRepoInput.value = localStorage.getItem('ai_enhancer_gh_repo') || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
 
         settingsBtn.onclick = () => settingsModal.style.display = 'flex';
         closeSettingsBtn.onclick = () => settingsModal.style.display = 'none';
@@ -1015,7 +1015,7 @@
             statusDetail.innerText = 'آماده‌سازی ورک‌فلو و ارسال دیتا...';
 
             const token = localStorage.getItem('ai_enhancer_gh_token') || DEFAULT_GH_TOKEN;
-            const repo = localStorage.getItem('ai_enhancer_gh_repo') || 'qqqggggcc/emarat';
+            const repo = localStorage.getItem('ai_enhancer_gh_repo') || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
 
             try {
                 // Send workflow_dispatch API request
