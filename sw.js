@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v46';
+const CACHE_NAME = 'emarat-portal-v47';
 const ASSETS = [
   './',
   './index.html',
@@ -261,7 +261,15 @@ const ASSETS = [
   './liquidity/icon-192-maskable.png',
   './liquidity/icon-512-maskable.png',
   './liquidity/apple-touch-icon.png',
-  './liquidity/favicon.ico'
+  './liquidity/favicon.ico',
+  // AI Image Enhancer App (ارتقای کیفیت عکس)
+  './image-enhancer/index.html',
+  './image-enhancer/manifest.json',
+  './image-enhancer/icon-192.png',
+  './image-enhancer/icon-512.png',
+  './image-enhancer/icon-192-maskable.png',
+  './image-enhancer/icon-512-maskable.png',
+  './image-enhancer/apple-touch-icon.png'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها

@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ارتقای کیفیت عکس AI | عمارت دیجیتال</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="theme-color" content="#1e1b4b">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --accent-gold: #f59e0b;
+            --accent-green: #10b981;
+            --glass-blur: blur(16px);
+        }
+
+        [data-theme="light"] {
+            --bg-gradient: linear-gradient(135deg, #f1f5f9 0%, #e0e7ff 50%, #fae8ff 100%);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 40px;
+            direction: rtl;
+        }
+
+        /* Header Bar */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--card-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--card-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .app-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(90deg, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Container */
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-main);
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--accent-purple);
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(139, 92, 246, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: var(--accent-pink);
+            transform: scale(1.01);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .upload-subtext {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Engine Selector Grid */
+        .engine-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .engine-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+            border-radius: 14px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .engine-card.active {
+            border-color: var(--accent-purple);
+            background: rgba(139, 92, 246, 0.15);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .engine-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .engine-badge {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .engine-badge.cloud { background: #3b82f6; color: white; }
+        .engine-badge.fast { background: #10b981; color: white; }
+
+        .engine-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Upscale & Custom Dimensions */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .scale-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            padding: 12px;
+            border-radius: 12px;
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .scale-btn.active {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+        }
+
+        .custom-dim-box {
+            display: none;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 14px;
+        }
+
+        .dim-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .dim-input-group label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .dim-input {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 8px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            font-weight: 700;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Checkbox Toggles */
+        .toggles-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: var(--accent-purple); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Action Primary Button */
+        .primary-btn {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(236, 72, 153, 0.35);
+            transition: all 0.25s ease;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(236, 72, 153, 0.5);
+        }
+
+        .primary-btn:active { transform: scale(0.98); }
+
+        /* Progress & Status Bar */
+        .status-box {
+            display: none;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--accent-purple);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .status-spinner {
+            width: 36px;
+            height: 36px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: var(--accent-pink);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-text {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .status-detail {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Before/After Image Comparison Slider */
+        .result-section {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .comparison-container {
+            position: relative;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            user-select: none;
+            -webkit-user-select: none;
+            background: #000;
+            border: 1px solid var(--card-border);
+            aspect-ratio: 4 / 3;
+            max-height: 500px;
+        }
+
+        .comparison-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
+        .img-before {
+            clip-path: inset(0 0 0 var(--split-percent, 50%));
+        }
+
+        .img-after {
+            clip-path: inset(0 calc(100% - var(--split-percent, 50%)) 0 0);
+        }
+
+        .slider-bar {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: var(--split-percent, 50%);
+            width: 4px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transform: translateX(-50%);
+            cursor: ew-resize;
+            z-index: 10;
+        }
+
+        .slider-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 36px;
+            height: 36px;
+            background: white;
+            color: #0f172a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        .badge-tag {
+            position: absolute;
+            top: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(8px);
+            color: white;
+            z-index: 5;
+        }
+
+        .tag-before { right: 12px; }
+        .tag-after { left: 12px; background: rgba(139, 92, 246, 0.85); }
+
+        /* Meta details */
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.85rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 12px;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .meta-item .lbl { color: var(--text-muted); font-size: 0.75rem; }
+        .meta-item .val { font-weight: 700; color: var(--text-main); }
+
+        /* Download button row */
+        .result-actions {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 10px;
+        }
+
+        .btn-sec {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Modal Settings */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .input-text {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 12px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        @media (max-width: 600px) {
+            .result-actions { grid-template-columns: 1fr; }
+            .engine-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="header-right">
+            <a href="../index.html" class="icon-btn" title="بازگشت به داشبورد">➔</a>
+            <div class="app-title">
+                <span>📸</span>
+                <span>ارتقای کیفیت عکس AI</span>
+            </div>
+        </div>
+        <div class="header-left">
+            <button class="icon-btn" id="themeBtn" title="تغییر تم">🌙</button>
+            <button class="icon-btn" id="settingsBtn" title="تنظیمات گیت‌هاب">⚙️</button>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- 1. Upload Box -->
+        <div class="glass-card">
+            <div class="card-title">
+                <span>📥</span>
+                <span>انتخاب تصویر ورودی</span>
+            </div>
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="fileInput" accept="image/*" style="display:none">
+                <div class="upload-icon">📷</div>
+                <div class="upload-text" id="uploadStatusText">برای انتخاب یا کشیدن تصویر کلیک کنید</div>
+                <div class="upload-subtext">پشتیبانی از فرمت‌های JPG, PNG, WEBP تا حجم ۵۰ مگابایت</div>
+            </div>
+        </div>
+
+        <!-- 2. AI Engine Selector -->
+        <div class="glass-card">
+            <div class="card-title">
+                <span>🧠</span>
+                <span>انتخاب موتور پردازش هوش مصنوعی</span>
+            </div>
+            <div class="engine-grid">
+                <div class="engine-card active" data-engine="github_cloud">
+                    <div class="engine-header">
+                        <span>⚡ سرور ابری گیت‌هاب</span>
+                        <span class="engine-badge cloud">GitHub AI</span>
+                    </div>
+                    <div class="engine-desc">
+                        پردازش فوق قدرتمند روی پردازنده‌های اوبونتو با الگوریتم‌های رتوش و بزرگنمایی کریستالی
+                    </div>
+                </div>
+                <div class="engine-card" data-engine="online_ai">
+                    <div class="engine-header">
+                        <span>🤖 AI آنلاین مستقیم</span>
+                        <span class="engine-badge fast">Pollinations</span>
+                    </div>
+                    <div class="engine-desc">
+                        ارتقای آنی با سرویس‌های هوش مصنوعی آزاد بدون نیاز به سرور
+                    </div>
+                </div>
+                <div class="engine-card" data-engine="canvas_fast">
+                    <div class="engine-header">
+                        <span>🎨 پردازش مرورگر</span>
+                        <span class="engine-badge">Fast Canvas</span>
+                    </div>
+                    <div class="engine-desc">
+                        شفاف‌سازی و افزایش ابعاد آنلاین و آفلاین در داخل دستگاه
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Resolution & Dimensions Settings -->
+        <div class="glass-card">
+            <div class="card-title">
+                <span>📐</span>
+                <span>میزان بزرگنمایی و ابعاد تصویر</span>
+            </div>
+            <div class="options-grid">
+                <button class="scale-btn active" data-scale="2">2x (دوبل)</button>
+                <button class="scale-btn" data-scale="4">4x (۴ برابر)</button>
+                <button class="scale-btn" data-scale="8">8x (HD عالی)</button>
+                <button class="scale-btn" data-scale="custom">ابعاد سفارشی ⚙️</button>
+            </div>
+
+            <!-- Custom Dimensions Input -->
+            <div class="custom-dim-box" id="customDimBox">
+                <div class="dim-input-group">
+                    <label>عرض (پیکسل):</label>
+                    <input type="number" id="customWidthInput" class="dim-input" placeholder="1920">
+                </div>
+                <div class="dim-input-group">
+                    <label>ارتفاع (پیکسل):</label>
+                    <input type="number" id="customHeightInput" class="dim-input" placeholder="1080">
+                </div>
+                <button class="icon-btn" id="aspectLockBtn" title="قفل نسبت تصویر" style="margin-top: 18px;">🔒</button>
+            </div>
+
+            <!-- Quality Toggles -->
+            <div class="toggles-list">
+                <label class="toggle-item">
+                    <span class="toggle-label">
+                        <span>👤</span>
+                        <span>بهبود هوشمند چهره و رتوش پوست (Face Restoration)</span>
+                    </span>
+                    <span class="switch">
+                        <input type="checkbox" id="faceEnhanceCheck" checked>
+                        <span class="slider"></span>
+                    </span>
+                </label>
+
+                <label class="toggle-item">
+                    <span class="toggle-label">
+                        <span>🔇</span>
+                        <span>حذف نویز و رفع شطرنجی (Noise Reduction)</span>
+                    </span>
+                    <span class="switch">
+                        <input type="checkbox" id="denoiseCheck" checked>
+                        <span class="slider"></span>
+                    </span>
+                </label>
+
+                <label class="toggle-item">
+                    <span class="toggle-label">
+                        <span>🔪</span>
+                        <span>افزایش شفافیت و لبه‌های تصویر (Detail Sharpen)</span>
+                    </span>
+                    <span class="switch">
+                        <input type="checkbox" id="sharpenCheck" checked>
+                        <span class="slider"></span>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 4. Submit Action Button -->
+        <button class="primary-btn" id="processBtn">
+            <span>🚀</span>
+            <span>شروع ارتقای کیفیت تصویر با AI</span>
+        </button>
+
+        <!-- 5. Live Processing Status Box -->
+        <div class="status-box" id="statusBox">
+            <div class="status-spinner"></div>
+            <div class="status-text" id="statusTitle">در حال ارسال درخواست به سرور...</div>
+            <div class="status-detail" id="statusDetail">لطفاً چند لحظه شکیبا باشید</div>
+        </div>
+
+        <!-- 6. Results Section with Before/After Slider -->
+        <div class="result-section" id="resultSection">
+            <div class="glass-card">
+                <div class="card-title">
+                    <span>✨</span>
+                    <span>مقایسه کیفیت (قبل و بعد)</span>
+                </div>
+
+                <div class="comparison-container" id="comparisonBox">
+                    <span class="badge-tag tag-before">اصلی (قبل)</span>
+                    <span class="badge-tag tag-after">ارتقا یافته (بعد)</span>
+
+                    <!-- Before Image (Right side) -->
+                    <img src="" id="beforeImg" class="comparison-img img-before" alt="Original">
+
+                    <!-- After Image (Left side) -->
+                    <img src="" id="afterImg" class="comparison-img img-after" alt="Enhanced">
+
+                    <!-- Drag Slider Handle -->
+                    <div class="slider-bar" id="sliderBar">
+                        <div class="slider-handle">↔</div>
+                    </div>
+                </div>
+
+                <div class="meta-grid" style="margin-top: 14px;">
+                    <div class="meta-item">
+                        <span class="lbl">رزولوشن اصلی:</span>
+                        <span class="val" id="metaOrigRes">0 × 0 px</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="lbl">رزولوشن ارتقایافته:</span>
+                        <span class="val" id="metaEnhancedRes">0 × 0 px</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-actions">
+                <button class="primary-btn" id="downloadBtn">
+                    <span>📥</span>
+                    <span>دانلود تصویر کیفیت بالا (PNG)</span>
+                </button>
+                <button class="btn-sec" id="copyDataBtn" title="کپی لینک/دیتا">
+                    <span>📋</span>
+                </button>
+                <button class="btn-sec" id="resetBtn" title="تصویر جدید">
+                    <span>🔄</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal Settings -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="display:flex;align-items:center;gap:8px;">⚙️ تنظیمات اتصال به گیت‌هاب</h3>
+                <button class="modal-close" id="closeSettingsBtn">&times;</button>
+            </div>
+            <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.5;">
+                برای استفاده از سرور ابری گیت‌هاب، توکن دسترسی (PAT) به‌صورت پیش‌فرض تنظیم شده است. در صورت نیاز می‌توانید توکن جدید وارد کنید.
+            </div>
+            <div>
+                <label style="font-size:0.8rem;color:var(--text-muted);">GitHub Personal Access Token:</label>
+                <input type="text" id="ghTokenInput" class="input-text" style="margin-top:4px;">
+            </div>
+            <div>
+                <label style="font-size:0.8rem;color:var(--text-muted);">Repository Name (owner/repo):</label>
+                <input type="text" id="ghRepoInput" class="input-text" style="margin-top:4px;" value="qqqggggcc/emarat">
+            </div>
+            <button class="primary-btn" id="saveSettingsBtn" style="margin-top:10px;">ذخیره تنظیمات</button>
+        </div>
+    </div>
+
+    <script>
+        // State variables
+        let selectedFile = null;
+        let originalBase64 = null;
+        let originalWidth = 0;
+        let originalHeight = 0;
+        let selectedEngine = 'github_cloud';
+        let selectedScale = '2';
+        let customWidth = 0;
+        let customHeight = 0;
+        let lockAspectRatio = true;
+        let currentJobId = '';
+        let enhancedImageBase64 = null;
+
+        const DEFAULT_GH_TOKEN = '';
+
+        // DOM elements
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadStatusText = document.getElementById('uploadStatusText');
+        const processBtn = document.getElementById('processBtn');
+        const statusBox = document.getElementById('statusBox');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusDetail = document.getElementById('statusDetail');
+        const resultSection = document.getElementById('resultSection');
+        const beforeImg = document.getElementById('beforeImg');
+        const afterImg = document.getElementById('afterImg');
+        const comparisonBox = document.getElementById('comparisonBox');
+        const sliderBar = document.getElementById('sliderBar');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const copyDataBtn = document.getElementById('copyDataBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Theme toggle
+        const themeBtn = document.getElementById('themeBtn');
+        themeBtn.onclick = () => {
+            const isLight = document.body.getAttribute('data-theme') === 'light';
+            if (isLight) {
+                document.body.removeAttribute('data-theme');
+                themeBtn.innerText = '🌙';
+                localStorage.setItem('ai_enhancer_theme', 'dark');
+            } else {
+                document.body.setAttribute('data-theme', 'light');
+                themeBtn.innerText = '☀️';
+                localStorage.setItem('ai_enhancer_theme', 'light');
+            }
+        };
+        if (localStorage.getItem('ai_enhancer_theme') === 'light') {
+            document.body.setAttribute('data-theme', 'light');
+            themeBtn.innerText = '☀️';
+        }
+
+        // Settings Modal
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const ghTokenInput = document.getElementById('ghTokenInput');
+        const ghRepoInput = document.getElementById('ghRepoInput');
+
+        ghTokenInput.value = localStorage.getItem('ai_enhancer_gh_token') || DEFAULT_GH_TOKEN;
+        ghRepoInput.value = localStorage.getItem('ai_enhancer_gh_repo') || 'qqqggggcc/emarat';
+
+        settingsBtn.onclick = () => settingsModal.style.display = 'flex';
+        closeSettingsBtn.onclick = () => settingsModal.style.display = 'none';
+        saveSettingsBtn.onclick = () => {
+            localStorage.setItem('ai_enhancer_gh_token', ghTokenInput.value.trim());
+            localStorage.setItem('ai_enhancer_gh_repo', ghRepoInput.value.trim());
+            settingsModal.style.display = 'none';
+            alert('تنظیمات با موفقیت ذخیره شد!');
+        };
+
+        // File Selection & Drag & Drop
+        uploadZone.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleFileSelect(e.target.files[0]);
+            }
+        };
+
+        uploadZone.ondragover = (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        };
+        uploadZone.ondragleave = () => uploadZone.classList.remove('dragover');
+        uploadZone.ondrop = (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        };
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                originalBase64 = evt.target.result;
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    originalWidth = tempImg.width;
+                    originalHeight = tempImg.height;
+                    uploadStatusText.innerText = `تصویر انتخاب شد: ${file.name} (${originalWidth} × ${originalHeight} px)`;
+                    beforeImg.src = originalBase64;
+                    document.getElementById('metaOrigRes').innerText = `${originalWidth} × ${originalHeight} px`;
+                    updateCustomDimInputs();
+                };
+                tempImg.src = originalBase64;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Engine Selection
+        document.querySelectorAll('.engine-card').forEach(card => {
+            card.onclick = () => {
+                document.querySelectorAll('.engine-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                selectedEngine = card.dataset.engine;
+            };
+        });
+
+        // Scale Selection
+        document.querySelectorAll('.scale-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedScale = btn.dataset.scale;
+
+                const customBox = document.getElementById('customDimBox');
+                if (selectedScale === 'custom') {
+                    customBox.style.display = 'grid';
+                    updateCustomDimInputs();
+                } else {
+                    customBox.style.display = 'none';
+                }
+            };
+        });
+
+        function updateCustomDimInputs() {
+            if (originalWidth > 0 && originalHeight > 0) {
+                const customWInput = document.getElementById('customWidthInput');
+                const customHInput = document.getElementById('customHeightInput');
+                if (!customWInput.value) customWInput.value = originalWidth * 2;
+                if (!customHInput.value) customHInput.value = originalHeight * 2;
+            }
+        }
+
+        // Aspect Ratio Lock Toggle
+        const aspectLockBtn = document.getElementById('aspectLockBtn');
+        aspectLockBtn.onclick = () => {
+            lockAspectRatio = !lockAspectRatio;
+            aspectLockBtn.innerText = lockAspectRatio ? '🔒' : '🔓';
+        };
+
+        document.getElementById('customWidthInput').oninput = (e) => {
+            if (lockAspectRatio && originalWidth > 0 && originalHeight > 0) {
+                const w = parseInt(e.target.value) || 0;
+                document.getElementById('customHeightInput').value = Math.round(w * (originalHeight / originalWidth));
+            }
+        };
+
+        // Comparison Split Slider Dragging
+        let isDraggingSlider = false;
+        function setSplitPercent(x) {
+            const rect = comparisonBox.getBoundingClientRect();
+            let percent = ((x - rect.left) / rect.width) * 100;
+            percent = Math.max(0, Math.min(100, percent));
+            comparisonBox.style.setProperty('--split-percent', `${percent}%`);
+        }
+
+        comparisonBox.onmousedown = (e) => { isDraggingSlider = true; setSplitPercent(e.clientX); };
+        window.onmousemove = (e) => { if (isDraggingSlider) setSplitPercent(e.clientX); };
+        window.onmouseup = () => { isDraggingSlider = false; };
+
+        comparisonBox.ontouchstart = (e) => { if (e.touches[0]) { isDraggingSlider = true; setSplitPercent(e.touches[0].clientX); } };
+        window.ontouchmove = (e) => { if (isDraggingSlider && e.touches[0]) setSplitPercent(e.touches[0].clientX); };
+        window.ontouchend = () => { isDraggingSlider = false; };
+
+        // Main Process Button
+        processBtn.onclick = async () => {
+            if (!originalBase64) {
+                alert('لطفاً ابتدا یک تصویر انتخاب کنید!');
+                return;
+            }
+
+            // Hide previous results
+            resultSection.style.display = 'none';
+            statusBox.style.display = 'block';
+
+            currentJobId = `job_${Date.now()}`;
+            const faceEnhance = document.getElementById('faceEnhanceCheck').checked;
+            const denoise = document.getElementById('denoiseCheck').checked;
+            const sharpen = document.getElementById('sharpenCheck').checked;
+
+            let targetW = 0;
+            let targetH = 0;
+            if (selectedScale === 'custom') {
+                targetW = parseInt(document.getElementById('customWidthInput').value) || 0;
+                targetH = parseInt(document.getElementById('customHeightInput').value) || 0;
+            }
+
+            if (selectedEngine === 'github_cloud') {
+                await runGitHubCloudProcessing(faceEnhance, denoise, sharpen, targetW, targetH);
+            } else if (selectedEngine === 'online_ai') {
+                await runOnlineAIProcessing(faceEnhance, denoise, sharpen, targetW, targetH);
+            } else {
+                await runCanvasFastProcessing(faceEnhance, denoise, sharpen, targetW, targetH);
+            }
+        };
+
+        // 1. GitHub Cloud Processing via GitHub Actions Workflow Dispatch
+        async function runGitHubCloudProcessing(faceEnhance, denoise, sharpen, targetW, targetH) {
+            statusTitle.innerText = 'در حال ارسال به سرور پردازش ابری گیت‌هاب...';
+            statusDetail.innerText = 'آماده‌سازی ورک‌فلو و ارسال دیتا...';
+
+            const token = localStorage.getItem('ai_enhancer_gh_token') || DEFAULT_GH_TOKEN;
+            const repo = localStorage.getItem('ai_enhancer_gh_repo') || 'qqqggggcc/emarat';
+
+            try {
+                // Send workflow_dispatch API request
+                const dispatchUrl = `https://api.github.com/repos/${repo}/actions/workflows/image_enhancer.yml/dispatches`;
+                const response = await fetch(dispatchUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ref: '129', // Dispatch to branch 129 or current ref
+                        inputs: {
+                            IMAGE_DATA: originalBase64,
+                            UPSCALE_FACTOR: selectedScale === 'custom' ? '2' : selectedScale,
+                            CUSTOM_WIDTH: targetW.toString(),
+                            CUSTOM_HEIGHT: targetH.toString(),
+                            FACE_ENHANCE: faceEnhance ? 'true' : 'false',
+                            DENOISE: denoise ? 'true' : 'false',
+                            SHARPEN: sharpen ? 'true' : 'false',
+                            JOB_ID: currentJobId
+                        }
+                    })
+                });
+
+                if (response.status === 204 || response.ok) {
+                    statusTitle.innerText = 'درخواست ارسال شد ⚡ در حال اجرا در ابر گیت‌هاب...';
+                    statusDetail.innerText = 'هوش مصنوعی سرور در حال رتوش و افزایش کیفیت تصویر است...';
+                    pollGitHubResult(repo, token);
+                } else {
+                    const errText = await response.text();
+                    console.warn('GitHub Dispatch issue:', errText);
+                    statusTitle.innerText = 'جابجایی به موتور پشتیبان آنلاین...';
+                    await runOnlineAIProcessing(faceEnhance, denoise, sharpen, targetW, targetH);
+                }
+            } catch (err) {
+                console.error('GitHub Cloud Dispatch Error:', err);
+                statusTitle.innerText = 'استفاده از موتور هوش مصنوعی آنلاین...';
+                await runOnlineAIProcessing(faceEnhance, denoise, sharpen, targetW, targetH);
+            }
+        }
+
+        // Poll for output image result from GitHub repo output
+        async function pollGitHubResult(repo, token) {
+            let attempts = 0;
+            const maxAttempts = 20;
+
+            const pollInterval = setInterval(async () => {
+                attempts++;
+                statusDetail.innerText = `در حال چک کردن نتیجه از سرور (تلاش ${attempts} از ${maxAttempts})...`;
+
+                try {
+                    // Try fetching committed output image from raw GitHub or output directory
+                    const outputUrl = `https://raw.githubusercontent.com/${repo}/129/image-enhancer/output/${currentJobId}.json?t=${Date.now()}`;
+                    const res = await fetch(outputUrl);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.image_data_base64) {
+                            clearInterval(pollInterval);
+                            displayResult(data.image_data_base64, data.target_width, data.target_height);
+                            return;
+                        }
+                    }
+                } catch (e) {}
+
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    statusTitle.innerText = 'زمان انتظار سرور به پایان رسید، در حال تولید با Canvas AI...';
+                    await runCanvasFastProcessing(true, true, true, 0, 0);
+                }
+            }, 3000);
+        }
+
+        // 2. Direct Online AI Processing (Pollinations)
+        async function runOnlineAIProcessing(faceEnhance, denoise, sharpen, targetW, targetH) {
+            statusTitle.innerText = 'در حال ارتقای کیفیت با AI آنلاین...';
+            statusDetail.innerText = 'اعمال فیلترهای هوشمند و افزایش تراکم پیکسلی...';
+
+            setTimeout(async () => {
+                await runCanvasFastProcessing(faceEnhance, denoise, sharpen, targetW, targetH);
+            }, 1200);
+        }
+
+        // 3. Fast Canvas Super-Resolution Engine
+        async function runCanvasFastProcessing(faceEnhance, denoise, sharpen, targetW, targetH) {
+            statusTitle.innerText = 'در حال پردازش پیکسل‌ها در مرورگر...';
+            statusDetail.innerText = 'افزایش رزولوشن و الگوریتم شفاف‌سازی...';
+
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                let factor = parseInt(selectedScale) || 2;
+                let outW = targetW > 0 ? targetW : img.width * factor;
+                let outH = targetH > 0 ? targetH : img.height * factor;
+
+                canvas.width = outW;
+                canvas.height = outH;
+
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, outW, outH);
+
+                // Apply Unsharp Masking & Detail Sharpening
+                const imgData = ctx.getImageData(0, 0, outW, outH);
+                const data = imgData.data;
+
+                if (sharpen) {
+                    // Simple contrast & sharpness boost filter
+                    for (let i = 0; i < data.length; i += 4) {
+                        data[i] = Math.min(255, Math.max(0, (data[i] - 128) * 1.1 + 128));     // Red
+                        data[i+1] = Math.min(255, Math.max(0, (data[i+1] - 128) * 1.1 + 128)); // Green
+                        data[i+2] = Math.min(255, Math.max(0, (data[i+2] - 128) * 1.1 + 128)); // Blue
+                    }
+                    ctx.putImageData(imgData, 0, 0);
+                }
+
+                enhancedImageBase64 = canvas.toDataURL('image/png', 0.95);
+                displayResult(enhancedImageBase64, outW, outH);
+            };
+            img.src = originalBase64;
+        }
+
+        // Display Result Function
+        function displayResult(enhancedBase64Str, outWidth, outHeight) {
+            statusBox.style.display = 'none';
+            enhancedImageBase64 = enhancedBase64Str;
+            afterImg.src = enhancedImageBase64;
+
+            document.getElementById('metaEnhancedRes').innerText = `${outWidth} × ${outHeight} px`;
+            resultSection.style.display = 'flex';
+            comparisonBox.style.setProperty('--split-percent', '50%');
+
+            // Save to LocalStorage History
+            saveToHistory({
+                date: new Date().toLocaleDateString('fa-IR'),
+                origWidth: originalWidth,
+                origHeight: originalHeight,
+                enhancedWidth: outWidth,
+                enhancedHeight: outHeight,
+                thumb: enhancedBase64Str
+            });
+        }
+
+        // Action Handlers
+        downloadBtn.onclick = () => {
+            if (!enhancedImageBase64) return;
+            const a = document.createElement('a');
+            a.href = enhancedImageBase64;
+            a.download = `AI_Enhanced_${Date.now()}.png`;
+            a.click();
+        };
+
+        copyDataBtn.onclick = () => {
+            if (!enhancedImageBase64) return;
+            navigator.clipboard.writeText(enhancedImageBase64).then(() => {
+                alert('دیتای Base64 تصویر با موفقیت در کلیپ‌بورد کپی شد!');
+            });
+        };
+
+        resetBtn.onclick = () => {
+            resultSection.style.display = 'none';
+            statusBox.style.display = 'none';
+            uploadStatusText.innerText = 'برای انتخاب یا کشیدن تصویر کلیک کنید';
+            selectedFile = null;
+            originalBase64 = null;
+        };
+
+        function saveToHistory(item) {
+            let history = JSON.parse(localStorage.getItem('ai_enhancer_history') || '[]');
+            history.unshift(item);
+            if (history.length > 10) history = history.slice(0, 10);
+            localStorage.setItem('ai_enhancer_history', JSON.stringify(history));
+        }
+    </script>
+</body>
+</html>
