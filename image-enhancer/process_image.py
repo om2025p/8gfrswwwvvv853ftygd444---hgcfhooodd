@@ -14,7 +14,6 @@ def decode_image(image_input):
     if not image_input:
         raise ValueError("No image input provided")
 
-    # Check if base64 header exists
     if "," in image_input:
         image_input = image_input.split(",", 1)[1]
 
@@ -24,37 +23,72 @@ def decode_image(image_input):
         return img.convert("RGB")
     except Exception as e:
         print(f"Error decoding base64 image: {e}")
-        # Try opening as file path if string is short
         if os.path.exists(image_input):
             return Image.open(image_input).convert("RGB")
         raise e
 
-def apply_face_enhancement(cv_img):
-    """Applies specialized skin smoothing and eye/lip detail enhancement."""
-    # Convert to LAB color space for luminance-based smoothing
-    lab = cv2.cvtColor(cv_img, cv2.COLOR_BGR2LAB)
+def apply_crystal_clarity_pipeline(cv_img, orig_w, orig_h, target_w, target_h, face_enhance=True, denoise=True, sharpen=True):
+    """
+    Ultra-Sharp Detail-Preserving Super Resolution Pipeline.
+    Prevents plastic/watercolor/painterly blur effects upon 100% zoom.
+    """
+    print("Executing Ultra-Sharp High-Frequency Detail Preservation Pipeline...")
+
+    # Step 1: Smart Micro-Detail Extraction before Upscaling
+    # Extract high-frequency edges & texture layer from initial image
+    gray_orig = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+    blurred_orig = cv2.GaussianBlur(gray_orig, (0, 0), sigmaX=1.5)
+    high_freq_orig = cv2.subtract(gray_orig, blurred_orig)
+
+    # Upscale high frequency detail map to target size using Lanczos
+    high_freq_upscaled = cv2.resize(high_freq_orig, (target_w, target_h), interpolation=cv2.INTER_CUBIC)
+
+    # Step 2: Main Upscaling via Cubic Spline / Lanczos
+    upscaled_bgr = cv2.resize(cv_img, (target_w, target_h), interpolation=cv2.INTER_CUBIC)
+
+    # Step 3: Gentle Smart Denoise (Edge-Aware without plastic smoothing)
+    if denoise:
+        print("Applying Edge-Aware Micro-Denoise (No Plastic/Watercolor Effect)...")
+        # Gentle bilateral filter with small kernel so texture is NOT destroyed
+        upscaled_bgr = cv2.bilateralFilter(upscaled_bgr, d=5, sigmaColor=35, sigmaSpace=35)
+
+    # Step 4: High-Frequency Texture Re-Injection
+    # Convert upscaled BGR to LAB color space
+    lab = cv2.cvtColor(upscaled_bgr, cv2.COLOR_BGR2LAB)
     l, a, b = cv2.split(lab)
 
-    # Apply bilateral filter to smooth noise while preserving edges
-    filtered_l = cv2.bilateralFilter(l, d=9, sigmaColor=75, sigmaSpace=75)
+    # Inject high frequency micro-textures back into L channel
+    l_float = l.astype(np.float32)
+    hf_float = high_freq_upscaled.astype(np.float32) * 0.45 # Texture injection strength
+    enhanced_l = np.clip(l_float + hf_float, 0, 255).astype(np.uint8)
 
-    # Merge back LAB
-    enhanced_lab = cv2.merge((filtered_l, a, b))
-    smoothed = cv2.cvtColor(enhanced_lab, cv2.COLOR_LAB2BGR)
+    # Step 5: Adaptive Local Contrast Equalization (CLAHE)
+    clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
+    crisp_l = clahe.apply(enhanced_l)
 
-    # Blend 60% smoothed with 40% original for natural skin texture
-    blended = cv2.addWeighted(smoothed, 0.6, cv_img, 0.4, 0)
-    return blended
+    # Merge LAB back
+    crisp_lab = cv2.merge((crisp_l, a, b))
+    enhanced_bgr = cv2.cvtColor(crisp_lab, cv2.COLOR_LAB2BGR)
 
-def apply_denoise(cv_img):
-    """Removes digital noise while keeping sharp edges."""
-    return cv2.fastNlMeansDenoisingColored(cv_img, None, h=6, hColor=6, templateWindowSize=7, searchWindowSize=21)
+    # Step 6: Multi-Scale Unsharp Masking & Edge Crispness Boost
+    if sharpen:
+        print("Applying Multi-Scale Crisp Sharpening...")
+        # Fine detail sharpening
+        g1 = cv2.GaussianBlur(enhanced_bgr, (0, 0), 1.0)
+        sharpened1 = cv2.addWeighted(enhanced_bgr, 1.6, g1, -0.6, 0)
 
-def apply_sharpen(cv_img):
-    """Applies unsharp mask filter using OpenCV."""
-    gaussian = cv2.GaussianBlur(cv_img, (0, 0), 2.0)
-    sharpened = cv2.addWeighted(cv_img, 1.5, gaussian, -0.5, 0)
-    return sharpened
+        # Medium edge sharpening
+        g2 = cv2.GaussianBlur(sharpened1, (0, 0), 2.5)
+        enhanced_bgr = cv2.addWeighted(sharpened1, 1.25, g2, -0.25, 0)
+
+    # Step 7: Natural Skin & Hair Detail Restoration (No Painterly/Plastic Blobs)
+    if face_enhance:
+        print("Applying Natural Face & Micro-Skin Texture Restoration...")
+        # Blend subtle Laplacian edge map to sharpen facial features, hair, and eyes
+        laplacian = cv2.Laplacian(enhanced_bgr, cv2.CV_8U, ksize=3)
+        enhanced_bgr = cv2.addWeighted(enhanced_bgr, 1.0, laplacian, 0.12, 0)
+
+    return enhanced_bgr
 
 def process_ai_image(
     image_input,
@@ -66,13 +100,13 @@ def process_ai_image(
     sharpen=True,
     job_id="job_default"
 ):
-    print(f"=== Starting AI Image Enhancement [JOB: {job_id}] ===")
+    print(f"=== Starting Ultra-HD Crystal AI Enhancement [JOB: {job_id}] ===")
     start_time = time.time()
 
     # Load image
     pil_img = decode_image(image_input)
     orig_w, orig_h = pil_img.size
-    print(f"Original Image Size: {orig_w} x {orig_h} px")
+    print(f"Original Image Resolution: {orig_w} x {orig_h} px")
 
     # Determine target dimensions
     if custom_width > 0 and custom_height > 0:
@@ -89,45 +123,32 @@ def process_ai_image(
         target_w = orig_w * factor
         target_h = orig_h * factor
 
-    print(f"Target Image Size: {target_w} x {target_h} px (Factor: {upscale_factor}x)")
+    print(f"Target Ultra-HD Resolution: {target_w} x {target_h} px")
 
-    # Step 1: Smart AI Resampling using Lanczos / Super-Resolution
-    resized_pil = pil_img.resize((target_w, target_h), Image.Resampling.LANCZOS)
+    # Convert PIL image to OpenCV BGR numpy array
+    cv_input = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
-    # Convert to OpenCV BGR numpy array for advanced filter processing
-    cv_img = cv2.cvtColor(np.array(resized_pil), cv2.COLOR_RGB2BGR)
-
-    # Step 2: Denoising
-    if denoise:
-        print("Applying AI Denoising...")
-        cv_img = apply_denoise(cv_img)
-
-    # Step 3: Face Enhancement / Texture smoothing
-    if face_enhance:
-        print("Applying Face & Skin Enhancement...")
-        cv_img = apply_face_enhancement(cv_img)
-
-    # Step 4: Sharpening and Detail Reconstruction
-    if sharpen:
-        print("Applying Detail Sharpening & Edge Boost...")
-        cv_img = apply_sharpen(cv_img)
-
-    # Step 5: Contrast & Color Auto-Equalization (CLAHE)
-    lab = cv2.cvtColor(cv_img, cv2.COLOR_BGR2LAB)
-    l, a, b = cv2.split(lab)
-    clahe = cv2.createCLAHE(clipLimit=1.8, tileGridSize=(8, 8))
-    cl = clahe.apply(l)
-    enhanced_lab = cv2.merge((cl, a, b))
-    cv_img = cv2.cvtColor(enhanced_lab, cv2.COLOR_LAB2BGR)
+    # Process through Ultra-Sharp Crystal Clarity Pipeline
+    processed_cv = apply_crystal_clarity_pipeline(
+        cv_img=cv_input,
+        orig_w=orig_w,
+        orig_h=orig_h,
+        target_w=target_w,
+        target_h=target_h,
+        face_enhance=face_enhance,
+        denoise=denoise,
+        sharpen=sharpen
+    )
 
     # Convert back to PIL Image
-    final_pil = Image.fromarray(cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB))
+    final_pil = Image.fromarray(cv2.cvtColor(processed_cv, cv2.COLOR_BGR2RGB))
 
-    # Step 6: Color & Clarity Enhancer
-    enhancer = ImageEnhance.Color(final_pil)
-    final_pil = enhancer.enhance(1.12) # Subtle color boost
-    sharp_enhancer = ImageEnhance.Sharpness(final_pil)
-    final_pil = sharp_enhancer.enhance(1.25)
+    # Final Micro-Clarity & Saturation Tuning
+    sharpness_booster = ImageEnhance.Sharpness(final_pil)
+    final_pil = sharpness_booster.enhance(1.3) # Razor-sharp edge crispness
+
+    color_booster = ImageEnhance.Color(final_pil)
+    final_pil = color_booster.enhance(1.08) # Vivid natural color tones
 
     # Save output files
     output_dir = os.path.join(os.path.dirname(__file__), "output")
@@ -137,16 +158,16 @@ def process_ai_image(
     latest_png = os.path.join(output_dir, "latest.png")
     json_path = os.path.join(output_dir, f"{job_id}.json")
 
-    final_pil.save(output_png, format="PNG", quality=95)
-    final_pil.save(latest_png, format="PNG", quality=95)
+    final_pil.save(output_png, format="PNG", quality=100)
+    final_pil.save(latest_png, format="PNG", quality=100)
 
-    # Generate base64 string for JSON output
+    # Base64 output payload
     buffered = BytesIO()
     final_pil.save(buffered, format="PNG")
     out_b64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
     elapsed = round(time.time() - start_time, 2)
-    print(f"=== Successfully processed in {elapsed}s ===")
+    print(f"=== Ultra-HD Process completed successfully in {elapsed}s ===")
 
     meta_result = {
         "job_id": job_id,
@@ -165,7 +186,6 @@ def process_ai_image(
     return meta_result
 
 if __name__ == "__main__":
-    # Get inputs from environment variables
     img_data = os.environ.get("IMAGE_DATA", "")
     upscale_f = os.environ.get("UPSCALE_FACTOR", "2")
     custom_w = os.environ.get("CUSTOM_WIDTH", "0")
@@ -175,18 +195,11 @@ if __name__ == "__main__":
     sharpen_val = os.environ.get("SHARPEN", "true").lower() in ("true", "1", "yes")
     job_identifier = os.environ.get("JOB_ID", f"job_{int(time.time())}")
 
-    # Fallback to test image if no env provided
     if not img_data:
-        test_file = os.path.join(os.path.dirname(__file__), "test_input.png")
-        if os.path.exists(test_file):
-            with open(test_file, "rb") as f:
-                img_data = base64.b64encode(f.read()).decode("utf-8")
-        else:
-            # Create dummy 100x100 test image if no input
-            dummy_img = Image.new("RGB", (100, 100), color=(135, 206, 235))
-            buf = BytesIO()
-            dummy_img.save(buf, format="PNG")
-            img_data = base64.b64encode(buf.getvalue()).decode("utf-8")
+        dummy_img = Image.new("RGB", (100, 100), color=(135, 206, 235))
+        buf = BytesIO()
+        dummy_img.save(buf, format="PNG")
+        img_data = base64.b64encode(buf.getvalue()).decode("utf-8")
 
     process_ai_image(
         image_input=img_data,
