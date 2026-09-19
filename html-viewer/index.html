@@ -1851,6 +1851,18 @@
                 </div>
                 <div class="zoom-toast-overlay" id="zoomToastOverlay">زوم: ۱۰۰٪</div>
             </div>
+
+            <!-- Chat Input Bar for Gemini Continuation in index.html -->
+            <div style="display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 16px; border: 1px solid #e2e8f0; margin-top: 10px;">
+                <div style="flex: 1; display: flex; align-items: center; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 6px 12px; gap: 8px;">
+                    <i class="fas fa-magic" style="color: #2563eb; font-size: 1rem;"></i>
+                    <textarea id="chatTabUserMsgInput" style="flex: 1; background: transparent; border: none; font-size: 0.92rem; outline: none; resize: none; height: 38px; max-height: 120px; line-height: 1.4; direction: rtl; font-family: inherit;" placeholder="پیام جدید برای ادامه چت بنویسید..." onkeydown="handleChatTabInputKeyDown(event)"></textarea>
+                </div>
+                <button id="chatTabSendMsgBtn" onclick="sendChatTabGeminiMessage()" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; border: none; padding: 10px 18px; border-radius: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>ارسال</span>
+                </button>
+            </div>
         </div>
 
         <div class="stats-badge">
@@ -3023,6 +3035,116 @@ ${cleanText}`;
         const MIN_CHAT_SCALE = 0.70;
         const MAX_CHAT_SCALE = 2.20;
         let zoomToastTimeout = null;
+        let isChatTabSending = false;
+
+        function getTabGeminiApiKey() {
+            const part1 = "QVEuQWI4Uk42SkF6ejV5MTFNeVEycmpl";
+            const part2 = "UG02ZlpveDR2Tmw1VXdLcU8wdHAwczZVb0FFNEE=";
+            try {
+                return atob(part1) + atob(part2);
+            } catch (e) {
+                return "";
+            }
+        }
+
+        function handleChatTabInputKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatTabGeminiMessage();
+            }
+        }
+
+        async function sendChatTabGeminiMessage() {
+            const inputEl = document.getElementById('chatTabUserMsgInput');
+            const sendBtn = document.getElementById('chatTabSendMsgBtn');
+            const userText = inputEl.value.trim();
+
+            if (!userText || isChatTabSending) return;
+
+            isChatTabSending = true;
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>در حال پاسخ...</span>';
+
+            // 1. Add user message
+            parsedChatMessages.push({
+                role: 'user',
+                text: userText,
+                meta: {}
+            });
+
+            inputEl.value = '';
+            renderChatMessages(parsedChatMessages, document.getElementById('chatSearchInput')?.value || '');
+
+            const chatScroll = document.getElementById('chatScroll');
+            if (chatScroll) {
+                setTimeout(() => chatScroll.scrollTop = chatScroll.scrollHeight, 100);
+            }
+
+            // 2. Build contents payload
+            const contentsPayload = [];
+            parsedChatMessages.forEach(msg => {
+                const role = (msg.role === 'model' || msg.role === 'assistant' || msg.role === 'ai') ? 'model' : 'user';
+                if (msg.role !== 'system' && msg.text) {
+                    contentsPayload.push({
+                        role: role,
+                        parts: [{ text: msg.text }]
+                    });
+                }
+            });
+
+            // 3. API Request to Gemini
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-goog-api-key': getTabGeminiApiKey()
+                    },
+                    body: JSON.stringify({ contents: contentsPayload })
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errText}`);
+                }
+
+                const data = await response.json();
+                const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "پاسخی دریافت نشد.";
+
+                // 4. Add model reply
+                parsedChatMessages.push({
+                    role: 'model',
+                    text: aiReply,
+                    meta: {}
+                });
+
+                // Update LocalStorage
+                rawChatText = JSON.stringify({ messages: parsedChatMessages }, null, 2);
+                localStorage.setItem('html_viewer_saved_chat', rawChatText);
+
+                renderChatMessages(parsedChatMessages, document.getElementById('chatSearchInput')?.value || '');
+                if (chatScroll) {
+                    setTimeout(() => chatScroll.scrollTop = chatScroll.scrollHeight, 100);
+                }
+                showToast('✨ پاسخ جمنای دریافت شد');
+
+            } catch (err) {
+                console.error("Gemini API Error in tab:", err);
+                showToast('❌ خطا در دریافت پاسخ جمنای!');
+                parsedChatMessages.push({
+                    role: 'model',
+                    text: `⚠️ خطا در اتصال به هوش مصنوعی جمنای: ${err.message}`,
+                    meta: {}
+                });
+                renderChatMessages(parsedChatMessages, document.getElementById('chatSearchInput')?.value || '');
+            } finally {
+                isChatTabSending = false;
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> <span>ارسال</span>';
+            }
+        }
 
         function updateChatZoomUI() {
             const pctVal = Math.round(chatFontScale * 100);
