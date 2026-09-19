@@ -819,6 +819,10 @@
                 <label style="font-size:0.8rem;color:var(--text-muted);">Repository Name (owner/repo):</label>
                 <input type="text" id="ghRepoInput" class="input-text" style="margin-top:4px;" value="om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd">
             </div>
+            <div>
+                <label style="font-size:0.8rem;color:var(--text-muted);">Branch / Ref (شاخه گیت‌هاب):</label>
+                <input type="text" id="ghBranchInput" class="input-text" style="margin-top:4px;" value="main" placeholder="main یا 129">
+            </div>
             <button class="primary-btn" id="saveSettingsBtn" style="margin-top:10px;">ذخیره تنظیمات</button>
         </div>
     </div>
@@ -950,17 +954,22 @@
         const saveSettingsBtn = document.getElementById('saveSettingsBtn');
         const ghTokenInput = document.getElementById('ghTokenInput');
         const ghRepoInput = document.getElementById('ghRepoInput');
+        const ghBranchInput = document.getElementById('ghBranchInput');
 
         ghTokenInput.value = localStorage.getItem('ai_enhancer_gh_token') || DEFAULT_GH_TOKEN;
         ghRepoInput.value = localStorage.getItem('ai_enhancer_gh_repo') || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
+        ghBranchInput.value = localStorage.getItem('ai_enhancer_gh_branch') || 'main';
 
         settingsBtn.onclick = () => settingsModal.style.display = 'flex';
         closeSettingsBtn.onclick = () => settingsModal.style.display = 'none';
         saveSettingsBtn.onclick = () => {
             const cleanRepo = sanitizeRepoName(ghRepoInput.value);
+            const cleanBranch = ghBranchInput.value.trim() || 'main';
             ghRepoInput.value = cleanRepo;
+            ghBranchInput.value = cleanBranch;
             localStorage.setItem('ai_enhancer_gh_token', ghTokenInput.value.trim());
             localStorage.setItem('ai_enhancer_gh_repo', cleanRepo);
+            localStorage.setItem('ai_enhancer_gh_branch', cleanBranch);
             settingsModal.style.display = 'none';
             alert('تنظیمات با موفقیت ذخیره شد!');
         };
@@ -1111,6 +1120,7 @@
 
             const token = localStorage.getItem('ai_enhancer_gh_token') || DEFAULT_GH_TOKEN;
             const rawRepo = localStorage.getItem('ai_enhancer_gh_repo') || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
+            const userBranch = localStorage.getItem('ai_enhancer_gh_branch') || 'main';
             const repo = sanitizeRepoName(rawRepo);
 
             if (!token) {
@@ -1121,64 +1131,78 @@
                 return;
             }
 
-            try {
-                const dispatchUrl = `https://api.github.com/repos/${repo}/actions/workflows/image_enhancer.yml/dispatches`;
-                logToConsole(`ارسال درخواست به آدرس: ${dispatchUrl}`, 'GITHUB_DISPATCH');
+            // Fallback list of branches to try if 422 No Ref Found occurs
+            const branchesToTry = [userBranch, 'main', '129', 'master'].filter((v, i, a) => a.indexOf(v) === i);
 
-                const response = await fetch(dispatchUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        ref: '129',
-                        inputs: {
-                            IMAGE_DATA: originalBase64,
-                            UPSCALE_FACTOR: selectedScale === 'custom' ? '2' : selectedScale,
-                            CUSTOM_WIDTH: targetW.toString(),
-                            CUSTOM_HEIGHT: targetH.toString(),
-                            FACE_ENHANCE: faceEnhance ? 'true' : 'false',
-                            DENOISE: denoise ? 'true' : 'false',
-                            SHARPEN: sharpen ? 'true' : 'false',
-                            JOB_ID: currentJobId
+            for (let i = 0; i < branchesToTry.length; i++) {
+                const targetRef = branchesToTry[i];
+                logToConsole(`تلاش برای ارسال به شاخه (Ref): [${targetRef}]...`, 'GITHUB_TRY_REF');
+
+                try {
+                    const dispatchUrl = `https://api.github.com/repos/${repo}/actions/workflows/image_enhancer.yml/dispatches`;
+                    const response = await fetch(dispatchUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            ref: targetRef,
+                            inputs: {
+                                IMAGE_DATA: originalBase64,
+                                UPSCALE_FACTOR: selectedScale === 'custom' ? '2' : selectedScale,
+                                CUSTOM_WIDTH: targetW.toString(),
+                                CUSTOM_HEIGHT: targetH.toString(),
+                                FACE_ENHANCE: faceEnhance ? 'true' : 'false',
+                                DENOISE: denoise ? 'true' : 'false',
+                                SHARPEN: sharpen ? 'true' : 'false',
+                                JOB_ID: currentJobId
+                            }
+                        })
+                    });
+
+                    if (response.status === 204 || response.ok) {
+                        logToConsole(`درخواست با موفقیت در شاخه [${targetRef}] ثبت شد (HTTP 204 OK).`, 'GITHUB_SUCCESS');
+                        statusTitle.innerText = 'درخواست ارسال شد ⚡ در حال اجرا در ابر گیت‌هاب...';
+                        statusDetail.innerText = `ورک‌فلو در شاخه [${targetRef}] در حال پردازش تصویر است...`;
+                        pollGitHubResult(repo, token, targetRef);
+                        return;
+                    } else {
+                        const errText = await response.text();
+                        logToConsole(`خطا در ارسال به شاخه [${targetRef}]: کد ${response.status} - ${errText}`, 'GITHUB_REF_FAIL');
+
+                        // If NOT a 422 Ref Error or last branch, break
+                        if (response.status !== 422 || i === branchesToTry.length - 1) {
+                            statusTitle.innerText = '❌ گزارش خطا در سرور گیت‌هاب';
+                            statusDetail.innerText = `کد خطا: ${response.status} - برای مشاهده و کپی کامل لاگ، دکمه 🐛 را بزنید.`;
+                            return;
                         }
-                    })
-                });
-
-                if (response.status === 204 || response.ok) {
-                    logToConsole('درخواست با موفقیت در گیت‌هاب ثبت شد (HTTP 204 OK).', 'GITHUB_SUCCESS');
-                    statusTitle.innerText = 'درخواست ارسال شد ⚡ در حال اجرا در ابر گیت‌هاب...';
-                    statusDetail.innerText = 'هوش مصنوعی سرور در حال رتوش و افزایش کیفیت تصویر است...';
-                    pollGitHubResult(repo, token);
-                } else {
-                    const errText = await response.text();
-                    const fullErrStr = `خطا در فراخوانی API گیت‌هاب: کد کد ${response.status} (${response.statusText}) - جزئیات: ${errText}`;
-                    logToConsole(fullErrStr, 'GITHUB_API_ERROR');
-                    statusTitle.innerText = '❌ گزارش خطا در سرور گیت‌هاب';
-                    statusDetail.innerText = `کد خطا: ${response.status} - برای مشاهده و کپی کامل لاگ، دکمه 🐛 را بزنید.`;
+                    }
+                } catch (err) {
+                    const connErr = `خطای ارتباط با گیت‌هاب (شاخه ${targetRef}): ${err.message || err}`;
+                    logToConsole(connErr, 'GITHUB_NETWORK_ERROR');
+                    if (i === branchesToTry.length - 1) {
+                        statusTitle.innerText = '❌ عدم برقراری ارتباط با سرور';
+                        statusDetail.innerText = connErr;
+                        return;
+                    }
                 }
-            } catch (err) {
-                const connErr = `خطای ارتباط با گیت‌هاب: ${err.message || err}`;
-                logToConsole(connErr, 'GITHUB_NETWORK_ERROR');
-                statusTitle.innerText = '❌ عدم برقراری ارتباط با سرور';
-                statusDetail.innerText = connErr;
             }
         }
 
         // Poll for output image result from GitHub repo output
-        async function pollGitHubResult(rawRepoName, token) {
+        async function pollGitHubResult(rawRepoName, token, activeRef = 'main') {
             const repo = sanitizeRepoName(rawRepoName);
             let attempts = 0;
             const maxAttempts = 25;
 
             const pollInterval = setInterval(async () => {
                 attempts++;
-                statusDetail.innerText = `در حال دریافت خروجی از سرور (تلاش ${attempts} از ${maxAttempts})...`;
+                statusDetail.innerText = `در حال دریافت خروجی از سرور [شاخه ${activeRef}] (تلاش ${attempts} از ${maxAttempts})...`;
 
                 try {
-                    const outputUrl = `https://raw.githubusercontent.com/${repo}/129/image-enhancer/output/${currentJobId}.json?t=${Date.now()}`;
+                    const outputUrl = `https://raw.githubusercontent.com/${repo}/${activeRef}/image-enhancer/output/${currentJobId}.json?t=${Date.now()}`;
                     logToConsole(`بررسی وضعیت خروجی سرور: ${outputUrl}`, 'GITHUB_POLL');
                     const res = await fetch(outputUrl);
 
