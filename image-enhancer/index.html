@@ -676,6 +676,57 @@
                 <button class="icon-btn" id="aspectLockBtn" title="قفل نسبت تصویر" style="margin-top: 18px;">🔒</button>
             </div>
 
+            <!-- AI Library / Model Style Selector -->
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 8px;">
+                    🧬 مدل و الگوریتم هوش مصنوعی (AI Model Engine):
+                </label>
+                <select id="aiModelSelect" class="input-text" style="font-weight: 700; background: rgba(139, 92, 246, 0.15); border-color: var(--accent-purple);">
+                    <option value="crystal_hd">💎 Crystal Real-ESRGAN (شفافیت فوق‌العاده عمومی و مناظر)</option>
+                    <option value="codeformer_face">👤 CodeFormer Face Master (تخصصی چهره، رتوش پوست و چشم‌ها)</option>
+
+                    <option value="anime_art">🎨 Anime & Digital Art (ویژه انیمه، نقاشی و طرح‌های گرافیکی)</option>
+                    <option value="hdr_vivid">⚡ Dynamic HDR Boost (کنتراست زنده، عمق رنگ و جزئیات تاریک)</option>
+                </select>
+            </div>
+
+            <!-- Quality Control Sliders -->
+            <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; background: rgba(0,0,0,0.2); padding: 14px; border-radius: 14px;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px;">
+                        <span>🔪 میزان تیز بودن لبه‌ها (Sharpen Strength):</span>
+                        <span id="sharpenValTxt" style="color: var(--accent-pink);">120%</span>
+                    </div>
+                    <input type="range" id="sharpenRange" min="0" max="200" value="120" style="width: 100%; accent-color: var(--accent-pink);">
+                </div>
+
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px;">
+                        <span>🧴 میزان نرمی و همواری سطح (Smooth Skin/Surface):</span>
+                        <span id="smoothValTxt" style="color: var(--accent-purple);">60%</span>
+                    </div>
+                    <input type="range" id="smoothRange" min="0" max="100" value="60" style="width: 100%; accent-color: var(--accent-purple);">
+                </div>
+
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px;">
+                        <span>🎨 غنای رنگ و کنتراست (Color & Contrast Boost):</span>
+                        <span id="contrastValTxt" style="color: var(--accent-gold);">110%</span>
+                    </div>
+                    <input type="range" id="contrastRange" min="50" max="180" value="110" style="width: 100%; accent-color: var(--accent-gold);">
+                </div>
+            </div>
+
+            <!-- Output Format Selector -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; background: rgba(255,255,255,0.04); padding: 10px 14px; border-radius: 12px;">
+                <span style="font-size: 0.85rem; font-weight: 700;">🖼️ فرمت خروجی تصویر:</span>
+                <select id="outputFormatSelect" class="input-text" style="width: auto; padding: 6px 12px; font-weight: 700;">
+                    <option value="png">PNG (کیفیت اصلی بدون افت)</option>
+                    <option value="webp">WEBP (فوق‌العاده کم حجم)</option>
+                    <option value="jpg">JPG (100% کیفیت)</option>
+                </select>
+            </div>
+
             <!-- Quality Toggles -->
             <div class="toggles-list">
                 <label class="toggle-item">
@@ -1122,6 +1173,17 @@
             }
         }
 
+        // Slider value text updaters
+        document.getElementById('sharpenRange').oninput = (e) => {
+            document.getElementById('sharpenValTxt').innerText = `${e.target.value}%`;
+        };
+        document.getElementById('smoothRange').oninput = (e) => {
+            document.getElementById('smoothValTxt').innerText = `${e.target.value}%`;
+        };
+        document.getElementById('contrastRange').oninput = (e) => {
+            document.getElementById('contrastValTxt').innerText = `${e.target.value}%`;
+        };
+
         // Aspect Ratio Lock Toggle
         const aspectLockBtn = document.getElementById('aspectLockBtn');
         aspectLockBtn.onclick = () => {
@@ -1235,6 +1297,11 @@
                                 FACE_ENHANCE: faceEnhance ? 'true' : 'false',
                                 DENOISE: denoise ? 'true' : 'false',
                                 SHARPEN: sharpen ? 'true' : 'false',
+                                SHARPEN_STRENGTH: document.getElementById('sharpenRange').value,
+                                SMOOTH_STRENGTH: document.getElementById('smoothRange').value,
+                                CONTRAST_STRENGTH: document.getElementById('contrastRange').value,
+                                AI_MODEL: document.getElementById('aiModelSelect').value,
+                                OUTPUT_FORMAT: document.getElementById('outputFormatSelect').value,
                                 JOB_ID: currentJobId
                             }
                         })

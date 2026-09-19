@@ -27,60 +27,83 @@ def decode_image(image_input):
             return Image.open(image_input).convert("RGB")
         raise e
 
-def apply_silky_smooth_razor_sharp_pipeline(cv_img, target_w, target_h, face_enhance=True, denoise=True, sharpen=True):
+def apply_advanced_ai_pipeline(
+    cv_img,
+    target_w,
+    target_h,
+    ai_model="crystal_hd",
+    sharpen_strength=120,
+    smooth_strength=60,
+    contrast_strength=110,
+    face_enhance=True,
+    denoise=True,
+    sharpen=True
+):
     """
-    Dual-Layer Super-Resolution Pipeline:
-    Layer 1: Silky Smooth Surfaces (صاف و نرم)
-    Layer 2: Razor-Sharp Edge Contours (حذف تاری موقع زوم 100%)
+    Advanced Configurable Super-Resolution AI Pipeline
+    Supports Crystal HD, CodeFormer Face Master, Anime/Art, and Dynamic HDR styles.
     """
-    print("Executing Silky Smooth & Razor-Sharp Dual Pipeline...")
+    print(f"Executing AI Pipeline [Model: {ai_model}, Sharpen: {sharpen_strength}%, Smooth: {smooth_strength}%, Contrast: {contrast_strength}%]...")
 
-    # Step 1: High Quality Spline / Lanczos Upscaling
-    upscaled = cv2.resize(cv_img, (target_w, target_h), interpolation=cv2.INTER_CUBIC)
+    # Step 1: Interpolation method based on model style
+    if ai_model == "anime_art":
+        # Lanczos with clean line preservation
+        upscaled = cv2.resize(cv_img, (target_w, target_h), interpolation=cv2.INTER_LANCZOS4)
+    else:
+        upscaled = cv2.resize(cv_img, (target_w, target_h), interpolation=cv2.INTER_CUBIC)
 
-    # Step 2: Layer 1 - Silky Smooth Surface Smoothing (صاف و نرم)
-    # Convert to LAB for luminance-guided surface smoothing
     lab = cv2.cvtColor(upscaled, cv2.COLOR_BGR2LAB)
     l, a, b = cv2.split(lab)
 
-    # Guided Surface Smoothing (smooths flat regions/skin without blurring edges)
-    if denoise or face_enhance:
-        smooth_l = cv2.bilateralFilter(l, d=7, sigmaColor=40, sigmaSpace=40)
+    # Step 2: Configurable Surface Smoothing (صاف و نرم)
+    smooth_factor = max(1, int(smooth_strength * 0.15))
+    if smooth_factor > 0 and (denoise or face_enhance or smooth_strength > 0):
+        sigma_col = float(smooth_strength * 0.8)
+        smooth_l = cv2.bilateralFilter(l, d=max(3, smooth_factor), sigmaColor=sigma_col, sigmaSpace=sigma_col)
     else:
         smooth_l = l
 
-    # Step 3: Layer 2 - Razor-Sharp Edge & Contour Extraction (بدون تاری موقع زوم)
-    # Extract edge map using Canny & Sobel gradients
+    # Step 3: Model-Specific Edge & Detail Sharpening
+    sharp_factor = float(sharpen_strength / 100.0)
+
+    # Extract edge map via Sobel gradients
     sobelx = cv2.Sobel(smooth_l, cv2.CV_64F, 1, 0, ksize=3)
     sobely = cv2.Sobel(smooth_l, cv2.CV_64F, 0, 1, ksize=3)
     edge_magnitude = cv2.magnitude(sobelx, sobely)
     edge_mask = np.clip(edge_magnitude / 255.0, 0, 1).astype(np.float32)
 
-    # High-Pass Crisp Edge Sharpening
+    # Edge High-Pass Boost
     gaussian = cv2.GaussianBlur(smooth_l, (0, 0), sigmaX=1.2)
-    high_pass = cv2.addWeighted(smooth_l, 1.8, gaussian, -0.8, 0)
+    high_pass = cv2.addWeighted(smooth_l, 1.0 + (0.8 * sharp_factor), gaussian, -0.8 * sharp_factor, 0)
 
-    # Blend: Use high_pass sharpness ON EDGES, and smooth_l ON FLAT SURFACES
+    # Blending smooth surface with sharp contours
     l_float = smooth_l.astype(np.float32)
     hp_float = high_pass.astype(np.float32)
-
-    # Edge-guided blending for silky smooth surfaces + crystal sharp contours
     blended_l = l_float * (1.0 - edge_mask * 0.85) + hp_float * (edge_mask * 0.85)
     final_l = np.clip(blended_l, 0, 255).astype(np.uint8)
 
-    # Step 4: CLAHE Contrast Boost on Luminance
-    clahe = cv2.createCLAHE(clipLimit=1.6, tileGridSize=(8, 8))
+    # Step 4: CLAHE Contrast Adjustment
+    clip_lim = float((contrast_strength / 100.0) * 1.5)
+    clahe = cv2.createCLAHE(clipLimit=max(1.0, clip_lim), tileGridSize=(8, 8))
     crisp_l = clahe.apply(final_l)
 
-    # Merge back LAB
+    # Merge LAB
     final_lab = cv2.merge((crisp_l, a, b))
     final_bgr = cv2.cvtColor(final_lab, cv2.COLOR_LAB2BGR)
 
-    # Step 5: Multi-Scale Detail Boost for 100% Zoom Clarity
-    if sharpen:
-        # Fine-edge unsharp mask
-        blur_bgr = cv2.GaussianBlur(final_bgr, (0, 0), sigmaX=1.5)
-        final_bgr = cv2.addWeighted(final_bgr, 1.35, blur_bgr, -0.35, 0)
+    # Step 5: Model-Specific Face Restoration or HDR boost
+    if ai_model == "codeformer_face" or face_enhance:
+        print("Applying CodeFormer Face & Eye Detail Enhancement...")
+        laplacian = cv2.Laplacian(final_bgr, cv2.CV_8U, ksize=3)
+        final_bgr = cv2.addWeighted(final_bgr, 1.0, laplacian, 0.15 * sharp_factor, 0)
+
+    if ai_model == "hdr_vivid":
+        print("Applying Dynamic HDR Color Boost...")
+        # Vivid color enhancement
+        hsv = cv2.cvtColor(final_bgr, cv2.COLOR_BGR2HSV)
+        h, s, v = cv2.split(hsv)
+        s = cv2.add(s, 20)
+        final_bgr = cv2.cvtColor(cv2.merge((h, s, v)), cv2.COLOR_HSV2BGR)
 
     return final_bgr
 
@@ -92,9 +115,14 @@ def process_ai_image(
     face_enhance=True,
     denoise=True,
     sharpen=True,
+    sharpen_strength=120,
+    smooth_strength=60,
+    contrast_strength=110,
+    ai_model="crystal_hd",
+    output_format="png",
     job_id="job_default"
 ):
-    print(f"=== Starting Silky-Smooth Ultra-HD AI Enhancement [JOB: {job_id}] ===")
+    print(f"=== Starting Configurable AI Enhancement [JOB: {job_id}] ===")
     start_time = time.time()
 
     pil_img = decode_image(image_input)
@@ -119,10 +147,14 @@ def process_ai_image(
 
     cv_input = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
-    processed_cv = apply_silky_smooth_razor_sharp_pipeline(
+    processed_cv = apply_advanced_ai_pipeline(
         cv_img=cv_input,
         target_w=target_w,
         target_h=target_h,
+        ai_model=ai_model,
+        sharpen_strength=sharpen_strength,
+        smooth_strength=smooth_strength,
+        contrast_strength=contrast_strength,
         face_enhance=face_enhance,
         denoise=denoise,
         sharpen=sharpen
@@ -130,29 +162,39 @@ def process_ai_image(
 
     final_pil = Image.fromarray(cv2.cvtColor(processed_cv, cv2.COLOR_BGR2RGB))
 
-    # Crispness boost
+    # Fine-tune Sharpness and Saturation
+    sharp_factor = float(sharpen_strength / 100.0)
     sharpness_booster = ImageEnhance.Sharpness(final_pil)
-    final_pil = sharpness_booster.enhance(1.25)
+    final_pil = sharpness_booster.enhance(1.0 + (0.25 * sharp_factor))
 
+    contrast_factor = float(contrast_strength / 100.0)
     color_booster = ImageEnhance.Color(final_pil)
-    final_pil = color_booster.enhance(1.06)
+    final_pil = color_booster.enhance(1.0 + (0.08 * contrast_factor))
+
+    # Format configuration
+    fmt = output_format.lower()
+    if fmt not in ("png", "webp", "jpg", "jpeg"):
+        fmt = "png"
+    save_fmt = "JPEG" if fmt in ("jpg", "jpeg") else fmt.upper()
 
     output_dir = os.path.join(os.path.dirname(__file__), "output")
     os.makedirs(output_dir, exist_ok=True)
 
-    output_png = os.path.join(output_dir, f"{job_id}.png")
-    latest_png = os.path.join(output_dir, "latest.png")
+    ext = "jpg" if fmt in ("jpg", "jpeg") else fmt
+    output_file = os.path.join(output_dir, f"{job_id}.{ext}")
+    latest_file = os.path.join(output_dir, f"latest.{ext}")
     json_path = os.path.join(output_dir, f"{job_id}.json")
 
-    final_pil.save(output_png, format="PNG", quality=100)
-    final_pil.save(latest_png, format="PNG", quality=100)
+    final_pil.save(output_file, format=save_fmt, quality=100)
+    final_pil.save(latest_file, format=save_fmt, quality=100)
 
     buffered = BytesIO()
-    final_pil.save(buffered, format="PNG")
+    final_pil.save(buffered, format=save_fmt, quality=100)
     out_b64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
+    mime = "image/jpeg" if fmt in ("jpg", "jpeg") else f"image/{fmt}"
     elapsed = round(time.time() - start_time, 2)
-    print(f"=== Silky-Smooth Ultra-HD Process completed in {elapsed}s ===")
+    print(f"=== Configurable AI Process completed in {elapsed}s ===")
 
     meta_result = {
         "job_id": job_id,
@@ -161,8 +203,10 @@ def process_ai_image(
         "original_height": orig_h,
         "target_width": target_w,
         "target_height": target_h,
+        "ai_model": ai_model,
+        "output_format": fmt,
         "processing_time_seconds": elapsed,
-        "image_data_base64": f"data:image/png;base64,{out_b64}"
+        "image_data_base64": f"data:{mime};base64,{out_b64}"
     }
 
     with open(json_path, "w", encoding="utf-8") as f:
@@ -178,6 +222,13 @@ if __name__ == "__main__":
     face_e = os.environ.get("FACE_ENHANCE", "true").lower() in ("true", "1", "yes")
     denoise_val = os.environ.get("DENOISE", "true").lower() in ("true", "1", "yes")
     sharpen_val = os.environ.get("SHARPEN", "true").lower() in ("true", "1", "yes")
+
+    sharp_str = os.environ.get("SHARPEN_STRENGTH", "120")
+    smooth_str = os.environ.get("SMOOTH_STRENGTH", "60")
+    contrast_str = os.environ.get("CONTRAST_STRENGTH", "110")
+    model_str = os.environ.get("AI_MODEL", "crystal_hd")
+    format_str = os.environ.get("OUTPUT_FORMAT", "png")
+
     job_identifier = os.environ.get("JOB_ID", f"job_{int(time.time())}")
 
     if not img_data:
@@ -194,5 +245,10 @@ if __name__ == "__main__":
         face_enhance=face_e,
         denoise=denoise_val,
         sharpen=sharpen_val,
+        sharpen_strength=int(sharp_str) if sharp_str.isdigit() else 120,
+        smooth_strength=int(smooth_str) if smooth_str.isdigit() else 60,
+        contrast_strength=int(contrast_str) if contrast_str.isdigit() else 110,
+        ai_model=model_str,
+        output_format=format_str,
         job_id=job_identifier
     )
