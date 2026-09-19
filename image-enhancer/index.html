@@ -839,6 +839,19 @@
 
         const DEFAULT_GH_TOKEN = '';
 
+        // Helper to sanitize Repository Name input
+        function sanitizeRepoName(rawStr) {
+            if (!rawStr) return 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
+            let s = rawStr.trim();
+            s = s.replace(/^gh\s+repo\s+clone\s+/i, '');
+            s = s.replace(/^git\s+clone\s+/i, '');
+            s = s.replace(/^https?:\/\/github\.com\//i, '');
+            s = s.replace(/^git@github\.com:/i, '');
+            s = s.replace(/\.git$/i, '');
+            s = s.trim().replace(/^\/+|\/+$/g, '');
+            return s || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
+        }
+
         // System Logging Engine
         let systemLogs = [];
         function logToConsole(message, type = 'INFO') {
@@ -944,8 +957,10 @@
         settingsBtn.onclick = () => settingsModal.style.display = 'flex';
         closeSettingsBtn.onclick = () => settingsModal.style.display = 'none';
         saveSettingsBtn.onclick = () => {
+            const cleanRepo = sanitizeRepoName(ghRepoInput.value);
+            ghRepoInput.value = cleanRepo;
             localStorage.setItem('ai_enhancer_gh_token', ghTokenInput.value.trim());
-            localStorage.setItem('ai_enhancer_gh_repo', ghRepoInput.value.trim());
+            localStorage.setItem('ai_enhancer_gh_repo', cleanRepo);
             settingsModal.style.display = 'none';
             alert('تنظیمات با موفقیت ذخیره شد!');
         };
@@ -1095,7 +1110,8 @@
             logToConsole(`شروع فرآیند ارسال به سرور گیت‌هاب (کد جاب: ${currentJobId})...`, 'GITHUB_START');
 
             const token = localStorage.getItem('ai_enhancer_gh_token') || DEFAULT_GH_TOKEN;
-            const repo = localStorage.getItem('ai_enhancer_gh_repo') || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
+            const rawRepo = localStorage.getItem('ai_enhancer_gh_repo') || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
+            const repo = sanitizeRepoName(rawRepo);
 
             if (!token) {
                 const errMsg = 'توکن گیت‌هاب (PAT) وارد نشده است! لطفاً از بخش تنظیمات ⚙️ توکن خود را وارد کنید.';
@@ -1152,7 +1168,8 @@
         }
 
         // Poll for output image result from GitHub repo output
-        async function pollGitHubResult(repo, token) {
+        async function pollGitHubResult(rawRepoName, token) {
+            const repo = sanitizeRepoName(rawRepoName);
             let attempts = 0;
             const maxAttempts = 25;
 
