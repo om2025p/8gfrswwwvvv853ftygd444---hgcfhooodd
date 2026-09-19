@@ -3277,6 +3277,27 @@ ${dayBlocksHtml}
         const CF_BACKUP_NAMESPACE_ID = "dd850edf9e5f4bb892e4859183c0a6f8";
         const getCfBackupToken = () => ["cfut_", "9OXqA1KGUJI4", "0xZv5YMzElxI", "IEiaMD1KzD0s", "Ip980b5170e4"].join("");
 
+        async function cfFetchWithProxy(targetUrl, options = {}) {
+            const proxyBase = "https://emarat-proxy.qqqggggcc.workers.dev/?url=";
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3500);
+                const directRes = await fetch(targetUrl, {
+                    ...options,
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                if (directRes.ok || directRes.status === 401 || directRes.status === 403) {
+                    return directRes;
+                }
+            } catch (err) {
+                console.warn("Direct Cloudflare API fetch failed/blocked, switching to worker proxy...", err);
+            }
+
+            const proxiedUrl = `${proxyBase}${encodeURIComponent(targetUrl)}`;
+            return fetch(proxiedUrl, options);
+        }
+
         async function exportFullBackup() {
             try {
                 const data = {};
@@ -3301,7 +3322,7 @@ ${dayBlocksHtml}
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                // 2. آپلود همزمان به ابر کلودفلر (Cloudflare KV)
+                // 2. آپلود همزمان به ابر کلودفلر (Cloudflare KV با پروکسی هوشمند)
                 try {
                     const urlLatest = `https://api.cloudflare.com/client/v4/accounts/${CF_BACKUP_ACCOUNT_ID}/storage/kv/namespaces/${CF_BACKUP_NAMESPACE_ID}/values/latest_backup`;
                     const urlDated = `https://api.cloudflare.com/client/v4/accounts/${CF_BACKUP_ACCOUNT_ID}/storage/kv/namespaces/${CF_BACKUP_NAMESPACE_ID}/values/emarat_backup_${dateStr}`;
@@ -3311,8 +3332,8 @@ ${dayBlocksHtml}
                         "Content-Type": "application/json"
                     };
 
-                    const res1 = await fetch(urlLatest, { method: "PUT", headers: headers, body: jsonStr });
-                    fetch(urlDated, { method: "PUT", headers: headers, body: jsonStr }).catch(e => console.warn("Dated backup save err:", e));
+                    const res1 = await cfFetchWithProxy(urlLatest, { method: "PUT", headers: headers, body: jsonStr });
+                    cfFetchWithProxy(urlDated, { method: "PUT", headers: headers, body: jsonStr }).catch(e => console.warn("Dated backup save err:", e));
 
                     if (res1.ok) {
                         alert(`✅ پشتیبان‌گیری کامل دوتایی انجام شد:\n\n۱. فایل پشتیبان محلی (${fileName}) دانلود شد.\n۲. پشتیبان ابری با موفقیت در کلودفلر (Cloudflare KV) ذخیره گردید. ☁️⚡`);
@@ -3338,7 +3359,7 @@ ${dayBlocksHtml}
                     "Authorization": `Bearer ${getCfBackupToken()}`
                 };
 
-                const res = await fetch(urlLatest, { method: "GET", headers: headers });
+                const res = await cfFetchWithProxy(urlLatest, { method: "GET", headers: headers });
                 if (!res.ok) {
                     throw new Error(`خطا در ارتباط با کلودفلر (کد ${res.status})`);
                 }
