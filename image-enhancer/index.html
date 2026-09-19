@@ -803,27 +803,43 @@
 
     <!-- Modal Settings -->
     <div class="modal-overlay" id="settingsModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 550px;">
             <div class="modal-header">
-                <h3 style="display:flex;align-items:center;gap:8px;">⚙️ تنظیمات اتصال به گیت‌هاب</h3>
+                <h3 style="display:flex;align-items:center;gap:8px;">⚙️ تنظیمات کامل سرور گیت‌هاب و اتوماسیون</h3>
                 <button class="modal-close" id="closeSettingsBtn">&times;</button>
             </div>
-            <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.5;">
-                برای استفاده از سرور ابری گیت‌هاب، توکن دسترسی (PAT) به‌صورت پیش‌فرض تنظیم شده است. در صورت نیاز می‌توانید توکن جدید وارد کنید.
+            <div style="font-size:0.82rem;color:var(--text-muted);line-height:1.5;">
+                اطلاعات اتصال گیت‌هاب خود را دقیقاً وارد کنید. این اطلاعات در مرورگر شما ذخیره شده و پردازش‌ها بر اساس آن انجام می‌شوند.
             </div>
-            <div>
-                <label style="font-size:0.8rem;color:var(--text-muted);">GitHub Personal Access Token:</label>
-                <input type="text" id="ghTokenInput" class="input-text" style="margin-top:4px;">
+
+            <div style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-left: 4px;">
+                <div>
+                    <label style="font-size:0.8rem;color:var(--text-muted);font-weight:bold;">1. GitHub Personal Access Token (PAT):</label>
+                    <input type="text" id="ghTokenInput" class="input-text" style="margin-top:4px;" placeholder="ghp_xxxxxxxxxxxxxxxxx">
+                </div>
+
+                <div>
+                    <label style="font-size:0.8rem;color:var(--text-muted);font-weight:bold;">2. Repository Name (نام انبار کد owner/repo):</label>
+                    <input type="text" id="ghRepoInput" class="input-text" style="margin-top:4px;" value="om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd" placeholder="owner/repo">
+                </div>
+
+                <div>
+                    <label style="font-size:0.8rem;color:var(--text-muted);font-weight:bold;">3. Target Branch / Ref (نام شاخه اصلی سرور):</label>
+                    <input type="text" id="ghBranchInput" class="input-text" style="margin-top:4px;" value="main" placeholder="main یا master یا 129">
+                </div>
+
+                <div>
+                    <label style="font-size:0.8rem;color:var(--text-muted);font-weight:bold;">4. Workflow File Name (نام فایل اکشن گیت‌هاب):</label>
+                    <input type="text" id="ghWorkflowInput" class="input-text" style="margin-top:4px;" value="image_enhancer.yml" placeholder="image_enhancer.yml">
+                </div>
+
+                <div>
+                    <label style="font-size:0.8rem;color:var(--text-muted);font-weight:bold;">5. Max Polling Retries (تعداد تلاش‌های استعلام خروجی):</label>
+                    <input type="number" id="ghRetriesInput" class="input-text" style="margin-top:4px;" value="30" placeholder="30">
+                </div>
             </div>
-            <div>
-                <label style="font-size:0.8rem;color:var(--text-muted);">Repository Name (owner/repo):</label>
-                <input type="text" id="ghRepoInput" class="input-text" style="margin-top:4px;" value="om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd">
-            </div>
-            <div>
-                <label style="font-size:0.8rem;color:var(--text-muted);">Branch / Ref (شاخه گیت‌هاب):</label>
-                <input type="text" id="ghBranchInput" class="input-text" style="margin-top:4px;" value="main" placeholder="main یا 129">
-            </div>
-            <button class="primary-btn" id="saveSettingsBtn" style="margin-top:10px;">ذخیره تنظیمات</button>
+
+            <button class="primary-btn" id="saveSettingsBtn" style="margin-top:10px;">💾 ذخیره کامل تنظیمات</button>
         </div>
     </div>
 
@@ -955,23 +971,37 @@
         const ghTokenInput = document.getElementById('ghTokenInput');
         const ghRepoInput = document.getElementById('ghRepoInput');
         const ghBranchInput = document.getElementById('ghBranchInput');
+        const ghWorkflowInput = document.getElementById('ghWorkflowInput');
+        const ghRetriesInput = document.getElementById('ghRetriesInput');
 
         ghTokenInput.value = localStorage.getItem('ai_enhancer_gh_token') || DEFAULT_GH_TOKEN;
         ghRepoInput.value = localStorage.getItem('ai_enhancer_gh_repo') || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
         ghBranchInput.value = localStorage.getItem('ai_enhancer_gh_branch') || 'main';
+        ghWorkflowInput.value = localStorage.getItem('ai_enhancer_gh_workflow') || 'image_enhancer.yml';
+        ghRetriesInput.value = localStorage.getItem('ai_enhancer_gh_retries') || '30';
 
         settingsBtn.onclick = () => settingsModal.style.display = 'flex';
         closeSettingsBtn.onclick = () => settingsModal.style.display = 'none';
         saveSettingsBtn.onclick = () => {
             const cleanRepo = sanitizeRepoName(ghRepoInput.value);
             const cleanBranch = ghBranchInput.value.trim() || 'main';
+            const cleanWorkflow = ghWorkflowInput.value.trim() || 'image_enhancer.yml';
+            const cleanRetries = parseInt(ghRetriesInput.value) || 30;
+
             ghRepoInput.value = cleanRepo;
             ghBranchInput.value = cleanBranch;
+            ghWorkflowInput.value = cleanWorkflow;
+            ghRetriesInput.value = cleanRetries;
+
             localStorage.setItem('ai_enhancer_gh_token', ghTokenInput.value.trim());
             localStorage.setItem('ai_enhancer_gh_repo', cleanRepo);
             localStorage.setItem('ai_enhancer_gh_branch', cleanBranch);
+            localStorage.setItem('ai_enhancer_gh_workflow', cleanWorkflow);
+            localStorage.setItem('ai_enhancer_gh_retries', cleanRetries.toString());
+
             settingsModal.style.display = 'none';
-            alert('تنظیمات با موفقیت ذخیره شد!');
+            alert('تنظیمات کامل با موفقیت ذخیره شد!');
+            logToConsole('تنظیمات جدید کاربر ذخیره شد.', 'SETTINGS_UPDATE');
         };
 
         // File Selection & Drag & Drop
@@ -1121,6 +1151,7 @@
             const token = localStorage.getItem('ai_enhancer_gh_token') || DEFAULT_GH_TOKEN;
             const rawRepo = localStorage.getItem('ai_enhancer_gh_repo') || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
             const userBranch = localStorage.getItem('ai_enhancer_gh_branch') || 'main';
+            const workflowFile = localStorage.getItem('ai_enhancer_gh_workflow') || 'image_enhancer.yml';
             const repo = sanitizeRepoName(rawRepo);
 
             if (!token) {
@@ -1136,10 +1167,10 @@
 
             for (let i = 0; i < branchesToTry.length; i++) {
                 const targetRef = branchesToTry[i];
-                logToConsole(`تلاش برای ارسال به شاخه (Ref): [${targetRef}]...`, 'GITHUB_TRY_REF');
+                logToConsole(`تلاش برای ارسال به شاخه (Ref): [${targetRef}] با فایل [${workflowFile}]...`, 'GITHUB_TRY_REF');
 
                 try {
-                    const dispatchUrl = `https://api.github.com/repos/${repo}/actions/workflows/image_enhancer.yml/dispatches`;
+                    const dispatchUrl = `https://api.github.com/repos/${repo}/actions/workflows/${workflowFile}/dispatches`;
                     const response = await fetch(dispatchUrl, {
                         method: 'POST',
                         headers: {
@@ -1172,7 +1203,6 @@
                         const errText = await response.text();
                         logToConsole(`خطا در ارسال به شاخه [${targetRef}]: کد ${response.status} - ${errText}`, 'GITHUB_REF_FAIL');
 
-                        // If NOT a 422 Ref Error or last branch, break
                         if (response.status !== 422 || i === branchesToTry.length - 1) {
                             statusTitle.innerText = '❌ گزارش خطا در سرور گیت‌هاب';
                             statusDetail.innerText = `کد خطا: ${response.status} - برای مشاهده و کپی کامل لاگ، دکمه 🐛 را بزنید.`;
@@ -1195,7 +1225,7 @@
         async function pollGitHubResult(rawRepoName, token, activeRef = 'main') {
             const repo = sanitizeRepoName(rawRepoName);
             let attempts = 0;
-            const maxAttempts = 25;
+            const maxAttempts = parseInt(localStorage.getItem('ai_enhancer_gh_retries')) || 30;
 
             const pollInterval = setInterval(async () => {
                 attempts++;
