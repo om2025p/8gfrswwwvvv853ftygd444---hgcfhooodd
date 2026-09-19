@@ -31,6 +31,26 @@ on:
         description: 'Enable detail sharpening (true/false)'
         required: false
         default: 'true'
+      SHARPEN_STRENGTH:
+        description: 'Sharpen strength percentage (0-200)'
+        required: false
+        default: '120'
+      SMOOTH_STRENGTH:
+        description: 'Surface smoothness percentage (0-100)'
+        required: false
+        default: '60'
+      CONTRAST_STRENGTH:
+        description: 'Color and contrast strength percentage (50-180)'
+        required: false
+        default: '110'
+      AI_MODEL:
+        description: 'AI Model style (crystal_hd, codeformer_face, anime_art, hdr_vivid)'
+        required: false
+        default: 'crystal_hd'
+      OUTPUT_FORMAT:
+        description: 'Output format (png, webp, jpg)'
+        required: false
+        default: 'png'
       JOB_ID:
         description: 'Unique Job Identifier'
         required: false
@@ -68,6 +88,11 @@ jobs:
           FACE_ENHANCE: ${{ github.event.inputs.FACE_ENHANCE }}
           DENOISE: ${{ github.event.inputs.DENOISE }}
           SHARPEN: ${{ github.event.inputs.SHARPEN }}
+          SHARPEN_STRENGTH: ${{ github.event.inputs.SHARPEN_STRENGTH }}
+          SMOOTH_STRENGTH: ${{ github.event.inputs.SMOOTH_STRENGTH }}
+          CONTRAST_STRENGTH: ${{ github.event.inputs.CONTRAST_STRENGTH }}
+          AI_MODEL: ${{ github.event.inputs.AI_MODEL }}
+          OUTPUT_FORMAT: ${{ github.event.inputs.OUTPUT_FORMAT }}
           JOB_ID: ${{ github.event.inputs.JOB_ID }}
         run: |
           python image-enhancer/process_image.py
