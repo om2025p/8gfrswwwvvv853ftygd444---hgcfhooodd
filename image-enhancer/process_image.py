@@ -27,68 +27,62 @@ def decode_image(image_input):
             return Image.open(image_input).convert("RGB")
         raise e
 
-def apply_crystal_clarity_pipeline(cv_img, orig_w, orig_h, target_w, target_h, face_enhance=True, denoise=True, sharpen=True):
+def apply_silky_smooth_razor_sharp_pipeline(cv_img, target_w, target_h, face_enhance=True, denoise=True, sharpen=True):
     """
-    Ultra-Sharp Detail-Preserving Super Resolution Pipeline.
-    Prevents plastic/watercolor/painterly blur effects upon 100% zoom.
+    Dual-Layer Super-Resolution Pipeline:
+    Layer 1: Silky Smooth Surfaces (صاف و نرم)
+    Layer 2: Razor-Sharp Edge Contours (حذف تاری موقع زوم 100%)
     """
-    print("Executing Ultra-Sharp High-Frequency Detail Preservation Pipeline...")
+    print("Executing Silky Smooth & Razor-Sharp Dual Pipeline...")
 
-    # Step 1: Smart Micro-Detail Extraction before Upscaling
-    # Extract high-frequency edges & texture layer from initial image
-    gray_orig = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
-    blurred_orig = cv2.GaussianBlur(gray_orig, (0, 0), sigmaX=1.5)
-    high_freq_orig = cv2.subtract(gray_orig, blurred_orig)
+    # Step 1: High Quality Spline / Lanczos Upscaling
+    upscaled = cv2.resize(cv_img, (target_w, target_h), interpolation=cv2.INTER_CUBIC)
 
-    # Upscale high frequency detail map to target size using Lanczos
-    high_freq_upscaled = cv2.resize(high_freq_orig, (target_w, target_h), interpolation=cv2.INTER_CUBIC)
-
-    # Step 2: Main Upscaling via Cubic Spline / Lanczos
-    upscaled_bgr = cv2.resize(cv_img, (target_w, target_h), interpolation=cv2.INTER_CUBIC)
-
-    # Step 3: Gentle Smart Denoise (Edge-Aware without plastic smoothing)
-    if denoise:
-        print("Applying Edge-Aware Micro-Denoise (No Plastic/Watercolor Effect)...")
-        # Gentle bilateral filter with small kernel so texture is NOT destroyed
-        upscaled_bgr = cv2.bilateralFilter(upscaled_bgr, d=5, sigmaColor=35, sigmaSpace=35)
-
-    # Step 4: High-Frequency Texture Re-Injection
-    # Convert upscaled BGR to LAB color space
-    lab = cv2.cvtColor(upscaled_bgr, cv2.COLOR_BGR2LAB)
+    # Step 2: Layer 1 - Silky Smooth Surface Smoothing (صاف و نرم)
+    # Convert to LAB for luminance-guided surface smoothing
+    lab = cv2.cvtColor(upscaled, cv2.COLOR_BGR2LAB)
     l, a, b = cv2.split(lab)
 
-    # Inject high frequency micro-textures back into L channel
-    l_float = l.astype(np.float32)
-    hf_float = high_freq_upscaled.astype(np.float32) * 0.45 # Texture injection strength
-    enhanced_l = np.clip(l_float + hf_float, 0, 255).astype(np.uint8)
+    # Guided Surface Smoothing (smooths flat regions/skin without blurring edges)
+    if denoise or face_enhance:
+        smooth_l = cv2.bilateralFilter(l, d=7, sigmaColor=40, sigmaSpace=40)
+    else:
+        smooth_l = l
 
-    # Step 5: Adaptive Local Contrast Equalization (CLAHE)
-    clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
-    crisp_l = clahe.apply(enhanced_l)
+    # Step 3: Layer 2 - Razor-Sharp Edge & Contour Extraction (بدون تاری موقع زوم)
+    # Extract edge map using Canny & Sobel gradients
+    sobelx = cv2.Sobel(smooth_l, cv2.CV_64F, 1, 0, ksize=3)
+    sobely = cv2.Sobel(smooth_l, cv2.CV_64F, 0, 1, ksize=3)
+    edge_magnitude = cv2.magnitude(sobelx, sobely)
+    edge_mask = np.clip(edge_magnitude / 255.0, 0, 1).astype(np.float32)
 
-    # Merge LAB back
-    crisp_lab = cv2.merge((crisp_l, a, b))
-    enhanced_bgr = cv2.cvtColor(crisp_lab, cv2.COLOR_LAB2BGR)
+    # High-Pass Crisp Edge Sharpening
+    gaussian = cv2.GaussianBlur(smooth_l, (0, 0), sigmaX=1.2)
+    high_pass = cv2.addWeighted(smooth_l, 1.8, gaussian, -0.8, 0)
 
-    # Step 6: Multi-Scale Unsharp Masking & Edge Crispness Boost
+    # Blend: Use high_pass sharpness ON EDGES, and smooth_l ON FLAT SURFACES
+    l_float = smooth_l.astype(np.float32)
+    hp_float = high_pass.astype(np.float32)
+
+    # Edge-guided blending for silky smooth surfaces + crystal sharp contours
+    blended_l = l_float * (1.0 - edge_mask * 0.85) + hp_float * (edge_mask * 0.85)
+    final_l = np.clip(blended_l, 0, 255).astype(np.uint8)
+
+    # Step 4: CLAHE Contrast Boost on Luminance
+    clahe = cv2.createCLAHE(clipLimit=1.6, tileGridSize=(8, 8))
+    crisp_l = clahe.apply(final_l)
+
+    # Merge back LAB
+    final_lab = cv2.merge((crisp_l, a, b))
+    final_bgr = cv2.cvtColor(final_lab, cv2.COLOR_LAB2BGR)
+
+    # Step 5: Multi-Scale Detail Boost for 100% Zoom Clarity
     if sharpen:
-        print("Applying Multi-Scale Crisp Sharpening...")
-        # Fine detail sharpening
-        g1 = cv2.GaussianBlur(enhanced_bgr, (0, 0), 1.0)
-        sharpened1 = cv2.addWeighted(enhanced_bgr, 1.6, g1, -0.6, 0)
+        # Fine-edge unsharp mask
+        blur_bgr = cv2.GaussianBlur(final_bgr, (0, 0), sigmaX=1.5)
+        final_bgr = cv2.addWeighted(final_bgr, 1.35, blur_bgr, -0.35, 0)
 
-        # Medium edge sharpening
-        g2 = cv2.GaussianBlur(sharpened1, (0, 0), 2.5)
-        enhanced_bgr = cv2.addWeighted(sharpened1, 1.25, g2, -0.25, 0)
-
-    # Step 7: Natural Skin & Hair Detail Restoration (No Painterly/Plastic Blobs)
-    if face_enhance:
-        print("Applying Natural Face & Micro-Skin Texture Restoration...")
-        # Blend subtle Laplacian edge map to sharpen facial features, hair, and eyes
-        laplacian = cv2.Laplacian(enhanced_bgr, cv2.CV_8U, ksize=3)
-        enhanced_bgr = cv2.addWeighted(enhanced_bgr, 1.0, laplacian, 0.12, 0)
-
-    return enhanced_bgr
+    return final_bgr
 
 def process_ai_image(
     image_input,
@@ -100,15 +94,13 @@ def process_ai_image(
     sharpen=True,
     job_id="job_default"
 ):
-    print(f"=== Starting Ultra-HD Crystal AI Enhancement [JOB: {job_id}] ===")
+    print(f"=== Starting Silky-Smooth Ultra-HD AI Enhancement [JOB: {job_id}] ===")
     start_time = time.time()
 
-    # Load image
     pil_img = decode_image(image_input)
     orig_w, orig_h = pil_img.size
-    print(f"Original Image Resolution: {orig_w} x {orig_h} px")
+    print(f"Original Resolution: {orig_w} x {orig_h} px")
 
-    # Determine target dimensions
     if custom_width > 0 and custom_height > 0:
         target_w = int(custom_width)
         target_h = int(custom_height)
@@ -125,14 +117,10 @@ def process_ai_image(
 
     print(f"Target Ultra-HD Resolution: {target_w} x {target_h} px")
 
-    # Convert PIL image to OpenCV BGR numpy array
     cv_input = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
-    # Process through Ultra-Sharp Crystal Clarity Pipeline
-    processed_cv = apply_crystal_clarity_pipeline(
+    processed_cv = apply_silky_smooth_razor_sharp_pipeline(
         cv_img=cv_input,
-        orig_w=orig_w,
-        orig_h=orig_h,
         target_w=target_w,
         target_h=target_h,
         face_enhance=face_enhance,
@@ -140,17 +128,15 @@ def process_ai_image(
         sharpen=sharpen
     )
 
-    # Convert back to PIL Image
     final_pil = Image.fromarray(cv2.cvtColor(processed_cv, cv2.COLOR_BGR2RGB))
 
-    # Final Micro-Clarity & Saturation Tuning
+    # Crispness boost
     sharpness_booster = ImageEnhance.Sharpness(final_pil)
-    final_pil = sharpness_booster.enhance(1.3) # Razor-sharp edge crispness
+    final_pil = sharpness_booster.enhance(1.25)
 
     color_booster = ImageEnhance.Color(final_pil)
-    final_pil = color_booster.enhance(1.08) # Vivid natural color tones
+    final_pil = color_booster.enhance(1.06)
 
-    # Save output files
     output_dir = os.path.join(os.path.dirname(__file__), "output")
     os.makedirs(output_dir, exist_ok=True)
 
@@ -161,13 +147,12 @@ def process_ai_image(
     final_pil.save(output_png, format="PNG", quality=100)
     final_pil.save(latest_png, format="PNG", quality=100)
 
-    # Base64 output payload
     buffered = BytesIO()
     final_pil.save(buffered, format="PNG")
     out_b64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
     elapsed = round(time.time() - start_time, 2)
-    print(f"=== Ultra-HD Process completed successfully in {elapsed}s ===")
+    print(f"=== Silky-Smooth Ultra-HD Process completed in {elapsed}s ===")
 
     meta_result = {
         "job_id": job_id,
