@@ -793,9 +793,6 @@
                         const tB = b.id || (b.timestamp ? new Date(b.timestamp).getTime() : 0);
                         return tB - tA; // descending
                     });
-                    if (localHistory.length > 60) {
-                        localHistory = localHistory.slice(0, 60);
-                    }
                     localStorage.setItem("sinergy_history", JSON.stringify(localHistory));
                     hasChanges = true;
                     console.log("⚡ Resilient two-way merge for sinergy_history completed!");

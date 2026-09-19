@@ -788,9 +788,6 @@
                         const tB = b.id || (b.timestamp ? new Date(b.timestamp).getTime() : 0);
                         return tB - tA;
                     });
-                    if (localHistory.length > 60) {
-                        localHistory = localHistory.slice(0, 60);
-                    }
                     localStorage.setItem("ahang_kian_history", JSON.stringify(localHistory));
                     hasChanges = true;
                 }

@@ -537,7 +537,6 @@
             timestamp: now.toISOString(),
             persianDate: toPersianDate(now)
         });
-        if (history.length > 60) history.pop();
         saveHistory(history);
     }
 
