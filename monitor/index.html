@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" href="../apple-touch-icon.png">
     <link rel="icon" href="../favicon.ico" type="image/x-icon">
     <title>دیدبان درصد ها</title>
+    <script src="../cloud-sync.js"></script>
     <style>
         :root {
             --bg-color: #f8fafc;
@@ -3379,11 +3380,19 @@ ${dayBlocksHtml}
                     count++;
                 });
 
+                const nowTs = Date.now().toString();
+                localStorage.setItem('emarat_last_modified', nowTs);
+
+                if (window.EmaratCloudSync && window.EmaratCloudSync.push) {
+                    window.EmaratCloudSync.push();
+                }
+
                 resetMonitorCache();
                 renderMonitor();
                 renderMonthlyPdfList();
 
-                alert(`🎉 بازیابی ابری با موفقیت انجام شد!\nتعداد ${count} کلید و داده‌ی کامل عمارت از کلودفلر جایگزین گردید. ☁️✅`);
+                alert(`🎉 بازیابی ابری با موفقیت انجام شد!\nتعداد ${count} کلید و داده‌ی کامل عمارت جایگزین و همگام‌سازی ابری به‌روزرسانی شد. ☁️✅`);
+                setTimeout(() => location.reload(), 500);
             } catch (err) {
                 alert('❌ خطا در بازیابی بکاپ ابری: ' + err.message);
             }
@@ -3767,11 +3776,33 @@ ${dayBlocksHtml}
                         count++;
                     });
 
+                    const nowTs = Date.now().toString();
+                    localStorage.setItem('emarat_last_modified', nowTs);
+
+                    if (window.EmaratCloudSync && window.EmaratCloudSync.push) {
+                        window.EmaratCloudSync.push();
+                    }
+
+                    try {
+                        const curJalali = getCurrentJalaliDate();
+                        const dateStr = `${curJalali.year}-${String(curJalali.month).padStart(2, '0')}-${String(curJalali.day).padStart(2, '0')}`;
+                        const urlLatest = `https://api.cloudflare.com/client/v4/accounts/${CF_BACKUP_ACCOUNT_ID}/storage/kv/namespaces/${CF_BACKUP_NAMESPACE_ID}/values/latest_backup`;
+                        const urlDated = `https://api.cloudflare.com/client/v4/accounts/${CF_BACKUP_ACCOUNT_ID}/storage/kv/namespaces/${CF_BACKUP_NAMESPACE_ID}/values/emarat_backup_${dateStr}`;
+                        const jsonStr = JSON.stringify(data, null, 2);
+                        const headers = {
+                            "Authorization": `Bearer ${getCfBackupToken()}`,
+                            "Content-Type": "application/json"
+                        };
+                        cfFetchWithProxy(urlLatest, { method: "PUT", headers: headers, body: jsonStr }).catch(() => {});
+                        cfFetchWithProxy(urlDated, { method: "PUT", headers: headers, body: jsonStr }).catch(() => {});
+                    } catch (cfErr) {}
+
                     resetMonitorCache();
                     renderMonitor();
                     renderMonthlyPdfList();
 
-                    alert(`✅ بازیابی کامل اطلاعات با موفقیت انجام شد! (${count} آیتم اطلاعاتی بازگردانی شد)`);
+                    alert(`✅ بازیابی کامل اطلاعات با موفقیت انجام شد! (${count} آیتم اطلاعاتی بازگردانی شد)\nتاریخ همگام‌سازی ابری به روز رسانی گردید.`);
+                    setTimeout(() => location.reload(), 500);
                 } catch (err) {
                     alert('❌ خطا در بازگردانی پشتیبان: ' + err.message);
                 } finally {
