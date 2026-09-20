@@ -2275,7 +2275,10 @@
                     const lastItemDay = new Date(lastItem.timestamp).toDateString();
                     if (lastItemDay === todayStr) {
                         completedAppsCount++;
-                        currentDaySum += lastItem.value;
+                        const calcDetails = getLatestAppCalcDetails(app.id);
+                        if (calcDetails.status === 'increase' && lastItem.value > 0) {
+                            currentDaySum += lastItem.value;
+                        }
                     }
                 }
             });
