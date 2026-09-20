@@ -7,6 +7,16 @@ __pycache__/
 .coverage
 htmlcov/
 
+# Android build artifacts
+.gradle/
+build/
+restricted/android/.gradle/
+restricted/android/build/
+restricted/android/app/build/
+**/build/
+**/.gradle/
+*.apk
+
 # Playwright & automation screenshots / debug logs
 *.png
 !**/icon-*.png
