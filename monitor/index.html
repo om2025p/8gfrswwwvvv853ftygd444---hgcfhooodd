@@ -2319,7 +2319,11 @@
                 apiKey = k1 + k2 + k3;
             }
 
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`;
+            const modelsToTry = [
+                'gemini-3.6-flash',
+                'gemini-3.5-flash',
+                'gemini-flash-latest'
+            ];
 
             const historyData = calculateDailyHistory();
             const totalSum = currentDaySum;
@@ -2333,39 +2337,45 @@
                 با توجه به این عدد مجموع درصدها و فاصله تا هدف ۳۰۰۰ درصدی، یک جمله‌ی فارسی بسیار جذاب، شیوا، موجز و شوخ‌طبعانه (حداکثر در ۳ خط کوتاه) بگو. به هیچ وجه متن طولانی ننویس.
             `;
 
-            try {
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: prompt
+            let resultText = '';
+            let lastError = null;
+
+            for (const model of modelsToTry) {
+                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: prompt
+                                }]
                             }]
-                        }]
-                    })
-                });
+                        })
+                    });
 
-                if (!response.ok) throw new Error('پاسخی از سرور جمنای دریافت نشد.');
+                    if (!response.ok) continue;
 
-                const data = await response.json();
-                let resultText = '';
-                if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
-                    resultText = data.candidates[0].content.parts[0].text.trim();
+                    const data = await response.json();
+                    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+                        resultText = data.candidates[0].content.parts[0].text.trim();
+                        if (resultText) break;
+                    }
+                } catch (err) {
+                    lastError = err;
                 }
+            }
 
-                if (!resultText) {
-                    throw new Error('متن خالی بازگردانده شد.');
-                }
-
+            if (resultText) {
                 localStorage.setItem('monitor_last_gemini_analysis', resultText);
                 localStorage.setItem('monitor_gemini_analysis_date', todayStr);
 
                 aiContent.innerText = resultText;
-            } catch (error) {
-                console.error(error);
+            } else {
+                if (lastError) console.error(lastError);
                 const cachedAnalysis = localStorage.getItem('monitor_last_gemini_analysis');
                 if (cachedAnalysis) {
                     aiContent.innerHTML = `⚠️ اتصال به سرور جمنای با خطا مواجه شد. در ادامه آخرین تحلیل موفق لود شد:<br><br>« ${cachedAnalysis} »`;
