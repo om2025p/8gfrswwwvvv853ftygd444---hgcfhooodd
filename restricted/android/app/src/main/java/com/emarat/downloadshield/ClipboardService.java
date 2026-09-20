@@ -116,21 +116,29 @@ public class ClipboardService extends Service {
             if (text.isEmpty() || text.equals(lastProcessedClip)) return;
 
             // 1. Check if copied text is JSON settings object from Web UI
-            if (text.startsWith("{") && text.endsWith("}") && text.contains("ghToken")) {
+            if (text.startsWith("{") && text.endsWith("}") && (text.contains("ghToken") || text.contains("ghPat"))) {
                 try {
                     JSONObject json = new JSONObject(text);
                     SharedPreferences prefs = getSharedPreferences("restricted_bot_prefs", MODE_PRIVATE);
                     SharedPreferences.Editor editor = prefs.edit();
 
-                    if (json.has("ghRepo")) editor.putString("restricted_bot_ghRepo", json.getString("ghRepo"));
-                    if (json.has("ghToken")) editor.putString("restricted_bot_ghToken", json.getString("ghToken"));
-                    if (json.has("ghBranch")) editor.putString("restricted_bot_ghBranch", json.getString("ghBranch"));
-                    if (json.has("tgBotToken")) editor.putString("restricted_bot_tgBotToken", json.getString("tgBotToken"));
-                    if (json.has("tgOwner")) editor.putString("restricted_bot_tgOwner", json.getString("tgOwner"));
+                    String tokenVal = "";
+                    if (json.has("ghToken")) tokenVal = json.getString("ghToken").trim();
+                    else if (json.has("ghPat")) tokenVal = json.getString("ghPat").trim();
+
+                    if (!tokenVal.isEmpty()) {
+                        editor.putString("restricted_bot_ghToken", tokenVal);
+                        editor.putString("restricted_bot_ghPat", tokenVal);
+                    }
+
+                    if (json.has("ghRepo")) editor.putString("restricted_bot_ghRepo", json.getString("ghRepo").trim());
+                    if (json.has("ghBranch")) editor.putString("restricted_bot_ghBranch", json.getString("ghBranch").trim());
+                    if (json.has("tgBotToken")) editor.putString("restricted_bot_tgBotToken", json.getString("tgBotToken").trim());
+                    if (json.has("tgOwner")) editor.putString("restricted_bot_tgOwner", json.getString("tgOwner").trim());
 
                     editor.apply();
                     lastProcessedClip = text;
-                    showToastOnMainThread("⚙️ تنظیمات گیت‌هاب و تلگرام نسخه اندروید با موفقیت به روز شد!");
+                    showToastOnMainThread("⚙️ تنظیمات گیت‌هاب و تلگرام نسخه اندروید با موفقیت به‌روزرسانی شد!");
                     return;
                 } catch (Exception ignored) {}
             }
@@ -152,14 +160,21 @@ public class ClipboardService extends Service {
         SharedPreferences prefs = getSharedPreferences("restricted_bot_prefs", MODE_PRIVATE);
         String ghRepo = prefs.getString("restricted_bot_ghRepo", "om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd");
         String ghToken = prefs.getString("restricted_bot_ghToken", "");
+        if (ghToken == null || ghToken.trim().isEmpty()) {
+            ghToken = prefs.getString("restricted_bot_ghPat", "");
+        }
         String ghBranch = prefs.getString("restricted_bot_ghBranch", "100");
 
-        if (ghToken == null || ghToken.isEmpty()) {
+        if (ghToken == null || ghToken.trim().isEmpty()) {
             String p1 = "github_pat_11BL4";
             String p2 = "BKGQ0oWk8o6Rk7mN8_";
             String p3 = "y2jG1M9Zq8P2y8W3K0";
             ghToken = p1 + p2 + p3;
         }
+
+        ghToken = ghToken.trim();
+        ghRepo = ghRepo.trim();
+        ghBranch = ghBranch.trim();
 
         String apiUrl = "https://api.github.com/repos/" + ghRepo + "/actions/workflows/restricted_bot.yml/dispatches";
 
@@ -186,10 +201,10 @@ public class ClipboardService extends Service {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
+                if (response.isSuccessful() || response.code() == 204) {
                     showToastOnMainThread("✅ لینک با موفقیت به گیت‌هاب ارسال شد 🚀");
                 } else {
-                    showToastOnMainThread("⚠️ پاسخ گیت‌هاب: " + response.code());
+                    showToastOnMainThread("⚠️ پاسخ گیت‌هاب (" + response.code() + "): لطفا توکن را بررسی کنید");
                 }
                 response.close();
             }
@@ -208,7 +223,7 @@ public class ClipboardService extends Service {
 
         // Direct Reply input box inside notification
         RemoteInput remoteInput = new RemoteInput.Builder(NotificationInputReceiver.KEY_TEXT_REPLY)
-                .setLabel("ارسال یا چسباندن لینک به گیت‌هاب...")
+                .setLabel("تایپ یا چسباندن لینک...")
                 .build();
 
         Intent submitIntent = new Intent(this, NotificationInputReceiver.class);
@@ -219,11 +234,11 @@ public class ClipboardService extends Service {
 
         NotificationCompat.Action directReplyAction = new NotificationCompat.Action.Builder(
                 R.drawable.ic_stat_download,
-                "📥 ارسال لینک (تایپ/چسباندن)",
+                "📥 ارسال لینک",
                 submitPendingIntent
         ).addRemoteInput(remoteInput).build();
 
-        // Quick Paste Action button
+        // Quick Paste Action button (Instant Auto-Paste & Auto-Send)
         Intent pasteIntent = new Intent(this, NotificationInputReceiver.class);
         pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
         PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
@@ -232,7 +247,7 @@ public class ClipboardService extends Service {
 
         NotificationCompat.Action quickPasteAction = new NotificationCompat.Action.Builder(
                 R.drawable.ic_stat_download,
-                "📋 چسباندن کلیپ‌بورد",
+                "📋 چسباندن و ارسال آنی",
                 pastePendingIntent
         ).build();
 

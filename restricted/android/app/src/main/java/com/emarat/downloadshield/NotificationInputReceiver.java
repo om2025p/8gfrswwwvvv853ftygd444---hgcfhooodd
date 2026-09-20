@@ -51,6 +51,7 @@ public class NotificationInputReceiver extends BroadcastReceiver {
                 }
             }
         } else if (ACTION_QUICK_PASTE.equals(action)) {
+            // Instant Auto-Paste & Auto-Send from Clipboard
             ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
             if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
                 ClipData clip = clipboardManager.getPrimaryClip();
@@ -70,10 +71,10 @@ public class NotificationInputReceiver extends BroadcastReceiver {
         }
 
         if (linkToDownload != null && !linkToDownload.isEmpty()) {
-            Toast.makeText(context, "🚀 در حال ارسال لینک از اعلان به گیت‌هاب...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "🚀 در حال ارسال آنی به گیت‌هاب...", Toast.LENGTH_SHORT).show();
             dispatchToGitHub(context, linkToDownload);
         } else {
-            Toast.makeText(context, "⚠️ لینکی در کلیپ‌بورد پیدا نشد!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "⚠️ هیچ لینکی در کلیپ‌بورد پیدا نشد!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -81,14 +82,21 @@ public class NotificationInputReceiver extends BroadcastReceiver {
         SharedPreferences prefs = context.getSharedPreferences("restricted_bot_prefs", Context.MODE_PRIVATE);
         String ghRepo = prefs.getString("restricted_bot_ghRepo", "om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd");
         String ghToken = prefs.getString("restricted_bot_ghToken", "");
+        if (ghToken == null || ghToken.trim().isEmpty()) {
+            ghToken = prefs.getString("restricted_bot_ghPat", "");
+        }
         String ghBranch = prefs.getString("restricted_bot_ghBranch", "100");
 
-        if (ghToken == null || ghToken.isEmpty()) {
+        if (ghToken == null || ghToken.trim().isEmpty()) {
             String p1 = "github_pat_11BL4";
             String p2 = "BKGQ0oWk8o6Rk7mN8_";
             String p3 = "y2jG1M9Zq8P2y8W3K0";
             ghToken = p1 + p2 + p3;
         }
+
+        ghToken = ghToken.trim();
+        ghRepo = ghRepo.trim();
+        ghBranch = ghBranch.trim();
 
         String apiUrl = "https://api.github.com/repos/" + ghRepo + "/actions/workflows/restricted_bot.yml/dispatches";
 
@@ -101,6 +109,7 @@ public class NotificationInputReceiver extends BroadcastReceiver {
 
         OkHttpClient client = new OkHttpClient();
         RequestBody body = RequestBody.create(jsonPayload, MediaType.parse("application/json; charset=utf-8"));
+
         Request request = new Request.Builder()
                 .url(apiUrl)
                 .addHeader("Authorization", "Bearer " + ghToken)
@@ -118,10 +127,10 @@ public class NotificationInputReceiver extends BroadcastReceiver {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    mainHandler.post(() -> Toast.makeText(context, "✅ لینک با موفقیت از اعلان به گیت‌هاب فرستاده شد 🚀", Toast.LENGTH_LONG).show());
+                if (response.isSuccessful() || response.code() == 204) {
+                    mainHandler.post(() -> Toast.makeText(context, "✅ لینک با موفقیت به گیت‌هاب ارسال شد 🚀", Toast.LENGTH_LONG).show());
                 } else {
-                    mainHandler.post(() -> Toast.makeText(context, "⚠️ پاسخ گیت‌هاب: " + response.code(), Toast.LENGTH_LONG).show());
+                    mainHandler.post(() -> Toast.makeText(context, "⚠️ پاسخ گیت‌هاب (" + response.code() + "): لطفا توکن را بررسی کنید", Toast.LENGTH_LONG).show());
                 }
                 response.close();
             }
