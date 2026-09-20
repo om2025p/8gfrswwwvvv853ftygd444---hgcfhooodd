@@ -451,19 +451,11 @@
                         🎬📸 لینک فیلم یا عکس تلگرام تیک تاک اینستاگرام را وارد کنید:
                     </label>
                     <div style="display: flex; gap: 8px; width: 100%;">
-                        <input type="text" id="dlLink" class="input-field" placeholder="https://t.me/c/123456789/22 یا اینستاگرام، تیک‌تاک..." style="direction: ltr; font-size: 0.95rem; padding: 15px; border-radius: 16px; flex: 1;">
+                        <input type="text" id="dlLink" class="input-field" placeholder="https://t.me/c/123456789/22" style="direction: ltr; font-size: 0.95rem; padding: 15px; border-radius: 16px; flex: 1;">
                         <button class="action-btn secondary" id="btnPaste" style="width: auto; padding: 0 16px; font-size: 0.9rem; border-radius: 16px; white-space: nowrap; flex-shrink: 0;">
                             📋 چسباندن
                         </button>
                     </div>
-                </div>
-
-                <!-- کادر ورودی هوشمند چسباندن آنی لینک جهت ارسال فوری -->
-                <div class="input-group" style="margin-bottom: 12px;">
-                    <label class="input-label" style="font-size: 0.85rem; color: #0284c7; font-weight: 700;">
-                        ⚡ کادر ارسال آنی (تا لینکی چسبانده شد بلافاصله ارسال می‌شود):
-                    </label>
-                    <input type="text" id="instantPasteLink" class="input-field" placeholder="📥 اینجا چسبانده شود -> ارسال آنی و خودکار" style="direction: ltr; font-size: 0.9rem; padding: 14px; border-radius: 14px; border: 2px dashed #38bdf8; background: #f0f9ff;">
                 </div>
 
                 <!-- شمارنده لینک‌های منحصربه‌فرد زیر کادر -->
@@ -915,26 +907,6 @@
             };
         }
 
-        // شنود کادر ارسال آنی پس از چسباندن
-        const instantInput = document.getElementById('instantPasteLink');
-        if (instantInput) {
-            let lastAutoTrigger = 0;
-            const handleInstantTrigger = () => {
-                setTimeout(() => {
-                    const val = instantInput.value.trim();
-                    const now = Date.now();
-                    if (val && (val.startsWith('http://') || val.startsWith('https://')) && (now - lastAutoTrigger > 2000)) {
-                        lastAutoTrigger = now;
-                        document.getElementById('dlLink').value = val;
-                        instantInput.value = '';
-                        showToast("⚡ لینک چسبانده‌شده بلافاصله برای دانلود به گیت‌هاب ارسال شد!");
-                        document.getElementById('btnDownload').click();
-                    }
-                }, 150);
-            };
-            instantInput.addEventListener('paste', handleInstantTrigger);
-            instantInput.addEventListener('input', handleInstantTrigger);
-        }
 
         // نمایش توست
         function showToast(msg) {

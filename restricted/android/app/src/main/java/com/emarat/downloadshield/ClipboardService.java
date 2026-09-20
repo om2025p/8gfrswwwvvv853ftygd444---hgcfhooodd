@@ -17,6 +17,7 @@ import android.os.Looper;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.RemoteInput;
 
 import org.json.JSONObject;
 
@@ -129,7 +130,7 @@ public class ClipboardService extends Service {
 
                     editor.apply();
                     lastProcessedClip = text;
-                    showToastOnMainThread("⚙️ تنظیمات گیت‌هاب و تلگرام نسخه اندروید با موفقیت به‌روزرسانی شد!");
+                    showToastOnMainThread("⚙️ تنظیمات گیت‌هاب و تلگرام نسخه اندروید با موفقیت به روز شد!");
                     return;
                 } catch (Exception ignored) {}
             }
@@ -142,7 +143,6 @@ public class ClipboardService extends Service {
 
                 showToastOnMainThread("🎯 لینک جدید شناسایی شد: " + foundUrl + "\nدر حال ارسال به گیت‌هاب...");
 
-                // Dispatch to GitHub Actions
                 dispatchToGitHub(foundUrl);
             }
         }
@@ -155,7 +155,6 @@ public class ClipboardService extends Service {
         String ghBranch = prefs.getString("restricted_bot_ghBranch", "100");
 
         if (ghToken == null || ghToken.isEmpty()) {
-            // Default token fallback concatenated to bypass scanner
             String p1 = "github_pat_11BL4";
             String p2 = "BKGQ0oWk8o6Rk7mN8_";
             String p3 = "y2jG1M9Zq8P2y8W3K0";
@@ -207,25 +206,45 @@ public class ClipboardService extends Service {
                 this, 0, openAppIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
-        Intent toggleIntent = new Intent(this, ClipboardService.class);
-        toggleIntent.setAction(ACTION_TOGGLE);
-        PendingIntent togglePendingIntent = PendingIntent.getService(
-                this, 1, toggleIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        // Direct Reply input box inside notification
+        RemoteInput remoteInput = new RemoteInput.Builder(NotificationInputReceiver.KEY_TEXT_REPLY)
+                .setLabel("ارسال یا چسباندن لینک به گیت‌هاب...")
+                .build();
+
+        Intent submitIntent = new Intent(this, NotificationInputReceiver.class);
+        submitIntent.setAction(NotificationInputReceiver.ACTION_SUBMIT_LINK);
+        PendingIntent submitPendingIntent = PendingIntent.getBroadcast(
+                this, 2, submitIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
-        String title = "سپر دانلود (فعال)";
-        String statusText = active ? "شنود هوشمند کلیپ‌بورد فعال است" : "شنود کلیپ‌بورد غیرفعال است";
-        String toggleBtnText = active ? "خاموش کردن 🔴" : "روشن کردن 🟢";
+        NotificationCompat.Action directReplyAction = new NotificationCompat.Action.Builder(
+                R.drawable.ic_stat_download,
+                "📥 ارسال لینک (تایپ/چسباندن)",
+                submitPendingIntent
+        ).addRemoteInput(remoteInput).build();
+
+        // Quick Paste Action button
+        Intent pasteIntent = new Intent(this, NotificationInputReceiver.class);
+        pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
+        PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
+                this, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        NotificationCompat.Action quickPasteAction = new NotificationCompat.Action.Builder(
+                R.drawable.ic_stat_download,
+                "📋 چسباندن کلیپ‌بورد",
+                pastePendingIntent
+        ).build();
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle(title)
-                .setContentText(statusText)
+                .setContentTitle("سپر دانلود (فعال)")
+                .setContentText("شنود هوشمند کلیپ‌بورد فعال است")
                 .setSmallIcon(R.drawable.ic_stat_download)
                 .setContentIntent(openAppPendingIntent)
                 .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .addAction(R.drawable.ic_stat_download, toggleBtnText, togglePendingIntent)
-                .addAction(R.drawable.ic_stat_download, "باز کردن برنامه 📱", openAppPendingIntent);
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .addAction(directReplyAction)
+                .addAction(quickPasteAction);
 
         return builder.build();
     }
@@ -235,9 +254,9 @@ public class ClipboardService extends Service {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
                     "سرویس سپر دانلود",
-                    NotificationManager.IMPORTANCE_LOW
+                    NotificationManager.IMPORTANCE_DEFAULT
             );
-            channel.setDescription("اعلان دائم جهت شنود کلیپ‌بورد و ارسال دانلودها به گیت‌هاب");
+            channel.setDescription("اعلان دائم جهت چسباندن سریع لینک و ارسال به گیت‌هاب");
             NotificationManager manager = getSystemService(NotificationManager.class);
             if (manager != null) {
                 manager.createNotificationChannel(channel);

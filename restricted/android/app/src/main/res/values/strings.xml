@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">سپر دانلود</string>
+    <string name="channel_id">download_shield_channel</string>
+    <string name="channel_name">سرویس سپر دانلود</string>
+    <string name="service_running">سپر دانلود فعال است (شنود هوشمند کلیپ‌بورد)</string>
+    <string name="stop_service">خاموش کردن</string>
+    <string name="start_service">روشن کردن</string>
+    <string name="open_app">باز کردن برنامه</string>
+</resources>
