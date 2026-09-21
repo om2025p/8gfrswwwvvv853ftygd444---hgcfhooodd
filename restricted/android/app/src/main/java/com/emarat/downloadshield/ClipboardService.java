@@ -90,7 +90,7 @@ public class ClipboardService extends Service {
         }
 
         isRunning = true;
-        Notification notification = buildNotification(true);
+        Notification notification = buildNotification();
         startForeground(NOTIFICATION_ID, notification);
         return START_STICKY;
     }
@@ -265,9 +265,10 @@ public class ClipboardService extends Service {
                 submitPendingIntent
         ).addRemoteInput(remoteInput).build();
 
-        Intent pasteIntent = new Intent(context, NotificationInputReceiver.class);
+        Intent pasteIntent = new Intent(context, MainActivity.class);
         pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
-        PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
+        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pastePendingIntent = PendingIntent.getActivity(
                 context, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
@@ -290,13 +291,12 @@ public class ClipboardService extends Service {
         manager.notify(NOTIFICATION_ID, builder.build());
     }
 
-    private Notification buildNotification(boolean active) {
+    private Notification buildNotification() {
         Intent openAppIntent = new Intent(this, MainActivity.class);
         PendingIntent openAppPendingIntent = PendingIntent.getActivity(
                 this, 0, openAppIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
-        // Direct Reply input box inside notification
         RemoteInput remoteInput = new RemoteInput.Builder(NotificationInputReceiver.KEY_TEXT_REPLY)
                 .setLabel("تایپ یا چسباندن لینک (بدون محدودیت طول)...")
                 .setAllowFreeFormInput(true)
@@ -314,10 +314,10 @@ public class ClipboardService extends Service {
                 submitPendingIntent
         ).addRemoteInput(remoteInput).build();
 
-        // Quick Paste Action button (Instant Auto-Paste & Auto-Send)
-        Intent pasteIntent = new Intent(this, NotificationInputReceiver.class);
+        Intent pasteIntent = new Intent(this, MainActivity.class);
         pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
-        PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
+        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pastePendingIntent = PendingIntent.getActivity(
                 this, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
