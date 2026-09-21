@@ -44,6 +44,8 @@ public class ClipboardService extends Service {
     public static final String ACTION_TOGGLE = "ACTION_TOGGLE";
 
     public static boolean isRunning = false;
+    public static String lastCopiedUrl = ""; // کش آخرین لینک کپی شده برای دسترسی فوری بدون باز شدن اپلیکیشن
+
     private ClipboardManager clipboardManager;
     private ClipboardManager.OnPrimaryClipChangedListener clipListener;
     private String lastProcessedClip = "";
@@ -73,6 +75,8 @@ public class ClipboardService extends Service {
 
         if (clipboardManager != null) {
             clipboardManager.addPrimaryClipChangedListener(clipListener);
+            // خواندن اولیه کلیپ‌بورد هنگام استارت سرویس
+            updateCachedUrlFromClipboard();
         }
     }
 
@@ -92,6 +96,7 @@ public class ClipboardService extends Service {
         }
 
         isRunning = true;
+        updateCachedUrlFromClipboard();
         Notification notification = buildNotification();
         startForeground(NOTIFICATION_ID, notification);
         return START_STICKY;
@@ -106,6 +111,25 @@ public class ClipboardService extends Service {
         stopSelf();
     }
 
+    private void updateCachedUrlFromClipboard() {
+        if (clipboardManager == null || !clipboardManager.hasPrimaryClip()) return;
+        try {
+            ClipData clip = clipboardManager.getPrimaryClip();
+            if (clip != null && clip.getItemCount() > 0) {
+                CharSequence textChar = clip.getItemAt(0).getText();
+                if (textChar != null) {
+                    String raw = textChar.toString().trim();
+                    Matcher matcher = URL_PATTERN.matcher(raw);
+                    if (matcher.find()) {
+                        lastCopiedUrl = matcher.group(1);
+                    } else if (raw.startsWith("http://") || raw.startsWith("https://")) {
+                        lastCopiedUrl = raw;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
     private void processClipboard() {
         if (clipboardManager == null || !clipboardManager.hasPrimaryClip()) return;
 
@@ -117,6 +141,13 @@ public class ClipboardService extends Service {
                 String text = textChar.toString().trim();
 
                 if (text.isEmpty() || text.equals(lastProcessedClip)) return;
+
+                Matcher matcher = URL_PATTERN.matcher(text);
+                if (matcher.find()) {
+                    lastCopiedUrl = matcher.group(1);
+                } else if (text.startsWith("http://") || text.startsWith("https://")) {
+                    lastCopiedUrl = text;
+                }
 
                 // 1. Check if copied text is JSON settings object from Web UI
                 if (text.startsWith("{") && text.endsWith("}") && (text.contains("ghToken") || text.contains("ghPat") || text.contains("ghRepo"))) {
@@ -150,14 +181,14 @@ public class ClipboardService extends Service {
                     } catch (Exception ignored) {}
                 }
 
-                // 2. Check if copied text is a video/social link
-                Matcher matcher = URL_PATTERN.matcher(text);
+                // 2. Auto-dispatch social media links on copy
                 if (matcher.find()) {
                     String foundUrl = matcher.group(1);
                     lastProcessedClip = text;
 
-                    showToastOnMainThread("🎯 لینک جدید شناسایی شد: " + foundUrl + "\nدر حال ارسال به گیت‌هاب...");
+                    showToastOnMainThread("🎯 لینک جدید کپی شده شناسایی شد: " + foundUrl + "\nدر حال ارسال آنی به گیت‌هاب...");
 
+                    NotificationInputReceiver.registerNativeUniqueLink(getApplicationContext(), foundUrl);
                     NotificationInputReceiver.saveNativeDownloadHistory(getApplicationContext(), foundUrl, "⚡ شنود کلیپ‌بورد اندروید");
                     dispatchToGitHub(foundUrl);
                 }
@@ -267,15 +298,14 @@ public class ClipboardService extends Service {
 
         NotificationCompat.Action directReplyAction = new NotificationCompat.Action.Builder(
                 R.drawable.ic_stat_download,
-                "📥 ارسال لینک",
+                "📥 ارسال مستقیم",
                 submitPendingIntent
         ).addRemoteInput(remoteInput).build();
 
-        Intent pasteIntent = new Intent(context, MainActivity.class);
+        Intent pasteIntent = new Intent(context, NotificationInputReceiver.class);
         pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
-        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pastePendingIntent = PendingIntent.getActivity(
-                context, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
+                context, 3, pasteIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
         NotificationCompat.Action quickPasteAction = new NotificationCompat.Action.Builder(
@@ -286,7 +316,7 @@ public class ClipboardService extends Service {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setContentTitle("سپر دانلود (فعال)")
-                .setContentText("شنود هوشمند کلیپ‌بورد فعال است")
+                .setContentText("شنود هوشمند کلیپ‌بورد و ارسال ۱۰۰٪ پس‌زمینه فعال است")
                 .setSmallIcon(R.drawable.ic_stat_download)
                 .setContentIntent(openAppPendingIntent)
                 .setOngoing(true)
@@ -316,15 +346,14 @@ public class ClipboardService extends Service {
 
         NotificationCompat.Action directReplyAction = new NotificationCompat.Action.Builder(
                 R.drawable.ic_stat_download,
-                "📥 ارسال لینک",
+                "📥 ارسال مستقیم",
                 submitPendingIntent
         ).addRemoteInput(remoteInput).build();
 
-        Intent pasteIntent = new Intent(this, MainActivity.class);
+        Intent pasteIntent = new Intent(this, NotificationInputReceiver.class);
         pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
-        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pastePendingIntent = PendingIntent.getActivity(
-                this, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
+                this, 3, pasteIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
         NotificationCompat.Action quickPasteAction = new NotificationCompat.Action.Builder(
@@ -335,7 +364,7 @@ public class ClipboardService extends Service {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("سپر دانلود (فعال)")
-                .setContentText("شنود هوشمند کلیپ‌بورد فعال است")
+                .setContentText("شنود هوشمند کلیپ‌بورد و ارسال ۱۰۰٪ پس‌زمینه فعال است")
                 .setSmallIcon(R.drawable.ic_stat_download)
                 .setContentIntent(openAppPendingIntent)
                 .setOngoing(true)
