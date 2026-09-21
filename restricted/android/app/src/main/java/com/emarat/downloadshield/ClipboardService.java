@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
@@ -36,6 +37,7 @@ import okhttp3.Response;
 public class ClipboardService extends Service {
     public static final String CHANNEL_ID = "download_shield_channel";
     public static final int NOTIFICATION_ID = 1001;
+    private static final String TAG = "ClipboardService";
 
     public static final String ACTION_START = "ACTION_START";
     public static final String ACTION_STOP = "ACTION_STOP";
@@ -107,57 +109,61 @@ public class ClipboardService extends Service {
     private void processClipboard() {
         if (clipboardManager == null || !clipboardManager.hasPrimaryClip()) return;
 
-        ClipData clip = clipboardManager.getPrimaryClip();
-        if (clip != null && clip.getItemCount() > 0) {
-            CharSequence textChar = clip.getItemAt(0).getText();
-            if (textChar == null) return;
-            String text = textChar.toString().trim();
+        try {
+            ClipData clip = clipboardManager.getPrimaryClip();
+            if (clip != null && clip.getItemCount() > 0) {
+                CharSequence textChar = clip.getItemAt(0).getText();
+                if (textChar == null) return;
+                String text = textChar.toString().trim();
 
-            if (text.isEmpty() || text.equals(lastProcessedClip)) return;
+                if (text.isEmpty() || text.equals(lastProcessedClip)) return;
 
-            // 1. Check if copied text is JSON settings object from Web UI
-            if (text.startsWith("{") && text.endsWith("}") && (text.contains("ghToken") || text.contains("ghPat") || text.contains("ghRepo"))) {
-                try {
-                    JSONObject json = new JSONObject(text);
-                    SharedPreferences prefs = getSharedPreferences("restricted_bot_prefs", MODE_PRIVATE);
-                    SharedPreferences.Editor editor = prefs.edit();
+                // 1. Check if copied text is JSON settings object from Web UI
+                if (text.startsWith("{") && text.endsWith("}") && (text.contains("ghToken") || text.contains("ghPat") || text.contains("ghRepo"))) {
+                    try {
+                        JSONObject json = new JSONObject(text);
+                        SharedPreferences prefs = getSharedPreferences("restricted_bot_prefs", MODE_PRIVATE);
+                        SharedPreferences.Editor editor = prefs.edit();
 
-                    String tokenVal = "";
-                    if (json.has("ghToken")) tokenVal = json.getString("ghToken").trim();
-                    else if (json.has("ghPat")) tokenVal = json.getString("ghPat").trim();
+                        String tokenVal = "";
+                        if (json.has("ghToken")) tokenVal = json.getString("ghToken").trim();
+                        else if (json.has("ghPat")) tokenVal = json.getString("ghPat").trim();
 
-                    if (!tokenVal.isEmpty()) {
-                        editor.putString("restricted_bot_ghToken", tokenVal);
-                        editor.putString("restricted_bot_ghPat", tokenVal);
-                    }
+                        if (!tokenVal.isEmpty()) {
+                            editor.putString("restricted_bot_ghToken", tokenVal);
+                            editor.putString("restricted_bot_ghPat", tokenVal);
+                        }
 
-                    if (json.has("ghOwner")) editor.putString("restricted_bot_ghOwner", json.getString("ghOwner").trim());
-                    if (json.has("ghRepo")) editor.putString("restricted_bot_ghRepo", json.getString("ghRepo").trim());
-                    if (json.has("ghBranch")) editor.putString("restricted_bot_ghBranch", json.getString("ghBranch").trim());
-                    if (json.has("tgApiId")) editor.putString("restricted_bot_tgApiId", json.getString("tgApiId").trim());
-                    if (json.has("tgApiHash")) editor.putString("restricted_bot_tgApiHash", json.getString("tgApiHash").trim());
-                    if (json.has("tgBotToken")) editor.putString("restricted_bot_tgBotToken", json.getString("tgBotToken").trim());
-                    if (json.has("tgSession")) editor.putString("restricted_bot_tgSession", json.getString("tgSession").trim());
-                    if (json.has("tgOwner")) editor.putString("restricted_bot_tgOwner", json.getString("tgOwner").trim());
+                        if (json.has("ghOwner")) editor.putString("restricted_bot_ghOwner", json.getString("ghOwner").trim());
+                        if (json.has("ghRepo")) editor.putString("restricted_bot_ghRepo", json.getString("ghRepo").trim());
+                        if (json.has("ghBranch")) editor.putString("restricted_bot_ghBranch", json.getString("ghBranch").trim());
+                        if (json.has("tgApiId")) editor.putString("restricted_bot_tgApiId", json.getString("tgApiId").trim());
+                        if (json.has("tgApiHash")) editor.putString("restricted_bot_tgApiHash", json.getString("tgApiHash").trim());
+                        if (json.has("tgBotToken")) editor.putString("restricted_bot_tgBotToken", json.getString("tgBotToken").trim());
+                        if (json.has("tgSession")) editor.putString("restricted_bot_tgSession", json.getString("tgSession").trim());
+                        if (json.has("tgOwner")) editor.putString("restricted_bot_tgOwner", json.getString("tgOwner").trim());
 
-                    editor.apply();
+                        editor.apply();
+                        lastProcessedClip = text;
+                        showToastOnMainThread("⚙️ تنظیمات گیت‌هاب و تلگرام نسخه اندروید با موفقیت به‌روزرسانی شد!");
+                        return;
+                    } catch (Exception ignored) {}
+                }
+
+                // 2. Check if copied text is a video/social link
+                Matcher matcher = URL_PATTERN.matcher(text);
+                if (matcher.find()) {
+                    String foundUrl = matcher.group(1);
                     lastProcessedClip = text;
-                    showToastOnMainThread("⚙️ تنظیمات گیت‌هاب و تلگرام نسخه اندروید با موفقیت به‌روزرسانی شد!");
-                    return;
-                } catch (Exception ignored) {}
+
+                    showToastOnMainThread("🎯 لینک جدید شناسایی شد: " + foundUrl + "\nدر حال ارسال به گیت‌هاب...");
+
+                    NotificationInputReceiver.saveNativeDownloadHistory(getApplicationContext(), foundUrl, "⚡ شنود کلیپ‌بورد اندروید");
+                    dispatchToGitHub(foundUrl);
+                }
             }
-
-            // 2. Check if copied text is a video/social link
-            Matcher matcher = URL_PATTERN.matcher(text);
-            if (matcher.find()) {
-                String foundUrl = matcher.group(1);
-                lastProcessedClip = text;
-
-                showToastOnMainThread("🎯 لینک جدید شناسایی شد: " + foundUrl + "\nدر حال ارسال به گیت‌هاب...");
-
-                NotificationInputReceiver.saveNativeDownloadHistory(getApplicationContext(), foundUrl, "⚡ شنود کلیپ‌بورد اندروید");
-                dispatchToGitHub(foundUrl);
-            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error in processClipboard: " + e.getMessage());
         }
     }
 
@@ -265,10 +271,11 @@ public class ClipboardService extends Service {
                 submitPendingIntent
         ).addRemoteInput(remoteInput).build();
 
-        Intent pasteIntent = new Intent(context, NotificationInputReceiver.class);
+        Intent pasteIntent = new Intent(context, MainActivity.class);
         pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
-        PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
-                context, 3, pasteIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pastePendingIntent = PendingIntent.getActivity(
+                context, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
         NotificationCompat.Action quickPasteAction = new NotificationCompat.Action.Builder(
@@ -313,10 +320,11 @@ public class ClipboardService extends Service {
                 submitPendingIntent
         ).addRemoteInput(remoteInput).build();
 
-        Intent pasteIntent = new Intent(this, NotificationInputReceiver.class);
+        Intent pasteIntent = new Intent(this, MainActivity.class);
         pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
-        PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
-                this, 3, pasteIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pastePendingIntent = PendingIntent.getActivity(
+                this, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
         NotificationCompat.Action quickPasteAction = new NotificationCompat.Action.Builder(
