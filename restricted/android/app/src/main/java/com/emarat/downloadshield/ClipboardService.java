@@ -15,7 +15,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.RemoteInput;
@@ -44,7 +43,7 @@ public class ClipboardService extends Service {
     public static final String ACTION_TOGGLE = "ACTION_TOGGLE";
 
     public static boolean isRunning = false;
-    public static String lastCopiedUrl = ""; // کش آخرین لینک کپی شده برای دسترسی فوری بدون باز شدن اپلیکیشن
+    public static String lastCopiedUrl = "";
 
     private ClipboardManager clipboardManager;
     private ClipboardManager.OnPrimaryClipChangedListener clipListener;
@@ -75,8 +74,6 @@ public class ClipboardService extends Service {
 
         if (clipboardManager != null) {
             clipboardManager.addPrimaryClipChangedListener(clipListener);
-            // خواندن اولیه کلیپ‌بورد هنگام استارت سرویس
-            updateCachedUrlFromClipboard();
         }
     }
 
@@ -96,7 +93,6 @@ public class ClipboardService extends Service {
         }
 
         isRunning = true;
-        updateCachedUrlFromClipboard();
         Notification notification = buildNotification();
         startForeground(NOTIFICATION_ID, notification);
         return START_STICKY;
@@ -109,25 +105,6 @@ public class ClipboardService extends Service {
         }
         stopForeground(true);
         stopSelf();
-    }
-
-    private void updateCachedUrlFromClipboard() {
-        if (clipboardManager == null || !clipboardManager.hasPrimaryClip()) return;
-        try {
-            ClipData clip = clipboardManager.getPrimaryClip();
-            if (clip != null && clip.getItemCount() > 0) {
-                CharSequence textChar = clip.getItemAt(0).getText();
-                if (textChar != null) {
-                    String raw = textChar.toString().trim();
-                    Matcher matcher = URL_PATTERN.matcher(raw);
-                    if (matcher.find()) {
-                        lastCopiedUrl = matcher.group(1);
-                    } else if (raw.startsWith("http://") || raw.startsWith("https://")) {
-                        lastCopiedUrl = raw;
-                    }
-                }
-            }
-        } catch (Exception ignored) {}
     }
 
     private void processClipboard() {
@@ -145,135 +122,17 @@ public class ClipboardService extends Service {
                 Matcher matcher = URL_PATTERN.matcher(text);
                 if (matcher.find()) {
                     lastCopiedUrl = matcher.group(1);
+                    lastProcessedClip = text;
+                    Log.d(TAG, "🎯 کش جدید کلیپ‌بورد به‌روزرسانی شد: " + lastCopiedUrl);
                 } else if (text.startsWith("http://") || text.startsWith("https://")) {
                     lastCopiedUrl = text;
-                }
-
-                // 1. Check if copied text is JSON settings object from Web UI
-                if (text.startsWith("{") && text.endsWith("}") && (text.contains("ghToken") || text.contains("ghPat") || text.contains("ghRepo"))) {
-                    try {
-                        JSONObject json = new JSONObject(text);
-                        SharedPreferences prefs = getSharedPreferences("restricted_bot_prefs", MODE_PRIVATE);
-                        SharedPreferences.Editor editor = prefs.edit();
-
-                        String tokenVal = "";
-                        if (json.has("ghToken")) tokenVal = json.getString("ghToken").trim();
-                        else if (json.has("ghPat")) tokenVal = json.getString("ghPat").trim();
-
-                        if (!tokenVal.isEmpty()) {
-                            editor.putString("restricted_bot_ghToken", tokenVal);
-                            editor.putString("restricted_bot_ghPat", tokenVal);
-                        }
-
-                        if (json.has("ghOwner")) editor.putString("restricted_bot_ghOwner", json.getString("ghOwner").trim());
-                        if (json.has("ghRepo")) editor.putString("restricted_bot_ghRepo", json.getString("ghRepo").trim());
-                        if (json.has("ghBranch")) editor.putString("restricted_bot_ghBranch", json.getString("ghBranch").trim());
-                        if (json.has("tgApiId")) editor.putString("restricted_bot_tgApiId", json.getString("tgApiId").trim());
-                        if (json.has("tgApiHash")) editor.putString("restricted_bot_tgApiHash", json.getString("tgApiHash").trim());
-                        if (json.has("tgBotToken")) editor.putString("restricted_bot_tgBotToken", json.getString("tgBotToken").trim());
-                        if (json.has("tgSession")) editor.putString("restricted_bot_tgSession", json.getString("tgSession").trim());
-                        if (json.has("tgOwner")) editor.putString("restricted_bot_tgOwner", json.getString("tgOwner").trim());
-
-                        editor.apply();
-                        lastProcessedClip = text;
-                        showToastOnMainThread("⚙️ تنظیمات گیت‌هاب و تلگرام نسخه اندروید با موفقیت به‌روزرسانی شد!");
-                        return;
-                    } catch (Exception ignored) {}
-                }
-
-                // 2. Auto-dispatch social media links on copy
-                if (matcher.find()) {
-                    String foundUrl = matcher.group(1);
                     lastProcessedClip = text;
-
-                    showToastOnMainThread("🎯 لینک جدید کپی شده شناسایی شد: " + foundUrl + "\nدر حال ارسال آنی به گیت‌هاب...");
-
-                    NotificationInputReceiver.registerNativeUniqueLink(getApplicationContext(), foundUrl);
-                    NotificationInputReceiver.saveNativeDownloadHistory(getApplicationContext(), foundUrl, "⚡ شنود کلیپ‌بورد اندروید");
-                    dispatchToGitHub(foundUrl);
+                    Log.d(TAG, "🎯 کش جدید کلیپ‌بورد به‌روزرسانی شد: " + lastCopiedUrl);
                 }
             }
         } catch (Exception e) {
             Log.e(TAG, "Error in processClipboard: " + e.getMessage());
         }
-    }
-
-    private void dispatchToGitHub(String link) {
-        SharedPreferences prefs = getSharedPreferences("restricted_bot_prefs", MODE_PRIVATE);
-        final String fullRepo = NotificationInputReceiver.getFullRepoPath(prefs);
-
-        String rawToken = prefs.getString("restricted_bot_ghToken", "");
-        if (rawToken == null || rawToken.trim().isEmpty()) {
-            rawToken = prefs.getString("restricted_bot_ghPat", "");
-        }
-        String rawBranch = prefs.getString("restricted_bot_ghBranch", "100");
-
-        if (rawToken == null) {
-            rawToken = "";
-        }
-
-        final String ghToken = rawToken.trim();
-        final String ghBranch = rawBranch.trim();
-
-        String tgApiId = prefs.getString("restricted_bot_tgApiId", "").trim();
-        String tgApiHash = prefs.getString("restricted_bot_tgApiHash", "").trim();
-        String tgBotToken = prefs.getString("restricted_bot_tgBotToken", "").trim();
-        String tgSession = prefs.getString("restricted_bot_tgSession", "").trim();
-        String tgOwner = prefs.getString("restricted_bot_tgOwner", "").trim();
-
-        String apiUrl = "https://api.github.com/repos/" + fullRepo + "/actions/workflows/restricted_bot.yml/dispatches";
-
-        JSONObject inputs = new JSONObject();
-        try {
-            inputs.put("TELEGRAM_LINK", link);
-            inputs.put("API_ID", tgApiId);
-            inputs.put("API_HASH", tgApiHash);
-            inputs.put("BOT_TOKEN", tgBotToken);
-            inputs.put("SESSION_STRING", tgSession);
-            inputs.put("OWNER_ID", tgOwner);
-        } catch (Exception ignored) {}
-
-        JSONObject payload = new JSONObject();
-        try {
-            payload.put("ref", ghBranch);
-            payload.put("inputs", inputs);
-        } catch (Exception ignored) {}
-
-        RequestBody body = RequestBody.create(payload.toString(), MediaType.parse("application/json; charset=utf-8"));
-        Request request = new Request.Builder()
-                .url(apiUrl)
-                .addHeader("Authorization", "Bearer " + ghToken)
-                .addHeader("Accept", "application/vnd.github.v3+json")
-                .post(body)
-                .build();
-
-        httpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                showToastOnMainThread("❌ خطا در ارسال به گیت‌هاب: " + e.getMessage());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                int code = response.code();
-                if (response.isSuccessful() || code == 204) {
-                    showToastOnMainThread("✅ لینک با موفقیت به گیت‌هاب ارسال شد 🚀");
-                } else if (code == 404) {
-                    showToastOnMainThread("❌ خطا ۴۰۴: مخزن (" + fullRepo + ") یا فایل restricted_bot.yml یافت نشد!");
-                } else if (code == 401) {
-                    showToastOnMainThread("❌ خطا ۴۰۱: توکن دسترسی گیت‌هاب منقضی یا نامعتبر است!");
-                } else if (code == 422) {
-                    showToastOnMainThread("⚠️ خطا ۴۲۲: شاخه " + ghBranch + " یا ورودی‌ها در گیت‌هاب تایید نشدند!");
-                } else {
-                    showToastOnMainThread("⚠️ پاسخ گیت‌هاب (" + code + "): لطفا توکن و اطلاعات مخزن را بررسی کنید");
-                }
-                response.close();
-            }
-        });
-    }
-
-    private void showToastOnMainThread(String msg) {
-        mainHandler.post(() -> Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show());
     }
 
     public static void refreshNotification(Context context) {
@@ -302,10 +161,11 @@ public class ClipboardService extends Service {
                 submitPendingIntent
         ).addRemoteInput(remoteInput).build();
 
-        Intent pasteIntent = new Intent(context, NotificationInputReceiver.class);
+        Intent pasteIntent = new Intent(context, MainActivity.class);
         pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
-        PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
-                context, 3, pasteIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pastePendingIntent = PendingIntent.getActivity(
+                context, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
         NotificationCompat.Action quickPasteAction = new NotificationCompat.Action.Builder(
@@ -316,7 +176,7 @@ public class ClipboardService extends Service {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setContentTitle("سپر دانلود (فعال)")
-                .setContentText("شنود هوشمند کلیپ‌بورد و ارسال ۱۰۰٪ پس‌زمینه فعال است")
+                .setContentText("شنود هوشمند کلیپ‌بورد فعال است")
                 .setSmallIcon(R.drawable.ic_stat_download)
                 .setContentIntent(openAppPendingIntent)
                 .setOngoing(true)
@@ -350,10 +210,11 @@ public class ClipboardService extends Service {
                 submitPendingIntent
         ).addRemoteInput(remoteInput).build();
 
-        Intent pasteIntent = new Intent(this, NotificationInputReceiver.class);
+        Intent pasteIntent = new Intent(this, MainActivity.class);
         pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
-        PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
-                this, 3, pasteIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pastePendingIntent = PendingIntent.getActivity(
+                this, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
         NotificationCompat.Action quickPasteAction = new NotificationCompat.Action.Builder(
@@ -364,7 +225,7 @@ public class ClipboardService extends Service {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("سپر دانلود (فعال)")
-                .setContentText("شنود هوشمند کلیپ‌بورد و ارسال ۱۰۰٪ پس‌زمینه فعال است")
+                .setContentText("شنود هوشمند کلیپ‌بورد فعال است")
                 .setSmallIcon(R.drawable.ic_stat_download)
                 .setContentIntent(openAppPendingIntent)
                 .setOngoing(true)
