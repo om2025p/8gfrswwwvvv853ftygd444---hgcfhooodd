@@ -44,10 +44,10 @@ public class ClipboardService extends Service {
 
     public static boolean isRunning = false;
     public static String lastCopiedUrl = "";
+    public static String lastProcessedClip = "";
 
     private ClipboardManager clipboardManager;
     private ClipboardManager.OnPrimaryClipChangedListener clipListener;
-    private String lastProcessedClip = "";
     private OkHttpClient httpClient;
     private Handler mainHandler;
 

@@ -39,7 +39,10 @@ public class TransparentPasteActivity extends Activity {
         if (freshLink != null && !freshLink.isEmpty()) {
             Toast.makeText(this, "🚀 چسباندن زنده و ارسال به گیت‌هاب:\n" + freshLink, Toast.LENGTH_LONG).show();
 
-            ClipboardService.lastCopiedUrl = freshLink;
+            // پس از خواندن و ارسال لینک، کش سرویس و حافظه پردازش‌شده را پاکسازی می‌کنیم تا دفعه بعد لینک قدیمی فرستاده نشود
+            ClipboardService.lastCopiedUrl = "";
+            ClipboardService.lastProcessedClip = "";
+
             NotificationInputReceiver.registerNativeUniqueLink(this, freshLink);
             NotificationInputReceiver.saveNativeDownloadHistory(this, freshLink, "⚡ چسباندن زنده از اعلان");
             dispatchToGitHub(freshLink);
@@ -59,29 +62,32 @@ public class TransparentPasteActivity extends Activity {
         }
 
         boolean hasClip = clipboardManager.hasPrimaryClip();
-        if (!hasClip) {
-            String serviceCache = ClipboardService.lastCopiedUrl;
-            if (!serviceCache.isEmpty()) return serviceCache;
-            return null;
-        }
-
-        try {
-            ClipData clip = clipboardManager.getPrimaryClip();
-            if (clip != null && clip.getItemCount() > 0) {
-                CharSequence textChar = clip.getItemAt(0).getText();
-                if (textChar != null) {
-                    String raw = textChar.toString().trim();
-                    Matcher matcher = URL_PATTERN.matcher(raw);
-                    if (matcher.find()) {
-                        return matcher.group(1);
-                    } else if (raw.startsWith("http://") || raw.startsWith("https://")) {
-                        return raw;
+        if (hasClip) {
+            try {
+                ClipData clip = clipboardManager.getPrimaryClip();
+                if (clip != null && clip.getItemCount() > 0) {
+                    CharSequence textChar = clip.getItemAt(0).getText();
+                    if (textChar != null) {
+                        String raw = textChar.toString().trim();
+                        Matcher matcher = URL_PATTERN.matcher(raw);
+                        if (matcher.find()) {
+                            return matcher.group(1);
+                        } else if (raw.startsWith("http://") || raw.startsWith("https://")) {
+                            return raw;
+                        }
                     }
                 }
+            } catch (Exception e) {
+                Log.e(TAG, "Error reading clipboard: " + e.getMessage());
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Error reading clipboard: " + e.getMessage());
         }
+
+        // اگر سیستم کلیپ بورد مستقیم تهی داد، از کش اخیر سرویس استفاده کن و سپس کش را تخلیه کن
+        String serviceCache = ClipboardService.lastCopiedUrl;
+        if (serviceCache != null && !serviceCache.isEmpty()) {
+            return serviceCache;
+        }
+
         return null;
     }
 
