@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.app.RemoteInput;
@@ -29,6 +30,7 @@ public class NotificationInputReceiver extends BroadcastReceiver {
     public static final String ACTION_SUBMIT_LINK = "com.emarat.downloadshield.ACTION_SUBMIT_LINK";
     public static final String ACTION_QUICK_PASTE = "com.emarat.downloadshield.ACTION_QUICK_PASTE";
     public static final String KEY_TEXT_REPLY = "key_text_reply";
+    private static final String TAG = "NotificationReceiver";
 
     private static final Pattern URL_PATTERN = Pattern.compile(
             "(https?://[^\\s]+)",
@@ -37,9 +39,14 @@ public class NotificationInputReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent == null || intent.getAction() == null) return;
+        if (intent == null || intent.getAction() == null) {
+            Log.e(TAG, "❌ دریافت اینتنت خالی یا بدون اکشن!");
+            return;
+        }
 
         String action = intent.getAction();
+        Log.d(TAG, "📢 دریافت اکشن اعلان پس‌زمینه: " + action);
+
         String linkToDownload = null;
 
         if (ACTION_SUBMIT_LINK.equals(action)) {
@@ -48,13 +55,15 @@ public class NotificationInputReceiver extends BroadcastReceiver {
                 CharSequence text = remoteInput.getCharSequence(KEY_TEXT_REPLY);
                 if (text != null) {
                     linkToDownload = text.toString().trim();
+                    Log.d(TAG, "✅ متن دریافتی از RemoteInput: " + linkToDownload);
                 }
             }
-            // Refresh notification immediately to stop Android inline reply spinner and clear input box
             ClipboardService.refreshNotification(context);
         } else if (ACTION_QUICK_PASTE.equals(action)) {
+            Log.d(TAG, "📋 پردازش چسباندن ۱۰۰٪ پس‌زمینه بدون باز شدن برنامه...");
+
+            // اولویت اول: استعلام مستقیم کلیپ‌بورد سیستم
             ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-            String pastedUrl = null;
             try {
                 if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
                     ClipData clip = clipboardManager.getPrimaryClip();
@@ -64,33 +73,61 @@ public class NotificationInputReceiver extends BroadcastReceiver {
                             String raw = text.toString().trim();
                             Matcher matcher = URL_PATTERN.matcher(raw);
                             if (matcher.find()) {
-                                pastedUrl = matcher.group(1);
-                            } else {
-                                pastedUrl = raw;
+                                linkToDownload = matcher.group(1);
+                            } else if (raw.startsWith("http://") || raw.startsWith("https://")) {
+                                linkToDownload = raw;
                             }
                         }
                     }
                 }
-            } catch (Exception ignored) {}
-
-            if (pastedUrl != null && !pastedUrl.isEmpty()) {
-                linkToDownload = pastedUrl;
-            } else {
-                Intent openIntent = new Intent(context, MainActivity.class);
-                openIntent.setAction(ACTION_QUICK_PASTE);
-                openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                context.startActivity(openIntent);
-                ClipboardService.refreshNotification(context);
-                return;
+            } catch (Exception e) {
+                Log.e(TAG, "❌ خطا در استعلام کلیپ‌بورد سیستم: " + e.getMessage());
             }
+
+            // اولویت دوم: کش اخیر سرویس پس‌زمینه
+            if ((linkToDownload == null || linkToDownload.isEmpty()) && ClipboardService.lastCopiedUrl != null && !ClipboardService.lastCopiedUrl.isEmpty()) {
+                linkToDownload = ClipboardService.lastCopiedUrl;
+                Log.d(TAG, "🎯 استفاده از کش سرویس: " + linkToDownload);
+            }
+
+            ClipboardService.refreshNotification(context);
         }
 
         if (linkToDownload != null && !linkToDownload.isEmpty()) {
-            Toast.makeText(context, "🚀 در حال ارسال آنی به گیت‌هاب...", Toast.LENGTH_SHORT).show();
-            saveNativeDownloadHistory(context, linkToDownload, "⚡ ارسال‌شده از اعلان اندروید");
+            Log.i(TAG, "🚀 شروع ارسال پس‌زمینه به گیت‌هاب برای لینک: " + linkToDownload);
+            Toast.makeText(context, "🚀 چسباندن و ارسال ۱۰۰٪ پس‌زمینه به گیت‌هاب:\n" + linkToDownload, Toast.LENGTH_LONG).show();
+
+            registerNativeUniqueLink(context, linkToDownload);
+            saveNativeDownloadHistory(context, linkToDownload, "⚡ چسباندن آنی و پس‌زمینه اعلان");
             dispatchToGitHub(context, linkToDownload);
-        } else if (ACTION_SUBMIT_LINK.equals(action)) {
-            Toast.makeText(context, "⚠️ متن ورودی خالی است!", Toast.LENGTH_SHORT).show();
+        } else {
+            Log.w(TAG, "⚠️ کلیپ‌بورد خالی است یا لینک معتبری یافت نشد.");
+            Toast.makeText(context, "⚠️ کلیپ‌بورد خالی است یا لینکی یافت نشد!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public static void registerNativeUniqueLink(Context context, String link) {
+        if (link == null || link.trim().isEmpty()) return;
+        try {
+            SharedPreferences prefs = context.getSharedPreferences("restricted_bot_prefs", Context.MODE_PRIVATE);
+            String rawUnique = prefs.getString("restricted_unique_download_links", "[]");
+            org.json.JSONArray array = new org.json.JSONArray(rawUnique);
+
+            boolean exists = false;
+            for (int i = 0; i < array.length(); i++) {
+                if (link.trim().equals(array.getString(i))) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (!exists) {
+                array.put(link.trim());
+                prefs.edit().putString("restricted_unique_download_links", array.toString()).apply();
+                Log.d(TAG, "🔗 لینک منحصربه‌فرد جدید ثبت شد. مجموع: " + array.length());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "❌ خطا در ثبت لینک منحصربه‌فرد: " + e.getMessage());
         }
     }
 
@@ -116,7 +153,10 @@ public class NotificationInputReceiver extends BroadcastReceiver {
             }
 
             prefs.edit().putString("restricted_download_history", updatedArray.toString()).apply();
-        } catch (Exception ignored) {}
+            Log.d(TAG, "💾 تاریخچه نیتیو با موفقیت ذخیره شد.");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ خطا در ذخیره تاریخچه نیتیو: " + e.getMessage());
+        }
     }
 
     public static String getFullRepoPath(SharedPreferences prefs) {
@@ -165,6 +205,11 @@ public class NotificationInputReceiver extends BroadcastReceiver {
         final String ghToken = rawToken.trim();
         final String ghBranch = rawBranch.trim();
 
+        if (ghToken.isEmpty()) {
+            Toast.makeText(context, "⚠️ توکن گیت‌هاب خالی است! ابتدا تنظیمات را پر کنید.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         String tgApiId = prefs.getString("restricted_bot_tgApiId", "").trim();
         String tgApiHash = prefs.getString("restricted_bot_tgApiHash", "").trim();
         String tgBotToken = prefs.getString("restricted_bot_tgBotToken", "").trim();
@@ -211,15 +256,13 @@ public class NotificationInputReceiver extends BroadcastReceiver {
             public void onResponse(Call call, Response response) throws IOException {
                 int code = response.code();
                 if (response.isSuccessful() || code == 204) {
-                    mainHandler.post(() -> Toast.makeText(context, "✅ لینک با موفقیت به گیت‌هاب ارسال شد 🚀", Toast.LENGTH_LONG).show());
+                    mainHandler.post(() -> Toast.makeText(context, "✅ دانلود با موفقیت در پس‌زمینه به گیت‌هاب فرستاده شد 🚀", Toast.LENGTH_LONG).show());
                 } else if (code == 404) {
-                    mainHandler.post(() -> Toast.makeText(context, "❌ خطا ۴۰۴: مخزن (" + fullRepo + ") یا فایل restricted_bot.yml یافت نشد!", Toast.LENGTH_LONG).show());
+                    mainHandler.post(() -> Toast.makeText(context, "❌ خطا ۴۰۴: مخزن (" + fullRepo + ") یا ورک‌فلو یافت نشد!", Toast.LENGTH_LONG).show());
                 } else if (code == 401) {
-                    mainHandler.post(() -> Toast.makeText(context, "❌ خطا ۴۰۱: توکن دسترسی گیت‌هاب منقضی یا نامعتبر است!", Toast.LENGTH_LONG).show());
-                } else if (code == 422) {
-                    mainHandler.post(() -> Toast.makeText(context, "⚠️ خطا ۴۲۲: شاخه " + ghBranch + " یا ورودی‌ها در گیت‌هاب تایید نشدند!", Toast.LENGTH_LONG).show());
+                    mainHandler.post(() -> Toast.makeText(context, "❌ خطا ۴۰۱: توکن دسترسی گیت‌هاب معتبر نیست!", Toast.LENGTH_LONG).show());
                 } else {
-                    mainHandler.post(() -> Toast.makeText(context, "⚠️ پاسخ گیت‌هاب (" + code + "): لطفا توکن و اطلاعات مخزن را بررسی کنید", Toast.LENGTH_LONG).show());
+                    mainHandler.post(() -> Toast.makeText(context, "⚠️ پاسخ گیت‌هاب (" + code + "): لطفا تنظیمات مخزن را چک کنید", Toast.LENGTH_LONG).show());
                 }
                 response.close();
             }
