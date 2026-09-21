@@ -50,7 +50,6 @@ public class NotificationInputReceiver extends BroadcastReceiver {
                     linkToDownload = text.toString().trim();
                 }
             }
-            // Refresh notification immediately to stop Android inline reply spinner and clear input box
             ClipboardService.refreshNotification(context);
         } else if (ACTION_QUICK_PASTE.equals(action)) {
             ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
@@ -73,6 +72,8 @@ public class NotificationInputReceiver extends BroadcastReceiver {
                 }
             } catch (Exception ignored) {}
 
+            ClipboardService.refreshNotification(context);
+
             if (pastedUrl != null && !pastedUrl.isEmpty()) {
                 linkToDownload = pastedUrl;
             } else {
@@ -80,13 +81,12 @@ public class NotificationInputReceiver extends BroadcastReceiver {
                 openIntent.setAction(ACTION_QUICK_PASTE);
                 openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 context.startActivity(openIntent);
-                ClipboardService.refreshNotification(context);
                 return;
             }
         }
 
         if (linkToDownload != null && !linkToDownload.isEmpty()) {
-            Toast.makeText(context, "🚀 در حال ارسال آنی به گیت‌هاب...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "🚀 در حال چسباندن و ارسال آنی به گیت‌هاب...", Toast.LENGTH_SHORT).show();
             saveNativeDownloadHistory(context, linkToDownload, "⚡ ارسال‌شده از اعلان اندروید");
             dispatchToGitHub(context, linkToDownload);
         } else if (ACTION_SUBMIT_LINK.equals(action)) {
