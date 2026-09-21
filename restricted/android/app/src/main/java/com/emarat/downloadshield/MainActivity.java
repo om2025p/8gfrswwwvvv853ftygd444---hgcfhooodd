@@ -11,9 +11,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.View;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,10 +27,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textfield.TextInputEditText;
 
 import org.json.JSONArray;
@@ -51,6 +57,10 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 101;
+
+    private TabLayout tabLayout;
+    private NestedScrollView layoutNativeTab1;
+    private WebView webViewTab2;
 
     private TextInputEditText etDownloadLink;
     private MaterialButton btnPasteLink, btnDownload, btnToggleNotification, btnConfigBackupRestore, btnClearHistory;
@@ -89,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         mainHandler = new Handler(Looper.getMainLooper());
 
         initViews();
+        setupWebView();
         setupListeners();
         loadSavedData();
         checkPermissionsAndStartService();
@@ -118,6 +129,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+        tabLayout = findViewById(R.id.tabLayout);
+        layoutNativeTab1 = findViewById(R.id.layoutNativeTab1);
+        webViewTab2 = findViewById(R.id.webViewTab2);
+
         etDownloadLink = findViewById(R.id.etDownloadLink);
         btnPasteLink = findViewById(R.id.btnPasteLink);
         btnDownload = findViewById(R.id.btnDownload);
@@ -139,6 +154,62 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         rvDownloadHistory.setAdapter(historyAdapter);
+
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                if (tab.getPosition() == 0) {
+                    layoutNativeTab1.setVisibility(View.VISIBLE);
+                    webViewTab2.setVisibility(View.GONE);
+                } else {
+                    layoutNativeTab1.setVisibility(View.GONE);
+                    webViewTab2.setVisibility(View.VISIBLE);
+                    if (webViewTab2.getUrl() == null) {
+                        webViewTab2.loadUrl("file:///android_asset/restricted/index.html");
+                    }
+                    webViewTab2.evaluateJavascript("if(typeof switchTab==='function') switchTab(2);", null);
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
+    }
+
+    private void setupWebView() {
+        WebSettings settings = webViewTab2.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+
+        webViewTab2.addJavascriptInterface(new AndroidBridge(this), "AndroidNative");
+
+        webViewTab2.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                request.grant(request.getResources());
+            }
+        });
+
+        webViewTab2.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                if (url.startsWith("file:///android_asset/")) {
+                    return false;
+                }
+                view.loadUrl(url);
+                return true;
+            }
+        });
     }
 
     private void setupListeners() {
@@ -562,6 +633,15 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
             startClipboardService();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (tabLayout.getSelectedTabPosition() == 1 && webViewTab2 != null && webViewTab2.canGoBack()) {
+            webViewTab2.goBack();
+        } else {
+            super.onBackPressed();
         }
     }
 }
