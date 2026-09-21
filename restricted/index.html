@@ -515,7 +515,7 @@
                             <span style="font-size: 0.82rem; font-weight: 800; color: #16a34a; background: #dc26260f; padding: 3px 10px; border-radius: 10px; border: 1px solid #bbf7d0;">۱۲ شهریور ۱۴۰۵ ساعت ۱۱:۳۰</span>
                         </div>
                         <ul style="margin: 0; padding-right: 18px; font-size: 0.82rem; color: #475569; line-height: 1.7;">
-                            <li>📋 <strong>[۱۲ شهریور ۱۴۰۵ - ۱۱:۳۰] افزودن دکمه چسباندن پیوند و شمارنده هوشمند:</strong> قابلیت چسباندن سریع متن کلیپ‌بورد به کادر دانلود با یک کلیک و ثبت دائم تعداد کل لینک‌های منحصربه‌فرد (غیرتکراری) در حافظه مرورگر.</li>
+                            <li>📋 <strong>[۱۲ شهریور ۱۴۰۵ - ۱۱:۳۰] افزودن دکمه چسباندن پیوند و شمارنده هوشمند:</strong> قابلیت چسباندن سریع متن کلیپ‌بورد به کادر دانلود با یک کلیک و ثبت دائم تعداد کل لینک‌های منحصربه‌فرد (غیرتکراری) در حافظه دستگاه.</li>
                             <li>🩸 <strong>[۱۰ شهریور ۱۴۰۵ - ۱۶:۴۵] گزارش و عیب‌یابی هوشمند خطاها:</strong> ارائه علت و شرح دقیق عدم دریافت لینک در پیام تلگرام و ارسال فایل متنی پیوست در صورت طولانی بودن لاگ‌ها.</li>
                             <li>🟢 <strong>[۵ شهریور ۱۴۰۵ - ۰۷:۴۶] اتصال لایو دیباگ سرور:</strong> استریم خط‌به‌خط لاگ‌های سرور ابری گیت‌هاب در پنل دیاگ دانلود.</li>
                             <li>⚡ <strong>[۴ شهریور ۱۴۰۵ - ۲۲:۱۵] موتور ۴ لایه مدرن رسانه:</strong> استخراج تیک‌تاک بدون واترمارک HD (TikWM API)، ریلز اینستاگرام (Embed Engine)، yt-dlp 2024 و Direct Parser.</li>
@@ -633,7 +633,7 @@
             <div class="white-card">
                 <h2 class="card-title">⚙️ تنظیمات و متغیرهای محرمانه (پرونده ربات)</h2>
                 <p style="font-size: 0.82rem; line-height: 1.6; color: #64748b; margin-top: -8px; margin-bottom: 16px;">
-                    این تنظیمات صرفاً در حافظه امن مرورگر شما به صورت محلی ذخیره می‌شوند تا بتوانید دستور فعال‌سازی گیت‌هاب را مستقیم صادر کنید.
+                    این تنظیمات صرفاً در حافظه امن برنامه به صورت محلی ذخیره می‌شوند تا بتوانید دستور فعال‌سازی گیت‌هاب را مستقیم صادر کنید.
                 </p>
 
                 <div class="form-grid">
@@ -1044,8 +1044,9 @@
         }
 
         async function requestNotificationPermission() {
+            if (window.AndroidNative) return true;
             if (!('Notification' in window)) {
-                showToast("⚠️ مرورگر شما از سیستم اعلان‌ها پشتیبانی نمی‌کند!");
+                showToast("⚠️ سیستم‌عامل از اعلان‌ها پشتیبانی نمی‌کند!");
                 return false;
             }
             if (Notification.permission === 'granted') return true;
@@ -1110,7 +1111,7 @@
                             "برای دانلود سریع فیلم‌ها، فقط روی «📋 چسباندن و دانلود سریع» بزنید!"
                         );
                     } else {
-                        showToast("⚠️ اجازه دسترسی به اعلان‌ها توسط مرورگر تایید نشد!");
+                        showToast("⚠️ اجازه دسترسی به اعلان‌ها تایید نشد!");
                     }
                 }
             };
@@ -2211,7 +2212,7 @@
                     if (data && data.channels) {
                         currentSearchChannels = data.channels;
                         renderWebChannels(currentSearchChannels);
-                        logDebug(`بارگذاری ${currentSearchChannels.length} کانال ذخیره‌شده از حافظه مرورگر.`, 'success');
+                        logDebug(`بارگذاری ${currentSearchChannels.length} کانال ذخیره‌شده از حافظه دستگاه.`, 'success');
                     }
                 }
             } catch (e) {
