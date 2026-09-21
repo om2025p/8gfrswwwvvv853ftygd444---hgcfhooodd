@@ -5,6 +5,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -39,7 +40,8 @@ public class TransparentPasteActivity extends Activity {
         if (freshLink != null && !freshLink.isEmpty()) {
             Toast.makeText(this, "🚀 چسباندن زنده و ارسال به گیت‌هاب:\n" + freshLink, Toast.LENGTH_LONG).show();
 
-            // پس از خواندن و ارسال لینک، کش سرویس و حافظه پردازش‌شده را پاکسازی می‌کنیم تا دفعه بعد لینک قدیمی فرستاده نشود
+            // پاکسازی کامل کلیپ‌بورد سیستم و حافظه سرویس تا لینک قدیمی پاک شود و جا برای لینک جدید باز گردد
+            clearClipboardSystem();
             ClipboardService.lastCopiedUrl = "";
             ClipboardService.lastProcessedClip = "";
 
@@ -52,6 +54,22 @@ public class TransparentPasteActivity extends Activity {
 
         ClipboardService.refreshNotification(this);
         finish();
+    }
+
+    private void clearClipboardSystem() {
+        try {
+            ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboardManager != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    clipboardManager.clearPrimaryClip();
+                } else {
+                    clipboardManager.setPrimaryClip(ClipData.newPlainText("", ""));
+                }
+                Log.d(TAG, "کلیپ‌بورد سیستم با موفقیت پاکسازی شد.");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error clearing clipboard: " + e.getMessage());
+        }
     }
 
     private String getFreshClipboardUrl() {
@@ -82,7 +100,7 @@ public class TransparentPasteActivity extends Activity {
             }
         }
 
-        // اگر سیستم کلیپ بورد مستقیم تهی داد، از کش اخیر سرویس استفاده کن و سپس کش را تخلیه کن
+        // اگر سیستم کلیپ بورد مستقیم تهی داد، از کش اخیر سرویس استفاده کن
         String serviceCache = ClipboardService.lastCopiedUrl;
         if (serviceCache != null && !serviceCache.isEmpty()) {
             return serviceCache;
