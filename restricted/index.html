@@ -154,14 +154,60 @@
             display: flex;
         }
 
-        /* کارت‌های سفید شیک */
+        /* کارت‌های نیتیو متریال ۳ اندروید */
         .white-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 28px;
+            padding: 22px 18px;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* کارت اندروید نئومورفیک تب اول */
+        .android-native-card {
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border: 1.5px solid #dbeafe;
+            border-radius: 32px;
+            padding: 24px 20px;
+            box-shadow: 0 12px 32px -4px rgba(37, 99, 235, 0.12);
+        }
+
+        .android-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+
+        .android-btn-green {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #ffffff;
+            border: none;
             border-radius: 24px;
-            padding: 24px;
-            box-shadow: var(--shadow-lg);
-            transition: all 0.2s ease;
+            padding: 18px;
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: -0.2px;
+            box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.4);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .android-btn-green:active {
+            transform: scale(0.97);
+            box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.5);
         }
 
         .card-title {
@@ -433,39 +479,39 @@
 
     <div class="container">
 
-        <!-- ==================== تب ۱: مینی‌مال و سفید (پیش‌فرض) ==================== -->
+        <!-- ==================== تب ۱: کاملاً نیتیو متریال ۳ اندروید (پیش‌فرض) ==================== -->
         <div class="tab-content active" id="tabContent1">
-            <div class="white-card" style="padding: 28px 22px;">
-                <!-- وضعیت زنده سرور -->
-                <div class="status-panel">
-                    <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">وضعیت موتور دانلود:</span>
+            <div class="android-native-card">
+                <!-- وضعیت زنده سرور نیتیو -->
+                <div class="status-panel" style="border-radius: 20px; background: #ffffff; border: 1px solid #e2e8f0; margin-bottom: 18px;">
+                    <span style="font-size: 0.85rem; color: #475569; font-weight: 700;">🟢 وضعیت موتور ابری دانلود:</span>
                     <div class="status-badge" id="workflowStatus1">
                         <span class="status-dot idle"></span>
                         <span id="statusText1">در حال دریافت وضعیت...</span>
                     </div>
                 </div>
 
-                <!-- کادر ورودی پیوند عکس / فیلم -->
-                <div class="input-group" style="margin-bottom: 12px;">
-                    <label class="input-label" style="font-size: 0.9rem; color: #1e293b; font-weight: 700;">
-                        🎬📸 لینک فیلم یا عکس تلگرام تیک تاک اینستاگرام را وارد کنید:
+                <!-- کادر ورودی پیوند با طراحی کپسولی اندروید -->
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label" style="font-size: 0.92rem; color: #0f172a; font-weight: 800; margin-bottom: 4px;">
+                        🎬📸 لینک فیلم یا عکس (تلگرام، اینستا، تیک‌تاک):
                     </label>
-                    <div style="display: flex; gap: 8px; width: 100%;">
-                        <input type="text" id="dlLink" class="input-field" placeholder="https://t.me/c/123456789/22" style="direction: ltr; font-size: 0.95rem; padding: 15px; border-radius: 16px; flex: 1;">
-                        <button class="action-btn secondary" id="btnPaste" style="width: auto; padding: 0 16px; font-size: 0.9rem; border-radius: 16px; white-space: nowrap; flex-shrink: 0;">
+                    <div style="display: flex; gap: 10px; width: 100%; align-items: center;">
+                        <input type="text" id="dlLink" class="input-field" placeholder="https://t.me/c/123456789/22" style="direction: ltr; font-size: 0.95rem; padding: 16px 18px; border-radius: 20px; flex: 1; border: 2px solid #cbd5e1; background: #ffffff;">
+                        <button class="action-btn secondary" id="btnPaste" style="width: auto; padding: 0 18px; height: 54px; font-size: 0.92rem; font-weight: 800; border-radius: 20px; white-space: nowrap; flex-shrink: 0; background: #eff6ff; color: #2563eb; border: 1.5px solid #bfdbfe;">
                             📋 چسباندن
                         </button>
                     </div>
                 </div>
 
-                <!-- شمارنده لینک‌های منحصربه‌فرد زیر کادر -->
-                <div id="uniqueLinksCounter" style="font-size: 0.83rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 8px 14px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-                    <span>🔗 تعداد لینک‌های دانلودشده (غیرتکراری):</span>
-                    <span id="uniqueLinksCountBadge" style="background: #2563eb; color: #ffffff; padding: 2px 10px; border-radius: 10px; font-size: 0.85rem;">۰</span>
+                <!-- چیپ هوشمند شمارنده اندروید -->
+                <div id="uniqueLinksCounter" style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a; background: #f0f9ff; border: 1px solid #bae6fd; padding: 10px 16px; border-radius: 18px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between;">
+                    <span class="android-chip" style="background: #e0f2fe; color: #0369a1; border-color: #7dd3fc;">🔗 دانلودهای یکتا:</span>
+                    <span id="uniqueLinksCountBadge" style="background: #0284c7; color: #ffffff; padding: 3px 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 800;">۰</span>
                 </div>
 
-                <!-- دکمه دانلود بزرگ -->
-                <button class="action-btn green" id="btnDownload" style="padding: 16px; font-size: 1.05rem; border-radius: 16px;">
+                <!-- دکمه اکشن شناور متریال ۳ -->
+                <button class="android-btn-green" id="btnDownload">
                     📥 دانلود و ارسال مستقیم به تلگرام
                 </button>
             </div>
