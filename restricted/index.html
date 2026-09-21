@@ -1777,18 +1777,38 @@
         // بارگذاری اولیه شمارنده لینک‌های منحصربه‌فرد
         updateUniqueLinksBadge();
 
-        // مدیریت تاریخچه زنده دانلودها
+        // مدیریت تاریخچه زنده دانلودها (ادغام تاریخچه نیتیو اندروید)
         function getDownloadHistory() {
+            let history = [];
             try {
                 const raw = localStorage.getItem(DOWNLOAD_HISTORY_STORAGE_KEY);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed)) return parsed;
+                    if (Array.isArray(parsed)) history = parsed;
                 }
             } catch (e) {
                 console.error("Error reading download history:", e);
             }
-            return [];
+
+            try {
+                if (window.AndroidNative && typeof window.AndroidNative.getDownloadHistory === 'function') {
+                    const rawNative = window.AndroidNative.getDownloadHistory();
+                    if (rawNative && rawNative !== '[]') {
+                        const parsedNative = JSON.parse(rawNative);
+                        if (Array.isArray(parsedNative) && parsedNative.length > 0) {
+                            parsedNative.forEach(nItem => {
+                                if (!history.some(h => h.id === nItem.id || h.link === nItem.link)) {
+                                    history.push(nItem);
+                                }
+                            });
+                        }
+                    }
+                }
+            } catch (eNative) {
+                console.error("Error merging native download history:", eNative);
+            }
+
+            return history;
         }
 
         function saveDownloadHistory(historyArr) {
@@ -1936,19 +1956,22 @@
 
         // تابع هوشمند و امن دریافت متن کلیپ‌بورد (اولویت با نیتیو اندروید)
         async function getClipboardTextSafely() {
-            // ۱. ابتدا تلاش برای فراخوانی مستقیم از نیتیو اندروید (بدون نیاز به مجوز کرومیوم)
-            try {
-                if (window.AndroidNative && typeof window.AndroidNative.getClipboardText === 'function') {
-                    const nativeText = window.AndroidNative.getClipboardText();
-                    if (nativeText && nativeText.trim()) {
-                        return nativeText.trim();
+            // ۱. در صورت حضور نیتیو اندروید، فقط و فقط از پل نیتیو استفاده می‌کنیم
+            if (window.AndroidNative) {
+                try {
+                    if (typeof window.AndroidNative.getClipboardText === 'function') {
+                        const nativeText = window.AndroidNative.getClipboardText();
+                        if (nativeText && nativeText.trim()) {
+                            return nativeText.trim();
+                        }
                     }
+                } catch (errNative) {
+                    logDlDebug("خطای خواندن کلیپ‌بورد اندروید: " + errNative.message, "error");
                 }
-            } catch (errNative) {
-                logDlDebug("خطا در فراخوانی کلیپ‌بورد نیتیو اندروید: " + errNative.message, "error");
+                return ""; // در WebView به هیچ وجه سراغ navigator.clipboard نرو تا ارور Permission Denied ندهد!
             }
 
-            // ۲. در غیر این صورت استفاده از API استاندارد مرورگر
+            // ۲. استفاده از API وب برای مرورگرهای استاندارد دسکتاپ/موبایل
             try {
                 if (navigator.clipboard && navigator.clipboard.readText) {
                     const webText = await navigator.clipboard.readText();

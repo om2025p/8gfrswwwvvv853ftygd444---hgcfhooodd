@@ -155,6 +155,7 @@ public class ClipboardService extends Service {
 
                 showToastOnMainThread("🎯 لینک جدید شناسایی شد: " + foundUrl + "\nدر حال ارسال به گیت‌هاب...");
 
+                NotificationInputReceiver.saveNativeDownloadHistory(getApplicationContext(), foundUrl, "⚡ شنود کلیپ‌بورد اندروید");
                 dispatchToGitHub(foundUrl);
             }
         }

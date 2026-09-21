@@ -53,20 +53,70 @@ public class NotificationInputReceiver extends BroadcastReceiver {
             // Refresh notification immediately to stop Android inline reply spinner and clear input box
             ClipboardService.refreshNotification(context);
         } else if (ACTION_QUICK_PASTE.equals(action)) {
-            // Launch MainActivity into foreground to gain window focus for reading Clipboard safely on Android 10+
-            Intent openIntent = new Intent(context, MainActivity.class);
-            openIntent.setAction(ACTION_QUICK_PASTE);
-            openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            context.startActivity(openIntent);
-            return;
+            ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+            String pastedUrl = null;
+            try {
+                if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
+                    ClipData clip = clipboardManager.getPrimaryClip();
+                    if (clip != null && clip.getItemCount() > 0) {
+                        CharSequence text = clip.getItemAt(0).getText();
+                        if (text != null) {
+                            String raw = text.toString().trim();
+                            Matcher matcher = URL_PATTERN.matcher(raw);
+                            if (matcher.find()) {
+                                pastedUrl = matcher.group(1);
+                            } else {
+                                pastedUrl = raw;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            if (pastedUrl != null && !pastedUrl.isEmpty()) {
+                linkToDownload = pastedUrl;
+            } else {
+                Intent openIntent = new Intent(context, MainActivity.class);
+                openIntent.setAction(ACTION_QUICK_PASTE);
+                openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                context.startActivity(openIntent);
+                ClipboardService.refreshNotification(context);
+                return;
+            }
         }
 
         if (linkToDownload != null && !linkToDownload.isEmpty()) {
             Toast.makeText(context, "🚀 در حال ارسال آنی به گیت‌هاب...", Toast.LENGTH_SHORT).show();
+            saveNativeDownloadHistory(context, linkToDownload, "⚡ ارسال‌شده از اعلان اندروید");
             dispatchToGitHub(context, linkToDownload);
         } else if (ACTION_SUBMIT_LINK.equals(action)) {
             Toast.makeText(context, "⚠️ متن ورودی خالی است!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public static void saveNativeDownloadHistory(Context context, String link, String statusText) {
+        try {
+            SharedPreferences prefs = context.getSharedPreferences("restricted_bot_prefs", Context.MODE_PRIVATE);
+            String rawHistory = prefs.getString("restricted_download_history", "[]");
+            org.json.JSONArray historyArray = new org.json.JSONArray(rawHistory);
+
+            org.json.JSONObject item = new org.json.JSONObject();
+            item.put("id", "dl_native_" + System.currentTimeMillis());
+            item.put("link", link);
+            item.put("timestamp", "اعلان اندروید");
+            item.put("status", "in_progress");
+            item.put("statusText", statusText);
+            item.put("isUnique", true);
+
+            org.json.JSONArray updatedArray = new org.json.JSONArray();
+            updatedArray.put(item);
+
+            for (int i = 0; i < Math.min(49, historyArray.length()); i++) {
+                updatedArray.put(historyArray.get(i));
+            }
+
+            prefs.edit().putString("restricted_download_history", updatedArray.toString()).apply();
+        } catch (Exception ignored) {}
     }
 
     public static String getFullRepoPath(SharedPreferences prefs) {

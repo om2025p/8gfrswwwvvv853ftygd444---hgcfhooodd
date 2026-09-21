@@ -5,11 +5,15 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 import android.webkit.JavascriptInterface;
 import android.widget.Toast;
 import androidx.core.content.ContextCompat;
 
 import org.json.JSONObject;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class AndroidBridge {
     private Context context;
@@ -25,19 +29,40 @@ public class AndroidBridge {
 
     @JavascriptInterface
     public String getClipboardText() {
-        try {
-            ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-            if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
-                ClipData clip = clipboardManager.getPrimaryClip();
-                if (clip != null && clip.getItemCount() > 0) {
-                    CharSequence text = clip.getItemAt(0).getText();
-                    if (text != null) {
-                        return text.toString();
+        final String[] result = {""};
+        final CountDownLatch latch = new CountDownLatch(1);
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+
+        mainHandler.post(() -> {
+            try {
+                ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
+                    ClipData clip = clipboardManager.getPrimaryClip();
+                    if (clip != null && clip.getItemCount() > 0) {
+                        CharSequence text = clip.getItemAt(0).getText();
+                        if (text != null) {
+                            result[0] = text.toString();
+                        }
                     }
                 }
-            }
+            } catch (Exception ignored) {}
+            latch.countDown();
+        });
+
+        try {
+            latch.await(500, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ignored) {}
+
+        return result[0];
+    }
+
+    @JavascriptInterface
+    public String getDownloadHistory() {
+        try {
+            SharedPreferences prefs = context.getSharedPreferences("restricted_bot_prefs", Context.MODE_PRIVATE);
+            return prefs.getString("restricted_download_history", "[]");
         } catch (Exception ignored) {}
-        return "";
+        return "[]";
     }
 
     @JavascriptInterface
