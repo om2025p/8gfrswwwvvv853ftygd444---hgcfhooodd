@@ -838,6 +838,33 @@
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
 
+        // همگام‌سازی خودکار از تنظیمات نیتیو اندروید
+        function syncNativeAndroidConfig() {
+            try {
+                if (window.AndroidNative && typeof window.AndroidNative.getConfigData === 'function') {
+                    const rawJson = window.AndroidNative.getConfigData();
+                    if (rawJson && rawJson !== '{}') {
+                        const data = JSON.parse(rawJson);
+                        inputs.forEach(id => {
+                            let val = data[id] || (id === 'ghPat' ? data.ghToken : '');
+                            if (val && String(val).trim()) {
+                                const cleaned = sanitizeString(String(val).trim());
+                                const el = document.getElementById(id);
+                                if (el && (!el.value || !el.value.trim())) {
+                                    el.value = cleaned;
+                                }
+                                localStorage.setItem('restricted_bot_' + id, cleaned);
+                            }
+                        });
+                        updateEnvPreview();
+                        logDebug("تنظیمات نیتیو اندروید با موفقیت همگام‌سازی شدند.");
+                    }
+                }
+            } catch (err) {
+                console.error("Error syncing native android config:", err);
+            }
+        }
+
         // لود مقادیر ذخیره شده همراه با ضدعفونی خودکار
         logDebug("در حال راه‌اندازی و بارگذاری متغیرهای ذخیره شده...");
         inputs.forEach(id => {
@@ -866,9 +893,19 @@
                     } catch (err) {}
                 }
                 localStorage.setItem('restricted_bot_' + id, cleaned);
+
+                if (window.AndroidNative && typeof window.AndroidNative.saveConfigData === 'function') {
+                    const cfgData = {};
+                    inputs.forEach(k => cfgData[k] = localStorage.getItem('restricted_bot_' + k) || '');
+                    window.AndroidNative.saveConfigData(JSON.stringify(cfgData));
+                }
+
                 updateEnvPreview();
             });
         });
+
+        // فراخوانی اولیه همگام‌سازی نیتیو
+        syncNativeAndroidConfig();
         logDebug("متغیرهای محلی با موفقیت بازیابی و ضدعفونی شدند.");
 
         // تولید پیش‌نمایش فایل تنظیمات
@@ -1415,6 +1452,8 @@
 
         // صدور دستور شروع سرور یا دانلود یا سرچ
         async function triggerWorkflow(downloadLink = null, targetHistoryId = null) {
+            syncNativeAndroidConfig();
+
             const owner = sanitizeString(document.getElementById('ghOwner').value);
             const repo = sanitizeString(document.getElementById('ghRepo').value);
             const pat = sanitizeString(document.getElementById('ghPat').value);

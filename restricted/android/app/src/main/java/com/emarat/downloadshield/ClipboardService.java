@@ -238,6 +238,57 @@ public class ClipboardService extends Service {
         mainHandler.post(() -> Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show());
     }
 
+    public static void refreshNotification(Context context) {
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager == null) return;
+
+        Intent openAppIntent = new Intent(context, MainActivity.class);
+        PendingIntent openAppPendingIntent = PendingIntent.getActivity(
+                context, 0, openAppIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        RemoteInput remoteInput = new RemoteInput.Builder(NotificationInputReceiver.KEY_TEXT_REPLY)
+                .setLabel("تایپ یا چسباندن لینک (بدون محدودیت طول)...")
+                .setAllowFreeFormInput(true)
+                .build();
+
+        Intent submitIntent = new Intent(context, NotificationInputReceiver.class);
+        submitIntent.setAction(NotificationInputReceiver.ACTION_SUBMIT_LINK);
+        PendingIntent submitPendingIntent = PendingIntent.getBroadcast(
+                context, 2, submitIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        NotificationCompat.Action directReplyAction = new NotificationCompat.Action.Builder(
+                R.drawable.ic_stat_download,
+                "📥 ارسال لینک",
+                submitPendingIntent
+        ).addRemoteInput(remoteInput).build();
+
+        Intent pasteIntent = new Intent(context, NotificationInputReceiver.class);
+        pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
+        PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
+                context, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        NotificationCompat.Action quickPasteAction = new NotificationCompat.Action.Builder(
+                R.drawable.ic_stat_download,
+                "📋 چسباندن و ارسال آنی",
+                pastePendingIntent
+        ).build();
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setContentTitle("سپر دانلود (فعال)")
+                .setContentText("شنود هوشمند کلیپ‌بورد فعال است")
+                .setSmallIcon(R.drawable.ic_stat_download)
+                .setContentIntent(openAppPendingIntent)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .addAction(directReplyAction)
+                .addAction(quickPasteAction);
+
+        manager.notify(NOTIFICATION_ID, builder.build());
+    }
+
     private Notification buildNotification(boolean active) {
         Intent openAppIntent = new Intent(this, MainActivity.class);
         PendingIntent openAppPendingIntent = PendingIntent.getActivity(

@@ -41,6 +41,31 @@ public class AndroidBridge {
     }
 
     @JavascriptInterface
+    public String getConfigData() {
+        try {
+            SharedPreferences prefs = context.getSharedPreferences("restricted_bot_prefs", Context.MODE_PRIVATE);
+            JSONObject json = new JSONObject();
+
+            String token = prefs.getString("restricted_bot_ghToken", "");
+            if (token.isEmpty()) token = prefs.getString("restricted_bot_ghPat", "");
+
+            json.put("ghOwner", prefs.getString("restricted_bot_ghOwner", ""));
+            json.put("ghRepo", prefs.getString("restricted_bot_ghRepo", ""));
+            json.put("ghPat", token);
+            json.put("ghToken", token);
+            json.put("ghBranch", prefs.getString("restricted_bot_ghBranch", "100"));
+            json.put("tgApiId", prefs.getString("restricted_bot_tgApiId", ""));
+            json.put("tgApiHash", prefs.getString("restricted_bot_tgApiHash", ""));
+            json.put("tgBotToken", prefs.getString("restricted_bot_tgBotToken", ""));
+            json.put("tgSession", prefs.getString("restricted_bot_tgSession", ""));
+            json.put("tgOwner", prefs.getString("restricted_bot_tgOwner", ""));
+
+            return json.toString();
+        } catch (Exception ignored) {}
+        return "{}";
+    }
+
+    @JavascriptInterface
     public void saveConfigData(String jsonString) {
         try {
             if (jsonString != null && !jsonString.isEmpty()) {

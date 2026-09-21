@@ -50,6 +50,8 @@ public class NotificationInputReceiver extends BroadcastReceiver {
                     linkToDownload = text.toString().trim();
                 }
             }
+            // Refresh notification immediately to stop Android inline reply spinner and clear input box
+            ClipboardService.refreshNotification(context);
         } else if (ACTION_QUICK_PASTE.equals(action)) {
             // Launch MainActivity into foreground to gain window focus for reading Clipboard safely on Android 10+
             Intent openIntent = new Intent(context, MainActivity.class);
