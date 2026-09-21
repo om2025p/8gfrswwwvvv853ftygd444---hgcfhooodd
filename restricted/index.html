@@ -1955,55 +1955,33 @@
             return matches.map(u => sanitizeString(u.trim())).filter(u => u.length > 5);
         }
 
-        // تابع هوشمند و امن دریافت متن کلیپ‌بورد (اولویت با نیتیو اندروید)
+        // تابع ۱۰۰٪ نیتیو اندروید جهت خواندن کلیپ‌بورد بدون کوچک‌ترین وابستگی به مرورگر
         async function getClipboardTextSafely() {
-            // ۱. در صورت حضور نیتیو اندروید، فقط و فقط از پل نیتیو استفاده می‌کنیم
-            if (window.AndroidNative) {
+            if (window.AndroidNative && typeof window.AndroidNative.getClipboardText === 'function') {
                 try {
-                    if (typeof window.AndroidNative.getClipboardText === 'function') {
-                        const nativeText = window.AndroidNative.getClipboardText();
-                        if (nativeText && nativeText.trim()) {
-                            return nativeText.trim();
-                        }
+                    const nativeText = window.AndroidNative.getClipboardText();
+                    if (nativeText && nativeText.trim()) {
+                        return nativeText.trim();
                     }
                 } catch (errNative) {
-                    logDlDebug("خطای خواندن کلیپ‌بورد اندروید: " + errNative.message, "error");
+                    logDlDebug("خطای خواندن کلیپ‌بورد از پل نیتیو: " + errNative.message, "error");
                 }
-                return ""; // در WebView به هیچ وجه سراغ navigator.clipboard نرو تا ارور Permission Denied ندهد!
             }
-
-            // ۲. استفاده از API وب برای مرورگرهای استاندارد دسکتاپ/موبایل
-            try {
-                if (navigator.clipboard && navigator.clipboard.readText) {
-                    const webText = await navigator.clipboard.readText();
-                    if (webText && webText.trim()) {
-                        return webText.trim();
-                    }
-                }
-            } catch (errWeb) {
-                logDlDebug("خطا در فراخوانی navigator.clipboard: " + errWeb.message, "error");
-            }
-
             return "";
         }
 
-        // دکمه چسباندن متن از کلیپ‌بورد
+        // دکمه چسباندن متن از کلیپ‌بورد اندروید
         const btnPaste = document.getElementById('btnPaste');
         if (btnPaste) {
             btnPaste.onclick = async () => {
-                try {
-                    const text = await getClipboardTextSafely();
-                    if (text) {
-                        const cleaned = sanitizeString(text);
-                        document.getElementById('dlLink').value = cleaned;
-                        showToast("📋 متن کلیپ‌بورد با موفقیت چسبانده شد!");
-                        logDlDebug("متن با موفقیت از حافظه کلیپ‌بورد چسبانده شد.");
-                    } else {
-                        showToast("⚠️ هیچ متن یا پیوندی در کلیپ‌بورد یافت نشد!");
-                    }
-                } catch (err) {
-                    showToast("⚠️ امکان دریافت کلیپ‌بورد وجود ندارد!");
-                    logDlDebug("خطای دسترسی به کلیپ‌بورد: " + err.message, "error");
+                const text = await getClipboardTextSafely();
+                if (text && text.trim()) {
+                    const cleaned = sanitizeString(text);
+                    document.getElementById('dlLink').value = cleaned;
+                    showToast("📋 متن از کلیپ‌بورد اندروید چسبانده شد!");
+                    logDlDebug("پیوند با موفقیت از حافظه اندروید دریافت و جای‌گذاری شد.");
+                } else {
+                    showToast("⚠️ کلیپ‌بورد دستگاه خالی است یا پیوندی یافت نشد!");
                 }
             };
         }

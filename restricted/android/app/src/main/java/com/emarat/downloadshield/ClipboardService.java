@@ -265,11 +265,10 @@ public class ClipboardService extends Service {
                 submitPendingIntent
         ).addRemoteInput(remoteInput).build();
 
-        Intent pasteIntent = new Intent(context, MainActivity.class);
+        Intent pasteIntent = new Intent(context, NotificationInputReceiver.class);
         pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
-        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pastePendingIntent = PendingIntent.getActivity(
-                context, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
+                context, 3, pasteIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
         NotificationCompat.Action quickPasteAction = new NotificationCompat.Action.Builder(
@@ -314,11 +313,10 @@ public class ClipboardService extends Service {
                 submitPendingIntent
         ).addRemoteInput(remoteInput).build();
 
-        Intent pasteIntent = new Intent(this, MainActivity.class);
+        Intent pasteIntent = new Intent(this, NotificationInputReceiver.class);
         pasteIntent.setAction(NotificationInputReceiver.ACTION_QUICK_PASTE);
-        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pastePendingIntent = PendingIntent.getActivity(
-                this, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent pastePendingIntent = PendingIntent.getBroadcast(
+                this, 3, pasteIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
         NotificationCompat.Action quickPasteAction = new NotificationCompat.Action.Builder(
