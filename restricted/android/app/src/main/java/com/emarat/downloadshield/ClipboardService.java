@@ -170,11 +170,8 @@ public class ClipboardService extends Service {
         }
         String rawBranch = prefs.getString("restricted_bot_ghBranch", "100");
 
-        if (rawToken == null || rawToken.trim().isEmpty()) {
-            String p1 = "github_pat_11BL4";
-            String p2 = "BKGQ0oWk8o6Rk7mN8_";
-            String p3 = "y2jG1M9Zq8P2y8W3K0";
-            rawToken = p1 + p2 + p3;
+        if (rawToken == null) {
+            rawToken = "";
         }
 
         final String ghToken = rawToken.trim();
@@ -249,7 +246,8 @@ public class ClipboardService extends Service {
 
         // Direct Reply input box inside notification
         RemoteInput remoteInput = new RemoteInput.Builder(NotificationInputReceiver.KEY_TEXT_REPLY)
-                .setLabel("تایپ یا چسباندن لینک...")
+                .setLabel("تایپ یا چسباندن لینک (بدون محدودیت طول)...")
+                .setAllowFreeFormInput(true)
                 .build();
 
         Intent submitIntent = new Intent(this, NotificationInputReceiver.class);

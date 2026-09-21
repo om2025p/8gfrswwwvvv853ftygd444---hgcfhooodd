@@ -51,30 +51,19 @@ public class NotificationInputReceiver extends BroadcastReceiver {
                 }
             }
         } else if (ACTION_QUICK_PASTE.equals(action)) {
-            // Instant Auto-Paste & Auto-Send from Clipboard
-            ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-            if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
-                ClipData clip = clipboardManager.getPrimaryClip();
-                if (clip != null && clip.getItemCount() > 0) {
-                    CharSequence text = clip.getItemAt(0).getText();
-                    if (text != null) {
-                        String raw = text.toString().trim();
-                        Matcher matcher = URL_PATTERN.matcher(raw);
-                        if (matcher.find()) {
-                            linkToDownload = matcher.group(1);
-                        } else {
-                            linkToDownload = raw;
-                        }
-                    }
-                }
-            }
+            // Launch MainActivity into foreground to gain window focus for reading Clipboard safely on Android 10+
+            Intent openIntent = new Intent(context, MainActivity.class);
+            openIntent.setAction(ACTION_QUICK_PASTE);
+            openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            context.startActivity(openIntent);
+            return;
         }
 
         if (linkToDownload != null && !linkToDownload.isEmpty()) {
             Toast.makeText(context, "🚀 در حال ارسال آنی به گیت‌هاب...", Toast.LENGTH_SHORT).show();
             dispatchToGitHub(context, linkToDownload);
-        } else {
-            Toast.makeText(context, "⚠️ هیچ لینکی در کلیپ‌بورد پیدا نشد!", Toast.LENGTH_SHORT).show();
+        } else if (ACTION_SUBMIT_LINK.equals(action)) {
+            Toast.makeText(context, "⚠️ متن ورودی خالی است!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -117,11 +106,8 @@ public class NotificationInputReceiver extends BroadcastReceiver {
         }
         String rawBranch = prefs.getString("restricted_bot_ghBranch", "100");
 
-        if (rawToken == null || rawToken.trim().isEmpty()) {
-            String p1 = "github_pat_11BL4";
-            String p2 = "BKGQ0oWk8o6Rk7mN8_";
-            String p3 = "y2jG1M9Zq8P2y8W3K0";
-            rawToken = p1 + p2 + p3;
+        if (rawToken == null) {
+            rawToken = "";
         }
 
         final String ghToken = rawToken.trim();

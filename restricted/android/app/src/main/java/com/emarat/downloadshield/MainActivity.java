@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -29,6 +31,24 @@ public class MainActivity extends AppCompatActivity {
         checkPermissionsAndStartService();
 
         webView.loadUrl("file:///android_asset/restricted/index.html");
+        handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+        if (intent != null && NotificationInputReceiver.ACTION_QUICK_PASTE.equals(intent.getAction())) {
+            if (webView != null) {
+                webView.postDelayed(() -> {
+                    webView.evaluateJavascript("if(typeof handlePasteAndDownloadFromNotification==='function') handlePasteAndDownloadFromNotification();", null);
+                }, 400);
+            }
+        }
     }
 
     private void setupWebView() {
@@ -43,6 +63,13 @@ public class MainActivity extends AppCompatActivity {
         settings.setMediaPlaybackRequiresUserGesture(false);
 
         webView.addJavascriptInterface(new AndroidBridge(this), "AndroidNative");
+
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                request.grant(request.getResources());
+            }
+        });
 
         webView.setWebViewClient(new WebViewClient() {
             @Override

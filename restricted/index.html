@@ -537,9 +537,14 @@
                     با روشن کردن این گزینه، یک اعلان دائمی در کشوی بالای گوشیتان قرار می‌گیرد تا هر زمان لینکی کپی کردید، بدون باز کردن برنامه و مستقیم از نوار اعلان‌ها روی دکمه «📋 چسباندن و دانلود سریع» بزنید!
                 </p>
 
-                <button class="action-btn secondary" id="btnTogglePersistentNotification" style="padding: 12px; font-size: 0.88rem; border-radius: 14px; background: #eff6ff; color: #2563eb; border-color: #bfdbfe;">
-                    ⚡ فعال‌سازی اعلان همیشگی
-                </button>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="action-btn secondary" id="btnTogglePersistentNotification" style="padding: 12px; font-size: 0.88rem; border-radius: 14px; background: #eff6ff; color: #2563eb; border-color: #bfdbfe;">
+                        ⚡ فعال‌سازی اعلان همیشگی
+                    </button>
+                    <button class="action-btn secondary" id="btnTestClipboardPerm" style="padding: 12px; font-size: 0.88rem; border-radius: 14px; background: #f0fdf4; color: #16a34a; border-color: #bbf7d0;">
+                        📋 تست و تایید مجوز کلیپ‌بورد
+                    </button>
+                </div>
             </div>
 
             <!-- کنترل سرور -->
@@ -1075,6 +1080,22 @@
         }
         updateNotificationBtnUI();
 
+        const btnTestClip = document.getElementById('btnTestClipboardPerm');
+        if (btnTestClip) {
+            btnTestClip.onclick = async () => {
+                try {
+                    const text = await getClipboardTextSafely();
+                    if (text) {
+                        showToast("🟢 دسترسی به کلیپ‌بورد تایید شد! محتوا: " + text.slice(0, 35) + "...");
+                    } else {
+                        showToast("🟢 دسترسی به کلیپ‌بورد فعال است (کلیپ‌بورد در حال حاضر خالی است)");
+                    }
+                } catch (e) {
+                    showToast("⚠️ لطفاً اجازه دسترسی به کلیپ‌بورد را تایید فرمایید!");
+                }
+            };
+        }
+
         // ثبت سرویس‌ورکر مرکزی در صورت عدم وجود
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('../sw.js').catch(err => console.error("SW registration error:", err));
@@ -1096,29 +1117,26 @@
 
         async function handlePasteAndDownloadFromNotification() {
             try {
-                if (navigator.clipboard && navigator.clipboard.readText) {
-                    const text = await navigator.clipboard.readText();
-                    if (text && text.trim()) {
-                        const cleaned = sanitizeString(text);
-                        document.getElementById('dlLink').value = cleaned;
-                        showToast("📋 متن از کلیپ‌بورد خوانده شد... در حال ارسال به صف دانلود!");
-                        logDlDebug("پیوند از دکمه اکشن نوتیفیکیشن دریافت و وارد فرآیند دانلود شد.");
+                const text = await getClipboardTextSafely();
+                if (text && text.trim()) {
+                    const cleaned = sanitizeString(text);
+                    document.getElementById('dlLink').value = cleaned;
+                    showToast("📋 متن از کلیپ‌بورد خوانده شد... در حال ارسال به صف دانلود!");
+                    logDlDebug("پیوند از دکمه اکشن نوتیفیکیشن دریافت و وارد فرآیند دانلود شد.");
 
-                        // اجرای خودکار دانلود
-                        const btnDl = document.getElementById('btnDownload');
-                        if (btnDl) btnDl.click();
-                    } else {
-                        showToast("⚠️ هیچ متن یا پیوندی در کلیپ‌بورد سیستم یافت نشد!");
-                        showPersistentNotification("⚠️ کلیپ‌بورد خالی است", "لطفاً ابتدا لینک فیلم یا عکس را کپی کنید!");
-                    }
+                    // اجرای خودکار دانلود
+                    const btnDl = document.getElementById('btnDownload');
+                    if (btnDl) btnDl.click();
                 } else {
-                    showToast("⚠️ دسترسی به کلیپ‌بورد توسط مرورگر تایید نشد!");
+                    showToast("⚠️ هیچ متن یا پیوندی در کلیپ‌بورد سیستم یافت نشد!");
+                    showPersistentNotification("⚠️ کلیپ‌بورد خالی است", "لطفاً ابتدا لینک فیلم یا عکس را کپی کنید!");
                 }
             } catch (err) {
-                showToast("⚠️ لطفاً اجازه دسترسی به کلیپ‌بورد را در مرورگر تایید فرمایید!");
+                showToast("⚠️ امکان خواندن کلیپ‌بورد وجود ندارد!");
                 logDlDebug("خطای خواندن کلیپ‌بورد از نوتیفیکیشن: " + err.message, "error");
             }
         }
+        window.handlePasteAndDownloadFromNotification = handlePasteAndDownloadFromNotification;
 
         // دریافت وضعیت گیت هاب به صورت داینامیک
         async function fetchGitHubStatus() {
@@ -1877,26 +1895,51 @@
             return matches.map(u => sanitizeString(u.trim())).filter(u => u.length > 5);
         }
 
+        // تابع هوشمند و امن دریافت متن کلیپ‌بورد (اولویت با نیتیو اندروید)
+        async function getClipboardTextSafely() {
+            // ۱. ابتدا تلاش برای فراخوانی مستقیم از نیتیو اندروید (بدون نیاز به مجوز کرومیوم)
+            try {
+                if (window.AndroidNative && typeof window.AndroidNative.getClipboardText === 'function') {
+                    const nativeText = window.AndroidNative.getClipboardText();
+                    if (nativeText && nativeText.trim()) {
+                        return nativeText.trim();
+                    }
+                }
+            } catch (errNative) {
+                logDlDebug("خطا در فراخوانی کلیپ‌بورد نیتیو اندروید: " + errNative.message, "error");
+            }
+
+            // ۲. در غیر این صورت استفاده از API استاندارد مرورگر
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    const webText = await navigator.clipboard.readText();
+                    if (webText && webText.trim()) {
+                        return webText.trim();
+                    }
+                }
+            } catch (errWeb) {
+                logDlDebug("خطا در فراخوانی navigator.clipboard: " + errWeb.message, "error");
+            }
+
+            return "";
+        }
+
         // دکمه چسباندن متن از کلیپ‌بورد
         const btnPaste = document.getElementById('btnPaste');
         if (btnPaste) {
             btnPaste.onclick = async () => {
                 try {
-                    if (navigator.clipboard && navigator.clipboard.readText) {
-                        const text = await navigator.clipboard.readText();
-                        if (text) {
-                            const cleaned = sanitizeString(text);
-                            document.getElementById('dlLink').value = cleaned;
-                            showToast("📋 متن کلیپ‌بورد با موفقیت چسبانده شد!");
-                            logDlDebug("متن از حافظه کلیپ‌بورد چسبانده شد.");
-                        } else {
-                            showToast("⚠️ متن یا پیوندی در کلیپ‌بورد یافت نشد!");
-                        }
+                    const text = await getClipboardTextSafely();
+                    if (text) {
+                        const cleaned = sanitizeString(text);
+                        document.getElementById('dlLink').value = cleaned;
+                        showToast("📋 متن کلیپ‌بورد با موفقیت چسبانده شد!");
+                        logDlDebug("متن با موفقیت از حافظه کلیپ‌بورد چسبانده شد.");
                     } else {
-                        showToast("⚠️ مرورگر شما از قابلیت چسباندن مستقیم پشتیبانی نمی‌کند!");
+                        showToast("⚠️ هیچ متن یا پیوندی در کلیپ‌بورد یافت نشد!");
                     }
                 } catch (err) {
-                    showToast("⚠️ لطفا اجازه دسترسی به کلیپ‌بورد را تایید کنید!");
+                    showToast("⚠️ امکان دریافت کلیپ‌بورد وجود ندارد!");
                     logDlDebug("خطای دسترسی به کلیپ‌بورد: " + err.message, "error");
                 }
             };
