@@ -34,15 +34,12 @@ public class TransparentPasteActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // خواندن کلیپ‌بورد سیستم با دسترسی ۱۰۰٪ زنده و قانونی به دلیل داشتن فوکوس Activity
         String freshLink = getFreshClipboardUrl();
 
         if (freshLink != null && !freshLink.isEmpty()) {
             Toast.makeText(this, "🚀 چسباندن زنده و ارسال به گیت‌هاب:\n" + freshLink, Toast.LENGTH_LONG).show();
 
-            // به‌روزرسانی کش سرویس
             ClipboardService.lastCopiedUrl = freshLink;
-
             NotificationInputReceiver.registerNativeUniqueLink(this, freshLink);
             NotificationInputReceiver.saveNativeDownloadHistory(this, freshLink, "⚡ چسباندن زنده از اعلان");
             dispatchToGitHub(freshLink);
@@ -56,8 +53,15 @@ public class TransparentPasteActivity extends Activity {
 
     private String getFreshClipboardUrl() {
         ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        if (clipboardManager == null || !clipboardManager.hasPrimaryClip()) {
-            Log.w(TAG, "ClipboardManager has no primary clip");
+        if (clipboardManager == null) {
+            Log.w(TAG, "ClipboardManager is null");
+            return null;
+        }
+
+        boolean hasClip = clipboardManager.hasPrimaryClip();
+        if (!hasClip) {
+            String serviceCache = ClipboardService.lastCopiedUrl;
+            if (!serviceCache.isEmpty()) return serviceCache;
             return null;
         }
 
@@ -76,7 +80,7 @@ public class TransparentPasteActivity extends Activity {
                 }
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error reading fresh clipboard: " + e.getMessage());
+            Log.e(TAG, "Error reading clipboard: " + e.getMessage());
         }
         return null;
     }
