@@ -154,14 +154,60 @@
             display: flex;
         }
 
-        /* کارت‌های سفید شیک */
+        /* کارت‌های نیتیو متریال ۳ اندروید */
         .white-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 28px;
+            padding: 22px 18px;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* کارت اندروید نئومورفیک تب اول */
+        .android-native-card {
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border: 1.5px solid #dbeafe;
+            border-radius: 32px;
+            padding: 24px 20px;
+            box-shadow: 0 12px 32px -4px rgba(37, 99, 235, 0.12);
+        }
+
+        .android-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+
+        .android-btn-green {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #ffffff;
+            border: none;
             border-radius: 24px;
-            padding: 24px;
-            box-shadow: var(--shadow-lg);
-            transition: all 0.2s ease;
+            padding: 18px;
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: -0.2px;
+            box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.4);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .android-btn-green:active {
+            transform: scale(0.97);
+            box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.5);
         }
 
         .card-title {
@@ -433,39 +479,39 @@
 
     <div class="container">
 
-        <!-- ==================== تب ۱: مینی‌مال و سفید (پیش‌فرض) ==================== -->
+        <!-- ==================== تب ۱: کاملاً نیتیو متریال ۳ اندروید (پیش‌فرض) ==================== -->
         <div class="tab-content active" id="tabContent1">
-            <div class="white-card" style="padding: 28px 22px;">
-                <!-- وضعیت زنده سرور -->
-                <div class="status-panel">
-                    <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">وضعیت موتور دانلود:</span>
+            <div class="android-native-card">
+                <!-- وضعیت زنده سرور نیتیو -->
+                <div class="status-panel" style="border-radius: 20px; background: #ffffff; border: 1px solid #e2e8f0; margin-bottom: 18px;">
+                    <span style="font-size: 0.85rem; color: #475569; font-weight: 700;">🟢 وضعیت موتور ابری دانلود:</span>
                     <div class="status-badge" id="workflowStatus1">
                         <span class="status-dot idle"></span>
                         <span id="statusText1">در حال دریافت وضعیت...</span>
                     </div>
                 </div>
 
-                <!-- کادر ورودی پیوند عکس / فیلم -->
-                <div class="input-group" style="margin-bottom: 12px;">
-                    <label class="input-label" style="font-size: 0.9rem; color: #1e293b; font-weight: 700;">
-                        🎬📸 لینک فیلم یا عکس تلگرام تیک تاک اینستاگرام را وارد کنید:
+                <!-- کادر ورودی پیوند با طراحی کپسولی اندروید -->
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label" style="font-size: 0.92rem; color: #0f172a; font-weight: 800; margin-bottom: 4px;">
+                        🎬📸 لینک فیلم یا عکس (تلگرام، اینستا، تیک‌تاک):
                     </label>
-                    <div style="display: flex; gap: 8px; width: 100%;">
-                        <input type="text" id="dlLink" class="input-field" placeholder="https://t.me/c/123456789/22" style="direction: ltr; font-size: 0.95rem; padding: 15px; border-radius: 16px; flex: 1;">
-                        <button class="action-btn secondary" id="btnPaste" style="width: auto; padding: 0 16px; font-size: 0.9rem; border-radius: 16px; white-space: nowrap; flex-shrink: 0;">
+                    <div style="display: flex; gap: 10px; width: 100%; align-items: center;">
+                        <input type="text" id="dlLink" class="input-field" placeholder="https://t.me/c/123456789/22" style="direction: ltr; font-size: 0.95rem; padding: 16px 18px; border-radius: 20px; flex: 1; border: 2px solid #cbd5e1; background: #ffffff;">
+                        <button class="action-btn secondary" id="btnPaste" style="width: auto; padding: 0 18px; height: 54px; font-size: 0.92rem; font-weight: 800; border-radius: 20px; white-space: nowrap; flex-shrink: 0; background: #eff6ff; color: #2563eb; border: 1.5px solid #bfdbfe;">
                             📋 چسباندن
                         </button>
                     </div>
                 </div>
 
-                <!-- شمارنده لینک‌های منحصربه‌فرد زیر کادر -->
-                <div id="uniqueLinksCounter" style="font-size: 0.83rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 8px 14px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-                    <span>🔗 تعداد لینک‌های دانلودشده (غیرتکراری):</span>
-                    <span id="uniqueLinksCountBadge" style="background: #2563eb; color: #ffffff; padding: 2px 10px; border-radius: 10px; font-size: 0.85rem;">۰</span>
+                <!-- چیپ هوشمند شمارنده اندروید -->
+                <div id="uniqueLinksCounter" style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a; background: #f0f9ff; border: 1px solid #bae6fd; padding: 10px 16px; border-radius: 18px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between;">
+                    <span class="android-chip" style="background: #e0f2fe; color: #0369a1; border-color: #7dd3fc;">🔗 دانلودهای یکتا:</span>
+                    <span id="uniqueLinksCountBadge" style="background: #0284c7; color: #ffffff; padding: 3px 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 800;">۰</span>
                 </div>
 
-                <!-- دکمه دانلود بزرگ -->
-                <button class="action-btn green" id="btnDownload" style="padding: 16px; font-size: 1.05rem; border-radius: 16px;">
+                <!-- دکمه اکشن شناور متریال ۳ -->
+                <button class="android-btn-green" id="btnDownload">
                     📥 دانلود و ارسال مستقیم به تلگرام
                 </button>
             </div>
@@ -515,7 +561,7 @@
                             <span style="font-size: 0.82rem; font-weight: 800; color: #16a34a; background: #dc26260f; padding: 3px 10px; border-radius: 10px; border: 1px solid #bbf7d0;">۱۲ شهریور ۱۴۰۵ ساعت ۱۱:۳۰</span>
                         </div>
                         <ul style="margin: 0; padding-right: 18px; font-size: 0.82rem; color: #475569; line-height: 1.7;">
-                            <li>📋 <strong>[۱۲ شهریور ۱۴۰۵ - ۱۱:۳۰] افزودن دکمه چسباندن پیوند و شمارنده هوشمند:</strong> قابلیت چسباندن سریع متن کلیپ‌بورد به کادر دانلود با یک کلیک و ثبت دائم تعداد کل لینک‌های منحصربه‌فرد (غیرتکراری) در حافظه مرورگر.</li>
+                            <li>📋 <strong>[۱۲ شهریور ۱۴۰۵ - ۱۱:۳۰] افزودن دکمه چسباندن پیوند و شمارنده هوشمند:</strong> قابلیت چسباندن سریع متن کلیپ‌بورد به کادر دانلود با یک کلیک و ثبت دائم تعداد کل لینک‌های منحصربه‌فرد (غیرتکراری) در حافظه دستگاه.</li>
                             <li>🩸 <strong>[۱۰ شهریور ۱۴۰۵ - ۱۶:۴۵] گزارش و عیب‌یابی هوشمند خطاها:</strong> ارائه علت و شرح دقیق عدم دریافت لینک در پیام تلگرام و ارسال فایل متنی پیوست در صورت طولانی بودن لاگ‌ها.</li>
                             <li>🟢 <strong>[۵ شهریور ۱۴۰۵ - ۰۷:۴۶] اتصال لایو دیباگ سرور:</strong> استریم خط‌به‌خط لاگ‌های سرور ابری گیت‌هاب در پنل دیاگ دانلود.</li>
                             <li>⚡ <strong>[۴ شهریور ۱۴۰۵ - ۲۲:۱۵] موتور ۴ لایه مدرن رسانه:</strong> استخراج تیک‌تاک بدون واترمارک HD (TikWM API)، ریلز اینستاگرام (Embed Engine)، yt-dlp 2024 و Direct Parser.</li>
@@ -537,9 +583,14 @@
                     با روشن کردن این گزینه، یک اعلان دائمی در کشوی بالای گوشیتان قرار می‌گیرد تا هر زمان لینکی کپی کردید، بدون باز کردن برنامه و مستقیم از نوار اعلان‌ها روی دکمه «📋 چسباندن و دانلود سریع» بزنید!
                 </p>
 
-                <button class="action-btn secondary" id="btnTogglePersistentNotification" style="padding: 12px; font-size: 0.88rem; border-radius: 14px; background: #eff6ff; color: #2563eb; border-color: #bfdbfe;">
-                    ⚡ فعال‌سازی اعلان همیشگی
-                </button>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="action-btn secondary" id="btnTogglePersistentNotification" style="padding: 12px; font-size: 0.88rem; border-radius: 14px; background: #eff6ff; color: #2563eb; border-color: #bfdbfe;">
+                        ⚡ فعال‌سازی اعلان همیشگی
+                    </button>
+                    <button class="action-btn secondary" id="btnTestClipboardPerm" style="padding: 12px; font-size: 0.88rem; border-radius: 14px; background: #f0fdf4; color: #16a34a; border-color: #bbf7d0;">
+                        📋 تست و تایید مجوز کلیپ‌بورد
+                    </button>
+                </div>
             </div>
 
             <!-- کنترل سرور -->
@@ -628,7 +679,7 @@
             <div class="white-card">
                 <h2 class="card-title">⚙️ تنظیمات و متغیرهای محرمانه (پرونده ربات)</h2>
                 <p style="font-size: 0.82rem; line-height: 1.6; color: #64748b; margin-top: -8px; margin-bottom: 16px;">
-                    این تنظیمات صرفاً در حافظه امن مرورگر شما به صورت محلی ذخیره می‌شوند تا بتوانید دستور فعال‌سازی گیت‌هاب را مستقیم صادر کنید.
+                    این تنظیمات صرفاً در حافظه امن برنامه به صورت محلی ذخیره می‌شوند تا بتوانید دستور فعال‌سازی گیت‌هاب را مستقیم صادر کنید.
                 </p>
 
                 <div class="form-grid">
@@ -833,6 +884,33 @@
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
 
+        // همگام‌سازی خودکار از تنظیمات نیتیو اندروید
+        function syncNativeAndroidConfig() {
+            try {
+                if (window.AndroidNative && typeof window.AndroidNative.getConfigData === 'function') {
+                    const rawJson = window.AndroidNative.getConfigData();
+                    if (rawJson && rawJson !== '{}') {
+                        const data = JSON.parse(rawJson);
+                        inputs.forEach(id => {
+                            let val = data[id] || (id === 'ghPat' ? data.ghToken : '');
+                            if (val && String(val).trim()) {
+                                const cleaned = sanitizeString(String(val).trim());
+                                const el = document.getElementById(id);
+                                if (el && (!el.value || !el.value.trim())) {
+                                    el.value = cleaned;
+                                }
+                                localStorage.setItem('restricted_bot_' + id, cleaned);
+                            }
+                        });
+                        updateEnvPreview();
+                        logDebug("تنظیمات نیتیو اندروید با موفقیت همگام‌سازی شدند.");
+                    }
+                }
+            } catch (err) {
+                console.error("Error syncing native android config:", err);
+            }
+        }
+
         // لود مقادیر ذخیره شده همراه با ضدعفونی خودکار
         logDebug("در حال راه‌اندازی و بارگذاری متغیرهای ذخیره شده...");
         inputs.forEach(id => {
@@ -861,9 +939,19 @@
                     } catch (err) {}
                 }
                 localStorage.setItem('restricted_bot_' + id, cleaned);
+
+                if (window.AndroidNative && typeof window.AndroidNative.saveConfigData === 'function') {
+                    const cfgData = {};
+                    inputs.forEach(k => cfgData[k] = localStorage.getItem('restricted_bot_' + k) || '');
+                    window.AndroidNative.saveConfigData(JSON.stringify(cfgData));
+                }
+
                 updateEnvPreview();
             });
         });
+
+        // فراخوانی اولیه همگام‌سازی نیتیو
+        syncNativeAndroidConfig();
         logDebug("متغیرهای محلی با موفقیت بازیابی و ضدعفونی شدند.");
 
         // تولید پیش‌نمایش فایل تنظیمات
@@ -893,6 +981,7 @@
         if (btnAndroidCfg) {
             btnAndroidCfg.onclick = () => {
                 const configData = {
+                    ghOwner: sanitizeString(document.getElementById('ghOwner').value) || '',
                     ghRepo: sanitizeString(document.getElementById('ghRepo').value) || '',
                     ghToken: sanitizeString(document.getElementById('ghPat').value) || '',
                     ghPat: sanitizeString(document.getElementById('ghPat').value) || '',
@@ -947,6 +1036,7 @@
                         }
                     };
 
+                    setVal('ghOwner', 'ghOwner', data.ghOwner);
                     setVal('ghRepo', 'ghRepo', data.ghRepo);
                     setVal('ghPat', 'ghPat', data.ghToken || data.ghPat);
                     setVal('ghBranch', 'ghBranch', data.ghBranch);
@@ -1000,8 +1090,9 @@
         }
 
         async function requestNotificationPermission() {
+            if (window.AndroidNative) return true;
             if (!('Notification' in window)) {
-                showToast("⚠️ مرورگر شما از سیستم اعلان‌ها پشتیبانی نمی‌کند!");
+                showToast("⚠️ سیستم‌عامل از اعلان‌ها پشتیبانی نمی‌کند!");
                 return false;
             }
             if (Notification.permission === 'granted') return true;
@@ -1066,12 +1157,28 @@
                             "برای دانلود سریع فیلم‌ها، فقط روی «📋 چسباندن و دانلود سریع» بزنید!"
                         );
                     } else {
-                        showToast("⚠️ اجازه دسترسی به اعلان‌ها توسط مرورگر تایید نشد!");
+                        showToast("⚠️ اجازه دسترسی به اعلان‌ها تایید نشد!");
                     }
                 }
             };
         }
         updateNotificationBtnUI();
+
+        const btnTestClip = document.getElementById('btnTestClipboardPerm');
+        if (btnTestClip) {
+            btnTestClip.onclick = async () => {
+                try {
+                    const text = await getClipboardTextSafely();
+                    if (text) {
+                        showToast("🟢 دسترسی به کلیپ‌بورد فعال است! محتوا: " + text.slice(0, 35) + "...");
+                    } else {
+                        showToast("🟢 دسترسی به کلیپ‌بورد فعال است (کلیپ‌بورد در حال حاضر خالی است)");
+                    }
+                } catch (e) {
+                    showToast("⚠️ دسترسی به کلیپ‌بورد دستگاه امکان‌پذیر نشد.");
+                }
+            };
+        }
 
         // ثبت سرویس‌ورکر مرکزی در صورت عدم وجود
         if ('serviceWorker' in navigator) {
@@ -1094,29 +1201,26 @@
 
         async function handlePasteAndDownloadFromNotification() {
             try {
-                if (navigator.clipboard && navigator.clipboard.readText) {
-                    const text = await navigator.clipboard.readText();
-                    if (text && text.trim()) {
-                        const cleaned = sanitizeString(text);
-                        document.getElementById('dlLink').value = cleaned;
-                        showToast("📋 متن از کلیپ‌بورد خوانده شد... در حال ارسال به صف دانلود!");
-                        logDlDebug("پیوند از دکمه اکشن نوتیفیکیشن دریافت و وارد فرآیند دانلود شد.");
+                const text = await getClipboardTextSafely();
+                if (text && text.trim()) {
+                    const cleaned = sanitizeString(text);
+                    document.getElementById('dlLink').value = cleaned;
+                    showToast("📋 متن از کلیپ‌بورد خوانده شد... در حال ارسال به صف دانلود!");
+                    logDlDebug("پیوند از دکمه اکشن نوتیفیکیشن دریافت و وارد فرآیند دانلود شد.");
 
-                        // اجرای خودکار دانلود
-                        const btnDl = document.getElementById('btnDownload');
-                        if (btnDl) btnDl.click();
-                    } else {
-                        showToast("⚠️ هیچ متن یا پیوندی در کلیپ‌بورد سیستم یافت نشد!");
-                        showPersistentNotification("⚠️ کلیپ‌بورد خالی است", "لطفاً ابتدا لینک فیلم یا عکس را کپی کنید!");
-                    }
+                    // اجرای خودکار دانلود
+                    const btnDl = document.getElementById('btnDownload');
+                    if (btnDl) btnDl.click();
                 } else {
-                    showToast("⚠️ دسترسی به کلیپ‌بورد توسط مرورگر تایید نشد!");
+                    showToast("⚠️ هیچ متن یا پیوندی در کلیپ‌بورد سیستم یافت نشد!");
+                    showPersistentNotification("⚠️ کلیپ‌بورد خالی است", "لطفاً ابتدا لینک فیلم یا عکس را کپی کنید!");
                 }
             } catch (err) {
-                showToast("⚠️ لطفاً اجازه دسترسی به کلیپ‌بورد را در مرورگر تایید فرمایید!");
+                showToast("⚠️ امکان خواندن کلیپ‌بورد وجود ندارد!");
                 logDlDebug("خطای خواندن کلیپ‌بورد از نوتیفیکیشن: " + err.message, "error");
             }
         }
+        window.handlePasteAndDownloadFromNotification = handlePasteAndDownloadFromNotification;
 
         // دریافت وضعیت گیت هاب به صورت داینامیک
         async function fetchGitHubStatus() {
@@ -1395,6 +1499,8 @@
 
         // صدور دستور شروع سرور یا دانلود یا سرچ
         async function triggerWorkflow(downloadLink = null, targetHistoryId = null) {
+            syncNativeAndroidConfig();
+
             const owner = sanitizeString(document.getElementById('ghOwner').value);
             const repo = sanitizeString(document.getElementById('ghRepo').value);
             const pat = sanitizeString(document.getElementById('ghPat').value);
@@ -1718,18 +1824,38 @@
         // بارگذاری اولیه شمارنده لینک‌های منحصربه‌فرد
         updateUniqueLinksBadge();
 
-        // مدیریت تاریخچه زنده دانلودها
+        // مدیریت تاریخچه زنده دانلودها (ادغام تاریخچه نیتیو اندروید)
         function getDownloadHistory() {
+            let history = [];
             try {
                 const raw = localStorage.getItem(DOWNLOAD_HISTORY_STORAGE_KEY);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed)) return parsed;
+                    if (Array.isArray(parsed)) history = parsed;
                 }
             } catch (e) {
                 console.error("Error reading download history:", e);
             }
-            return [];
+
+            try {
+                if (window.AndroidNative && typeof window.AndroidNative.getDownloadHistory === 'function') {
+                    const rawNative = window.AndroidNative.getDownloadHistory();
+                    if (rawNative && rawNative !== '[]') {
+                        const parsedNative = JSON.parse(rawNative);
+                        if (Array.isArray(parsedNative) && parsedNative.length > 0) {
+                            parsedNative.forEach(nItem => {
+                                if (!history.some(h => h.id === nItem.id || h.link === nItem.link)) {
+                                    history.push(nItem);
+                                }
+                            });
+                        }
+                    }
+                }
+            } catch (eNative) {
+                console.error("Error merging native download history:", eNative);
+            }
+
+            return history;
         }
 
         function saveDownloadHistory(historyArr) {
@@ -1875,27 +2001,33 @@
             return matches.map(u => sanitizeString(u.trim())).filter(u => u.length > 5);
         }
 
-        // دکمه چسباندن متن از کلیپ‌بورد
+        // تابع ۱۰۰٪ نیتیو اندروید جهت خواندن کلیپ‌بورد بدون کوچک‌ترین وابستگی به مرورگر
+        async function getClipboardTextSafely() {
+            if (window.AndroidNative && typeof window.AndroidNative.getClipboardText === 'function') {
+                try {
+                    const nativeText = window.AndroidNative.getClipboardText();
+                    if (nativeText && nativeText.trim()) {
+                        return nativeText.trim();
+                    }
+                } catch (errNative) {
+                    logDlDebug("خطای خواندن کلیپ‌بورد از پل نیتیو: " + errNative.message, "error");
+                }
+            }
+            return "";
+        }
+
+        // دکمه چسباندن متن از کلیپ‌بورد اندروید
         const btnPaste = document.getElementById('btnPaste');
         if (btnPaste) {
             btnPaste.onclick = async () => {
-                try {
-                    if (navigator.clipboard && navigator.clipboard.readText) {
-                        const text = await navigator.clipboard.readText();
-                        if (text) {
-                            const cleaned = sanitizeString(text);
-                            document.getElementById('dlLink').value = cleaned;
-                            showToast("📋 متن کلیپ‌بورد با موفقیت چسبانده شد!");
-                            logDlDebug("متن از حافظه کلیپ‌بورد چسبانده شد.");
-                        } else {
-                            showToast("⚠️ متن یا پیوندی در کلیپ‌بورد یافت نشد!");
-                        }
-                    } else {
-                        showToast("⚠️ مرورگر شما از قابلیت چسباندن مستقیم پشتیبانی نمی‌کند!");
-                    }
-                } catch (err) {
-                    showToast("⚠️ لطفا اجازه دسترسی به کلیپ‌بورد را تایید کنید!");
-                    logDlDebug("خطای دسترسی به کلیپ‌بورد: " + err.message, "error");
+                const text = await getClipboardTextSafely();
+                if (text && text.trim()) {
+                    const cleaned = sanitizeString(text);
+                    document.getElementById('dlLink').value = cleaned;
+                    showToast("📋 متن از کلیپ‌بورد اندروید چسبانده شد!");
+                    logDlDebug("پیوند با موفقیت از حافظه اندروید دریافت و جای‌گذاری شد.");
+                } else {
+                    showToast("⚠️ کلیپ‌بورد دستگاه خالی است یا پیوندی یافت نشد!");
                 }
             };
         }
@@ -2104,7 +2236,7 @@
                     if (data && data.channels) {
                         currentSearchChannels = data.channels;
                         renderWebChannels(currentSearchChannels);
-                        logDebug(`بارگذاری ${currentSearchChannels.length} کانال ذخیره‌شده از حافظه مرورگر.`, 'success');
+                        logDebug(`بارگذاری ${currentSearchChannels.length} کانال ذخیره‌شده از حافظه دستگاه.`, 'success');
                     }
                 }
             } catch (e) {
