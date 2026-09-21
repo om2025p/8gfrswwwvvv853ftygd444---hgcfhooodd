@@ -60,36 +60,34 @@ public class NotificationInputReceiver extends BroadcastReceiver {
             }
             ClipboardService.refreshNotification(context);
         } else if (ACTION_QUICK_PASTE.equals(action)) {
-            Log.d(TAG, "📋 پردازش چسباندن ۱۰۰٪ پس‌زمینه...");
+            Log.d(TAG, "📋 پردازش چسباندن ۱۰۰٪ پس‌زمینه بدون باز شدن برنامه...");
 
-            // اولویت اول: کش فوری سرویس پس‌زمینه
-            if (ClipboardService.lastCopiedUrl != null && !ClipboardService.lastCopiedUrl.isEmpty()) {
-                linkToDownload = ClipboardService.lastCopiedUrl;
-                Log.d(TAG, "🎯 استفاده از کش فوری سرویس: " + linkToDownload);
-            }
-
-            // اولویت دوم: استعلام مستقیم کلیپ‌بورد سیستم
-            if (linkToDownload == null || linkToDownload.isEmpty()) {
-                ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-                try {
-                    if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
-                        ClipData clip = clipboardManager.getPrimaryClip();
-                        if (clip != null && clip.getItemCount() > 0) {
-                            CharSequence text = clip.getItemAt(0).getText();
-                            if (text != null) {
-                                String raw = text.toString().trim();
-                                Matcher matcher = URL_PATTERN.matcher(raw);
-                                if (matcher.find()) {
-                                    linkToDownload = matcher.group(1);
-                                } else if (raw.startsWith("http://") || raw.startsWith("https://")) {
-                                    linkToDownload = raw;
-                                }
+            // اولویت اول: استعلام مستقیم کلیپ‌بورد سیستم
+            ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+            try {
+                if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
+                    ClipData clip = clipboardManager.getPrimaryClip();
+                    if (clip != null && clip.getItemCount() > 0) {
+                        CharSequence text = clip.getItemAt(0).getText();
+                        if (text != null) {
+                            String raw = text.toString().trim();
+                            Matcher matcher = URL_PATTERN.matcher(raw);
+                            if (matcher.find()) {
+                                linkToDownload = matcher.group(1);
+                            } else if (raw.startsWith("http://") || raw.startsWith("https://")) {
+                                linkToDownload = raw;
                             }
                         }
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "❌ خطا در استعلام کلیپ‌بورد سیستم: " + e.getMessage());
                 }
+            } catch (Exception e) {
+                Log.e(TAG, "❌ خطا در استعلام کلیپ‌بورد سیستم: " + e.getMessage());
+            }
+
+            // اولویت دوم: کش اخیر سرویس پس‌زمینه
+            if ((linkToDownload == null || linkToDownload.isEmpty()) && ClipboardService.lastCopiedUrl != null && !ClipboardService.lastCopiedUrl.isEmpty()) {
+                linkToDownload = ClipboardService.lastCopiedUrl;
+                Log.d(TAG, "🎯 استفاده از کش سرویس: " + linkToDownload);
             }
 
             ClipboardService.refreshNotification(context);
