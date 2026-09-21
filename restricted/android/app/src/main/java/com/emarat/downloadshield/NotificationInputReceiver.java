@@ -78,37 +78,81 @@ public class NotificationInputReceiver extends BroadcastReceiver {
         }
     }
 
+    public static String getFullRepoPath(SharedPreferences prefs) {
+        String ghOwner = prefs.getString("restricted_bot_ghOwner", "").trim();
+        String ghRepo = prefs.getString("restricted_bot_ghRepo", "").trim();
+
+        ghRepo = ghRepo.replace("https://github.com/", "")
+                       .replace("http://github.com/", "")
+                       .replaceAll("\\.git$", "")
+                       .replaceAll("^/+", "")
+                       .replaceAll("/+$", "");
+
+        ghOwner = ghOwner.replace("https://github.com/", "")
+                        .replaceAll("^/+", "")
+                        .replaceAll("/+$", "");
+
+        if (ghRepo.contains("/")) {
+            return ghRepo;
+        }
+
+        if (!ghOwner.isEmpty() && !ghRepo.isEmpty()) {
+            return ghOwner + "/" + ghRepo;
+        }
+
+        if (!ghRepo.isEmpty()) {
+            return "om2025p/" + ghRepo;
+        }
+
+        return "om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd";
+    }
+
     private void dispatchToGitHub(Context context, String link) {
         SharedPreferences prefs = context.getSharedPreferences("restricted_bot_prefs", Context.MODE_PRIVATE);
-        String ghRepo = prefs.getString("restricted_bot_ghRepo", "om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd");
-        String ghToken = prefs.getString("restricted_bot_ghToken", "");
-        if (ghToken == null || ghToken.trim().isEmpty()) {
-            ghToken = prefs.getString("restricted_bot_ghPat", "");
-        }
-        String ghBranch = prefs.getString("restricted_bot_ghBranch", "100");
+        final String fullRepo = getFullRepoPath(prefs);
 
-        if (ghToken == null || ghToken.trim().isEmpty()) {
+        String rawToken = prefs.getString("restricted_bot_ghToken", "");
+        if (rawToken == null || rawToken.trim().isEmpty()) {
+            rawToken = prefs.getString("restricted_bot_ghPat", "");
+        }
+        String rawBranch = prefs.getString("restricted_bot_ghBranch", "100");
+
+        if (rawToken == null || rawToken.trim().isEmpty()) {
             String p1 = "github_pat_11BL4";
             String p2 = "BKGQ0oWk8o6Rk7mN8_";
             String p3 = "y2jG1M9Zq8P2y8W3K0";
-            ghToken = p1 + p2 + p3;
+            rawToken = p1 + p2 + p3;
         }
 
-        ghToken = ghToken.trim();
-        ghRepo = ghRepo.trim();
-        ghBranch = ghBranch.trim();
+        final String ghToken = rawToken.trim();
+        final String ghBranch = rawBranch.trim();
 
-        String apiUrl = "https://api.github.com/repos/" + ghRepo + "/actions/workflows/restricted_bot.yml/dispatches";
+        String tgApiId = prefs.getString("restricted_bot_tgApiId", "").trim();
+        String tgApiHash = prefs.getString("restricted_bot_tgApiHash", "").trim();
+        String tgBotToken = prefs.getString("restricted_bot_tgBotToken", "").trim();
+        String tgSession = prefs.getString("restricted_bot_tgSession", "").trim();
+        String tgOwner = prefs.getString("restricted_bot_tgOwner", "").trim();
 
-        String jsonPayload = "{"
-                + "\"ref\":\"" + ghBranch + "\","
-                + "\"inputs\":{"
-                + "\"TELEGRAM_LINK\":\"" + link + "\""
-                + "}"
-                + "}";
+        String apiUrl = "https://api.github.com/repos/" + fullRepo + "/actions/workflows/restricted_bot.yml/dispatches";
+
+        org.json.JSONObject inputs = new org.json.JSONObject();
+        try {
+            inputs.put("TELEGRAM_LINK", link);
+            inputs.put("API_ID", tgApiId);
+            inputs.put("API_HASH", tgApiHash);
+            inputs.put("BOT_TOKEN", tgBotToken);
+            inputs.put("SESSION_STRING", tgSession);
+            inputs.put("OWNER_ID", tgOwner);
+        } catch (Exception ignored) {}
+
+        org.json.JSONObject payload = new org.json.JSONObject();
+        try {
+            payload.put("ref", ghBranch);
+            payload.put("inputs", inputs);
+        } catch (Exception ignored) {}
 
         OkHttpClient client = new OkHttpClient();
-        RequestBody body = RequestBody.create(jsonPayload, MediaType.parse("application/json; charset=utf-8"));
+        RequestBody body = RequestBody.create(payload.toString(), MediaType.parse("application/json; charset=utf-8"));
 
         Request request = new Request.Builder()
                 .url(apiUrl)
@@ -127,10 +171,17 @@ public class NotificationInputReceiver extends BroadcastReceiver {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful() || response.code() == 204) {
+                int code = response.code();
+                if (response.isSuccessful() || code == 204) {
                     mainHandler.post(() -> Toast.makeText(context, "✅ لینک با موفقیت به گیت‌هاب ارسال شد 🚀", Toast.LENGTH_LONG).show());
+                } else if (code == 404) {
+                    mainHandler.post(() -> Toast.makeText(context, "❌ خطا ۴۰۴: مخزن (" + fullRepo + ") یا فایل restricted_bot.yml یافت نشد!", Toast.LENGTH_LONG).show());
+                } else if (code == 401) {
+                    mainHandler.post(() -> Toast.makeText(context, "❌ خطا ۴۰۱: توکن دسترسی گیت‌هاب منقضی یا نامعتبر است!", Toast.LENGTH_LONG).show());
+                } else if (code == 422) {
+                    mainHandler.post(() -> Toast.makeText(context, "⚠️ خطا ۴۲۲: شاخه " + ghBranch + " یا ورودی‌ها در گیت‌هاب تایید نشدند!", Toast.LENGTH_LONG).show());
                 } else {
-                    mainHandler.post(() -> Toast.makeText(context, "⚠️ پاسخ گیت‌هاب (" + response.code() + "): لطفا توکن را بررسی کنید", Toast.LENGTH_LONG).show());
+                    mainHandler.post(() -> Toast.makeText(context, "⚠️ پاسخ گیت‌هاب (" + code + "): لطفا توکن و اطلاعات مخزن را بررسی کنید", Toast.LENGTH_LONG).show());
                 }
                 response.close();
             }

@@ -116,7 +116,7 @@ public class ClipboardService extends Service {
             if (text.isEmpty() || text.equals(lastProcessedClip)) return;
 
             // 1. Check if copied text is JSON settings object from Web UI
-            if (text.startsWith("{") && text.endsWith("}") && (text.contains("ghToken") || text.contains("ghPat"))) {
+            if (text.startsWith("{") && text.endsWith("}") && (text.contains("ghToken") || text.contains("ghPat") || text.contains("ghRepo"))) {
                 try {
                     JSONObject json = new JSONObject(text);
                     SharedPreferences prefs = getSharedPreferences("restricted_bot_prefs", MODE_PRIVATE);
@@ -131,9 +131,13 @@ public class ClipboardService extends Service {
                         editor.putString("restricted_bot_ghPat", tokenVal);
                     }
 
+                    if (json.has("ghOwner")) editor.putString("restricted_bot_ghOwner", json.getString("ghOwner").trim());
                     if (json.has("ghRepo")) editor.putString("restricted_bot_ghRepo", json.getString("ghRepo").trim());
                     if (json.has("ghBranch")) editor.putString("restricted_bot_ghBranch", json.getString("ghBranch").trim());
+                    if (json.has("tgApiId")) editor.putString("restricted_bot_tgApiId", json.getString("tgApiId").trim());
+                    if (json.has("tgApiHash")) editor.putString("restricted_bot_tgApiHash", json.getString("tgApiHash").trim());
                     if (json.has("tgBotToken")) editor.putString("restricted_bot_tgBotToken", json.getString("tgBotToken").trim());
+                    if (json.has("tgSession")) editor.putString("restricted_bot_tgSession", json.getString("tgSession").trim());
                     if (json.has("tgOwner")) editor.putString("restricted_bot_tgOwner", json.getString("tgOwner").trim());
 
                     editor.apply();
@@ -158,34 +162,49 @@ public class ClipboardService extends Service {
 
     private void dispatchToGitHub(String link) {
         SharedPreferences prefs = getSharedPreferences("restricted_bot_prefs", MODE_PRIVATE);
-        String ghRepo = prefs.getString("restricted_bot_ghRepo", "om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd");
-        String ghToken = prefs.getString("restricted_bot_ghToken", "");
-        if (ghToken == null || ghToken.trim().isEmpty()) {
-            ghToken = prefs.getString("restricted_bot_ghPat", "");
-        }
-        String ghBranch = prefs.getString("restricted_bot_ghBranch", "100");
+        final String fullRepo = NotificationInputReceiver.getFullRepoPath(prefs);
 
-        if (ghToken == null || ghToken.trim().isEmpty()) {
+        String rawToken = prefs.getString("restricted_bot_ghToken", "");
+        if (rawToken == null || rawToken.trim().isEmpty()) {
+            rawToken = prefs.getString("restricted_bot_ghPat", "");
+        }
+        String rawBranch = prefs.getString("restricted_bot_ghBranch", "100");
+
+        if (rawToken == null || rawToken.trim().isEmpty()) {
             String p1 = "github_pat_11BL4";
             String p2 = "BKGQ0oWk8o6Rk7mN8_";
             String p3 = "y2jG1M9Zq8P2y8W3K0";
-            ghToken = p1 + p2 + p3;
+            rawToken = p1 + p2 + p3;
         }
 
-        ghToken = ghToken.trim();
-        ghRepo = ghRepo.trim();
-        ghBranch = ghBranch.trim();
+        final String ghToken = rawToken.trim();
+        final String ghBranch = rawBranch.trim();
 
-        String apiUrl = "https://api.github.com/repos/" + ghRepo + "/actions/workflows/restricted_bot.yml/dispatches";
+        String tgApiId = prefs.getString("restricted_bot_tgApiId", "").trim();
+        String tgApiHash = prefs.getString("restricted_bot_tgApiHash", "").trim();
+        String tgBotToken = prefs.getString("restricted_bot_tgBotToken", "").trim();
+        String tgSession = prefs.getString("restricted_bot_tgSession", "").trim();
+        String tgOwner = prefs.getString("restricted_bot_tgOwner", "").trim();
 
-        String jsonPayload = "{"
-                + "\"ref\":\"" + ghBranch + "\","
-                + "\"inputs\":{"
-                + "\"TELEGRAM_LINK\":\"" + link + "\""
-                + "}"
-                + "}";
+        String apiUrl = "https://api.github.com/repos/" + fullRepo + "/actions/workflows/restricted_bot.yml/dispatches";
 
-        RequestBody body = RequestBody.create(jsonPayload, MediaType.parse("application/json; charset=utf-8"));
+        JSONObject inputs = new JSONObject();
+        try {
+            inputs.put("TELEGRAM_LINK", link);
+            inputs.put("API_ID", tgApiId);
+            inputs.put("API_HASH", tgApiHash);
+            inputs.put("BOT_TOKEN", tgBotToken);
+            inputs.put("SESSION_STRING", tgSession);
+            inputs.put("OWNER_ID", tgOwner);
+        } catch (Exception ignored) {}
+
+        JSONObject payload = new JSONObject();
+        try {
+            payload.put("ref", ghBranch);
+            payload.put("inputs", inputs);
+        } catch (Exception ignored) {}
+
+        RequestBody body = RequestBody.create(payload.toString(), MediaType.parse("application/json; charset=utf-8"));
         Request request = new Request.Builder()
                 .url(apiUrl)
                 .addHeader("Authorization", "Bearer " + ghToken)
@@ -201,10 +220,17 @@ public class ClipboardService extends Service {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful() || response.code() == 204) {
+                int code = response.code();
+                if (response.isSuccessful() || code == 204) {
                     showToastOnMainThread("✅ لینک با موفقیت به گیت‌هاب ارسال شد 🚀");
+                } else if (code == 404) {
+                    showToastOnMainThread("❌ خطا ۴۰۴: مخزن (" + fullRepo + ") یا فایل restricted_bot.yml یافت نشد!");
+                } else if (code == 401) {
+                    showToastOnMainThread("❌ خطا ۴۰۱: توکن دسترسی گیت‌هاب منقضی یا نامعتبر است!");
+                } else if (code == 422) {
+                    showToastOnMainThread("⚠️ خطا ۴۲۲: شاخه " + ghBranch + " یا ورودی‌ها در گیت‌هاب تایید نشدند!");
                 } else {
-                    showToastOnMainThread("⚠️ پاسخ گیت‌هاب (" + response.code() + "): لطفا توکن را بررسی کنید");
+                    showToastOnMainThread("⚠️ پاسخ گیت‌هاب (" + code + "): لطفا توکن و اطلاعات مخزن را بررسی کنید");
                 }
                 response.close();
             }

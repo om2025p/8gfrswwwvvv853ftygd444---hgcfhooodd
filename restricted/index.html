@@ -893,6 +893,7 @@
         if (btnAndroidCfg) {
             btnAndroidCfg.onclick = () => {
                 const configData = {
+                    ghOwner: sanitizeString(document.getElementById('ghOwner').value) || '',
                     ghRepo: sanitizeString(document.getElementById('ghRepo').value) || '',
                     ghToken: sanitizeString(document.getElementById('ghPat').value) || '',
                     ghPat: sanitizeString(document.getElementById('ghPat').value) || '',
@@ -947,6 +948,7 @@
                         }
                     };
 
+                    setVal('ghOwner', 'ghOwner', data.ghOwner);
                     setVal('ghRepo', 'ghRepo', data.ghRepo);
                     setVal('ghPat', 'ghPat', data.ghToken || data.ghPat);
                     setVal('ghBranch', 'ghBranch', data.ghBranch);

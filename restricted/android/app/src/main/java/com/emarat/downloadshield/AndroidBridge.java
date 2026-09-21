@@ -57,9 +57,13 @@ public class AndroidBridge {
                     editor.putString("restricted_bot_ghPat", tokenVal);
                 }
 
+                if (json.has("ghOwner")) editor.putString("restricted_bot_ghOwner", json.getString("ghOwner").trim());
                 if (json.has("ghRepo")) editor.putString("restricted_bot_ghRepo", json.getString("ghRepo").trim());
                 if (json.has("ghBranch")) editor.putString("restricted_bot_ghBranch", json.getString("ghBranch").trim());
+                if (json.has("tgApiId")) editor.putString("restricted_bot_tgApiId", json.getString("tgApiId").trim());
+                if (json.has("tgApiHash")) editor.putString("restricted_bot_tgApiHash", json.getString("tgApiHash").trim());
                 if (json.has("tgBotToken")) editor.putString("restricted_bot_tgBotToken", json.getString("tgBotToken").trim());
+                if (json.has("tgSession")) editor.putString("restricted_bot_tgSession", json.getString("tgSession").trim());
                 if (json.has("tgOwner")) editor.putString("restricted_bot_tgOwner", json.getString("tgOwner").trim());
 
                 editor.apply();
