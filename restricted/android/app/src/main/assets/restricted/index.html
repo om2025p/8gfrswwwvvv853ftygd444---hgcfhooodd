@@ -689,7 +689,10 @@
                         📋 کپی کردن متن محتوای فایل config.env
                     </button>
                     <button class="action-btn" id="btnCopyAndroidConfig" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #10b981, #059669); color: white;">
-                        📱 کپی اطلاعات اتصال برای نسخه اندروید
+                        💾 بکاپ کامل تنظیمات برای اندروید
+                    </button>
+                    <button class="action-btn" id="btnRestoreAndroidConfig" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white;">
+                        📥 بازیابی اطلاعات از بکاپ کلیپ‌بورد
                     </button>
                 </div>
             </div>
@@ -885,13 +888,14 @@
             });
         };
 
-        // کپی کردن اطلاعات اتصال برای نسخه اندروید
+        // کپی کردن اطلاعات اتصال (بکاپ) برای نسخه اندروید
         const btnAndroidCfg = document.getElementById('btnCopyAndroidConfig');
         if (btnAndroidCfg) {
             btnAndroidCfg.onclick = () => {
                 const configData = {
                     ghRepo: sanitizeString(document.getElementById('ghRepo').value) || '',
                     ghToken: sanitizeString(document.getElementById('ghPat').value) || '',
+                    ghPat: sanitizeString(document.getElementById('ghPat').value) || '',
                     ghBranch: sanitizeString(document.getElementById('ghBranch').value) || '100',
                     tgApiId: sanitizeString(document.getElementById('tgApiId').value) || '',
                     tgApiHash: sanitizeString(document.getElementById('tgApiHash').value) || '',
@@ -901,9 +905,67 @@
                 };
                 const jsonString = JSON.stringify(configData, null, 2);
                 navigator.clipboard.writeText(jsonString).then(() => {
-                    showToast("📱 اطلاعات اتصال گیت‌هاب و تلگرام برای نسخه اندروید کپی شد!");
-                    logDebug("اطلاعات اتصال اندروید در کلیپ‌بورد کپی شد.");
+                    showToast("💾 بکاپ کامل تنظیمات در کلیپ‌بورد کپی شد!");
+                    logDebug("بکاپ تنظیمات در کلیپ‌بورد کپی شد.");
                 });
+            };
+        }
+
+        // بازیابی اطلاعات از کلیپ‌بورد در نسخه اندروید / وب
+        const btnRestoreCfg = document.getElementById('btnRestoreAndroidConfig');
+        if (btnRestoreCfg) {
+            btnRestoreCfg.onclick = async () => {
+                try {
+                    let clipText = '';
+                    if (window.AndroidNative && typeof window.AndroidNative.getClipboardText === 'function') {
+                        clipText = window.AndroidNative.getClipboardText();
+                    } else if (navigator.clipboard && navigator.clipboard.readText) {
+                        clipText = await navigator.clipboard.readText();
+                    }
+
+                    if (!clipText || !clipText.trim()) {
+                        showToast("⚠️ هیچ متنی در کلیپ‌بورد یافت نشد!");
+                        return;
+                    }
+
+                    clipText = clipText.trim();
+                    if (!clipText.startsWith('{') || !clipText.endsWith('}')) {
+                        showToast("⚠️ متن موجود در کلیپ‌بورد فرمت بکاپ JSON معتبر ندارد!");
+                        return;
+                    }
+
+                    const data = JSON.parse(clipText);
+                    let count = 0;
+
+                    const setVal = (elemId, storageKey, val) => {
+                        if (val !== undefined && val !== null && val !== '') {
+                            const cleaned = sanitizeString(String(val));
+                            const el = document.getElementById(elemId);
+                            if (el) el.value = cleaned;
+                            localStorage.setItem('restricted_bot_' + storageKey, cleaned);
+                            count++;
+                        }
+                    };
+
+                    setVal('ghRepo', 'ghRepo', data.ghRepo);
+                    setVal('ghPat', 'ghPat', data.ghToken || data.ghPat);
+                    setVal('ghBranch', 'ghBranch', data.ghBranch);
+                    setVal('tgApiId', 'tgApiId', data.tgApiId);
+                    setVal('tgApiHash', 'tgApiHash', data.tgApiHash);
+                    setVal('tgBotToken', 'tgBotToken', data.tgBotToken);
+                    setVal('tgSession', 'tgSession', data.tgSession);
+                    setVal('tgOwner', 'tgOwner', data.tgOwner);
+
+                    if (window.AndroidNative && typeof window.AndroidNative.saveConfigData === 'function') {
+                        window.AndroidNative.saveConfigData(JSON.stringify(data));
+                    }
+
+                    updateEnvPreview();
+                    showToast("✅ " + count + " مورد از اطلاعات اتصال با موفقیت بازیابی شد!");
+                    logDebug("اطلاعات اتصال از کلیپ‌بورد بازیابی گردید.");
+                } catch (err) {
+                    showToast("❌ خطا در بازیابی اطلاعات: " + err.message);
+                }
             };
         }
 

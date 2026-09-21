@@ -1,10 +1,15 @@
 package com.emarat.downloadshield;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.webkit.JavascriptInterface;
 import android.widget.Toast;
 import androidx.core.content.ContextCompat;
+
+import org.json.JSONObject;
 
 public class AndroidBridge {
     private Context context;
@@ -16,6 +21,50 @@ public class AndroidBridge {
     @JavascriptInterface
     public void showToast(String message) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @JavascriptInterface
+    public String getClipboardText() {
+        try {
+            ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
+                ClipData clip = clipboardManager.getPrimaryClip();
+                if (clip != null && clip.getItemCount() > 0) {
+                    CharSequence text = clip.getItemAt(0).getText();
+                    if (text != null) {
+                        return text.toString();
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return "";
+    }
+
+    @JavascriptInterface
+    public void saveConfigData(String jsonString) {
+        try {
+            if (jsonString != null && !jsonString.isEmpty()) {
+                JSONObject json = new JSONObject(jsonString);
+                SharedPreferences prefs = context.getSharedPreferences("restricted_bot_prefs", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
+
+                String tokenVal = "";
+                if (json.has("ghToken")) tokenVal = json.getString("ghToken").trim();
+                else if (json.has("ghPat")) tokenVal = json.getString("ghPat").trim();
+
+                if (!tokenVal.isEmpty()) {
+                    editor.putString("restricted_bot_ghToken", tokenVal);
+                    editor.putString("restricted_bot_ghPat", tokenVal);
+                }
+
+                if (json.has("ghRepo")) editor.putString("restricted_bot_ghRepo", json.getString("ghRepo").trim());
+                if (json.has("ghBranch")) editor.putString("restricted_bot_ghBranch", json.getString("ghBranch").trim());
+                if (json.has("tgBotToken")) editor.putString("restricted_bot_tgBotToken", json.getString("tgBotToken").trim());
+                if (json.has("tgOwner")) editor.putString("restricted_bot_tgOwner", json.getString("tgOwner").trim());
+
+                editor.apply();
+            }
+        } catch (Exception ignored) {}
     }
 
     @JavascriptInterface
