@@ -120,8 +120,10 @@ public class ClipboardService extends Service {
                     Matcher matcher = URL_PATTERN.matcher(raw);
                     if (matcher.find()) {
                         lastCopiedUrl = matcher.group(1);
+                        Log.d(TAG, "به‌روزرسانی اولیه کش سرویس: " + lastCopiedUrl);
                     } else if (raw.startsWith("http://") || raw.startsWith("https://")) {
                         lastCopiedUrl = raw;
+                        Log.d(TAG, "به‌روزرسانی اولیه کش سرویس: " + lastCopiedUrl);
                     }
                 }
             }
@@ -144,11 +146,11 @@ public class ClipboardService extends Service {
                 if (matcher.find()) {
                     lastCopiedUrl = matcher.group(1);
                     lastProcessedClip = text;
-                    Log.d(TAG, "🎯 کش جدید کلیپ‌بورد به‌روزرسانی شد: " + lastCopiedUrl);
+                    Log.d(TAG, "تغییر کلیپ‌بورد شناسایی شد: " + lastCopiedUrl);
                 } else if (text.startsWith("http://") || text.startsWith("https://")) {
                     lastCopiedUrl = text;
                     lastProcessedClip = text;
-                    Log.d(TAG, "🎯 کش جدید کلیپ‌بورد به‌روزرسانی شد: " + lastCopiedUrl);
+                    Log.d(TAG, "تغییر کلیپ‌بورد شناسایی شد: " + lastCopiedUrl);
                 }
             }
         } catch (Exception e) {

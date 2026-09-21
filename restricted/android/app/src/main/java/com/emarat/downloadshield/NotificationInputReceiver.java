@@ -46,10 +46,10 @@ public class NotificationInputReceiver extends BroadcastReceiver {
 
         String action = intent.getAction();
         Log.d(TAG, "📢 دریافت اکشن اعلان پس‌زمینه: " + action);
+
         String linkToDownload = null;
 
         if (ACTION_SUBMIT_LINK.equals(action)) {
-            Log.d(TAG, "📥 پردازش ارسال دستی لینک از نوار اعلان...");
             Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
             if (remoteInput != null) {
                 CharSequence text = remoteInput.getCharSequence(KEY_TEXT_REPLY);
@@ -95,7 +95,7 @@ public class NotificationInputReceiver extends BroadcastReceiver {
 
         if (linkToDownload != null && !linkToDownload.isEmpty()) {
             Log.i(TAG, "🚀 شروع ارسال پس‌زمینه به گیت‌هاب برای لینک: " + linkToDownload);
-            Toast.makeText(context, "🚀 ارسال ۱۰۰٪ پس‌زمینه به گیت‌هاب:\n" + linkToDownload, Toast.LENGTH_LONG).show();
+            Toast.makeText(context, "🚀 چسباندن و ارسال ۱۰۰٪ پس‌زمینه به گیت‌هاب:\n" + linkToDownload, Toast.LENGTH_LONG).show();
 
             registerNativeUniqueLink(context, linkToDownload);
             saveNativeDownloadHistory(context, linkToDownload, "⚡ چسباندن آنی و پس‌زمینه اعلان");
