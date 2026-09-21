@@ -116,11 +116,37 @@ public class NotificationInputReceiver extends BroadcastReceiver {
         if (linkToDownload != null && !linkToDownload.isEmpty()) {
             Log.i(TAG, "🚀 شروع ارسال به گیت‌هاب برای لینک: " + linkToDownload);
             Toast.makeText(context, "🚀 در حال چسباندن و ارسال آنی به گیت‌هاب...\n" + linkToDownload, Toast.LENGTH_SHORT).show();
+            registerNativeUniqueLink(context, linkToDownload);
             saveNativeDownloadHistory(context, linkToDownload, "⚡ ارسال‌شده از اعلان اندروید");
             dispatchToGitHub(context, linkToDownload);
         } else if (ACTION_SUBMIT_LINK.equals(action)) {
             Log.w(TAG, "⚠️ عدم ارسال به گیت‌هاب: لینک ورودی تهی است.");
             Toast.makeText(context, "⚠️ متن ورودی خالی است!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public static void registerNativeUniqueLink(Context context, String link) {
+        if (link == null || link.trim().isEmpty()) return;
+        try {
+            SharedPreferences prefs = context.getSharedPreferences("restricted_bot_prefs", Context.MODE_PRIVATE);
+            String rawUnique = prefs.getString("restricted_unique_download_links", "[]");
+            org.json.JSONArray array = new org.json.JSONArray(rawUnique);
+
+            boolean exists = false;
+            for (int i = 0; i < array.length(); i++) {
+                if (link.trim().equals(array.getString(i))) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (!exists) {
+                array.put(link.trim());
+                prefs.edit().putString("restricted_unique_download_links", array.toString()).apply();
+                Log.d(TAG, "🔗 لینک منحصربه‌فرد جدید در حافظه نیتیو ثبت شد. مجموع: " + array.length());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "❌ خطا در ثبت لینک منحصربه‌فرد نیتیو: " + e.getMessage(), e);
         }
     }
 
