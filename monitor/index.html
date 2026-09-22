@@ -1293,6 +1293,93 @@
             };
         }
 
+        function calculateTotalAbovePeakCumulativePercent() {
+            const historyKeys = {
+                1: "gold_history",
+                2: "fixedIncome_history",
+                3: "kian_history",
+                4: "pension_history",
+                5: "sinergy_history",
+                6: "cement_history",
+                7: "ahang_kian_history"
+            };
+
+            let totalAbovePeak = 0;
+
+            for (let appId = 1; appId <= 7; appId++) {
+                const historyKey = historyKeys[appId];
+                let historyRaw = localStorage.getItem(historyKey);
+                let history = [];
+                try { history = JSON.parse(historyRaw) || []; } catch(e) {}
+
+                if (history && history.length > 0) {
+                    history.forEach(calc => {
+                        let rawBase = 0;
+                        let rawNew = 0;
+                        let rawPeak = 0;
+
+                        if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
+                            rawBase = calc.rawBase;
+                        } else if (calc.base) {
+                            rawBase = parseFloat(normalizeToEnglishDigits(calc.base).replace(/,/g, '')) || 0;
+                        }
+
+                        if (calc.rawNew !== undefined && calc.rawNew !== null && !isNaN(calc.rawNew)) {
+                            rawNew = calc.rawNew;
+                        } else if (calc.new) {
+                            rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
+                        }
+
+                        if (calc.rawPeak !== undefined && calc.rawPeak !== null && !isNaN(calc.rawPeak)) {
+                            rawPeak = calc.rawPeak;
+                        } else if (calc.peak) {
+                            rawPeak = parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0;
+                        }
+
+                        let status = calc.type;
+                        if (!status) {
+                            if (rawNew < rawBase) {
+                                status = 'decrease';
+                            } else if (rawPeak > 0 && rawNew < rawPeak) {
+                                status = 'recovering';
+                            } else {
+                                status = 'increase';
+                            }
+                        }
+
+                        if (status === 'increase') {
+                            let val = 0;
+                            if (calc.percent !== undefined && calc.percent !== null) {
+                                if (typeof calc.percent === 'number') {
+                                    val = calc.percent;
+                                } else {
+                                    val = parseFloat(normalizeToEnglishDigits(String(calc.percent)).replace(/[^0-9.-]/g, '')) || 0;
+                                }
+                            } else if (rawBase > 0 && rawNew > rawBase) {
+                                val = ((rawNew - rawBase) / rawBase) * 100;
+                            }
+
+                            if (val > 0) {
+                                totalAbovePeak += val;
+                            }
+                        }
+                    });
+                } else {
+                    const appsInfo = getAppPercentData();
+                    const app = appsInfo.find(a => a.id === appId);
+                    if (app && app.data) {
+                        app.data.forEach(item => {
+                            if (item.value && item.value > 0) {
+                                totalAbovePeak += item.value;
+                            }
+                        });
+                    }
+                }
+            }
+
+            return totalAbovePeak;
+        }
+
         function getLatestTomanProfit(appId) {
             return getLatestAppCalcDetails(appId).profit;
         }
@@ -2328,16 +2415,24 @@
                 'gemini-flash-latest'
             ];
 
-            const historyData = calculateDailyHistory();
-            const totalSum = currentDaySum;
+            const totalCumulativePercent = calculateTotalAbovePeakCumulativePercent();
+            localStorage.setItem('monitor_cumulative_percent_v1', totalCumulativePercent.toFixed(2));
+
             const targetPercent = 3000;
-            const remainingToTarget = targetPercent - totalSum;
+            const pastCumulative = Math.max(0, totalCumulativePercent - currentDaySum);
+            const remainingToTarget = Math.max(0, targetPercent - totalCumulativePercent);
 
             const prompt = `
                 تو یک هوش مصنوعی بسیار باهوش، رفیق شفیق، با نمک و کمی شوخ‌طبع برای عمارت دیجیتال هستی.
-                امروز هر ۷ درصد ثبت شدند و مجموع درصدهای ثبت‌شده امروز به ${totalSum.toFixed(2)}% رسیده است.
-                هدف نهایی ما رسیدن به ${targetPercent}% سود است. یعنی ${remainingToTarget.toFixed(2)}% تا هدف طلایی فاصله داریم.
-                با توجه به این عدد مجموع درصدها و فاصله تا هدف ۳۰۰۰ درصدی، یک جمله‌ی فارسی بسیار جذاب، شیوا، موجز و شوخ‌طبعانه (حداکثر در ۳ خط کوتاه) بگو. به هیچ وجه متن طولانی ننویس.
+                امروز هر ۷ درصد ثبت شدند.
+                - سود فوق قله ثبت‌شده امروز: +${currentDaySum.toFixed(2)}%
+                - مجموع سودهای فوق قله کل تا قبل از امروز: ${pastCumulative.toFixed(2)}%
+                - مجموع سود تراکمی فوق قله تا به امروز: ${totalCumulativePercent.toFixed(2)}%
+                - هدف نهایی: رسیدن به ${targetPercent}% سود تراکمی کل است.
+                - فاصله واقعی باقی‌مانده تا قله ۳۰۰۰٪: ${remainingToTarget.toFixed(2)}%
+
+                نکته مهم: هدف ۳۰۰۰٪ یک هدف تراکمی کل از تمام روزهای گذشته است و امروز هم +${currentDaySum.toFixed(2)}% به آن اضافه شده است.
+                با توجه به این اعداد و میزان پیشرفت تا قله ۳۰۰۰٪، یک جمله‌ی فارسی بسیار جذاب، شیوا، امیدبخش و شوخ‌طبعانه (حداکثر در ۳ خط کوتاه) بگو که هم سود امروز و هم پیشرفت تراکمی کل تا قله ۳۰۰۰٪ را منعکس کند. به هیچ وجه متن طولانی ننویس.
             `;
 
             let resultText = '';
