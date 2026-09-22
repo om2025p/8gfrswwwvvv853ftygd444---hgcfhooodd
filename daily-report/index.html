@@ -796,14 +796,33 @@
             }
         }
 
+        // Clean technical raw English terms from commit messages
+        function cleanCommitMessage(msg) {
+            if (!msg) return "به‌روزرسانی و بهبود عملکرد برنامه";
+            return msg
+                .replace(/Co-authored-by:.*$/gmi, '')
+                .replace(/feat\([^)]*\):/gi, 'افزودن قابلیت:')
+                .replace(/fix\([^)]*\):/gi, 'رفع مشکل:')
+                .replace(/docs\([^)]*\):/gi, 'مستندات:')
+                .replace(/style\([^)]*\):/gi, 'استایل و ظاهر:')
+                .replace(/refactor\([^)]*\):/gi, 'بازنویسی کد:')
+                .trim();
+        }
+
         // Call Gemini AI Model
         async function callGeminiAI(apiKey, appName, commitMsg, filesStr) {
-            const prompt = `شما هوش مصنوعی تحلیلی عمارت دیجیتال هستید. برنامه "${appName}" دچار تغییرات و بروزرسانی جدید شده است.
-اطلاعات بروزرسانی:
-پیام کامیت: "${commitMsg}"
+            const cleanedMsg = cleanCommitMessage(commitMsg);
+            const prompt = `شما هوش مصنوعی تحلیلی و گزارش‌نویس اختصاصی عمارت دیجیتال هستید.
+برنامه "${appName}" به نسخه جدیدی به‌روزرسانی شده است.
+
+اطلاعات فنی بروزرسانی:
+پیام کامیت: "${cleanedMsg}"
 فایل‌های تغییر یافته: "${filesStr}"
 
-لطفا تغییرات انجام شده را نسبت به آخرین نسخه در یک یا چند پاراگراف روان، جذاب، شیک و دقیق به زبان فارسی توضیح دهید و بگویید کاربران چه انتظاراتی باید داشته باشند. از لحن محترمانه و حرفه‌ای استفاده کنید.`;
+دستورالعمل مهم:
+۱. پاسخ شما باید ۱۰۰٪ به زبان فارسی، بسیار روان، خوانا، جذاب و هموار باشد.
+۲. از آوردن متون انگلیسی، ایمیل‌ها، نام‌های ربات، و پیام‌های خام انگلیسی اکیداً خودداری کنید. تمام مفاهیم و تغییرات فنی را به فارسی روان و ساده ترجمه کنید.
+۳. در یک یا دو پاراگراف خوانا توضیح دهید که چه قابلیت‌ها یا اصلاحاتی در برنامه "${appName}" انجام شده و کاربر چه انتظاری باید داشته باشد.`;
 
             try {
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
@@ -818,10 +837,13 @@
                 if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
                 const data = await response.json();
                 const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                return text || `بروزرسانی جدید در برنامه ${appName} با پیام کامیت: ${commitMsg}`;
+                if (text && text.trim()) {
+                    return text.trim();
+                }
+                return `در این به‌روزرسانی، تغییراتی در بخش کدهای برنامه ${appName} ایجاد شده و عملکرد آن بهبود یافته است.`;
             } catch (e) {
                 console.error("Gemini AI failed:", e);
-                return `بروزرسانی برنامه ${appName}: ${commitMsg} (فایل‌های تغییر یافته: ${filesStr})`;
+                return `در این نسخه، قابلیت‌ها و اصلاحات جدیدی در برنامه ${appName} اعمال شده است (${cleanedMsg}).`;
             }
         }
 
