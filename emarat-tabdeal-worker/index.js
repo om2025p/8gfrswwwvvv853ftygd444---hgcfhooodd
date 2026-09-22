@@ -10,20 +10,35 @@ const MANTLE_DB_URL = "https://mantledb.sh/v2/emarat-tabdeal-wallet-v1/global_hi
 async function getUsdtIrtPrice() {
   let price = 0;
 
-  // 1. Tabdeal trades USDT_IRT
+  // 1. Tabdeal 24hr ticker
   try {
-    const res = await fetch("https://api1.tabdeal.org/r/api/v1/trades?symbol=USDT_IRT&limit=1", {
+    const res = await fetch("https://api1.tabdeal.org/r/api/v1/ticker/24hr?symbol=USDT_IRT", {
       headers: { "Accept": "application/json" }
     });
     if (res.ok) {
-      const trades = await res.json();
-      if (Array.isArray(trades) && trades[0] && trades[0].price) {
-        price = parseFloat(trades[0].price) || 0;
+      const data = await res.json();
+      if (data && (data.lastPrice || data.askPrice || data.bidPrice)) {
+        price = parseFloat(data.lastPrice || data.askPrice || data.bidPrice) || 0;
       }
     }
   } catch (e) {}
 
-  // 2. Tabdeal trades USDTIRT
+  // 2. Tabdeal trades USDT_IRT
+  if (!price) {
+    try {
+      const res = await fetch("https://api1.tabdeal.org/r/api/v1/trades?symbol=USDT_IRT&limit=1", {
+        headers: { "Accept": "application/json" }
+      });
+      if (res.ok) {
+        const trades = await res.json();
+        if (Array.isArray(trades) && trades[0] && trades[0].price) {
+          price = parseFloat(trades[0].price) || 0;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 3. Tabdeal trades USDTIRT
   if (!price) {
     try {
       const res = await fetch("https://api1.tabdeal.org/r/api/v1/trades?symbol=USDTIRT&limit=1", {
@@ -38,7 +53,7 @@ async function getUsdtIrtPrice() {
     } catch (e) {}
   }
 
-  // 3. Nobitex fallback
+  // 4. Nobitex fallback
   if (!price) {
     try {
       const res = await fetch("https://api.nobitex.ir/v2/trades/USDTIRT");
@@ -51,7 +66,7 @@ async function getUsdtIrtPrice() {
     } catch (e) {}
   }
 
-  // 4. Wallex fallback
+  // 5. Wallex fallback
   if (!price) {
     try {
       const res = await fetch("https://api.wallex.ir/v1/currencies/stats");
@@ -183,7 +198,6 @@ function processHistoryWithAverages(historyRaw, currentIrt, currentUsdt, usdtPri
     history.push(snapshotObj);
   } else {
     const lastEntry = history[history.length - 1];
-    // Check if last entry is for today (same Jalali date)
     if (lastEntry.date_str_jalali === jalaliToday) {
       lastEntry.total_irt = Math.round(currentIrt);
       lastEntry.total_usdt = parseFloat(currentUsdt.toFixed(2));
@@ -196,13 +210,10 @@ function processHistoryWithAverages(historyRaw, currentIrt, currentUsdt, usdtPri
     }
   }
 
-  // Cap at 365 daily records
   if (history.length > 365) {
     history = history.slice(-365);
   }
 
-  // Calculate percentage changes and averages for all items
-  // 1. Calculate 24h percent for each item i relative to previous item i-1
   let cumulativeSum = 0;
   for (let i = 0; i < history.length; i++) {
     const item = history[i];
@@ -218,12 +229,10 @@ function processHistoryWithAverages(historyRaw, currentIrt, currentUsdt, usdtPri
       item.percent_24h = parseFloat(pct.toFixed(2));
       cumulativeSum += item.percent_24h;
 
-      // Method 2 (شگرد ۲): Average percentage up to this point/hour
       item.avg_cumulative_to_now = parseFloat((cumulativeSum / i).toFixed(2));
     }
   }
 
-  // Method 1 (شگرد ۱): Total overall average percentage across ALL recorded days
   const totalDaysCount = history.length - 1;
   const overallAvg = totalDaysCount > 0 ? parseFloat((cumulativeSum / totalDaysCount).toFixed(2)) : 0.00;
 
@@ -271,18 +280,22 @@ async function fetchBalanceAndValuation(env) {
     });
   };
 
-  // 1. Spot balances
+  // 1. Spot balances (including free, locked, freeze, and frozen amounts)
   let spotAssets = [];
   try {
     const spotRes = await fetchSigned("https://api1.tabdeal.org/r/api/v1/account");
     if (spotRes.ok) {
       const data = await spotRes.json();
       if (data && data.balances) {
-        spotAssets = data.balances.map(b => ({
-          asset: b.asset,
-          free: parseFloat(b.free) || 0,
-          freeze: parseFloat(b.freeze) || 0,
-        })).filter(b => (b.free + b.freeze) > 0);
+        spotAssets = data.balances.map(b => {
+          const free = parseFloat(b.free) || 0;
+          const freeze = parseFloat(b.freeze) || parseFloat(b.locked) || parseFloat(b.frozen) || parseFloat(b.borrowed) || 0;
+          return {
+            asset: b.asset,
+            free: free,
+            freeze: freeze,
+          };
+        }).filter(b => (b.free + b.freeze) > 0);
       }
     }
   } catch (e) {}
@@ -295,16 +308,43 @@ async function fetchBalanceAndValuation(env) {
       const data = await futuresRes.json();
       if (data && data.assets) {
         futuresAssets = data.assets.map(b => {
-          const marginBal = parseFloat(b.marginBalance) || parseFloat(b.walletBalance) || 0;
+          const walletBal = parseFloat(b.walletBalance) || 0;
+          const marginBal = parseFloat(b.marginBalance) || 0;
+          const crossBal = parseFloat(b.crossWalletBalance) || 0;
+          const unPnl = parseFloat(b.unrealizedProfit) || parseFloat(b.unrealizedPnl) || 0;
+          const totalAmt = Math.max(walletBal, marginBal, crossBal) + unPnl;
           return {
             asset: b.asset,
-            free: marginBal,
+            free: totalAmt > 0 ? totalAmt : 0,
             freeze: 0,
           };
         }).filter(b => b.free > 0);
       }
     }
   } catch (e) {}
+
+  // Fallback to v2/v1 Futures if v3 returned empty
+  if (futuresAssets.length === 0) {
+    try {
+      const futuresRes = await fetchSigned("https://api1.tabdeal.org/r/fapi/v2/account");
+      if (futuresRes.ok) {
+        const data = await futuresRes.json();
+        if (data && data.assets) {
+          futuresAssets = data.assets.map(b => {
+            const walletBal = parseFloat(b.walletBalance) || 0;
+            const marginBal = parseFloat(b.marginBalance) || 0;
+            const unPnl = parseFloat(b.unrealizedProfit) || 0;
+            const totalAmt = Math.max(walletBal, marginBal) + unPnl;
+            return {
+              asset: b.asset,
+              free: totalAmt > 0 ? totalAmt : 0,
+              freeze: 0,
+            };
+          }).filter(b => b.free > 0);
+        }
+      }
+    } catch (e) {}
+  }
 
   // Merge assets
   const mergedMap = new Map();
