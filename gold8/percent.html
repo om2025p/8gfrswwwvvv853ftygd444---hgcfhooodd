@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>💊 ثبت درصد 8 · فارما کیان</title>
+    <title>💊 ثبت درصد 8</title>
     <style>
         * {
             box-sizing: border-box;
@@ -16,7 +16,7 @@
             --pharma-4: #06b6d4;
             --pharma-5: #14b8a6;
             --bg-color: #042f2e;
-            --card-bg: #0f3e3a;
+            --card-bg: rgba(15, 62, 58, 0.92);
             --text-dark: #f0fdf4;
             --border-radius: 20px;
             --shadow: 0 4px 20px rgba(0,0,0,0.5);
@@ -27,34 +27,16 @@
 
         body {
             font-family: Tahoma, 'Segoe UI', system-ui, sans-serif;
-            background: var(--bg-color);
-            background-image:
-                radial-gradient(circle at 10% 20%, rgba(13, 148, 136, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(2, 132, 199, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 60%);
+            background-color: var(--bg-color);
+            background-image: url('pharma_wallpaper.svg');
+            background-repeat: repeat;
+            background-size: 180px 180px;
             color: var(--text-dark);
             margin: 0;
             padding: 0;
             min-height: 100vh;
             direction: rtl;
             position: relative;
-        }
-
-        /* المان‌های نمادین پس‌زمینه دارویی (قرص و کپسول) */
-        body::before {
-            content: "💊 💉 🩺 💊 🧪 💊 🩺 💉";
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 5rem;
-            opacity: 0.03;
-            letter-spacing: 30px;
-            pointer-events: none;
-            z-index: 0;
-            width: 100%;
-            text-align: center;
-            line-height: 2;
         }
 
         .page {
@@ -72,6 +54,7 @@
             max-width: 550px;
             margin: 0 auto;
             background: var(--card-bg);
+            backdrop-filter: blur(8px);
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             padding: 18px 16px;
@@ -91,7 +74,6 @@
             color: transparent;
         }
 
-        /* ===== منوی کشویی آمار ===== */
         .stats-dropdown {
             margin: 10px 0 15px 0;
             border-radius: 16px;
@@ -367,8 +349,8 @@
     <div id="notesToggle" onclick="toggleNotesDrawer()">📝 یادداشت‌ها ▼</div>
 </div>
 <div id="notesDrawer">
-    <h2>📌 یادداشت‌های فارما کیان</h2>
-    <textarea id="newNoteInput" placeholder="یادداشت دارویی/مالی خود را بنویسید..."></textarea>
+    <h2>📌 یادداشت‌ها</h2>
+    <textarea id="newNoteInput" placeholder="یادداشت خود را بنویسید..."></textarea>
     <button onclick="addNote()" style="margin-bottom: 15px;">➕ افزودن یادداشت</button>
     <ul id="notesList" class="percent-list" style="max-height: 40vh;"></ul>
     <button onclick="toggleNotesDrawer()" class="secondary-btn">بستن</button>
@@ -376,7 +358,7 @@
 
 <div id="mainPage" class="page active-page">
     <div class="container">
-        <h1>💊 صندوق فارما کیان<br>ثبت درصد 8</h1>
+        <h1>💊 ثبت درصد 8</h1>
 
         <div class="stats-dropdown">
             <div class="stats-header" onclick="toggleStatsMenu()">
@@ -500,13 +482,13 @@
             </div>
         </div>
         <input type="file" id="fileInput" style="display:none;" onchange="recoveryData(event)">
-        <footer>💊 فارما کیان | مدیریت سوددهی خودکار مرورگر</footer>
+        <footer>💊 ثبت درصد 8 | مدیریت سوددهی خودکار مرورگر</footer>
     </div>
 </div>
 
 <div id="chartPage" class="page">
     <div class="container">
-        <h1>📊 روند سود مرکب فارما کیان</h1>
+        <h1>📊 روند سود مرکب ثبت درصد 8</h1>
         <div class="chart-controls">
             <button onclick="zoomIn()">➕ زوم بزرگ</button>
             <button onclick="zoomOut()">➖ زوم کوچک</button>
@@ -600,7 +582,7 @@
             let blob = new Blob(["\uFEFF" + csvContent], {type: "text/csv;charset=utf-8;"});
             let link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `pharma-kian-fund-data-${new Date().toISOString().slice(0,10)}.csv`;
+            link.download = `gold8-fund-data-${new Date().toISOString().slice(0,10)}.csv`;
             link.click();
         };
 
@@ -1270,7 +1252,7 @@
         window.downloadChartAsImage = function() {
             if(chartCanvas) {
                 let link = document.createElement('a');
-                link.download = `pharma-kian-chart-${Date.now()}.png`;
+                link.download = `gold8-chart-${Date.now()}.png`;
                 link.href = chartCanvas.toDataURL();
                 link.click();
             }
@@ -1431,7 +1413,7 @@
                 appendGithubLog("در حال تبدیل محتوا به Base64...");
                 const base64Content = btoa(unescape(encodeURIComponent(contentString)));
                 const body = {
-                    message: `بکاپ خودکار ثبت درصد ۸ (فارما کیان) - ${new Date().toLocaleString('fa-IR')}`,
+                    message: `بکاپ خودکار ثبت درصد ۸ - ${new Date().toLocaleString('fa-IR')}`,
                     content: base64Content,
                     branch: branch
                 };
@@ -1531,7 +1513,7 @@
             const a = document.createElement('a');
             const d = new Date();
             const timestamp = d.toISOString().slice(0,19).replace(/:/g, "-");
-            const fileName = `backup_pharma_kian_percent_${timestamp}.json`;
+            const fileName = `backup_gold8_percent_${timestamp}.json`;
             a.download = fileName;
             a.href = URL.createObjectURL(blob);
             a.click();

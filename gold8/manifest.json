@@ -1,7 +1,7 @@
 {
-  "name": "ثبت درصد 8 · فارما کیان",
+  "name": "ثبت درصد 8",
   "short_name": "ثبت درصد 8",
-  "description": "سیستم مدیریت سوددهی و محاسبات تغییرات صندوق فارما کیان",
+  "description": "سیستم مدیریت سوددهی و محاسبات تغییرات صندوق ثبت درصد 8",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#042f2e",

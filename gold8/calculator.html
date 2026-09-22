@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>محاسبه تغییرات درصد · صندوق فارما کیان</title>
+    <title>محاسبه تغییرات درصد · ثبت درصد 8</title>
     <style>
         :root {
             --bg-body: #042f2e;
-            --bg-container: #0f3e3a;
+            --bg-container: rgba(15, 62, 58, 0.92);
             --text-primary: #f0fdf4;
             --text-secondary: #99f6e4;
             --primary-color: #0d9488;
@@ -38,6 +38,9 @@
             margin: 0;
             padding: 0;
             background-color: var(--bg-body);
+            background-image: url('pharma_wallpaper.svg');
+            background-repeat: repeat;
+            background-size: 180px 180px;
             color: var(--text-primary);
             display: flex;
             justify-content: center;
@@ -48,6 +51,7 @@
 
         .container {
             background-color: var(--bg-container);
+            backdrop-filter: blur(8px);
             border-radius: 16px;
             box-shadow: 0 8px 24px var(--shadow-color);
             padding: 30px;
@@ -341,7 +345,7 @@
 <body>
 
 <div class="container">
-    <h1>💊 محاسبه تغییرات درصد · صندوق فارما کیان</h1>
+    <h1>💊 محاسبه تغییرات درصد · ثبت درصد 8</h1>
 
     <div class="calculator-section">
         <h2>محاسبه تفاوت درصد</h2>
@@ -648,7 +652,7 @@
         const percent = (diff / baseNum) * 100;
         let percentFixed = percent.toFixed(2);
         let type = 'neutral';
-        let resultText = `💊 تغییرات درصد (فارما کیان): ${percentFixed}%`;
+        let resultText = `💊 تغییرات درصد (ثبت درصد 8): ${percentFixed}%`;
 
         const changeAmount = Math.abs((percent/100) * baseNum);
 
@@ -768,7 +772,7 @@
     calcBtn.addEventListener('click', () => calculateAndSave(true));
 
     clearHistoryBtn.addEventListener('click', () => {
-        if (confirm('❗ همه تاریخچه صندوق فارما کیان پاک می‌شه! مطمئنی؟')) {
+        if (confirm('❗ همه تاریخچه ثبت درصد 8 پاک می‌شه! مطمئنی؟')) {
             localStorage.removeItem(STORAGE_HISTORY);
             renderHistory();
             resultDiv.textContent = '🧹 تاریخچه با موفقیت پاک شد';

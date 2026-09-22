@@ -1225,8 +1225,7 @@
                 4: "pension_history",
                 5: "sinergy_history",
                 6: "cement_history",
-                7: "ahang_kian_history",
-                8: "pharma_kian_history"
+                7: "ahang_kian_history"
             };
             const peakKeys = {
                 1: "gold_peakNumber",
@@ -1235,8 +1234,7 @@
                 4: "pension_peakNumber",
                 5: "sinergy_peakNumber",
                 6: "cement_peakNumber",
-                7: "ahang_kian_peakNumber",
-                8: "pharma_kian_peakNumber"
+                7: "ahang_kian_peakNumber"
             };
             const historyKey = historyKeys[appId];
             let historyRaw = localStorage.getItem(historyKey);
@@ -1329,13 +1327,12 @@
                 4: "pension_history",
                 5: "sinergy_history",
                 6: "cement_history",
-                7: "ahang_kian_history",
-                8: "pharma_kian_history"
+                7: "ahang_kian_history"
             };
 
             let totalAbovePeak = 0;
 
-            for (let appId = 1; appId <= 8; appId++) {
+            for (let appId = 1; appId <= 7; appId++) {
                 const historyKey = historyKeys[appId];
                 let historyRaw = localStorage.getItem(historyKey);
                 let history = [];
@@ -1421,8 +1418,7 @@
                 4: "pension_history",
                 5: "sinergy_history",
                 6: "cement_history",
-                7: "ahang_kian_history",
-                8: "pharma_kian_history"
+                7: "ahang_kian_history"
             };
             const historyKey = historyKeys[appId];
             let historyRaw = localStorage.getItem(historyKey);
@@ -1486,8 +1482,7 @@
                 4: "pension_history",
                 5: "sinergy_history",
                 6: "cement_history",
-                7: "ahang_kian_history",
-                8: "pharma_kian_history"
+                7: "ahang_kian_history"
             };
             const peakKeys = {
                 1: "gold_peakNumber",
@@ -1496,13 +1491,12 @@
                 4: "pension_peakNumber",
                 5: "sinergy_peakNumber",
                 6: "cement_peakNumber",
-                7: "ahang_kian_peakNumber",
-                8: "pharma_kian_peakNumber"
+                7: "ahang_kian_peakNumber"
             };
 
             const processedAppsPerDay = {};
 
-            for (let appId = 1; appId <= 8; appId++) {
+            for (let appId = 1; appId <= 7; appId++) {
                 const historyKey = historyKeys[appId];
                 let historyRaw = localStorage.getItem(historyKey);
                 let history = [];
@@ -1799,16 +1793,6 @@
                 }
             } catch(e) {}
             result.push({ id: 7, title: "ثبت درصد 7", data: app7Data });
-
-            let app8Raw = localStorage.getItem("pharma_kian_percents");
-            let app8Data = [];
-            try {
-                if (app8Raw) {
-                    let parsed = JSON.parse(app8Raw);
-                    app8Data = parsed.percents || [];
-                }
-            } catch(e) {}
-            result.push({ id: 8, title: "ثبت درصد 8", data: app8Data });
 
             cachedAppsPercentData = result;
             return result;
@@ -2466,7 +2450,7 @@
 
             const prompt = `
                 تو یک هوش مصنوعی بسیار باهوش، رفیق شفیق، با نمک و کمی شوخ‌طبع برای عمارت دیجیتال هستی.
-                امروز هر ۸ درصد ثبت شدند.
+                امروز هر ۷ درصد ثبت شدند.
                 - سود فوق قله ثبت‌شده امروز: +${currentDaySum.toFixed(2)}%
                 - مجموع سودهای فوق قله کل تا قبل از امروز: ${pastCumulative.toFixed(2)}%
                 - مجموع سود تراکمی فوق قله تا به امروز: ${totalCumulativePercent.toFixed(2)}%
@@ -3732,7 +3716,7 @@ ${dayBlocksHtml}
                 { keys: ['energy_fund_synergy', 'sinergy_notes'], name: 'ثبت درصد ۵ (سینرژی)', isUnifiedObj: true },
                 { keys: ['cement_factory_percents', 'cement_notes'], name: 'ثبت درصد ۶ (سیمان)', isUnifiedObj: true },
                 { keys: ['ahang_kian_percents', 'ahang_kian_notes'], name: 'ثبت درصد ۷ (آهنگ کیان)', isUnifiedObj: true },
-                { keys: ['pharma_kian_percents', 'pharma_kian_notes'], name: 'ثبت درصد ۸ (فارما کیان)', isUnifiedObj: true }
+                { keys: ['pharma_kian_percents', 'pharma_kian_notes'], name: 'ثبت درصد ۸', isUnifiedObj: true }
             ];
 
             appNoteSources.forEach(app => {

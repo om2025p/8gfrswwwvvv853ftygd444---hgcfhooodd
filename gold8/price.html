@@ -3,11 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>ثبت قیمت ابطال + جدول رشد | فارما کیان</title>
+    <title>ثبت قیمت ابطال + جدول رشد | ثبت درصد 8</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #042f2e; margin: 0; padding: 8px; min-height: 100vh; color: #f0fdf4; }
-        .container { max-width: 1200px; margin: 0 auto; background: #0f3e3a; border-radius: 24px; padding: 12px; border: 1px solid #14b8a6; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #042f2e;
+            background-image: url('pharma_wallpaper.svg');
+            background-repeat: repeat;
+            background-size: 180px 180px;
+            margin: 0;
+            padding: 8px;
+            min-height: 100vh;
+            color: #f0fdf4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(15, 62, 58, 0.92);
+            backdrop-filter: blur(8px);
+            border-radius: 24px;
+            padding: 12px;
+            border: 1px solid #14b8a6;
+        }
         h1 { font-size: 1.4rem; text-align: center; background: linear-gradient(135deg, #0d9488, #0284c7, #10b981, #06b6d4, #14b8a6); -webkit-background-clip: text; background-clip: text; color: transparent; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
         .card { background: #042f2e; border-radius: 20px; padding: 14px; margin-bottom: 16px; border-right: 3px solid #14b8a6; }
         .input-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
@@ -70,7 +88,7 @@
         .col-center { text-align: center; }
         .col-left { text-align: left; direction: ltr; }
         .col-day { text-align: center; font-weight: bold; color: #2dd4bf; }
-        .stats-bar { background: #0f3e3a; border-radius: 14px; padding: 8px 10px; margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: space-around; gap: 8px; font-size: 0.7rem; text-align: center; }
+        .stats-bar { background: #0f3e3a; border-radius: 14px; padding: 8px 10px; margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-around: space-around; gap: 8px; font-size: 0.7rem; text-align: center; }
         .stat-item { flex: 1; min-width: 60px; }
         .stat-label { color: #99f6e4; font-size: 0.6rem; }
         .stat-value { font-weight: bold; font-size: 0.8rem; color: #f59e0b; }
@@ -82,7 +100,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>💊 ثبت قیمت ابطال + جدول رشد <span style="font-size:0.7rem;">| فارما کیان</span></h1>
+    <h1>💊 ثبت قیمت ابطال + جدول رشد <span style="font-size:0.7rem;">| ثبت درصد 8</span></h1>
     <div class="card">
         <div class="input-row">
             <label>💰 قیمت امروز (تومان):</label>
@@ -793,7 +811,7 @@
         const dataStr = JSON.stringify(getPrices(), null, 2);
         const blob = new Blob([dataStr], {type: "application/json"});
         const a = document.createElement("a");
-        a.download = `backup_pharma_kian_prices_${Date.now()}.json`;
+        a.download = `backup_gold8_prices_${Date.now()}.json`;
         a.href = URL.createObjectURL(blob);
         a.click();
     });

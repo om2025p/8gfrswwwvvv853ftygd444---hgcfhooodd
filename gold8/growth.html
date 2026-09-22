@@ -3,13 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>مدیریت رشد · فارما کیان</title>
+<title>مدیریت رشد · ثبت درصد 8</title>
 <style>
   * { box-sizing: border-box; }
 
   body {
     font-family: Tahoma, Arial, sans-serif;
-    background: #042f2e;
+    background-color: #042f2e;
+    background-image: url('pharma_wallpaper.svg');
+    background-repeat: repeat;
+    background-size: 180px 180px;
     margin: 0;
     padding: 12px;
     color: #f0fdf4;
@@ -18,7 +21,8 @@
   .container {
     max-width: 100%;
     margin: 0 auto;
-    background: #0f3e3a;
+    background: rgba(15, 62, 58, 0.92);
+    backdrop-filter: blur(8px);
     padding: 14px;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
@@ -256,20 +260,6 @@
     border-bottom: 2px solid #14b8a6;
   }
 
-  .mini-calc-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 0 2px;
-    vertical-align: middle;
-    transition: transform 0.15s;
-    line-height: 1;
-  }
-  .mini-calc-btn:active {
-    transform: scale(1.25);
-  }
-
   .txt-3d {
     font-family: inherit;
     font-size: 34px;
@@ -341,44 +331,6 @@
     background: transparent;
   }
 
-  .shine-wrap::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 60%;
-    height: 100%;
-    background: linear-gradient(
-      100deg,
-      transparent 0%,
-      rgba(255,255,255,0) 30%,
-      rgba(255,255,255,0.9) 50%,
-      rgba(255,255,255,0) 70%,
-      transparent 100%
-    );
-    transform: translateX(-150%);
-    pointer-events: none;
-    will-change: transform;
-    z-index: 2;
-  }
-
-  .shine-wrap:hover::after {
-    transform: translateX(250%);
-    transition: transform 0.7s ease-out;
-  }
-
-  @keyframes pulse-white-red {
-    0%, 100% { background-color: transparent; }
-    25% { background-color: #ff5252; }
-    50% { background-color: #fff; }
-    75% { background-color: #ff5252; }
-  }
-
-  tr.pulse-flash,
-  tr.pulse-flash + tr.desc-row {
-    animation: pulse-white-red 0.5s ease-in-out 3;
-  }
-
   tr.checked-yellow {
     background: #854d0e !important;
   }
@@ -391,40 +343,6 @@
     padding: 8px;
   }
 
-  .desc-row-content {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .desc-row-content .desc-cell {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .action-btn {
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.05s, box-shadow 0.05s;
-    padding: 0;
-  }
-
-  .action-btn:active {
-    transform: translateY(2px);
-    box-shadow: 0 1px 0 rgba(0,0,0,0.3) !important;
-  }
-
   .hamburger-btn {
     width: 56px;
     height: 56px;
@@ -434,115 +352,18 @@
     flex-shrink: 0;
   }
 
-  .desc-menu {
-    position: fixed;
-    background: #0f3e3a;
-    border: 1px solid #14b8a6;
-    border-radius: 8px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-    padding: 6px;
-    z-index: 10000;
-    min-width: 150px;
-    font-family: Tahoma, Arial, sans-serif;
-    direction: rtl;
-  }
-
-  .desc-menu-item {
-    padding: 10px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 15px;
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: bold;
-    transition: transform 0.1s;
-  }
-
-  .desc-menu-item:last-child { margin-bottom: 0; }
-  .desc-menu-item:hover { transform: scale(1.03); }
-
-  .desc-menu-item.buy {
-    background: linear-gradient(180deg, #a5d6a7 0%, #388e3c 100%);
-    color: #fff;
-  }
-  .desc-menu-item.sell {
-    background: linear-gradient(180deg, #ef5350 0%, #c62828 100%);
-    color: #fff;
-  }
-  .desc-menu-item.withdraw {
-    background: linear-gradient(180deg, #ffa726 0%, #ef6c00 100%);
-    color: #fff;
-  }
-  .desc-menu-item.note {
-    background: linear-gradient(180deg, #b0bec5 0%, #455a64 100%);
-    color: #fff;
-  }
-
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 20000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
-
-  .modal-box {
+  .dropdown-menu {
+    position: absolute;
+    top: 52px;
+    right: 0;
     background: #0f3e3a;
     border: 1px solid #14b8a6;
     border-radius: 12px;
-    padding: 20px;
-    max-width: 420px;
-    width: 100%;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-    text-align: center;
-    font-family: Tahoma, Arial, sans-serif;
-    direction: rtl;
-    color: #fff;
-  }
-
-  .modal-title { font-size: 17px; font-weight: bold; color: #f87171; margin-bottom: 10px; }
-  .modal-text { font-size: 14px; color: #99f6e4; margin-bottom: 16px; line-height: 1.6; }
-
-  .modal-buttons { display: flex; gap: 8px; }
-
-  .modal-btn {
-    flex: 1;
-    padding: 10px;
-    font-size: 14px;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: inherit;
-  }
-
-  .modal-btn.cancel { background: #334155; color: #fff; }
-  .modal-btn.confirm { background: #ef4444; color: #fff; }
-
-  .big-cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
-  }
-
-  .big-cal-day {
-    text-align: center;
-    padding: 14px 0;
-    font-size: 18px;
-    font-weight: bold;
-    border-radius: 10px;
-    min-height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #042f2e;
-    color: #99f6e4;
-    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    padding: 8px;
+    z-index: 5000;
+    min-width: 200px;
+    display: none;
   }
 </style>
 </head>
@@ -550,7 +371,7 @@
 
 <div class="container">
   <div class="header">
-    <h1>💊 مدیریت رشد · فارما کیان</h1>
+    <h1>🌱 مدیریت رشد · ثبت درصد 8</h1>
     <button class="menu-toggle" id="menuToggle">☰</button>
     <div class="dropdown-menu" id="dropdownMenu">
       <button class="dropdown-item" id="addRowBtn">➕ افزودن ردیف جدید</button>
@@ -615,15 +436,6 @@ function updateRowInDB(row) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
     const req = tx.objectStore(STORE_NAME).put(row);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function deleteRowFromDB(id) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readwrite");
-    const req = tx.objectStore(STORE_NAME).delete(id);
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
@@ -859,7 +671,7 @@ backupBtn.onclick = async () => {
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `pharma_kian_growth_backup_${Date.now()}.json`;
+  a.download = `gold8_growth_backup_${Date.now()}.json`;
   a.click();
 };
 
