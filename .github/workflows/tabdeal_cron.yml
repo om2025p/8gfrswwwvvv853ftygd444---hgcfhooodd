@@ -1,0 +1,17 @@
+name: Tabdeal 24h Daily Snapshot Cron (00:00 UTC)
+
+on:
+  schedule:
+    # Official World Standard Trading Time (00:00 UTC Daily)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  trigger-snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Tabdeal Worker Snapshot Endpoint
+        run: |
+          echo "Triggering 24h Tabdeal Daily Snapshot at 00:00 UTC..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "https://emarat-tabdeal-worker.qqqggggcc.workers.dev/record-snapshot")
+          echo "Response: $RESPONSE"

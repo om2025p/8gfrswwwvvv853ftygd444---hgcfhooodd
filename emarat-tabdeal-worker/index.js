@@ -1,14 +1,428 @@
 /**
- * Cloudflare Worker for Tabdeal Wallet Aggregation and Valuation
- *
- * This worker securely queries Spot, Funding, and Futures accounts on Tabdeal,
- * signs requests using HMAC-SHA256 with keys stored safely in its environment,
- * calculates total asset values in Toman (IRT) and Tether (USDT), and handles CORS.
+ * Cloudflare Worker for Tabdeal Wallet Aggregation, Tether Valuation,
+ * 24h Official World Standard Automated Snapshots (00:00 UTC Cron),
+ * and Dual-Method Percentage Averages Database.
  */
 
+const MANTLE_DB_URL = "https://mantledb.sh/v2/emarat-tabdeal-wallet-v1/global_history";
+
+// Helper: Get Accurate USDT/IRT price in Toman with multi-source fallback
+async function getUsdtIrtPrice() {
+  let price = 0;
+
+  // 1. Tabdeal trades USDT_IRT
+  try {
+    const res = await fetch("https://api1.tabdeal.org/r/api/v1/trades?symbol=USDT_IRT&limit=1", {
+      headers: { "Accept": "application/json" }
+    });
+    if (res.ok) {
+      const trades = await res.json();
+      if (Array.isArray(trades) && trades[0] && trades[0].price) {
+        price = parseFloat(trades[0].price) || 0;
+      }
+    }
+  } catch (e) {}
+
+  // 2. Tabdeal trades USDTIRT
+  if (!price) {
+    try {
+      const res = await fetch("https://api1.tabdeal.org/r/api/v1/trades?symbol=USDTIRT&limit=1", {
+        headers: { "Accept": "application/json" }
+      });
+      if (res.ok) {
+        const trades = await res.json();
+        if (Array.isArray(trades) && trades[0] && trades[0].price) {
+          price = parseFloat(trades[0].price) || 0;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 3. Nobitex fallback
+  if (!price) {
+    try {
+      const res = await fetch("https://api.nobitex.ir/v2/trades/USDTIRT");
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.trades && data.trades[0] && data.trades[0].price) {
+          price = parseFloat(data.trades[0].price) || 0;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 4. Wallex fallback
+  if (!price) {
+    try {
+      const res = await fetch("https://api.wallex.ir/v1/currencies/stats");
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.result && data.result.currencies && data.result.currencies.USDT) {
+          price = parseFloat(data.result.currencies.USDT.price_toman || data.result.currencies.USDT.latest_price) || 0;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // Convert Rial to Toman if returned price is in Rials (> 300,000)
+  if (price > 300000) {
+    price = price / 10;
+  }
+
+  // Sanity check for realistic Tether Toman price (e.g. between 30,000 and 250,000)
+  if (price < 30000 || price > 250000) {
+    price = 91500; // Standard fallback rate
+  }
+
+  return Math.round(price);
+}
+
+// Helpers for Date & Time Formatting
+function getJalaliDateStr(ts = Date.now()) {
+  try {
+    return new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
+      timeZone: 'Asia/Tehran',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(new Date(ts));
+  } catch(e) {
+    return new Date(ts).toISOString().split('T')[0];
+  }
+}
+
+function getGregorianDateStr(ts = Date.now()) {
+  try {
+    return new Date(ts).toISOString().split('T')[0];
+  } catch(e) {
+    return "";
+  }
+}
+
+function getTimeStr(ts = Date.now()) {
+  try {
+    return new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
+      timeZone: 'Asia/Tehran',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).format(new Date(ts));
+  } catch(e) {
+    return "";
+  }
+}
+
+// Cloud Database Pull / Push (MantleDB & Cloudflare KV)
+async function pullCloudHistory(env) {
+  let history = [];
+  if (env && env.TABDEAL_KV) {
+    try {
+      const kvData = await env.TABDEAL_KV.get("tabdeal_history_v1", "json");
+      if (Array.isArray(kvData) && kvData.length > 0) {
+        return kvData;
+      }
+    } catch (e) {}
+  }
+
+  try {
+    const res = await fetch(MANTLE_DB_URL);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.history)) {
+        history = data.history;
+      } else if (Array.isArray(data)) {
+        history = data;
+      }
+    }
+  } catch (e) {}
+
+  return history;
+}
+
+async function pushCloudHistory(env, history) {
+  if (env && env.TABDEAL_KV) {
+    try {
+      await env.TABDEAL_KV.put("tabdeal_history_v1", JSON.stringify(history));
+    } catch (e) {}
+  }
+
+  try {
+    await fetch(MANTLE_DB_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        timestamp: Date.now(),
+        updated_at: new Date().toISOString(),
+        history: history
+      })
+    });
+  } catch (e) {}
+}
+
+// Recalculate Dual-Method Percentage Averages and update History
+function processHistoryWithAverages(historyRaw, currentIrt, currentUsdt, usdtPrice, source = "user_visit") {
+  let history = Array.isArray(historyRaw) ? [...historyRaw] : [];
+  const now = Date.now();
+  const jalaliToday = getJalaliDateStr(now);
+  const gregorianToday = getGregorianDateStr(now);
+  const timeToday = getTimeStr(now);
+
+  const snapshotObj = {
+    timestamp: now,
+    date_str_jalali: jalaliToday,
+    date_str_gregorian: gregorianToday,
+    time_str: timeToday,
+    total_irt: Math.round(currentIrt),
+    total_usdt: parseFloat(currentUsdt.toFixed(2)),
+    usdt_irt_price: usdtPrice,
+    recorded_by: source
+  };
+
+  if (history.length === 0) {
+    history.push(snapshotObj);
+  } else {
+    const lastEntry = history[history.length - 1];
+    // Check if last entry is for today (same Jalali date)
+    if (lastEntry.date_str_jalali === jalaliToday) {
+      lastEntry.total_irt = Math.round(currentIrt);
+      lastEntry.total_usdt = parseFloat(currentUsdt.toFixed(2));
+      lastEntry.usdt_irt_price = usdtPrice;
+      lastEntry.timestamp = now;
+      lastEntry.time_str = timeToday;
+      lastEntry.recorded_by = source;
+    } else {
+      history.push(snapshotObj);
+    }
+  }
+
+  // Cap at 365 daily records
+  if (history.length > 365) {
+    history = history.slice(-365);
+  }
+
+  // Calculate percentage changes and averages for all items
+  // 1. Calculate 24h percent for each item i relative to previous item i-1
+  let cumulativeSum = 0;
+  for (let i = 0; i < history.length; i++) {
+    const item = history[i];
+    if (i === 0) {
+      item.percent_24h = 0.00;
+      item.avg_cumulative_to_now = 0.00;
+    } else {
+      const prev = history[i - 1];
+      let pct = 0;
+      if (prev.total_irt > 0) {
+        pct = ((item.total_irt - prev.total_irt) / prev.total_irt) * 100;
+      }
+      item.percent_24h = parseFloat(pct.toFixed(2));
+      cumulativeSum += item.percent_24h;
+
+      // Method 2 (شگرد ۲): Average percentage up to this point/hour
+      item.avg_cumulative_to_now = parseFloat((cumulativeSum / i).toFixed(2));
+    }
+  }
+
+  // Method 1 (شگرد ۱): Total overall average percentage across ALL recorded days
+  const totalDaysCount = history.length - 1;
+  const overallAvg = totalDaysCount > 0 ? parseFloat((cumulativeSum / totalDaysCount).toFixed(2)) : 0.00;
+
+  for (let i = 0; i < history.length; i++) {
+    history[i].avg_overall_percent = overallAvg;
+  }
+
+  return { history, overallAvg, latestPct: history[history.length - 1].percent_24h };
+}
+
+// Fetch balances from Tabdeal and compute valuations
+async function fetchBalanceAndValuation(env) {
+  const apiKey = env.TABDEAL_API_KEY;
+  const apiSecret = env.TABDEAL_API_SECRET;
+
+  if (!apiKey || !apiSecret) {
+    throw new Error("API_KEYS_NOT_CONFIGURED");
+  }
+
+  const hmacSha256 = async (secret, message) => {
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
+    return Array.from(new Uint8Array(sig))
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+  };
+
+  const fetchSigned = async (baseUrl) => {
+    const timestamp = Date.now();
+    const queryString = `timestamp=${timestamp}`;
+    const signature = await hmacSha256(apiSecret, queryString);
+    const fullUrl = `${baseUrl}?${queryString}&signature=${signature}`;
+    return fetch(fullUrl, {
+      headers: {
+        "X-MBX-APIKEY": apiKey,
+        "Accept": "application/json"
+      }
+    });
+  };
+
+  // 1. Spot balances
+  let spotAssets = [];
+  try {
+    const spotRes = await fetchSigned("https://api1.tabdeal.org/r/api/v1/account");
+    if (spotRes.ok) {
+      const data = await spotRes.json();
+      if (data && data.balances) {
+        spotAssets = data.balances.map(b => ({
+          asset: b.asset,
+          free: parseFloat(b.free) || 0,
+          freeze: parseFloat(b.freeze) || 0,
+        })).filter(b => (b.free + b.freeze) > 0);
+      }
+    }
+  } catch (e) {}
+
+  // 2. Futures balances
+  let futuresAssets = [];
+  try {
+    const futuresRes = await fetchSigned("https://api1.tabdeal.org/r/fapi/v3/account");
+    if (futuresRes.ok) {
+      const data = await futuresRes.json();
+      if (data && data.assets) {
+        futuresAssets = data.assets.map(b => {
+          const marginBal = parseFloat(b.marginBalance) || parseFloat(b.walletBalance) || 0;
+          return {
+            asset: b.asset,
+            free: marginBal,
+            freeze: 0,
+          };
+        }).filter(b => b.free > 0);
+      }
+    }
+  } catch (e) {}
+
+  // Merge assets
+  const mergedMap = new Map();
+  const addAsset = (item, type) => {
+    const symbol = item.asset.toUpperCase();
+    const totalAmt = item.free + item.freeze;
+    if (totalAmt <= 0) return;
+
+    if (!mergedMap.has(symbol)) {
+      mergedMap.set(symbol, {
+        asset: symbol,
+        total: 0,
+        spot: 0,
+        futures: 0
+      });
+    }
+    const existing = mergedMap.get(symbol);
+    existing.total += totalAmt;
+    existing[type] += totalAmt;
+  };
+
+  spotAssets.forEach(a => addAsset(a, "spot"));
+  futuresAssets.forEach(a => addAsset(a, "futures"));
+
+  const uniqueAssets = Array.from(mergedMap.values());
+
+  // Get accurate Tether price
+  const usdtIrtPrice = await getUsdtIrtPrice();
+
+  // Price each asset
+  const finalAssets = await Promise.all(uniqueAssets.map(async (assetItem) => {
+    const sym = assetItem.asset;
+    let priceIrt = 0;
+
+    if (sym === "IRT" || sym === "TOMAN") {
+      priceIrt = 1;
+    } else if (sym === "USDT" || sym === "TETHER") {
+      priceIrt = usdtIrtPrice;
+    } else {
+      try {
+        const tabdealPriceRes = await fetch(`https://api1.tabdeal.org/r/api/v1/trades?symbol=${sym}IRT&limit=1`);
+        if (tabdealPriceRes.ok) {
+          const trades = await tabdealPriceRes.json();
+          if (trades && trades[0] && trades[0].price) {
+            priceIrt = parseFloat(trades[0].price) || 0;
+          }
+        }
+      } catch (e) {}
+
+      if (priceIrt === 0) {
+        try {
+          const binanceRes = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${sym}USDT`);
+          if (binanceRes.ok) {
+            const bdata = await binanceRes.json();
+            if (bdata && bdata.price) {
+              const priceUsd = parseFloat(bdata.price) || 0;
+              priceIrt = priceUsd * usdtIrtPrice;
+            }
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (priceIrt === 0) {
+      if (sym === "BTC") priceIrt = 98000 * usdtIrtPrice;
+      else if (sym === "ETH") priceIrt = 3300 * usdtIrtPrice;
+      else if (sym === "SOL") priceIrt = 180 * usdtIrtPrice;
+    }
+
+    const valueIrt = assetItem.total * priceIrt;
+    const valueUsdt = valueIrt / usdtIrtPrice;
+
+    return {
+      ...assetItem,
+      price_irt: priceIrt,
+      value_irt: valueIrt,
+      value_usdt: valueUsdt
+    };
+  }));
+
+  let totalIrt = 0;
+  let totalUsdt = 0;
+
+  finalAssets.forEach(a => {
+    totalIrt += a.value_irt;
+    totalUsdt += a.value_usdt;
+  });
+
+  return {
+    totalIrt,
+    totalUsdt,
+    usdtIrtPrice,
+    assets: finalAssets
+  };
+}
+
 export default {
+  // Scheduled Cron Event (00:00 UTC Official World Standard Trading Time)
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil((async () => {
+      try {
+        const valuation = await fetchBalanceAndValuation(env);
+        const currentHistory = await pullCloudHistory(env);
+        const { history } = processHistoryWithAverages(
+          currentHistory,
+          valuation.totalIrt,
+          valuation.totalUsdt,
+          valuation.usdtIrtPrice,
+          "auto_cron_00utc"
+        );
+        await pushCloudHistory(env, history);
+      } catch (e) {
+        console.error("Cron snapshot failed:", e);
+      }
+    })());
+  },
+
   async fetch(request, env, ctx) {
-    // CORS configuration
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -22,8 +436,7 @@ export default {
 
     const url = new URL(request.url);
 
-    // Endpoint: POST /set-keys
-    // Updates worker environment variables using user's Cloudflare Token if requested
+    // POST /set-keys
     if (url.pathname === "/set-keys" && request.method === "POST") {
       try {
         const body = await request.json();
@@ -36,11 +449,9 @@ export default {
           });
         }
 
-        // We call Cloudflare API to update secrets individually using the official /secrets endpoint
         const scriptName = "emarat-tabdeal-worker";
         const baseCfUrl = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/workers/scripts/${scriptName}/secrets`;
 
-        // Function to update an individual secret
         const updateSecret = async (name, text) => {
           return fetch(baseCfUrl, {
             method: "PUT",
@@ -48,15 +459,10 @@ export default {
               "Authorization": `Bearer ${cfToken}`,
               "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-              name: name,
-              text: text,
-              type: "secret_text"
-            })
+            body: JSON.stringify({ name, text, type: "secret_text" })
           });
         };
 
-        // Update TABDEAL_API_KEY and TABDEAL_API_SECRET in parallel
         const [resKey, resSecret] = await Promise.all([
           updateSecret("TABDEAL_API_KEY", apiKey),
           updateSecret("TABDEAL_API_SECRET", apiSecret)
@@ -66,7 +472,7 @@ export default {
           const errKeyText = !resKey.ok ? await resKey.text() : "";
           const errSecText = !resSecret.ok ? await resSecret.text() : "";
           return new Response(JSON.stringify({
-            error: `Failed to update secrets on Cloudflare. Key error: ${errKeyText || "None"}. Secret error: ${errSecText || "None"}`
+            error: `Failed to update secrets on Cloudflare. Key error: ${errKeyText}. Secret error: ${errSecText}`
           }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -84,210 +490,13 @@ export default {
       }
     }
 
-    // Endpoint: GET /balance
-    if (url.pathname === "/balance") {
-      const apiKey = env.TABDEAL_API_KEY;
-      const apiSecret = env.TABDEAL_API_SECRET;
-
-      if (!apiKey || !apiSecret) {
-        return new Response(JSON.stringify({ error: "API_KEYS_NOT_CONFIGURED" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-      }
-
+    // GET /history
+    if (url.pathname === "/history") {
       try {
-        // Sign query function
-        const hmacSha256 = async (secret, message) => {
-          const encoder = new TextEncoder();
-          const key = await crypto.subtle.importKey(
-            "raw",
-            encoder.encode(secret),
-            { name: "HMAC", hash: "SHA-256" },
-            false,
-            ["sign"]
-          );
-          const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
-          return Array.from(new Uint8Array(sig))
-            .map(b => b.toString(16).padStart(2, "0"))
-            .join("");
-        };
-
-        const fetchSigned = async (baseUrl) => {
-          const timestamp = Date.now();
-          const queryString = `timestamp=${timestamp}`;
-          const signature = await hmacSha256(apiSecret, queryString);
-          const fullUrl = `${baseUrl}?${queryString}&signature=${signature}`;
-          return fetch(fullUrl, {
-            headers: {
-              "X-MBX-APIKEY": apiKey,
-              "Accept": "application/json"
-            }
-          });
-        };
-
-        // 1. Fetch Spot balances
-        let spotAssets = [];
-        try {
-          const spotRes = await fetchSigned("https://api1.tabdeal.org/r/api/v1/account");
-          if (spotRes.ok) {
-            const data = await spotRes.json();
-            if (data && data.balances) {
-              spotAssets = data.balances.map(b => ({
-                asset: b.asset,
-                free: parseFloat(b.free) || 0,
-                freeze: parseFloat(b.freeze) || 0,
-              })).filter(b => (b.free + b.freeze) > 0);
-            }
-          } else {
-            console.error("Spot API failed:", await spotRes.text());
-          }
-        } catch (e) {
-          console.error("Error fetching spot balance:", e);
-        }
-
-        // 2. Fetch Futures balances (Note: Funding is already merged within Spot API on Tabdeal, hence omitted to prevent double valuation)
-        let futuresAssets = [];
-        try {
-          const futuresRes = await fetchSigned("https://api1.tabdeal.org/r/fapi/v3/account");
-          if (futuresRes.ok) {
-            const data = await futuresRes.json();
-            if (data && data.assets) {
-              futuresAssets = data.assets.map(b => {
-                const marginBal = parseFloat(b.marginBalance) || parseFloat(b.walletBalance) || 0;
-                return {
-                  asset: b.asset,
-                  free: marginBal,
-                  freeze: 0,
-                };
-              }).filter(b => b.free > 0);
-            }
-          } else {
-            console.error("Futures API failed:", await futuresRes.text());
-          }
-        } catch (e) {
-          console.error("Error fetching futures balance:", e);
-        }
-
-        // Merge all assets by symbol name
-        const mergedMap = new Map();
-        const addAsset = (item, type) => {
-          const symbol = item.asset.toUpperCase();
-          const totalAmt = item.free + item.freeze;
-          if (totalAmt <= 0) return;
-
-          if (!mergedMap.has(symbol)) {
-            mergedMap.set(symbol, {
-              asset: symbol,
-              total: 0,
-              spot: 0,
-              futures: 0
-            });
-          }
-          const existing = mergedMap.get(symbol);
-          existing.total += totalAmt;
-          existing[type] += totalAmt;
-        };
-
-        spotAssets.forEach(a => addAsset(a, "spot"));
-        futuresAssets.forEach(a => addAsset(a, "futures"));
-
-        const uniqueAssets = Array.from(mergedMap.values());
-
-        // 4. Pricing service: Get prices in Toman (IRT) and calculate total valuation
-        // A. Get USDTIRT price first from Tabdeal (as key multiplier)
-        let usdtIrtPrice = 61500; // conservative fallback
-        try {
-          const usdtIrtRes = await fetch("https://api1.tabdeal.org/r/api/v1/trades?symbol=USDTIRT&limit=1");
-          if (usdtIrtRes.ok) {
-            const trades = await usdtIrtRes.json();
-            if (trades && trades[0] && trades[0].price) {
-              usdtIrtPrice = parseFloat(trades[0].price) || usdtIrtPrice;
-            }
-          }
-        } catch (e) {
-          console.error("Error fetching USDTIRT price:", e);
-        }
-
-        // B. Query prices for each asset in parallel
-        const finalAssets = await Promise.all(uniqueAssets.map(async (assetItem) => {
-          const sym = assetItem.asset;
-          let priceIrt = 0;
-          let pricingSource = "mock";
-
-          if (sym === "IRT" || sym === "TOMAN") {
-            priceIrt = 1;
-            pricingSource = "fixed";
-          } else if (sym === "USDT" || sym === "TETHER") {
-            priceIrt = usdtIrtPrice;
-            pricingSource = "tabdeal";
-          } else {
-            // Try Tabdeal direct price first
-            try {
-              const tabdealPriceRes = await fetch(`https://api1.tabdeal.org/r/api/v1/trades?symbol=${sym}IRT&limit=1`);
-              if (tabdealPriceRes.ok) {
-                const trades = await tabdealPriceRes.json();
-                if (trades && trades[0] && trades[0].price) {
-                  priceIrt = parseFloat(trades[0].price) || 0;
-                  pricingSource = "tabdeal";
-                }
-              }
-            } catch (e) {}
-
-            // Fallback to Binance USD price * USDT_IRT_price if Direct IRT price failed
-            if (priceIrt === 0) {
-              try {
-                const binanceRes = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${sym}USDT`);
-                if (binanceRes.ok) {
-                  const bdata = await binanceRes.json();
-                  if (bdata && bdata.price) {
-                    const priceUsd = parseFloat(bdata.price) || 0;
-                    priceIrt = priceUsd * usdtIrtPrice;
-                    pricingSource = "binance_fallback";
-                  }
-                }
-              } catch (e) {}
-            }
-          }
-
-          // Fallbacks for main assets if both APIs failed
-          if (priceIrt === 0) {
-            if (sym === "BTC") priceIrt = 98000 * usdtIrtPrice;
-            else if (sym === "ETH") priceIrt = 3300 * usdtIrtPrice;
-            else if (sym === "SOL") priceIrt = 180 * usdtIrtPrice;
-          }
-
-          const valueIrt = assetItem.total * priceIrt;
-          const valueUsdt = valueIrt / usdtIrtPrice;
-
-          return {
-            ...assetItem,
-            price_irt: priceIrt,
-            value_irt: valueIrt,
-            value_usdt: valueUsdt
-          };
-        }));
-
-        // Calculate total valuations
-        let totalIrt = 0;
-        let totalUsdt = 0;
-
-        finalAssets.forEach(a => {
-          totalIrt += a.value_irt;
-          totalUsdt += a.value_usdt;
-        });
-
-        return new Response(JSON.stringify({
-          success: true,
-          timestamp: Date.now(),
-          total_irt: totalIrt,
-          total_usdt: totalUsdt,
-          usdt_irt_price: usdtIrtPrice,
-          assets: finalAssets
-        }), {
+        const history = await pullCloudHistory(env);
+        return new Response(JSON.stringify({ success: true, history }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
-
       } catch (err) {
         return new Response(JSON.stringify({ error: err.message }), {
           status: 500,
@@ -296,9 +505,86 @@ export default {
       }
     }
 
-    // Default route: instructions
+    // GET /record-snapshot (manual or external cron trigger)
+    if (url.pathname === "/record-snapshot") {
+      try {
+        const valuation = await fetchBalanceAndValuation(env);
+        const currentHistory = await pullCloudHistory(env);
+        const { history, overallAvg, latestPct } = processHistoryWithAverages(
+          currentHistory,
+          valuation.totalIrt,
+          valuation.totalUsdt,
+          valuation.usdtIrtPrice,
+          "manual_snapshot_api"
+        );
+        await pushCloudHistory(env, history);
+
+        return new Response(JSON.stringify({
+          success: true,
+          timestamp: Date.now(),
+          total_irt: valuation.totalIrt,
+          total_usdt: valuation.totalUsdt,
+          usdt_irt_price: valuation.usdtIrtPrice,
+          latest_24h_percent: latestPct,
+          overall_avg_percent: overallAvg,
+          history
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
+    // GET /balance
+    if (url.pathname === "/balance") {
+      try {
+        const valuation = await fetchBalanceAndValuation(env);
+        const currentHistory = await pullCloudHistory(env);
+        const { history, overallAvg, latestPct } = processHistoryWithAverages(
+          currentHistory,
+          valuation.totalIrt,
+          valuation.totalUsdt,
+          valuation.usdtIrtPrice,
+          "user_visit"
+        );
+
+        // Sync to cloud database asynchronously
+        ctx.waitUntil(pushCloudHistory(env, history));
+
+        return new Response(JSON.stringify({
+          success: true,
+          timestamp: Date.now(),
+          total_irt: valuation.totalIrt,
+          total_usdt: valuation.totalUsdt,
+          usdt_irt_price: valuation.usdtIrtPrice,
+          latest_24h_percent: latestPct,
+          overall_avg_percent: overallAvg,
+          assets: valuation.assets,
+          history
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+
+      } catch (err) {
+        if (err.message === "API_KEYS_NOT_CONFIGURED") {
+          return new Response(JSON.stringify({ error: "API_KEYS_NOT_CONFIGURED" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
     return new Response(
-      "Emarat Tabdeal Wallet CF Worker is Active and Secure! Use GET /balance to fetch your wallet balance, or POST /set-keys to configure your keys.",
+      "Emarat Tabdeal Wallet Worker Active! Supports GET /balance, GET /history, GET /record-snapshot, and 00:00 UTC Scheduled Auto Cron.",
       { headers: { "Content-Type": "text/plain", ...corsHeaders } }
     );
   }

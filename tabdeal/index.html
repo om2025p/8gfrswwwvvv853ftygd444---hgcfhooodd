@@ -9,6 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="../apple-touch-icon.png">
     <link rel="icon" href="../favicon.ico" type="image/x-icon">
+    <script src="../cloud-sync.js"></script>
     <title>کیف پول تبدیل</title>
     <style>
         :root {
@@ -116,7 +117,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
             align-items: center;
             text-align: center;
         }
@@ -142,7 +143,7 @@
         }
 
         .val-toman {
-            font-size: 2.3rem;
+            font-size: 2.2rem;
             font-weight: 900;
             color: #ffffff;
             direction: ltr;
@@ -151,12 +152,23 @@
         }
 
         .val-tether {
-            font-size: 1.35rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: rgba(255, 255, 255, 0.7);
             direction: ltr;
             z-index: 1;
-            margin-top: -8px;
+            margin-top: -6px;
+        }
+
+        .tether-rate-badge {
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            color: #60a5fa;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 1;
         }
 
         .change-badge {
@@ -165,7 +177,7 @@
             color: var(--positive-color);
             padding: 8px 18px;
             border-radius: 16px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -207,7 +219,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
         }
 
         .info-label {
@@ -336,6 +348,28 @@
             border-radius: 12px;
             border: 1px solid rgba(239, 68, 68, 0.2);
         }
+
+        /* کارت‌های شاخص در کشوی تاریخچه */
+        .grid-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .metric-card {
+            padding: 10px;
+            border-radius: 14px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+        }
     </style>
 </head>
 <body>
@@ -400,8 +434,13 @@
             <div id="loader" class="spinner" style="margin: 20px 0;"></div>
 
             <div id="balanceData" style="display: none; flex-direction: column; align-items: center; gap: 8px; width: 100%;">
-                <div class="val-toman" id="valToman">۰ <span style="color: #10b981; font-weight: 900; margin-right: 8px; font-size: 1.6rem; vertical-align: middle;">تومان</span></div>
-                <div class="val-tether" id="valTether">۰ <span style="color: #3b82f6; font-weight: 900; margin-right: 6px; font-size: 1.15rem; vertical-align: middle;">تتر (USDT)</span></div>
+                <div class="val-toman" id="valToman">۰ <span style="color: #10b981; font-weight: 900; margin-right: 8px; font-size: 1.5rem; vertical-align: middle;">تومان</span></div>
+                <div class="val-tether" id="valTether">۰ <span style="color: #3b82f6; font-weight: 900; margin-right: 6px; font-size: 1.1rem; vertical-align: middle;">تتر (USDT)</span></div>
+
+                <div class="tether-rate-badge" id="tetherRateBadge">
+                    💵 نرخ لحظه‌ای تتر: ۰ تومان
+                </div>
+
                 <div class="change-badge" id="changeBadge">
                     <span id="changeArrow">▲</span>
                     <span id="changeVal">۰.۰۰٪</span>
@@ -423,8 +462,18 @@
             </div>
 
             <div class="info-row">
-                <span class="info-label">تغییر کل امروز:</span>
+                <span class="info-label">تغییر کل امروز (۲۴ ساعت):</span>
                 <span class="info-value" id="todayChangeVal">۰ تومان</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">شگرد ۱ - میانگین کل روزها:</span>
+                <span class="info-value" id="overallAvgVal" style="color: var(--primary-color);">۰.۰۰٪</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">شگرد ۲ - میانگین تا امروز:</span>
+                <span class="info-value" id="cumulativeAvgVal" style="color: var(--secondary-color);">۰.۰۰٪</span>
             </div>
 
             <div class="info-row">
@@ -440,29 +489,38 @@
         <!-- منوی کشویی تاریخچه تغییرات درصد -->
         <div class="glass-panel" id="historyDropdown" style="display: none; padding: 0; overflow: hidden; border-radius: 24px;">
             <div style="padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 700; user-select: none;" onclick="toggleHistoryDropdown()">
-                <span style="color: var(--primary-color); display: flex; align-items: center; gap: 8px;">📜 تاریخچه کامل تغییرات درصد</span>
+                <span style="color: var(--primary-color); display: flex; align-items: center; gap: 8px;">📜 تاریخچه اتوماتیک درصدهای ۲۴ ساعته</span>
                 <span id="historyArrow" style="transition: transform 0.3s ease; color: var(--primary-color);">▼</span>
             </div>
             <div id="historyDropdownContent" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease; background: rgba(0, 0, 0, 0.15); display: flex; flex-direction: column;">
 
-                <!-- بخش روزهای سبز و قرمز و متن طنز -->
-                <div style="background: rgba(255, 255, 255, 0.04); border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 15px; display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center;">
-                    <div style="display: flex; gap: 15px; justify-content: center; width: 100%;">
-                        <div style="flex: 1; padding: 8px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: bold; display: flex; flex-direction: column; gap: 4px; align-items: center; border: 1px solid rgba(52, 211, 153, 0.2); background: rgba(52, 211, 153, 0.1); color: var(--positive-color);">
-                            <span>روزهای سبز (مثبت)</span>
-                            <span id="greenDaysVal" style="font-size: 1.25rem; font-weight: 800;">🟢 ۰</span>
+                <!-- کارت‌های شاخص درصدی و متن طنز -->
+                <div style="background: rgba(255, 255, 255, 0.04); border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 15px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;">
+                    <div class="grid-metrics">
+                        <div class="metric-card" style="border-color: rgba(52, 211, 153, 0.2); background: rgba(52, 211, 153, 0.08); color: var(--positive-color);">
+                            <span>روزهای سبز</span>
+                            <span id="greenDaysVal" style="font-size: 1.1rem; font-weight: 800;">🟢 ۰</span>
                         </div>
-                        <div style="flex: 1; padding: 8px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: bold; display: flex; flex-direction: column; gap: 4px; align-items: center; border: 1px solid rgba(248, 113, 113, 0.2); background: rgba(248, 113, 113, 0.1); color: var(--negative-color);">
-                            <span>روزهای قرمز (منفی)</span>
-                            <span id="redDaysVal" style="font-size: 1.25rem; font-weight: 800;">🔴 ۰</span>
+                        <div class="metric-card" style="border-color: rgba(248, 113, 113, 0.2); background: rgba(248, 113, 113, 0.08); color: var(--negative-color);">
+                            <span>روزهای قرمز</span>
+                            <span id="redDaysVal" style="font-size: 1.1rem; font-weight: 800;">🔴 ۰</span>
+                        </div>
+                        <div class="metric-card" style="border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.08); color: var(--primary-color);">
+                            <span>شگرد ۱: میانگین کل</span>
+                            <span id="m1AvgVal" style="font-size: 1.05rem; font-weight: 800;">۰.۰۰٪</span>
+                        </div>
+                        <div class="metric-card" style="border-color: rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.08); color: #60a5fa;">
+                            <span>شگرد ۲: میانگین تا کنون</span>
+                            <span id="m2AvgVal" style="font-size: 1.05rem; font-weight: 800;">۰.۰۰٪</span>
                         </div>
                     </div>
+
                     <div id="wittyAnalysisText" style="font-size: 0.82rem; line-height: 1.5; color: rgba(255, 255, 255, 0.85); font-weight: 500;">
                         تساوی مقتدرانه! گاوهای سبز و خرس‌های سرخ شانه به شانه هم ایستاده‌اند. 🕊️🤝
                     </div>
                 </div>
 
-                <div id="historyList" style="padding: 15px; display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto;">
+                <div id="historyList" style="padding: 15px; display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto;">
                     <!-- آیتم‌های تاریخچه به صورت پویا -->
                 </div>
             </div>
@@ -473,7 +531,6 @@
     <script>
         const CF_WORKER_URL = "https://emarat-tabdeal-worker.qqqggggcc.workers.dev";
 
-        // مدیریت وضعیت دکمه خروج
         function updateLogoutButtonVisibility() {
             const logoutBtn = document.getElementById('logoutBtn');
             if (localStorage.getItem("tabdeal_api_key")) {
@@ -483,7 +540,6 @@
             }
         }
 
-        // خروج امن از کیف پول صرافی تبدیل
         function logoutWallet() {
             if (confirm("آلپ عزیز، آیا واقعاً می‌خواهید از کیف پول صرافی تبدیل خارج شوید و اطلاعات محلی را پاکسازی کنید؟ 🚪🔐")) {
                 localStorage.removeItem("tabdeal_api_key");
@@ -501,7 +557,6 @@
             }
         }
 
-        // پر کردن بقیه فیلدها از روی localStorage در صورت وجود
         if (localStorage.getItem("tabdeal_api_key")) {
             document.getElementById('apiKey').value = localStorage.getItem("tabdeal_api_key");
         }
@@ -514,7 +569,6 @@
             panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
         }
 
-        // ذخیره کردن تنظیمات روی کلودفلر با استفاده از توکن
         async function saveConfigToServer() {
             const cfToken = document.getElementById('cfToken').value.trim();
             const cfAccountId = document.getElementById('cfAccountId').value.trim();
@@ -534,16 +588,13 @@
             try {
                 const response = await fetch(`${CF_WORKER_URL}/set-keys`, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ apiKey, apiSecret, cfToken, cfAccountId })
                 });
 
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    // ذخیره در فرانت جهت همگام‌سازی و لود بعدی
                     localStorage.setItem("tabdeal_api_key", apiKey);
                     localStorage.setItem("tabdeal_api_secret", apiSecret);
                     localStorage.setItem("tabdeal_cf_token", cfToken);
@@ -586,7 +637,6 @@
             }
         }
 
-        // بارگذاری موجودی از ورکر کلودفلر
         async function loadWalletBalance() {
             const loader = document.getElementById('loader');
             const dataSection = document.getElementById('balanceData');
@@ -613,164 +663,114 @@
                     }
                     errBox.style.display = 'block';
                     loader.style.display = 'none';
+
+                    // لود از حافظه محلی در صورت بروز خطا
+                    renderFromLocalCache();
                     return;
                 }
 
-                // دریافت موفق دارایی‌ها
                 const totalIrt = data.total_irt;
                 const totalUsdt = data.total_usdt;
+                const usdtPrice = data.usdt_irt_price || 91500;
+                const history = data.history || [];
 
-                // نمایش مقادیر با فرمت‌های شیک
-                document.getElementById('valToman').innerHTML = `${formatNumberPersian(Math.round(totalIrt))} <span style="color: #10b981; font-weight: 900; margin-right: 8px; font-size: 1.6rem; text-shadow: 0 0 10px rgba(16,185,129,0.3); vertical-align: middle;">تومان</span>`;
-                document.getElementById('valTether').innerHTML = `${formatNumberPersian(totalUsdt.toFixed(2))} <span style="color: #3b82f6; font-weight: 900; margin-right: 6px; font-size: 1.15rem; text-shadow: 0 0 10px rgba(59,130,246,0.3); vertical-align: middle;">تتر (USDT)</span>`;
+                document.getElementById('valToman').innerHTML = `${formatNumberPersian(Math.round(totalIrt))} <span style="color: #10b981; font-weight: 900; margin-right: 8px; font-size: 1.5rem; text-shadow: 0 0 10px rgba(16,185,129,0.3); vertical-align: middle;">تومان</span>`;
+                document.getElementById('valTether').innerHTML = `${formatNumberPersian(totalUsdt.toFixed(2))} <span style="color: #3b82f6; font-weight: 900; margin-right: 6px; font-size: 1.1rem; text-shadow: 0 0 10px rgba(59,130,246,0.3); vertical-align: middle;">تتر (USDT)</span>`;
+                document.getElementById('tetherRateBadge').innerText = `💵 نرخ لحظه‌ای تتر: ${formatNumberPersian(usdtPrice)} تومان`;
 
-                // بروزرسانی دکمه خروج
                 updateLogoutButtonVisibility();
 
-                // بروزرسانی تاریخچه و محاسبه تغییرات ۲۴ ساعته درصدها
-                updateWalletHistory(totalIrt, totalUsdt);
+                // بروزرسانی تاریخچه و محاسبات آماری
+                renderWalletUI(history, totalIrt, totalUsdt, usdtPrice);
 
                 loader.style.display = 'none';
                 dataSection.style.display = 'flex';
                 statsPanel.style.display = 'flex';
 
             } catch (err) {
-                errBox.innerText = "⚠️ اتصال به سرور کلودفلر برقرار نشد. لطفاً قندشکن خود را چک کرده یا دوباره تلاش کنید.";
+                errBox.innerText = "⚠️ اتصال به سرور کلودفلر برقرار نشد. نمایش آخرین اطلاعات ذخیره‌شده...";
                 errBox.style.display = 'block';
                 loader.style.display = 'none';
+
+                renderFromLocalCache();
             }
         }
 
-        // بروزرسانی تاریخچه در LocalStorage و رسم نمودار
-        function updateWalletHistory(currentIrt, currentUsdt) {
+        function renderFromLocalCache() {
             let historyRaw = localStorage.getItem("tabdeal_wallet_history");
             let history = [];
             try { history = JSON.parse(historyRaw) || []; } catch(e) {}
 
-            const now = Date.now();
-            let shouldAdd = true;
-
-            // دریافت تاریخ شمسی امروز برای مقایسه دقیق تقویمی
-            let todayStr = "";
-            try {
-                todayStr = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                }).format(new Date(now));
-            } catch(e) {
-                todayStr = new Date(now).toDateString();
-            }
-
             if (history.length > 0) {
-                const lastEntry = history[history.length - 1];
-                let lastEntryDateStr = "";
-                try {
-                    lastEntryDateStr = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                    }).format(new Date(lastEntry.timestamp));
-                } catch(e) {
-                    lastEntryDateStr = new Date(lastEntry.timestamp).toDateString();
+                const last = history[history.length - 1];
+                document.getElementById('valToman').innerHTML = `${formatNumberPersian(Math.round(last.total_irt))} <span style="color: #10b981; font-weight: 900; margin-right: 8px; font-size: 1.5rem; vertical-align: middle;">تومان</span>`;
+                document.getElementById('valTether').innerHTML = `${formatNumberPersian(last.total_usdt.toFixed(2))} <span style="color: #3b82f6; font-weight: 900; margin-right: 6px; font-size: 1.1rem; vertical-align: middle;">تتر (USDT)</span>`;
+                if (last.usdt_irt_price) {
+                    document.getElementById('tetherRateBadge').innerText = `💵 نرخ لودشده: ${formatNumberPersian(last.usdt_irt_price)} تومان`;
                 }
 
-                // اگر آخرین رکورد ثبت شده مربوط به همین امروز شمسی باشد، رکورد جدید اضافه نمی‌کنیم
-                // بلکه آخرین رکورد را با مقادیر دارایی جدید بروزرسانی می‌کنیم تا همواره یک رکورد برای هر روز داشته باشیم.
-                if (todayStr === lastEntryDateStr) {
-                    lastEntry.total_irt = currentIrt;
-                    lastEntry.total_usdt = currentUsdt;
-                    lastEntry.timestamp = now; // بروزرسانی زمان ثبت نهایی امروز
-                    shouldAdd = false;
-                }
-            }
+                renderWalletUI(history, last.total_irt, last.total_usdt, last.usdt_irt_price || 91500);
 
-            if (shouldAdd) {
-                history.push({
-                    timestamp: now,
-                    total_irt: currentIrt,
-                    total_usdt: currentUsdt
-                });
+                document.getElementById('balanceData').style.display = 'flex';
+                document.getElementById('statsPanel').style.display = 'flex';
             }
+        }
 
-            // نگهداری سوابق تا حداکثر ۱۰۰ روز برای صرفه‌جویی در استوریج
-            if (history.length > 100) {
-                history.shift();
-            }
+        function renderWalletUI(history, currentIrt, currentUsdt, usdtPrice) {
+            if (!Array.isArray(history) || history.length === 0) return;
 
             localStorage.setItem("tabdeal_wallet_history", JSON.stringify(history));
 
-            // محاسبه درصد رشد روزانه (۲۴ ساعت گذشته)
-            let percentChange = 0;
-            let absoluteChange = 0;
+            const lastItem = history[history.length - 1];
+            const pct24h = lastItem.percent_24h || 0;
+            const overallAvg = lastItem.avg_overall_percent || 0;
+            const cumulativeAvg = lastItem.avg_cumulative_to_now || 0;
 
-            if (history.length > 1) {
-                // تلاش برای پیدا کردن رکوردی که نزدیک به ۲۴ ساعت پیش ثبت شده است
-                const TargetTs = now - (24 * 60 * 60 * 1000);
-                let closestEntry = history[0];
-                let minDiff = Math.abs(closestEntry.timestamp - TargetTs);
+            let prevIrt = history.length > 1 ? history[history.length - 2].total_irt : currentIrt;
+            let absoluteChange = currentIrt - prevIrt;
 
-                for (let i = 1; i < history.length - 1; i++) {
-                    const diff = Math.abs(history[i].timestamp - TargetTs);
-                    if (diff < minDiff) {
-                        minDiff = diff;
-                        closestEntry = history[i];
-                    }
-                }
-
-                const oldIrt = closestEntry.total_irt;
-                if (oldIrt > 0) {
-                    percentChange = ((currentIrt - oldIrt) / oldIrt) * 100;
-                    absoluteChange = currentIrt - oldIrt;
-                }
-            }
-
-            // ذخیره آخرین درصد رشد روزانه در یک کلید مجزا تا مانیتور (دیدبان) هم بتواند راحت از آن استفاده کند
-            localStorage.setItem("tabdeal_last_percent_change", percentChange.toFixed(2));
+            // ذخیره آخرین درصد و مقادیر در استوریج
+            localStorage.setItem("tabdeal_last_percent_change", pct24h.toFixed(2));
             localStorage.setItem("tabdeal_last_value_toman", currentIrt);
             localStorage.setItem("tabdeal_last_value_tether", currentUsdt);
-            localStorage.setItem("tabdeal_last_updated_ts", now);
+            localStorage.setItem("tabdeal_last_updated_ts", lastItem.timestamp || Date.now());
 
-            // نمایش روی ویجت تغییرات
             const badge = document.getElementById('changeBadge');
             const arrow = document.getElementById('changeArrow');
             const val = document.getElementById('changeVal');
             const todayChangeText = document.getElementById('todayChangeVal');
 
-            const isPositive = percentChange >= 0;
+            const isPositive = pct24h >= 0;
             if (isPositive) {
                 badge.className = "change-badge";
                 arrow.innerText = "▲";
-                val.innerText = "+" + percentChange.toFixed(2) + "٪";
+                val.innerText = "+" + pct24h.toFixed(2) + "٪";
                 todayChangeText.innerText = "+" + formatNumberPersian(Math.round(absoluteChange)) + " تومان";
                 todayChangeText.style.color = "var(--positive-color)";
             } else {
                 badge.className = "change-badge negative";
                 arrow.innerText = "▼";
-                val.innerText = percentChange.toFixed(2) + "٪";
+                val.innerText = pct24h.toFixed(2) + "٪";
                 todayChangeText.innerText = formatNumberPersian(Math.round(absoluteChange)) + " تومان";
                 todayChangeText.style.color = "var(--negative-color)";
             }
 
-            // پر کردن بقیه اطلاعات آماری
+            document.getElementById('overallAvgVal').innerText = (overallAvg >= 0 ? "+" : "") + overallAvg.toFixed(2) + "٪";
+            document.getElementById('cumulativeAvgVal').innerText = (cumulativeAvg >= 0 ? "+" : "") + cumulativeAvg.toFixed(2) + "٪";
             document.getElementById('recordedDaysCount').innerText = history.length + " روز";
-            document.getElementById('lastUpdatedTime').innerText = "⏰ " + formatTimeAgo(now);
+            document.getElementById('lastUpdatedTime').innerText = "⏰ " + formatTimeAgo(lastItem.timestamp || Date.now());
 
-            // رسم نمودار رشد
             renderGrowthChart(history);
-
-            // رسم تاریخچه درصدها
             renderHistoryList(history);
         }
 
-        // مدیریت منوی کشویی تاریخچه درصدها
         let isHistoryDropdownOpen = false;
         function toggleHistoryDropdown() {
             isHistoryDropdownOpen = !isHistoryDropdownOpen;
             const content = document.getElementById('historyDropdownContent');
             const arrow = document.getElementById('historyArrow');
             if (isHistoryDropdownOpen) {
-                content.style.maxHeight = '600px';
+                content.style.maxHeight = '750px';
                 arrow.style.transform = 'rotate(180deg)';
             } else {
                 content.style.maxHeight = '0';
@@ -783,90 +783,80 @@
             const listEl = document.getElementById('historyList');
             const greenDaysVal = document.getElementById('greenDaysVal');
             const redDaysVal = document.getElementById('redDaysVal');
+            const m1AvgVal = document.getElementById('m1AvgVal');
+            const m2AvgVal = document.getElementById('m2AvgVal');
             const wittyAnalysisText = document.getElementById('wittyAnalysisText');
 
             if (!dropdown || !listEl) return;
 
-            if (history.length < 2) {
+            if (history.length < 1) {
                 dropdown.style.display = 'none';
                 return;
             }
 
             dropdown.style.display = 'block';
 
-            // گروه‌بندی بر اساس روز شمسی برای ممانعت از تکرار ساعت‌ها
-            const dailyRecords = [];
-            const seenDates = new Set();
-
-            for (let i = history.length - 1; i >= 0; i--) {
-                const item = history[i];
-                try {
-                    const dateStr = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                    }).format(new Date(item.timestamp));
-
-                    if (!seenDates.has(dateStr)) {
-                        seenDates.add(dateStr);
-                        dailyRecords.push({
-                            dateStr: dateStr,
-                            timestamp: item.timestamp,
-                            total_irt: item.total_irt,
-                            total_usdt: item.total_usdt
-                        });
-                    }
-                } catch(e) {}
-            }
-
-            // مرتب‌سازی بر اساس زمان صعودی برای محاسبه تغییرات درصد
-            dailyRecords.sort((a, b) => a.timestamp - b.timestamp);
-
-            const itemsHtml = [];
             let positiveCount = 0;
             let negativeCount = 0;
 
-            for (let i = 1; i < dailyRecords.length; i++) {
-                const current = dailyRecords[i];
-                const prev = dailyRecords[i - 1];
+            const itemsHtml = [];
 
-                let percent = 0;
-                if (prev.total_irt > 0) {
-                    percent = ((current.total_irt - prev.total_irt) / prev.total_irt) * 100;
+            for (let i = history.length - 1; i >= 0; i--) {
+                const item = history[i];
+                const pct = item.percent_24h || 0;
+                const isPos = pct >= 0;
+
+                if (i > 0) {
+                    if (isPos) positiveCount++;
+                    else negativeCount++;
                 }
 
-                const isPositive = percent >= 0;
-                if (isPositive) {
-                    positiveCount++;
-                } else {
-                    negativeCount++;
-                }
+                const valueSign = isPos ? '+' : '';
+                const colorClass = isPos ? 'var(--positive-color)' : 'var(--negative-color)';
 
-                const valueSign = isPositive ? '+' : '';
-                const colorClass = isPositive ? 'var(--positive-color)' : 'var(--negative-color)';
+                const m2Val = item.avg_cumulative_to_now || 0;
+                const m2Sign = m2Val >= 0 ? '+' : '';
+
+                const dateDisplay = item.date_str_jalali || formatDateText(item.timestamp);
+                const timeDisplay = item.time_str ? `⏰ ${item.time_str}` : '';
+                const sourceDisplay = item.recorded_by && item.recorded_by.includes('cron') ? '🤖 00:00 UTC' : '👤 بازدید';
 
                 itemsHtml.push(`
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); padding: 12px 16px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.9rem;">
-                        <span style="font-weight: 600; color: rgba(255, 255, 255, 0.9);">📅 روز شمسی ${current.dateStr}</span>
-                        <span style="font-weight: 800; direction: ltr; color: ${colorClass};">${valueSign}${percent.toFixed(2)}٪</span>
+                    <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(255, 255, 255, 0.03); padding: 12px 14px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 6px;">
+                            <span style="font-weight: 700; color: rgba(255, 255, 255, 0.9);">📅 ${dateDisplay} <span style="font-weight: 400; font-size: 0.75rem; color: rgba(255,255,255,0.5);">${timeDisplay}</span></span>
+                            <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 8px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);">${sourceDisplay}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: rgba(255, 255, 255, 0.65);">تغییر ۲۴ ساعته:</span>
+                            <span style="font-weight: 800; direction: ltr; color: ${colorClass}; font-size: 0.95rem;">${valueSign}${pct.toFixed(2)}٪</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                            <span style="color: rgba(255, 255, 255, 0.5);">شگرد ۲ (میانگین تا این روز):</span>
+                            <span style="font-weight: 700; direction: ltr; color: #60a5fa;">${m2Sign}${m2Val.toFixed(2)}٪</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: rgba(255, 255, 255, 0.45); border-top: 1px dashed rgba(255, 255, 255, 0.05); padding-top: 4px;">
+                            <span>ارزش: ${formatNumberPersian(item.total_irt)} تومان</span>
+                            <span>(${formatNumberPersian(item.total_usdt)} USDT)</span>
+                        </div>
                     </div>
                 `);
             }
 
-            if (itemsHtml.length === 0) {
-                dropdown.style.display = 'none';
-                return;
-            }
-
-            // بروزرسانی شاخص‌ها
             greenDaysVal.innerText = `🟢 ${positiveCount}`;
             redDaysVal.innerText = `🔴 ${negativeCount}`;
 
-            // متن طنز و تحلیل شوخ‌طبعانه صرافی
+            const lastItem = history[history.length - 1];
+            const m1Val = lastItem.avg_overall_percent || 0;
+            const m2Val = lastItem.avg_cumulative_to_now || 0;
+
+            m1AvgVal.innerText = (m1Val >= 0 ? "+" : "") + m1Val.toFixed(2) + "٪";
+            m2AvgVal.innerText = (m2Val >= 0 ? "+" : "") + m2Val.toFixed(2) + "٪";
+
             const diff = positiveCount - negativeCount;
             let wittyText = '';
             if (positiveCount > negativeCount) {
-                wittyText = `ارتش گاوهای سبزپوش صعودی با اختلاف ${diff} روز جلوترند! خرس‌های سرخ صرافی تبدیل دارن زار زار گریه می‌کنند! 🟢🐮🥳🚀`;
+                wittyText = `ارتش گاوهای سبزپوش صعودی با اختلاف ${diff} روز جلوترند! خرس‌های سرخ صرافی تبدیل زانو زده‌اند! 🟢🐮🥳🚀`;
             } else if (negativeCount > positiveCount) {
                 wittyText = `ای دل غافل! لشکر قرمزهای خرس‌نما با اختلاف ${Math.abs(diff)} روز جلو زدند. یه دمنوش بابونه بنوشید تا ان‌شاءالله فردا سبز بشیم! 🔴🐻☕️`;
             } else {
@@ -874,11 +864,9 @@
             }
             wittyAnalysisText.innerText = wittyText;
 
-            // رندر جدیدترین به قدیمی‌ترین
-            listEl.innerHTML = itemsHtml.reverse().join('');
+            listEl.innerHTML = itemsHtml.join('');
         }
 
-        // رسم نمودار خطی دارایی روی HTML Canvas
         function renderGrowthChart(history) {
             const canvas = document.getElementById('growthCanvas');
             if (!canvas) return;
@@ -917,7 +905,6 @@
                 return { x, y, value: item.total_irt };
             });
 
-            // افکت گرادینت زیر خط نمودار
             const grad = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
             grad.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
             grad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
@@ -930,7 +917,6 @@
             ctx.fillStyle = grad;
             ctx.fill();
 
-            // رسم خط اصلی نمودار سبز زمردی تبدیل
             ctx.beginPath();
             ctx.strokeStyle = '#10b981';
             ctx.lineWidth = 2.5;
@@ -941,7 +927,6 @@
             });
             ctx.stroke();
 
-            // رسم نقاط کلیدی
             points.forEach((p, i) => {
                 if (i === 0 || i === points.length - 1 || p.value === maxVal || p.value === minVal) {
                     ctx.beginPath();
@@ -957,21 +942,18 @@
                 }
             });
 
-            // محورهای فرضی و برچسب‌های ارزش کل تومانی
             ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
             ctx.font = '9px Segoe UI, Tahoma';
             ctx.textAlign = 'right';
             ctx.fillText(formatShortAmount(maxVal), padding.left - 6, padding.top + 8);
             ctx.fillText(formatShortAmount(minVal), padding.left - 6, height - padding.bottom);
 
-            // نوشتن تاریخ ابتدا و انتها زیر نمودار
             ctx.textAlign = 'left';
-            ctx.fillText(formatDateText(history[0].timestamp), padding.left, height - 4);
+            ctx.fillText(history[0].date_str_jalali || formatDateText(history[0].timestamp), padding.left, height - 4);
             ctx.textAlign = 'right';
-            ctx.fillText(formatDateText(history[history.length - 1].timestamp), width - padding.right, height - 4);
+            ctx.fillText(history[history.length - 1].date_str_jalali || formatDateText(history[history.length - 1].timestamp), width - padding.right, height - 4);
         }
 
-        // قالب‌بندی مختصر اعداد مثل 240M یا 15M تومان برای نمودار
         function formatShortAmount(amount) {
             if (amount >= 1e9) {
                 return (amount / 1e9).toFixed(1) + "B";
@@ -981,7 +963,6 @@
             return amount;
         }
 
-        // قالب‌بندی تاریخ شمسی مختصر
         function formatDateText(ts) {
             try {
                 return new Intl.DateTimeFormat('fa-IR', {
@@ -993,7 +974,6 @@
             }
         }
 
-        // فارسی‌سازی و قالب‌بندی سه‌رقم سه‌رقم اعداد
         function formatNumberPersian(num) {
             if (num === null || num === undefined) return "";
             try {
@@ -1003,7 +983,6 @@
             }
         }
 
-        // زمان سپری شده به شکل فارسی شیک
         function formatTimeAgo(timestamp) {
             if (!timestamp) return '';
             const diffMs = Date.now() - timestamp;
@@ -1023,7 +1002,6 @@
             }
         }
 
-        // اجرای خودکار لود و بررسی دکمه خروج در بدو ورود
         updateLogoutButtonVisibility();
         loadWalletBalance();
     </script>
