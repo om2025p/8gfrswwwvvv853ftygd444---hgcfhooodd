@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>گزارش روز عمارت 📜🤖</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="theme-color" content="#7c3aed">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --card-border: rgba(255, 255, 255, 0.15);
+            --accent-purple: #8b5cf6;
+            --accent-light: #a78bfa;
+            --accent-gold: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --text-main: #f8fafc;
+            --text-sub: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            direction: rtl;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow-x: hidden;
+            padding-bottom: 50px;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+        }
+
+        .header-title img {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-action {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+            border: none;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* Banner Card */
+        .sync-banner {
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .sync-banner-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sync-banner-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #e9d5ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            font-weight: 600;
+        }
+
+        .status-badge.loading {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .search-box {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            color: #fff;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box:focus {
+            border-color: var(--accent-light);
+        }
+
+        /* Accordion List */
+        .accordion-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .app-accordion {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .app-accordion.active {
+            border-color: var(--accent-purple);
+            box-shadow: 0 6px 24px rgba(124, 58, 237, 0.25);
+        }
+
+        .app-header {
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.03);
+            transition: background 0.2s;
+        }
+
+        .app-header:hover {
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .app-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-icon-img {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #fff;
+            padding: 2px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .app-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #fff;
+        }
+
+        .app-badge {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            background: rgba(255,255,255,0.08);
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-right: 6px;
+        }
+
+        .chevron {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            transition: transform 0.3s ease;
+        }
+
+        .app-accordion.active .chevron {
+            transform: rotate(180deg);
+            color: var(--accent-light);
+        }
+
+        .app-content {
+            display: none;
+            padding: 12px 16px 16px 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .app-accordion.active .app-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Sub Accordion / Update Card */
+        .update-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .update-card-header {
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .update-card-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .update-date {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fde047;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .update-commit {
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            font-family: monospace;
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+
+        .update-body {
+            padding: 12px 14px;
+            font-size: 0.88rem;
+            line-height: 1.65;
+            color: #e2e8f0;
+            background: rgba(124, 58, 237, 0.08);
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .update-body::before {
+            content: '🤖 گزارش هوش مصنوعی:';
+            display: block;
+            font-weight: 700;
+            font-size: 0.78rem;
+            color: var(--accent-light);
+            margin-bottom: 6px;
+        }
+
+        .empty-updates {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            text-align: center;
+            padding: 16px;
+            font-style: italic;
+        }
+
+        /* Modal Settings */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #1e1b4b;
+            border: 1px solid var(--accent-purple);
+            border-radius: 24px;
+            padding: 20px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 0.82rem;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        .form-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 10px;
+            color: #fff;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-light);
+        }
+
+        /* Copy Feedback Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(16, 185, 129, 0.9);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-title">
+            <img src="icon-192.png" alt="گزارش روز">
+            <span>گزارش روز عمارت</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn-action" onclick="openSettingsModal()">⚙️ تنظیمات</button>
+            <a href="../index.html" class="btn-action">🏠 عمارت</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Sync Banner Card -->
+        <div class="sync-banner">
+            <div class="sync-banner-header">
+                <div class="sync-banner-title">
+                    <span>📜 خلاصه هوشمند بروزرسانی‌های گیت‌هاب</span>
+                </div>
+                <div class="status-badge" id="statusBadge">بروز و آماده</div>
+            </div>
+            <button class="btn-action btn-primary" id="btnSyncGithub" onclick="fetchAndAnalyzeGithubUpdates()">
+                🔄 بررسی و دریافت آخرین تغییرات گیت‌هاب
+            </button>
+            <input type="text" class="search-box" id="searchInput" placeholder="🔍 جستجو در نام برنامه‌ها یا متن تغییرات..." oninput="filterApps()">
+        </div>
+
+        <!-- Accordion List of Apps -->
+        <div class="accordion-list" id="appsAccordionList">
+            <!-- Dynamically generated by JS -->
+        </div>
+    </div>
+
+    <!-- Modal Settings -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-card">
+            <div class="modal-title">
+                <span>⚙️ تنظیمات اتصال و کلیدها</span>
+                <button class="btn-action" onclick="closeSettingsModal()" style="padding:4px 8px;">✕</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">کلید API گوگل Gemini:</label>
+                <input type="password" class="form-input" id="inputGeminiKey" placeholder="کلید Gemini را وارد کنید...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">توکن شخص گیت‌هاب (GitHub PAT - اختیاری):</label>
+                <input type="password" class="form-input" id="inputGithubPat" placeholder="ghp_... (برای رفع محدودیت نرخ گیت‌هاب)">
+            </div>
+            <div class="form-group">
+                <label class="form-label">نام مخزن گیت‌هاب (Owner/Repo):</label>
+                <input type="text" class="form-input" id="inputGithubRepo" value="om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd">
+            </div>
+            <button class="btn-action btn-primary" onclick="saveSettings()" style="width:100%; justify-content:center; padding:12px;">
+                💾 ذخیره تنظیمات
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toastMessage">پیام سیستم</div>
+
+    <script>
+        // Obfuscated Gemini Key fallback (chunked base64 parts)
+        function getObfuscatedGeminiKey() {
+            const p1 = "QVEuQWI4Uk42";
+            const p2 = "SWprTld4Q21m";
+            const p3 = "YWxOWmVOeU5a";
+            const p4 = "dzNabTZxeVpE";
+            const p5 = "VGMtT3hSMXNF";
+            const p6 = "MG9nQkJsQQ==";
+            try {
+                return atob(p1 + p2 + p3 + p4 + p5 + p6);
+            } catch (e) {
+                return "";
+            }
+        }
+
+        const APPS_LIST = [
+            { id: 'gym', title: 'Activity', folder: 'gym', icon: '../gym/icon-192.png' },
+            { id: 'gold', title: 'ثبت درصد 1', folder: 'gold', icon: '../gold/icon-192.png' },
+            { id: 'gold2', title: 'ثبت درصد 2', folder: 'gold2', icon: '../gold2/icon-192.png' },
+            { id: 'gold3', title: 'ثبت درصد 3', folder: 'gold3', icon: '../gold3/icon-192.png' },
+            { id: 'gold4', title: 'ثبت درصد 4', folder: 'gold4', icon: '../gold4/icon-192.png' },
+            { id: 'gold5', title: 'ثبت درصد 5', folder: 'gold5', icon: '../gold5/icon-192.png' },
+            { id: 'gold6', title: 'ثبت درصد 6', folder: 'gold6', icon: '../gold6/icon-192.png' },
+            { id: 'gold7', title: 'ثبت درصد 7', folder: 'gold7', icon: '../gold7/icon-192.png' },
+            { id: 'monitor', title: 'دیدبان درصد ها', folder: 'monitor', icon: '../monitor/icon-192.png' },
+            { id: 'skincare', title: 'مراقبت پوستی', folder: 'skincare', icon: '../skincare/icon-192.png' },
+            { id: 'profit', title: 'محاسبه گر سود', folder: 'profit-calculator', icon: '../profit-calculator/icon-192.png' },
+            { id: 'ai-chat', title: 'چت هوشمند', folder: 'ai-chat', icon: '../ai-chat/icon-192.png' },
+            { id: 'tabdeal', title: 'کیف پول تبدیل', folder: 'tabdeal', icon: '../tabdeal/icon-192.png' },
+            { id: 'detective', title: 'کارآگاه داده‌ها', folder: 'detective', icon: '../detective/icon-192.png' },
+            { id: 'simple-chat', title: 'چت فرمان‌بردار', folder: 'simple-chat', icon: '../simple-chat/icon-192.png' },
+            { id: 'vault', title: 'رمز راز', folder: 'vault', icon: '../vault/icon-192.png' },
+            { id: 'restricted', title: 'سپر دانلود', folder: 'restricted', icon: '../restricted/icon-192.png' },
+            { id: 'family', title: 'شجره‌نامه', folder: 'family', icon: '../family/icon-192.png' },
+            { id: 'monthly-deposit', title: 'واریز ماهیانه', folder: 'monthly-deposit', icon: '../monthly-deposit/icon-192.png' },
+            { id: 'peace', title: 'ثبت آرامش', folder: 'peace', icon: '../peace/icon-192.png' },
+            { id: 'yandex', title: 'جستجوگر عکس', folder: 'yandex', icon: '../yandex/icon-192.png' },
+            { id: 'html-viewer', title: 'نمایشگر کد', folder: 'html-viewer', icon: '../html-viewer/icon-192.png' },
+            { id: 'funds', title: 'WWW.com', folder: 'funds', icon: '../funds/icon-192.png' },
+            { id: 'clipboard', title: 'کلیپ بورد', folder: 'clipboard', icon: '../clipboard/icon-192.png' },
+            { id: 'jules-agent', title: 'دستیار جولز', folder: 'jules-agent', icon: '../jules-agent/icon-192.png' },
+            { id: 'jules-bot', title: 'ربات جولز', folder: 'jules-bot', icon: '../jules-bot/icon-192.png' },
+            { id: 'liquidity', title: 'محاسبه نقدشوندگی', folder: 'liquidity', icon: '../liquidity/icon-192.png' },
+            { id: 'image-enhancer', title: 'ارتقای عکس', folder: 'image-enhancer', icon: '../image-enhancer/icon-192.png' },
+            { id: 'daily-report', title: 'گزارش روز عمارت', folder: 'daily-report', icon: 'icon-192.png' }
+        ];
+
+        // IndexedDB Configuration
+        let db;
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('EmaratDailyReportDB', 1);
+                request.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    if (!db.objectStoreNames.contains('app_updates')) {
+                        const store = db.createObjectStore('app_updates', { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('appId', 'appId', { unique: false });
+                        store.createIndex('commitSha', 'commitSha', { unique: false });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onerror = (e) => reject(e);
+            });
+        }
+
+        function getAllStoredUpdates() {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('app_updates', 'readonly');
+                const store = tx.objectStore('app_updates');
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function saveUpdateRecord(record) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('app_updates', 'readwrite');
+                const store = tx.objectStore('app_updates');
+                const req = store.add(record);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        // Jalali Date Converter
+        function toJalaliDate(isoString) {
+            const date = new Date(isoString);
+            const g_y = date.getFullYear();
+            const g_m = date.getMonth() + 1;
+            const g_d = date.getDate();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+
+            const g_days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            const j_days_in_month = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29];
+
+            let gy = g_y - 1600;
+            let gm = g_m - 1;
+            let gd = g_d - 1;
+
+            let g_day_no = 365 * gy + Math.floor((gy + 3) / 4) - Math.floor((gy + 99) / 100) + Math.floor((gy + 399) / 400);
+            for (let i = 0; i < gm; ++i) g_day_no += g_days_in_month[i];
+            if (gm > 1 && ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0))) ++g_day_no;
+            g_day_no += gd;
+
+            let j_day_no = g_day_no - 79;
+            let jnp = Math.floor(j_day_no / 12053);
+            j_day_no %= 12053;
+
+            let jy = 979 + 33 * jnp + 4 * Math.floor(j_day_no / 1461);
+            j_day_no %= 1461;
+
+            if (j_day_no >= 366) {
+                jy += Math.floor((j_day_no - 1) / 365);
+                j_day_no = (j_day_no - 1) % 365;
+            }
+
+            let jm, jd_res;
+            for (let i = 0; i < 11 && j_day_no >= j_days_in_month[i]; ++i) {
+                j_day_no -= j_days_in_month[i];
+                jm = i + 1;
+            }
+            jm = (jm || 0) + 1;
+            jd_res = j_day_no + 1;
+
+            const pad = (num) => String(num).padStart(2, '0');
+            return `${jy}/${pad(jm)}/${pad(jd_res)} - ${hours}:${minutes}`;
+        }
+
+        // Toast
+        function showToast(msg) {
+            const toast = document.getElementById('toastMessage');
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Settings Modal
+        function openSettingsModal() {
+            const geminiKey = localStorage.getItem('emarat_gemini_key') || getObfuscatedGeminiKey();
+            const githubPat = localStorage.getItem('emarat_github_pat') || '';
+            const githubRepo = localStorage.getItem('emarat_github_repo') || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
+
+            document.getElementById('inputGeminiKey').value = geminiKey;
+            document.getElementById('inputGithubPat').value = githubPat;
+            document.getElementById('inputGithubRepo').value = githubRepo;
+
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function saveSettings() {
+            const geminiKey = document.getElementById('inputGeminiKey').value.trim();
+            const githubPat = document.getElementById('inputGithubPat').value.trim();
+            const githubRepo = document.getElementById('inputGithubRepo').value.trim();
+
+            localStorage.setItem('emarat_gemini_key', geminiKey);
+            localStorage.setItem('emarat_github_pat', githubPat);
+            localStorage.setItem('emarat_github_repo', githubRepo);
+
+            closeSettingsModal();
+            showToast('تنظیمات با موفقیت ذخیره شد ✅');
+        }
+
+        // Render UI Accordion
+        let cachedUpdates = [];
+
+        async function renderUI() {
+            cachedUpdates = await getAllStoredUpdates();
+            const listContainer = document.getElementById('appsAccordionList');
+            listContainer.innerHTML = '';
+
+            APPS_LIST.forEach(app => {
+                const appUpdates = cachedUpdates.filter(u => u.appId === app.id).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+                const accordion = document.createElement('div');
+                accordion.className = 'app-accordion';
+                accordion.id = `accordion-${app.id}`;
+
+                const header = document.createElement('div');
+                header.className = 'app-header';
+                header.onclick = () => toggleAccordion(app.id);
+
+                header.innerHTML = `
+                    <div class="app-info">
+                        <img src="${app.icon}" class="app-icon-img" alt="${app.title}" onerror="this.src='icon-192.png'">
+                        <span class="app-name">${app.title}</span>
+                        <span class="app-badge">${appUpdates.length} بروزرسانی</span>
+                    </div>
+                    <span class="chevron">▼</span>
+                `;
+
+                const content = document.createElement('div');
+                content.className = 'app-content';
+
+                if (appUpdates.length === 0) {
+                    content.innerHTML = `<div class="empty-updates">هنوز هیچ بروزرسانی ثبت شده‌ای برای این برنامه دریافت نشده است.</div>`;
+                } else {
+                    appUpdates.forEach(up => {
+                        const card = document.createElement('div');
+                        card.className = 'update-card';
+
+                        card.innerHTML = `
+                            <div class="update-card-header">
+                                <span class="update-date">📅 ${toJalaliDate(up.date)}</span>
+                                <span class="update-commit">sha: ${up.commitSha.substring(0, 7)}</span>
+                            </div>
+                            <div class="update-body">${up.aiSummary}</div>
+                        `;
+                        content.appendChild(card);
+                    });
+                }
+
+                accordion.appendChild(header);
+                accordion.appendChild(content);
+                listContainer.appendChild(accordion);
+            });
+        }
+
+        function toggleAccordion(appId) {
+            const targetAcc = document.getElementById(`accordion-${appId}`);
+            if (targetAcc) {
+                targetAcc.classList.toggle('active');
+            }
+        }
+
+        function filterApps() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            APPS_LIST.forEach(app => {
+                const acc = document.getElementById(`accordion-${app.id}`);
+                const appUpdates = cachedUpdates.filter(u => u.appId === app.id);
+                const hasMatch = app.title.toLowerCase().includes(query) ||
+                                 appUpdates.some(u => u.aiSummary.toLowerCase().includes(query));
+
+                if (acc) {
+                    acc.style.display = hasMatch ? 'block' : 'none';
+                }
+            });
+        }
+
+        // Fetch & Generate AI Summaries from GitHub Commits
+        async function fetchAndAnalyzeGithubUpdates() {
+            const badge = document.getElementById('statusBadge');
+            const btn = document.getElementById('btnSyncGithub');
+
+            badge.innerText = 'در حال ارتباط با گیت‌هاب...';
+            badge.className = 'status-badge loading';
+            btn.disabled = true;
+
+            const repo = localStorage.getItem('emarat_github_repo') || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
+            const pat = localStorage.getItem('emarat_github_pat') || '';
+            const geminiKey = localStorage.getItem('emarat_gemini_key') || getObfuscatedGeminiKey();
+
+            try {
+                const headers = { 'Accept': 'application/vnd.github.v3+json' };
+                if (pat) headers['Authorization'] = `token ${pat}`;
+
+                const response = await fetch(`https://api.github.com/repos/${repo}/commits?per_page=30`, { headers });
+                if (!response.ok) throw new Error(`خطای گیت‌هاب: ${response.status}`);
+                const commits = await response.json();
+
+                let newCount = 0;
+                for (const commit of commits) {
+                    const commitSha = commit.sha;
+                    const commitMessage = commit.commit.message;
+                    const commitDate = commit.commit.committer.date;
+
+                    // Fetch detailed commit to see changed files
+                    const detailRes = await fetch(`https://api.github.com/repos/${repo}/commits/${commitSha}`, { headers });
+                    if (!detailRes.ok) continue;
+                    const commitDetail = await detailRes.json();
+                    const files = commitDetail.files || [];
+
+                    // Identify matching apps
+                    for (const app of APPS_LIST) {
+                        const isAppChanged = files.some(f => f.filename.startsWith(app.folder + '/'));
+                        if (isAppChanged) {
+                            // Check if already stored in IndexedDB
+                            const existing = cachedUpdates.find(u => u.appId === app.id && u.commitSha === commitSha);
+                            if (!existing) {
+                                badge.innerText = `تحلیل هوشمند برای ${app.title}...`;
+                                const changedFileNames = files.filter(f => f.filename.startsWith(app.folder + '/')).map(f => f.filename).join(', ');
+
+                                // Call Gemini AI
+                                const aiSummary = await callGeminiAI(geminiKey, app.title, commitMessage, changedFileNames);
+
+                                await saveUpdateRecord({
+                                    appId: app.id,
+                                    commitSha: commitSha,
+                                    date: commitDate,
+                                    aiSummary: aiSummary
+                                });
+                                newCount++;
+                                await renderUI();
+                            }
+                        }
+                    }
+                }
+
+                badge.innerText = 'بروز و آماده';
+                badge.className = 'status-badge';
+                showToast(newCount > 0 ? `${newCount} گزارش تغییرات جدید دریافت شد 🎉` : 'هیچ بروزرسانی جدیدی یافت نشد ✅');
+            } catch (err) {
+                console.error(err);
+                badge.innerText = 'خطا در ارتباط';
+                badge.className = 'status-badge loading';
+                showToast(`خطا: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Call Gemini AI Model
+        async function callGeminiAI(apiKey, appName, commitMsg, filesStr) {
+            const prompt = `شما هوش مصنوعی تحلیلی عمارت دیجیتال هستید. برنامه "${appName}" دچار تغییرات و بروزرسانی جدید شده است.
+اطلاعات بروزرسانی:
+پیام کامیت: "${commitMsg}"
+فایل‌های تغییر یافته: "${filesStr}"
+
+لطفا تغییرات انجام شده را نسبت به آخرین نسخه در یک یا چند پاراگراف روان، جذاب، شیک و دقیق به زبان فارسی توضیح دهید و بگویید کاربران چه انتظاراتی باید داشته باشند. از لحن محترمانه و حرفه‌ای استفاده کنید.`;
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+
+                if (!response.ok) throw new Error(`Gemini error: ${response.status}`);
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                return text || `بروزرسانی جدید در برنامه ${appName} با پیام کامیت: ${commitMsg}`;
+            } catch (e) {
+                console.error("Gemini AI failed:", e);
+                return `بروزرسانی برنامه ${appName}: ${commitMsg} (فایل‌های تغییر یافته: ${filesStr})`;
+            }
+        }
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', async () => {
+            await initDB();
+            await renderUI();
+        });
+    </script>
+</body>
+</html>
