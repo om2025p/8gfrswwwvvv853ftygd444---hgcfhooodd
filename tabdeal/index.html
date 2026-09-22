@@ -494,15 +494,15 @@
             </div>
             <div id="historyDropdownContent" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease; background: rgba(0, 0, 0, 0.15); display: flex; flex-direction: column;">
 
-                <!-- کارت‌های شاخص درصدی و متن طنز -->
+                <!-- کارت‌های شاخص درصدی و متن طنز نبرد گاوها و خرس‌ها -->
                 <div style="background: rgba(255, 255, 255, 0.04); border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 15px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;">
                     <div class="grid-metrics">
                         <div class="metric-card" style="border-color: rgba(52, 211, 153, 0.2); background: rgba(52, 211, 153, 0.08); color: var(--positive-color);">
-                            <span>روزهای سبز</span>
+                            <span>روزهای سبز (گاوها 🐮)</span>
                             <span id="greenDaysVal" style="font-size: 1.1rem; font-weight: 800;">🟢 ۰</span>
                         </div>
                         <div class="metric-card" style="border-color: rgba(248, 113, 113, 0.2); background: rgba(248, 113, 113, 0.08); color: var(--negative-color);">
-                            <span>روزهای قرمز</span>
+                            <span>روزهای قرمز (خرس‌ها 🐻)</span>
                             <span id="redDaysVal" style="font-size: 1.1rem; font-weight: 800;">🔴 ۰</span>
                         </div>
                         <div class="metric-card" style="border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.08); color: var(--primary-color);">
@@ -515,12 +515,12 @@
                         </div>
                     </div>
 
-                    <div id="wittyAnalysisText" style="font-size: 0.82rem; line-height: 1.5; color: rgba(255, 255, 255, 0.85); font-weight: 500;">
+                    <div id="wittyAnalysisText" style="font-size: 0.85rem; line-height: 1.5; color: rgba(255, 255, 255, 0.9); font-weight: 600; background: rgba(15, 23, 42, 0.6); padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.08); width: 100%; box-sizing: border-box;">
                         تساوی مقتدرانه! گاوهای سبز و خرس‌های سرخ شانه به شانه هم ایستاده‌اند. 🕊️🤝
                     </div>
                 </div>
 
-                <div id="historyList" style="padding: 15px; display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto;">
+                <div id="historyList" style="padding: 15px; display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto;">
                     <!-- آیتم‌های تاریخچه به صورت پویا -->
                 </div>
             </div>
@@ -664,7 +664,6 @@
                     errBox.style.display = 'block';
                     loader.style.display = 'none';
 
-                    // لود از حافظه محلی در صورت بروز خطا
                     renderFromLocalCache();
                     return;
                 }
@@ -680,7 +679,6 @@
 
                 updateLogoutButtonVisibility();
 
-                // بروزرسانی تاریخچه و محاسبات آماری
                 renderWalletUI(history, totalIrt, totalUsdt, usdtPrice);
 
                 loader.style.display = 'none';
@@ -729,7 +727,6 @@
             let prevIrt = history.length > 1 ? history[history.length - 2].total_irt : currentIrt;
             let absoluteChange = currentIrt - prevIrt;
 
-            // ذخیره آخرین درصد و مقادیر در استوریج
             localStorage.setItem("tabdeal_last_percent_change", pct24h.toFixed(2));
             localStorage.setItem("tabdeal_last_value_toman", currentIrt);
             localStorage.setItem("tabdeal_last_value_tether", currentUsdt);
@@ -770,7 +767,7 @@
             const content = document.getElementById('historyDropdownContent');
             const arrow = document.getElementById('historyArrow');
             if (isHistoryDropdownOpen) {
-                content.style.maxHeight = '750px';
+                content.style.maxHeight = '800px';
                 arrow.style.transform = 'rotate(180deg)';
             } else {
                 content.style.maxHeight = '0';
@@ -813,6 +810,7 @@
 
                 const valueSign = isPos ? '+' : '';
                 const colorClass = isPos ? 'var(--positive-color)' : 'var(--negative-color)';
+                const animalBadge = pct > 0 ? '🟢 پیروزی گاوها 🐮' : (pct < 0 ? '🔴 حمله خرس‌ها 🐻' : '⚪️ صلح بازار 🕊️');
 
                 const m2Val = item.avg_cumulative_to_now || 0;
                 const m2Sign = m2Val >= 0 ? '+' : '';
@@ -828,7 +826,7 @@
                             <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 8px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);">${sourceDisplay}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: rgba(255, 255, 255, 0.65);">تغییر ۲۴ ساعته:</span>
+                            <span style="font-size: 0.8rem; font-weight: 700; color: rgba(255, 255, 255, 0.8);">${animalBadge}</span>
                             <span style="font-weight: 800; direction: ltr; color: ${colorClass}; font-size: 0.95rem;">${valueSign}${pct.toFixed(2)}٪</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
@@ -856,7 +854,7 @@
             const diff = positiveCount - negativeCount;
             let wittyText = '';
             if (positiveCount > negativeCount) {
-                wittyText = `ارتش گاوهای سبزپوش صعودی با اختلاف ${diff} روز جلوترند! خرس‌های سرخ صرافی تبدیل زانو زده‌اند! 🟢🐮🥳🚀`;
+                wittyText = `ارتش گاوهای سبزپوش صعودی با اختلاف ${diff} روز جلوترند! خرس‌های سرخ صرافی تبدیل زانو زده و عقب‌نشینی کرده‌اند! 🟢🐮🥳🚀`;
             } else if (negativeCount > positiveCount) {
                 wittyText = `ای دل غافل! لشکر قرمزهای خرس‌نما با اختلاف ${Math.abs(diff)} روز جلو زدند. یه دمنوش بابونه بنوشید تا ان‌شاءالله فردا سبز بشیم! 🔴🐻☕️`;
             } else {
