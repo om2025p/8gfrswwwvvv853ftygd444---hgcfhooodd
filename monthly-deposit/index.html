@@ -689,7 +689,7 @@
       5: 'ثبت درصد 5 (نفت و انرژی)',
       6: 'ثبت درصد 6 (سیمان کیان)',
       7: 'ثبت درصد 7 (آهنگ کیان)',
-      8: 'ثبت درصد 8'
+      8: 'ثبت درصد 8 (فارما کیان)'
     };
 
     const DEFAULT_FUND_MAPPING = {
@@ -700,7 +700,7 @@
       5: 'صندوق سهام نفت گاز برق',
       6: 'صندوق  ارزش سیمان',
       7: 'صندوق آهنگ سهام کیان',
-      8: 'صندوق ثبت درصد 8'
+      8: 'صندوق فارما کیان'
     };
 
     function getFundMapping() {
@@ -777,7 +777,7 @@
         container.innerHTML = '';
         const currentMapping = getFundMapping();
 
-        for (let appId = 1; appId <= 7; appId++) {
+        for (let appId = 1; appId <= 8; appId++) {
           const row = document.createElement('div');
           row.className = 'settings-row';
 
