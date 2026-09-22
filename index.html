@@ -300,6 +300,7 @@
             { id: 'gold5', title: 'ثبت درصد 5', icon: 'gold5/icon-192.png', url: 'gold5/index.html' },
             { id: 'gold6', title: 'ثبت درصد 6', icon: 'gold6/icon-192.png', url: 'gold6/index.html' },
             { id: 'gold7', title: 'ثبت درصد 7', icon: 'gold7/icon-192.png', url: 'gold7/index.html' },
+            { id: 'gold8', title: 'ثبت درصد 8 · فارما کیان', icon: 'gold8/icon-192.png', url: 'gold8/index.html' },
             { id: 'monitor', title: 'دیدبان درصد ها', icon: 'monitor/icon-192.png', url: 'monitor/index.html' },
             { id: 'skincare', title: 'مراقبت پوستی', icon: 'skincare/icon-192.png', url: 'skincare/index.html' },
             { id: 'profit', title: 'محاسبه گر سود', icon: 'profit-calculator/icon-192.png', url: 'profit-calculator/index.html' },
@@ -538,7 +539,7 @@
                 navigator.serviceWorker.getRegistrations().then(registrations => {
                     for (let registration of registrations) {
                         const path = new URL(registration.scope).pathname;
-                        if (path.includes('/gym/') || path.includes('/gold/') || path.includes('/gold2/') || path.includes('/gold3/') || path.includes('/gold4/') || path.includes('/gold5/') || path.includes('/gold6/') || path.includes('/gold7/') || path.includes('/monitor/') || path.includes('/skincare/') || path.includes('/profit-calculator/') || path.includes('/ai-chat/') || path.includes('/tabdeal/') || path.includes('/family/') || path.includes('/monthly-deposit/') || path.includes('/peace/') || path.includes('/yandex/') || path.includes('/html-viewer/') || path.includes('/funds/') || path.includes('/clipboard/') || path.includes('/liquidity/')) {
+                        if (path.includes('/gym/') || path.includes('/gold/') || path.includes('/gold2/') || path.includes('/gold3/') || path.includes('/gold4/') || path.includes('/gold5/') || path.includes('/gold6/') || path.includes('/gold7/') || path.includes('/gold8/') || path.includes('/monitor/') || path.includes('/skincare/') || path.includes('/profit-calculator/') || path.includes('/ai-chat/') || path.includes('/tabdeal/') || path.includes('/family/') || path.includes('/monthly-deposit/') || path.includes('/peace/') || path.includes('/yandex/') || path.includes('/html-viewer/') || path.includes('/funds/') || path.includes('/clipboard/') || path.includes('/liquidity/')) {
                             registration.unregister().then(success => {
                                 if (success) console.log(`Legacy SW at ${path} unregistered.`);
                             });

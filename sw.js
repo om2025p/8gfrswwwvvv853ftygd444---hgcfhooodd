@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v48';
+const CACHE_NAME = 'emarat-portal-v49';
 const ASSETS = [
   './',
   './index.html',
@@ -119,6 +119,19 @@ const ASSETS = [
   './gold7/icon-512-maskable.png',
   './gold7/apple-touch-icon.png',
   './gold7/favicon.ico',
+  // Gold 8 App (Farma Kian)
+  './gold8/index.html',
+  './gold8/calculator.html',
+  './gold8/percent.html',
+  './gold8/price.html',
+  './gold8/growth.html',
+  './gold8/manifest.json',
+  './gold8/icon-192.png',
+  './gold8/icon-512.png',
+  './gold8/icon-192-maskable.png',
+  './gold8/icon-512-maskable.png',
+  './gold8/apple-touch-icon.png',
+  './gold8/favicon.ico',
   // Profit Calculator
   './profit-calculator/index.html',
   './profit-calculator/calc1.html',

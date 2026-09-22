@@ -1498,6 +1498,41 @@ REAL_UI_TUTORIALS = [
                 "bubble_right": 80
             }
         ]
+    },
+    {
+        "id": "gold8",
+        "title": "صندوق ثبت درصد ۸ (فارما کیان)",
+        "url_path": "gold8/index.html",
+        "accent": "#0d9488",
+        "steps": [
+            {
+                "bubble_title": "💊 صندوق فارما کیان",
+                "bubble_text": "هشتمین صندوق با تم اختصاصی دارویی و پزشکی جهت مدیریت سود فارما کیان.",
+                "arrow_top": 120,
+                "arrow_left": 480,
+                "arrow_icon": "💊",
+                "bubble_top": 220,
+                "bubble_right": 80
+            },
+            {
+                "bubble_title": "✏️ ثبت درصد و محاسبه تغییرات",
+                "bubble_text": "محاسبه خودکار درصد تغییرات و ثبت مستقیم در حافظه pharma_kian_percents.",
+                "arrow_top": 350,
+                "arrow_left": 400,
+                "arrow_icon": "📊",
+                "bubble_top": 450,
+                "bubble_right": 80
+            },
+            {
+                "bubble_title": "📈 مدیریت رشد و ثبت ابطال",
+                "bubble_text": "ارائه جدول پیش‌بینی رشد سرمایه و ثبت قیمت ابطال واحدها.",
+                "arrow_top": 550,
+                "arrow_left": 350,
+                "arrow_icon": "📈",
+                "bubble_top": 480,
+                "bubble_right": 100
+            }
+        ]
     }
 ]
 

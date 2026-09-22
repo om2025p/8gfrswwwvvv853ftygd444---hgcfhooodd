@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مدیریت رشد · فارما کیان</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: Tahoma, Arial, sans-serif;
+    background: #042f2e;
+    margin: 0;
+    padding: 12px;
+    color: #f0fdf4;
+  }
+
+  .container {
+    max-width: 100%;
+    margin: 0 auto;
+    background: #0f3e3a;
+    padding: 14px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    border: 1px solid #14b8a6;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .header h1 {
+    font-size: 18px;
+    margin: 0;
+    color: #2dd4bf;
+    font-weight: bold;
+    flex: 1;
+    text-align: center;
+  }
+
+  .menu-toggle {
+    background: linear-gradient(180deg, #0d9488 0%, #0284c7 100%);
+    color: #fff;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #0f766e, 0 4px 6px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.05s, box-shadow 0.05s;
+    flex-shrink: 0;
+  }
+
+  .menu-toggle:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #0f766e;
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    top: 52px;
+    right: 0;
+    background: #0f3e3a;
+    border: 1px solid #14b8a6;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    padding: 8px;
+    z-index: 5000;
+    min-width: 200px;
+    display: none;
+    animation: dropIn 0.15s ease-out;
+  }
+
+  .dropdown-menu.show { display: block; }
+
+  @keyframes dropIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    color: #f0fdf4;
+    font-family: inherit;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: right;
+    transition: background 0.15s, transform 0.05s;
+    margin-bottom: 4px;
+  }
+
+  .dropdown-item:last-child { margin-bottom: 0; }
+  .dropdown-item:hover { background: #115e59; transform: translateX(-2px); }
+  .dropdown-item:active { transform: scale(0.98); }
+
+  .dropdown-item.danger { color: #f87171; }
+  .dropdown-item.danger:hover { background: #7f1d1d; }
+
+  .capital-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: #042f2e;
+    border: 1px solid #115e59;
+    border-radius: 8px;
+    flex-wrap: wrap;
+  }
+
+  .capital-box label {
+    font-weight: bold;
+    color: #2dd4bf;
+    white-space: nowrap;
+    font-size: 14px;
+  }
+
+  .capital-box input {
+    flex: 1;
+    min-width: 100px;
+    padding: 6px 8px;
+    border: 1px solid #115e59;
+    border-radius: 6px;
+    font-size: 14px;
+    text-align: left;
+    direction: ltr;
+    font-family: inherit;
+    background: #0f3e3a;
+    color: #fff;
+  }
+
+  .delete-actions {
+    display: none;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .delete-actions.show { display: flex; }
+
+  .delete-action-btn {
+    flex: 1;
+    padding: 9px 10px;
+    font-size: 13px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    color: #fff;
+    transition: opacity 0.2s;
+  }
+
+  .delete-action-btn.confirm-delete { background: #b71c1c; }
+  .delete-action-btn.cancel-delete { background: #475569; }
+  .delete-action-btn:hover { opacity: 0.88; }
+
+  .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 14px;
+    border-radius: 8px;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 380px;
+  }
+
+  th, td {
+    border: 1px solid #115e59;
+    padding: 4px;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  th {
+    background: #042f2e;
+    font-size: 11px;
+    color: #2dd4bf;
+    padding: 6px 3px;
+    white-space: nowrap;
+    font-weight: bold;
+  }
+
+  th.check-col { width: 36px; }
+  th.col-main { width: calc((100% - 36px) / 3); }
+
+  td input[type="text"] {
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 6px 2px;
+    font-size: 13px;
+    text-align: center;
+    font-family: inherit;
+    min-width: 0;
+    color: #fff;
+  }
+
+  td input[type="text"].num {
+    direction: ltr;
+    text-align: center;
+    min-width: 0;
+  }
+
+  .check-col input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #0d9488;
+  }
+
+  .check-col input.del-check {
+    accent-color: #ef4444;
+    transform: scale(1.15);
+  }
+
+  body.delete-mode tr.main-row td input[type="text"] {
+    pointer-events: none;
+    opacity: 0.55;
+  }
+
+  body.delete-mode tr.main-row td.check-col input[type="checkbox"]:not(.del-check) {
+    pointer-events: none;
+  }
+
+  tr.marked-for-delete,
+  tr.row-header.marked-for-delete,
+  tr.marked-for-delete + tr.desc-row {
+    background: #7f1d1d !important;
+  }
+
+  tr.row-header th {
+    background: #042f2e;
+    color: #2dd4bf;
+    font-size: 12px;
+    padding: 6px 3px;
+    border-bottom: 2px solid #14b8a6;
+  }
+
+  .mini-calc-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 2px;
+    vertical-align: middle;
+    transition: transform 0.15s;
+    line-height: 1;
+  }
+  .mini-calc-btn:active {
+    transform: scale(1.25);
+  }
+
+  .txt-3d {
+    font-family: inherit;
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    padding: 14px 32px;
+    border: none;
+    border-radius: 14px;
+    background: none !important;
+    background-color: transparent !important;
+    cursor: default;
+    position: relative;
+    user-select: none;
+    text-align: center;
+    width: 100%;
+    display: inline-block;
+    line-height: 1.3;
+    min-height: 56px;
+    box-shadow: none !important;
+  }
+
+  .txt-3d.buy {
+    background-image: linear-gradient(180deg, #c8e6c9 0%, #81c784 45%, #66bb6a 55%, #388e3c 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    -webkit-text-stroke: 1.5px #2e7d32;
+    paint-order: stroke fill;
+  }
+
+  .txt-3d.sell {
+    background-image: linear-gradient(180deg, #ef5350 0%, #c62828 45%, #b71c1c 55%, #7f0e0e 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    -webkit-text-stroke: 1.5px #b71c1c;
+    paint-order: stroke fill;
+  }
+
+  .txt-3d.withdraw {
+    background-image: linear-gradient(180deg, #ffa726 0%, #ef6c00 45%, #e65100 55%, #a63a00 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    -webkit-text-stroke: 1.5px #e65100;
+    paint-order: stroke fill;
+  }
+
+  .txt-3d.note {
+    background-image: linear-gradient(180deg, #b0bec5 0%, #607d8b 45%, #455a64 55%, #263238 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    -webkit-text-stroke: 1.5px #37474f;
+    paint-order: stroke fill;
+  }
+
+  .shine-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    background: transparent;
+  }
+
+  .shine-wrap::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      rgba(255,255,255,0) 30%,
+      rgba(255,255,255,0.9) 50%,
+      rgba(255,255,255,0) 70%,
+      transparent 100%
+    );
+    transform: translateX(-150%);
+    pointer-events: none;
+    will-change: transform;
+    z-index: 2;
+  }
+
+  .shine-wrap:hover::after {
+    transform: translateX(250%);
+    transition: transform 0.7s ease-out;
+  }
+
+  @keyframes pulse-white-red {
+    0%, 100% { background-color: transparent; }
+    25% { background-color: #ff5252; }
+    50% { background-color: #fff; }
+    75% { background-color: #ff5252; }
+  }
+
+  tr.pulse-flash,
+  tr.pulse-flash + tr.desc-row {
+    animation: pulse-white-red 0.5s ease-in-out 3;
+  }
+
+  tr.checked-yellow {
+    background: #854d0e !important;
+  }
+
+  tr.checked-blue {
+    background: #1e3a8a !important;
+  }
+
+  tr.desc-row td {
+    padding: 8px;
+  }
+
+  .desc-row-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .desc-row-content .desc-cell {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .action-btn {
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.05s, box-shadow 0.05s;
+    padding: 0;
+  }
+
+  .action-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.3) !important;
+  }
+
+  .hamburger-btn {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(180deg, #0d9488 0%, #0284c7 100%);
+    box-shadow: 0 3px 0 #0f766e, 0 4px 6px rgba(0,0,0,0.15);
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .desc-menu {
+    position: fixed;
+    background: #0f3e3a;
+    border: 1px solid #14b8a6;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    padding: 6px;
+    z-index: 10000;
+    min-width: 150px;
+    font-family: Tahoma, Arial, sans-serif;
+    direction: rtl;
+  }
+
+  .desc-menu-item {
+    padding: 10px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    transition: transform 0.1s;
+  }
+
+  .desc-menu-item:last-child { margin-bottom: 0; }
+  .desc-menu-item:hover { transform: scale(1.03); }
+
+  .desc-menu-item.buy {
+    background: linear-gradient(180deg, #a5d6a7 0%, #388e3c 100%);
+    color: #fff;
+  }
+  .desc-menu-item.sell {
+    background: linear-gradient(180deg, #ef5350 0%, #c62828 100%);
+    color: #fff;
+  }
+  .desc-menu-item.withdraw {
+    background: linear-gradient(180deg, #ffa726 0%, #ef6c00 100%);
+    color: #fff;
+  }
+  .desc-menu-item.note {
+    background: linear-gradient(180deg, #b0bec5 0%, #455a64 100%);
+    color: #fff;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .modal-box {
+    background: #0f3e3a;
+    border: 1px solid #14b8a6;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    text-align: center;
+    font-family: Tahoma, Arial, sans-serif;
+    direction: rtl;
+    color: #fff;
+  }
+
+  .modal-title { font-size: 17px; font-weight: bold; color: #f87171; margin-bottom: 10px; }
+  .modal-text { font-size: 14px; color: #99f6e4; margin-bottom: 16px; line-height: 1.6; }
+
+  .modal-buttons { display: flex; gap: 8px; }
+
+  .modal-btn {
+    flex: 1;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .modal-btn.cancel { background: #334155; color: #fff; }
+  .modal-btn.confirm { background: #ef4444; color: #fff; }
+
+  .big-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+
+  .big-cal-day {
+    text-align: center;
+    padding: 14px 0;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 10px;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #042f2e;
+    color: #99f6e4;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>💊 مدیریت رشد · فارما کیان</h1>
+    <button class="menu-toggle" id="menuToggle">☰</button>
+    <div class="dropdown-menu" id="dropdownMenu">
+      <button class="dropdown-item" id="addRowBtn">➕ افزودن ردیف جدید</button>
+      <button class="dropdown-item" id="backupBtn">💾 پشتیبان‌گیری</button>
+      <button class="dropdown-item" id="restoreBtn">📂 بازیابی</button>
+      <button class="dropdown-item danger" id="deleteModeBtn">🗑️ حذف گروهی</button>
+      <input type="file" id="restoreInput" accept=".json,application/json" style="display:none">
+    </div>
+  </div>
+
+  <div class="capital-box">
+    <label for="capital">سرمایه فعلی:</label>
+    <input type="text" id="capital" inputmode="numeric" placeholder="0" autocomplete="off">
+  </div>
+
+  <div class="delete-actions" id="deleteActions">
+    <button class="delete-action-btn confirm-delete" id="confirmDeleteBtn">✅ تأیید حذف</button>
+    <button class="delete-action-btn cancel-delete" id="cancelDeleteBtn">❌ انصراف</button>
+  </div>
+
+  <div class="table-wrap">
+    <table id="mainTable">
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const DB_NAME = "GrowthDB_gold8";
+const DB_VERSION = 1;
+const STORE_NAME = "rows";
+const CAPITAL_STORE = "settings";
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const database = e.target.result;
+      if (!database.objectStoreNames.contains(STORE_NAME)) {
+        database.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+      }
+      if (!database.objectStoreNames.contains(CAPITAL_STORE)) {
+        database.createObjectStore(CAPITAL_STORE, { keyPath: "key" });
+      }
+    };
+    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function addRowToDB(row) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const req = tx.objectStore(STORE_NAME).add(row);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function updateRowInDB(row) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const req = tx.objectStore(STORE_NAME).put(row);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function deleteRowFromDB(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const req = tx.objectStore(STORE_NAME).delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function getAllRows() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const req = tx.objectStore(STORE_NAME).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function clearAllRows() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const req = tx.objectStore(STORE_NAME).clear();
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function saveCapital(value) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CAPITAL_STORE, "readwrite");
+    const req = tx.objectStore(CAPITAL_STORE).put({ key: "capital", value: value });
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function loadCapital() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CAPITAL_STORE, "readonly");
+    const req = tx.objectStore(CAPITAL_STORE).get("capital");
+    req.onsuccess = () => resolve(req.result ? req.result.value : "");
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function toEnglishDigits(str) {
+  if (!str) return "";
+  return str.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧۸٩".indexOf(d));
+}
+
+function cleanNumber(str) {
+  return toEnglishDigits(str).replace(/[^0-9.]/g, "");
+}
+
+function formatWithCommas(numStr) {
+  if (!numStr) return "";
+  const parts = numStr.split(".");
+  let intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  if (parts.length > 1) return intPart + "." + parts[1];
+  return intPart;
+}
+
+function removeCommas(str) {
+  return (str || "").replace(/,/g, "");
+}
+
+const menuToggle = document.getElementById("menuToggle");
+const dropdownMenu = document.getElementById("dropdownMenu");
+
+menuToggle.onclick = (e) => {
+  e.stopPropagation();
+  dropdownMenu.classList.toggle("show");
+};
+
+document.addEventListener("click", (e) => {
+  if (!dropdownMenu.contains(e.target) && e.target !== menuToggle) {
+    dropdownMenu.classList.remove("show");
+  }
+});
+
+function closeDropdown() { dropdownMenu.classList.remove("show"); }
+
+const tableBody = document.getElementById("tableBody");
+const addRowBtn = document.getElementById("addRowBtn");
+const capitalInput = document.getElementById("capital");
+const backupBtn = document.getElementById("backupBtn");
+const restoreBtn = document.getElementById("restoreBtn");
+const restoreInput = document.getElementById("restoreInput");
+
+async function init() {
+  await openDB();
+  const cap = await loadCapital();
+  capitalInput.value = formatWithCommas(cap || "");
+
+  const rows = await getAllRows();
+  if (rows.length === 0) {
+    await addNewRow();
+  } else {
+    rows.forEach(r => prependRowPair(r));
+  }
+}
+
+function createRowElement(row) {
+  const trHeader = document.createElement("tr");
+  trHeader.className = "row-header";
+
+  const thCheck = document.createElement("th");
+  thCheck.textContent = "✔";
+
+  const thUnit = document.createElement("th");
+  thUnit.textContent = "قیمت واحد";
+
+  const thQty = document.createElement("th");
+  thQty.textContent = "تعداد واحد";
+
+  const thAmount = document.createElement("th");
+  thAmount.textContent = "مقدار واحد";
+
+  trHeader.appendChild(thCheck);
+  trHeader.appendChild(thUnit);
+  trHeader.appendChild(thQty);
+  trHeader.appendChild(thAmount);
+
+  const tr = document.createElement("tr");
+  tr.className = "main-row";
+  tr.dataset.id = row.id || "";
+
+  const tdCheck = document.createElement("td");
+  const check = document.createElement("input");
+  check.type = "checkbox";
+  check.className = "main-check";
+  check.checked = !!row.checked;
+  check.onchange = async () => {
+    row.checked = check.checked;
+    if (row.id) await updateRowInDB(row);
+  };
+  tdCheck.appendChild(check);
+  tr.appendChild(tdCheck);
+
+  const tdUnit = document.createElement("td");
+  const inpUnit = document.createElement("input");
+  inpUnit.type = "text";
+  inpUnit.className = "num";
+  inpUnit.value = formatWithCommas(removeCommas(row.unitPrice || ""));
+  inpUnit.placeholder = "0";
+  tdUnit.appendChild(inpUnit);
+  tr.appendChild(tdUnit);
+
+  const tdQty = document.createElement("td");
+  const inpQty = document.createElement("input");
+  inpQty.type = "text";
+  inpQty.className = "num";
+  inpQty.value = formatWithCommas(removeCommas(row.quantity || ""));
+  inpQty.placeholder = "0";
+  tdQty.appendChild(inpQty);
+  tr.appendChild(tdQty);
+
+  const tdAmount = document.createElement("td");
+  const inpAmount = document.createElement("input");
+  inpAmount.type = "text";
+  inpAmount.className = "num";
+  inpAmount.value = formatWithCommas(removeCommas(row.amount || ""));
+  inpAmount.placeholder = "0";
+  tdAmount.appendChild(inpAmount);
+  tr.appendChild(tdAmount);
+
+  const calculateAutoAmount = () => {
+    const u = parseFloat(row.unitPrice) || 0;
+    const q = parseFloat(row.quantity) || 0;
+    if (u > 0 && q > 0) {
+      const calcAmt = Math.round(u * q);
+      row.amount = String(calcAmt);
+      inpAmount.value = formatWithCommas(row.amount);
+    }
+  };
+
+  inpUnit.oninput = () => {
+    const raw = cleanNumber(inpUnit.value);
+    inpUnit.value = formatWithCommas(raw);
+    row.unitPrice = raw;
+    calculateAutoAmount();
+    saveRow(row);
+  };
+
+  inpQty.oninput = () => {
+    const raw = cleanNumber(inpQty.value);
+    inpQty.value = formatWithCommas(raw);
+    row.quantity = raw;
+    calculateAutoAmount();
+    saveRow(row);
+  };
+
+  inpAmount.oninput = () => {
+    const raw = cleanNumber(inpAmount.value);
+    inpAmount.value = formatWithCommas(raw);
+    row.amount = raw;
+    saveRow(row);
+  };
+
+  return { headerRow: trHeader, mainRow: tr };
+}
+
+function saveRow(row) {
+  if (!row.id) return;
+  updateRowInDB(row);
+}
+
+function prependRowPair(row) {
+  const pair = createRowElement(row);
+  const first = tableBody.firstChild;
+  if (first) {
+    tableBody.insertBefore(pair.headerRow, first);
+    tableBody.insertBefore(pair.mainRow, first);
+  } else {
+    tableBody.appendChild(pair.headerRow);
+    tableBody.appendChild(pair.mainRow);
+  }
+}
+
+async function addNewRow() {
+  const newRow = { unitPrice: "", quantity: "", amount: "", checked: false };
+  const id = await addRowToDB(newRow);
+  newRow.id = id;
+  prependRowPair(newRow);
+}
+
+addRowBtn.onclick = async () => {
+  closeDropdown();
+  await addNewRow();
+};
+
+backupBtn.onclick = async () => {
+  closeDropdown();
+  const rows = await getAllRows();
+  const capital = await loadCapital();
+  const backup = { app: "GrowthDB_gold8", version: 1, capital, rows };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `pharma_kian_growth_backup_${Date.now()}.json`;
+  a.click();
+};
+
+restoreBtn.onclick = () => {
+  closeDropdown();
+  restoreInput.click();
+};
+
+restoreInput.onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data && Array.isArray(data.rows)) {
+        await clearAllRows();
+        for (const r of data.rows) await addRowToDB(r);
+        if (data.capital) await saveCapital(data.capital);
+        tableBody.innerHTML = "";
+        await init();
+        alert("✅ بازیابی انجام شد");
+      }
+    } catch(err) { alert("فایل معتبر نیست"); }
+  };
+  reader.readAsText(file);
+};
+
+init();
+</script>
+</body>
+</html>
