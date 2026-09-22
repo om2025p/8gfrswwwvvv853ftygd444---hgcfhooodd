@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v47';
+const CACHE_NAME = 'emarat-portal-v48';
 const ASSETS = [
   './',
   './index.html',
@@ -269,7 +269,16 @@ const ASSETS = [
   './image-enhancer/icon-512.png',
   './image-enhancer/icon-192-maskable.png',
   './image-enhancer/icon-512-maskable.png',
-  './image-enhancer/apple-touch-icon.png'
+  './image-enhancer/apple-touch-icon.png',
+  // Daily Report App (گزارش روز عمارت)
+  './daily-report/index.html',
+  './daily-report/manifest.json',
+  './daily-report/icon-192.png',
+  './daily-report/icon-512.png',
+  './daily-report/icon-192-maskable.png',
+  './daily-report/icon-512-maskable.png',
+  './daily-report/apple-touch-icon.png',
+  './daily-report/favicon.ico'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
