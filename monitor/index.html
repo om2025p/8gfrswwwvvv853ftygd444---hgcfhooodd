@@ -2387,9 +2387,9 @@
             if (completedAppsCount < 7) {
                 const cachedAnalysis = localStorage.getItem('monitor_last_gemini_analysis');
                 if (cachedAnalysis) {
-                    aiContent.innerHTML = `⏳ منتظر ثبت درصد بقیه اپ‌ها (${completedAppsCount} از ۷ تکمیل شده)...<br><br><span style="font-size: 0.8rem; opacity: 0.7;">💡 تحلیل آخرین روز تکمیل‌شده:</span><br>« ${cachedAnalysis} »`;
+                    aiContent.innerHTML = cachedAnalysis;
                 } else {
-                    aiContent.innerText = `⏳ برای دریافت تحلیل هوش مصنوعی، لطفاً درصد هر ۷ اپلیکیشن را برای امروز ثبت کنید (${completedAppsCount} از ۷ تکمیل شده).`;
+                    aiContent.innerText = `جهت دریافت تحلیل هوشمند، لطفاً درصد ۷ اپلیکیشن را ثبت کنید (${completedAppsCount} از ۷ تکمیل شده).`;
                 }
                 return;
             }
