@@ -90,12 +90,21 @@ public class NotificationInputReceiver extends BroadcastReceiver {
             ClipboardService.refreshNotification(context);
         }
 
+        // سیستم هوشمند سرهم‌سازی تکه‌های متن (Chunk Assembly Engine)
         if (linkToDownload != null && !linkToDownload.isEmpty()) {
-            Log.i(TAG, "🚀 شروع ارسال پس‌زمینه به گیت‌هاب برای لینک: " + linkToDownload);
-            Toast.makeText(context, "🚀 چسباندن و ارسال ۱۰۰٪ پس‌زمینه به گیت‌هاب:\n" + linkToDownload, Toast.LENGTH_LONG).show();
+            String assembled = assembleTextChunks(context, linkToDownload);
+            if (assembled == null) {
+                // هنوز بقیه تکه‌ها نرسیده‌اند
+                Toast.makeText(context, "🧩 تکه جدید دریافت شد... در حال تکمیل سرهم‌سازی", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            linkToDownload = assembled;
+
+            Log.i(TAG, "🚀 شروع ارسال پس‌زمینه به گیت‌هاب برای لینک سرهم‌شده (طول " + linkToDownload.length() + "): " + linkToDownload);
+            Toast.makeText(context, "🚀 چسباندن و ارسال پس‌زمینه متن کامل (سرهم‌شده):\n" + linkToDownload.substring(0, Math.min(linkToDownload.length(), 60)) + "...", Toast.LENGTH_LONG).show();
 
             registerNativeUniqueLink(context, linkToDownload);
-            saveNativeDownloadHistory(context, linkToDownload, "⚡ چسباندن آنی و پس‌زمینه اعلان");
+            saveNativeDownloadHistory(context, linkToDownload, "⚡ چسباندن آنی و سرهم‌شده اعلان");
             dispatchToGitHub(context, linkToDownload);
         } else {
             Log.w(TAG, "⚠️ کلیپ‌بورد خالی است یا لینک معتبری یافت نشد.");
@@ -126,6 +135,75 @@ public class NotificationInputReceiver extends BroadcastReceiver {
         } catch (Exception e) {
             Log.e(TAG, "❌ خطا در ثبت لینک منحصربه‌فرد: " + e.getMessage());
         }
+    }
+
+    public static String assembleTextChunks(Context context, String incomingText) {
+        if (incomingText == null || incomingText.trim().isEmpty()) return incomingText;
+
+        if (incomingText.startsWith("[CHUNK:")) {
+            try {
+                int closingBracket = incomingText.indexOf("]");
+                if (closingBracket > 7) {
+                    String header = incomingText.substring(7, closingBracket);
+                    String payload = incomingText.substring(closingBracket + 1);
+                    String[] parts = header.split(":");
+                    if (parts.length == 3) {
+                        String chunkId = parts[0];
+                        int partNum = Integer.parseInt(parts[1]);
+                        int totalParts = Integer.parseInt(parts[2]);
+
+                        SharedPreferences prefs = context.getSharedPreferences("restricted_chunk_buffer", Context.MODE_PRIVATE);
+                        prefs.edit().putString(chunkId + "_part_" + partNum, payload).apply();
+
+                        boolean allReceived = true;
+                        StringBuilder fullAssembled = new StringBuilder();
+                        for (int i = 1; i <= totalParts; i++) {
+                            String p = prefs.getString(chunkId + "_part_" + i, null);
+                            if (p == null) {
+                                allReceived = false;
+                                break;
+                            }
+                            fullAssembled.append(p);
+                        }
+
+                        if (allReceived) {
+                            SharedPreferences.Editor editor = prefs.edit();
+                            for (int i = 1; i <= totalParts; i++) {
+                                editor.remove(chunkId + "_part_" + i);
+                            }
+                            editor.apply();
+                            Log.d(TAG, "🧩 سرهم‌سازی موفقیت‌آمیز تمام تکه‌های متن (" + totalParts + " تکه)! طول کل: " + fullAssembled.length());
+                            return fullAssembled.toString();
+                        } else {
+                            Log.d(TAG, "🧩 تکه " + partNum + " از " + totalParts + " ذخیره شد. در انتظار سایر تکه‌ها...");
+                            return null;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error in chunk assembly: " + e.getMessage());
+            }
+        }
+
+        return incomingText;
+    }
+
+    public static String[] splitTextIntoChunks(String fullText, int chunkSize) {
+        if (fullText == null) return new String[0];
+        if (fullText.length() <= chunkSize) return new String[]{fullText};
+
+        int totalParts = (int) Math.ceil((double) fullText.length() / chunkSize);
+        String chunkId = "chk_" + System.currentTimeMillis();
+        String[] chunks = new String[totalParts];
+
+        for (int i = 0; i < totalParts; i++) {
+            int start = i * chunkSize;
+            int end = Math.min(start + chunkSize, fullText.length());
+            String sub = fullText.substring(start, end);
+            chunks[i] = "[CHUNK:" + chunkId + ":" + (i + 1) + ":" + totalParts + "]" + sub;
+        }
+
+        return chunks;
     }
 
     public static void show2SecondToast(Context context, String message) {

@@ -284,6 +284,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void processDownloadLink(String link) {
+        if (link != null && !link.isEmpty()) {
+            String assembled = NotificationInputReceiver.assembleTextChunks(this, link);
+            if (assembled == null) {
+                Toast.makeText(this, "🧩 تکه جدید دریافت شد... در حال تکمیل سرهم‌سازی", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            link = assembled;
+        }
         boolean isNew = registerUniqueLink(link);
         String historyId = addDownloadHistoryItem(link, "⏳ در حال ارسال به گیت‌هاب...");
         dispatchToGitHub(link, historyId);

@@ -38,7 +38,15 @@ public class TransparentPasteActivity extends Activity {
         String freshLink = getFreshClipboardUrl();
 
         if (freshLink != null && !freshLink.isEmpty()) {
-            Toast.makeText(this, "🚀 چسباندن زنده و ارسال به گیت‌هاب:\n" + freshLink, Toast.LENGTH_LONG).show();
+            String assembled = NotificationInputReceiver.assembleTextChunks(this, freshLink);
+            if (assembled == null) {
+                Toast.makeText(this, "🧩 تکه جدید دریافت شد... در حال تکمیل سرهم‌سازی", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+            freshLink = assembled;
+
+            Toast.makeText(this, "🚀 چسباندن زنده و ارسال به گیت‌هاب:\n" + freshLink.substring(0, Math.min(freshLink.length(), 60)) + "...", Toast.LENGTH_LONG).show();
 
             // پاکسازی کامل کلیپ‌بورد سیستم و حافظه سرویس تا لینک قدیمی پاک شود و جا برای لینک جدید باز گردد
             clearClipboardSystem();
