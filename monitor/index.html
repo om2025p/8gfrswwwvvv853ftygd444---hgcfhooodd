@@ -895,20 +895,35 @@
     <!-- تب ۳: صورت مالی ماهیانه -->
     <div id="pdf-tab" class="content-section">
         <!-- کارت راهنمای صدور صورت مالی -->
-        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 18px; margin-bottom: 20px; box-shadow: var(--card-shadow);">
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 18px; margin-bottom: 16px; box-shadow: var(--card-shadow);">
             <div style="font-size: 1rem; font-weight: bold; color: var(--primary-light); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                 <span>🏛️ صدور صورت‌حساب بانکی کلاسیک (آفلاین و مستقیم)</span>
             </div>
             <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
-                📌 در این بخش صورت‌حساب رسمی بانکی تاریخچه زرین (سودهای مثبت) به صورت ۱۰۰٪ آفلاین و آنی درون مرورگر تولید و آماده پرینت یا ذخیره‌سازی به عنوان فایل PDF می‌گردد. دانلود هر ماه صرفاً پس از **تکمیل شدن ماه** فعال خواهد شد.
+                📌 در این بخش صورت‌حساب رسمی بانکی به صورت ۱۰۰٪ آفلاین و آنی درون مرورگر تولید و آماده پرینت یا ذخیره‌سازی به عنوان فایل PDF می‌گردد. دانلود هر ماه صرفاً پس از **تکمیل شدن ماه** فعال خواهد شد.
             </div>
         </div>
 
-        <!-- بخش دانلود گزارش ماهانه تاریخچه زرین -->
+        <!-- کارت انتخاب حالت گزارش‌گیری (فقط سودها / تاریخچه رشد کلی) -->
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 14px; margin-bottom: 20px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; gap: 10px;">
+            <div style="font-size: 0.9rem; font-weight: bold; color: var(--text-color); display: flex; align-items: center; gap: 6px;">
+                <span>⚙️ حالت گزارش‌گیری صورت‌حساب:</span>
+            </div>
+            <div style="display: flex; gap: 8px; background: var(--history-sub-bg); padding: 4px; border-radius: 14px; border: 1px solid var(--card-border);">
+                <button id="pdfModePositivesBtn" onclick="setMonthlyPdfReportMode('only_positives')" style="flex: 1; padding: 10px 8px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; background: var(--card-bg); color: var(--positive-color); box-shadow: var(--card-shadow);">
+                    🌟 فقط سودها (تاریخچه زرین)
+                </button>
+                <button id="pdfModeTotalBtn" onclick="setMonthlyPdfReportMode('total_growth')" style="flex: 1; padding: 10px 8px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);">
+                    📊 تاریخچه رشد کلی (کامل)
+                </button>
+            </div>
+        </div>
+
+        <!-- بخش دانلود گزارش ماهانه -->
         <div class="history-dropdown" id="monthly-pdf-dropdown" style="display: block;">
             <div class="history-header" style="display: flex; justify-content: space-between; align-items: center;" onclick="toggleHistoryMenu('monthly-pdf')">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span>📥 دانلود گزارش ماهانه تاریخچه زرین</span>
+                    <span id="monthlyPdfDropdownTitle">📥 دانلود گزارش ماهانه تاریخچه زرین (فقط سودها)</span>
                 </div>
                 <span class="history-arrow" id="monthly-pdf-history-arrow">▼</span>
             </div>
@@ -1909,6 +1924,40 @@
         }
 
         let isOnlyPositivesMode = false;
+        let monthlyPdfReportMode = 'only_positives'; // 'only_positives' | 'total_growth'
+
+        function setMonthlyPdfReportMode(mode) {
+            monthlyPdfReportMode = mode;
+            const posBtn = document.getElementById('pdfModePositivesBtn');
+            const totalBtn = document.getElementById('pdfModeTotalBtn');
+            const titleEl = document.getElementById('monthlyPdfDropdownTitle');
+
+            if (mode === 'only_positives') {
+                if (posBtn) {
+                    posBtn.style.background = 'var(--card-bg)';
+                    posBtn.style.color = 'var(--positive-color)';
+                    posBtn.style.boxShadow = 'var(--card-shadow)';
+                }
+                if (totalBtn) {
+                    totalBtn.style.background = 'transparent';
+                    totalBtn.style.color = 'var(--text-muted)';
+                    totalBtn.style.boxShadow = 'none';
+                }
+                if (titleEl) titleEl.innerText = '📥 دانلود گزارش ماهانه تاریخچه زرین (فقط سودها)';
+            } else {
+                if (posBtn) {
+                    posBtn.style.background = 'transparent';
+                    posBtn.style.color = 'var(--text-muted)';
+                    posBtn.style.boxShadow = 'none';
+                }
+                if (totalBtn) {
+                    totalBtn.style.background = 'var(--card-bg)';
+                    totalBtn.style.color = 'var(--primary-light)';
+                    totalBtn.style.boxShadow = 'var(--card-shadow)';
+                }
+                if (titleEl) titleEl.innerText = '📥 دانلود گزارش ماهانه تاریخچه رشد کلی (کامل)';
+            }
+        }
 
         function handleHistoryHeaderClick(event, tabName) {
             if (event.target.closest('.history-switch-btn')) {
@@ -2980,6 +3029,9 @@
             const rawHistory = calculateDailyHistory();
             const appsInfo = getAppPercentData();
 
+            const isTotalGrowth = (monthlyPdfReportMode === 'total_growth');
+            const reportTypeName = isTotalGrowth ? 'تاریخچه رشد کلی (کامل)' : 'تاریخچه زرین (فقط سودها)';
+
             const toDigit = (val) => usePersianDigits ? convertDigitsToPersian(val) : convertDigitsToEnglish(val);
 
             let totalMonthToman = 0;
@@ -3010,33 +3062,50 @@
                 const rDay = parseInt(formatterDay.format(d));
 
                 if (rYear === year && rMonth === monthIdx) {
-                    const posItems = [];
+                    const dayItems = [];
                     appsInfo.forEach(app => {
                         const appTomanProfit = (dailyTomanProfitAppMap[dayStr] && dailyTomanProfitAppMap[dayStr][app.id]) || 0;
                         const appDetails = (dailyTomanProfitAppDetailsMap[dayStr] && dailyTomanProfitAppDetailsMap[dayStr][app.id]) || null;
                         const appStatus = appDetails ? appDetails.status : (appTomanProfit > 0 ? 'increase' : (appTomanProfit < 0 ? 'decrease' : 'none'));
                         const isRecovering = appStatus === 'recovering';
+                        const isDecrease = appStatus === 'decrease' || appTomanProfit < 0;
 
-                        if (appTomanProfit > 0) {
-                            let appPercentVal = 0;
-                            if (app.data) {
-                                for (let i = 0; i < app.data.length; i++) {
-                                    const itemDStr = getGregorianDayString(app.data[i].timestamp);
-                                    if (itemDStr === dayStr) {
-                                        appPercentVal = app.data[i].value;
-                                        break;
-                                    }
+                        let hasRegistration = false;
+                        let appPercentVal = 0;
+                        if (app.data) {
+                            for (let i = 0; i < app.data.length; i++) {
+                                const itemDStr = getGregorianDayString(app.data[i].timestamp);
+                                if (itemDStr === dayStr) {
+                                    hasRegistration = true;
+                                    appPercentVal = app.data[i].value;
+                                    break;
                                 }
                             }
+                        }
 
-                            posItems.push({
-                                title: app.title + (isRecovering ? ' (جبران ضرر 🟠)' : ''),
-                                percent: appPercentVal,
-                                toman: appTomanProfit,
-                                isRecovering: isRecovering
-                            });
+                        if (isTotalGrowth) {
+                            if (appTomanProfit !== 0 || hasRegistration) {
+                                let statusTag = '';
+                                let colorClass = 'pos';
+                                if (isDecrease) {
+                                    statusTag = ' (افت قیمت 🔴)';
+                                    colorClass = 'neg';
+                                } else if (isRecovering) {
+                                    statusTag = ' (جبران ضرر 🟡)';
+                                    colorClass = 'rec';
+                                } else {
+                                    statusTag = ' (سود فوق قله 🟢)';
+                                    colorClass = 'pos';
+                                }
 
-                            if (!isRecovering) {
+                                dayItems.push({
+                                    title: app.title + statusTag,
+                                    percent: appPercentVal,
+                                    toman: appTomanProfit,
+                                    colorClass: colorClass,
+                                    status: appStatus
+                                });
+
                                 if (fundMonthlySums[app.id]) {
                                     fundMonthlySums[app.id].percentSum += appPercentVal;
                                     fundMonthlySums[app.id].tomanSum += appTomanProfit;
@@ -3045,32 +3114,61 @@
                                 totalMonthPercent += appPercentVal;
                                 totalMonthToman += appTomanProfit;
                             }
+                        } else {
+                            if (appTomanProfit > 0) {
+                                dayItems.push({
+                                    title: app.title + (isRecovering ? ' (جبران ضرر 🟡)' : ''),
+                                    percent: appPercentVal,
+                                    toman: appTomanProfit,
+                                    colorClass: isRecovering ? 'rec' : 'pos',
+                                    isRecovering: isRecovering
+                                });
+
+                                if (!isRecovering) {
+                                    if (fundMonthlySums[app.id]) {
+                                        fundMonthlySums[app.id].percentSum += appPercentVal;
+                                        fundMonthlySums[app.id].tomanSum += appTomanProfit;
+                                    }
+
+                                    totalMonthPercent += appPercentVal;
+                                    totalMonthToman += appTomanProfit;
+                                }
+                            }
                         }
                     });
 
-                    if (posItems.length > 0) {
+                    if (dayItems.length > 0) {
                         activeDaysCount++;
-                        const dayTotalToman = posItems.filter(item => !item.isRecovering).reduce((acc, curr) => acc + curr.toman, 0);
+                        let dayTotalToman = 0;
+                        if (isTotalGrowth) {
+                            dayTotalToman = dayItems.reduce((acc, curr) => acc + curr.toman, 0);
+                        } else {
+                            dayTotalToman = dayItems.filter(item => !item.isRecovering).reduce((acc, curr) => acc + curr.toman, 0);
+                        }
 
                         const dateStrFormatted = `${rYear}/${String(rMonth).padStart(2, '0')}/${String(rDay).padStart(2, '0')}`;
                         const timeStrFormatted = d.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
                         let rowsHtml = '';
-                        posItems.forEach((item, itemIdx) => {
+                        dayItems.forEach((item, itemIdx) => {
                             const bgClass = itemIdx % 2 === 0 ? 'yellow-bg' : 'white-bg';
+                            const sign = item.toman > 0 ? '+' : (item.toman < 0 ? '' : '');
                             rowsHtml += `
                                 <div class="fund-row ${bgClass}">
                                     <span class="fund-name">${item.title}</span>
-                                    <span class="fund-val pos">+${toDigit(item.percent.toFixed(2))}٪ (+${toDigit(item.toman.toLocaleString('en-US'))} تومان)</span>
+                                    <span class="fund-val ${item.colorClass}">${sign}${toDigit(item.percent.toFixed(2))}٪ (${sign}${toDigit(item.toman.toLocaleString('en-US'))} تومان)</span>
                                 </div>
                             `;
                         });
+
+                        const dayTotalSign = dayTotalToman > 0 ? '+' : '';
+                        const dayBadgeClass = dayTotalToman >= 0 ? 'pos-badge' : 'neg-badge';
 
                         dayBlocksHtml += `
                             <div class="day-block">
                                 <div class="day-block-header">
                                     <span>📅 تاریخ: ${toDigit(dateStrFormatted)} · ساعت ثبت: ${toDigit(timeStrFormatted)}</span>
-                                    <span class="day-total-badge">💰 مجموع روز: +${toDigit(dayTotalToman.toLocaleString('en-US'))} تومان</span>
+                                    <span class="day-total-badge ${dayBadgeClass}">💰 خالص روز: ${dayTotalSign}${toDigit(dayTotalToman.toLocaleString('en-US'))} تومان</span>
                                 </div>
                                 ${rowsHtml}
                             </div>
@@ -3089,13 +3187,17 @@
 
             appsInfo.forEach(app => {
                 const fundData = fundMonthlySums[app.id];
-                if (fundData && fundData.tomanSum > 0) {
+                if (fundData && (fundData.tomanSum !== 0 || fundData.percentSum !== 0)) {
                     hasAnySummary = true;
+                    const percentSign = fundData.percentSum > 0 ? '+' : '';
+                    const tomanSign = fundData.tomanSum > 0 ? '+' : '';
+                    const colorStyle = fundData.tomanSum >= 0 ? 'color: #16a34a;' : 'color: #dc2626;';
+
                     summaryRowsHtml += `
                         <tr>
                             <td><strong>${fundData.title}</strong></td>
-                            <td style="text-align: center; color: #16a34a; font-weight: bold;">+${toDigit(fundData.percentSum.toFixed(2))}٪</td>
-                            <td style="text-align: left; color: #16a34a; font-weight: bold;">+${toDigit(fundData.tomanSum.toLocaleString('en-US'))} تومان</td>
+                            <td style="text-align: center; ${colorStyle} font-weight: bold;">${percentSign}${toDigit(fundData.percentSum.toFixed(2))}٪</td>
+                            <td style="text-align: left; ${colorStyle} font-weight: bold;">${tomanSign}${toDigit(fundData.tomanSum.toLocaleString('en-US'))} تومان</td>
                         </tr>
                     `;
                 }
@@ -3103,6 +3205,14 @@
 
             let summaryTableHtml = '';
             if (hasAnySummary) {
+                const totalTomanSign = totalMonthToman > 0 ? '+' : '';
+                const totalPercentSign = totalMonthPercent > 0 ? '+' : '';
+                const totalColorStyle = totalMonthToman >= 0 ? 'color: #16a34a;' : 'color: #dc2626;';
+
+                const avgTomanSign = avgMonthToman > 0 ? '+' : '';
+                const avgPercentSign = avgMonthPercent > 0 ? '+' : '';
+                const avgColorStyle = avgMonthToman >= 0 ? 'color: #16a34a;' : 'color: #dc2626;';
+
                 summaryTableHtml = `
                     <h4 style="margin-bottom: 10px; color: var(--header-bg, #1e3a8a);">📊 خلاصه تفکیکی عملکرد هر صندوق در این ماه:</h4>
                     <table class="summary-table">
@@ -3110,20 +3220,20 @@
                             <tr>
                                 <th>نام صندوق</th>
                                 <th style="text-align: center;">مجموع درصد ماه</th>
-                                <th style="text-align: left;">مجموع سود تومانی ماه</th>
+                                <th style="text-align: left;">خالص عملکرد تومانی ماه</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${summaryRowsHtml}
                             <tr class="total-row">
-                                <td><strong>🏆 مجموع کل عملکرد ماه</strong></td>
-                                <td style="text-align: center; color: #16a34a; font-weight: 800; font-size: 13px;">+${toDigit(totalMonthPercent.toFixed(2))}٪</td>
-                                <td style="text-align: left; color: #16a34a; font-weight: 800; font-size: 13px;">+${toDigit(totalMonthToman.toLocaleString('en-US'))} تومان</td>
+                                <td><strong>🏆 خالص کل عملکرد ماه</strong></td>
+                                <td style="text-align: center; ${totalColorStyle} font-weight: 800; font-size: 13px;">${totalPercentSign}${toDigit(totalMonthPercent.toFixed(2))}٪</td>
+                                <td style="text-align: left; ${totalColorStyle} font-weight: 800; font-size: 13px;">${totalTomanSign}${toDigit(totalMonthToman.toLocaleString('en-US'))} تومان</td>
                             </tr>
                             <tr class="total-row" style="background: rgba(16, 185, 129, 0.12);">
                                 <td><strong>📈 میانگین روزانه عملکرد ماه (${toDigit(activeDaysCount)} روز)</strong></td>
-                                <td style="text-align: center; color: #16a34a; font-weight: 800; font-size: 13px;">+${toDigit(avgMonthPercent.toFixed(2))}٪</td>
-                                <td style="text-align: left; color: #16a34a; font-weight: 800; font-size: 13px;">+${toDigit(avgMonthToman.toLocaleString('en-US'))} تومان</td>
+                                <td style="text-align: center; ${avgColorStyle} font-weight: 800; font-size: 13px;">${avgPercentSign}${toDigit(avgMonthPercent.toFixed(2))}٪</td>
+                                <td style="text-align: left; ${avgColorStyle} font-weight: 800; font-size: 13px;">${avgTomanSign}${toDigit(avgMonthToman.toLocaleString('en-US'))} تومان</td>
                             </tr>
                         </tbody>
                     </table>
@@ -3133,18 +3243,19 @@
             if (!dayBlocksHtml) {
                 dayBlocksHtml = `
                     <div style="text-align: center; padding: 40px; color: #64748b; font-size: 13px; border: 1px dashed #cbd5e1; border-radius: 12px;">
-                        📭 هیچ سود مثبتی برای این ماه ثبت نشده است.
+                        📭 هیچ ثبتی برای این ماه پیدا نشد.
                     </div>
                 `;
             }
 
             const monthIdxStr = String(monthIdx).padStart(2, '0');
+            const totalSignHeader = totalMonthToman > 0 ? '+' : '';
 
             const bankDocHtml = `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>صورت‌حساب تاریخچه زرین - ${monthName} ${toDigit(year)}</title>
+<title>صورت‌حساب ${reportTypeName} - ${monthName} ${toDigit(year)}</title>
 <style>
     @page { size: A4; margin: 12mm; }
     :root {
@@ -3314,6 +3425,11 @@
         font-size: 12px;
     }
     .fund-val.pos { color: #16a34a; }
+    .fund-val.rec { color: #d97706; }
+    .fund-val.neg { color: #dc2626; }
+    .badge-red { color: #dc2626; font-weight: bold; }
+    .day-total-badge.pos-badge { background: var(--badge-yellow-bg); color: var(--badge-yellow-text); }
+    .day-total-badge.neg-badge { background: #fee2e2; color: #991b1b; }
 
     .footer-stamp {
         margin-top: 25px;
@@ -3362,7 +3478,7 @@
     <tr>
         <td class="header-title-cell">
             <div class="header-title">🏛️ بانک متمرکز عمارت دیجیتال</div>
-            <div class="header-sub">صورت‌حساب رسمی بانکی · گردش روزانه تاریخچه زرین سودهای مثبت</div>
+            <div class="header-sub">صورت‌حساب رسمی بانکی · گردش روزانه ${reportTypeName}</div>
         </td>
     </tr>
 </table>
@@ -3376,27 +3492,27 @@
     </tr>
     <tr>
         <td class="info-label">🏷️ نوع صورت‌حساب:</td>
-        <td class="info-val">تاریخچه زرین (فقط سودهای مثبت)</td>
+        <td class="info-val">${reportTypeName}</td>
         <td class="info-label">🏷️ کد پیگیری:</td>
-        <td class="info-val">EMR-${toDigit(year)}-${toDigit(monthIdxStr)}-ZARIN</td>
+        <td class="info-val">EMR-${toDigit(year)}-${toDigit(monthIdxStr)}-${isTotalGrowth ? 'TOTAL' : 'ZARIN'}</td>
     </tr>
     <tr>
-        <td class="info-label">💰 مجموع سود تومانی ماه:</td>
-        <td class="info-val badge-green">+${toDigit(totalMonthToman.toLocaleString('en-US'))} تومان</td>
-        <td class="info-label">📊 مجموع سود درصدی ماه:</td>
-        <td class="info-val badge-green">+${toDigit(totalMonthPercent.toFixed(2))}٪</td>
+        <td class="info-label">💰 خالص عملکرد تومانی ماه:</td>
+        <td class="info-val ${totalMonthToman >= 0 ? 'badge-green' : 'badge-red'}">${totalSignHeader}${toDigit(totalMonthToman.toLocaleString('en-US'))} تومان</td>
+        <td class="info-label">📊 خالص عملکرد درصدی ماه:</td>
+        <td class="info-val ${totalMonthPercent >= 0 ? 'badge-green' : 'badge-red'}">${totalMonthPercent > 0 ? '+' : ''}${toDigit(totalMonthPercent.toFixed(2))}٪</td>
     </tr>
     <tr>
-        <td class="info-label">💸 میانگین روزانه سود تومانی:</td>
-        <td class="info-val badge-green">+${toDigit(avgMonthToman.toLocaleString('en-US'))} تومان</td>
-        <td class="info-label">📈 میانگین روزانه سود درصدی:</td>
-        <td class="info-val badge-green">+${toDigit(avgMonthPercent.toFixed(2))}٪</td>
+        <td class="info-label">💸 میانگین روزانه عملکرد تومانی:</td>
+        <td class="info-val ${avgMonthToman >= 0 ? 'badge-green' : 'badge-red'}">${avgMonthToman > 0 ? '+' : ''}${toDigit(avgMonthToman.toLocaleString('en-US'))} تومان</td>
+        <td class="info-label">📈 میانگین روزانه عملکرد درصدی:</td>
+        <td class="info-val ${avgMonthPercent >= 0 ? 'badge-green' : 'badge-red'}">${avgMonthPercent > 0 ? '+' : ''}${toDigit(avgMonthPercent.toFixed(2))}٪</td>
     </tr>
 </table>
 
 ${summaryTableHtml}
 
-<h4 style="margin-bottom: 10px; color: var(--header-bg, #1e3a8a);">📋 ریز صورت‌حساب سودهای مثبت روزانه (کادرهای زرد و سفید):</h4>
+<h4 style="margin-bottom: 10px; color: var(--header-bg, #1e3a8a);">📋 ریز صورت‌حساب ${reportTypeName} روزانه:</h4>
 
 ${dayBlocksHtml}
 
