@@ -23,7 +23,7 @@ html_icon = '''<!DOCTYPE html>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
     <!-- Background Gradient -->
-    <radialGradient id="bgGrad" cx="50%" cy="35%" r="70%">
+    <radialGradient id="bgGrad" cx="50%" cy="35%" r="75%">
       <stop offset="0%" stop-color="#1e293b"/>
       <stop offset="60%" stop-color="#0f172a"/>
       <stop offset="100%" stop-color="#020617"/>
@@ -32,16 +32,17 @@ html_icon = '''<!DOCTYPE html>
     <!-- Metallic Shield Gradient -->
     <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="30%" stop-color="#cbd5e1"/>
+      <stop offset="35%" stop-color="#cbd5e1"/>
       <stop offset="70%" stop-color="#64748b"/>
       <stop offset="100%" stop-color="#334155"/>
     </linearGradient>
 
-    <!-- Golden Arrow Gradient -->
+    <!-- Golden Download Arrow Gradient -->
     <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fef08a"/>
-      <stop offset="30%" stop-color="#facc15"/>
-      <stop offset="70%" stop-color="#eab308"/>
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="20%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#facc15"/>
+      <stop offset="80%" stop-color="#eab308"/>
       <stop offset="100%" stop-color="#ca8a04"/>
     </linearGradient>
 
@@ -53,64 +54,75 @@ html_icon = '''<!DOCTYPE html>
     </linearGradient>
 
     <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feGaussianBlur stdDeviation="10" result="blur"/>
       <feComposite in="SourceGraphic" in2="blur" operator="over"/>
     </filter>
 
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000000" flood-opacity="0.65"/>
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000000" flood-opacity="0.7"/>
     </filter>
   </defs>
 
-  <!-- Base Squircle -->
+  <!-- Base Rounded Squircle -->
   <rect width="512" height="512" rx="120" fill="url(#bgGrad)"/>
-  <rect width="502" height="504" x="5" y="4" rx="116" fill="none" stroke="url(#blueGrad)" stroke-width="6" opacity="0.8"/>
+  <rect width="502" height="504" x="5" y="4" rx="116" fill="none" stroke="url(#blueGrad)" stroke-width="8" opacity="0.85"/>
 
   <!-- Glowing Rim Light -->
-  <circle cx="256" cy="256" r="210" fill="none" stroke="#38bdf8" stroke-width="2" opacity="0.3" filter="url(#glow)"/>
+  <circle cx="256" cy="256" r="215" fill="none" stroke="#38bdf8" stroke-width="3" opacity="0.35" filter="url(#glow)"/>
 
-  <!-- 3D Metallic Outer Shield -->
+  <!-- 3D Metallic Outer Shield Frame -->
   <g filter="url(#shadow)">
-    <path d="M 256 70
-             C 340 70, 400 95, 400 160
-             C 400 280, 320 380, 256 440
-             C 192 380, 112 280, 112 160
-             C 112 95, 172 70, 256 70 Z"
+    <path d="M 256 60
+             C 345 60, 410 88, 410 155
+             C 410 285, 325 390, 256 450
+             C 187 390, 102 285, 102 155
+             C 102 88, 167 60, 256 60 Z"
           fill="url(#shieldGrad)"/>
 
-    <path d="M 256 86
-             C 328 86, 380 108, 380 165
-             C 380 268, 308 358, 256 418
-             C 204 358, 132 268, 132 165
-             C 132 108, 184 86, 256 86 Z"
+    <path d="M 256 78
+             C 332 78, 388 102, 388 160
+             C 388 272, 312 368, 256 426
+             C 200 368, 124 272, 124 160
+             C 124 102, 180 78, 256 78 Z"
           fill="#0f172a"/>
   </g>
 
-  <!-- Inner Blue Arc & Golden Download Arrow -->
+  <!-- PROMINENT 3D DOWNLOAD SYMBOL -->
   <g filter="url(#shadow)">
-    <!-- Inner Blue Core -->
-    <path d="M 256 102
-             C 314 102, 360 120, 360 170
-             C 360 255, 298 335, 256 392
-             C 214 335, 152 255, 152 170
-             C 152 120, 198 102, 256 102 Z"
-          fill="url(#blueGrad)" opacity="0.35"/>
+    <!-- Inner Blue Glowing Shield Core -->
+    <path d="M 256 96
+             C 318 96, 366 116, 366 165
+             C 366 258, 298 345, 256 400
+             C 214 345, 146 258, 146 165
+             C 146 116, 194 96, 256 96 Z"
+          fill="url(#blueGrad)" opacity="0.4"/>
 
-    <!-- Golden 3D Download Arrow -->
-    <path d="M 216 130
-             L 296 130
-             L 296 220
-             L 346 220
-             L 256 320
-             L 166 220
-             L 216 220 Z"
+    <!-- Large Bold 3D Golden Download Arrow (نماد دانلود برجسته) -->
+    <path d="M 206 115
+             L 306 115
+             L 306 215
+             L 366 215
+             L 256 335
+             L 146 215
+             L 206 215 Z"
           fill="url(#goldGrad)"
-          stroke="#fef08a"
-          stroke-width="3"
+          stroke="#ffffff"
+          stroke-width="4"
           filter="url(#glow)"/>
 
-    <!-- Bottom Shield Tray Base -->
-    <rect x="186" y="340" width="140" height="24" rx="12" fill="url(#goldGrad)" filter="url(#glow)"/>
+    <!-- 3D Download Tray / Base Bracket -->
+    <path d="M 156 330
+             L 156 375
+             C 156 385, 166 395, 176 395
+             L 336 395
+             C 346 395, 356 385, 356 375
+             L 356 330"
+          fill="none"
+          stroke="url(#goldGrad)"
+          stroke-width="22"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          filter="url(#glow)"/>
   </g>
 </svg>
 </body>
@@ -131,7 +143,6 @@ async def generate_icons():
         os.makedirs(os.path.dirname(icon_512), exist_ok=True)
         await page.screenshot(path=icon_512, omit_background=True)
 
-        # Generate Android mipmap sizes
         densities = {
             "mipmap-mdpi": 48,
             "mipmap-hdpi": 72,
@@ -147,7 +158,6 @@ async def generate_icons():
             p_res = await browser.new_page(viewport={"width": size, "height": size})
             await p_res.goto(f"file://{os.path.abspath(temp_html)}")
 
-            # Save square and round icons
             await p_res.screenshot(path=f"{dir_path}/ic_launcher.png", omit_background=True)
             await p_res.screenshot(path=f"{dir_path}/ic_launcher_round.png", omit_background=True)
             await p_res.close()
@@ -157,7 +167,7 @@ async def generate_icons():
     if os.path.exists(temp_html):
         os.remove(temp_html)
 
-    print("Android 3D Launcher icons generated successfully across all mipmap resolutions!")
+    print("Prominent Download Symbol 3D Launcher Icons generated successfully across all mipmaps!")
 
 if __name__ == "__main__":
     asyncio.run(generate_icons())
