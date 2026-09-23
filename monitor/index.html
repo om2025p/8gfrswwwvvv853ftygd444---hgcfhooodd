@@ -629,13 +629,13 @@
 
         .ai-content {
             font-size: 0.98rem;
-            line-height: 2.1;
+            line-height: 2.2;
             color: #fef08a;
             font-weight: 700;
-            text-align: justify;
+            text-align: right;
+            direction: rtl;
             min-height: 40px;
-            display: flex;
-            align-items: center;
+            word-break: break-word;
             text-shadow: 0 1px 3px rgba(0,0,0,0.9);
         }
 
@@ -1305,11 +1305,11 @@
         function formatAiTextWith3DCapsules(text) {
             if (!text) return '';
 
-            const greenCapsule = (match) => `<span style="background: linear-gradient(135deg, rgba(22, 163, 74, 0.4), rgba(34, 197, 94, 0.2)); color: #86efac; border: 1px solid #4ade80; padding: 3px 10px; border-radius: 20px; font-weight: 800; direction: ltr; display: inline-block; box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 12px rgba(22,163,74,0.4);">${match}</span>`;
-            const goldCapsule = (match) => `<span style="background: linear-gradient(135deg, rgba(217, 119, 6, 0.4), rgba(245, 158, 11, 0.2)); color: #fef08a; border: 1px solid #facc15; padding: 3px 10px; border-radius: 20px; font-weight: 800; direction: ltr; display: inline-block; box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 12px rgba(217,119,6,0.4);">${match}</span>`;
-            const purpleCapsule = (match) => `<span style="background: linear-gradient(135deg, rgba(147, 51, 234, 0.4), rgba(168, 85, 247, 0.2)); color: #f5d0fe; border: 1px solid #c084fc; padding: 3px 10px; border-radius: 20px; font-weight: 800; direction: ltr; display: inline-block; box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 12px rgba(147,51,234,0.4);">${match}</span>`;
+            const greenCapsule = (match) => `<span style="background: linear-gradient(135deg, rgba(22, 163, 74, 0.4), rgba(34, 197, 94, 0.2)); color: #86efac; border: 1px solid #4ade80; padding: 2px 10px; border-radius: 20px; font-weight: 800; direction: ltr; unicode-bidi: isolate; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; margin: 2px 4px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 12px rgba(22,163,74,0.4);">${match}</span>`;
+            const goldCapsule = (match) => `<span style="background: linear-gradient(135deg, rgba(217, 119, 6, 0.4), rgba(245, 158, 11, 0.2)); color: #fef08a; border: 1px solid #facc15; padding: 2px 10px; border-radius: 20px; font-weight: 800; direction: ltr; unicode-bidi: isolate; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; margin: 2px 4px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 12px rgba(217,119,6,0.4);">${match}</span>`;
+            const purpleCapsule = (match) => `<span style="background: linear-gradient(135deg, rgba(147, 51, 234, 0.4), rgba(168, 85, 247, 0.2)); color: #f5d0fe; border: 1px solid #c084fc; padding: 2px 10px; border-radius: 20px; font-weight: 800; direction: ltr; unicode-bidi: isolate; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; margin: 2px 4px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 12px rgba(147,51,234,0.4);">${match}</span>`;
 
-            return text.replace(/(\+\d+(?:\.\d+)?%?|\d+(?:\.\d+)?%|\d+(?:\.\d+)?٪|۳۰۰۰٪|۳۰۰۰%)/g, (match) => {
+            return text.replace(/(\+[\d\u06f0-\u06f9]+(?:\.[\d\u06f0-\u06f9]+)?%?|[\d\u06f0-\u06f9]+(?:\.[\d\u06f0-\u06f9]+)?[%٪])/g, (match) => {
                 if (match.startsWith('+')) {
                     return greenCapsule(match);
                 } else if (match.includes('3000') || match.includes('۳۰۰۰')) {
@@ -2466,15 +2466,17 @@
 
             const prompt = `
                 تو یک هوش مصنوعی بسیار باهوش، رفیق شفیق، با نمک و کمی شوخ‌طبع برای عمارت دیجیتال هستی.
-                امروز هر ۸ درصد ثبت شدند.
+                امروز هر ۸ درصد ثبت شدند. اطلاعات واقعی و دقیق امروز به شرح زیر است:
                 - سود فوق قله ثبت‌شده امروز: +${currentDaySum.toFixed(2)}%
-                - مجموع سودهای فوق قله کل تا قبل از امروز: ${pastCumulative.toFixed(2)}%
-                - مجموع سود تراکمی فوق قله تا به امروز: ${totalCumulativePercent.toFixed(2)}%
-                - هدف نهایی: رسیدن به ${targetPercent}% سود تراکمی کل است.
+                - مجموع سودهای فوق قله تا قبل از امروز: ${pastCumulative.toFixed(2)}%
+                - مجموع کل سود تراکمی فوق قله تا به امروز: ${totalCumulativePercent.toFixed(2)}%
+                - هدف نهایی: رسیدن به 3000% سود تراکمی کل.
                 - فاصله واقعی باقی‌مانده تا قله ۳۰۰۰٪: ${remainingToTarget.toFixed(2)}%
 
-                نکته مهم: هدف ۳۰۰۰٪ یک هدف تراکمی کل از تمام روزهای گذشته است و امروز هم +${currentDaySum.toFixed(2)}% به آن اضافه شده است.
-                با توجه به این اعداد و میزان پیشرفت تا قله ۳۰۰۰٪، یک جمله‌ی فارسی بسیار جذاب، شیوا، امیدبخش و شوخ‌طبعانه (حداکثر در ۳ خط کوتاه) بگو که هم سود امروز و هم پیشرفت تراکمی کل تا قله ۳۰۰۰٪ را منعکس کند. به هیچ وجه متن طولانی ننویس.
+                دستورالعمل مهم:
+                ۱. حتماً و دقیقاً از همین اعداد داده شده بالا (+${currentDaySum.toFixed(2)}% برای امروز، ${totalCumulativePercent.toFixed(2)}% برای مجموع کل تا کنون، و ${remainingToTarget.toFixed(2)}% برای فاصله باقی‌مانده تا قله ۳۰۰۰٪) استفاده کن و هیچ عدد فرضی یا گردشده‌ی من‌درآوردی دیگری نساز.
+                ۲. درصدها را با علامت % بنویس (مثلاً +${currentDaySum.toFixed(2)}%، ${totalCumulativePercent.toFixed(2)}%، ${remainingToTarget.toFixed(2)}%، 3000%).
+                ۳. یک متن فارسی جذاب، روان، امیدبخش و شوخ‌طبعانه در ۳ خط کوتاه بگو که هم سود امروز و هم پیشرفت تراکمی تا قله ۳۰۰۰٪ را منعکس کند.
             `;
 
             let resultText = '';

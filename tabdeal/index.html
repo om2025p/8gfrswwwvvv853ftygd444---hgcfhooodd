@@ -531,6 +531,90 @@
     <script>
         const CF_WORKER_URL = "https://emarat-tabdeal-worker.qqqggggcc.workers.dev";
 
+        /* ===== IndexedDB Storage Engine (TabdealWalletDB) ===== */
+        const DB_NAME = "TabdealWalletDB";
+        const DB_VERSION = 1;
+        const STORE_NAME = "wallet_history";
+
+        function openWalletDB() {
+            return new Promise((resolve, reject) => {
+                if (!window.indexedDB) {
+                    resolve(null);
+                    return;
+                }
+                const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = () => resolve(null);
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: "timestamp" });
+                    }
+                };
+            });
+        }
+
+        async function saveWalletHistoryToIndexedDB(history) {
+            try {
+                const db = await openWalletDB();
+                if (!db) return;
+                const tx = db.transaction(STORE_NAME, "readwrite");
+                const store = tx.objectStore(STORE_NAME);
+                history.forEach(item => {
+                    if (item && item.timestamp) {
+                        store.put(item);
+                    }
+                });
+            } catch (e) {
+                console.warn("IndexedDB write failed:", e);
+            }
+        }
+
+        async function getWalletHistoryFromIndexedDB() {
+            try {
+                const db = await openWalletDB();
+                if (!db) return [];
+                return new Promise((resolve) => {
+                    const tx = db.transaction(STORE_NAME, "readonly");
+                    const store = tx.objectStore(STORE_NAME);
+                    const req = store.getAll();
+                    req.onsuccess = () => {
+                        const items = req.result || [];
+                        items.sort((a, b) => a.timestamp - b.timestamp);
+                        resolve(items);
+                    };
+                    req.onerror = () => resolve([]);
+                });
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function mergeHistories(h1, h2) {
+            const map = new Map();
+            (h1 || []).forEach(item => {
+                if (item && item.date_str_jalali) {
+                    map.set(item.date_str_jalali, item);
+                } else if (item && item.timestamp) {
+                    map.set(item.timestamp, item);
+                }
+            });
+            (h2 || []).forEach(item => {
+                if (item && item.date_str_jalali) {
+                    if (!map.has(item.date_str_jalali) || (item.timestamp > (map.get(item.date_str_jalali).timestamp || 0))) {
+                        map.set(item.date_str_jalali, item);
+                    }
+                } else if (item && item.timestamp) {
+                    if (!map.has(item.timestamp)) {
+                        map.set(item.timestamp, item);
+                    }
+                }
+            });
+            const merged = Array.from(map.values());
+            merged.sort((a, b) => a.timestamp - b.timestamp);
+            return merged;
+        }
+
         function updateLogoutButtonVisibility() {
             const logoutBtn = document.getElementById('logoutBtn');
             if (localStorage.getItem("tabdeal_api_key")) {
@@ -540,7 +624,7 @@
             }
         }
 
-        function logoutWallet() {
+        async function logoutWallet() {
             if (confirm("آلپ عزیز، آیا واقعاً می‌خواهید از کیف پول صرافی تبدیل خارج شوید و اطلاعات محلی را پاکسازی کنید؟ 🚪🔐")) {
                 localStorage.removeItem("tabdeal_api_key");
                 localStorage.removeItem("tabdeal_api_secret");
@@ -551,6 +635,14 @@
                 localStorage.removeItem("tabdeal_last_value_tether");
                 localStorage.removeItem("tabdeal_last_updated_ts");
                 localStorage.removeItem("tabdeal_wallet_history");
+
+                try {
+                    const db = await openWalletDB();
+                    if (db) {
+                        const tx = db.transaction(STORE_NAME, "readwrite");
+                        tx.objectStore(STORE_NAME).clear();
+                    }
+                } catch(e) {}
 
                 alert("🚪 اطلاعات با موفقیت پاکسازی شد. به امید سودهای فضایی بعدی!");
                 window.location.reload();
@@ -671,7 +763,14 @@
                 const totalIrt = data.total_irt;
                 const totalUsdt = data.total_usdt;
                 const usdtPrice = data.usdt_irt_price || 91500;
-                const history = data.history || [];
+                let serverHistory = data.history || [];
+
+                let localHistoryRaw = localStorage.getItem("tabdeal_wallet_history");
+                let localHistory = [];
+                try { localHistory = JSON.parse(localHistoryRaw) || []; } catch(e) {}
+                let idbHistory = await getWalletHistoryFromIndexedDB();
+
+                let combined = mergeHistories(mergeHistories(localHistory, idbHistory), serverHistory);
 
                 document.getElementById('valToman').innerHTML = `${formatNumberPersian(Math.round(totalIrt))} <span style="color: #10b981; font-weight: 900; margin-right: 8px; font-size: 1.5rem; text-shadow: 0 0 10px rgba(16,185,129,0.3); vertical-align: middle;">تومان</span>`;
                 document.getElementById('valTether').innerHTML = `${formatNumberPersian(totalUsdt.toFixed(2))} <span style="color: #3b82f6; font-weight: 900; margin-right: 6px; font-size: 1.1rem; text-shadow: 0 0 10px rgba(59,130,246,0.3); vertical-align: middle;">تتر (USDT)</span>`;
@@ -679,7 +778,7 @@
 
                 updateLogoutButtonVisibility();
 
-                renderWalletUI(history, totalIrt, totalUsdt, usdtPrice);
+                renderWalletUI(combined, totalIrt, totalUsdt, usdtPrice);
 
                 loader.style.display = 'none';
                 dataSection.style.display = 'flex';
@@ -694,10 +793,13 @@
             }
         }
 
-        function renderFromLocalCache() {
+        async function renderFromLocalCache() {
             let historyRaw = localStorage.getItem("tabdeal_wallet_history");
-            let history = [];
-            try { history = JSON.parse(historyRaw) || []; } catch(e) {}
+            let localHistory = [];
+            try { localHistory = JSON.parse(historyRaw) || []; } catch(e) {}
+
+            let idbHistory = await getWalletHistoryFromIndexedDB();
+            let history = mergeHistories(localHistory, idbHistory);
 
             if (history.length > 0) {
                 const last = history[history.length - 1];
@@ -718,6 +820,7 @@
             if (!Array.isArray(history) || history.length === 0) return;
 
             localStorage.setItem("tabdeal_wallet_history", JSON.stringify(history));
+            saveWalletHistoryToIndexedDB(history);
 
             const lastItem = history[history.length - 1];
             const pct24h = lastItem.percent_24h || 0;
