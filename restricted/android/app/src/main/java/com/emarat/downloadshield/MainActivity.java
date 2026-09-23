@@ -403,6 +403,9 @@ public class MainActivity extends AppCompatActivity {
         loadHistory();
     }
 
+    private boolean isMonitoringServerForCompletion = false;
+    private long lastHandledCompletedRunId = -1;
+
     private void dispatchToGitHub(String link, String historyId) {
         SharedPreferences prefs = getSharedPreferences("restricted_bot_prefs", MODE_PRIVATE);
         final String fullRepo = NotificationInputReceiver.getFullRepoPath(prefs);
@@ -465,8 +468,10 @@ public class MainActivity extends AppCompatActivity {
                     int code = response.code();
                     mainHandler.post(() -> {
                         if (response.isSuccessful() || code == 204) {
-                            show2SecondToast("🎬 کلیپ با موفقیت به تلگرام ارسال شد 🚀");
-                            updateHistoryItemStatus(historyId, "completed", "ارسال به گیت‌هاب انجام شد 📥", null);
+                            Toast.makeText(MainActivity.this, "⚡ درخواست به سرور ارسال شد (در حال دانلود و ارسال به تلگرام...)", Toast.LENGTH_SHORT).show();
+                            isMonitoringServerForCompletion = true;
+                            updateHistoryItemStatus(historyId, "in_progress", "⚡ در حال دانلود در سرور...", null);
+                            checkServerStatus();
                         } else {
                             String msg = "پاسخ گیت‌هاب کد " + code;
                             Toast.makeText(MainActivity.this, "⚠️ " + msg, Toast.LENGTH_LONG).show();
@@ -524,16 +529,23 @@ public class MainActivity extends AppCompatActivity {
                             String status = run.optString("status");
                             String conclusion = run.optString("conclusion");
 
+                            final long currentRunId = run.optLong("id", -1);
                             mainHandler.post(() -> {
                                 if ("completed".equals(status)) {
                                     if ("success".equals(conclusion)) {
                                         tvServerStatus.setText("آماده به کار (موتور فعال) ✅");
                                         tvServerStatus.setTextColor(0xFF16A34A);
+                                        if (isMonitoringServerForCompletion && currentRunId != lastHandledCompletedRunId) {
+                                            isMonitoringServerForCompletion = false;
+                                            lastHandledCompletedRunId = currentRunId;
+                                            show2SecondToast("🎬 کلیپ با موفقیت به تلگرام ارسال شد 🚀");
+                                        }
                                     } else {
                                         tvServerStatus.setText("آخرین اجرا ناموفق ❌");
                                         tvServerStatus.setTextColor(0xFFEF4444);
                                     }
                                 } else if ("in_progress".equals(status)) {
+                                    isMonitoringServerForCompletion = true;
                                     tvServerStatus.setText("در حال دانلود / پردازش ⚡");
                                     tvServerStatus.setTextColor(0xFF0284C7);
                                 } else {
