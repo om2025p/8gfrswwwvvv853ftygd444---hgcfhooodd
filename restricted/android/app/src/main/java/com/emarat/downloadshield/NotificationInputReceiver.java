@@ -62,7 +62,7 @@ public class NotificationInputReceiver extends BroadcastReceiver {
         } else if (ACTION_QUICK_PASTE.equals(action)) {
             Log.d(TAG, "📋 پردازش چسباندن ۱۰۰٪ پس‌زمینه بدون باز شدن برنامه...");
 
-            // اولویت اول: استعلام مستقیم کلیپ‌بورد سیستم
+            // اولویت اول: استعلام مستقیم کلیپ‌بورد سیستم بدون محدودیت طول متن
             ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
             try {
                 if (clipboardManager != null && clipboardManager.hasPrimaryClip()) {
@@ -71,10 +71,7 @@ public class NotificationInputReceiver extends BroadcastReceiver {
                         CharSequence text = clip.getItemAt(0).getText();
                         if (text != null) {
                             String raw = text.toString().trim();
-                            Matcher matcher = URL_PATTERN.matcher(raw);
-                            if (matcher.find()) {
-                                linkToDownload = matcher.group(1);
-                            } else if (raw.startsWith("http://") || raw.startsWith("https://")) {
+                            if (!raw.isEmpty()) {
                                 linkToDownload = raw;
                             }
                         }
@@ -129,6 +126,15 @@ public class NotificationInputReceiver extends BroadcastReceiver {
         } catch (Exception e) {
             Log.e(TAG, "❌ خطا در ثبت لینک منحصربه‌فرد: " + e.getMessage());
         }
+    }
+
+    public static void show2SecondToast(Context context, String message) {
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        mainHandler.post(() -> {
+            Toast toast = Toast.makeText(context, message, Toast.LENGTH_SHORT);
+            toast.show();
+            mainHandler.postDelayed(toast::cancel, 2000);
+        });
     }
 
     public static void saveNativeDownloadHistory(Context context, String link, String statusText) {
@@ -256,7 +262,7 @@ public class NotificationInputReceiver extends BroadcastReceiver {
             public void onResponse(Call call, Response response) throws IOException {
                 int code = response.code();
                 if (response.isSuccessful() || code == 204) {
-                    mainHandler.post(() -> Toast.makeText(context, "✅ دانلود با موفقیت در پس‌زمینه به گیت‌هاب فرستاده شد 🚀", Toast.LENGTH_LONG).show());
+                    show2SecondToast(context, "🎬 کلیپ با موفقیت به تلگرام ارسال شد 🚀");
                 } else if (code == 404) {
                     mainHandler.post(() -> Toast.makeText(context, "❌ خطا ۴۰۴: مخزن (" + fullRepo + ") یا ورک‌فلو یافت نشد!", Toast.LENGTH_LONG).show());
                 } else if (code == 401) {

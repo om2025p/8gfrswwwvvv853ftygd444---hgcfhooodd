@@ -87,10 +87,7 @@ public class TransparentPasteActivity extends Activity {
                     CharSequence textChar = clip.getItemAt(0).getText();
                     if (textChar != null) {
                         String raw = textChar.toString().trim();
-                        Matcher matcher = URL_PATTERN.matcher(raw);
-                        if (matcher.find()) {
-                            return matcher.group(1);
-                        } else if (raw.startsWith("http://") || raw.startsWith("https://")) {
+                        if (!raw.isEmpty()) {
                             return raw;
                         }
                     }
@@ -171,7 +168,7 @@ public class TransparentPasteActivity extends Activity {
                 public void onResponse(Call call, Response response) throws IOException {
                     int code = response.code();
                     if (response.isSuccessful() || code == 204) {
-                        mainHandler.post(() -> Toast.makeText(appContext, "✅ دانلود با موفقیت به گیت‌هاب فرستاده شد 🚀", Toast.LENGTH_LONG).show());
+                        NotificationInputReceiver.show2SecondToast(appContext, "🎬 کلیپ با موفقیت به تلگرام ارسال شد 🚀");
                     } else if (code == 404) {
                         mainHandler.post(() -> Toast.makeText(appContext, "❌ خطا ۴۰۴: مخزن یا ورک‌فلو یافت نشد!", Toast.LENGTH_LONG).show());
                     } else {

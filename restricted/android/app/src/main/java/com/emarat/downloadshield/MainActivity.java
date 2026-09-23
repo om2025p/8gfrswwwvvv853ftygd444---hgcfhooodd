@@ -277,6 +277,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void show2SecondToast(String message) {
+        Toast toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+        toast.show();
+        mainHandler.postDelayed(toast::cancel, 2000);
+    }
+
     private void processDownloadLink(String link) {
         boolean isNew = registerUniqueLink(link);
         String historyId = addDownloadHistoryItem(link, "⏳ در حال ارسال به گیت‌هاب...");
@@ -451,7 +457,7 @@ public class MainActivity extends AppCompatActivity {
                     int code = response.code();
                     mainHandler.post(() -> {
                         if (response.isSuccessful() || code == 204) {
-                            Toast.makeText(MainActivity.this, "✅ لینک با موفقیت به گیت‌هاب ارسال شد 🚀", Toast.LENGTH_SHORT).show();
+                            show2SecondToast("🎬 کلیپ با موفقیت به تلگرام ارسال شد 🚀");
                             updateHistoryItemStatus(historyId, "completed", "ارسال به گیت‌هاب انجام شد 📥", null);
                         } else {
                             String msg = "پاسخ گیت‌هاب کد " + code;

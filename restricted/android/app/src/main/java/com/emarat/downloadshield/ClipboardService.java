@@ -117,13 +117,9 @@ public class ClipboardService extends Service {
                 CharSequence textChar = clip.getItemAt(0).getText();
                 if (textChar != null) {
                     String raw = textChar.toString().trim();
-                    Matcher matcher = URL_PATTERN.matcher(raw);
-                    if (matcher.find()) {
-                        lastCopiedUrl = matcher.group(1);
-                        Log.d(TAG, "به‌روزرسانی اولیه کش سرویس: " + lastCopiedUrl);
-                    } else if (raw.startsWith("http://") || raw.startsWith("https://")) {
+                    if (!raw.isEmpty()) {
                         lastCopiedUrl = raw;
-                        Log.d(TAG, "به‌روزرسانی اولیه کش سرویس: " + lastCopiedUrl);
+                        Log.d(TAG, "به‌روزرسانی اولیه کش سرویس (متن کامل بدون محدودیت): " + lastCopiedUrl);
                     }
                 }
             }
@@ -142,16 +138,9 @@ public class ClipboardService extends Service {
 
                 if (text.isEmpty() || text.equals(lastProcessedClip)) return;
 
-                Matcher matcher = URL_PATTERN.matcher(text);
-                if (matcher.find()) {
-                    lastCopiedUrl = matcher.group(1);
-                    lastProcessedClip = text;
-                    Log.d(TAG, "تغییر کلیپ‌بورد شناسایی شد: " + lastCopiedUrl);
-                } else if (text.startsWith("http://") || text.startsWith("https://")) {
-                    lastCopiedUrl = text;
-                    lastProcessedClip = text;
-                    Log.d(TAG, "تغییر کلیپ‌بورد شناسایی شد: " + lastCopiedUrl);
-                }
+                lastCopiedUrl = text;
+                lastProcessedClip = text;
+                Log.d(TAG, "تغییر کلیپ‌بورد شناسایی شد (متن کامل بدون محدودیت): " + lastCopiedUrl);
             }
         } catch (Exception e) {
             Log.e(TAG, "Error in processClipboard: " + e.getMessage());

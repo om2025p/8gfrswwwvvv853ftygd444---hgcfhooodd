@@ -1060,14 +1060,15 @@
         }
 
 
-        // نمایش توست
+        // نمایش توست (دقیقاً به مدت ۲ ثانیه)
         function showToast(msg) {
             const toast = document.getElementById('toast');
+            if (!toast) return;
             toast.innerText = msg;
             toast.classList.add('show');
             setTimeout(() => {
                 toast.classList.remove('show');
-            }, 3000);
+            }, 2000); // بازخورد دقیقاً ۲ ثانیه‌ای روی صفحه
         }
 
         // ==================== سیستم اعلان‌های دائمی و نوار وضعیت سیستم (Persistent Notification Bar) ====================
@@ -1438,6 +1439,7 @@
                         if (targetHistoryId) {
                             if (isSuccess) {
                                 updateDownloadHistoryStatus(targetHistoryId, 'completed', 'دانلود و ارسال تکمیل شد 📥');
+                                showToast("🎬 کلیپ با موفقیت به تلگرام ارسال شد 🚀");
                                 showPersistentNotification("✅ دانلود با موفقیت انجام شد!", "فایل با موفقیت استخراج و به تلگرام ارسال گردید.");
                             } else {
                                 updateDownloadHistoryStatus(targetHistoryId, 'failed', '❌ خطا در دانلود / اجرای ناموفق', 'اجرای سرور گیت‌هاب با خطا مواجه شد. لطفاً پنل دیاگ یا تلگرام را چک فرمایید.');
