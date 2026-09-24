@@ -95,3 +95,15 @@ jobs:
             git commit -m "chore(gallery): update persistent photo history and gallery stats [skip ci]"
             git push origin HEAD:${{ github.ref_name }} || true
           fi
+
+      - name: Auto-retrigger Next 6-Hour Gallery Extraction Cycle
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔄 Automatically dispatching next 6-hour gallery extraction workflow cycle..."
+          curl -s -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/gallery_extractor.yml/dispatches" \
+            -d "{\"ref\":\"${{ github.ref_name }}\", \"inputs\": {\"GALLERY_URL\":\"${{ github.event.inputs.GALLERY_URL || github.event.inputs.TELEGRAM_LINK }}\", \"TARGET_CHANNEL\":\"${{ github.event.inputs.TARGET_CHANNEL }}\", \"API_ID\":\"${{ github.event.inputs.API_ID }}\", \"API_HASH\":\"${{ github.event.inputs.API_HASH }}\", \"BOT_TOKEN\":\"${{ github.event.inputs.BOT_TOKEN }}\", \"SESSION_STRING\":\"${{ github.event.inputs.SESSION_STRING }}\", \"OWNER_ID\":\"${{ github.event.inputs.OWNER_ID }}\"}}" || true
