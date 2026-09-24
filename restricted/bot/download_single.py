@@ -361,9 +361,9 @@ async def call_gemini_ai_extract(html_snippet, page_url):
     def _do_extract():
         models = [
             "gemini-2.0-flash",
-            "gemini-1.5-flash-8b",
-            "gemini-flash-latest",
-            "gemini-pro"
+            "gemini-2.5-flash",
+            "gemini-3.5-flash",
+            "gemini-flash-latest"
         ]
         prompt = (
             f"You are an expert media link extractor. Analyze the webpage HTML snippet for URL '{page_url}'. "
@@ -943,7 +943,7 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
             # Layer 2.5: Try xHamster dedicated metadata parser (shorts & full videos) with anti-429 retry loops
             if 'xhamster.com' in link and not scan_files():
                 try:
-                    import urllib.request, re, json, time, subprocess
+                    import urllib.request, re, json, subprocess
                     html_xh = ""
                     xh_headers = get_random_headers()
 
@@ -1795,7 +1795,7 @@ async def main_download():
             parsed_domain = urlparse(target_link_lower).netloc
             is_telegram_link = 't.me' in parsed_domain or 'telegram.me' in parsed_domain
 
-            is_gallery_link = any(kw in target_link_lower for kw in ['kir2kos.net', 'gallery', 'iranian-sexy-images-gallery', 'organized_gallery'])
+            is_gallery_link = any(kw in target_link_lower for kw in ['kir2kos', 'gallery', 'iranian-sexy-images-gallery', 'organized_gallery', 'images-gallery', 'album', '/gallery/'])
 
             is_social = (any(domain in target_link_lower for domain in [
                 'instagram.com', 'instagr.am', 'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
