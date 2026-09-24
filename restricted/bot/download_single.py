@@ -645,9 +645,12 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
 
         msg_obj = await safe_edit_message(owner_id, msg_obj, "🔎 *در حال دریافت سورس اصلی گالری و شناسایی تمام دسته‌بندی‌ها...*")
 
+        print("DEBUG GALLERY: Fetching page HTML from:", link)
         page_html = await fetch_page_html_async(link, get_stealth_headers())
+        print("DEBUG GALLERY: Fetched page HTML length:", len(page_html) if page_html else 0)
 
         if not page_html:
+            print("DEBUG GALLERY: Failed to fetch page HTML!")
             await safe_edit_message(owner_id, msg_obj, "❌ *خطا در دریافت سورس صفحه گالری! لطفاً پیوند را بررسی بفرمایید.*")
             return
 
@@ -656,7 +659,7 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
 
         for match in re.finditer(r'(?:data-src|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp))["\']', page_html, re.I):
             img_url = match.group(1).strip()
-            if 'svg' in img_url or 'logo' in img_url or 'avatar' in img_url or 'emoji' in img_url:
+            if 'svg' in img_url or 'logo' in img_url or 'avatar' in img_url or 'emoji' in img_url or 'favicon' in img_url:
                 continue
             if not img_url.startswith('http'):
                 img_url = 'https://kir2kos.net' + (img_url if img_url.startswith('/') else '/' + img_url)
@@ -670,7 +673,7 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
             if m:
                 batches_in_html.add(int(m.group(1)))
 
-        print("DEBUG: Initial photos in HTML:", len(extracted_photos), "Batches found:", sorted(list(batches_in_html)))
+        print("DEBUG GALLERY: Initial photos in HTML:", len(extracted_photos), "Batches found:", sorted(list(batches_in_html)))
 
         if batches_in_html:
             max_b = max(batches_in_html)
@@ -705,7 +708,7 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                 if sub_html:
                     for match in re.finditer(r'(?:data-src|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp))["\']', sub_html, re.I):
                         img_url = match.group(1).strip()
-                        if 'svg' in img_url or 'logo' in img_url or 'avatar' in img_url or 'emoji' in img_url:
+                        if 'svg' in img_url or 'logo' in img_url or 'avatar' in img_url or 'emoji' in img_url or 'favicon' in img_url:
                             continue
                         if not img_url.startswith('http'):
                             img_url = 'https://kir2kos.net' + (img_url if img_url.startswith('/') else '/' + img_url)
@@ -1881,13 +1884,16 @@ async def main_download():
                 'xhamster.com', 'xvideos.com', 'pornhub.com'
             ]) or (target_link_lower.startswith(('http://', 'https://')) and not is_telegram_link)) and not is_gallery_link
 
+            print(f"DEBUG ROUTING: link={target_link_str}, is_gallery={is_gallery_link}, is_social={is_social}, is_tg={is_telegram_link}")
             print(f"Starting single download [{link_idx}/{len(extracted_links)}] for link: {target_link_str} to owner: {owner_id}")
 
             try:
                 if is_gallery_link:
+                    print("DEBUG ROUTING: Routing to process_gallery_extraction...")
                     msg = await safe_send_message(owner_id, f"🖼️ *تشخیص لینک گالری تصویری ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
                     await process_gallery_extraction(target_link_str, owner_id, msg)
                 elif is_social and not target_link_lower.startswith("search:"):
+                    print("DEBUG ROUTING: Routing to process_social_media_download...")
                     msg = await safe_send_message(owner_id, f"🎬 *تشخیص لینک شبکه اجتماعی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
                     await process_social_media_download(target_link_str, owner_id, msg)
                 elif 't.me/+' in target_link_str or 't.me/joinchat/' in target_link_str:
