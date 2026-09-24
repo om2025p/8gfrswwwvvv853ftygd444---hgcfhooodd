@@ -707,28 +707,27 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
 
         print("DEBUG GALLERY: Initial photos found directly in HTML:", len(extracted_photos), "Batches:", sorted(list(batches_in_html), reverse=True)[:10])
 
-        # Always probe for newer batches above the highest batch found in page HTML (e.g. Batch_145+)
-        start_probe_batch = max(batches_in_html) + 15 if batches_in_html else 155
-        min_probe_batch = min(batches_in_html) - 5 if batches_in_html else 125
+        # Fast targeted probe for newer batches just above max_b found in page HTML (e.g. Batch_145)
+        if batches_in_html:
+            max_b = max(batches_in_html)
+            print(f"DEBUG GALLERY: Fast probing 5 newer batches above Batch_{max_b}...")
+            for b in range(max_b + 5, max_b, -1):
+                consecutive_404s = 0
+                for num in range(1, 60):
+                    p_url = f"https://kir2kos.net/gallery/Organized_Gallery/Batch_{b}/photo_{b}_{num:03d}.jpg"
+                    if p_url in seen_urls:
+                        continue
 
-        print(f"DEBUG GALLERY: Probing extra/newer batches from Batch_{start_probe_batch} down to Batch_{min_probe_batch}...")
-        for b in range(start_probe_batch, min_probe_batch, -1):
-            consecutive_404s = 0
-            for num in range(1, 200):
-                p_url = f"https://kir2kos.net/gallery/Organized_Gallery/Batch_{b}/photo_{b}_{num:03d}.jpg"
-                if p_url in seen_urls:
-                    continue
+                    is_valid = await probe_photo_url_async(p_url, get_stealth_headers())
+                    if is_valid:
+                        seen_urls.add(p_url)
+                        extracted_photos.append(p_url)
+                        consecutive_404s = 0
+                    else:
+                        consecutive_404s += 1
 
-                is_valid = await probe_photo_url_async(p_url, get_stealth_headers())
-                if is_valid:
-                    seen_urls.add(p_url)
-                    extracted_photos.append(p_url)
-                    consecutive_404s = 0
-                else:
-                    consecutive_404s += 1
-
-                if consecutive_404s >= 2 and num > 2:
-                    break
+                    if consecutive_404s >= 2 and num > 2:
+                        break
 
         # Subpage pagination / Show More link crawler loop
         if page_html:
