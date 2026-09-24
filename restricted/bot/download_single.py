@@ -707,27 +707,43 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
 
         print("DEBUG GALLERY: Initial photos found directly in HTML:", len(extracted_photos), "Batches:", sorted(list(batches_in_html), reverse=True)[:10])
 
-        # Fast targeted probe for newer batches just above max_b found in page HTML (e.g. Batch_145)
-        if batches_in_html:
-            max_b = max(batches_in_html)
-            print(f"DEBUG GALLERY: Fast probing 5 newer batches above Batch_{max_b}...")
-            for b in range(max_b + 5, max_b, -1):
-                consecutive_404s = 0
-                for num in range(1, 60):
-                    p_url = f"https://kir2kos.net/gallery/Organized_Gallery/Batch_{b}/photo_{b}_{num:03d}.jpg"
-                    if p_url in seen_urls:
-                        continue
+        # Deep multi-batch concurrent probing to discover ALL existing photos across batches
+        max_b = max(batches_in_html) if batches_in_html else 160
+        min_b = max(1, min(batches_in_html) - 15) if batches_in_html else 1
+        start_probe_batch = max_b + 20
+        end_probe_batch = max(1, min_b)
 
-                    is_valid = await probe_photo_url_async(p_url, get_stealth_headers())
-                    if is_valid:
-                        seen_urls.add(p_url)
-                        extracted_photos.append(p_url)
-                        consecutive_404s = 0
-                    else:
-                        consecutive_404s += 1
+        print(f"DEBUG GALLERY: Deep probing batches from Batch_{start_probe_batch} down to Batch_{end_probe_batch}...")
+        sem = asyncio.Semaphore(15)
 
-                    if consecutive_404s >= 2 and num > 2:
+        async def probe_single_batch(b):
+            b_photos = []
+            consecutive_404s = 0
+            headers = get_stealth_headers()
+            for num in range(1, 200):
+                p_url = f"https://kir2kos.net/gallery/Organized_Gallery/Batch_{b}/photo_{b}_{num:03d}.jpg"
+                if p_url in seen_urls:
+                    continue
+
+                async with sem:
+                    is_valid = await probe_photo_url_async(p_url, headers)
+
+                if is_valid:
+                    b_photos.append(p_url)
+                    consecutive_404s = 0
+                else:
+                    consecutive_404s += 1
+                    if consecutive_404s >= 3 and num > 3:
                         break
+            return b_photos
+
+        batch_tasks = [probe_single_batch(b) for b in range(start_probe_batch, end_probe_batch - 1, -1)]
+        probe_results = await asyncio.gather(*batch_tasks)
+        for res_list in probe_results:
+            for p_url in res_list:
+                if p_url not in seen_urls:
+                    seen_urls.add(p_url)
+                    extracted_photos.append(p_url)
 
         # Subpage pagination / Show More link crawler loop
         if page_html:
