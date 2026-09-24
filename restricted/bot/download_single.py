@@ -3,6 +3,7 @@ import sys
 import os
 import asyncio
 import time
+import json
 import tempfile
 import shutil
 import yt_dlp
@@ -414,21 +415,39 @@ async def call_gemini_ai_extract(html_snippet, page_url):
 SENT_PHOTOS_DB_FILE = "restricted_sent_photos.json"
 GALLERY_STATS_FILE = "restricted_gallery_stats.json"
 
+def get_db_paths(filename):
+    return [
+        filename,
+        os.path.join("restricted", filename),
+        os.path.join("bot", filename),
+        os.path.join("..", filename),
+        os.path.join("..", "restricted", filename)
+    ]
+
 def load_sent_photos_db():
-    if os.path.exists(SENT_PHOTOS_DB_FILE):
-        try:
-            with open(SENT_PHOTOS_DB_FILE, "r", encoding="utf-8") as f:
-                return set(json.load(f))
-        except Exception:
-            pass
+    for p in get_db_paths(SENT_PHOTOS_DB_FILE):
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        print(f"DEBUG: Loaded {len(data)} sent photos from {p}")
+                        return set(data)
+            except Exception as e:
+                print(f"DEBUG: Failed loading sent photos from {p}: {e}")
     return set()
 
 def save_sent_photos_db(sent_set):
-    try:
-        with open(SENT_PHOTOS_DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(list(sent_set), f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
+    data = list(sent_set)
+    for p in get_db_paths(SENT_PHOTOS_DB_FILE):
+        try:
+            parent = os.path.dirname(p)
+            if parent and not os.path.exists(parent):
+                os.makedirs(parent, exist_ok=True)
+            with open(p, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
 
 def update_gallery_stats(sent_count, total_extracted, duplicates_skipped, status_text="در حال پردازش"):
     try:
@@ -440,9 +459,12 @@ def update_gallery_stats(sent_count, total_extracted, duplicates_skipped, status
             "last_updated": time.time(),
             "last_updated_jalali": time.strftime("%Y-%m-%d %H:%M:%S")
         }
-        for path in [GALLERY_STATS_FILE, os.path.join("..", GALLERY_STATS_FILE)]:
+        for p in get_db_paths(GALLERY_STATS_FILE):
             try:
-                with open(path, "w", encoding="utf-8") as f:
+                parent = os.path.dirname(p)
+                if parent and not os.path.exists(parent):
+                    os.makedirs(parent, exist_ok=True)
+                with open(p, "w", encoding="utf-8") as f:
                     json.dump(stats, f, ensure_ascii=False, indent=2)
             except Exception:
                 pass
@@ -453,89 +475,123 @@ async def send_media_group_to_destinations(filepaths, caption, owner_id, custom_
     from main import Bot, bot, userbot, BOT_TOKEN
     token, default_chat_id = get_notif_config()
 
-    dest_id = custom_dest_id or os.environ.get("TARGET_CHANNEL") or default_chat_id or owner_id
     try:
-        dest_id = int(str(dest_id).strip())
+        owner_id = int(str(owner_id).strip())
     except Exception:
         pass
 
-    sent = False
-    print("DEBUG: send_media_group_to_destinations starting for", len(filepaths), "files to dest=", dest_id)
-
-    if getattr(userbot, 'is_connected', False):
+    destinations = []
+    target_channel = custom_dest_id or os.environ.get("TARGET_CHANNEL") or default_chat_id
+    if target_channel:
         try:
-            if str(dest_id).startswith('-100'):
-                try:
-                    await userbot.get_chat(dest_id)
-                except Exception:
+            target_channel = int(str(target_channel).strip())
+        except Exception:
+            pass
+        destinations.append(target_channel)
+
+    if owner_id and owner_id not in destinations:
+        destinations.append(owner_id)
+
+    if not destinations:
+        destinations = [owner_id]
+
+    print("DEBUG: send_media_group_to_destinations starting for", len(filepaths), "files to destinations=", destinations)
+    overall_success = False
+
+    for dest in destinations:
+        if not dest:
+            continue
+        dest_sent = False
+        print(f"DEBUG: Attempting send_media_group to dest={dest}...")
+
+        # Pre-resolve dest with userbot
+        if getattr(userbot, 'is_connected', False):
+            try:
+                if str(dest).startswith('-100'):
                     try:
-                        await userbot.join_chat(dest_id)
-                    except Exception as e_jc:
-                        print("DEBUG: userbot join_chat notice:", e_jc)
-            else:
-                await userbot.get_users(dest_id)
-        except Exception as e_res:
-            print("DEBUG: userbot resolve notice:", e_res)
+                        await userbot.get_chat(dest)
+                    except Exception:
+                        try:
+                            await userbot.join_chat(dest)
+                        except Exception as e_jc:
+                            print(f"DEBUG: userbot join_chat({dest}) notice:", e_jc)
+                else:
+                    await userbot.get_users(dest)
+            except Exception as e_res:
+                print(f"DEBUG: userbot resolve ({dest}) notice:", e_res)
 
-    if not sent and getattr(userbot, 'is_connected', False):
-        try:
-            from pyrogram.types import InputMediaPhoto
-            media_list = []
-            for idx, fp in enumerate(filepaths):
-                cap = caption if idx == 0 else None
-                media_list.append(InputMediaPhoto(media=fp, caption=cap))
-
-            await userbot.send_media_group(chat_id=dest_id, media=media_list)
-            sent = True
-            print("DEBUG: Pyrogram Userbot send_media_group succeeded")
-        except Exception as e_ub:
-            print("DEBUG: Pyrogram Userbot send_media_group failed:", e_ub)
-
-    if not sent and getattr(Bot, 'is_connected', False):
-        try:
-            from pyrogram.types import InputMediaPhoto
-            media_list = []
-            for idx, fp in enumerate(filepaths):
-                cap = caption if idx == 0 else None
-                media_list.append(InputMediaPhoto(media=fp, caption=cap))
-
-            await Bot.send_media_group(chat_id=dest_id, media=media_list)
-            sent = True
-            print("DEBUG: Pyrogram Bot send_media_group succeeded")
-        except Exception as e_pbot:
-            print("DEBUG: Pyrogram Bot send_media_group failed:", e_pbot)
-
-    if not sent:
+        # 1. Try Direct Bot API HTTP curl first if BOT_TOKEN available
         token_to_use = token or BOT_TOKEN
         if token_to_use:
             try:
-                import subprocess
-                cmd = ['curl', '-s', '-X', 'POST', "https://api.telegram.org/bot" + token_to_use + "/sendMediaGroup"]
+                import subprocess, json
+                cmd = ['curl', '-s', '-X', 'POST', "https://api.telegram.org/bot" + str(token_to_use) + "/sendMediaGroup"]
                 media_json_list = []
                 for idx, fp in enumerate(filepaths):
                     attach_name = 'photo' + str(idx)
                     cmd.extend(['-F', attach_name + '=@' + fp])
                     item = {'type': 'photo', 'media': 'attach://' + attach_name}
                     if idx == 0 and caption:
-                        item['caption'] = caption[:980]
+                        item['caption'] = str(caption)[:980]
                     media_json_list.append(item)
 
-                cmd.extend(['-F', 'chat_id=' + str(dest_id)])
+                cmd.extend(['-F', 'chat_id=' + str(dest)])
                 cmd.extend(['-F', 'media=' + json.dumps(media_json_list)])
 
                 res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+                print(f"DEBUG: sendMediaGroup curl response for dest={dest}: {res.stdout[:200]}")
                 if '"ok":true' in res.stdout:
-                    sent = True
-                    print("DEBUG: Direct Bot API sendMediaGroup HTTP curl succeeded")
+                    dest_sent = True
+                    overall_success = True
+                    print(f"DEBUG: Direct Bot API sendMediaGroup HTTP curl succeeded for dest={dest}")
             except Exception as e_http:
-                print("DEBUG: Direct Bot API sendMediaGroup HTTP curl failed:", e_http)
+                print(f"DEBUG: Direct Bot API sendMediaGroup HTTP curl failed for dest={dest}:", e_http)
 
-    if not sent:
-        print("DEBUG: Media group dispatch failed across all engines. Falling back to single sends...")
-        for idx, fp in enumerate(filepaths):
-            cap = caption if idx == 0 else None
-            await send_media_to_destinations(fp, cap, owner_id)
-            await asyncio.sleep(1.0)
+        # 2. Try Pyrogram Userbot
+        if not dest_sent and getattr(userbot, 'is_connected', False):
+            try:
+                from pyrogram.types import InputMediaPhoto
+                media_list = []
+                for idx, fp in enumerate(filepaths):
+                    cap = caption if idx == 0 else None
+                    media_list.append(InputMediaPhoto(media=fp, caption=cap))
+
+                await userbot.send_media_group(chat_id=dest, media=media_list)
+                dest_sent = True
+                overall_success = True
+                print(f"DEBUG: Pyrogram Userbot send_media_group succeeded for dest={dest}")
+            except Exception as e_ub:
+                print(f"DEBUG: Pyrogram Userbot send_media_group failed for dest={dest}:", e_ub)
+
+        # 3. Try Pyrogram Bot
+        if not dest_sent and getattr(Bot, 'is_connected', False):
+            try:
+                from pyrogram.types import InputMediaPhoto
+                media_list = []
+                for idx, fp in enumerate(filepaths):
+                    cap = caption if idx == 0 else None
+                    media_list.append(InputMediaPhoto(media=fp, caption=cap))
+
+                await Bot.send_media_group(chat_id=dest, media=media_list)
+                dest_sent = True
+                overall_success = True
+                print(f"DEBUG: Pyrogram Bot send_media_group succeeded for dest={dest}")
+            except Exception as e_pbot:
+                print(f"DEBUG: Pyrogram Bot send_media_group failed for dest={dest}:", e_pbot)
+
+        # 4. Fallback to single photo sends for this destination
+        if not dest_sent:
+            print(f"DEBUG: Media group dispatch failed for dest={dest}. Falling back to single sends...")
+            single_sent_count = 0
+            for idx, fp in enumerate(filepaths):
+                cap = caption if idx == 0 else None
+                await send_media_to_destinations(fp, cap, dest)
+                single_sent_count += 1
+                await asyncio.sleep(0.8)
+            if single_sent_count > 0:
+                overall_success = True
+
+    return overall_success
 
 async def probe_photo_url_async(url, headers):
     def _do_probe():
@@ -697,14 +753,17 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                 fps_list = [fp for _, fp in downloaded_fps]
                 album_caption = "📸 آرشیو گالری تصاویر (" + str(sent_in_this_session + 1) + " تا " + str(sent_in_this_session + len(downloaded_fps)) + " از " + str(len(photos_to_send)) + ")\n🔗 منبع: " + str(link) + "\n🛡️📥 سپر دانلود عمارت"
 
-                await send_media_group_to_destinations(fps_list, album_caption, owner_id, custom_dest_id=target_channel)
+                send_ok = await send_media_group_to_destinations(fps_list, album_caption, owner_id, custom_dest_id=target_channel)
 
-                for p_url, _ in downloaded_fps:
-                    sent_photos_db.add(p_url)
-                    sent_in_this_session += 1
+                if send_ok:
+                    for p_url, _ in downloaded_fps:
+                        sent_photos_db.add(p_url)
+                        sent_in_this_session += 1
 
-                save_sent_photos_db(sent_photos_db)
-                update_gallery_stats(len(sent_photos_db), total_extracted, duplicates_skipped, "در حال ارسال (" + str(sent_in_this_session) + "/" + str(len(photos_to_send)) + ")")
+                    save_sent_photos_db(sent_photos_db)
+                    update_gallery_stats(len(sent_photos_db), total_extracted, duplicates_skipped, "در حال ارسال (" + str(sent_in_this_session) + "/" + str(len(photos_to_send)) + ")")
+                else:
+                    print("DEBUG: Album send failed. Photos not added to sent_photos_db to allow retry.")
 
                 if (i // album_batch_size) % 2 == 0 or (i + album_batch_size) >= len(photos_to_send):
                     progress_msg = (
