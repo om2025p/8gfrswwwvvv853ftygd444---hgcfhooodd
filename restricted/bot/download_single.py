@@ -602,21 +602,24 @@ async def send_media_group_to_destinations(filepaths, caption, owner_id, custom_
 
 async def probe_photo_url_async(url, headers):
     def _do_probe():
-        try:
-            import urllib.request
-            req = urllib.request.Request(url, method='HEAD', headers=headers)
-            with urllib.request.urlopen(req, timeout=4) as res:
-                return res.status == 200
-        except Exception:
+        import time, urllib.request, subprocess
+        ua = headers.get('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/125.0.0.0 Safari/537.36')
+        for attempt in range(3):
             try:
-                import subprocess
-                cmd = ['curl', '-s', '-I', '-A', headers.get('User-Agent', 'Mozilla/5.0'), url]
-                res_curl = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-                if '200 OK' in res_curl.stdout or '200' in res_curl.stdout:
-                    return True
+                req = urllib.request.Request(url, method='HEAD', headers=headers)
+                with urllib.request.urlopen(req, timeout=10) as res:
+                    if res.status == 200:
+                        return True
             except Exception:
-                pass
-            return False
+                try:
+                    cmd = ['curl', '-s', '-I', '-L', '-A', ua, '--retry', '2', '--retry-delay', '1', url]
+                    res_curl = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+                    if '200 OK' in res_curl.stdout or '200' in res_curl.stdout:
+                        return True
+                except Exception:
+                    pass
+            time.sleep(1.2 + attempt * 0.5)
+        return False
     return await asyncio.to_thread(_do_probe)
 
 async def fetch_page_html_async(url, headers):
@@ -735,7 +738,7 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                     consecutive_404s = 0
                 else:
                     consecutive_404s += 1
-                    if consecutive_404s >= 3 and num > 3:
+                    if consecutive_404s >= 8 and num > 5:
                         break
             return b_photos
 
@@ -780,13 +783,40 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                 local_path = os.path.join(part_dir, file_name)
 
                 try:
-                    def _dl_p():
-                        req = urllib.request.Request(photo_url, headers=get_stealth_headers())
-                        with urllib.request.urlopen(req, timeout=15) as resp, open(local_path, 'wb') as f_out:
-                            f_out.write(resp.read())
-                    await asyncio.to_thread(_dl_p)
+                    def _dl_p_with_retries(p_url, out_p):
+                        import subprocess
+                        headers_to_use = get_stealth_headers()
+                        ua = headers_to_use['User-Agent']
+                        for attempt in range(5):
+                            try:
+                                req = urllib.request.Request(p_url, headers=headers_to_use)
+                                with urllib.request.urlopen(req, timeout=20) as resp, open(out_p, 'wb') as f_out:
+                                    f_out.write(resp.read())
+                                if os.path.exists(out_p) and os.path.getsize(out_p) > 1000:
+                                    return True
+                            except Exception as ex_urllib_dl:
+                                print(f"DEBUG GALLERY: urllib download attempt {attempt+1} failed for {p_url[:50]}... ({ex_urllib_dl}). Retrying with curl...")
+                                try:
+                                    cmd = [
+                                        'curl', '-s', '-L',
+                                        '-A', ua,
+                                        '-e', link,
+                                        '--retry', '3',
+                                        '--retry-delay', '2',
+                                        '-o', out_p,
+                                        p_url
+                                    ]
+                                    subprocess.run(cmd, timeout=30)
+                                    if os.path.exists(out_p) and os.path.getsize(out_p) > 1000:
+                                        return True
+                                except Exception as ex_curl_dl:
+                                    print(f"DEBUG GALLERY: curl attempt {attempt+1} failed: {ex_curl_dl}")
+                            time.sleep(1.5 + attempt * 1.0)
+                        return False
 
-                    if os.path.exists(local_path) and os.path.getsize(local_path) > 1000:
+                    success_dl = await asyncio.to_thread(_dl_p_with_retries, photo_url, local_path)
+
+                    if success_dl and os.path.exists(local_path) and os.path.getsize(local_path) > 1000:
                         file_size = os.path.getsize(local_path)
                         dimensions = "N/A"
                         if Image is not None:
