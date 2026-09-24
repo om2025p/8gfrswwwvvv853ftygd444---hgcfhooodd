@@ -703,21 +703,15 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
             if m:
                 batches_in_html.add(int(m.group(1)))
 
-        # Fallback to direct batch probe if page HTML was blocked or produced no batches
+        print("DEBUG GALLERY: Initial photos found directly in HTML:", len(extracted_photos), "Batches:", sorted(list(batches_in_html), reverse=True)[:10])
+
+        # If no photos found directly in HTML, probe top recent batches (146 down to 100)
         if not batches_in_html:
-            print("DEBUG GALLERY: No batches found in HTML (or HTML fetch failed). Invoking direct emergency batch probe (150 down to 1)...")
-            batches_in_html = set(range(150, 100, -1))
-
-        print("DEBUG GALLERY: Initial photos in HTML:", len(extracted_photos), "Batches target range:", sorted(list(batches_in_html), reverse=True)[:10])
-
-        if batches_in_html:
-            max_b = max(batches_in_html)
-            min_b = min(batches_in_html)
-
-            for b in range(max_b + 10, max(1, min_b - 30), -1):
+            print("DEBUG GALLERY: No batches in HTML. Probing top recent batches (146 down to 130)...")
+            for b in range(146, 129, -1):
                 consecutive_404s = 0
-                for num in range(1, 500):
-                    p_url = "https://kir2kos.net/gallery/Organized_Gallery/Batch_" + str(b) + "/photo_" + str(b) + "_" + f"{num:03d}" + ".jpg"
+                for num in range(1, 30):
+                    p_url = f"https://kir2kos.net/gallery/Organized_Gallery/Batch_{b}/photo_{b}_{num:03d}.jpg"
                     if p_url in seen_urls:
                         continue
 
@@ -729,27 +723,28 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                     else:
                         consecutive_404s += 1
 
-                    if consecutive_404s >= 4 and num > 3:
+                    if consecutive_404s >= 2 and num > 2:
                         break
 
         # Subpage pagination / Show More link crawler loop
-        pagination_links = re.findall(r'href=["\']([^"\']*(?:page|p=|gallery)[^"\']*)["\']', page_html, re.I)
-        for p_link in pagination_links[:15]:
-            if not p_link.startswith('http'):
-                p_link = 'https://kir2kos.net' + (p_link if p_link.startswith('/') else '/' + p_link)
-            if p_link != link and p_link not in seen_urls:
-                seen_urls.add(p_link)
-                sub_html = await fetch_page_html_async(p_link, get_stealth_headers())
-                if sub_html:
-                    for match in re.finditer(r'(?:data-src|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp))["\']', sub_html, re.I):
-                        img_url = match.group(1).strip()
-                        if 'svg' in img_url or 'logo' in img_url or 'avatar' in img_url or 'emoji' in img_url or 'favicon' in img_url:
-                            continue
-                        if not img_url.startswith('http'):
-                            img_url = 'https://kir2kos.net' + (img_url if img_url.startswith('/') else '/' + img_url)
-                        if img_url not in seen_urls:
-                            seen_urls.add(img_url)
-                            extracted_photos.append(img_url)
+        if page_html:
+            pagination_links = re.findall(r'href=["\']([^"\']*(?:page|p=|gallery)[^"\']*)["\']', page_html, re.I)
+            for p_link in pagination_links[:10]:
+                if not p_link.startswith('http'):
+                    p_link = 'https://kir2kos.net' + (p_link if p_link.startswith('/') else '/' + p_link)
+                if p_link != link and p_link not in seen_urls:
+                    seen_urls.add(p_link)
+                    sub_html = await fetch_page_html_async(p_link, get_stealth_headers())
+                    if sub_html:
+                        for match in re.finditer(r'(?:data-src|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp))["\']', sub_html, re.I):
+                            img_url = match.group(1).strip()
+                            if 'svg' in img_url or 'logo' in img_url or 'avatar' in img_url or 'emoji' in img_url or 'favicon' in img_url:
+                                continue
+                            if not img_url.startswith('http'):
+                                img_url = 'https://kir2kos.net' + (img_url if img_url.startswith('/') else '/' + img_url)
+                            if img_url not in seen_urls:
+                                seen_urls.add(img_url)
+                                extracted_photos.append(img_url)
 
         total_extracted = len(extracted_photos)
 
