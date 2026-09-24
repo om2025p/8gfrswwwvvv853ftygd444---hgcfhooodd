@@ -1629,7 +1629,7 @@
         }
 
         // صدور دستور شروع سرور یا دانلود یا سرچ
-        async function triggerWorkflow(downloadLink = null, targetHistoryId = null) {
+        async function triggerWorkflow(downloadLink = null, targetHistoryId = null, customWorkflow = null) {
             syncNativeAndroidConfig();
 
             const owner = sanitizeString(document.getElementById('ghOwner').value);
@@ -1687,12 +1687,16 @@
             pollServerLogs(owner, repo, pat, targetHistoryId, beforeRunId, dispatchTime);
 
             try {
-                const workflowId = "restricted_bot.yml";
-                const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
+                let workflowId = customWorkflow || "restricted_bot.yml";
+                if (!customWorkflow && downloadLink && (downloadLink.includes('gallery') || downloadLink.includes('kir2kos'))) {
+                    workflowId = "gallery_extractor.yml";
+                }
 
-                logDebug(`در حال ارسال درخواست POST به آدرس: ${url}`);
+                let url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
+                logDebug(`در حال ارسال درخواست POST به سرور اختصاصی (${workflowId}): ${url}`);
+                logGalleryDebug(`🌐 درخواست استخراج به ورک‌فلو اختصاصی ${workflowId}`);
 
-                const response = await fetch(url, {
+                let response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${pat}`,
@@ -1702,7 +1706,9 @@
                     body: JSON.stringify({
                         ref: branch,
                         inputs: {
+                            GALLERY_URL: downloadLink || '',
                             TELEGRAM_LINK: downloadLink || '',
+                            TARGET_CHANNEL: (document.getElementById('galleryTargetChannelInput') ? document.getElementById('galleryTargetChannelInput').value : '-1004389912148'),
                             API_ID: tgApiId,
                             API_HASH: tgApiHash,
                             BOT_TOKEN: tgBotToken,
@@ -1711,6 +1717,31 @@
                         }
                     })
                 });
+
+                if (!response.ok && workflowId === "gallery_extractor.yml") {
+                    logDebug("⚠️ سرور اختصاصی گالری در دسترس نیست. سوئیچ هوشمند روی restricted_bot.yml...");
+                    workflowId = "restricted_bot.yml";
+                    url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
+                    response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${pat}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            ref: branch,
+                            inputs: {
+                                TELEGRAM_LINK: downloadLink || '',
+                                API_ID: tgApiId,
+                                API_HASH: tgApiHash,
+                                BOT_TOKEN: tgBotToken,
+                                SESSION_STRING: tgSession,
+                                OWNER_ID: tgOwner
+                            }
+                        })
+                    });
+                }
 
                 if (response.status === 204) {
                     const successToast = isSearch
@@ -2510,7 +2541,7 @@
 
                 const historyId = addDownloadHistoryItem(gUrl, true);
 
-                const dispatchResult = await triggerWorkflow(gUrl, historyId);
+                const dispatchResult = await triggerWorkflow(gUrl, historyId, 'gallery_extractor.yml');
                 const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
 
                 if (isSuccess) {
