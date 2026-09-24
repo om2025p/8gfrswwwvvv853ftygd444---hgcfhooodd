@@ -597,20 +597,54 @@ async def probe_photo_url_async(url, headers):
     def _do_probe():
         try:
             req = urllib.request.Request(url, method='HEAD', headers=headers)
-            with urllib.request.urlopen(req, timeout=3) as res:
+            with urllib.request.urlopen(req, timeout=4) as res:
                 return res.status == 200
         except Exception:
+            try:
+                import subprocess
+                cmd = ['curl', '-s', '-I', '-A', headers.get('User-Agent', 'Mozilla/5.0'), url]
+                res_curl = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+                if '200 OK' in res_curl.stdout or '200' in res_curl.stdout:
+                    return True
+            except Exception:
+                pass
             return False
     return await asyncio.to_thread(_do_probe)
 
 async def fetch_page_html_async(url, headers):
     def _do_fetch():
+        # Layer 1: urllib standard request
         try:
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=15) as res:
-                return res.read().decode('utf-8', errors='ignore')
-        except Exception:
-            return ""
+                html = res.read().decode('utf-8', errors='ignore')
+                if html and len(html) > 500:
+                    print(f"DEBUG FETCH: urllib fetched HTML successfully ({len(html)} bytes)")
+                    return html
+        except Exception as e_u:
+            print(f"DEBUG FETCH: urllib fetch failed ({e_u}). Trying curl engine fallback...")
+
+        # Layer 2: curl engine with stealth headers and redirect follow
+        try:
+            import subprocess
+            cmd = [
+                'curl', '-s', '-L',
+                '-A', headers.get('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/125.0.0.0 Safari/537.36'),
+                '-e', url,
+                '--retry', '3',
+                '--retry-delay', '1',
+                url
+            ]
+            res_curl = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+            if res_curl.stdout and len(res_curl.stdout) > 500:
+                print(f"DEBUG FETCH: curl engine fetched HTML successfully ({len(res_curl.stdout)} bytes)")
+                return res_curl.stdout
+            else:
+                print(f"DEBUG FETCH: curl returned short response ({len(res_curl.stdout)} bytes). Stderr: {res_curl.stderr[:200]}")
+        except Exception as e_c:
+            print(f"DEBUG FETCH: curl engine fetch failed: {e_c}")
+
+        return ""
     return await asyncio.to_thread(_do_fetch)
 
 async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_id=None):
@@ -649,23 +683,19 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
         page_html = await fetch_page_html_async(link, get_stealth_headers())
         print("DEBUG GALLERY: Fetched page HTML length:", len(page_html) if page_html else 0)
 
-        if not page_html:
-            print("DEBUG GALLERY: Failed to fetch page HTML!")
-            await safe_edit_message(owner_id, msg_obj, "❌ *خطا در دریافت سورس صفحه گالری! لطفاً پیوند را بررسی بفرمایید.*")
-            return
-
         extracted_photos = []
         seen_urls = set()
 
-        for match in re.finditer(r'(?:data-src|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp))["\']', page_html, re.I):
-            img_url = match.group(1).strip()
-            if 'svg' in img_url or 'logo' in img_url or 'avatar' in img_url or 'emoji' in img_url or 'favicon' in img_url:
-                continue
-            if not img_url.startswith('http'):
-                img_url = 'https://kir2kos.net' + (img_url if img_url.startswith('/') else '/' + img_url)
-            if img_url not in seen_urls:
-                seen_urls.add(img_url)
-                extracted_photos.append(img_url)
+        if page_html:
+            for match in re.finditer(r'(?:data-src|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp))["\']', page_html, re.I):
+                img_url = match.group(1).strip()
+                if 'svg' in img_url or 'logo' in img_url or 'avatar' in img_url or 'emoji' in img_url or 'favicon' in img_url:
+                    continue
+                if not img_url.startswith('http'):
+                    img_url = 'https://kir2kos.net' + (img_url if img_url.startswith('/') else '/' + img_url)
+                if img_url not in seen_urls:
+                    seen_urls.add(img_url)
+                    extracted_photos.append(img_url)
 
         batches_in_html = set()
         for p_url in extracted_photos:
@@ -673,7 +703,12 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
             if m:
                 batches_in_html.add(int(m.group(1)))
 
-        print("DEBUG GALLERY: Initial photos in HTML:", len(extracted_photos), "Batches found:", sorted(list(batches_in_html)))
+        # Fallback to direct batch probe if page HTML was blocked or produced no batches
+        if not batches_in_html:
+            print("DEBUG GALLERY: No batches found in HTML (or HTML fetch failed). Invoking direct emergency batch probe (150 down to 1)...")
+            batches_in_html = set(range(150, 100, -1))
+
+        print("DEBUG GALLERY: Initial photos in HTML:", len(extracted_photos), "Batches target range:", sorted(list(batches_in_html), reverse=True)[:10])
 
         if batches_in_html:
             max_b = max(batches_in_html)
