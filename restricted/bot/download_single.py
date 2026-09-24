@@ -596,6 +596,7 @@ async def send_media_group_to_destinations(filepaths, caption, owner_id, custom_
 async def probe_photo_url_async(url, headers):
     def _do_probe():
         try:
+            import urllib.request
             req = urllib.request.Request(url, method='HEAD', headers=headers)
             with urllib.request.urlopen(req, timeout=4) as res:
                 return res.status == 200
@@ -615,6 +616,7 @@ async def fetch_page_html_async(url, headers):
     def _do_fetch():
         # Layer 1: urllib standard request
         try:
+            import urllib.request
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=15) as res:
                 html = res.read().decode('utf-8', errors='ignore')
@@ -705,26 +707,28 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
 
         print("DEBUG GALLERY: Initial photos found directly in HTML:", len(extracted_photos), "Batches:", sorted(list(batches_in_html), reverse=True)[:10])
 
-        # If no photos found directly in HTML, probe top recent batches (146 down to 100)
-        if not batches_in_html:
-            print("DEBUG GALLERY: No batches in HTML. Probing top recent batches (146 down to 130)...")
-            for b in range(146, 129, -1):
-                consecutive_404s = 0
-                for num in range(1, 30):
-                    p_url = f"https://kir2kos.net/gallery/Organized_Gallery/Batch_{b}/photo_{b}_{num:03d}.jpg"
-                    if p_url in seen_urls:
-                        continue
+        # Always probe for newer batches above the highest batch found in page HTML (e.g. Batch_145+)
+        start_probe_batch = max(batches_in_html) + 15 if batches_in_html else 155
+        min_probe_batch = min(batches_in_html) - 5 if batches_in_html else 125
 
-                    is_valid = await probe_photo_url_async(p_url, get_stealth_headers())
-                    if is_valid:
-                        seen_urls.add(p_url)
-                        extracted_photos.append(p_url)
-                        consecutive_404s = 0
-                    else:
-                        consecutive_404s += 1
+        print(f"DEBUG GALLERY: Probing extra/newer batches from Batch_{start_probe_batch} down to Batch_{min_probe_batch}...")
+        for b in range(start_probe_batch, min_probe_batch, -1):
+            consecutive_404s = 0
+            for num in range(1, 200):
+                p_url = f"https://kir2kos.net/gallery/Organized_Gallery/Batch_{b}/photo_{b}_{num:03d}.jpg"
+                if p_url in seen_urls:
+                    continue
 
-                    if consecutive_404s >= 2 and num > 2:
-                        break
+                is_valid = await probe_photo_url_async(p_url, get_stealth_headers())
+                if is_valid:
+                    seen_urls.add(p_url)
+                    extracted_photos.append(p_url)
+                    consecutive_404s = 0
+                else:
+                    consecutive_404s += 1
+
+                if consecutive_404s >= 2 and num > 2:
+                    break
 
         # Subpage pagination / Show More link crawler loop
         if page_html:
@@ -803,11 +807,13 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                         "📸 *در حال ارسال آلبومی گالری به کانال آرشیو...*\n\n"
                         "⚡ ارسال شده تا این لحظه: *" + f"{sent_in_this_session:,}" + " از " + f"{len(photos_to_send):,}" + " عکس*\n"
                         "📊 مجموع کل تاریخچه عکس‌های ارسال‌شده: *" + f"{len(sent_photos_db):,}" + " عکس*\n"
+                        "⏳ شکیبایی ۳۰ ثانیه‌ای جهت بارگذاری سری بعدی عکس‌ها...\n"
                         "🎯 مقصد: `" + str(target_channel) + "`"
                     )
                     await safe_edit_message(owner_id, msg_obj, progress_msg)
 
-                await asyncio.sleep(random.uniform(2.0, 4.0))
+                print("DEBUG GALLERY: Waiting 30 seconds for next batch chunk loading...")
+                await asyncio.sleep(30.0)
 
             for _, fp in downloaded_fps:
                 try:
