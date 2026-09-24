@@ -187,19 +187,26 @@ def get_notif_config():
         chat_id = -1002617482597
     return token, chat_id
 
-async def send_media_to_destinations(filepath, caption, owner_id):
+async def send_media_to_destinations(filepath, caption, owner_id, custom_dest_id=None):
     from main import Bot, bot, userbot, BOT_TOKEN
     ext = os.path.splitext(filepath)[1].lower()
-    token, chat_id = get_notif_config()
+    token, default_chat_id = get_notif_config()
 
     try:
         owner_id = int(str(owner_id).strip())
     except Exception:
         pass
 
+    target_channel = custom_dest_id or default_chat_id
+    if target_channel:
+        try:
+            target_channel = int(str(target_channel).strip())
+        except Exception:
+            pass
+
     destinations = [owner_id]
-    if chat_id and chat_id not in destinations:
-        destinations.append(chat_id)
+    if target_channel and target_channel not in destinations and str(target_channel) != "-1002617482597":
+        destinations.append(target_channel)
 
     # Strictly enforce Telegram's 1024 media caption character limit (safe buffer at 980 chars)
     if caption and len(str(caption)) > 980:
@@ -689,54 +696,68 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
         total_photos_sent_session = 0
         total_duplicates_skipped = 0
 
-        # Crawl page by page (Part 1 to 200) simulating "Show More" clicks
-        for part_num in range(1, 201):
-            page_urls_to_try = [
-                f"{base_clean_link}?page={part_num}",
-                f"{base_clean_link}/page/{part_num}/",
-                f"{base_clean_link}?p={part_num}"
-            ] if part_num > 1 else [link]
+        # Fetch initial main gallery HTML to discover starting Batch numbers & subpages
+        print("DEBUG GALLERY: Fetching initial main page HTML:", link)
+        main_html = await fetch_page_html_async(link, get_stealth_headers())
 
-            page_html = ""
-            for p_url in page_urls_to_try:
-                sub_html = await fetch_page_html_async(p_url, get_stealth_headers())
-                if sub_html and len(sub_html) > 500:
-                    page_html = sub_html
-                    break
-
-            if not page_html:
-                empty_pages_count += 1
-                if empty_pages_count >= 3:
-                    print(f"DEBUG GALLERY: No more pages found at Part {part_num}. Ending gallery extraction.")
-                    break
-                continue
-
-            # Extract photos from this page DOM
-            page_photos = []
-            for match in re.finditer(r'(?:data-src|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp))["\']', page_html, re.I):
+        initial_photos = []
+        if main_html:
+            for match in re.finditer(r'(?:data-src|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp))["\']', main_html, re.I):
                 img_url = match.group(1).strip()
                 if 'svg' in img_url or 'logo' in img_url or 'avatar' in img_url or 'emoji' in img_url or 'favicon' in img_url:
                     continue
                 if not img_url.startswith('http'):
                     img_url = 'https://kir2kos.net' + (img_url if img_url.startswith('/') else '/' + img_url)
-                if img_url not in seen_urls:
-                    seen_urls.add(img_url)
-                    page_photos.append(img_url)
+                if img_url not in initial_photos:
+                    initial_photos.append(img_url)
 
-            # Filter duplicates against persistent sent_photos_db
-            new_photos = [p for p in page_photos if p not in sent_photos_db]
-            total_duplicates_skipped += (len(page_photos) - len(new_photos))
+        batches_in_html = set()
+        for p_url in initial_photos:
+            m = re.search(r'Batch_(\d+)', p_url)
+            if m:
+                batches_in_html.add(int(m.group(1)))
 
-            if not new_photos:
-                print(f"DEBUG GALLERY: Part {part_num} has 0 new photos (all duplicates). Checking next page...")
-                empty_pages_count += 1
-                if empty_pages_count >= 4:
-                    print(f"DEBUG GALLERY: 4 consecutive pages with 0 new photos. Terminating crawler.")
-                    break
+        max_b = max(batches_in_html) if batches_in_html else 165
+        print(f"DEBUG GALLERY: Discovered highest batch Batch_{max_b}. Building batch queue from Batch_{max_b + 5} down to Batch_1...")
+
+        sem = asyncio.Semaphore(15)
+
+        async def probe_batch_photos(b):
+            b_photos = []
+            consecutive_404s = 0
+            headers = get_stealth_headers()
+            for num in range(1, 200):
+                p_url = f"https://kir2kos.net/gallery/Organized_Gallery/Batch_{b}/photo_{b}_{num:03d}.jpg"
+                async with sem:
+                    is_valid = await probe_photo_url_async(p_url, headers)
+                if is_valid:
+                    b_photos.append(p_url)
+                    consecutive_404s = 0
+                else:
+                    consecutive_404s += 1
+                    if consecutive_404s >= 3 and num > 3:
+                        break
+            return b_photos
+
+        part_counter = 0
+
+        # Process each Batch as an independent Part sequentially
+        for b in range(max_b + 5, 0, -1):
+            batch_photos = await probe_batch_photos(b)
+            if not batch_photos:
                 continue
 
-            empty_pages_count = 0
-            print(f"DEBUG GALLERY: Part {part_num} - Found {len(new_photos)} new photos to process.")
+            # Filter duplicates against persistent sent_photos_db
+            new_photos = [p for p in batch_photos if p not in sent_photos_db]
+            total_duplicates_skipped += (len(batch_photos) - len(new_photos))
+
+            if not new_photos:
+                print(f"DEBUG GALLERY: Batch_{b} has 0 new photos (all already sent). Skipping quickly...")
+                continue
+
+            part_counter += 1
+            part_num = part_counter
+            print(f"DEBUG GALLERY: Processing Part {part_num} (Batch_{b}) with {len(new_photos)} new photos...")
 
             part_status_msg = (
                 f"📥 *در حال دریافت پارت {part_num}:*\n"
@@ -826,7 +847,7 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                 f"🛡️📥 سپر دانلود عمارت"
             )
             print(f"DEBUG GALLERY: Sending ZIP document for Part {part_num}...")
-            await send_media_to_destinations(zip_path, zip_caption, owner_id)
+            await send_media_to_destinations(zip_path, zip_caption, owner_id, custom_dest_id=target_channel)
             await asyncio.sleep(2.0)
 
             # Step 5: Send Metadata JSON Document to Telegram
@@ -837,7 +858,7 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                 f"🛡️📥 سپر دانلود عمارت"
             )
             print(f"DEBUG GALLERY: Sending metadata document for Part {part_num}...")
-            await send_media_to_destinations(meta_path, meta_caption, owner_id)
+            await send_media_to_destinations(meta_path, meta_caption, owner_id, custom_dest_id=target_channel)
             await asyncio.sleep(2.0)
 
             # Step 6: Send 10-Photo Preview Albums to Telegram
