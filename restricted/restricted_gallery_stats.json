@@ -1,8 +1,8 @@
 {
   "total_sent": 60,
   "total_extracted": 60,
-  "duplicates_skipped": 0,
-  "status_text": "تکمیل موفقیت‌آمیز ✅",
-  "last_updated": 1790222063.8884146,
-  "last_updated_jalali": "2026-09-24 03:54:23"
+  "duplicates_skipped": 60,
+  "status_text": "تکمیل شد - تمام تصاویر قبلاً ارسال شده‌اند",
+  "last_updated": 1790222261.0592618,
+  "last_updated_jalali": "2026-09-24 03:57:41"
 }
