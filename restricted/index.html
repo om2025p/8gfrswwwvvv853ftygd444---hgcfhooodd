@@ -472,8 +472,11 @@
         <button class="tab-btn active" id="tabBtn1" onclick="switchTab(1)">
             📥 دانلود سریع
         </button>
+        <button class="tab-btn" id="tabBtn3" onclick="switchTab(3)">
+            🖼️ استخراج گالری
+        </button>
         <button class="tab-btn" id="tabBtn2" onclick="switchTab(2)">
-            ⚙️ امکانات و تنظیمات
+            ⚙️ تنظیمات
         </button>
     </div>
 
@@ -569,6 +572,88 @@
                             <li>🌐 <strong>[۱ شهریور ۱۴۰۵ - ۱۲:۰۰] پشتیبانی کامل پیوندها:</strong> قابلیت دانلود مستقیم لینک‌های عمومی و خصوصی تلگرام، تیک‌تاک و اینستاگرام.</li>
                         </ul>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== تب ۳: استخراج‌کننده اختصاصی گالری‌های تصویری ==================== -->
+        <div class="tab-content" id="tabContent3">
+            <div class="android-native-card" style="background: linear-gradient(145deg, #ffffff, #f0fdf4); border-color: #bbf7d0;">
+                <div class="card-title" style="color: #15803d; border-color: #bbf7d0;">
+                    🖼️ استخراج‌کننده هوشمند گالری‌های تصویری
+                </div>
+                <p style="font-size: 0.85rem; line-height: 1.6; color: #334155; margin-top: -6px; margin-bottom: 18px;">
+                    آدرس وب‌سایت گالری موردنظر را وارد کنید تا سرور به صورت خودکار تا آخرین عکس قدیمی (غیرتکراری) استخراج کرده و به صورت آلبومی به کانال تلگرام ارسال فرماید.
+                </p>
+
+                <!-- وضعیت زنده موتور استخراج گالری -->
+                <div class="status-panel" style="border-radius: 20px; background: #ffffff; border: 1px solid #bbf7d0; margin-bottom: 18px;">
+                    <span style="font-size: 0.85rem; color: #166534; font-weight: 700;">🟢 وضعیت موتور گالری:</span>
+                    <div class="status-badge" id="galleryEngineStatus">
+                        <span class="status-dot idle"></span>
+                        <span id="galleryStatusText">آماده به‌کار 💎</span>
+                    </div>
+                </div>
+
+                <!-- اینپوت آدرس گالری -->
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label" style="font-size: 0.92rem; color: #0f172a; font-weight: 800; margin-bottom: 4px;">
+                        🔗 آدرس وب‌سایت گالری تصویری:
+                    </label>
+                    <div style="display: flex; gap: 10px; width: 100%; align-items: center;">
+                        <input type="text" id="galleryUrlInput" class="input-field" placeholder="https://kir2kos.net/iranian-sexy-images-gallery/" value="https://kir2kos.net/iranian-sexy-images-gallery/" style="direction: ltr; font-size: 0.95rem; padding: 16px 18px; border-radius: 20px; flex: 1; border: 2px solid #bbf7d0; background: #ffffff;">
+                        <button class="action-btn secondary" id="btnPasteGalleryUrl" style="width: auto; padding: 0 18px; height: 54px; font-size: 0.92rem; font-weight: 800; border-radius: 20px; white-space: nowrap; flex-shrink: 0; background: #f0fdf4; color: #16a34a; border: 1.5px solid #bbf7d0;">
+                            📋 چسباندن
+                        </button>
+                    </div>
+                </div>
+
+                <!-- اینپوت کانال مقصد -->
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
+                        🎯 شناسه یا آیدی کانال مقصد (آرشیو):
+                    </label>
+                    <input type="text" id="galleryTargetChannelInput" class="input-field" placeholder="-1004389912148" value="-1004389912148" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
+                </div>
+
+                <!-- دکمه شروع استخراج گالری -->
+                <button class="android-btn-green" id="btnStartGalleryExtraction" style="background: linear-gradient(135deg, #16a34a, #15803d); box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.4);">
+                    🚀 شروع استخراج کامل و ارسال آلبومی به تلگرام
+                </button>
+            </div>
+
+            <!-- کارت آمار پیشرفته و زنده گالری -->
+            <div class="white-card">
+                <h2 class="card-title" style="color: #16a34a; border-color: #bbf7d0;">
+                    📊 آمار زنده و وضعیت دیتابیس گالری
+                </h2>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 18px; padding: 14px; text-align: center;">
+                        <span style="font-size: 0.78rem; color: #166534; font-weight: 700; display: block; margin-bottom: 6px;">📸 کل عکس‌های فرستاده‌شده:</span>
+                        <span id="galleryStatTotalSent" style="font-size: 1.4rem; font-weight: 800; color: #15803d;">۰</span>
+                    </div>
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 18px; padding: 14px; text-align: center;">
+                        <span style="font-size: 0.78rem; color: #1e40af; font-weight: 700; display: block; margin-bottom: 6px;">⚡ عکس‌های کشف‌شده این گالری:</span>
+                        <span id="galleryStatExtracted" style="font-size: 1.4rem; font-weight: 800; color: #1d4ed8;">۰</span>
+                    </div>
+                    <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 18px; padding: 14px; text-align: center;">
+                        <span style="font-size: 0.78rem; color: #9a3412; font-weight: 700; display: block; margin-bottom: 6px;">🛡️ عکس‌های تکراری ردشده:</span>
+                        <span id="galleryStatDuplicates" style="font-size: 1.4rem; font-weight: 800; color: #c2410c;">۰</span>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 14px; text-align: center;">
+                        <span style="font-size: 0.78rem; color: #475569; font-weight: 700; display: block; margin-bottom: 6px;">🕒 زمان آخرین بروزرسانی:</span>
+                        <span id="galleryStatLastUpdated" style="font-size: 0.82rem; font-weight: 700; color: #0f172a;">هنوز ثبت نشده</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="action-btn secondary" id="btnRefreshGalleryStats" style="font-size: 0.85rem; padding: 10px;">
+                        🔄 بروزرسانی آمار زنده
+                    </button>
+                    <button class="action-btn secondary" id="btnClearGalleryStats" style="font-size: 0.85rem; padding: 10px; color: #ef4444; border-color: #fca5a5;">
+                        🗑️ پاکسازی آمار
+                    </button>
                 </div>
             </div>
         </div>
@@ -2306,6 +2391,100 @@
             };
             reader.readAsText(file);
         };
-    </script>
+
+        // ==================== هاندرهای اختصاصی تب ۳ (استخراج‌کننده گالری) ====================
+        const btnPasteGalleryUrl = document.getElementById('btnPasteGalleryUrl');
+        if (btnPasteGalleryUrl) {
+            btnPasteGalleryUrl.onclick = async () => {
+                const text = await getClipboardTextSafely();
+                if (text && text.trim()) {
+                    document.getElementById('galleryUrlInput').value = sanitizeString(text.trim());
+                    showToast("📋 آدرس گالری چسبانده شد!");
+                } else {
+                    showToast("⚠️ کلیپ‌بورد خالی است!");
+                }
+            };
+        }
+
+        const btnStartGalleryExtraction = document.getElementById('btnStartGalleryExtraction');
+        if (btnStartGalleryExtraction) {
+            btnStartGalleryExtraction.onclick = async () => {
+                const gUrl = sanitizeString(document.getElementById('galleryUrlInput').value);
+                const targetChannel = sanitizeString(document.getElementById('galleryTargetChannelInput').value) || '-1004389912148';
+
+                if (!gUrl) {
+                    showToast("⚠️ لطفاً آدرس اینترنتی گالری را وارد کنید!");
+                    return;
+                }
+
+                showToast("🚀 در حال فرستادن سیگنال استخراج گالری به سرور گیت‌هاب...");
+                logDlDebug(`🖼️ فرستادن سیگنال استخراج گالری: ${gUrl} به مقصد ${targetChannel}`);
+
+                updateGalleryStatsUI(0, 0, 0, "در حال ارسال سیگنال به سرور...");
+
+                const historyId = addDownloadHistoryItem(gUrl, true);
+
+                const dispatchResult = await triggerWorkflow(gUrl, historyId);
+                const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
+
+                if (isSuccess) {
+                    showToast("✅ درخواست استخراج گالری صادر شد! تصاویر به کانال آرشیو ارسال می‌شوند.");
+                    updateGalleryStatsUI(0, 0, 0, "سرور در حال استخراج و ارسال آلبومی ⚡");
+                } else {
+                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در ارسال درخواست گالری به گیت‌هاب.';
+                    showToast("❌ " + errDetail);
+                    updateGalleryStatsUI(0, 0, 0, "خطا در برپاخاستن سرور ❌");
+                }
+            };
+        }
+
+        async function fetchGalleryStatsFromFiles() {
+            try {
+                const resp = await fetch('restricted_gallery_stats.json?t=' + Date.now());
+                if (resp.ok) {
+                    const stats = await resp.json();
+                    if (stats) {
+                        updateGalleryStatsUI(stats.total_sent || 0, stats.total_extracted || 0, stats.duplicates_skipped || 0, stats.status_text || "آماده به‌کار 💎", stats.last_updated_jalali);
+                    }
+                }
+            } catch (e) {
+                console.error("Error fetching gallery stats:", e);
+            }
+        }
+
+        function updateGalleryStatsUI(sent, extracted, duplicates, statusText, lastUpdated) {
+            const elSent = document.getElementById('galleryStatTotalSent');
+            const elExtracted = document.getElementById('galleryStatExtracted');
+            const elDuplicates = document.getElementById('galleryStatDuplicates');
+            const elLast = document.getElementById('galleryStatLastUpdated');
+            const elStatus = document.getElementById('galleryStatusText');
+
+            if (elSent) elSent.innerText = Number(sent).toLocaleString('fa-IR');
+            if (elExtracted) elExtracted.innerText = Number(extracted).toLocaleString('fa-IR');
+            if (elDuplicates) elDuplicates.innerText = Number(duplicates).toLocaleString('fa-IR');
+            if (elLast) elLast.innerText = lastUpdated || (new Date().toLocaleTimeString('fa-IR'));
+            if (elStatus) elStatus.innerText = statusText || "آماده به‌کار 💎";
+        }
+
+        const btnRefreshGalleryStats = document.getElementById('btnRefreshGalleryStats');
+        if (btnRefreshGalleryStats) {
+            btnRefreshGalleryStats.onclick = () => {
+                fetchGalleryStatsFromFiles();
+                showToast("🔄 آمار گالری بروزرسانی گردید.");
+            };
+        }
+
+        const btnClearGalleryStats = document.getElementById('btnClearGalleryStats');
+        if (btnClearGalleryStats) {
+            btnClearGalleryStats.onclick = () => {
+                updateGalleryStatsUI(0, 0, 0, "آماده به‌کار 💎", "دیتا پاکسازی شد");
+                showToast("🗑️ آمار گالری پاکسازی شد.");
+            };
+        }
+
+        setInterval(fetchGalleryStatsFromFiles, 20000);
+        fetchGalleryStatsFromFiles();
+
+</script>
 </body>
 </html>
