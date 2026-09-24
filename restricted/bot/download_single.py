@@ -664,7 +664,10 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
 
     try:
         import random, urllib.request, re, zipfile
-        from PIL import Image
+        try:
+            from PIL import Image
+        except ImportError:
+            Image = None
 
         USER_AGENTS = [
             'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1',
@@ -765,11 +768,12 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                     if os.path.exists(local_path) and os.path.getsize(local_path) > 1000:
                         file_size = os.path.getsize(local_path)
                         dimensions = "N/A"
-                        try:
-                            with Image.open(local_path) as img:
-                                dimensions = f"{img.width}x{img.height}"
-                        except Exception:
-                            pass
+                        if Image is not None:
+                            try:
+                                with Image.open(local_path) as img:
+                                    dimensions = f"{img.width}x{img.height}"
+                            except Exception:
+                                pass
 
                         downloaded_items.append((photo_url, local_path, file_name))
                         meta_file_records.append({
