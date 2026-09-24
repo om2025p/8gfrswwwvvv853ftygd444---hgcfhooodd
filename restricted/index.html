@@ -656,6 +656,29 @@
                     </button>
                 </div>
             </div>
+
+            <!-- کارت کنسول داده‌ها و لاگ زنده سرور گالری -->
+            <div class="white-card" style="margin-top: 16px;">
+                <div id="galleryDebugHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
+                    <h2 class="card-title" style="margin: 0; border: none; padding: 0; color: #16a34a;">🖥️ کنسول داده‌ها و لاگ زنده سرور (استخراج گالری)</h2>
+                    <span id="galleryDebugToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: #16a34a;">🔽</span>
+                </div>
+
+                <div id="galleryDebugContent" style="max-height: 500px; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 12px;">
+                    <p style="font-size: 0.82rem; color: #64748b; margin-top: 4px; margin-bottom: 12px; line-height: 1.5;">
+                        تمامی لاگ‌های استخراج، ارتباط با سرور گیت‌هاب اکشنز، وضعیت دریافت آلبوم عکس‌ها و خطاهای احتمالی به صورت زنده در این کنسول مستقیم قابل مشاهده و کپی برداری است.
+                    </p>
+                    <textarea id="galleryDebugConsole" readonly class="input-field" style="height: 220px; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; color: #4ade80; background: #0f172a; line-height: 1.4; resize: none; border-color: #1e293b; direction: ltr; text-align: left; border-radius: 16px; padding: 14px; width: 100%; box-sizing: border-box;"></textarea>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+                        <button class="action-btn secondary" id="btnCopyGalleryDebug" style="font-size: 0.88rem; padding: 12px; font-weight: 700; background: #f0fdf4; color: #16a34a; border-color: #bbf7d0;">
+                            📋 کپی کامل لاگ‌های سرور
+                        </button>
+                        <button class="action-btn secondary" id="btnClearGalleryDebug" style="font-size: 0.88rem; padding: 12px; font-weight: 700; color: #ef4444; border-color: #fca5a5;">
+                            🗑️ پاک کردن لاگ‌ها
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- ==================== تب ۲: تنظیمات و امکانات پیشرفته ==================== -->
@@ -960,10 +983,26 @@
         // لاگین دیباگ اختصاصی دانلود سریع (تب ۱)
         function logDlDebug(message, type = 'info') {
             const consoleEl = document.getElementById('dlDebugConsole');
+            if (consoleEl) {
+                const now = new Date();
+                const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+                const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : '📥');
+
+                consoleEl.value += `[${timeStr}] ${prefix} ${message}\n`;
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+            if (typeof message === 'string' && (message.includes('گالری') || message.includes('gallery') || message.includes('kir2kos'))) {
+                logGalleryDebug(message, type);
+            }
+        }
+
+        // لاگین دیباگ اختصاصی استخراج گالری (تب ۳)
+        function logGalleryDebug(message, type = 'info') {
+            const consoleEl = document.getElementById('galleryDebugConsole');
             if (!consoleEl) return;
             const now = new Date();
             const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
-            const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : '📥');
+            const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : '🖼️');
 
             consoleEl.value += `[${timeStr}] ${prefix} ${message}\n`;
             consoleEl.scrollTop = consoleEl.scrollHeight;
@@ -1565,14 +1604,19 @@
 
                                 if (filteredLines.length > 0) {
                                     filteredLines.slice(-100).forEach(line => {
-                                        logDlDebug(line.trim());
+                                        const cleanL = line.trim();
+                                        logDlDebug(cleanL);
+                                        logGalleryDebug(cleanL);
                                     });
                                 } else {
                                     lines.slice(-50).forEach(line => {
-                                        logDlDebug(line.trim());
+                                        const cleanL = line.trim();
+                                        logDlDebug(cleanL);
+                                        logGalleryDebug(cleanL);
                                     });
                                 }
                                 logDlDebug("📄 ===== پایان لاگ‌های سرور =====");
+                                logGalleryDebug("📄 ===== پایان لاگ‌های سرور =====");
                             }
                         } catch (eLogs) {
                             logDlDebug(`⚠️ عدم امکان دریافت لاگ متنی کامل: ${eLogs.message}`);
@@ -1750,6 +1794,47 @@
             document.getElementById('dlDebugConsole').value = '';
             showToast("🗑️ لاگ‌های پنل دانلود تب ۱ پاکسازی شدند.");
         };
+
+        // تاشو کردن پنل دیباگ اختصاصی استخراج گالری (تب ۳)
+        const galleryDebugHeader = document.getElementById('galleryDebugHeader');
+        const galleryDebugContent = document.getElementById('galleryDebugContent');
+        const galleryDebugToggleIcon = document.getElementById('galleryDebugToggleIcon');
+
+        if (galleryDebugHeader) {
+            galleryDebugHeader.onclick = () => {
+                if (galleryDebugContent.style.maxHeight === '0px' || !galleryDebugContent.style.maxHeight) {
+                    galleryDebugContent.style.maxHeight = '500px';
+                    galleryDebugToggleIcon.style.transform = 'rotate(180deg)';
+                    logGalleryDebug("کنسول دیاگ اختصاصی تب ۳ (استخراج گالری) باز شد.");
+                } else {
+                    galleryDebugContent.style.maxHeight = '0px';
+                    galleryDebugToggleIcon.style.transform = 'rotate(0deg)';
+                }
+            };
+        }
+
+        const btnCopyGalleryDebug = document.getElementById('btnCopyGalleryDebug');
+        if (btnCopyGalleryDebug) {
+            btnCopyGalleryDebug.onclick = () => {
+                const logs = document.getElementById('galleryDebugConsole').value;
+                if (!logs) {
+                    showToast("⚠️ هیچ لاگی در کنسول گالری وجود ندارد!");
+                    return;
+                }
+                navigator.clipboard.writeText(logs).then(() => {
+                    showToast("📋 لاگ‌های کامل سرور گالری با موفقیت کپی شد!");
+                    logGalleryDebug("تمام لاگ‌های سرور استخراج گالری در کلیپ‌بورد کپی شدند.", "success");
+                });
+            };
+        }
+
+        const btnClearGalleryDebug = document.getElementById('btnClearGalleryDebug');
+        if (btnClearGalleryDebug) {
+            btnClearGalleryDebug.onclick = () => {
+                document.getElementById('galleryDebugConsole').value = '';
+                showToast("🗑️ کنسول لاگ‌های گالری پاکسازی گردید.");
+            };
+        }
 
         // تاشو کردن پنل دیباگ عمومی
         const debugHeader = document.getElementById('debugHeader');
@@ -2419,6 +2504,7 @@
 
                 showToast("🚀 در حال فرستادن سیگنال استخراج گالری به سرور گیت‌هاب...");
                 logDlDebug(`🖼️ فرستادن سیگنال استخراج گالری: ${gUrl} به مقصد ${targetChannel}`);
+                logGalleryDebug(`🚀 شروع استخراج گالری: ${gUrl} به کانال مقصد ${targetChannel}`);
 
                 updateGalleryStatsUI(0, 0, 0, "در حال ارسال سیگنال به سرور...");
 
