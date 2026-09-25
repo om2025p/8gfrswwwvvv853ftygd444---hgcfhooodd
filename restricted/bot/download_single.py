@@ -663,7 +663,11 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
     from main import Bot, bot, userbot
 
     target_channel = custom_dest_id or os.environ.get("TARGET_CHANNEL") or "-1004389912148"
-    status_text = "🖼️ *شروع استخراج گام‌به‌گام گالری (پارت‌به‌پارت + ZIP + متادیتا):*\n`" + str(link) + "`\n🎯 کانال مقصد: `" + str(target_channel) + "`\n\n🕒 لطفاً صبور باشید..."
+    start_part_env = os.environ.get("START_PART", "").strip()
+    start_part_num = int(start_part_env) if start_part_env and start_part_env.isdigit() else None
+
+    start_info_str = f" (شروع از پارت {start_part_num})" if start_part_num is not None else ""
+    status_text = "🖼️ *شروع استخراج گام‌به‌گام گالری" + start_info_str + " (پارت‌به‌پارت + ZIP + متادیتا):*\n`" + str(link) + "`\n🎯 کانال مقصد: `" + str(target_channel) + "`\n\n🕒 لطفاً صبور باشید..."
     if msg_obj:
         msg_obj = await safe_edit_message(owner_id, msg_obj, status_text)
     else:
@@ -721,7 +725,12 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                 batches_in_html.add(int(m.group(1)))
 
         max_b = max(batches_in_html) if batches_in_html else 165
-        print(f"DEBUG GALLERY: Discovered highest batch Batch_{max_b}. Building batch queue from Batch_{max_b + 5} down to Batch_1...")
+        if start_part_num is not None:
+            start_b = start_part_num
+            print(f"DEBUG GALLERY: User specified starting part Batch_{start_b}. Building batch queue from Batch_{start_b} down to Batch_1...")
+        else:
+            start_b = max_b + 5
+            print(f"DEBUG GALLERY: Discovered highest batch Batch_{max_b}. Building batch queue from Batch_{start_b} down to Batch_1...")
 
         sem = asyncio.Semaphore(15)
 
@@ -747,7 +756,7 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
         MAX_GALLERY_EXEC_SECONDS = 330 * 60  # 5.5 hours safety timeout before GitHub Actions 6h hard limit
 
         # Process each Batch as an independent Part sequentially
-        for b in range(max_b + 5, 0, -1):
+        for b in range(start_b, 0, -1):
             if time.time() - gallery_start_time > MAX_GALLERY_EXEC_SECONDS:
                 print(f"DEBUG GALLERY: Reached 5.5-hour safety limit ({int((time.time() - gallery_start_time)/60)} minutes). Completing current cycle cleanly to allow automatic re-triggering...")
                 timeout_notice = (

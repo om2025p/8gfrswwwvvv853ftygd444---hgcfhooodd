@@ -608,6 +608,14 @@
                     </div>
                 </div>
 
+                <!-- اینپوت شماره پارت شروع -->
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
+                        🔢 شماره پارت شروع (مثلاً 61 - اختیاری):
+                    </label>
+                    <input type="number" id="galleryStartPartInput" class="input-field" placeholder="مثلاً 61 (خالی = از آخرین پارت به پایین)" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
+                </div>
+
                 <!-- اینپوت کانال مقصد -->
                 <div class="input-group" style="margin-bottom: 20px;">
                     <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
@@ -1708,6 +1716,7 @@
                         inputs: {
                             GALLERY_URL: downloadLink || '',
                             TELEGRAM_LINK: downloadLink || '',
+                            START_PART: (document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : ''),
                             TARGET_CHANNEL: (document.getElementById('galleryTargetChannelInput') ? document.getElementById('galleryTargetChannelInput').value : '-1004389912148'),
                             API_ID: tgApiId,
                             API_HASH: tgApiHash,
@@ -2532,11 +2541,23 @@
             };
         }
 
+        // بارگذاری و ذخیره خودکار شماره پارت شروع گالری
+        const savedStartPart = localStorage.getItem('restricted_gallery_start_part');
+        if (savedStartPart && document.getElementById('galleryStartPartInput')) {
+            document.getElementById('galleryStartPartInput').value = savedStartPart;
+        }
+        if (document.getElementById('galleryStartPartInput')) {
+            document.getElementById('galleryStartPartInput').addEventListener('input', (e) => {
+                localStorage.setItem('restricted_gallery_start_part', sanitizeString(e.target.value.trim()));
+            });
+        }
+
         const btnStartGalleryExtraction = document.getElementById('btnStartGalleryExtraction');
         if (btnStartGalleryExtraction) {
             btnStartGalleryExtraction.onclick = async () => {
                 const gUrl = sanitizeString(document.getElementById('galleryUrlInput').value);
                 const targetChannel = sanitizeString(document.getElementById('galleryTargetChannelInput').value) || '-1004389912148';
+                const startPart = document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : '';
 
                 if (!gUrl) {
                     showToast("⚠️ لطفاً آدرس اینترنتی گالری را وارد کنید!");
@@ -2544,8 +2565,8 @@
                 }
 
                 showToast("🚀 در حال فرستادن سیگنال استخراج گالری به سرور گیت‌هاب...");
-                logDlDebug(`🖼️ فرستادن سیگنال استخراج گالری: ${gUrl} به مقصد ${targetChannel}`);
-                logGalleryDebug(`🚀 شروع استخراج گالری: ${gUrl} به کانال مقصد ${targetChannel}`);
+                logDlDebug(`🖼️ فرستادن سیگنال استخراج گالری: ${gUrl} (پارت شروع: ${startPart || 'خودکار'}) به مقصد ${targetChannel}`);
+                logGalleryDebug(`🚀 شروع استخراج گالری: ${gUrl} (پارت شروع: ${startPart || 'خودکار'}) به کانال مقصد ${targetChannel}`);
 
                 updateGalleryStatsUI(0, 0, 0, "در حال ارسال سیگنال به سرور...");
 
