@@ -423,6 +423,10 @@
                 ذخیره و تنظیم روی سرور کلودفلر ☁️
             </button>
 
+            <button class="btn-submit" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); margin-top: 4px;" onclick="resetWalletHistory()">
+                🗑️ بازنشانی و شروع مجدد ثبت اطلاعات از امروز
+            </button>
+
             <p class="text-hint">
                 💡 اطلاعات API صرافی تبدیل شما به طور مستقیم و بسیار امن روی سرور ابری کلودفلر خودتان ذخیره می‌شود و مرورگر هرگز اطلاعات حساس شما را نگهداری نمی‌کند. برای دریافت کلیدهای خود می‌توانید از <a href="https://tabdeal.org/panel/settings/api" target="_blank">این آدرس در صرافی تبدیل</a> استفاده کنید.
             </p>
@@ -678,6 +682,31 @@
                 } catch(e) {}
 
                 alert("🚪 اطلاعات با موفقیت پاکسازی شد. به امید سودهای فضایی بعدی!");
+                window.location.reload();
+            }
+        }
+
+        async function resetWalletHistory() {
+            if (confirm("آلپ عزیز، آیا مطمئن هستید می‌خواهید تمام تاریخچه ثبت‌شده کیف پول پاک شده و محاسبه درصدها و داده‌ها از امروز از نو شروع شود؟ 🔄🧹")) {
+                localStorage.removeItem("tabdeal_wallet_history");
+                localStorage.removeItem("tabdeal_last_percent_change");
+                localStorage.removeItem("tabdeal_last_value_toman");
+                localStorage.removeItem("tabdeal_last_value_tether");
+                localStorage.removeItem("tabdeal_last_updated_ts");
+
+                try {
+                    const db = await openWalletDB();
+                    if (db) {
+                        const tx = db.transaction(STORE_NAME, "readwrite");
+                        tx.objectStore(STORE_NAME).clear();
+                    }
+                } catch(e) {}
+
+                try {
+                    await fetch(`${CF_WORKER_URL}/reset-history`, { method: "POST" });
+                } catch(e) {}
+
+                alert("✨ تاریخچه کیف پول با موفقیت بازنشانی شد! سیستم اکنون از امروز تمام اطلاعات را به عنوان نقطه شروع جدید ثبت خواهد کرد.");
                 window.location.reload();
             }
         }

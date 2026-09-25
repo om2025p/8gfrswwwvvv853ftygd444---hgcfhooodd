@@ -530,6 +530,21 @@ export default {
       }
     }
 
+    // POST /reset-history (wipes cloud history)
+    if (url.pathname === "/reset-history" && (request.method === "POST" || request.method === "GET")) {
+      try {
+        await pushCloudHistory(env, []);
+        return new Response(JSON.stringify({ success: true, message: "Cloud history reset successfully" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
     // GET /history
     if (url.pathname === "/history") {
       try {
