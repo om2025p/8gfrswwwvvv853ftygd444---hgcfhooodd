@@ -2204,7 +2204,7 @@
             return matches.map(u => sanitizeString(u.trim())).filter(u => u.length > 5);
         }
 
-        // تابع ۱۰۰٪ نیتیو اندروید جهت خواندن کلیپ‌بورد بدون کوچک‌ترین وابستگی به مرورگر
+        // تابع هوشمند جهت خواندن کلیپ‌بورد از اندروید یا مرورگر استاندارد وب
         async function getClipboardTextSafely() {
             if (window.AndroidNative && typeof window.AndroidNative.getClipboardText === 'function') {
                 try {
@@ -2216,10 +2216,20 @@
                     logDlDebug("خطای خواندن کلیپ‌بورد از پل نیتیو: " + errNative.message, "error");
                 }
             }
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                try {
+                    const webText = await navigator.clipboard.readText();
+                    if (webText && webText.trim()) {
+                        return webText.trim();
+                    }
+                } catch (errWeb) {
+                    logDlDebug("خطای خواندن کلیپ‌بورد از مرورگر وب: " + errWeb.message, "error");
+                }
+            }
             return "";
         }
 
-        // دکمه چسباندن متن از کلیپ‌بورد اندروید
+        // دکمه چسباندن متن از کلیپ‌بورد (اندروید و وب)
         const btnPaste = document.getElementById('btnPaste');
         if (btnPaste) {
             btnPaste.onclick = async () => {
@@ -2227,8 +2237,8 @@
                 if (text && text.trim()) {
                     const cleaned = sanitizeString(text);
                     document.getElementById('dlLink').value = cleaned;
-                    showToast("📋 متن از کلیپ‌بورد اندروید چسبانده شد!");
-                    logDlDebug("پیوند با موفقیت از حافظه اندروید دریافت و جای‌گذاری شد.");
+                    showToast("📋 متن از کلیپ‌بورد چسبانده شد!");
+                    logDlDebug("پیوند با موفقیت از کلیپ‌بورد دستگاه دریافت و جای‌گذاری شد.");
                 } else {
                     showToast("⚠️ کلیپ‌بورد دستگاه خالی است یا پیوندی یافت نشد!");
                 }

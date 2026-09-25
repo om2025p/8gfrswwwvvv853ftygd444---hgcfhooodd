@@ -743,9 +743,21 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
             return b_photos
 
         part_counter = 0
+        gallery_start_time = time.time()
+        MAX_GALLERY_EXEC_SECONDS = 330 * 60  # 5.5 hours safety timeout before GitHub Actions 6h hard limit
 
         # Process each Batch as an independent Part sequentially
         for b in range(max_b + 5, 0, -1):
+            if time.time() - gallery_start_time > MAX_GALLERY_EXEC_SECONDS:
+                print(f"DEBUG GALLERY: Reached 5.5-hour safety limit ({int((time.time() - gallery_start_time)/60)} minutes). Completing current cycle cleanly to allow automatic re-triggering...")
+                timeout_notice = (
+                    "⏳ *پایان دوره کاری ۵.۵ ساعته سرور استخراج گالری:*\n\n"
+                    "✅ تمام عکس‌ها و دیتابیس تا این لحظه به صورت کاملاً امن ذخیره گردید.\n"
+                    "🔄 دوره ۶ ساعته بعدی استخراج به صورت خودکار تا لحظاتی دیگر تمدید و شروع می‌شود... 💎"
+                )
+                await safe_edit_message(owner_id, msg_obj, timeout_notice)
+                break
+
             batch_photos = await probe_batch_photos(b)
             if not batch_photos:
                 continue
@@ -1705,40 +1717,40 @@ async def main_download():
 
     import inspect
 
-    # Start Userbot (the actual user session) - critical blocking start
+    # Start Userbot (the actual user session) - soft non-blocking start fallback
+    userbot_started = False
     try:
         print("Starting Userbot (SESSION_STRING) dynamically...")
         res = userbot.start()
         if inspect.iscoroutine(res):
             await res
         print("Userbot started successfully.")
+        userbot_started = True
     except Exception as e:
         err_msg = str(e)
-        print(f"Fatal error starting Userbot: {err_msg}")
+        print(f"Warning/Notice starting Userbot: {err_msg}")
         if "AUTH_KEY_DUPLICATED" in err_msg:
             friendly_err = (
-                f"\n❌ خطای امنیتی تلگرام [406 AUTH_KEY_DUPLICATED]:\n"
-                f"رئیس بزرگ، سشن تلگرام شما (SESSION_STRING) همزمان در جای دیگری فعال است یا باطل شده است!\n"
-                f"لطفاً ربات‌ها یا اسکریپت‌های دیگر خود را خاموش کنید و یا با استفاده از @TgDevToolBot یک سشن جدید بسازید و جایگزین کنید.\n"
+                f"\n⚠️ توجه تلگرام [406 AUTH_KEY_DUPLICATED]:\n"
+                f"رئیس بزرگ، سشن اکانت شخصی (SESSION_STRING) همزمان در جای دیگری فعال است یا باطل شده است.\n"
+                f"ربات به صورت خودکار روی حالت پشتیبان سوئیچ کرد تا دانلود لینک‌های عمومی و شبکه‌های اجتماعی متوقف نشود! 💎\n"
             )
             print(friendly_err)
-            sys.exit(1)
+            send_channel_notice("⚠️ سشن اکانت شخصی با خطای AUTH_KEY_DUPLICATED مواجه شد. سوئیچ هوشمند روی ربات پشتیبان جهت ادامه دانلود انجام گرفت. 💎")
         elif "FLOOD_WAIT" in err_msg or "FLOOD_WAIT_" in err_msg:
             friendly_err = (
-                f"\n❌ خطای محدودیت تلگرام [420 FLOOD_WAIT]:\n"
-                f"تلگرام اکانت کاربری شما را به دلیل درخواست‌های مکرر به طور موقت محدود کرده است.\n"
-                f"لطفاً چند دقیقه صبر کنید و سپس دوباره تلاش نمایید.\n"
+                f"\n⚠️ محدودیت موقت تلگرام [420 FLOOD_WAIT]:\n"
+                f"اکانت کاربری به دلیل درخواست‌های مکرر موقتاً محدود است. ادامه دانلودها با ربات پشتیبان انجام می‌شود.\n"
             )
             print(friendly_err)
-            sys.exit(1)
+            send_channel_notice("⚠️ اکانت شخصی در حالت FLOOD_WAIT است. ادامه دانلودها با ربات پشتیبان انجام می‌گیرد.")
         else:
             friendly_err = (
-                f"\n❌ خطا در راه‌اندازی اکانت کاربری (Userbot):\n"
+                f"\n⚠️ هشدار راه‌اندازی اکانت کاربری (Userbot):\n"
                 f"متن خطا: {err_msg}\n"
-                f"لطفاً مطمئن شوید SESSION_STRING معتبر است.\n"
+                f"ادامه دانلودها با استفاده از ربات پشتیبان انجام می‌پذیرد.\n"
             )
             print(friendly_err)
-            sys.exit(1)
 
     # Start Pyrogram Bot - Soft, non-blocking fallback start (won't crash on FLOOD_WAIT or Auth errors)
     try:

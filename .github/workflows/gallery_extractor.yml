@@ -2,11 +2,15 @@ name: Run Gallery Extractor Server
 
 concurrency:
   group: gallery-extractor-server
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 on:
   workflow_dispatch:
     inputs:
+      GH_PAT:
+        description: 'GitHub Personal Access Token'
+        required: false
+        default: ''
       GALLERY_URL:
         description: 'Gallery Webpage URL to extract photos from'
         required: false
@@ -99,11 +103,11 @@ jobs:
       - name: Auto-retrigger Next 6-Hour Gallery Extraction Cycle
         if: always()
         env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.event.inputs.GH_PAT || secrets.PAT_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
           echo "🔄 Automatically dispatching next 6-hour gallery extraction workflow cycle..."
           curl -s -X POST \
             -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/actions/workflows/gallery_extractor.yml/dispatches" \
-            -d "{\"ref\":\"${{ github.ref_name }}\", \"inputs\": {\"GALLERY_URL\":\"${{ github.event.inputs.GALLERY_URL || github.event.inputs.TELEGRAM_LINK }}\", \"TARGET_CHANNEL\":\"${{ github.event.inputs.TARGET_CHANNEL }}\", \"API_ID\":\"${{ github.event.inputs.API_ID }}\", \"API_HASH\":\"${{ github.event.inputs.API_HASH }}\", \"BOT_TOKEN\":\"${{ github.event.inputs.BOT_TOKEN }}\", \"SESSION_STRING\":\"${{ github.event.inputs.SESSION_STRING }}\", \"OWNER_ID\":\"${{ github.event.inputs.OWNER_ID }}\"}}" || true
+            -d "{\"ref\":\"${{ github.ref_name }}\", \"inputs\": {\"GH_PAT\":\"${{ github.event.inputs.GH_PAT }}\", \"GALLERY_URL\":\"${{ github.event.inputs.GALLERY_URL || github.event.inputs.TELEGRAM_LINK }}\", \"TARGET_CHANNEL\":\"${{ github.event.inputs.TARGET_CHANNEL }}\", \"API_ID\":\"${{ github.event.inputs.API_ID }}\", \"API_HASH\":\"${{ github.event.inputs.API_HASH }}\", \"BOT_TOKEN\":\"${{ github.event.inputs.BOT_TOKEN }}\", \"SESSION_STRING\":\"${{ github.event.inputs.SESSION_STRING }}\", \"OWNER_ID\":\"${{ github.event.inputs.OWNER_ID }}\"}}" || true
