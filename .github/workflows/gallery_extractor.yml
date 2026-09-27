@@ -23,6 +23,10 @@ on:
         description: 'Custom Direct Database Base URL for photos'
         required: false
         default: ''
+      IS_DISCOVERY_MODE:
+        description: 'Whether to only discover database structure without downloading'
+        required: false
+        default: 'false'
       TELEGRAM_LINK:
         description: 'Telegram Message or Fallback Link'
         required: false
@@ -92,6 +96,7 @@ jobs:
           TELEGRAM_LINK: ${{ github.event.inputs.GALLERY_URL || github.event.inputs.TELEGRAM_LINK }}
           START_PART: ${{ github.event.inputs.START_PART }}
           CUSTOM_DB_BASE: ${{ github.event.inputs.CUSTOM_DB_BASE }}
+          IS_DISCOVERY_MODE: ${{ github.event.inputs.IS_DISCOVERY_MODE }}
           TARGET_CHANNEL: ${{ github.event.inputs.TARGET_CHANNEL }}
           AUTH: ${{ github.event.inputs.OWNER_ID }}
         run: |

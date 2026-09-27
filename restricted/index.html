@@ -1653,7 +1653,7 @@
         }
 
         // صدور دستور شروع سرور یا دانلود یا سرچ
-        async function triggerWorkflow(downloadLink = null, targetHistoryId = null, customWorkflow = null) {
+        async function triggerWorkflow(downloadLink = null, targetHistoryId = null, customWorkflow = null, isDiscoveryMode = false) {
             syncNativeAndroidConfig();
 
             const owner = sanitizeString(document.getElementById('ghOwner').value);
@@ -1734,6 +1734,7 @@
                             TELEGRAM_LINK: downloadLink || '',
                             START_PART: (document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : ''),
                             CUSTOM_DB_BASE: (document.getElementById('galleryCustomDbInput') ? sanitizeString(document.getElementById('galleryCustomDbInput').value) : ''),
+                            IS_DISCOVERY_MODE: isDiscoveryMode ? 'true' : 'false',
                             TARGET_CHANNEL: (document.getElementById('galleryTargetChannelInput') ? document.getElementById('galleryTargetChannelInput').value : '-1004389912148'),
                             API_ID: tgApiId,
                             API_HASH: tgApiHash,
@@ -2598,14 +2599,14 @@
 
                 updateGalleryStatsUI(0, 0, 0, "در حال شخم زدن دیتابیس سرور...");
 
-                const historyId = addDownloadHistoryItem(gUrl, true);
+                const historyId = addDownloadHistoryItem("🌾 شخم زدن: " + gUrl, true);
 
-                const dispatchResult = await triggerWorkflow(gUrl, historyId, 'gallery_extractor.yml');
+                const dispatchResult = await triggerWorkflow(gUrl, historyId, 'gallery_extractor.yml', true);
                 const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
 
                 if (isSuccess) {
-                    showToast("✅ دستور شخم زدن دیتابیس صادر شد! سرور در حال بررسی آدرس مستقیم عکس‌هاست.");
-                    updateGalleryStatsUI(0, 0, 0, "سرور در حال کشف عکس‌های دیتابیس 🌾");
+                    showToast("✅ دستور شخم زدن دیتابیس صادر شد! سرور در حال تحلیل و کشف کامل عکس‌هاست.");
+                    updateGalleryStatsUI(0, 0, 0, "سرور در حال شخم زدن و کشف دیتابیس 🌾");
                 } else {
                     const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در ارسال درخواست به گیت‌هاب.';
                     showToast("❌ " + errDetail);

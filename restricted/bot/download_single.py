@@ -665,9 +665,14 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
     target_channel = custom_dest_id or os.environ.get("TARGET_CHANNEL") or "-1004389912148"
     start_part_env = os.environ.get("START_PART", "").strip()
     start_part_num = int(start_part_env) if start_part_env and start_part_env.isdigit() else None
+    is_discovery_mode = os.environ.get("IS_DISCOVERY_MODE", "false").strip().lower() == "true"
 
     start_info_str = f" (شروع از پارت {start_part_num})" if start_part_num is not None else ""
-    status_text = "🖼️ *شروع استخراج گام‌به‌گام گالری" + start_info_str + " (پارت‌به‌پارت + ZIP + متادیتا):*\n`" + str(link) + "`\n🎯 کانال مقصد: `" + str(target_channel) + "`\n\n🕒 لطفاً صبور باشید..."
+    if is_discovery_mode:
+        status_text = "🌾 *شروع شخم زدن و کشف دقیق دیتابیس گالری (حالت تحلیل و ردیابی بدون دانلود):*\n`" + str(link) + "`\n\n🕒 در حال بررسی و متری کردن تمام عکس‌های دیتابیس اصلی..."
+    else:
+        status_text = "🖼️ *شروع استخراج گام‌به‌گام گالری" + start_info_str + " (پارت‌به‌پارت + ZIP + متادیتا):*\n`" + str(link) + "`\n🎯 کانال مقصد: `" + str(target_channel) + "`\n\n🕒 لطفاً صبور باشید..."
+
     if msg_obj:
         msg_obj = await safe_edit_message(owner_id, msg_obj, status_text)
     else:
@@ -792,6 +797,52 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
         consecutive_empty_batches = 0
         gallery_start_time = time.time()
         MAX_GALLERY_EXEC_SECONDS = 330 * 60  # 5.5 hours safety timeout before GitHub Actions 6h hard limit
+
+        # If in Discovery Mode, run deep high-speed structural discovery without downloading or sending media to Telegram
+        if is_discovery_mode:
+            print("DEBUG GALLERY: Running in DISCOVERY MODE (kashf-only)...")
+            discovered_batches = {}
+            total_discovered_photos = 0
+
+            scan_range = range(start_b, start_b + 100) if is_user_specified_ascent else range(start_b, 0, -1)
+            consecutive_empty = 0
+
+            for b in scan_range:
+                if is_user_specified_ascent and consecutive_empty >= 5:
+                    break
+                b_photos = await probe_batch_photos(b)
+                if b_photos:
+                    discovered_batches[b] = len(b_photos)
+                    total_discovered_photos += len(b_photos)
+                    consecutive_empty = 0
+                    print(f"DEBUG DISCOVERY: Batch_{b} -> Discovered {len(b_photos)} photos")
+                else:
+                    if is_user_specified_ascent:
+                        consecutive_empty += 1
+
+            # Build discovery report summary
+            batches_list_str = ", ".join([f"پارت {k} ({v} عکس)" for k, v in sorted(discovered_batches.items())]) or 'هیچ پارتی یافت نشد'
+            active_base_db = custom_db_base if custom_db_base else "https://kir2kos.net/gallery/Organized_Gallery"
+            discovery_report = (
+                f"🌾 *گزارش شخم زدن و کشف دیتابیس گالری:*\n\n"
+                f"📂 تعداد پارت‌های فعال کشف‌شده: *{len(discovered_batches)} پارت*\n"
+                f"📸 کل عکس‌های سالم و آماده دانلود: *{total_discovered_photos:,} عکس*\n"
+                f"🗄️ آدرس دیتابیس منبع: `{active_base_db}`\n\n"
+                f"📋 *ریز تفکیک پارت‌ها:*\n{batches_list_str}\n\n"
+                f"💡 *آماده‌باش:* اکنون می‌توانید جهت دانلود و ارسال آلبومی به تلگرام، روی دکمه «🚀 شروع استخراج کامل» کلیک فرمایید! 💎"
+            )
+            await safe_edit_message(owner_id, msg_obj, discovery_report)
+
+            # Update stats JSON file for UI
+            stats_data = {
+                "total_sent": len(sent_photos_db),
+                "total_extracted": total_discovered_photos,
+                "duplicates_skipped": 0,
+                "status_text": f"کشف موفق: {total_discovered_photos:,} عکس در {len(discovered_batches)} پارت 🌾",
+                "last_updated_jalali": datetime.now().strftime("%Y/%m/%d - %H:%M:%S")
+            }
+            save_gallery_stats(stats_data)
+            return
 
         # Determine batch sequence: Ascending if specified by user (61, 62, 63...), Descending otherwise
         batch_generator = range(start_b, start_b + 300) if is_user_specified_ascent else range(start_b, 0, -1)
