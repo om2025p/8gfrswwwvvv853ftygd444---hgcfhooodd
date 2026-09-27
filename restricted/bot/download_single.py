@@ -6,6 +6,7 @@ import time
 import json
 import tempfile
 import shutil
+from datetime import datetime
 import yt_dlp
 from decouple import config
 
@@ -749,7 +750,9 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
             headers = get_stealth_headers()
 
             # Determine base URL for batch probing
-            base_gallery_url = custom_db_base if custom_db_base else "https://kir2kos.net/gallery/Organized_Gallery"
+            base_gallery_url = custom_db_base
+            if not base_gallery_url or 'Organized_Gallery' not in base_gallery_url:
+                base_gallery_url = "https://kir2kos.net/gallery/Organized_Gallery"
 
             # Direct organized gallery probing strictly for Batch_b
             for num in range(1, 200):
