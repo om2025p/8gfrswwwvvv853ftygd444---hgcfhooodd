@@ -605,21 +605,22 @@ async def probe_photo_url_async(url, headers):
     def _do_probe():
         import time, urllib.request, subprocess
         ua = headers.get('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/125.0.0.0 Safari/537.36')
-        for attempt in range(3):
+        for attempt in range(2):
             try:
                 req = urllib.request.Request(url, method='HEAD', headers=headers)
-                with urllib.request.urlopen(req, timeout=10) as res:
+                with urllib.request.urlopen(req, timeout=8) as res:
                     if res.status == 200:
                         return True
             except Exception:
                 try:
-                    cmd = ['curl', '-s', '-I', '-L', '-A', ua, '--retry', '2', '--retry-delay', '1', url]
-                    res_curl = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-                    if '200 OK' in res_curl.stdout or '200' in res_curl.stdout:
+                    cmd = ['curl', '-s', '-I', '-L', '-A', ua, '--retry', '1', '--retry-delay', '1', url]
+                    res_curl = subprocess.run(cmd, capture_output=True, text=True, timeout=8)
+                    first_line = res_curl.stdout.split('\n')[0] if res_curl.stdout else ""
+                    if '200' in first_line or '206' in first_line:
                         return True
                 except Exception:
                     pass
-            time.sleep(1.2 + attempt * 0.5)
+            time.sleep(0.5 + attempt * 0.5)
         return False
     return await asyncio.to_thread(_do_probe)
 
@@ -844,12 +845,16 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
 
             # Build discovery report summary
             batches_list_str = ", ".join([f"پارت {k} ({v} عکس)" for k, v in sorted(discovered_batches.items())]) or 'هیچ پارتی یافت نشد'
-            active_base_db = custom_db_base if custom_db_base else "https://kir2kos.net/gallery/Organized_Gallery"
+            active_base_db = custom_db_base if (custom_db_base and 'Organized_Gallery' in custom_db_base) else "https://kir2kos.net/gallery/Organized_Gallery"
+            scan_time_sec = round(time.time() - gallery_start_time, 1)
+            total_scanned_batches = len(list(scan_range))
             discovery_report = (
                 f"🌾 *گزارش کامل شخم زدن و کشف دیتابیس گالری:*\n\n"
                 f"📂 تعداد پارت‌های فعال کشف‌شده: *{len(discovered_batches)} پارت*\n"
                 f"📸 کل عکس‌های سالم و آماده دانلود: *{total_discovered_photos:,} عکس*\n"
-                f"🗄️ آدرس دیتابیس منبع: `{active_base_db}`\n\n"
+                f"🗄️ آدرس دیتابیس منبع: `{active_base_db}`\n"
+                f"⏱️ زمان پیمایش دیتابیس: *{scan_time_sec} ثانیه*\n"
+                f"📊 دامنه اسکن پارت‌ها: *از پارت {start_b} تا پارت {start_b + len(discovered_batches)}*\n\n"
                 f"📋 *ریز تفکیک پارت‌ها:*\n{batches_list_str}\n\n"
                 f"💡 *آماده‌باش:* اکنون می‌توانید جهت دانلود و ارسال آلبومی به تلگرام، روی دکمه «🚀 شروع استخراج کامل» کلیک فرمایید! 💎"
             )
