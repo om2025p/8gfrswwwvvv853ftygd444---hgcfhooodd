@@ -740,6 +740,7 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
             b_photos = []
             consecutive_404s = 0
             headers = get_stealth_headers()
+            # Direct organized gallery probing
             for num in range(1, 200):
                 p_url = f"https://kir2kos.net/gallery/Organized_Gallery/Batch_{b}/photo_{b}_{num:03d}.jpg"
                 async with sem:
@@ -751,6 +752,28 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                     consecutive_404s += 1
                     if consecutive_404s >= 8 and num > 5:
                         break
+
+            # Page/Load More subpage fallback probing (/page/{b}/ or ?page={b})
+            if not b_photos:
+                subpage_urls = [
+                    f"{base_clean_link}/page/{b}/",
+                    f"{base_clean_link}/?page={b}",
+                    f"{base_clean_link}/page/{b}"
+                ]
+                for sp_u in subpage_urls:
+                    sp_html = await fetch_page_html_async(sp_u, headers)
+                    if sp_html:
+                        for match in re.finditer(r'(?:data-src|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp))["\']', sp_html, re.I):
+                            img_u = match.group(1).strip()
+                            if 'svg' in img_u or 'logo' in img_u or 'avatar' in img_u or 'emoji' in img_u or 'favicon' in img_u:
+                                continue
+                            if not img_u.startswith('http'):
+                                img_u = 'https://kir2kos.net' + (img_u if img_u.startswith('/') else '/' + img_u)
+                            if img_u not in b_photos:
+                                b_photos.append(img_u)
+                        if b_photos:
+                            print(f"DEBUG GALLERY: Extracted {len(b_photos)} photo links from subpage/load-more URL {sp_u}")
+                            break
             return b_photos
 
         part_counter = 0

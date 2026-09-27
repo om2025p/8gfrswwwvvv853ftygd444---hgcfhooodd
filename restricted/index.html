@@ -2587,24 +2587,50 @@
         }
 
         async function fetchGalleryStatsFromFiles() {
+            let totalSentFromDb = 0;
+            const dbUrls = [
+                'restricted_sent_photos.json?t=' + Date.now(),
+                'bot/restricted_sent_photos.json?t=' + Date.now(),
+                '../restricted_sent_photos.json?t=' + Date.now()
+            ];
+            for (const u of dbUrls) {
+                try {
+                    const resp = await fetch(u);
+                    if (resp.ok) {
+                        const list = await resp.json();
+                        if (Array.isArray(list)) {
+                            totalSentFromDb = list.length;
+                            break;
+                        }
+                    }
+                } catch (e) {}
+            }
+
             const urlsToTry = [
                 'restricted_gallery_stats.json?t=' + Date.now(),
                 'bot/restricted_gallery_stats.json?t=' + Date.now(),
                 '../restricted_gallery_stats.json?t=' + Date.now()
             ];
+            let foundStats = false;
             for (const u of urlsToTry) {
                 try {
                     const resp = await fetch(u);
                     if (resp.ok) {
                         const stats = await resp.json();
                         if (stats) {
-                            updateGalleryStatsUI(stats.total_sent || 0, stats.total_extracted || 0, stats.duplicates_skipped || 0, stats.status_text || "آماده به‌کار 💎", stats.last_updated_jalali);
+                            const sentCount = Math.max(stats.total_sent || 0, totalSentFromDb);
+                            updateGalleryStatsUI(sentCount, stats.total_extracted || 0, stats.duplicates_skipped || 0, stats.status_text || "آماده به‌کار 💎", stats.last_updated_jalali);
+                            foundStats = true;
                             return;
                         }
                     }
                 } catch (e) {
                     // Try next url
                 }
+            }
+
+            if (!foundStats && totalSentFromDb > 0) {
+                updateGalleryStatsUI(totalSentFromDb, totalSentFromDb, 0, "آماده به‌کار 💎", new Date().toLocaleTimeString('fa-IR'));
             }
         }
 
