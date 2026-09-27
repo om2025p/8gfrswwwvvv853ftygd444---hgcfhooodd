@@ -624,10 +624,15 @@
                     <input type="text" id="galleryTargetChannelInput" class="input-field" placeholder="-1004389912148" value="-1004389912148" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
                 </div>
 
-                <!-- دکمه شروع استخراج گالری -->
-                <button class="android-btn-green" id="btnStartGalleryExtraction" style="background: linear-gradient(135deg, #16a34a, #15803d); box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.4);">
-                    🚀 شروع استخراج کامل و ارسال آلبومی به تلگرام
-                </button>
+                <!-- دکمه‌های عملیاتی استخراج گالری -->
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="android-btn-green" id="btnStartGalleryExtraction" style="background: linear-gradient(135deg, #16a34a, #15803d); box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.4);">
+                        🚀 شروع استخراج کامل و ارسال آلبومی به تلگرام
+                    </button>
+                    <button class="android-btn-green" id="btnStopGalleryServer" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 8px 20px -4px rgba(239, 68, 68, 0.3); font-size: 0.95rem; padding: 14px;">
+                        🛑 توقف فوری سرور استخراج گالری
+                    </button>
+                </div>
             </div>
 
             <!-- کارت آمار پیشرفته و زنده گالری -->
@@ -2550,6 +2555,19 @@
             document.getElementById('galleryStartPartInput').addEventListener('input', (e) => {
                 localStorage.setItem('restricted_gallery_start_part', sanitizeString(e.target.value.trim()));
             });
+        }
+
+        // دکمه توقف فوری سرور گالری
+        const btnStopGalleryServer = document.getElementById('btnStopGalleryServer');
+        if (btnStopGalleryServer) {
+            btnStopGalleryServer.onclick = () => {
+                const btnStop = document.getElementById('btnStopServer');
+                if (btnStop) {
+                    btnStop.click();
+                } else {
+                    showToast("🛑 دستور توقف سرور صادر شد.");
+                }
+            };
         }
 
         const btnStartGalleryExtraction = document.getElementById('btnStartGalleryExtraction');
