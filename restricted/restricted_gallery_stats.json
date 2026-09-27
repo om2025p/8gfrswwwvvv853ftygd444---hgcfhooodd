@@ -1,8 +1,8 @@
 {
-  "total_sent": 2189,
-  "total_extracted": 2189,
-  "duplicates_skipped": 0,
-  "status_text": "در حال ارسال پارت 100",
-  "last_updated": 1790477415.685386,
-  "last_updated_jalali": "2026-09-27 02:50:15"
+  "total_sent": 2243,
+  "total_extracted": 60,
+  "duplicates_skipped": 6,
+  "status_text": "در حال ارسال پارت 100000000000000000000",
+  "last_updated": 1790477650.7292624,
+  "last_updated_jalali": "2026-09-27 02:54:10"
 }
