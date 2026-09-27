@@ -19,6 +19,10 @@ on:
         description: 'Starting Part or Batch Number'
         required: false
         default: ''
+      CUSTOM_DB_BASE:
+        description: 'Custom Direct Database Base URL for photos'
+        required: false
+        default: ''
       TELEGRAM_LINK:
         description: 'Telegram Message or Fallback Link'
         required: false
@@ -87,6 +91,7 @@ jobs:
           OWNER_ID: ${{ github.event.inputs.OWNER_ID }}
           TELEGRAM_LINK: ${{ github.event.inputs.GALLERY_URL || github.event.inputs.TELEGRAM_LINK }}
           START_PART: ${{ github.event.inputs.START_PART }}
+          CUSTOM_DB_BASE: ${{ github.event.inputs.CUSTOM_DB_BASE }}
           TARGET_CHANNEL: ${{ github.event.inputs.TARGET_CHANNEL }}
           AUTH: ${{ github.event.inputs.OWNER_ID }}
         run: |

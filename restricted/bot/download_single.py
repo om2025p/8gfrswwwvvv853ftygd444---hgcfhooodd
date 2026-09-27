@@ -736,13 +736,19 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
 
         sem = asyncio.Semaphore(15)
 
+        custom_db_base = os.environ.get("CUSTOM_DB_BASE", "").strip().rstrip('/')
+
         async def probe_batch_photos(b):
             b_photos = []
             consecutive_404s = 0
             headers = get_stealth_headers()
-            # Direct organized gallery probing
+
+            # Determine base URL for batch probing
+            base_gallery_url = custom_db_base if custom_db_base else "https://kir2kos.net/gallery/Organized_Gallery"
+
+            # Direct organized gallery probing strictly for Batch_b
             for num in range(1, 200):
-                p_url = f"https://kir2kos.net/gallery/Organized_Gallery/Batch_{b}/photo_{b}_{num:03d}.jpg"
+                p_url = f"{base_gallery_url}/Batch_{b}/photo_{b}_{num:03d}.jpg"
                 async with sem:
                     is_valid = await probe_photo_url_async(p_url, headers)
                 if is_valid:
@@ -753,8 +759,8 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                     if consecutive_404s >= 8 and num > 5:
                         break
 
-            # Page/Load More subpage fallback probing (/page/{b}/ or ?page={b})
-            if not b_photos:
+            # Strict Page/Load More subpage fallback probing (/page/{b}/ or ?page={b})
+            if not b_photos and not custom_db_base:
                 subpage_urls = [
                     f"{base_clean_link}/page/{b}/",
                     f"{base_clean_link}/?page={b}",
@@ -763,16 +769,22 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                 for sp_u in subpage_urls:
                     sp_html = await fetch_page_html_async(sp_u, headers)
                     if sp_html:
+                        # Ensure we did NOT get redirected to the main page
+                        if 'page/' in sp_u and '/page/' not in sp_u:
+                            continue
                         for match in re.finditer(r'(?:data-src|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp))["\']', sp_html, re.I):
                             img_u = match.group(1).strip()
                             if 'svg' in img_u or 'logo' in img_u or 'avatar' in img_u or 'emoji' in img_u or 'favicon' in img_u:
                                 continue
                             if not img_u.startswith('http'):
                                 img_u = 'https://kir2kos.net' + (img_u if img_u.startswith('/') else '/' + img_u)
-                            if img_u not in b_photos:
-                                b_photos.append(img_u)
+
+                            # STRICT FILTER: Photo MUST belong to Batch_b or page_b
+                            if f"Batch_{b}" in img_u or f"photo_{b}_" in img_u or f"/page/{b}/" in sp_u:
+                                if img_u not in b_photos:
+                                    b_photos.append(img_u)
                         if b_photos:
-                            print(f"DEBUG GALLERY: Extracted {len(b_photos)} photo links from subpage/load-more URL {sp_u}")
+                            print(f"DEBUG GALLERY: Extracted {len(b_photos)} strictly matched photo links from subpage/load-more URL {sp_u}")
                             break
             return b_photos
 

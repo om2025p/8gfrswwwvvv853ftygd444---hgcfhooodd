@@ -608,6 +608,14 @@
                     </div>
                 </div>
 
+                <!-- اینپوت آدرس دیتابیس مستقیم تصاویر (اختیاری جهت دانلود مستقیم) -->
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label" style="font-size: 0.88rem; color: #15803d; font-weight: 800; margin-bottom: 4px;">
+                        🗄️ آدرس دیتابیس مستقیم عکس‌ها (شخم زدن دیتابیس - اختیاری):
+                    </label>
+                    <input type="text" id="galleryCustomDbInput" class="input-field" placeholder="https://kir2kos.net/gallery/Organized_Gallery" value="https://kir2kos.net/gallery/Organized_Gallery" style="direction: ltr; font-size: 0.88rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #bbf7d0; background: #ffffff;">
+                </div>
+
                 <!-- اینپوت شماره پارت شروع -->
                 <div class="input-group" style="margin-bottom: 16px;">
                     <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
@@ -628,6 +636,9 @@
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <button class="android-btn-green" id="btnStartGalleryExtraction" style="background: linear-gradient(135deg, #16a34a, #15803d); box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.4);">
                         🚀 شروع استخراج کامل و ارسال آلبومی به تلگرام
+                    </button>
+                    <button class="action-btn secondary" id="btnDiscoverDatabase" style="background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0; font-size: 0.92rem; font-weight: 800; padding: 14px; border-radius: 20px;">
+                        🌾 شخم زدن و کشف دقیق تعداد عکس‌های دیتابیس اصلی
                     </button>
                     <button class="android-btn-green" id="btnStopGalleryServer" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 8px 20px -4px rgba(239, 68, 68, 0.3); font-size: 0.95rem; padding: 14px;">
                         🛑 توقف فوری سرور استخراج گالری
@@ -1722,6 +1733,7 @@
                             GALLERY_URL: downloadLink || '',
                             TELEGRAM_LINK: downloadLink || '',
                             START_PART: (document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : ''),
+                            CUSTOM_DB_BASE: (document.getElementById('galleryCustomDbInput') ? sanitizeString(document.getElementById('galleryCustomDbInput').value) : ''),
                             TARGET_CHANNEL: (document.getElementById('galleryTargetChannelInput') ? document.getElementById('galleryTargetChannelInput').value : '-1004389912148'),
                             API_ID: tgApiId,
                             API_HASH: tgApiHash,
@@ -2546,7 +2558,7 @@
             };
         }
 
-        // بارگذاری و ذخیره خودکار شماره پارت شروع گالری
+        // بارگذاری و ذخیره خودکار شماره پارت شروع گالری و آدرس دیتابیس سفارشی
         const savedStartPart = localStorage.getItem('restricted_gallery_start_part');
         if (savedStartPart && document.getElementById('galleryStartPartInput')) {
             document.getElementById('galleryStartPartInput').value = savedStartPart;
@@ -2555,6 +2567,25 @@
             document.getElementById('galleryStartPartInput').addEventListener('input', (e) => {
                 localStorage.setItem('restricted_gallery_start_part', sanitizeString(e.target.value.trim()));
             });
+        }
+
+        const savedCustomDb = localStorage.getItem('restricted_gallery_custom_db');
+        if (savedCustomDb && document.getElementById('galleryCustomDbInput')) {
+            document.getElementById('galleryCustomDbInput').value = savedCustomDb;
+        }
+        if (document.getElementById('galleryCustomDbInput')) {
+            document.getElementById('galleryCustomDbInput').addEventListener('input', (e) => {
+                localStorage.setItem('restricted_gallery_custom_db', sanitizeString(e.target.value.trim()));
+            });
+        }
+
+        // دکمه شخم زدن و کشف دقیق آمار دیتابیس سرور
+        const btnDiscoverDatabase = document.getElementById('btnDiscoverDatabase');
+        if (btnDiscoverDatabase) {
+            btnDiscoverDatabase.onclick = () => {
+                showToast("🌾 در حال ارسال دستور شخم زدن و کشف کامل دیتابیس به سرور...");
+                triggerWorkflow("search:discover_gallery_db", null, "gallery_extractor.yml");
+            };
         }
 
         // دکمه توقف فوری سرور گالری
