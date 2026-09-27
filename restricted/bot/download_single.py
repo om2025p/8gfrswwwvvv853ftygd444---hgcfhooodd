@@ -446,14 +446,21 @@ def load_sent_photos_db():
 
 def save_sent_photos_db(sent_set):
     data = list(sent_set)
-    for p in get_db_paths(SENT_PHOTOS_DB_FILE):
+    paths_to_save = [
+        SENT_PHOTOS_DB_FILE,
+        os.path.join("restricted", SENT_PHOTOS_DB_FILE),
+        os.path.join("bot", SENT_PHOTOS_DB_FILE),
+        os.path.join("..", SENT_PHOTOS_DB_FILE),
+        os.path.join("..", "restricted", SENT_PHOTOS_DB_FILE)
+    ]
+    for p in paths_to_save:
         try:
             parent = os.path.dirname(p)
             if parent and not os.path.exists(parent):
                 os.makedirs(parent, exist_ok=True)
             with open(p, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
-        except Exception:
+        except Exception as e:
             pass
 
 def update_gallery_stats(sent_count, total_extracted, duplicates_skipped, status_text="در حال پردازش"):
@@ -466,7 +473,14 @@ def update_gallery_stats(sent_count, total_extracted, duplicates_skipped, status
             "last_updated": time.time(),
             "last_updated_jalali": time.strftime("%Y-%m-%d %H:%M:%S")
         }
-        for p in get_db_paths(GALLERY_STATS_FILE):
+        paths_to_save = [
+            GALLERY_STATS_FILE,
+            os.path.join("restricted", GALLERY_STATS_FILE),
+            os.path.join("bot", GALLERY_STATS_FILE),
+            os.path.join("..", GALLERY_STATS_FILE),
+            os.path.join("..", "restricted", GALLERY_STATS_FILE)
+        ]
+        for p in paths_to_save:
             try:
                 parent = os.path.dirname(p)
                 if parent and not os.path.exists(parent):
@@ -725,12 +739,14 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                 batches_in_html.add(int(m.group(1)))
 
         max_b = max(batches_in_html) if batches_in_html else 165
+        is_user_specified_ascent = False
         if start_part_num is not None:
             start_b = start_part_num
-            print(f"DEBUG GALLERY: User specified starting part Batch_{start_b}. Building batch queue from Batch_{start_b} down to Batch_1...")
+            is_user_specified_ascent = True
+            print(f"DEBUG GALLERY: User specified starting part Batch_{start_b}. Building batch queue ASCENDING from Batch_{start_b} onwards (61, 62, 63...)...")
         else:
             start_b = max_b + 5
-            print(f"DEBUG GALLERY: Discovered highest batch Batch_{max_b}. Building batch queue from Batch_{start_b} down to Batch_1...")
+            print(f"DEBUG GALLERY: Discovered highest batch Batch_{max_b}. Building batch queue DESCENDING from Batch_{start_b} down to Batch_1...")
 
         sem = asyncio.Semaphore(15)
 
@@ -752,11 +768,18 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
             return b_photos
 
         part_counter = 0
+        consecutive_empty_batches = 0
         gallery_start_time = time.time()
         MAX_GALLERY_EXEC_SECONDS = 330 * 60  # 5.5 hours safety timeout before GitHub Actions 6h hard limit
 
+        # Determine batch sequence: Ascending if specified by user (61, 62, 63...), Descending otherwise
+        batch_generator = range(start_b, start_b + 300) if is_user_specified_ascent else range(start_b, 0, -1)
+
         # Process each Batch as an independent Part sequentially
-        for b in range(start_b, 0, -1):
+        for b in batch_generator:
+            if is_user_specified_ascent and consecutive_empty_batches >= 5:
+                print(f"DEBUG GALLERY: Reached 5 consecutive empty batches in ascending mode after Batch_{b-1}. Ending extraction cycle cleanly...")
+                break
             if time.time() - gallery_start_time > MAX_GALLERY_EXEC_SECONDS:
                 print(f"DEBUG GALLERY: Reached 5.5-hour safety limit ({int((time.time() - gallery_start_time)/60)} minutes). Completing current cycle cleanly to allow automatic re-triggering...")
                 timeout_notice = (
@@ -769,7 +792,11 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
 
             batch_photos = await probe_batch_photos(b)
             if not batch_photos:
+                if is_user_specified_ascent:
+                    consecutive_empty_batches += 1
                 continue
+            else:
+                consecutive_empty_batches = 0
 
             # Filter duplicates against persistent sent_photos_db
             new_photos = [p for p in batch_photos if p not in sent_photos_db]
