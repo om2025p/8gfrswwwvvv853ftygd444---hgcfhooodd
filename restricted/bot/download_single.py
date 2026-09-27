@@ -423,12 +423,12 @@ SENT_PHOTOS_DB_FILE = "restricted_sent_photos.json"
 GALLERY_STATS_FILE = "restricted_gallery_stats.json"
 
 def get_db_paths(filename):
+    # Strictly target paths within the Download Shield directory hierarchy
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     return [
-        filename,
-        os.path.join("restricted", filename),
-        os.path.join("bot", filename),
-        os.path.join("..", filename),
-        os.path.join("..", "restricted", filename)
+        os.path.join(os.path.dirname(__file__), filename), # restricted/bot/
+        os.path.join(base_dir, filename),                  # restricted/
+        os.path.join(base_dir, "bot", filename)            # restricted/bot/
     ]
 
 def load_sent_photos_db():
@@ -445,15 +445,8 @@ def load_sent_photos_db():
     return set()
 
 def save_sent_photos_db(sent_set):
-    data = list(sent_set)
-    paths_to_save = [
-        SENT_PHOTOS_DB_FILE,
-        os.path.join("restricted", SENT_PHOTOS_DB_FILE),
-        os.path.join("bot", SENT_PHOTOS_DB_FILE),
-        os.path.join("..", SENT_PHOTOS_DB_FILE),
-        os.path.join("..", "restricted", SENT_PHOTOS_DB_FILE)
-    ]
-    for p in paths_to_save:
+    data = sorted(list(sent_set)) # Save sorted list of URL strings
+    for p in get_db_paths(SENT_PHOTOS_DB_FILE):
         try:
             parent = os.path.dirname(p)
             if parent and not os.path.exists(parent):
@@ -461,7 +454,7 @@ def save_sent_photos_db(sent_set):
             with open(p, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            pass
+            print(f"DEBUG: Failed saving sent photos to {p}: {e}")
 
 def update_gallery_stats(sent_count, total_extracted, duplicates_skipped, status_text="در حال پردازش"):
     try:
@@ -473,14 +466,7 @@ def update_gallery_stats(sent_count, total_extracted, duplicates_skipped, status
             "last_updated": time.time(),
             "last_updated_jalali": time.strftime("%Y-%m-%d %H:%M:%S")
         }
-        paths_to_save = [
-            GALLERY_STATS_FILE,
-            os.path.join("restricted", GALLERY_STATS_FILE),
-            os.path.join("bot", GALLERY_STATS_FILE),
-            os.path.join("..", GALLERY_STATS_FILE),
-            os.path.join("..", "restricted", GALLERY_STATS_FILE)
-        ]
-        for p in paths_to_save:
+        for p in get_db_paths(GALLERY_STATS_FILE):
             try:
                 parent = os.path.dirname(p)
                 if parent and not os.path.exists(parent):
