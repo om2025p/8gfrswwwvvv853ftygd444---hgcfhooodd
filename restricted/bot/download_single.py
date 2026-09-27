@@ -816,11 +816,13 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                 continue
 
             part_counter += 1
-            part_num = part_counter
+            part_num = b # Use actual Batch/Part number b (e.g. 61, 62) instead of sequential 1, 2, 3
             print(f"DEBUG GALLERY: Processing Part {part_num} (Batch_{b}) with {len(new_photos)} new photos...")
 
+            page_info = f"📑 دکمه مشاهده بیشتر (Load More) تا پارت {part_num - 1} زده شد.\n" if is_user_specified_ascent and part_num > start_b else ""
             part_status_msg = (
                 f"📥 *در حال دریافت پارت {part_num}:*\n"
+                f"{page_info}"
                 f"📸 عکس‌های جدید این پارت: *{len(new_photos)} عکس*\n"
                 f"🛡️ مجموع کل دیتابیس آرشیو: *{len(sent_photos_db):,} عکس*\n\n"
                 f"⚡ در حال ساخت ZIP کیفیت ۱۰۰٪ + متادیتا..."
