@@ -2582,9 +2582,35 @@
         // دکمه شخم زدن و کشف دقیق آمار دیتابیس سرور
         const btnDiscoverDatabase = document.getElementById('btnDiscoverDatabase');
         if (btnDiscoverDatabase) {
-            btnDiscoverDatabase.onclick = () => {
+            btnDiscoverDatabase.onclick = async () => {
+                const gUrl = sanitizeString(document.getElementById('galleryUrlInput').value);
+                const targetChannel = sanitizeString(document.getElementById('galleryTargetChannelInput').value) || '-1004389912148';
+                const startPart = document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : '';
+
+                if (!gUrl) {
+                    showToast("⚠️ لطفاً آدرس اینترنتی گالری را وارد کنید!");
+                    return;
+                }
+
                 showToast("🌾 در حال ارسال دستور شخم زدن و کشف کامل دیتابیس به سرور...");
-                triggerWorkflow("search:discover_gallery_db", null, "gallery_extractor.yml");
+                logDlDebug(`🌾 شخم زدن دیتابیس اصلی گالری: ${gUrl} (پارت شروع: ${startPart || 'خودکار'}) به مقصد ${targetChannel}`);
+                logGalleryDebug(`🌾 شروع شخم زدن دیتابیس اصلی: ${gUrl} (پارت شروع: ${startPart || 'خودکار'})`);
+
+                updateGalleryStatsUI(0, 0, 0, "در حال شخم زدن دیتابیس سرور...");
+
+                const historyId = addDownloadHistoryItem(gUrl, true);
+
+                const dispatchResult = await triggerWorkflow(gUrl, historyId, 'gallery_extractor.yml');
+                const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
+
+                if (isSuccess) {
+                    showToast("✅ دستور شخم زدن دیتابیس صادر شد! سرور در حال بررسی آدرس مستقیم عکس‌هاست.");
+                    updateGalleryStatsUI(0, 0, 0, "سرور در حال کشف عکس‌های دیتابیس 🌾");
+                } else {
+                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در ارسال درخواست به گیت‌هاب.';
+                    showToast("❌ " + errDetail);
+                    updateGalleryStatsUI(0, 0, 0, "خطا در برپاخاستن سرور ❌");
+                }
             };
         }
 
