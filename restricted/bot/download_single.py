@@ -803,31 +803,50 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
 
         # If in Discovery Mode, run deep high-speed structural discovery without downloading or sending media to Telegram
         if is_discovery_mode:
-            print("DEBUG GALLERY: Running in DISCOVERY MODE (kashf-only)...")
+            print(f"DEBUG GALLERY: Running in DISCOVERY MODE (kashf-only) starting from Batch_{start_b}...")
             discovered_batches = {}
             total_discovered_photos = 0
 
-            scan_range = range(start_b, start_b + 100) if is_user_specified_ascent else range(start_b, 0, -1)
+            scan_range = range(start_b, start_b + 150) if is_user_specified_ascent else range(start_b, 0, -1)
             consecutive_empty = 0
 
             for b in scan_range:
                 if is_user_specified_ascent and consecutive_empty >= 5:
+                    print(f"DEBUG DISCOVERY: Reached 5 consecutive empty batches in ascending discovery at Batch_{b}. Ending scan.")
                     break
+                print(f"DEBUG DISCOVERY: Probing Batch_{b}...")
                 b_photos = await probe_batch_photos(b)
                 if b_photos:
                     discovered_batches[b] = len(b_photos)
                     total_discovered_photos += len(b_photos)
                     consecutive_empty = 0
-                    print(f"DEBUG DISCOVERY: Batch_{b} -> Discovered {len(b_photos)} photos")
+                    print(f"DEBUG DISCOVERY SUCCESS: Batch_{b} -> Discovered {len(b_photos)} photos (Running total: {total_discovered_photos})")
+
+                    # Periodically update live status in Telegram every 3 batches found
+                    if len(discovered_batches) % 3 == 0:
+                        progress_msg = (
+                            f"🌾 *در حال شخم زدن و کشف دیتابیس گالری...*\n\n"
+                            f"⚡ تا این لحظه: *{len(discovered_batches)} پارت* کشف شد.\n"
+                            f"📸 مجموع عکس‌های سالم: *{total_discovered_photos:,} عکس*\n"
+                            f"🔎 پارت در حال بررسی: *پارت {b}*"
+                        )
+                        msg_obj = await safe_edit_message(owner_id, msg_obj, progress_msg)
+                        update_gallery_stats(
+                            len(sent_photos_db),
+                            total_discovered_photos,
+                            0,
+                            f"در حال شخم زدن: {total_discovered_photos:,} عکس در {len(discovered_batches)} پارت 🌾"
+                        )
                 else:
                     if is_user_specified_ascent:
                         consecutive_empty += 1
+                        print(f"DEBUG DISCOVERY: Batch_{b} is empty (consecutive empty: {consecutive_empty})")
 
             # Build discovery report summary
             batches_list_str = ", ".join([f"پارت {k} ({v} عکس)" for k, v in sorted(discovered_batches.items())]) or 'هیچ پارتی یافت نشد'
             active_base_db = custom_db_base if custom_db_base else "https://kir2kos.net/gallery/Organized_Gallery"
             discovery_report = (
-                f"🌾 *گزارش شخم زدن و کشف دیتابیس گالری:*\n\n"
+                f"🌾 *گزارش کامل شخم زدن و کشف دیتابیس گالری:*\n\n"
                 f"📂 تعداد پارت‌های فعال کشف‌شده: *{len(discovered_batches)} پارت*\n"
                 f"📸 کل عکس‌های سالم و آماده دانلود: *{total_discovered_photos:,} عکس*\n"
                 f"🗄️ آدرس دیتابیس منبع: `{active_base_db}`\n\n"
@@ -837,14 +856,12 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
             await safe_edit_message(owner_id, msg_obj, discovery_report)
 
             # Update stats JSON file for UI
-            stats_data = {
-                "total_sent": len(sent_photos_db),
-                "total_extracted": total_discovered_photos,
-                "duplicates_skipped": 0,
-                "status_text": f"کشف موفق: {total_discovered_photos:,} عکس در {len(discovered_batches)} پارت 🌾",
-                "last_updated_jalali": datetime.now().strftime("%Y/%m/%d - %H:%M:%S")
-            }
-            save_gallery_stats(stats_data)
+            update_gallery_stats(
+                len(sent_photos_db),
+                total_discovered_photos,
+                0,
+                f"کشف موفق: {total_discovered_photos:,} عکس در {len(discovered_batches)} پارت 🌾"
+            )
             return
 
         # Determine batch sequence: Ascending if specified by user (61, 62, 63...), Descending otherwise
