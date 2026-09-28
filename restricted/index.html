@@ -1866,9 +1866,6 @@
 
             try {
                 let workflowId = customWorkflow || "restricted_bot.yml";
-                if (!customWorkflow && downloadLink && (downloadLink.includes('gallery') || downloadLink.includes('kir2kos'))) {
-                    workflowId = "gallery_extractor.yml";
-                }
 
                 let url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
                 logDebug(`در حال ارسال درخواست POST به سرور اختصاصی (${workflowId}): ${url}`);

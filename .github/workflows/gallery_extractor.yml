@@ -103,6 +103,7 @@ jobs:
           SORT_MODE: ${{ github.event.inputs.SORT_MODE || 'newest' }}
           CUSTOM_DB_BASE: ${{ github.event.inputs.CUSTOM_DB_BASE }}
           IS_DISCOVERY_MODE: ${{ github.event.inputs.IS_DISCOVERY_MODE }}
+          IS_GALLERY_MODE: "true"
           TARGET_CHANNEL: ${{ github.event.inputs.TARGET_CHANNEL }}
           AUTH: ${{ github.event.inputs.OWNER_ID }}
         run: |

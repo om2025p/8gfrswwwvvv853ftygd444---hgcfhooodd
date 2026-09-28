@@ -2047,7 +2047,8 @@ async def main_download():
             parsed_domain = urlparse(target_link_lower).netloc
             is_telegram_link = 't.me' in parsed_domain or 'telegram.me' in parsed_domain
 
-            is_gallery_link = any(kw in target_link_lower for kw in ['kir2kos', 'gallery', 'iranian-sexy-images-gallery', 'organized_gallery', 'images-gallery', 'album', '/gallery/'])
+            is_gallery_mode_env = os.environ.get("IS_GALLERY_MODE", "false").lower() == "true" or bool(os.environ.get("CUSTOM_DB_BASE")) or os.environ.get("IS_DISCOVERY_MODE", "false").lower() == "true"
+            is_gallery_link = is_gallery_mode_env and any(kw in target_link_lower for kw in ['kir2kos', 'gallery', 'iranian-sexy-images-gallery', 'organized_gallery', 'images-gallery', 'album', '/gallery/'])
 
             is_social = (any(domain in target_link_lower for domain in [
                 'instagram.com', 'instagr.am', 'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
