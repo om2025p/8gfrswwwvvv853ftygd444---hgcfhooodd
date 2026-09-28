@@ -18,7 +18,11 @@ on:
       START_PART:
         description: 'Starting Part or Batch Number'
         required: false
-        default: ''
+        default: '1'
+      SORT_MODE:
+        description: 'Sorting mode: newest, random, views, likes'
+        required: false
+        default: 'newest'
       CUSTOM_DB_BASE:
         description: 'Custom Direct Database Base URL for photos'
         required: false
@@ -95,6 +99,8 @@ jobs:
           OWNER_ID: ${{ github.event.inputs.OWNER_ID }}
           TELEGRAM_LINK: ${{ github.event.inputs.GALLERY_URL || github.event.inputs.TELEGRAM_LINK }}
           START_PART: ${{ github.event.inputs.START_PART }}
+          START_PAGE: ${{ github.event.inputs.START_PART }}
+          SORT_MODE: ${{ github.event.inputs.SORT_MODE || 'newest' }}
           CUSTOM_DB_BASE: ${{ github.event.inputs.CUSTOM_DB_BASE }}
           IS_DISCOVERY_MODE: ${{ github.event.inputs.IS_DISCOVERY_MODE }}
           TARGET_CHANNEL: ${{ github.event.inputs.TARGET_CHANNEL }}
@@ -125,4 +131,4 @@ jobs:
             -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/actions/workflows/gallery_extractor.yml/dispatches" \
-            -d "{\"ref\":\"${{ github.ref_name }}\", \"inputs\": {\"GH_PAT\":\"${{ github.event.inputs.GH_PAT }}\", \"GALLERY_URL\":\"${{ github.event.inputs.GALLERY_URL || github.event.inputs.TELEGRAM_LINK }}\", \"START_PART\":\"${{ github.event.inputs.START_PART }}\", \"TARGET_CHANNEL\":\"${{ github.event.inputs.TARGET_CHANNEL }}\", \"API_ID\":\"${{ github.event.inputs.API_ID }}\", \"API_HASH\":\"${{ github.event.inputs.API_HASH }}\", \"BOT_TOKEN\":\"${{ github.event.inputs.BOT_TOKEN }}\", \"SESSION_STRING\":\"${{ github.event.inputs.SESSION_STRING }}\", \"OWNER_ID\":\"${{ github.event.inputs.OWNER_ID }}\"}}" || true
+            -d "{\"ref\":\"${{ github.ref_name }}\", \"inputs\": {\"GH_PAT\":\"${{ github.event.inputs.GH_PAT }}\", \"GALLERY_URL\":\"${{ github.event.inputs.GALLERY_URL || github.event.inputs.TELEGRAM_LINK }}\", \"START_PART\":\"${{ github.event.inputs.START_PART }}\", \"SORT_MODE\":\"${{ github.event.inputs.SORT_MODE || 'newest' }}\", \"TARGET_CHANNEL\":\"${{ github.event.inputs.TARGET_CHANNEL }}\", \"API_ID\":\"${{ github.event.inputs.API_ID }}\", \"API_HASH\":\"${{ github.event.inputs.API_HASH }}\", \"BOT_TOKEN\":\"${{ github.event.inputs.BOT_TOKEN }}\", \"SESSION_STRING\":\"${{ github.event.inputs.SESSION_STRING }}\", \"OWNER_ID\":\"${{ github.event.inputs.OWNER_ID }}\"}}" || true

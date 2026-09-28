@@ -618,12 +618,25 @@
                     <input type="text" id="galleryCustomDbInput" class="input-field" placeholder="https://kir2kos.net/gallery/Organized_Gallery" value="https://kir2kos.net/gallery/Organized_Gallery" style="direction: ltr; font-size: 0.88rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #bbf7d0; background: #ffffff;">
                 </div>
 
-                <!-- اینپوت شماره پارت شروع -->
+                <!-- اینپوت شماره صفحه شروع -->
                 <div class="input-group" style="margin-bottom: 16px;">
                     <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
-                        🔢 شماره پارت شروع (مثلاً 61 - اختیاری):
+                        🔢 شماره صفحه یا پارت شروع (پیش‌فرض 1):
                     </label>
-                    <input type="number" id="galleryStartPartInput" class="input-field" placeholder="مثلاً 61 (خالی = از آخرین پارت به پایین)" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
+                    <input type="number" id="galleryStartPartInput" class="input-field" placeholder="1" value="1" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
+                </div>
+
+                <!-- اینپوت حالت مرتب‌سازی -->
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
+                        📊 حالت مرتب‌سازی دریافت تصاویر:
+                    </label>
+                    <select id="gallerySortModeSelect" class="input-field" style="font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
+                        <option value="newest" selected>🆕 جدیدترین‌ها (Newest)</option>
+                        <option value="views">👁️ پربازدیدترین‌ها (Views)</option>
+                        <option value="likes">❤️ محبوب‌ترین‌ها (Likes)</option>
+                        <option value="random">🎲 تصادفی (Random)</option>
+                    </select>
                 </div>
 
                 <!-- اینپوت کانال مقصد -->
@@ -1866,7 +1879,8 @@
                     payloadInputs = {
                         GALLERY_URL: downloadLink || '',
                         TELEGRAM_LINK: downloadLink || '',
-                        START_PART: (document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : ''),
+                        START_PART: (document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : '1'),
+                        SORT_MODE: (document.getElementById('gallerySortModeSelect') ? sanitizeString(document.getElementById('gallerySortModeSelect').value) : 'newest'),
                         CUSTOM_DB_BASE: (document.getElementById('galleryCustomDbInput') ? sanitizeString(document.getElementById('galleryCustomDbInput').value) : ''),
                         IS_DISCOVERY_MODE: isDiscoveryMode ? 'true' : 'false',
                         TARGET_CHANNEL: (document.getElementById('galleryTargetChannelInput') ? document.getElementById('galleryTargetChannelInput').value : '-1004389912148'),

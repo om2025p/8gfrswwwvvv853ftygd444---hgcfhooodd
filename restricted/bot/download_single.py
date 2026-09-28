@@ -662,18 +662,34 @@ async def fetch_page_html_async(url, headers):
     return await asyncio.to_thread(_do_fetch)
 
 async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_id=None):
-    from main import Bot, bot, userbot
+    import json, zipfile, requests, time, os, shutil, tempfile
+    from datetime import datetime
+    from pathlib import Path
+    from PIL import Image
+    from main import Bot, bot, userbot, BOT_TOKEN as MAIN_BOT_TOKEN
 
-    target_channel = custom_dest_id or os.environ.get("TARGET_CHANNEL") or "-1004389912148"
-    start_part_env = os.environ.get("START_PART", "").strip()
-    start_part_num = int(start_part_env) if start_part_env and start_part_env.isdigit() else None
-    is_discovery_mode = os.environ.get("IS_DISCOVERY_MODE", "false").strip().lower() == "true"
+    bot_token = os.environ.get("BOT_TOKEN") or MAIN_BOT_TOKEN
+    target_channel = custom_dest_id or os.environ.get("TARGET_CHANNEL") or os.environ.get("CHAT_ID") or "-1004389912148"
 
-    start_info_str = f" (شروع از پارت {start_part_num})" if start_part_num is not None else ""
-    if is_discovery_mode:
-        status_text = "🌾 *شروع شخم زدن و کشف دقیق دیتابیس گالری (حالت تحلیل و ردیابی بدون دانلود):*\n`" + str(link) + "`\n\n🕒 در حال بررسی و متری کردن تمام عکس‌های دیتابیس اصلی..."
-    else:
-        status_text = "🖼️ *شروع استخراج گام‌به‌گام گالری" + start_info_str + " (پارت‌به‌پارت + ZIP + متادیتا):*\n`" + str(link) + "`\n🎯 کانال مقصد: `" + str(target_channel) + "`\n\n🕒 لطفاً صبور باشید..."
+    sort_mode = os.environ.get("SORT_MODE", "newest").strip()
+    start_page_env = os.environ.get("START_PAGE") or os.environ.get("START_PART")
+    start_page = int(start_page_env) if start_page_env and start_page_env.isdigit() else 1
+    max_page_env = os.environ.get("MAX_PAGE")
+    max_page = int(max_page_env) if max_page_env and max_page_env.isdigit() else None
+
+    API_BASE = "https://kir2kos.net/wp-json/k2k/v1/photos"
+    SITE_BASE = "https://kir2kos.net"
+    SLEEP_BETWEEN_PAGES = 30
+    DELAY_BETWEEN_ALBUMS = 3
+    ALBUM_SIZE = 10
+
+    status_text = (
+        "🖼️ *شروع استخراج خودکار تصاویر گالری (API-Driven):*\n"
+        f"`{SITE_BASE}`\n"
+        f"🎯 کانال مقصد: `{target_channel}`\n"
+        f"📄 شروع از صفحه: `{start_page}` | حالت: `{sort_mode}`\n\n"
+        "🕒 در حال دانلود، استخراج ابعاد، حجم، کیفیت، ZIP و ارسال آلبومی..."
+    )
 
     if msg_obj:
         msg_obj = await safe_edit_message(owner_id, msg_obj, status_text)
@@ -681,534 +697,274 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
         msg_obj = await safe_send_message(owner_id, status_text)
 
     temp_dir = tempfile.mkdtemp(prefix="emarat_gallery_")
+    download_dir = Path(temp_dir) / "downloads"
+    download_dir.mkdir(parents=True, exist_ok=True)
+
     sent_photos_db = load_sent_photos_db()
 
-    try:
-        import random, urllib.request, re, zipfile
+    def _tg_request(endpoint, payload=None, files=None, timeout=180):
+        if not bot_token:
+            return False
+        url = f"https://api.telegram.org/bot{bot_token}/{endpoint}"
         try:
-            from PIL import Image
-        except ImportError:
-            Image = None
+            r = requests.post(url, data=payload, files=files, timeout=timeout)
+            if r.status_code == 200 and r.json().get("ok"):
+                return True
+            print(f"DEBUG TG API ({endpoint}): {r.status_code} - {r.text[:200]}")
+            return False
+        except Exception as err:
+            print(f"DEBUG TG API ERR ({endpoint}): {err}")
+            return False
 
-        USER_AGENTS = [
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-            'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36'
-        ]
+    async def send_tg_message(chat_id, text):
+        def _do():
+            return _tg_request("sendMessage", {"chat_id": chat_id, "text": text, "parse_mode": "HTML"})
+        ok = await asyncio.to_thread(_do)
+        if not ok and str(chat_id) != str(owner_id):
+            await safe_send_message(chat_id, text)
+        return ok
 
-        def get_stealth_headers():
-            return {
-                'User-Agent': random.choice(USER_AGENTS),
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'fa,en-US;q=0.9,en;q=0.8',
-                'Referer': link
-            }
+    async def send_tg_document(chat_id, file_path, caption=""):
+        def _do():
+            with open(file_path, "rb") as f:
+                return _tg_request("sendDocument", {"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"}, {"document": f}, timeout=600)
+        ok = await asyncio.to_thread(_do)
+        if not ok and str(chat_id) != str(owner_id):
+            await send_media_to_destinations(file_path, [chat_id], caption=caption, as_document=True)
+        return ok
 
-        base_clean_link = link.rstrip('/')
-        seen_urls = set()
-        empty_pages_count = 0
-        total_photos_sent_session = 0
-        total_duplicates_skipped = 0
+    async def send_tg_media_group(chat_id, media_paths, caption=""):
+        def _do():
+            files = {}
+            payload_media = []
+            for i, img_path in enumerate(media_paths):
+                key = f"photo{i}"
+                files[key] = open(img_path, "rb")
+                entry = {"type": "photo", "media": f"attach://{key}"}
+                if i == 0 and caption:
+                    entry["caption"] = caption
+                    entry["parse_mode"] = "HTML"
+                payload_media.append(entry)
+            data = {"chat_id": chat_id, "media": json.dumps(payload_media)}
+            try:
+                return _tg_request("sendMediaGroup", payload=data, files=files, timeout=300)
+            finally:
+                for f in files.values():
+                    try:
+                        f.close()
+                    except Exception:
+                        pass
 
-        # Fetch initial main gallery HTML to discover starting Batch numbers & subpages
-        print("DEBUG GALLERY: Fetching initial main page HTML:", link)
-        main_html = await fetch_page_html_async(link, get_stealth_headers())
+        ok = await asyncio.to_thread(_do)
+        if not ok and str(chat_id) != str(owner_id):
+            for p in media_paths:
+                await send_media_to_destinations(p, [chat_id], caption=caption)
+                await asyncio.sleep(1)
+        return ok
 
-        initial_photos = []
-        if main_html:
-            for match in re.finditer(r'(?:data-src|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp))["\']', main_html, re.I):
-                img_url = match.group(1).strip()
-                if 'svg' in img_url or 'logo' in img_url or 'avatar' in img_url or 'emoji' in img_url or 'favicon' in img_url:
-                    continue
-                if not img_url.startswith('http'):
-                    img_url = 'https://kir2kos.net' + (img_url if img_url.startswith('/') else '/' + img_url)
-                if img_url not in initial_photos:
-                    initial_photos.append(img_url)
+    def download_single_image(img_url, save_path):
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+        }
+        for attempt in range(3):
+            try:
+                r = requests.get(img_url, timeout=30, headers=headers)
+                if r.status_code == 200 and len(r.content) > 1000:
+                    with open(save_path, "wb") as f:
+                        f.write(r.content)
+                    return True
+            except Exception as e:
+                time.sleep(2)
+        return False
 
-        batches_in_html = set()
-        for p_url in initial_photos:
-            m = re.search(r'Batch_(\d+)', p_url)
-            if m:
-                batches_in_html.add(int(m.group(1)))
+    def fetch_api_page(p_num):
+        url = f"{API_BASE}?page={p_num}&sort={sort_mode}"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        try:
+            r = requests.get(url, timeout=30, headers=headers)
+            if r.status_code != 200:
+                print(f"DEBUG GALLERY: API page {p_num} status {r.status_code}")
+                return None
+            data = r.json()
+            return data if isinstance(data, list) else None
+        except Exception as e:
+            print(f"DEBUG GALLERY: API page {p_num} exception: {e}")
+            return None
 
-        max_b = max(batches_in_html) if batches_in_html else 165
-        is_user_specified_ascent = False
-        if start_part_num is not None:
-            start_b = start_part_num
-            is_user_specified_ascent = True
-            print(f"DEBUG GALLERY: User specified starting part Batch_{start_b}. Building batch queue ASCENDING from Batch_{start_b} onwards (61, 62, 63...)...")
-        else:
-            start_b = max_b + 5
-            print(f"DEBUG GALLERY: Discovered highest batch Batch_{max_b}. Building batch queue DESCENDING from Batch_{start_b} down to Batch_1...")
+    page = start_page
+    empty_pages = 0
+    total_photos_extracted = 0
 
-        sem = asyncio.Semaphore(15)
+    try:
+        while True:
+            if max_page and page > max_page:
+                print(f"DEBUG GALLERY: Reached max_page {max_page}")
+                break
 
-        custom_db_base = os.environ.get("CUSTOM_DB_BASE", "").strip().rstrip('/')
+            items = await asyncio.to_thread(fetch_api_page, page)
 
-        async def probe_batch_photos(b):
-            b_photos = []
-            consecutive_404s = 0
-            headers = get_stealth_headers()
+            if items is None:
+                print(f"DEBUG GALLERY: Page {page} error, retrying in 10s...")
+                await asyncio.sleep(10)
+                continue
 
-            # Determine base URL for batch probing
-            base_gallery_url = custom_db_base
-            if not base_gallery_url or 'Organized_Gallery' not in base_gallery_url:
-                base_gallery_url = "https://kir2kos.net/gallery/Organized_Gallery"
+            if len(items) == 0:
+                empty_pages += 1
+                print(f"DEBUG GALLERY: Page {page} is empty ({empty_pages} consecutive empty pages)")
+                if empty_pages >= 2:
+                    print("DEBUG GALLERY: Reached end of gallery")
+                    break
+                page += 1
+                continue
 
-            # Direct organized gallery probing strictly for Batch_b
-            for num in range(1, 200):
-                p_url = f"{base_gallery_url}/Batch_{b}/photo_{b}_{num:03d}.jpg"
-                async with sem:
-                    is_valid = await probe_photo_url_async(p_url, headers)
-                if is_valid:
-                    b_photos.append(p_url)
-                    consecutive_404s = 0
-                else:
-                    consecutive_404s += 1
-                    if consecutive_404s >= 8 and num > 5:
-                        break
+            empty_pages = 0
 
-            # Strict Page/Load More subpage fallback probing (/page/{b}/ or ?page={b})
-            if not b_photos and not custom_db_base:
-                subpage_urls = [
-                    f"{base_clean_link}/page/{b}/",
-                    f"{base_clean_link}/?page={b}",
-                    f"{base_clean_link}/page/{b}"
-                ]
-                for sp_u in subpage_urls:
-                    sp_html = await fetch_page_html_async(sp_u, headers)
-                    if sp_html:
-                        # Ensure we did NOT get redirected to the main page
-                        if 'page/' in sp_u and '/page/' not in sp_u:
-                            continue
-                        for match in re.finditer(r'(?:data-src|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp))["\']', sp_html, re.I):
-                            img_u = match.group(1).strip()
-                            if 'svg' in img_u or 'logo' in img_u or 'avatar' in img_u or 'emoji' in img_u or 'favicon' in img_u:
-                                continue
-                            if not img_u.startswith('http'):
-                                img_u = 'https://kir2kos.net' + (img_u if img_u.startswith('/') else '/' + img_u)
+            folder = download_dir / f"page_{page:04d}"
+            folder.mkdir(parents=True, exist_ok=True)
 
-                            # STRICT FILTER: Photo MUST belong to Batch_b or page_b
-                            if f"Batch_{b}" in img_u or f"photo_{b}_" in img_u or f"/page/{b}/" in sp_u:
-                                if img_u not in b_photos:
-                                    b_photos.append(img_u)
-                        if b_photos:
-                            print(f"DEBUG GALLERY: Extracted {len(b_photos)} strictly matched photo links from subpage/load-more URL {sp_u}")
-                            break
-            return b_photos
+            print(f"DEBUG GALLERY: Processing page {page} ({len(items)} photos)...")
+            status_update = (
+                f"📄 *در حال پردازش صفحه {page} ({len(items)} تصویر):*\n"
+                f"🎯 کانال مقصد: `{target_channel}`\n"
+                "📥 دانلود تصاویر، محاسبه ابعاد، حجم و ساخت آرشیو..."
+            )
+            await safe_send_message(owner_id, status_update)
 
-        part_counter = 0
-        consecutive_empty_batches = 0
-        gallery_start_time = time.time()
-        MAX_GALLERY_EXEC_SECONDS = 330 * 60  # 5.5 hours safety timeout before GitHub Actions 6h hard limit
-
-        # Helper: Deep HTML Crawling across pagination, load-more & lazy attributes
-        async def crawl_html_pagination(target_url):
-            import urllib.parse
-            discovered_html_photos = []
-            parsed_base = urllib.parse.urlparse(target_url)
-            domain_base = f"{parsed_base.scheme}://{parsed_base.netloc}"
-
-            def extract_images_from_html(html_text):
-                imgs = []
-                if not html_text:
-                    return imgs
-                # Match all potential image attributes (data-src, data-lazy, srcset, src, href, data-original, data-srcset)
-                patterns = [
-                    r'(?:data-src|data-lazy|data-original|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp)(?:\?[^"\']*)?)["\']',
-                    r'srcset=["\']([^"\']+)["\']'
-                ]
-                for pat in patterns:
-                    for match in re.finditer(pat, html_text, re.I):
-                        val = match.group(1).strip()
-                        if 'srcset' in pat:
-                            for part in val.split(','):
-                                u = part.strip().split(' ')[0]
-                                if u and any(u.lower().endswith(ext) or ext + '?' in u.lower() for ext in ['.jpg', '.jpeg', '.png', '.webp']):
-                                    imgs.append(u)
-                        else:
-                            imgs.append(val)
-
-                clean_imgs = []
-                for u in imgs:
-                    if 'svg' in u.lower() or 'logo' in u.lower() or 'avatar' in u.lower() or 'emoji' in u.lower() or 'favicon' in u.lower():
-                        continue
-                    if not u.startswith('http'):
-                        if u.startswith('//'):
-                            u = 'https:' + u
-                        elif u.startswith('/'):
-                            u = domain_base + u
-                        else:
-                            u = domain_base + '/' + u
-                    if u not in clean_imgs:
-                        clean_imgs.append(u)
-                return clean_imgs
-
-            headers = get_stealth_headers()
-            # Crawl Page 1 to 30 for pagination / load-more patterns
-            page_templates = [
-                f"{target_url.rstrip('/')}/page/{{p}}/",
-                f"{target_url.rstrip('/')}/?page={{p}}",
-                f"{target_url.rstrip('/')}/?p={{p}}",
-                f"{target_url.rstrip('/')}/page/{{p}}",
-                f"{target_url.rstrip('/')}/?offset={{p_off}}"
+            downloaded = []
+            metadata_lines = [
+                f"صفحه: {page}",
+                f"مرتب‌سازی: {sort_mode}",
+                f"تاریخ دریافت: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                f"تعداد عکس: {len(items)}",
+                "=" * 60,
+                ""
             ]
 
-            consecutive_empty_pages = 0
-            for page_num in range(1, 35):
-                if consecutive_empty_pages >= 3:
-                    break
-                page_found_any = False
-                for tmpl in page_templates:
-                    p_off = (page_num - 1) * 20
-                    test_u = tmpl.format(p=page_num, p_off=p_off) if '{p_off}' in tmpl else tmpl.format(p=page_num)
-                    if page_num == 1:
-                        test_u = target_url
+            for idx, item in enumerate(items, start=1):
+                raw_rel_url = item.get("url", "")
+                img_url = SITE_BASE + raw_rel_url if raw_rel_url.startswith("/") else raw_rel_url
+                filename = os.path.basename(raw_rel_url) or f"photo_{item.get('id', idx)}.jpg"
+                save_path = folder / filename
 
-                    p_html = await fetch_page_html_async(test_u, headers)
-                    if p_html:
-                        p_imgs = extract_images_from_html(p_html)
-                        new_count = 0
-                        for img_u in p_imgs:
-                            if img_u not in discovered_html_photos:
-                                discovered_html_photos.append(img_u)
-                                new_count += 1
-                        if new_count > 0:
-                            page_found_any = True
-                            print(f"DEBUG HTML CRAWLER: Page {page_num} ({test_u}) -> Extracted {new_count} new images.")
-                            break
-                    if page_num == 1:
-                        break # Only run first page for tmpl on page 1
-
-                if page_found_any:
-                    consecutive_empty_pages = 0
+                if save_path.exists() and save_path.stat().st_size > 1000:
+                    ok = True
                 else:
-                    consecutive_empty_pages += 1
+                    ok = await asyncio.to_thread(download_single_image, img_url, save_path)
 
-            return discovered_html_photos
+                if ok:
+                    file_size_bytes = save_path.stat().st_size
+                    file_size_kb = file_size_bytes / 1024.0
 
-        # Run Heavy Open-Source Crawler & Database Scanner Engine (gallery-dl + Deep Directory Probe + Pattern Detection)
-        def run_heavy_gallery_dl_scan(target_url):
-            discovered_urls = []
-            try:
-                import subprocess, json
-                print(f"DEBUG CRAWLER: Executing gallery-dl dump for URL: {target_url}")
-                cmd = ["gallery-dl", "-j", "--get-urls", target_url]
-                res = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-                if res.stdout:
-                    for line in res.stdout.splitlines():
-                        line = line.strip()
-                        if line.startswith("http") and line not in discovered_urls:
-                            discovered_urls.append(line)
-            except Exception as e_gdl:
-                print(f"DEBUG CRAWLER: gallery-dl execution notice: {e_gdl}")
-            return discovered_urls
+                    dims_str = "نامشخص"
+                    img_fmt = "JPEG"
+                    try:
+                        with Image.open(save_path) as img:
+                            w, h = img.size
+                            dims_str = f"{w}x{h} px"
+                            img_fmt = img.format or "JPEG"
+                    except Exception:
+                        pass
 
-        if is_discovery_mode:
-            print(f"DEBUG GALLERY: Running in HEAVY CRAWLER & DISCOVERY MODE for URL: {link}...")
+                    downloaded.append((idx, save_path, item))
+                    total_photos_extracted += 1
 
-            # Layer 1: Heavy Open-Source Engine gallery-dl URL Extraction
-            gdl_photos = await asyncio.to_thread(run_heavy_gallery_dl_scan, link)
-            print(f"DEBUG CRAWLER: gallery-dl extracted {len(gdl_photos)} direct URLs.")
+                    metadata_lines.append(
+                        f"[{idx}] {filename}\n"
+                        f"    شناسه ID: {item.get('id', 'N/A')}\n"
+                        f"    لایک: {item.get('likes', 0)} | بازدید: {item.get('views', 0)}\n"
+                        f"    ابعاد (سایز px): {dims_str}\n"
+                        f"    حجم فایل: {file_size_kb:.1f} KB ({file_size_bytes:,} بایت)\n"
+                        f"    فرمت / کیفیت: {img_fmt} (اصلی ✅)\n"
+                        f"    زمان انتشار: {item.get('time_ago', 'N/A')}\n"
+                        f"    آدرس مستقیم: {img_url}\n"
+                    )
 
-            # Layer 2: Deep HTML Pagination & Load-More Crawling
-            html_crawl_photos = await crawl_html_pagination(link)
-            print(f"DEBUG HTML CRAWLER: HTML Pagination extracted {len(html_crawl_photos)} images.")
+                await asyncio.sleep(0.1)
 
-            discovered_batches = {}
-            total_discovered_photos = 0
-
-            # Layer 3: Deep Directory & Batch Discovery Scan
-            scan_range = range(start_b, start_b + 150) if is_user_specified_ascent else range(start_b, 0, -1)
-            consecutive_empty = 0
-
-            for b in scan_range:
-                if is_user_specified_ascent and consecutive_empty >= 5:
-                    print(f"DEBUG DISCOVERY: Reached 5 consecutive empty batches in ascending discovery at Batch_{b}. Ending scan.")
-                    break
-                print(f"DEBUG DISCOVERY: Probing Batch_{b}...")
-                b_photos = await probe_batch_photos(b)
-                if b_photos:
-                    discovered_batches[b] = len(b_photos)
-                    total_discovered_photos += len(b_photos)
-                    consecutive_empty = 0
-                    print(f"DEBUG DISCOVERY SUCCESS: Batch_{b} -> Discovered {len(b_photos)} photos (Running total: {total_discovered_photos})")
-
-                    # Periodically update live status in Telegram every 3 batches found
-                    if len(discovered_batches) % 3 == 0:
-                        progress_msg = (
-                            f"🌾 *در حال شخم زدن و کشف عمیق دیتابیس سایت...*\n\n"
-                            f"🔍 عکس‌های مستقیم gallery-dl: *{len(gdl_photos):,} عدد*\n"
-                            f"🌐 عکس‌های کشف‌شده از صفحه‌بندی سایت: *{len(html_crawl_photos):,} عدد*\n"
-                            f"⚡ تا این لحظه: *{len(discovered_batches)} پارت پوشه‌ای* کشف شد.\n"
-                            f"📸 مجموع عکس‌های سالم: *{total_discovered_photos:,} عکس*\n"
-                            f"🔎 پارت در حال بررسی: *پارت {b}*"
-                        )
-                        msg_obj = await safe_edit_message(owner_id, msg_obj, progress_msg)
-                else:
-                    if is_user_specified_ascent:
-                        consecutive_empty += 1
-
-            # Merge all unique discovered photo URLs
-            all_discovered_photos_set = set(gdl_photos + html_crawl_photos)
-            grand_total_photos = total_discovered_photos + len(all_discovered_photos_set)
-
-            # Auto-map discovered standalone photos into virtual parts if no structural directory batches exist
-            if not discovered_batches and all_discovered_photos_set:
-                photos_list = list(all_discovered_photos_set)
-                chunk_size = 25
-                virtual_part_count = (len(photos_list) + chunk_size - 1) // chunk_size
-                for idx in range(virtual_part_count):
-                    part_photos = photos_list[idx * chunk_size : (idx + 1) * chunk_size]
-                    discovered_batches[idx + 1] = len(part_photos)
-
-            batches_list_str = ", ".join([f"پارت {k} ({v} عکس)" for k, v in sorted(discovered_batches.items())]) or 'پارت‌های ساختاری یا مجازی ایجاد شد'
-            active_base_db = custom_db_base if (custom_db_base and 'Organized_Gallery' in custom_db_base) else link
-            scan_time_sec = round(time.time() - gallery_start_time, 1)
-
-            discovery_report = (
-                f"🔍 *گزارش کامل اسکنر و کشف‌کننده دیتابیس سایت:*\n\n"
-                f"🌐 عکس‌های مستقیم gallery-dl: *{len(gdl_photos):,} عکس*\n"
-                f"🌐 عکس‌های کشف‌شده از صفحه‌بندی: *{len(html_crawl_photos):,} عکس*\n"
-                f"📂 تعداد پارت‌های کشف‌شده/ایجادشده: *{len(discovered_batches)} پارت*\n"
-                f"📸 کل عکس‌های سالم و آماده دانلود: *{grand_total_photos:,} عکس*\n"
-                f"🗄️ آدرس دیتابیس یا دامنه منبع: `{active_base_db}`\n"
-                f"⏱️ زمان پیمایش دیتابیس: *{scan_time_sec} ثانیه*\n\n"
-                f"📋 *ریز تفکیک پارت‌ها:*\n{batches_list_str}\n\n"
-                f"💡 *توصیه:* اکنون می‌توانید آدرس دیتابیس کشف‌شده بالا را جهت استخراج خودکار و ارسال آلبومی به تلگرام اعمال فرمایید! 💎"
-            )
-            await safe_edit_message(owner_id, msg_obj, discovery_report)
-
-            # Update stats JSON file for UI
-            update_gallery_stats(
-                len(sent_photos_db),
-                total_discovered_photos + len(gdl_photos),
-                0,
-                f"کشف کامل دیتابیس: {(total_discovered_photos + len(gdl_photos)):,} عکس کشف گردید 🔍"
-            )
-            return
-
-        # Determine batch sequence: Ascending if specified by user (61, 62, 63...), Descending otherwise
-        batch_generator = range(start_b, start_b + 300) if is_user_specified_ascent else range(start_b, 0, -1)
-
-        # Process each Batch as an independent Part sequentially
-        for b in batch_generator:
-            if is_user_specified_ascent and consecutive_empty_batches >= 5:
-                print(f"DEBUG GALLERY: Reached 5 consecutive empty batches in ascending mode after Batch_{b-1}. Ending extraction cycle cleanly...")
-                break
-            if time.time() - gallery_start_time > MAX_GALLERY_EXEC_SECONDS:
-                print(f"DEBUG GALLERY: Reached 5.5-hour safety limit ({int((time.time() - gallery_start_time)/60)} minutes). Completing current cycle cleanly to allow automatic re-triggering...")
-                timeout_notice = (
-                    "⏳ *پایان دوره کاری ۵.۵ ساعته سرور استخراج گالری:*\n\n"
-                    "✅ تمام عکس‌ها و دیتابیس تا این لحظه به صورت کاملاً امن ذخیره گردید.\n"
-                    "🔄 دوره ۶ ساعته بعدی استخراج به صورت خودکار تا لحظاتی دیگر تمدید و شروع می‌شود... 💎"
-                )
-                await safe_edit_message(owner_id, msg_obj, timeout_notice)
-                break
-
-            batch_photos = await probe_batch_photos(b)
-            if not batch_photos:
-                if is_user_specified_ascent:
-                    consecutive_empty_batches += 1
-                continue
-            else:
-                consecutive_empty_batches = 0
-
-            # Filter duplicates against persistent sent_photos_db
-            new_photos = [p for p in batch_photos if p not in sent_photos_db]
-            total_duplicates_skipped += (len(batch_photos) - len(new_photos))
-
-            if not new_photos:
-                print(f"DEBUG GALLERY: Batch_{b} has 0 new photos (all already sent). Skipping quickly...")
+            if not downloaded:
+                print(f"DEBUG GALLERY: No photos downloaded for page {page}")
+                page += 1
                 continue
 
-            part_counter += 1
-            part_num = b # Use actual Batch/Part number b (e.g. 61, 62) instead of sequential 1, 2, 3
-            print(f"DEBUG GALLERY: Processing Part {part_num} (Batch_{b}) with {len(new_photos)} new photos...")
+            # 1. Create TXT Info File
+            txt_path = folder / f"page_{page:04d}_info.txt"
+            with open(txt_path, "w", encoding="utf-8") as f:
+                f.write("\n".join(metadata_lines))
 
-            page_info = f"📑 دکمه مشاهده بیشتر (Load More) تا پارت {part_num - 1} زده شد.\n" if is_user_specified_ascent and part_num > start_b else ""
-            part_status_msg = (
-                f"📥 *در حال دریافت پارت {part_num}:*\n"
-                f"{page_info}"
-                f"📸 عکس‌های جدید این پارت: *{len(new_photos)} عکس*\n"
-                f"🛡️ مجموع کل دیتابیس آرشیو: *{len(sent_photos_db):,} عکس*\n\n"
-                f"⚡ در حال ساخت ZIP کیفیت ۱۰۰٪ + متادیتا..."
+            # 2. Create ZIP Archive File
+            zip_path = download_dir / f"page_{page:04d}_images.zip"
+            def _make_zip():
+                with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                    for _, path, _ in downloaded:
+                        zf.write(path, arcname=path.name)
+            await asyncio.to_thread(_make_zip)
+            zip_mb = zip_path.stat().st_size / (1024 * 1024)
+
+            # 3. Header Message
+            header_text = (
+                f"<b>📄 صفحه {page}</b>\n"
+                f"تعداد عکس: {len(downloaded)}\n"
+                f"حجم آرشیو: {zip_mb:.1f} MB\n"
+                "━━━━━━━━━━━━━━"
             )
-            msg_obj = await safe_edit_message(owner_id, msg_obj, part_status_msg)
+            await send_tg_message(target_channel, header_text)
 
-            # Step 1: Download photos of this part locally
-            part_dir = os.path.join(temp_dir, f"part_{part_num:03d}")
-            os.makedirs(part_dir, exist_ok=True)
-
-            downloaded_items = []
-            meta_file_records = []
-
-            for idx_p, photo_url in enumerate(new_photos, 1):
-                ext = os.path.splitext(photo_url)[1] or '.jpg'
-                file_name = f"photo_{part_num:03d}_{idx_p:03d}{ext}"
-                local_path = os.path.join(part_dir, file_name)
-
-                try:
-                    def _dl_p_with_retries(p_url, out_p):
-                        import subprocess
-                        headers_to_use = get_stealth_headers()
-                        ua = headers_to_use['User-Agent']
-                        for attempt in range(5):
-                            try:
-                                req = urllib.request.Request(p_url, headers=headers_to_use)
-                                with urllib.request.urlopen(req, timeout=20) as resp, open(out_p, 'wb') as f_out:
-                                    f_out.write(resp.read())
-                                if os.path.exists(out_p) and os.path.getsize(out_p) > 1000:
-                                    return True
-                            except Exception as ex_urllib_dl:
-                                print(f"DEBUG GALLERY: urllib download attempt {attempt+1} failed for {p_url[:50]}... ({ex_urllib_dl}). Retrying with curl...")
-                                try:
-                                    cmd = [
-                                        'curl', '-s', '-L',
-                                        '-A', ua,
-                                        '-e', link,
-                                        '--retry', '3',
-                                        '--retry-delay', '2',
-                                        '-o', out_p,
-                                        p_url
-                                    ]
-                                    subprocess.run(cmd, timeout=30)
-                                    if os.path.exists(out_p) and os.path.getsize(out_p) > 1000:
-                                        return True
-                                except Exception as ex_curl_dl:
-                                    print(f"DEBUG GALLERY: curl attempt {attempt+1} failed: {ex_curl_dl}")
-                            time.sleep(1.5 + attempt * 1.0)
-                        return False
-
-                    success_dl = await asyncio.to_thread(_dl_p_with_retries, photo_url, local_path)
-
-                    if success_dl and os.path.exists(local_path) and os.path.getsize(local_path) > 1000:
-                        file_size = os.path.getsize(local_path)
-                        dimensions = "N/A"
-                        if Image is not None:
-                            try:
-                                with Image.open(local_path) as img:
-                                    dimensions = f"{img.width}x{img.height}"
-                            except Exception:
-                                pass
-
-                        downloaded_items.append((photo_url, local_path, file_name))
-                        meta_file_records.append({
-                            "archive_id": f"ARC-{len(sent_photos_db) + idx_p:06d}",
-                            "file_name": file_name,
-                            "size_bytes": file_size,
-                            "size_mb": round(file_size / (1024 * 1024), 2),
-                            "dimensions": dimensions,
-                            "format": ext.replace('.', '').upper(),
-                            "source_url": photo_url
-                        })
-                except Exception as ex_p_dl:
-                    print(f"DEBUG GALLERY: Error downloading photo {photo_url}: {ex_p_dl}")
-
-            if not downloaded_items:
-                continue
-
-            # Step 2: Build uncompressed ZIP (ZIP_STORED - 100% original quality)
-            zip_filename = f"part_{part_num:03d}_quality100.zip"
-            zip_path = os.path.join(temp_dir, zip_filename)
-
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_STORED) as zf:
-                for _, local_p, arc_name in downloaded_items:
-                    zf.write(local_p, arcname=arc_name)
-
-            zip_size_mb = round(os.path.getsize(zip_path) / (1024 * 1024), 2)
-
-            # Step 3: Build Metadata JSON file
-            meta_filename = f"part_{part_num:03d}_metadata.json"
-            meta_path = os.path.join(temp_dir, meta_filename)
-            meta_payload = {
-                "part": part_num,
-                "total_files": len(downloaded_items),
-                "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "zip_name": zip_filename,
-                "zip_size_mb": zip_size_mb,
-                "source_page_link": link,
-                "files": meta_file_records
-            }
-            with open(meta_path, "w", encoding="utf-8") as f_meta:
-                json.dump(meta_payload, f_meta, ensure_ascii=False, indent=2)
-
-            # Step 4: Send ZIP Document to Telegram
+            # 4. Send ZIP Document
             zip_caption = (
-                f"📦 *آرشیو پارت {part_num} (کیفیت ۱۰۰٪ اصلی)*\n"
-                f"🗂️ فایل‌های پارت: *{len(downloaded_items)} عکس*\n"
-                f"💾 حجم ZIP: *{zip_size_mb} MB*\n"
-                f"📝 فرمت: ZIP بدون فشرده‌سازی تخریبی (STORED)\n"
-                f"🔗 منبع: `{link}`\n"
-                f"🛡️📥 سپر دانلود عمارت"
+                f"<b>🗜️ آرشیو کامل صفحه {page}</b>\n"
+                f"تعداد: {len(downloaded)} عکس\n"
+                f"حجم: {zip_mb:.1f} MB\n"
+                "کیفیت اصلی ✅"
             )
-            print(f"DEBUG GALLERY: Sending ZIP document for Part {part_num}...")
-            await send_media_to_destinations(zip_path, zip_caption, owner_id, custom_dest_id=target_channel)
-            await asyncio.sleep(2.0)
+            await send_tg_document(target_channel, zip_path, caption=zip_caption)
+            await asyncio.sleep(2)
 
-            # Step 5: Send Metadata JSON Document to Telegram
-            meta_caption = (
-                f"📋 *فهرست اطلاعات کامل تصاویر (متادیتا) - پارت {part_num}*\n"
-                f"📂 متصل به فایل: `{zip_filename}`\n"
-                f"📑 رکوردها: *{len(downloaded_items)} تصویر*\n"
-                f"🛡️📥 سپر دانلود عمارت"
+            # 5. Send TXT Info Document (with image size & quality details)
+            txt_caption = (
+                f"<b>📋 مشخصات، ابعاد (سایز) و کیفیت عکس‌های صفحه {page}</b>\n"
+                "شامل ID، ابعاد پیکسل، حجم فایل KB، فرمت، لایک، بازدید و لینک مستقیم"
             )
-            print(f"DEBUG GALLERY: Sending metadata document for Part {part_num}...")
-            await send_media_to_destinations(meta_path, meta_caption, owner_id, custom_dest_id=target_channel)
-            await asyncio.sleep(2.0)
+            await send_tg_document(target_channel, txt_path, caption=txt_caption)
+            await asyncio.sleep(2)
 
-            # Step 6: Send 10-Photo Preview Albums to Telegram
-            chunk_size = 10
-            for album_idx in range(0, len(downloaded_items), chunk_size):
-                album_items = downloaded_items[album_idx:album_idx + chunk_size]
-                album_fps = [lp for _, lp, _ in album_items]
+            # 6. Send Albums (Media Groups of 10)
+            total_albums = (len(downloaded) + ALBUM_SIZE - 1) // ALBUM_SIZE
+            for album_idx in range(total_albums):
+                start = album_idx * ALBUM_SIZE
+                end = start + ALBUM_SIZE
+                chunk = downloaded[start:end]
+                paths = [p for _, p, _ in chunk]
 
                 album_caption = (
-                    f"📸 *پارت {part_num} - آلبوم نمایشی (عکس {album_idx + 1} تا {album_idx + len(album_items)} از {len(downloaded_items)})*\n"
-                    f"📦 ZIP کامل: `{zip_filename}`\n"
-                    f"📋 متادیتا: `{meta_filename}`\n"
-                    f"🛡️📥 سپر دانلود عمارت"
+                    f"📄 صفحه {page}\n"
+                    f"🖼 آلبوم {album_idx+1} از {total_albums}\n"
+                    f"عکس‌های {start+1} تا {start+len(chunk)}"
                 )
-                album_ok = await send_media_group_to_destinations(album_fps, album_caption, owner_id, custom_dest_id=target_channel)
 
-                if album_ok:
-                    for p_u, _, _ in album_items:
-                        sent_photos_db.add(p_u)
-                        total_photos_sent_session += 1
+                await send_tg_media_group(target_channel, paths, caption=album_caption)
+                await asyncio.sleep(DELAY_BETWEEN_ALBUMS)
 
-                    save_sent_photos_db(sent_photos_db)
-                    update_gallery_stats(len(sent_photos_db), total_photos_sent_session + total_duplicates_skipped, total_duplicates_skipped, f"در حال ارسال پارت {part_num}")
-
-                await asyncio.sleep(3.0)  # 3-second delay between preview albums
-
-            # Cleanup temp files of this part
-            shutil.rmtree(part_dir, ignore_errors=True)
-            if os.path.exists(zip_path):
-                os.remove(zip_path)
-            if os.path.exists(meta_path):
-                os.remove(meta_path)
-
-            progress_notice = (
-                f"✅ *پارت {part_num} با موفقیت کامل ارسال گردید!*\n\n"
-                f"📦 فایل ZIP کیفیت اصلی + متادیتا + آلبوم‌های ۱۰تایی به کانال تحویل شد.\n"
-                f"📸 کل عکس‌های جدید ارسال‌شده: *{total_photos_sent_session:,} عکس*\n"
-                f"📊 مجموع بانک اطلاعاتی عکس‌های آرشیو: *{len(sent_photos_db):,} عکس*\n"
-                f"⏳ شکیبایی ۳۰ ثانیه‌ای برای باز کردن خودکار «مشاهده بیشتر» و رفتن به پارت {part_num + 1}..."
+            # 7. Page Completion Notification
+            completion_text = (
+                f"<b>✅ پایان موفقیت‌آمیز صفحه {page}</b>\n"
+                f"{total_albums} آلبوم + فایل ZIP + فایل TXT مشخصات با ابعاد و کیفیت به کانال ارسال شد.\n"
+                "⏳ ۳۰ ثانیه صبر تا شروع صفحه بعدی..."
             )
-            msg_obj = await safe_edit_message(owner_id, msg_obj, progress_notice)
+            await send_tg_message(target_channel, completion_text)
+            await safe_send_message(owner_id, f"✅ *صفحه {page} با موفقیت کامل استخراج و به کانال `{target_channel}` ارسال شد!*")
 
-            print(f"DEBUG GALLERY: Part {part_num} completed. Waiting 30 seconds before Part {part_num + 1}...")
-            await asyncio.sleep(30.0)
+            update_gallery_stats(total_photos_extracted, total_photos_extracted, 0, f"صفحه {page}")
 
-        update_gallery_stats(len(sent_photos_db), total_photos_sent_session + total_duplicates_skipped, total_duplicates_skipped, "تکمیل موفقیت‌آمیز ✅")
+            page += 1
+            await asyncio.sleep(SLEEP_BETWEEN_PAGES)
+
         final_summary = (
-            "✅ *فرآیند استخراج گام‌به‌گام و کامل گالری با موفقیت پایان یافت!*\n\n"
-            "📸 عکس‌های جدید ارسال‌شده: *" + f"{total_photos_sent_session:,}" + " عکس*\n"
-            "🛡️ عکس‌های تکراری ردشده: *" + f"{total_duplicates_skipped:,}" + " عکس*\n"
-            "📊 مجموع کل دیتابیس عکس‌های آرشیو: *" + f"{len(sent_photos_db):,} عکس*\n"
-            "💎 مقصد: `" + str(target_channel) + "`"
+            "🎉 *پایان استخراج و ارسال کامل گالری تصویری!*\n"
+            f"📊 تعداد کل صفحات پردازش‌شده: `{page - start_page}`\n"
+            f"🖼️ تعداد کل تصاویر استخراج‌شده: `{total_photos_extracted}`\n"
+            f"🎯 کانال مقصد: `{target_channel}`"
         )
-        await safe_edit_message(owner_id, msg_obj, final_summary)
+        await safe_send_message(owner_id, final_summary)
 
     except Exception as e:
         print("DEBUG: Error in process_gallery_extraction:", e)
