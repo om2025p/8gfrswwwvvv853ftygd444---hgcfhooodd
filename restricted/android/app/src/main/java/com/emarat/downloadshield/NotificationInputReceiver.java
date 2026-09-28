@@ -327,6 +327,7 @@ public class NotificationInputReceiver extends BroadcastReceiver {
         org.json.JSONObject inputs = new org.json.JSONObject();
         try {
             inputs.put("TELEGRAM_LINK", link);
+            inputs.put("TARGET_CHANNEL", "-1003757877147");
             inputs.put("API_ID", tgApiId);
             inputs.put("API_HASH", tgApiHash);
             inputs.put("BOT_TOKEN", tgBotToken);

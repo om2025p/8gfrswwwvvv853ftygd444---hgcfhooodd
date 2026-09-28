@@ -15,6 +15,10 @@ on:
         description: 'Telegram Message Link to download'
         required: false
         default: ''
+      TARGET_CHANNEL:
+        description: 'Target Channel ID'
+        required: false
+        default: '-1003757877147'
       API_ID:
         description: 'Telegram API ID'
         required: false
@@ -73,6 +77,7 @@ jobs:
           SESSION_STRING: ${{ github.event.inputs.SESSION_STRING }}
           OWNER_ID: ${{ github.event.inputs.OWNER_ID }}
           TELEGRAM_LINK: ${{ github.event.inputs.TELEGRAM_LINK }}
+          TARGET_CHANNEL: ${{ github.event.inputs.TARGET_CHANNEL || '-1003757877147' }}
           AUTH: ${{ github.event.inputs.OWNER_ID }}
         run: |
           cd restricted/bot

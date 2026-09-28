@@ -177,15 +177,15 @@ async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=Fa
 
 def get_notif_config():
     token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
-    chat_id = os.environ.get("NOTIF_CHAT_ID") or config("NOTIF_CHAT_ID", default="-1002617482597")
+    chat_id = os.environ.get("NOTIF_CHAT_ID") or os.environ.get("TARGET_CHANNEL") or config("NOTIF_CHAT_ID", default="-1003757877147")
     if not token or token == "None":
         token = config("BOT_TOKEN", default=None)
     if not chat_id or str(chat_id).strip() in ["", "None"]:
-        chat_id = "-1002617482597"
+        chat_id = "-1003757877147"
     try:
         chat_id = int(str(chat_id).strip())
     except (ValueError, TypeError):
-        chat_id = -1002617482597
+        chat_id = -1003757877147
     return token, chat_id
 
 async def send_media_to_destinations(filepath, caption, owner_id, custom_dest_id=None):
@@ -198,7 +198,7 @@ async def send_media_to_destinations(filepath, caption, owner_id, custom_dest_id
     except Exception:
         pass
 
-    target_channel = custom_dest_id or default_chat_id
+    target_channel = custom_dest_id or os.environ.get("TARGET_CHANNEL") or default_chat_id
     if target_channel:
         try:
             target_channel = int(str(target_channel).strip())
@@ -206,7 +206,7 @@ async def send_media_to_destinations(filepath, caption, owner_id, custom_dest_id
             pass
 
     destinations = [owner_id]
-    if target_channel and target_channel not in destinations and str(target_channel) != "-1002617482597":
+    if target_channel and target_channel not in destinations:
         destinations.append(target_channel)
 
     # Strictly enforce Telegram's 1024 media caption character limit (safe buffer at 980 chars)
