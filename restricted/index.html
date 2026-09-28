@@ -647,6 +647,38 @@
                 </div>
             </div>
 
+            <!-- کارت جدید: اسکنر و کشف‌کننده قدرتمند دیتابیس وب‌سایت (gallery-dl & Directory Scanner) -->
+            <div class="white-card" style="background: linear-gradient(145deg, #ffffff, #faf5ff); border: 1.5px solid #e9d5ff;">
+                <div class="card-title" style="color: #7e22ce; border-color: #e9d5ff;">
+                    🔍 اسکنر و کشف‌کننده قدرتمند دیتابیس سایت
+                </div>
+                <p style="font-size: 0.85rem; line-height: 1.6; color: #4c1d95; margin-top: -6px; margin-bottom: 16px;">
+                    این ابزار هوشمند با استفاده از موتور سنگین اوپن‌سورس <code>gallery-dl</code>، اسکن ساختار پوشه‌ها و آنالیز الگوهای مخفی، دیتابیس کلیه تصاویر و پوشه‌های گالری هر وب‌سایتی را عمیقاً ردیابی و کشف می‌کند.
+                </p>
+
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label" style="font-size: 0.88rem; color: #6b21a8; font-weight: 800; margin-bottom: 4px;">
+                        🧭 آدرس وب‌سایت یا دامنه اصلی جهت اسکن دیتابیس:
+                    </label>
+                    <input type="text" id="crawlerTargetInput" class="input-field" placeholder="https://example.com/gallery/" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #d8b4fe; background: #ffffff;">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                    <button class="action-btn" id="btnRunDatabaseCrawler" style="background: linear-gradient(135deg, #9333ea, #7e22ce); box-shadow: 0 8px 20px -4px rgba(147, 51, 234, 0.4); font-size: 0.95rem; padding: 16px;">
+                        🔍 اسکنر و کشف‌کننده قدرتمند دیتابیس سایت
+                    </button>
+                </div>
+
+                <!-- باکس نمایش دیتابیس کشف‌شده با دکمه اعمال سریع -->
+                <div id="discoveredDbResultContainer" style="display: none; background: #f3e8ff; border: 1px solid #d8b4fe; border-radius: 16px; padding: 14px; margin-top: 10px;">
+                    <span style="font-size: 0.8rem; font-weight: 800; color: #6b21a8; display: block; margin-bottom: 6px;">🎯 آدرس دیتابیس کشف‌شده:</span>
+                    <div id="discoveredDbUrlText" style="font-family: monospace; font-size: 0.82rem; color: #581c87; background: #ffffff; padding: 8px 12px; border-radius: 10px; border: 1px solid #c084fc; word-break: break-all; direction: ltr; text-align: left; margin-bottom: 10px;"></div>
+                    <button class="action-btn secondary" id="btnApplyDiscoveredDb" style="background: #ffffff; color: #7e22ce; border: 1.5px solid #a855f7; font-size: 0.85rem; padding: 10px; font-weight: bold;">
+                        ✅ اعمال خودکار آدرس دیتابیس در فرم استخراج
+                    </button>
+                </div>
+            </div>
+
             <!-- کارت آمار پیشرفته و زنده گالری -->
             <div class="white-card">
                 <h2 class="card-title" style="color: #16a34a; border-color: #bbf7d0;">
@@ -2595,6 +2627,57 @@
             document.getElementById('galleryCustomDbInput').addEventListener('input', (e) => {
                 localStorage.setItem('restricted_gallery_custom_db', sanitizeString(e.target.value.trim()));
             });
+        }
+
+        // هاندر دکمه اسکنر و کشف‌کننده قدرتمند دیتابیس وب‌سایت (gallery-dl & Crawler)
+        const btnRunDatabaseCrawler = document.getElementById('btnRunDatabaseCrawler');
+        if (btnRunDatabaseCrawler) {
+            btnRunDatabaseCrawler.onclick = async () => {
+                let targetUrl = document.getElementById('crawlerTargetInput') ? sanitizeString(document.getElementById('crawlerTargetInput').value) : '';
+                if (!targetUrl) {
+                    targetUrl = sanitizeString(document.getElementById('galleryUrlInput').value);
+                }
+
+                if (!targetUrl) {
+                    showToast("⚠️ لطفاً آدرس وب‌سایت موردنظر جهت اسکن دیتابیس را وارد کنید!");
+                    return;
+                }
+
+                showToast("🔍 در حال راه‌اندازی موتور سنگین اسکنر و کشف‌کننده دیتابیس...");
+                logDlDebug(`🔍 شروع اسکن عمیق دیتابیس سایت: ${targetUrl}`);
+                logGalleryDebug(`🔍 اجرای اسکنر دیتابیس برای وب‌سایت: ${targetUrl}`);
+
+                updateGalleryStatsUI(0, 0, 0, "موتور اسکنر در حال کاوش دیتابیس... 🔍");
+
+                const historyId = addDownloadHistoryItem("🔍 اسکن دیتابیس: " + targetUrl, true);
+
+                // Dispatch to gallery_extractor.yml with IS_CRAWLER_MODE: "true"
+                const dispatchResult = await triggerWorkflow(targetUrl, historyId, 'gallery_extractor.yml', true);
+                const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
+
+                if (isSuccess) {
+                    showToast("✅ موتور اسکنر دیتابیس با موفقیت فعال شد! لاگ‌های زنده را چک بفرمایید.");
+                } else {
+                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در برپاخاستن سرور اسکنر.';
+                    showToast("❌ " + errDetail);
+                }
+            };
+        }
+
+        const btnApplyDiscoveredDb = document.getElementById('btnApplyDiscoveredDb');
+        if (btnApplyDiscoveredDb) {
+            btnApplyDiscoveredDb.onclick = () => {
+                const dbUrl = document.getElementById('discoveredDbUrlText') ? document.getElementById('discoveredDbUrlText').innerText.trim() : '';
+                if (dbUrl) {
+                    const customDbEl = document.getElementById('galleryCustomDbInput');
+                    if (customDbEl) {
+                        customDbEl.value = dbUrl;
+                        localStorage.setItem('restricted_gallery_custom_db', dbUrl);
+                        showToast("✅ آدرس دیتابیس کشف‌شده در فرم اعمال گردید!");
+                        window.scrollTo({ top: customDbEl.offsetTop - 100, behavior: 'smooth' });
+                    }
+                }
+            };
         }
 
         // دکمه شخم زدن و کشف دقیق آمار دیتابیس سرور

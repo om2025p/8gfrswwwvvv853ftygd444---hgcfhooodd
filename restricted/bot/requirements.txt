@@ -8,3 +8,5 @@ pyrogram
 python-decouple
 yt-dlp
 Pillow
+gallery-dl
+beautifulsoup4

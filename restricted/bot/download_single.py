@@ -802,12 +802,34 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
         gallery_start_time = time.time()
         MAX_GALLERY_EXEC_SECONDS = 330 * 60  # 5.5 hours safety timeout before GitHub Actions 6h hard limit
 
-        # If in Discovery Mode, run deep high-speed structural discovery without downloading or sending media to Telegram
+        # Run Heavy Open-Source Crawler & Database Scanner Engine (gallery-dl + Deep Directory Probe + Pattern Detection)
+        def run_heavy_gallery_dl_scan(target_url):
+            discovered_urls = []
+            try:
+                import subprocess, json
+                print(f"DEBUG CRAWLER: Executing gallery-dl dump for URL: {target_url}")
+                cmd = ["gallery-dl", "-j", "--get-urls", target_url]
+                res = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+                if res.stdout:
+                    for line in res.stdout.splitlines():
+                        line = line.strip()
+                        if line.startswith("http") and line not in discovered_urls:
+                            discovered_urls.append(line)
+            except Exception as e_gdl:
+                print(f"DEBUG CRAWLER: gallery-dl execution notice: {e_gdl}")
+            return discovered_urls
+
         if is_discovery_mode:
-            print(f"DEBUG GALLERY: Running in DISCOVERY MODE (kashf-only) starting from Batch_{start_b}...")
+            print(f"DEBUG GALLERY: Running in HEAVY CRAWLER & DISCOVERY MODE for URL: {link}...")
+
+            # Layer 1: Heavy Open-Source Engine gallery-dl URL Extraction
+            gdl_photos = await asyncio.to_thread(run_heavy_gallery_dl_scan, link)
+            print(f"DEBUG CRAWLER: gallery-dl extracted {len(gdl_photos)} direct URLs.")
+
             discovered_batches = {}
             total_discovered_photos = 0
 
+            # Layer 2: Deep Directory & Batch Discovery Scan
             scan_range = range(start_b, start_b + 150) if is_user_specified_ascent else range(start_b, 0, -1)
             consecutive_empty = 0
 
@@ -826,17 +848,18 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                     # Periodically update live status in Telegram every 3 batches found
                     if len(discovered_batches) % 3 == 0:
                         progress_msg = (
-                            f"🌾 *در حال شخم زدن و کشف دیتابیس گالری...*\n\n"
-                            f"⚡ تا این لحظه: *{len(discovered_batches)} پارت* کشف شد.\n"
+                            f"🌾 *در حال شخم زدن و کشف عمیق دیتابیس سایت...*\n\n"
+                            f"🔍 عکس‌های مستقیم gallery-dl: *{len(gdl_photos):,} عدد*\n"
+                            f"⚡ تا این لحظه: *{len(discovered_batches)} پارت دیتابیس* کشف شد.\n"
                             f"📸 مجموع عکس‌های سالم: *{total_discovered_photos:,} عکس*\n"
                             f"🔎 پارت در حال بررسی: *پارت {b}*"
                         )
                         msg_obj = await safe_edit_message(owner_id, msg_obj, progress_msg)
                         update_gallery_stats(
                             len(sent_photos_db),
-                            total_discovered_photos,
+                            total_discovered_photos + len(gdl_photos),
                             0,
-                            f"در حال شخم زدن: {total_discovered_photos:,} عکس در {len(discovered_batches)} پارت 🌾"
+                            f"در حال اسکن دیتابیس: {total_discovered_photos + len(gdl_photos):,} عکس در {len(discovered_batches)} پارت 🔍"
                         )
                 else:
                     if is_user_specified_ascent:
@@ -844,28 +867,28 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                         print(f"DEBUG DISCOVERY: Batch_{b} is empty (consecutive empty: {consecutive_empty})")
 
             # Build discovery report summary
-            batches_list_str = ", ".join([f"پارت {k} ({v} عکس)" for k, v in sorted(discovered_batches.items())]) or 'هیچ پارتی یافت نشد'
+            batches_list_str = ", ".join([f"پارت {k} ({v} عکس)" for k, v in sorted(discovered_batches.items())]) or 'پارت پوشه‌ای یافت نشد'
             active_base_db = custom_db_base if (custom_db_base and 'Organized_Gallery' in custom_db_base) else "https://kir2kos.net/gallery/Organized_Gallery"
             scan_time_sec = round(time.time() - gallery_start_time, 1)
-            total_scanned_batches = len(list(scan_range))
+
             discovery_report = (
-                f"🌾 *گزارش کامل شخم زدن و کشف دیتابیس گالری:*\n\n"
+                f"🔍 *گزارش کامل اسکنر و کشف‌کننده دیتابیس سایت:*\n\n"
+                f"🌐 موتور سنگین gallery-dl: *{len(gdl_photos):,} عکس مستقیم*\n"
                 f"📂 تعداد پارت‌های فعال کشف‌شده: *{len(discovered_batches)} پارت*\n"
-                f"📸 کل عکس‌های سالم و آماده دانلود: *{total_discovered_photos:,} عکس*\n"
-                f"🗄️ آدرس دیتابیس منبع: `{active_base_db}`\n"
-                f"⏱️ زمان پیمایش دیتابیس: *{scan_time_sec} ثانیه*\n"
-                f"📊 دامنه اسکن پارت‌ها: *از پارت {start_b} تا پارت {start_b + len(discovered_batches)}*\n\n"
+                f"📸 کل عکس‌های سالم و آماده دانلود: *{(total_discovered_photos + len(gdl_photos)):,} عکس*\n"
+                f"🗄️ آدرس دیتابیس منبع کشف‌شده: `{active_base_db}`\n"
+                f"⏱️ زمان پیمایش دیتابیس: *{scan_time_sec} ثانیه*\n\n"
                 f"📋 *ریز تفکیک پارت‌ها:*\n{batches_list_str}\n\n"
-                f"💡 *آماده‌باش:* اکنون می‌توانید جهت دانلود و ارسال آلبومی به تلگرام، روی دکمه «🚀 شروع استخراج کامل» کلیک فرمایید! 💎"
+                f"💡 *توصیه:* اکنون می‌توانید آدرس دیتابیس کشف‌شده بالا را جهت استخراج خودکار و ارسال آلبومی به تلگرام اعمال فرمایید! 💎"
             )
             await safe_edit_message(owner_id, msg_obj, discovery_report)
 
             # Update stats JSON file for UI
             update_gallery_stats(
                 len(sent_photos_db),
-                total_discovered_photos,
+                total_discovered_photos + len(gdl_photos),
                 0,
-                f"کشف موفق: {total_discovered_photos:,} عکس در {len(discovered_batches)} پارت 🌾"
+                f"کشف کامل دیتابیس: {(total_discovered_photos + len(gdl_photos)):,} عکس کشف گردید 🔍"
             )
             return
 
