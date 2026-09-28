@@ -1454,10 +1454,19 @@
                         const dotClass = (status === 'completed' ? (conclusion === 'success' ? 'completed' : 'failed') : status);
 
                         let persianStatus = "در حال کار";
-                        if (status === 'queued') persianStatus = "در صف انتظار ⏳";
-                        else if (status === 'in_progress') persianStatus = "در حال دانلود / پردازش ⚡";
-                        else if (status === 'completed') {
+                        if (status === 'queued') {
+                            persianStatus = "در صف انتظار ⏳";
+                            isServerCurrentlyRunning = true;
+                        } else if (status === 'in_progress') {
+                            persianStatus = "در حال دانلود / پردازش ⚡";
+                            isServerCurrentlyRunning = true;
+                        } else if (status === 'completed') {
                             persianStatus = conclusion === 'success' ? "آماده به کار (موتور فعال) ✅" : "آخرین اجرا ناموفق ❌";
+                            if (isServerCurrentlyRunning) {
+                                isServerCurrentlyRunning = false;
+                                // در صورت اتمام کار سرور و وجود داشتن لینک جدید در صف، ارسال نوبت بعدی به صورت خودکار
+                                setTimeout(processSmartDownloadQueue, 2000);
+                            }
                         }
 
                         updateUI(dotClass, persianStatus);
@@ -2322,17 +2331,46 @@
             };
         }
 
-        // سیستم صف هوشمند و تجمع‌دهنده دانلودهای متوالی (Smart Queue & Debounce Engine)
-        let downloadBatchQueue = [];
-        let batchDebounceTimer = null;
-        let isProcessingBatch = false;
+        // سیستم مدیریت صف هوشمند چسبنده و ترتیبی (Sticky Smart Queue & Dispatch Engine)
+        const QUEUE_STORAGE_KEY = 'restricted_pending_links_queue_v1';
+        let isDispatchingQueue = false;
+        let isServerCurrentlyRunning = false;
+        let queueDebounceTimer = null;
 
-        async function processAccumulatedBatchQueue() {
-            if (downloadBatchQueue.length === 0 || isProcessingBatch) return;
+        function getPendingQueue() {
+            try {
+                const raw = localStorage.getItem(QUEUE_STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) return parsed;
+                }
+            } catch (e) {}
+            return [];
+        }
 
-            isProcessingBatch = true;
-            const currentBatch = [...downloadBatchQueue];
-            downloadBatchQueue = [];
+        function savePendingQueue(q) {
+            try {
+                localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(q));
+            } catch (e) {}
+        }
+
+        async function processSmartDownloadQueue() {
+            if (isDispatchingQueue) return;
+
+            const queue = getPendingQueue();
+            if (queue.length === 0) return;
+
+            // اگر سرور گیت‌هاب در حال حاضر مشغول است، منتظر بمان تا اجرای قبلی تمام شود
+            if (isServerCurrentlyRunning) {
+                logDlDebug(`⏳ سرور گیت‌هاب در حال حاضر مشغول است. ${queue.length} لینک در صف انتظار فرانت‌اند منتظر می‌مانند...`);
+                return;
+            }
+
+            isDispatchingQueue = true;
+
+            // برداشتن تمامی لینک‌های موجود در صف جهت ارسال یکپارچه در یک جاب پایتون
+            const batchToProcess = [...queue];
+            savePendingQueue([]); // پاک کردن صف محلی
 
             // باز کردن خودکار آکاردئون تاریخچه
             if (historyAccordionContent) {
@@ -2340,24 +2378,28 @@
                 if (historyAccordionToggleIcon) historyAccordionToggleIcon.style.transform = 'rotate(180deg)';
             }
 
-            showToast(`🚀 ارسال تجمع ${currentBatch.length.toLocaleString('fa-IR')} لینک به سرور ابری...`);
-            logDlDebug(`⚡ تجمع ${currentBatch.length} لینک به صورت یکپارچه آماده ارسال به سرور گیت‌هاب است.`);
+            showToast(`🚀 ارسال تجمع ${batchToProcess.length.toLocaleString('fa-IR')} لینک به سرور ابری...`);
+            logDlDebug(`⚡ ارسال یکپارچه ${batchToProcess.length} لینک به سرور پایتون برای دانلود ترتیبی و بدون تداخل.`);
 
-            const historyIds = [];
-            currentBatch.forEach(link => {
+            const historyItems = [];
+            batchToProcess.forEach(linkItem => {
+                const link = typeof linkItem === 'string' ? linkItem : linkItem.link;
+                const hId = typeof linkItem === 'object' && linkItem.id ? linkItem.id : null;
+
                 const isNewUnique = registerUniqueLink(link);
-                const hId = addDownloadHistoryItem(link, isNewUnique);
-                historyIds.push({ link, id: hId });
+                const activeHId = hId || addDownloadHistoryItem(link, isNewUnique);
+                historyItems.push({ link, id: activeHId });
             });
 
-            // ترکیب تمامی پیوندها جهت ارسال یکپارچه در یک اجرای سرور
-            const combinedLinksPayload = currentBatch.join('\n');
-            const primaryHistoryId = historyIds.length > 0 ? historyIds[0].id : null;
+            // ادغام تمامی لینک‌ها با کاراکتر نیولاین (\n) برای یک پایتون ران یکپارچه
+            const combinedPayload = historyItems.map(item => item.link).join('\n');
+            const firstHistoryId = historyItems.length > 0 ? historyItems[0].id : null;
 
-            const dispatchResult = await triggerWorkflow(combinedLinksPayload, primaryHistoryId);
+            isServerCurrentlyRunning = true;
+            const dispatchResult = await triggerWorkflow(combinedPayload, firstHistoryId);
             const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
 
-            historyIds.forEach(item => {
+            historyItems.forEach(item => {
                 if (!isSuccess) {
                     const errDetail = (dispatchResult && dispatchResult.errorMessage)
                         ? dispatchResult.errorMessage
@@ -2368,33 +2410,36 @@
                 }
             });
 
-            isProcessingBatch = false;
-
-            // اگر در حین ارسال پیوند جدیدی به صف اضافه شد، با ۲ ثانیه مکث دفعه بعدی را فرست
-            if (downloadBatchQueue.length > 0) {
-                setTimeout(processAccumulatedBatchQueue, 2000);
-            }
+            isDispatchingQueue = false;
         }
 
         function enqueueLinksForDownload(links) {
             if (!links || links.length === 0) return;
 
+            const queue = getPendingQueue();
             let addedCount = 0;
+
             links.forEach(l => {
-                if (!downloadBatchQueue.includes(l)) {
-                    downloadBatchQueue.push(l);
+                const cleaned = sanitizeString(l);
+                if (cleaned && !queue.some(item => (typeof item === 'string' ? item : item.link) === cleaned)) {
+                    const isNewUnique = registerUniqueLink(cleaned);
+                    const hId = addDownloadHistoryItem(cleaned, isNewUnique);
+                    updateDownloadHistoryStatus(hId, 'in_progress', '⏳ در صف انتظار فرانت‌اند...');
+
+                    queue.push({ link: cleaned, id: hId });
                     addedCount++;
                 }
             });
 
             if (addedCount > 0) {
-                logDlDebug(`📥 تعداد ${addedCount} پیوند به صف تجمع هوشمند اضافه شد (مجموع صف: ${downloadBatchQueue.length}).`);
-                showToast(`📥 ${addedCount.toLocaleString('fa-IR')} پیوند به صف اضافه شد... ارسال تا ۳ ثانیه دیگر!`);
+                savePendingQueue(queue);
+                logDlDebug(`📥 تعداد ${addedCount} پیوند به صف هوشمند فرانت‌اند اضافه شد (مجموع صف: ${queue.length}).`);
+                showToast(`📥 ${addedCount.toLocaleString('fa-IR')} پیوند به صف اضافه شد...`);
 
-                if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
-                batchDebounceTimer = setTimeout(() => {
-                    processAccumulatedBatchQueue();
-                }, 2500); // مهلت ۲.۵ ثانیه‌ای تجمع لینک‌های رگباری
+                if (queueDebounceTimer) clearTimeout(queueDebounceTimer);
+                queueDebounceTimer = setTimeout(() => {
+                    processSmartDownloadQueue();
+                }, 1500); // مکث ۱.۵ ثانیه‌ای جهت تجمع لینک‌های کلیک شده در فواصل کوتاه
             }
         }
 
