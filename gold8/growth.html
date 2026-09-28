@@ -17,6 +17,13 @@
     margin: 0;
     padding: 12px;
     color: #f0fdf4;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  body.light-mode {
+    background-color: #f4f6f9;
+    background-image: none;
+    color: #1e293b;
   }
 
   .container {
@@ -28,6 +35,13 @@
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     border: 1px solid #14b8a6;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  }
+
+  body.light-mode .container {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   }
 
   .header {
@@ -45,6 +59,11 @@
     font-weight: bold;
     flex: 1;
     text-align: center;
+    transition: color 0.3s;
+  }
+
+  body.light-mode .header h1 {
+    color: #0d5c9c;
   }
 
   .menu-toggle {
@@ -64,9 +83,18 @@
     flex-shrink: 0;
   }
 
+  body.light-mode .menu-toggle {
+    background: linear-gradient(180deg, #42a5f5 0%, #1976d2 100%);
+    box-shadow: 0 3px 0 #0d47a1, 0 4px 6px rgba(0,0,0,0.15);
+  }
+
   .menu-toggle:active {
     transform: translateY(2px);
     box-shadow: 0 1px 0 #0f766e;
+  }
+
+  body.light-mode .menu-toggle:active {
+    box-shadow: 0 1px 0 #0d47a1;
   }
 
   .dropdown-menu {
@@ -82,6 +110,12 @@
     min-width: 200px;
     display: none;
     animation: dropIn 0.15s ease-out;
+  }
+
+  body.light-mode .dropdown-menu {
+    background: #ffffff;
+    border: 1px solid #dfe3e8;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
   }
 
   .dropdown-menu.show { display: block; }
@@ -110,12 +144,19 @@
     margin-bottom: 4px;
   }
 
+  body.light-mode .dropdown-item {
+    color: #222222;
+  }
+
   .dropdown-item:last-child { margin-bottom: 0; }
   .dropdown-item:hover { background: #115e59; transform: translateX(-2px); }
+  body.light-mode .dropdown-item:hover { background: #e3f2fd; }
   .dropdown-item:active { transform: scale(0.98); }
 
   .dropdown-item.danger { color: #f87171; }
   .dropdown-item.danger:hover { background: #7f1d1d; }
+  body.light-mode .dropdown-item.danger { color: #c62828; }
+  body.light-mode .dropdown-item.danger:hover { background: #ffebee; }
 
   .capital-box {
     display: flex;
@@ -129,11 +170,20 @@
     flex-wrap: wrap;
   }
 
+  body.light-mode .capital-box {
+    background: #eef7ff;
+    border: 1px solid #cfe4f7;
+  }
+
   .capital-box label {
     font-weight: bold;
     color: #2dd4bf;
     white-space: nowrap;
     font-size: 14px;
+  }
+
+  body.light-mode .capital-box label {
+    color: #0d5c9c;
   }
 
   .capital-box input {
@@ -148,6 +198,12 @@
     font-family: inherit;
     background: #0f3e3a;
     color: #fff;
+  }
+
+  body.light-mode .capital-box input {
+    background: #ffffff;
+    border: 1px solid #b8d4ec;
+    color: #222222;
   }
 
   .delete-actions {
@@ -173,6 +229,7 @@
 
   .delete-action-btn.confirm-delete { background: #b71c1c; }
   .delete-action-btn.cancel-delete { background: #475569; }
+  body.light-mode .delete-action-btn.cancel-delete { background: #757575; }
   .delete-action-btn:hover { opacity: 0.88; }
 
   .table-wrap {
@@ -196,6 +253,10 @@
     vertical-align: middle;
   }
 
+  body.light-mode th, body.light-mode td {
+    border: 1px solid #dfe3e8;
+  }
+
   th {
     background: #042f2e;
     font-size: 11px;
@@ -203,6 +264,11 @@
     padding: 6px 3px;
     white-space: nowrap;
     font-weight: bold;
+  }
+
+  body.light-mode th {
+    background: #f0f3f7;
+    color: #333333;
   }
 
   th.check-col { width: 36px; }
@@ -220,6 +286,10 @@
     color: #fff;
   }
 
+  body.light-mode td input[type="text"] {
+    color: #222222;
+  }
+
   td input[type="text"].num {
     direction: ltr;
     text-align: center;
@@ -231,6 +301,10 @@
     height: 18px;
     cursor: pointer;
     accent-color: #0d9488;
+  }
+
+  body.light-mode .check-col input[type="checkbox"] {
+    accent-color: #1976d2;
   }
 
   .check-col input.del-check {
@@ -253,12 +327,24 @@
     background: #7f1d1d !important;
   }
 
+  body.light-mode tr.marked-for-delete,
+  body.light-mode tr.row-header.marked-for-delete,
+  body.light-mode tr.marked-for-delete + tr.desc-row {
+    background: #ffcdd2 !important;
+  }
+
   tr.row-header th {
     background: #042f2e;
     color: #2dd4bf;
     font-size: 12px;
     padding: 6px 3px;
     border-bottom: 2px solid #14b8a6;
+  }
+
+  body.light-mode tr.row-header th {
+    background: #eef7ff;
+    color: #0d5c9c;
+    border-bottom: 2px solid #b8d4ec;
   }
 
   .mini-calc-btn {
@@ -391,8 +477,16 @@
     background: #854d0e !important;
   }
 
+  body.light-mode tr.checked-yellow {
+    background: #fff59d !important;
+  }
+
   tr.checked-blue {
     background: #1e3a8a !important;
+  }
+
+  body.light-mode tr.checked-blue {
+    background: #bbdefb !important;
   }
 
   tr.desc-row td {
@@ -442,8 +536,17 @@
     flex-shrink: 0;
   }
 
+  body.light-mode .hamburger-btn {
+    background: linear-gradient(180deg, #42a5f5 0%, #1976d2 100%);
+    box-shadow: 0 3px 0 #0d47a1, 0 4px 6px rgba(0,0,0,0.15);
+  }
+
   .hamburger-btn:hover {
     background: linear-gradient(180deg, #14b8a6 0%, #0369a1 100%);
+  }
+
+  body.light-mode .hamburger-btn:hover {
+    background: linear-gradient(180deg, #4dafff 0%, #1e88e5 100%);
   }
 
   .desc-menu {
@@ -457,6 +560,12 @@
     min-width: 150px;
     font-family: Tahoma, Arial, sans-serif;
     direction: rtl;
+  }
+
+  body.light-mode .desc-menu {
+    background: #ffffff;
+    border: 1px solid #ccc;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.18);
   }
 
   .desc-menu-item {
@@ -509,6 +618,10 @@
     animation: fadeIn 0.2s;
   }
 
+  body.light-mode .modal-overlay {
+    background: rgba(0,0,0,0.55);
+  }
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -531,6 +644,13 @@
     color: #f0fdf4;
   }
 
+  body.light-mode .modal-box {
+    background: #ffffff;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    color: #222222;
+  }
+
   .modal-box.wide {
     max-width: 500px;
   }
@@ -542,9 +662,13 @@
 
   .modal-icon { font-size: 42px; margin-bottom: 8px; }
   .modal-title { font-size: 17px; font-weight: bold; color: #f87171; margin-bottom: 10px; }
+  body.light-mode .modal-title { color: #d32f2f; }
   .modal-title.note { color: #94a3b8; }
+  body.light-mode .modal-title.note { color: #37474f; }
   .modal-title.calendar { color: #2dd4bf; }
+  body.light-mode .modal-title.calendar { color: #0d5c9c; }
   .modal-text { font-size: 14px; color: #ccfbf1; margin-bottom: 16px; line-height: 1.6; }
+  body.light-mode .modal-text { color: #555555; }
 
   .modal-code {
     font-size: 30px;
@@ -558,6 +682,12 @@
     margin: 10px 0 16px;
     direction: ltr;
     user-select: none;
+  }
+
+  body.light-mode .modal-code {
+    color: #0d5c9c;
+    background: #eef7ff;
+    border: 2px dashed #2196f3;
   }
 
   .modal-input {
@@ -576,7 +706,14 @@
     color: #fff;
   }
 
+  body.light-mode .modal-input {
+    border: 2px solid #b8d4ec;
+    background: #ffffff;
+    color: #222222;
+  }
+
   .modal-input:focus { border-color: #14b8a6; }
+  body.light-mode .modal-input:focus { border-color: #2196f3; }
 
   .modal-input.error {
     border-color: #ef4444;
@@ -601,7 +738,14 @@
     color: #fff;
   }
 
+  body.light-mode .note-textarea {
+    border: 2px solid #b8d4ec;
+    background: #ffffff;
+    color: #222222;
+  }
+
   .note-textarea:focus { border-color: #14b8a6; }
+  body.light-mode .note-textarea:focus { border-color: #607d8b; }
 
   @keyframes shake {
     0%, 100% { transform: translateX(0); }
@@ -625,10 +769,13 @@
 
   .modal-btn:hover { opacity: 0.88; }
   .modal-btn.cancel { background: #334155; color: #f1f5f9; }
+  body.light-mode .modal-btn.cancel { background: #eceff1; color: #37474f; }
   .modal-btn.confirm { background: #ef4444; color: #fff; }
+  body.light-mode .modal-btn.confirm { background: #ff5252; color: #fff; }
   .modal-btn.confirm-step1 { background: #f59e0b; color: #fff; }
   .modal-btn.confirm-step2 { background: #dc2626; color: #fff; }
   .modal-btn.save-note { background: #0d9488; color: #fff; }
+  body.light-mode .modal-btn.save-note { background: #607d8b; color: #fff; }
 
   .modal-progress {
     display: flex;
@@ -645,13 +792,23 @@
     transition: background 0.3s;
   }
 
+  body.light-mode .modal-progress span {
+    background: #dfe3e8;
+  }
+
   .modal-progress span.active { background: #14b8a6; }
+  body.light-mode .modal-progress span.active { background: #2196f3; }
 
   .big-calendar {
     background: #042f2e;
     border-radius: 12px;
     padding: 8px;
     border: 1px solid #115e59;
+  }
+
+  body.light-mode .big-calendar {
+    background: #ffffff;
+    border: none;
   }
 
   .big-cal-header {
@@ -670,6 +827,10 @@
     text-align: center;
   }
 
+  body.light-mode .big-cal-title {
+    color: #0d5c9c;
+  }
+
   .big-cal-nav {
     background: #0d9488;
     color: #fff;
@@ -685,9 +846,18 @@
     transition: transform 0.05s;
   }
 
+  body.light-mode .big-cal-nav {
+    background: #2196f3;
+    box-shadow: 0 3px 0 #0d47a1;
+  }
+
   .big-cal-nav:active {
     transform: translateY(2px);
     box-shadow: 0 1px 0 #0f766e;
+  }
+
+  body.light-mode .big-cal-nav:active {
+    box-shadow: 0 1px 0 #0d47a1;
   }
 
   .big-cal-grid {
@@ -702,6 +872,10 @@
     font-weight: bold;
     color: #99f6e4;
     padding: 8px 0;
+  }
+
+  body.light-mode .big-cal-dayname {
+    color: #666666;
   }
 
   .big-cal-day, .big-cal-empty {
@@ -723,6 +897,11 @@
     color: #f0fdf4;
   }
 
+  body.light-mode .big-cal-day {
+    background: #f5f7fa;
+    color: #37474f;
+  }
+
   .big-cal-day:hover {
     transform: scale(1.05);
     filter: brightness(1.15);
@@ -730,6 +909,10 @@
 
   .big-cal-day.today {
     border: 2px solid #2dd4bf;
+  }
+
+  body.light-mode .big-cal-day.today {
+    border: 2px solid #2196f3;
   }
 
   .big-cal-day.has-data {
@@ -753,38 +936,6 @@
 
   .big-cal-day.has-note {
     background: linear-gradient(180deg, #90a4ae 0%, #455a64 100%);
-  }
-
-  .big-cal-day.has-buy.has-sell {
-    background: linear-gradient(180deg, #66bb6a 0%, #66bb6a 50%, #ef5350 50%, #c62828 100%);
-  }
-
-  .big-cal-day.has-buy.has-withdraw {
-    background: linear-gradient(180deg, #66bb6a 0%, #66bb6a 50%, #ffa726 50%, #ef6c00 100%);
-  }
-
-  .big-cal-day.has-sell.has-withdraw {
-    background: linear-gradient(180deg, #ef5350 0%, #ef5350 50%, #ffa726 50%, #ef6c00 100%);
-  }
-
-  .big-cal-day.has-buy.has-note {
-    background: linear-gradient(180deg, #66bb6a 0%, #66bb6a 50%, #90a4ae 50%, #455a64 100%);
-  }
-
-  .big-cal-day.has-sell.has-note {
-    background: linear-gradient(180deg, #ef5350 0%, #ef5350 50%, #90a4ae 50%, #455a64 100%);
-  }
-
-  .big-cal-day.has-withdraw.has-note {
-    background: linear-gradient(180deg, #ffa726 0%, #ffa726 50%, #90a4ae 50%, #455a64 100%);
-  }
-
-  .big-cal-day.has-buy.has-sell.has-withdraw {
-    background: linear-gradient(180deg, #66bb6a 0%, #66bb6a 33%, #ef5350 33%, #ef5350 66%, #ffa726 66%, #ef6c00 100%);
-  }
-
-  .big-cal-day.has-buy.has-sell.has-note {
-    background: linear-gradient(180deg, #66bb6a 0%, #66bb6a 33%, #ef5350 33%, #ef5350 66%, #90a4ae 66%, #455a64 100%);
   }
 
   .big-cal-empty { visibility: hidden; }
@@ -815,9 +966,19 @@
     color: #fff;
   }
 
+  body.light-mode .day-row-item {
+    background: #f5f7fa;
+    border: 1px solid #dfe3e8;
+    color: #222222;
+  }
+
   .day-row-item:hover {
     background: #115e59;
     transform: translateX(-3px);
+  }
+
+  body.light-mode .day-row-item:hover {
+    background: #e3f2fd;
   }
 
   .day-row-item .row-type {
@@ -847,6 +1008,10 @@
     font-weight: bold;
     direction: ltr;
   }
+
+  body.light-mode .day-row-item .row-amount {
+    color: #0d5c9c;
+  }
 </style>
 </head>
 <body>
@@ -857,6 +1022,7 @@
     <button class="menu-toggle" id="menuToggle">☰</button>
     <div class="dropdown-menu" id="dropdownMenu">
       <button class="dropdown-item" id="addRowBtn">➕ افزودن ردیف جدید</button>
+      <button class="dropdown-item" id="themeToggleBtn">☀️ تم روشن</button>
       <button class="dropdown-item" id="backupBtn">💾 پشتیبان‌گیری</button>
       <button class="dropdown-item" id="restoreBtn">📂 بازیابی</button>
       <button class="dropdown-item" id="calendarBtn">📅 تقویم</button>
@@ -883,6 +1049,33 @@
 </div>
 
 <script>
+/* ============================================================
+   0) مد تم روشن/تاریک
+   ============================================================ */
+const THEME_KEY = "gold8_growth_theme";
+let currentTheme = localStorage.getItem(THEME_KEY) || "dark";
+
+function applyTheme(theme) {
+  currentTheme = theme;
+  localStorage.setItem(THEME_KEY, theme);
+  const themeBtn = document.getElementById("themeToggleBtn");
+  if (theme === "light") {
+    document.body.classList.add("light-mode");
+    if (themeBtn) themeBtn.textContent = "🌙 تم تاریک";
+  } else {
+    document.body.classList.remove("light-mode");
+    if (themeBtn) themeBtn.textContent = "☀️ تم روشن";
+  }
+}
+
+const themeToggleBtn = document.getElementById("themeToggleBtn");
+if (themeToggleBtn) {
+  themeToggleBtn.onclick = () => {
+    closeDropdown();
+    applyTheme(currentTheme === "light" ? "dark" : "light");
+  };
+}
+
 /* ============================================================
    1) IndexedDB
    ============================================================ */
@@ -1578,11 +1771,11 @@ function openPriceIncreaseModal(rawVal) {
 
   overlay.innerHTML = `
     <div class="modal-box">
-      <div class="modal-title" style="color:#2dd4bf;">💡 محاسبه قیمت بالاتر</div>
-      <div class="modal-text" style="font-weight: bold; margin-bottom: 12px; color:#f0fdf4;">
+      <div class="modal-title calendar">💡 محاسبه قیمت بالاتر</div>
+      <div class="modal-text" style="font-weight: bold; margin-bottom: 12px;">
         قیمت فعلی: <span style="color: #2dd4bf;">${formatWithCommas(String(basePrice))} تومان</span>
       </div>
-      <div style="font-size: 14px; margin-bottom: 16px; color: #ccfbf1;">
+      <div style="font-size: 14px; margin-bottom: 16px;">
         می‌خواهی چند درصد قیمت بالاتر را ببینی؟
       </div>
       <div style="display: flex; gap: 10px; margin-bottom: 16px;">
@@ -1590,7 +1783,7 @@ function openPriceIncreaseModal(rawVal) {
         <button class="modal-btn" id="btn50Pct" style="flex: 1; background: #16a34a; color: #fff;">🚀 ۵۰٪ بالاتر</button>
       </div>
       <div id="priceResultBox" style="display: none; background: #042f2e; border: 1px solid #115e59; border-radius: 10px; padding: 12px; text-align: center; margin-bottom: 16px;">
-        <div style="font-size: 13px; color: #99f6e4; margin-bottom: 6px;" id="resultTitle">قیمت جدید:</div>
+        <div style="font-size: 13px; margin-bottom: 6px;" id="resultTitle">قیمت جدید:</div>
         <div style="font-size: 22px; font-weight: bold; color: #2dd4bf; margin-bottom: 10px;" id="resultVal">0 تومان</div>
         <button class="modal-btn" id="btnCopyPrice" style="width: 100%; background: #0f766e; color: #fff; display: flex; align-items: center; justify-content: center; gap: 6px;">
           📋 کپی قیمت جدید
@@ -2254,6 +2447,7 @@ function prependRowPair(row) {
 }
 
 async function init() {
+  applyTheme(currentTheme);
   await openDB();
   const cap = await loadCapital();
   capitalInput.value = formatWithCommas(cap || "");
