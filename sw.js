@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v48';
+const CACHE_NAME = 'emarat-portal-v50';
 const ASSETS = [
   './',
   './index.html',
@@ -342,9 +342,10 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('notificationclick', (event) => {
   const notification = event.notification;
   const action = event.action;
+  const replyText = event.reply; // کادر متنی ورودی تایپ/پیست شده در اعلان نوار وضعیت
 
-  // اگر اکشن چسباندن نبود، اعلان بسته می‌شود
-  if (action !== 'paste_download') {
+  // اگر اکشن چسباندن یا ارسال مستقیم نبود، اعلان بسته می‌شود
+  if (action !== 'paste_download' && action !== 'direct_submit') {
     notification.close();
   }
 
@@ -361,7 +362,16 @@ self.addEventListener('notificationclick', (event) => {
         }
       }
 
-      if (action === 'paste_download') {
+      if (action === 'direct_submit' && replyText) {
+        const directUrl = new URL('/restricted/index.html?action=direct_submit&link=' + encodeURIComponent(replyText), self.location.origin).href;
+        if (matchingClient) {
+          return matchingClient.focus().then(() => {
+            matchingClient.postMessage({ action: 'DIRECT_SUBMIT_LINK', link: replyText });
+          });
+        } else if (clients.openWindow) {
+          return clients.openWindow(directUrl);
+        }
+      } else if (action === 'paste_download') {
         if (matchingClient) {
           return matchingClient.focus().then(() => {
             matchingClient.postMessage({ action: 'PASTE_AND_DOWNLOAD' });
