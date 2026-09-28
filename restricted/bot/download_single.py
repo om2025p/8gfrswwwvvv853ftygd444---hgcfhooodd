@@ -802,6 +802,91 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
         gallery_start_time = time.time()
         MAX_GALLERY_EXEC_SECONDS = 330 * 60  # 5.5 hours safety timeout before GitHub Actions 6h hard limit
 
+        # Helper: Deep HTML Crawling across pagination, load-more & lazy attributes
+        async def crawl_html_pagination(target_url):
+            import urllib.parse
+            discovered_html_photos = []
+            parsed_base = urllib.parse.urlparse(target_url)
+            domain_base = f"{parsed_base.scheme}://{parsed_base.netloc}"
+
+            def extract_images_from_html(html_text):
+                imgs = []
+                if not html_text:
+                    return imgs
+                # Match all potential image attributes (data-src, data-lazy, srcset, src, href, data-original, data-srcset)
+                patterns = [
+                    r'(?:data-src|data-lazy|data-original|src|href)=["\']([^"\']+\.(?:jpg|jpeg|png|webp)(?:\?[^"\']*)?)["\']',
+                    r'srcset=["\']([^"\']+)["\']'
+                ]
+                for pat in patterns:
+                    for match in re.finditer(pat, html_text, re.I):
+                        val = match.group(1).strip()
+                        if 'srcset' in pat:
+                            for part in val.split(','):
+                                u = part.strip().split(' ')[0]
+                                if u and any(u.lower().endswith(ext) or ext + '?' in u.lower() for ext in ['.jpg', '.jpeg', '.png', '.webp']):
+                                    imgs.append(u)
+                        else:
+                            imgs.append(val)
+
+                clean_imgs = []
+                for u in imgs:
+                    if 'svg' in u.lower() or 'logo' in u.lower() or 'avatar' in u.lower() or 'emoji' in u.lower() or 'favicon' in u.lower():
+                        continue
+                    if not u.startswith('http'):
+                        if u.startswith('//'):
+                            u = 'https:' + u
+                        elif u.startswith('/'):
+                            u = domain_base + u
+                        else:
+                            u = domain_base + '/' + u
+                    if u not in clean_imgs:
+                        clean_imgs.append(u)
+                return clean_imgs
+
+            headers = get_stealth_headers()
+            # Crawl Page 1 to 30 for pagination / load-more patterns
+            page_templates = [
+                f"{target_url.rstrip('/')}/page/{{p}}/",
+                f"{target_url.rstrip('/')}/?page={{p}}",
+                f"{target_url.rstrip('/')}/?p={{p}}",
+                f"{target_url.rstrip('/')}/page/{{p}}",
+                f"{target_url.rstrip('/')}/?offset={{p_off}}"
+            ]
+
+            consecutive_empty_pages = 0
+            for page_num in range(1, 35):
+                if consecutive_empty_pages >= 3:
+                    break
+                page_found_any = False
+                for tmpl in page_templates:
+                    p_off = (page_num - 1) * 20
+                    test_u = tmpl.format(p=page_num, p_off=p_off) if '{p_off}' in tmpl else tmpl.format(p=page_num)
+                    if page_num == 1:
+                        test_u = target_url
+
+                    p_html = await fetch_page_html_async(test_u, headers)
+                    if p_html:
+                        p_imgs = extract_images_from_html(p_html)
+                        new_count = 0
+                        for img_u in p_imgs:
+                            if img_u not in discovered_html_photos:
+                                discovered_html_photos.append(img_u)
+                                new_count += 1
+                        if new_count > 0:
+                            page_found_any = True
+                            print(f"DEBUG HTML CRAWLER: Page {page_num} ({test_u}) -> Extracted {new_count} new images.")
+                            break
+                    if page_num == 1:
+                        break # Only run first page for tmpl on page 1
+
+                if page_found_any:
+                    consecutive_empty_pages = 0
+                else:
+                    consecutive_empty_pages += 1
+
+            return discovered_html_photos
+
         # Run Heavy Open-Source Crawler & Database Scanner Engine (gallery-dl + Deep Directory Probe + Pattern Detection)
         def run_heavy_gallery_dl_scan(target_url):
             discovered_urls = []
@@ -826,10 +911,14 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
             gdl_photos = await asyncio.to_thread(run_heavy_gallery_dl_scan, link)
             print(f"DEBUG CRAWLER: gallery-dl extracted {len(gdl_photos)} direct URLs.")
 
+            # Layer 2: Deep HTML Pagination & Load-More Crawling
+            html_crawl_photos = await crawl_html_pagination(link)
+            print(f"DEBUG HTML CRAWLER: HTML Pagination extracted {len(html_crawl_photos)} images.")
+
             discovered_batches = {}
             total_discovered_photos = 0
 
-            # Layer 2: Deep Directory & Batch Discovery Scan
+            # Layer 3: Deep Directory & Batch Discovery Scan
             scan_range = range(start_b, start_b + 150) if is_user_specified_ascent else range(start_b, 0, -1)
             consecutive_empty = 0
 
@@ -850,33 +939,40 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                         progress_msg = (
                             f"🌾 *در حال شخم زدن و کشف عمیق دیتابیس سایت...*\n\n"
                             f"🔍 عکس‌های مستقیم gallery-dl: *{len(gdl_photos):,} عدد*\n"
-                            f"⚡ تا این لحظه: *{len(discovered_batches)} پارت دیتابیس* کشف شد.\n"
+                            f"🌐 عکس‌های کشف‌شده از صفحه‌بندی سایت: *{len(html_crawl_photos):,} عدد*\n"
+                            f"⚡ تا این لحظه: *{len(discovered_batches)} پارت پوشه‌ای* کشف شد.\n"
                             f"📸 مجموع عکس‌های سالم: *{total_discovered_photos:,} عکس*\n"
                             f"🔎 پارت در حال بررسی: *پارت {b}*"
                         )
                         msg_obj = await safe_edit_message(owner_id, msg_obj, progress_msg)
-                        update_gallery_stats(
-                            len(sent_photos_db),
-                            total_discovered_photos + len(gdl_photos),
-                            0,
-                            f"در حال اسکن دیتابیس: {total_discovered_photos + len(gdl_photos):,} عکس در {len(discovered_batches)} پارت 🔍"
-                        )
                 else:
                     if is_user_specified_ascent:
                         consecutive_empty += 1
-                        print(f"DEBUG DISCOVERY: Batch_{b} is empty (consecutive empty: {consecutive_empty})")
 
-            # Build discovery report summary
-            batches_list_str = ", ".join([f"پارت {k} ({v} عکس)" for k, v in sorted(discovered_batches.items())]) or 'پارت پوشه‌ای یافت نشد'
-            active_base_db = custom_db_base if (custom_db_base and 'Organized_Gallery' in custom_db_base) else "https://kir2kos.net/gallery/Organized_Gallery"
+            # Merge all unique discovered photo URLs
+            all_discovered_photos_set = set(gdl_photos + html_crawl_photos)
+            grand_total_photos = total_discovered_photos + len(all_discovered_photos_set)
+
+            # Auto-map discovered standalone photos into virtual parts if no structural directory batches exist
+            if not discovered_batches and all_discovered_photos_set:
+                photos_list = list(all_discovered_photos_set)
+                chunk_size = 25
+                virtual_part_count = (len(photos_list) + chunk_size - 1) // chunk_size
+                for idx in range(virtual_part_count):
+                    part_photos = photos_list[idx * chunk_size : (idx + 1) * chunk_size]
+                    discovered_batches[idx + 1] = len(part_photos)
+
+            batches_list_str = ", ".join([f"پارت {k} ({v} عکس)" for k, v in sorted(discovered_batches.items())]) or 'پارت‌های ساختاری یا مجازی ایجاد شد'
+            active_base_db = custom_db_base if (custom_db_base and 'Organized_Gallery' in custom_db_base) else link
             scan_time_sec = round(time.time() - gallery_start_time, 1)
 
             discovery_report = (
                 f"🔍 *گزارش کامل اسکنر و کشف‌کننده دیتابیس سایت:*\n\n"
-                f"🌐 موتور سنگین gallery-dl: *{len(gdl_photos):,} عکس مستقیم*\n"
-                f"📂 تعداد پارت‌های فعال کشف‌شده: *{len(discovered_batches)} پارت*\n"
-                f"📸 کل عکس‌های سالم و آماده دانلود: *{(total_discovered_photos + len(gdl_photos)):,} عکس*\n"
-                f"🗄️ آدرس دیتابیس منبع کشف‌شده: `{active_base_db}`\n"
+                f"🌐 عکس‌های مستقیم gallery-dl: *{len(gdl_photos):,} عکس*\n"
+                f"🌐 عکس‌های کشف‌شده از صفحه‌بندی: *{len(html_crawl_photos):,} عکس*\n"
+                f"📂 تعداد پارت‌های کشف‌شده/ایجادشده: *{len(discovered_batches)} پارت*\n"
+                f"📸 کل عکس‌های سالم و آماده دانلود: *{grand_total_photos:,} عکس*\n"
+                f"🗄️ آدرس دیتابیس یا دامنه منبع: `{active_base_db}`\n"
                 f"⏱️ زمان پیمایش دیتابیس: *{scan_time_sec} ثانیه*\n\n"
                 f"📋 *ریز تفکیک پارت‌ها:*\n{batches_list_str}\n\n"
                 f"💡 *توصیه:* اکنون می‌توانید آدرس دیتابیس کشف‌شده بالا را جهت استخراج خودکار و ارسال آلبومی به تلگرام اعمال فرمایید! 💎"
