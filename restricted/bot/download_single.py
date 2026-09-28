@@ -1216,10 +1216,11 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
-async def process_social_media_download(link, owner_id, msg_obj=None):
+async def process_social_media_download(link, owner_id, msg_obj=None, current_idx=1, total_count=1):
     from main import Bot, bot, userbot
 
-    status_text = f"📥 *در حال دریافت و تحلیل محتوای شبکه اجتماعی:*\n`{link}`\n\n🕒 لطفاً کمی صبور باشید..."
+    queue_info = f"\n📊 *وضعیت صف:* ویدیو *{current_idx}* از *{total_count}* (⏳ *{total_count - current_idx}* باقی‌مانده)" if total_count > 1 else ""
+    status_text = f"📥 *در حال دریافت و تحلیل محتوای شبکه اجتماعی:*\n`{link}`{queue_info}\n\n🕒 لطفاً کمی صبور باشید..."
     if msg_obj:
         msg_obj = await safe_edit_message(owner_id, msg_obj, status_text)
     else:
@@ -2302,14 +2303,16 @@ async def main_download():
             print(f"Starting single download [{link_idx}/{len(extracted_links)}] for link: {target_link_str} to owner: {owner_id}")
 
             try:
+                queue_status_text = f"\n📊 *وضعیت صف سفارش:* ویدیو *{link_idx}* از *{len(extracted_links)}* (⏳ *{len(extracted_links) - link_idx}* ویدیو باقی‌مانده)" if len(extracted_links) > 1 else ""
+
                 if is_gallery_link:
                     print("DEBUG ROUTING: Routing to process_gallery_extraction...")
-                    msg = await safe_send_message(owner_id, f"🖼️ *تشخیص لینک گالری تصویری ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
+                    msg = await safe_send_message(owner_id, f"🖼️ *تشخیص لینک گالری تصویری ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`{queue_status_text}\n\n🕒 لطفا صبور باشید...")
                     await process_gallery_extraction(target_link_str, owner_id, msg)
                 elif is_social and not target_link_lower.startswith("search:"):
                     print("DEBUG ROUTING: Routing to process_social_media_download...")
-                    msg = await safe_send_message(owner_id, f"🎬 *تشخیص لینک شبکه اجتماعی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
-                    await process_social_media_download(target_link_str, owner_id, msg)
+                    msg = await safe_send_message(owner_id, f"🎬 *تشخیص لینک شبکه اجتماعی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`{queue_status_text}\n\n🕒 لطفا صبور باشید...")
+                    await process_social_media_download(target_link_str, owner_id, msg, current_idx=link_idx, total_count=len(extracted_links))
                 elif 't.me/+' in target_link_str or 't.me/joinchat/' in target_link_str:
                     msg = await safe_send_message(owner_id, f"📥 *شروع ورود به کانال خصوصی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
                     res = await join(userbot, target_link_str)
