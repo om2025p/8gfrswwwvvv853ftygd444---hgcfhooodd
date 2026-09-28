@@ -1868,7 +1868,7 @@ async def main_download():
         print("Error: No valid URLs extracted from input.")
         return
 
-    print(f"DEBUG: Extracted {len(extracted_links)} link(s) for processing: {extracted_links}")
+    print(f"DEBUG: Extracted {len(extracted_links)} link(s) for sequential processing: {extracted_links}")
 
     print("Connecting to Telegram clients...")
     # On import, main/__init__.py creates client instances without auto-starting if in async context
