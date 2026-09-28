@@ -2429,7 +2429,7 @@
             };
         }
 
-        // سیستم مدیریت صف هوشمند چسبنده و ترتیبی (Sticky Smart Queue & Dispatch Engine)
+        // سیستم مدیریت صف هوشمند و ترتیبی کلاینت (Smart Queue Engine)
         const QUEUE_STORAGE_KEY = 'restricted_pending_links_queue_v1';
         let isDispatchingQueue = false;
         let isServerCurrentlyRunning = false;
@@ -2458,17 +2458,11 @@
             const queue = getPendingQueue();
             if (queue.length === 0) return;
 
-            // اگر سرور گیت‌هاب در حال حاضر مشغول است، منتظر بمان تا اجرای قبلی تمام شود
-            if (isServerCurrentlyRunning) {
-                logDlDebug(`⏳ سرور گیت‌هاب در حال حاضر مشغول است. ${queue.length} لینک در صف انتظار فرانت‌اند منتظر می‌مانند...`);
-                return;
-            }
-
             isDispatchingQueue = true;
 
-            // برداشتن تمامی لینک‌های موجود در صف جهت ارسال یکپارچه در یک جاب پایتون
+            // برداشتن تمامی لینک‌های موجود در صف و پاکسازی صف محلی
             const batchToProcess = [...queue];
-            savePendingQueue([]); // پاک کردن صف محلی
+            savePendingQueue([]);
 
             // باز کردن خودکار آکاردئون تاریخچه
             if (historyAccordionContent) {
@@ -2476,8 +2470,8 @@
                 if (historyAccordionToggleIcon) historyAccordionToggleIcon.style.transform = 'rotate(180deg)';
             }
 
-            showToast(`🚀 ارسال تجمع ${batchToProcess.length.toLocaleString('fa-IR')} لینک به سرور ابری...`);
-            logDlDebug(`⚡ ارسال یکپارچه ${batchToProcess.length} لینک به سرور پایتون برای دانلود ترتیبی و بدون تداخل.`);
+            showToast(`🚀 ارسال تجمع ${batchToProcess.length.toLocaleString('fa-IR')} لینک به سرور...`);
+            logDlDebug(`⚡ ارسال یکپارچه ${batchToProcess.length} لینک به سرور پایتون جهت دانلود ترتیبی و مقاوم.`);
 
             const historyItems = [];
             batchToProcess.forEach(linkItem => {
@@ -2504,7 +2498,7 @@
                         : 'ارسال درخواست به گیت‌هاب با خطا مواجه شد. لطفاً توکن PAT و تنظیمات گیت‌هاب را بررسی کنید.';
                     updateDownloadHistoryStatus(item.id, 'failed', '❌ عدم موفقیت در ارسال به گیت‌هاب', errDetail);
                 } else {
-                    updateDownloadHistoryStatus(item.id, 'in_progress', '⚡ تحویل به صف پردازش سرور...');
+                    updateDownloadHistoryStatus(item.id, 'in_progress', '⚡ در حال پردازش در سرور...');
                 }
             });
 
