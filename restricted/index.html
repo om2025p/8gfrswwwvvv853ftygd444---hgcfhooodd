@@ -564,6 +564,7 @@
                             <span style="font-size: 0.82rem; font-weight: 800; color: #16a34a; background: #dc26260f; padding: 3px 10px; border-radius: 10px; border: 1px solid #bbf7d0;">۱۲ شهریور ۱۴۰۵ ساعت ۱۱:۳۰</span>
                         </div>
                         <ul style="margin: 0; padding-right: 18px; font-size: 0.82rem; color: #475569; line-height: 1.7;">
+                            <li>🚀 <strong>[۱۶ شهریور ۱۴۰۵ - ۰۱:۰۰] موتور صف هوشمند و دانلود رگباری متوالی:</strong> تجمع تمام پیوندهای ارسالی در فواصل چند ثانیه‌ای و ارسال یکپارچه/مقاوم به سرور جهت دانلود تمامی ویدیوها بدون جا ماندن یا لغو سرور.</li>
                             <li>🚀 <strong>[۱۵ شهریور ۱۴۰۵ - ۲۲:۰۰] رفع تداخل دانلود وب و تنظیم کانال جدید (-1003757877147):</strong> جداسازی متغیرهای گالری و دانلود سریع جهت رفع خطای ۴۲۲ و ارسال مستقیم ویدیوهای اینستاگرام، تیک‌تاک و تلگرام به کانال جدید.</li>
                             <li>📋 <strong>[۱۲ شهریور ۱۴۰۵ - ۱۱:۳۰] افزودن دکمه چسباندن پیوند و شمارنده هوشمند:</strong> قابلیت چسباندن سریع متن کلیپ‌بورد به کادر دانلود با یک کلیک و ثبت دائم تعداد کل لینک‌های منحصربه‌فرد (غیرتکراری) در حافظه دستگاه.</li>
                             <li>🩸 <strong>[۱۰ شهریور ۱۴۰۵ - ۱۶:۴۵] گزارش و عیب‌یابی هوشمند خطاها:</strong> ارائه علت و شرح دقیق عدم دریافت لینک در پیام تلگرام و ارسال فایل متنی پیوست در صورت طولانی بودن لاگ‌ها.</li>
@@ -2321,6 +2322,82 @@
             };
         }
 
+        // سیستم صف هوشمند و تجمع‌دهنده دانلودهای متوالی (Smart Queue & Debounce Engine)
+        let downloadBatchQueue = [];
+        let batchDebounceTimer = null;
+        let isProcessingBatch = false;
+
+        async function processAccumulatedBatchQueue() {
+            if (downloadBatchQueue.length === 0 || isProcessingBatch) return;
+
+            isProcessingBatch = true;
+            const currentBatch = [...downloadBatchQueue];
+            downloadBatchQueue = [];
+
+            // باز کردن خودکار آکاردئون تاریخچه
+            if (historyAccordionContent) {
+                historyAccordionContent.style.maxHeight = '400px';
+                if (historyAccordionToggleIcon) historyAccordionToggleIcon.style.transform = 'rotate(180deg)';
+            }
+
+            showToast(`🚀 ارسال تجمع ${currentBatch.length.toLocaleString('fa-IR')} لینک به سرور ابری...`);
+            logDlDebug(`⚡ تجمع ${currentBatch.length} لینک به صورت یکپارچه آماده ارسال به سرور گیت‌هاب است.`);
+
+            const historyIds = [];
+            currentBatch.forEach(link => {
+                const isNewUnique = registerUniqueLink(link);
+                const hId = addDownloadHistoryItem(link, isNewUnique);
+                historyIds.push({ link, id: hId });
+            });
+
+            // ترکیب تمامی پیوندها جهت ارسال یکپارچه در یک اجرای سرور
+            const combinedLinksPayload = currentBatch.join('\n');
+            const primaryHistoryId = historyIds.length > 0 ? historyIds[0].id : null;
+
+            const dispatchResult = await triggerWorkflow(combinedLinksPayload, primaryHistoryId);
+            const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
+
+            historyIds.forEach(item => {
+                if (!isSuccess) {
+                    const errDetail = (dispatchResult && dispatchResult.errorMessage)
+                        ? dispatchResult.errorMessage
+                        : 'ارسال درخواست به گیت‌هاب با خطا مواجه شد. لطفاً توکن PAT و تنظیمات گیت‌هاب را بررسی کنید.';
+                    updateDownloadHistoryStatus(item.id, 'failed', '❌ عدم موفقیت در ارسال به گیت‌هاب', errDetail);
+                } else {
+                    updateDownloadHistoryStatus(item.id, 'in_progress', '⚡ تحویل به صف پردازش سرور...');
+                }
+            });
+
+            isProcessingBatch = false;
+
+            // اگر در حین ارسال پیوند جدیدی به صف اضافه شد، با ۲ ثانیه مکث دفعه بعدی را فرست
+            if (downloadBatchQueue.length > 0) {
+                setTimeout(processAccumulatedBatchQueue, 2000);
+            }
+        }
+
+        function enqueueLinksForDownload(links) {
+            if (!links || links.length === 0) return;
+
+            let addedCount = 0;
+            links.forEach(l => {
+                if (!downloadBatchQueue.includes(l)) {
+                    downloadBatchQueue.push(l);
+                    addedCount++;
+                }
+            });
+
+            if (addedCount > 0) {
+                logDlDebug(`📥 تعداد ${addedCount} پیوند به صف تجمع هوشمند اضافه شد (مجموع صف: ${downloadBatchQueue.length}).`);
+                showToast(`📥 ${addedCount.toLocaleString('fa-IR')} پیوند به صف اضافه شد... ارسال تا ۳ ثانیه دیگر!`);
+
+                if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
+                batchDebounceTimer = setTimeout(() => {
+                    processAccumulatedBatchQueue();
+                }, 2500); // مهلت ۲.۵ ثانیه‌ای تجمع لینک‌های رگباری
+            }
+        }
+
         document.getElementById('btnDownload').onclick = async () => {
             const rawText = document.getElementById('dlLink').value;
             if (!rawText || !rawText.trim()) {
@@ -2334,36 +2411,7 @@
                 return;
             }
 
-            showToast(`🚀 شناسایی ${links.length.toLocaleString('fa-IR')} لینک معتبر... در حال ارسال به صف دانلود!`);
-            logDlDebug(`⚡ مجموعاً ${links.length} لینک برای دانلود شناسایی شد.`);
-
-            // باز کردن خودکار آکاردئون تاریخچه
-            if (historyAccordionContent) {
-                historyAccordionContent.style.maxHeight = '400px';
-                if (historyAccordionToggleIcon) historyAccordionToggleIcon.style.transform = 'rotate(180deg)';
-            }
-
-            for (let i = 0; i < links.length; i++) {
-                const link = links[i];
-                const isNewUnique = registerUniqueLink(link);
-                const historyId = addDownloadHistoryItem(link, isNewUnique);
-
-                const dispatchResult = await triggerWorkflow(link, historyId);
-                const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
-
-                if (!isSuccess) {
-                    const errDetail = (dispatchResult && dispatchResult.errorMessage)
-                        ? dispatchResult.errorMessage
-                        : 'ارسال درخواست به گیت‌هاب با خطا مواجه شد. لطفاً توکن PAT و تنظیمات گیت‌هاب را بررسی کنید.';
-                    updateDownloadHistoryStatus(historyId, 'failed', '❌ عدم موفقیت در ارسال به گیت‌هاب', errDetail);
-                }
-
-                // وقفه هوشمند ۱۰ ثانیه‌ای بین ارسال‌های متوالی جهت جلوگیری از محدودیت Rate Limit گیت‌هاب (HTTP 429 / 422)
-                if (i < links.length - 1) {
-                    await new Promise(r => setTimeout(r, 10000));
-                }
-            }
-
+            enqueueLinksForDownload(links);
             document.getElementById('dlLink').value = '';
         };
 
