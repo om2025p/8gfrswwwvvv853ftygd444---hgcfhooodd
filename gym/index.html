@@ -1331,8 +1331,8 @@
         }
 
         // تقسیم شیب‌دار نزولی هوشمند (Front-Loaded / Pyramid) برای ۳ ست
-        let s1 = Math.round(total * 0.45);
-        let s2 = Math.round(total * 0.35);
+        let s1 = Math.round(total * 0.44);
+        let s2 = Math.round(total * 0.33);
         let s3 = total - s1 - s2;
 
         if (s3 < 1) {
@@ -1354,6 +1354,21 @@
         if (s1 < s2) {
             s1++;
             s2--;
+        }
+
+        // تنظیم ویژه برای ۱۰ تکرار 👈 ۵، ۳، ۲
+        if (total === 10) {
+            return [5, 3, 2];
+        }
+
+        // تضمین تفکیک پلکانی نزولی
+        if (s1 === s2 && s2 > 1) {
+            s1++;
+            s2--;
+        }
+        if (s2 === s3 && s2 > 1 && s1 > s2 + 1) {
+            s2++;
+            s3--;
         }
 
         return [s1, s2, s3];
