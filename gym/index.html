@@ -1298,21 +1298,65 @@
         return Math.max(1, settings.defaultSetCount || 3);
     }
 
-    function getDistributedSetTargets(target, setCount) {
+    function getDistributedSetTargets(target, setCount, unit) {
         const total = parseInt(target) || 0;
         const numSets = Math.max(1, parseInt(setCount) || 1);
-        const base = Math.floor(total / numSets);
-        let remainder = total % numSets;
-        const result = [];
-        for (let i = 0; i < numSets; i++) {
-            let val = base;
-            if (remainder > 0) {
-                val += 1;
-                remainder--;
+
+        // اگر حرکت ثانیه‌ای باشد یا تعداد ست غیر از ۳ باشد، همان تقسیم یکنواخت انجام می‌شود
+        if (unit === 'ثانیه' || numSets !== 3) {
+            const base = Math.floor(total / numSets);
+            let remainder = total % numSets;
+            const result = [];
+            for (let i = 0; i < numSets; i++) {
+                let val = base;
+                if (remainder > 0) {
+                    val += 1;
+                    remainder--;
+                }
+                result.push(val);
             }
-            result.push(val);
+            return result;
         }
-        return result;
+
+        if (total <= 3) {
+            const base = Math.floor(total / 3);
+            let remainder = total % 3;
+            const res = [];
+            for (let i = 0; i < 3; i++) {
+                let val = base;
+                if (remainder > 0) { val += 1; remainder--; }
+                res.push(val);
+            }
+            return res;
+        }
+
+        // تقسیم شیب‌دار نزولی هوشمند (Front-Loaded / Pyramid) برای ۳ ست
+        let s1 = Math.round(total * 0.45);
+        let s2 = Math.round(total * 0.35);
+        let s3 = total - s1 - s2;
+
+        if (s3 < 1) {
+            s3 = 1;
+            s2 = Math.max(1, Math.floor((total - 1) / 2));
+            s1 = total - s2 - s3;
+        }
+
+        if (s1 < s2) {
+            const diff = Math.ceil((s2 - s1) / 2);
+            s1 += diff;
+            s2 -= diff;
+        }
+        if (s2 < s3) {
+            const diff = Math.ceil((s3 - s2) / 2);
+            s2 += diff;
+            s3 -= diff;
+        }
+        if (s1 < s2) {
+            s1++;
+            s2--;
+        }
+
+        return [s1, s2, s3];
     }
 
     // =======================================================
@@ -1594,13 +1638,13 @@
             if (ex.side) {
                 const rKey = `${ex.id}-r`;
                 const lKey = `${ex.id}-l`;
-                initExerciseSessionState(rKey, ex.target, numSets);
-                initExerciseSessionState(lKey, ex.target, numSets);
+                initExerciseSessionState(rKey, ex.target, numSets, ex.unit);
+                initExerciseSessionState(lKey, ex.target, numSets, ex.unit);
 
                 card.innerHTML = renderSideExerciseCard(ex, rKey, lKey, numSets, isSeconds);
             } else {
                 const key = ex.id;
-                initExerciseSessionState(key, ex.target, numSets);
+                initExerciseSessionState(key, ex.target, numSets, ex.unit);
 
                 card.innerHTML = renderSingleExerciseCard(ex, key, numSets, isSeconds);
             }
@@ -1609,9 +1653,10 @@
         });
     }
 
-    function initExerciseSessionState(key, totalTarget, numSets) {
+    function initExerciseSessionState(key, totalTarget, numSets, unit) {
+        const distributed = getDistributedSetTargets(totalTarget, numSets, unit);
+
         if (!sessionState[key]) {
-            const distributed = getDistributedSetTargets(totalTarget, numSets);
             const setsArr = distributed.map(t => ({ done: false, value: t, time: null, rawTime: null }));
             sessionState[key] = {
                 done: false,
@@ -1622,9 +1667,8 @@
                 note: ""
             };
         } else {
-            // ساختاردهی همگام برای بارهای قبلی یا لود لایو
+            // ساختاردهی همگام برای بارهای قبلی یا لود لایو (بروزرسانی فوری برای جلسه جاری)
             if (!sessionState[key].sets || sessionState[key].sets.length !== numSets) {
-                const distributed = getDistributedSetTargets(totalTarget, numSets);
                 const oldSets = sessionState[key].sets || [];
                 const newSets = [];
                 for (let i = 0; i < numSets; i++) {
@@ -1635,6 +1679,14 @@
                     }
                 }
                 sessionState[key].sets = newSets;
+            } else {
+                // اگر کاربر تیک را نزده و ست دستکاری نشده، مقدار ست را به توزیع نزولی جدید به‌روز کن
+                const allUnchecked = sessionState[key].sets.every(s => !s.done);
+                if (allUnchecked) {
+                    sessionState[key].sets.forEach((sObj, idx) => {
+                        sObj.value = distributed[idx];
+                    });
+                }
             }
         }
     }
