@@ -15,6 +15,10 @@ on:
         description: 'Compressed File URL (Zip/Rar/7z/Anonfiles/etc.)'
         required: false
         default: ''
+      TELEGRAM_LINK:
+        description: 'Telegram Message or Fallback Link'
+        required: false
+        default: ''
       TARGET_CHANNEL:
         description: 'Target Telegram Channel ID for folder contents'
         required: false
@@ -78,7 +82,7 @@ jobs:
           SESSION: ${{ github.event.inputs.SESSION_STRING }}
           SESSION_STRING: ${{ github.event.inputs.SESSION_STRING }}
           OWNER_ID: ${{ github.event.inputs.OWNER_ID }}
-          ZIP_URL: ${{ github.event.inputs.ZIP_URL }}
+          ZIP_URL: ${{ github.event.inputs.ZIP_URL || github.event.inputs.TELEGRAM_LINK }}
           TARGET_CHANNEL: ${{ github.event.inputs.TARGET_CHANNEL || '-1004498823531' }}
           AUTH: ${{ github.event.inputs.OWNER_ID }}
         run: |
@@ -90,7 +94,7 @@ jobs:
         if: always()
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.email "github-actions[bot]"
           git add restricted/bot/restricted_zip_sent.json restricted/bot/restricted_zip_stats.json restricted/restricted_zip_sent.json restricted/restricted_zip_stats.json 2>/dev/null || true
           if ! git diff --staged --quiet; then
             git commit -m "chore(zip): update persistent tracking and zip extraction stats [skip ci]"

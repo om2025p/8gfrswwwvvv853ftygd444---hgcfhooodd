@@ -1999,7 +1999,9 @@
                 let payloadInputs = {};
                 if (workflowId === "zip_extractor.yml") {
                     payloadInputs = {
+                        GH_PAT: pat,
                         ZIP_URL: downloadLink || '',
+                        TELEGRAM_LINK: downloadLink || '',
                         TARGET_CHANNEL: (document.getElementById('zipTargetChannelInput') ? sanitizeString(document.getElementById('zipTargetChannelInput').value) : '-1004498823531'),
                         API_ID: tgApiId,
                         API_HASH: tgApiHash,
@@ -2009,6 +2011,7 @@
                     };
                 } else if (workflowId === "gallery_extractor.yml") {
                     payloadInputs = {
+                        GH_PAT: pat,
                         GALLERY_URL: downloadLink || '',
                         TELEGRAM_LINK: downloadLink || '',
                         START_PART: (document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : '1'),
@@ -2024,6 +2027,7 @@
                     };
                 } else {
                     payloadInputs = {
+                        GH_PAT: pat,
                         TELEGRAM_LINK: downloadLink || '',
                         TARGET_CHANNEL: '-1003757877147',
                         API_ID: tgApiId,
@@ -2034,18 +2038,37 @@
                     };
                 }
 
-                let response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${pat}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        ref: branch,
-                        inputs: payloadInputs
-                    })
-                });
+                const branchesToTry = Array.from(new Set([branch, '156', '100', 'main', 'master']));
+                let response = null;
+
+                for (const tryBranch of branchesToTry) {
+                    try {
+                        logDebug(`در حال ارسال درخواست POST به ${workflowId} روی شاخه ${tryBranch}...`);
+                        response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${pat}`,
+                                'Accept': 'application/vnd.github.v3+json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ref: tryBranch,
+                                inputs: payloadInputs
+                            })
+                        });
+
+                        if (response.status === 204 || response.ok) {
+                            logDebug(`ورک‌فلو با موفقیت روی شاخه ${tryBranch} فعال شد.`, 'success');
+                            break;
+                        } else if (response.status === 422) {
+                            logDebug(`شاخه ${tryBranch} برای ${workflowId} وجود ندارد یا معتبر نیست (HTTP 422). سوئیچ روی شاخه بعدی...`, 'warning');
+                        } else {
+                            break;
+                        }
+                    } catch (eBr) {
+                        logDebug(`خطای ارسال به شاخه ${tryBranch}: ${eBr.message}`, 'error');
+                    }
+                }
 
                 if (!response.ok && workflowId === "gallery_extractor.yml") {
                     logDebug("⚠️ سرور اختصاصی گالری در دسترس نیست. سوئیچ هوشمند روی restricted_bot.yml...");
