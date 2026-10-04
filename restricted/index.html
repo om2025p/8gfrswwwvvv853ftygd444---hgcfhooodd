@@ -475,6 +475,9 @@
         <button class="tab-btn" id="tabBtn3" onclick="switchTab(3)">
             🖼️ استخراج گالری
         </button>
+        <button class="tab-btn" id="tabBtn4" onclick="switchTab(4)">
+            📦 فایل فشرده
+        </button>
         <button class="tab-btn" id="tabBtn2" onclick="switchTab(2)">
             ⚙️ تنظیمات
         </button>
@@ -573,6 +576,116 @@
                             <li>📢 <strong>[۳ شهریور ۱۴۰۵ - ۱۹:۳۰] ارسال دوگانه هوشمند:</strong> ارسال همزمان فایل‌های دانلودشده به پی‌وی کاربر و کانال تلگرام «دنیا های قشنگ».</li>
                             <li>🌐 <strong>[۱ شهریور ۱۴۰۵ - ۱۲:۰۰] پشتیبانی کامل پیوندها:</strong> قابلیت دانلود مستقیم لینک‌های عمومی و خصوصی تلگرام، تیک‌تاک و اینستاگرام.</li>
                         </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== تب ۴: استخراج‌کننده فایل‌های فشرده (Zip/Rar/7z) ==================== -->
+        <div class="tab-content" id="tabContent4">
+            <div class="android-native-card" style="background: linear-gradient(145deg, #ffffff, #f0fdfa); border-color: #99f6e4;">
+                <div class="card-title" style="color: #0d9488; border-color: #99f6e4;">
+                    📦 استخراج و انتقال خودکار فایل‌های فشرده (Zip/Rar/7z)
+                </div>
+                <p style="font-size: 0.85rem; line-height: 1.6; color: #334155; margin-top: -6px; margin-bottom: 18px;">
+                    آدرس لینک مستقیم یا anonfiles فایل فشرده (تا حجم ۱۰ گیگابایت) را وارد بفرمایید تا سرور ابری آن را استخراج کرده، نام پوشه‌ها را اعلام کرده و فایل‌ها را به صورت Document به کانال اختصاصی ارسال فرماید.
+                </p>
+
+                <!-- وضعیت زنده موتور استخراج فایل فشرده -->
+                <div class="status-panel" style="border-radius: 20px; background: #ffffff; border: 1px solid #99f6e4; margin-bottom: 18px;">
+                    <span style="font-size: 0.85rem; color: #0f766e; font-weight: 700;">🟢 وضعیت موتور استخراج فایل فشرده:</span>
+                    <div class="status-badge" id="zipEngineStatus">
+                        <span class="status-dot idle"></span>
+                        <span id="zipStatusText">آماده به‌کار 💎</span>
+                    </div>
+                </div>
+
+                <!-- اینپوت آدرس فایل فشرده -->
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label" style="font-size: 0.92rem; color: #0f172a; font-weight: 800; margin-bottom: 4px;">
+                        🔗 آدرس فایل فشرده (Zip / Rar / 7z / Anonfiles):
+                    </label>
+                    <div style="display: flex; gap: 10px; width: 100%; align-items: center;">
+                        <input type="text" id="zipUrlInput" class="input-field" placeholder="https://anonfilesnew.com/content/v4?s=..." style="direction: ltr; font-size: 0.95rem; padding: 16px 18px; border-radius: 20px; flex: 1; border: 2px solid #99f6e4; background: #ffffff;">
+                        <button class="action-btn secondary" id="btnPasteZipUrl" style="width: auto; padding: 0 18px; height: 54px; font-size: 0.92rem; font-weight: 800; border-radius: 20px; white-space: nowrap; flex-shrink: 0; background: #f0fdfa; color: #0d9488; border: 1.5px solid #99f6e4;">
+                            📋 چسباندن
+                        </button>
+                    </div>
+                </div>
+
+                <!-- اینپوت کانال مقصد -->
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
+                        🎯 شناسه یا آیدی کانال مقصد (پیش‌فرض: -1004498823531):
+                    </label>
+                    <input type="text" id="zipTargetChannelInput" class="input-field" placeholder="-1004498823531" value="-1004498823531" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
+                </div>
+
+                <!-- دکمه‌های عملیاتی استخراج فایل فشرده -->
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="android-btn-green" id="btnStartZipExtraction" style="background: linear-gradient(135deg, #0d9488, #0f766e); box-shadow: 0 8px 20px -4px rgba(13, 148, 136, 0.4);">
+                        🚀 شروع استخراج فایل فشرده و ارسال پوشه‌ای به کانال
+                    </button>
+                    <button class="android-btn-green" id="btnStopZipServer" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 8px 20px -4px rgba(239, 68, 68, 0.3); font-size: 0.95rem; padding: 14px;">
+                        🛑 توقف فوری سرور استخراج فایل فشرده
+                    </button>
+                </div>
+            </div>
+
+            <!-- کارت آمار پیشرفته استخراج فایل‌های فشرده -->
+            <div class="white-card">
+                <h2 class="card-title" style="color: #0d9488; border-color: #99f6e4;">
+                    📊 آمار زنده و وضعیت انتقال فایل‌های فشرده
+                </h2>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 18px; padding: 14px; text-align: center;">
+                        <span style="font-size: 0.78rem; color: #0f766e; font-weight: 700; display: block; margin-bottom: 6px;">📄 کل فایل‌های استخراج‌شده:</span>
+                        <span id="zipStatTotalFiles" style="font-size: 1.4rem; font-weight: 800; color: #0d9488;">۰</span>
+                    </div>
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 18px; padding: 14px; text-align: center;">
+                        <span style="font-size: 0.78rem; color: #1e40af; font-weight: 700; display: block; margin-bottom: 6px;">📥 فایل‌های فرستاده‌شده:</span>
+                        <span id="zipStatSentFiles" style="font-size: 1.4rem; font-weight: 800; color: #1d4ed8;">۰</span>
+                    </div>
+                    <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 18px; padding: 14px; text-align: center;">
+                        <span style="font-size: 0.78rem; color: #9a3412; font-weight: 700; display: block; margin-bottom: 6px;">💾 حجم کل ارسال‌شده:</span>
+                        <span id="zipStatMbSent" style="font-size: 1.2rem; font-weight: 800; color: #c2410c;">۰ MB</span>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 14px; text-align: center;">
+                        <span style="font-size: 0.78rem; color: #475569; font-weight: 700; display: block; margin-bottom: 6px;">🕒 زمان آخرین بروزرسانی:</span>
+                        <span id="zipStatLastUpdated" style="font-size: 0.82rem; font-weight: 700; color: #0f172a;">هنوز ثبت نشده</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="action-btn secondary" id="btnRefreshZipStats" style="font-size: 0.85rem; padding: 10px;">
+                        🔄 بروزرسانی آمار زنده
+                    </button>
+                    <button class="action-btn secondary" id="btnClearZipStats" style="font-size: 0.85rem; padding: 10px; color: #ef4444; border-color: #fca5a5;">
+                        🗑️ پاکسازی آمار
+                    </button>
+                </div>
+            </div>
+
+            <!-- کارت کنسول داده‌ها و لاگ زنده سرور استخراج فایل فشرده -->
+            <div class="white-card" style="margin-top: 16px;">
+                <div id="zipDebugHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
+                    <h2 class="card-title" style="margin: 0; border: none; padding: 0; color: #0d9488;">🖥️ کنسول داده‌ها و لاگ زنده سرور (استخراج فایل فشرده)</h2>
+                    <span id="zipDebugToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: #0d9488;">🔽</span>
+                </div>
+
+                <div id="zipDebugContent" style="max-height: 500px; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 12px;">
+                    <p style="font-size: 0.82rem; color: #64748b; margin-top: 4px; margin-bottom: 12px; line-height: 1.5;">
+                        تمامی لاگ‌های دانلود فایل ۱۰ گیگابایتی، استخراج پوشه‌ها، حجم‌ها، وضعیت ارسال ۲ گیگابایتی و خطاهای احتمالی به صورت زنده در این کنسول قابل مشاهده و کپی‌برداری است.
+                    </p>
+                    <textarea id="zipDebugConsole" readonly class="input-field" style="height: 220px; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; color: #2dd4bf; background: #0f172a; line-height: 1.4; resize: none; border-color: #1e293b; direction: ltr; text-align: left; border-radius: 16px; padding: 14px; width: 100%; box-sizing: border-box;"></textarea>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+                        <button class="action-btn secondary" id="btnCopyZipDebug" style="font-size: 0.88rem; padding: 12px; font-weight: 700; background: #f0fdfa; color: #0d9488; border-color: #99f6e4;">
+                            📋 کپی کامل لاگ‌های سرور
+                        </button>
+                        <button class="action-btn secondary" id="btnClearZipDebug" style="font-size: 0.88rem; padding: 12px; font-weight: 700; color: #ef4444; border-color: #fca5a5;">
+                            🗑️ پاک کردن لاگ‌ها
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1085,6 +1198,18 @@
             const now = new Date();
             const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
             const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : 'ℹ️');
+
+            consoleEl.value += `[${timeStr}] ${prefix} ${message}\n`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        // لاگین دیباگ اختصاصی استخراج فایل فشرده (تب ۴)
+        function logZipDebug(message, type = 'info') {
+            const consoleEl = document.getElementById('zipDebugConsole');
+            if (!consoleEl) return;
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+            const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : '📦');
 
             consoleEl.value += `[${timeStr}] ${prefix} ${message}\n`;
             consoleEl.scrollTop = consoleEl.scrollHeight;
@@ -1872,7 +1997,17 @@
                 logGalleryDebug(`🌐 درخواست استخراج به ورک‌فلو اختصاصی ${workflowId}`);
 
                 let payloadInputs = {};
-                if (workflowId === "gallery_extractor.yml") {
+                if (workflowId === "zip_extractor.yml") {
+                    payloadInputs = {
+                        ZIP_URL: downloadLink || '',
+                        TARGET_CHANNEL: (document.getElementById('zipTargetChannelInput') ? sanitizeString(document.getElementById('zipTargetChannelInput').value) : '-1004498823531'),
+                        API_ID: tgApiId,
+                        API_HASH: tgApiHash,
+                        BOT_TOKEN: tgBotToken,
+                        SESSION_STRING: tgSession,
+                        OWNER_ID: tgOwner
+                    };
+                } else if (workflowId === "gallery_extractor.yml") {
                     payloadInputs = {
                         GALLERY_URL: downloadLink || '',
                         TELEGRAM_LINK: downloadLink || '',
@@ -3038,6 +3173,166 @@
 
         setInterval(fetchGalleryStatsFromFiles, 20000);
         fetchGalleryStatsFromFiles();
+
+        // ==================== هاندرهای اختصاصی تب ۴ (استخراج فایل‌های فشرده) ====================
+        const btnPasteZipUrl = document.getElementById('btnPasteZipUrl');
+        if (btnPasteZipUrl) {
+            btnPasteZipUrl.onclick = async () => {
+                const text = await getClipboardTextSafely();
+                if (text && text.trim()) {
+                    document.getElementById('zipUrlInput').value = sanitizeString(text.trim());
+                    showToast("📋 آدرس فایل فشرده چسبانده شد!");
+                } else {
+                    showToast("⚠️ کلیپ‌بورد خالی است!");
+                }
+            };
+        }
+
+        const btnStartZipExtraction = document.getElementById('btnStartZipExtraction');
+        if (btnStartZipExtraction) {
+            btnStartZipExtraction.onclick = async () => {
+                const zUrl = sanitizeString(document.getElementById('zipUrlInput').value);
+                const targetChannel = sanitizeString(document.getElementById('zipTargetChannelInput').value) || '-1004498823531';
+
+                if (!zUrl) {
+                    showToast("⚠️ لطفاً آدرس فایل فشرده (Zip/Rar/7z) را وارد بفرمایید!");
+                    return;
+                }
+
+                showToast("🚀 در حال ارسال درخواست استخراج فایل فشرده به سرور...");
+                logZipDebug(`📦 شروع استخراج فایل فشرده: ${zUrl} به مقصد کانال ${targetChannel}`);
+
+                updateZipStatsUI(0, 0, 0, "در حال برپاخاستن سرور...", "ارسال سیگنال 🚀");
+
+                const historyId = addDownloadHistoryItem("📦 استخراج فشرده: " + zUrl, true);
+
+                const dispatchResult = await triggerWorkflow(zUrl, historyId, 'zip_extractor.yml');
+                const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
+
+                if (isSuccess) {
+                    showToast("✅ درخواست استخراج صادر شد! سرور در حال دانلود و آنزیپ فایل ۱۰ گیگابایتی است.");
+                    updateZipStatsUI(0, 0, 0, "سرور در حال پردازش", "در حال اجرا ⚡");
+                } else {
+                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در برپاخاستن سرور.';
+                    showToast("❌ " + errDetail);
+                    updateZipStatsUI(0, 0, 0, "خطا", "خطا در اتصال ❌");
+                }
+            };
+        }
+
+        const btnStopZipServer = document.getElementById('btnStopZipServer');
+        if (btnStopZipServer) {
+            btnStopZipServer.onclick = () => {
+                const btnStop = document.getElementById('btnStopServer');
+                if (btnStop) {
+                    btnStop.click();
+                } else {
+                    showToast("🛑 دستور توقف سرور صادر شد.");
+                }
+            };
+        }
+
+        // تاشو کردن پنل دیباگ اختصاصی استخراج فایل فشرده (تب ۴)
+        const zipDebugHeader = document.getElementById('zipDebugHeader');
+        const zipDebugContent = document.getElementById('zipDebugContent');
+        const zipDebugToggleIcon = document.getElementById('zipDebugToggleIcon');
+
+        if (zipDebugHeader) {
+            zipDebugHeader.onclick = () => {
+                if (zipDebugContent.style.maxHeight === '0px' || !zipDebugContent.style.maxHeight) {
+                    zipDebugContent.style.maxHeight = '500px';
+                    zipDebugToggleIcon.style.transform = 'rotate(180deg)';
+                    logZipDebug("کنسول دیاگ اختصاصی تب ۴ (استخراج فایل فشرده) باز شد.");
+                } else {
+                    zipDebugContent.style.maxHeight = '0px';
+                    zipDebugToggleIcon.style.transform = 'rotate(0deg)';
+                }
+            };
+        }
+
+        const btnCopyZipDebug = document.getElementById('btnCopyZipDebug');
+        if (btnCopyZipDebug) {
+            btnCopyZipDebug.onclick = () => {
+                const logs = document.getElementById('zipDebugConsole').value;
+                if (!logs) {
+                    showToast("⚠️ لاگی در کنسول استخراج فایل فشرده وجود ندارد!");
+                    return;
+                }
+                navigator.clipboard.writeText(logs).then(() => {
+                    showToast("📋 لاگ‌های کامل سرور استخراج فایل فشرده کپی شد!");
+                    logZipDebug("تمام لاگ‌های سرور استخراج فایل فشرده کپی گردید.", "success");
+                });
+            };
+        }
+
+        const btnClearZipDebug = document.getElementById('btnClearZipDebug');
+        if (btnClearZipDebug) {
+            btnClearZipDebug.onclick = () => {
+                document.getElementById('zipDebugConsole').value = '';
+                showToast("🗑️ لاگ‌های کنسول پاکسازی شد.");
+            };
+        }
+
+        async function fetchZipStatsFromFiles() {
+            const urlsToTry = [
+                'restricted_zip_stats.json?t=' + Date.now(),
+                'bot/restricted_zip_stats.json?t=' + Date.now(),
+                '../restricted_zip_stats.json?t=' + Date.now()
+            ];
+
+            for (const u of urlsToTry) {
+                try {
+                    const resp = await fetch(u);
+                    if (resp.ok) {
+                        const stats = await resp.json();
+                        if (stats) {
+                            updateZipStatsUI(
+                                stats.total_files || 0,
+                                stats.sent_files || 0,
+                                stats.total_mb_sent || 0,
+                                stats.current_folder || "-",
+                                stats.status_text || "آماده به کار 💎",
+                                stats.last_updated_jalali
+                            );
+                            return;
+                        }
+                    }
+                } catch (e) {}
+            }
+        }
+
+        function updateZipStatsUI(totalFiles, sentFiles, mbSent, currentFolder, statusText, lastUpdated) {
+            const elTotal = document.getElementById('zipStatTotalFiles');
+            const elSent = document.getElementById('zipStatSentFiles');
+            const elMb = document.getElementById('zipStatMbSent');
+            const elLast = document.getElementById('zipStatLastUpdated');
+            const elStatus = document.getElementById('zipStatusText');
+
+            if (elTotal) elTotal.innerText = Number(totalFiles).toLocaleString('fa-IR');
+            if (elSent) elSent.innerText = Number(sentFiles).toLocaleString('fa-IR');
+            if (elMb) elMb.innerText = Number(mbSent).toLocaleString('fa-IR') + ' MB';
+            if (elLast) elLast.innerText = lastUpdated || (new Date().toLocaleTimeString('fa-IR'));
+            if (elStatus) elStatus.innerText = statusText || "آماده به‌کار 💎";
+        }
+
+        const btnRefreshZipStats = document.getElementById('btnRefreshZipStats');
+        if (btnRefreshZipStats) {
+            btnRefreshZipStats.onclick = () => {
+                fetchZipStatsFromFiles();
+                showToast("🔄 آمار فایل فشرده بروزرسانی گردید.");
+            };
+        }
+
+        const btnClearZipStats = document.getElementById('btnClearZipStats');
+        if (btnClearZipStats) {
+            btnClearZipStats.onclick = () => {
+                updateZipStatsUI(0, 0, 0, "-", "آماده به‌کار 💎", "دیتا پاکسازی شد");
+                showToast("🗑️ آمار پاکسازی شد.");
+            };
+        }
+
+        setInterval(fetchZipStatsFromFiles, 20000);
+        fetchZipStatsFromFiles();
 
 </script>
 </body>
