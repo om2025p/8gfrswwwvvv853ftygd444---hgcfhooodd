@@ -109,14 +109,19 @@ def resolve_direct_download_link(url):
             log_print(f"HTML fetch response status: {resp.status_code}, length: {len(resp.text)} bytes", "DEBUG")
             if resp.status_code == 200:
                 html = resp.text
+                # Check tianji-event or data attributes on download buttons
+                tianji_matches = re.findall(r'data-tianji-event=[\"\']([^\"\']+)[\"\']', html, re.I)
+                for t_url in tianji_matches:
+                    if t_url.startswith("http"):
+                        log_print(f"Found tianji download event target URL: {t_url}", "INFO")
+                        return t_url
+
                 # Look for direct download link in href or download buttons
                 download_matches = re.findall(r'href=[\"\'](https?://[^\s\"\'<>]+(?:/download/|/cdn/|/get/|\.zip|\.rar|\.7z|\.tar|\.gz)[^\s\"\'<>]*)[\"\']', html, re.I)
                 if not download_matches:
                     download_matches = re.findall(r'id=[\"\']download-url[\"\'][^>]*href=[\"\']([^\"\']+)[\"\']', html, re.I)
                 if not download_matches:
                     download_matches = re.findall(r'class=[\"\'][^\"\']*btn-primary[^\"\']*[\"\'][^>]*href=[\"\']([^\"\']+)[\"\']', html, re.I)
-                if not download_matches:
-                    download_matches = re.findall(r'href=[\"\'](https?://[^\s\"\'<>]+)[\"\']', html, re.I)
 
                 for match in download_matches:
                     if any(ext in match.lower() for ext in ['.zip', '.rar', '.7z', '.tar', '.gz', 'download', 'cdn']):
@@ -320,7 +325,12 @@ async def main():
                 await Bot.send_message(target_channel, text)
                 return
             except Exception as e:
-                log_print(f"Bot send_notice error: {e}", "WARNING")
+                try:
+                    chat_obj = await Bot.get_chat(target_channel)
+                    await Bot.send_message(chat_obj.id, text)
+                    return
+                except Exception as e2:
+                    log_print(f"Bot send_notice error: {e2}", "WARNING")
 
     temp_work_dir = tempfile.mkdtemp(prefix="zip_extractor_")
     download_dir = os.path.join(temp_work_dir, "dl")
