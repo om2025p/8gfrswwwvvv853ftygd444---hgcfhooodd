@@ -78,7 +78,7 @@ public class AndroidBridge {
             json.put("ghRepo", prefs.getString("restricted_bot_ghRepo", ""));
             json.put("ghPat", token);
             json.put("ghToken", token);
-            json.put("ghBranch", prefs.getString("restricted_bot_ghBranch", "100"));
+            json.put("ghBranch", prefs.getString("restricted_bot_ghBranch", "157"));
             json.put("tgApiId", prefs.getString("restricted_bot_tgApiId", ""));
             json.put("tgApiHash", prefs.getString("restricted_bot_tgApiHash", ""));
             json.put("tgBotToken", prefs.getString("restricted_bot_tgBotToken", ""));

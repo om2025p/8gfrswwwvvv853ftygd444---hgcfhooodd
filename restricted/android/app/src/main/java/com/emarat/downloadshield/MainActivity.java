@@ -414,10 +414,10 @@ public class MainActivity extends AppCompatActivity {
         if (rawToken == null || rawToken.trim().isEmpty()) {
             rawToken = prefs.getString("restricted_bot_ghPat", "");
         }
-        String rawBranch = prefs.getString("restricted_bot_ghBranch", "100");
+        String rawBranch = prefs.getString("restricted_bot_ghBranch", "157");
 
         final String ghToken = rawToken != null ? rawToken.trim() : "";
-        final String ghBranch = rawBranch != null ? rawBranch.trim() : "100";
+        final String ghBranch = rawBranch != null ? rawBranch.trim() : "157";
 
         if (ghToken.isEmpty()) {
             Toast.makeText(this, "⚠️ توکن گیت‌هاب تنظیم نشده است! تنظیمات را بررسی کنید.", Toast.LENGTH_LONG).show();
@@ -580,7 +580,7 @@ public class MainActivity extends AppCompatActivity {
             cfg.put("ghOwner", prefs.getString("restricted_bot_ghOwner", ""));
             cfg.put("ghRepo", prefs.getString("restricted_bot_ghRepo", ""));
             cfg.put("ghPat", prefs.getString("restricted_bot_ghPat", ""));
-            cfg.put("ghBranch", prefs.getString("restricted_bot_ghBranch", "100"));
+            cfg.put("ghBranch", prefs.getString("restricted_bot_ghBranch", "157"));
             cfg.put("tgApiId", prefs.getString("restricted_bot_tgApiId", ""));
             cfg.put("tgApiHash", prefs.getString("restricted_bot_tgApiHash", ""));
             cfg.put("tgBotToken", prefs.getString("restricted_bot_tgBotToken", ""));

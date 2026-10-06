@@ -302,7 +302,7 @@ public class NotificationInputReceiver extends BroadcastReceiver {
         if (rawToken == null || rawToken.trim().isEmpty()) {
             rawToken = prefs.getString("restricted_bot_ghPat", "");
         }
-        String rawBranch = prefs.getString("restricted_bot_ghBranch", "100");
+        String rawBranch = prefs.getString("restricted_bot_ghBranch", "157");
 
         if (rawToken == null) {
             rawToken = "";
