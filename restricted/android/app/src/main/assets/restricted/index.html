@@ -472,14 +472,8 @@
         <button class="tab-btn active" id="tabBtn1" onclick="switchTab(1)">
             📥 دانلود سریع
         </button>
-        <button class="tab-btn" id="tabBtn3" onclick="switchTab(3)">
-            🖼️ استخراج گالری
-        </button>
-        <button class="tab-btn" id="tabBtn4" onclick="switchTab(4)">
-            📦 فایل فشرده
-        </button>
         <button class="tab-btn" id="tabBtn2" onclick="switchTab(2)">
-            ⚙️ تنظیمات
+            ⚙️ امکانات و تنظیمات
         </button>
     </div>
 
@@ -567,8 +561,6 @@
                             <span style="font-size: 0.82rem; font-weight: 800; color: #16a34a; background: #dc26260f; padding: 3px 10px; border-radius: 10px; border: 1px solid #bbf7d0;">۱۲ شهریور ۱۴۰۵ ساعت ۱۱:۳۰</span>
                         </div>
                         <ul style="margin: 0; padding-right: 18px; font-size: 0.82rem; color: #475569; line-height: 1.7;">
-                            <li>🚀 <strong>[۱۶ شهریور ۱۴۰۵ - ۰۱:۰۰] موتور صف هوشمند و دانلود رگباری متوالی:</strong> تجمع تمام پیوندهای ارسالی در فواصل چند ثانیه‌ای و ارسال یکپارچه/مقاوم به سرور جهت دانلود تمامی ویدیوها بدون جا ماندن یا لغو سرور.</li>
-                            <li>🚀 <strong>[۱۵ شهریور ۱۴۰۵ - ۲۲:۰۰] رفع تداخل دانلود وب و تنظیم کانال جدید (-1003757877147):</strong> جداسازی متغیرهای گالری و دانلود سریع جهت رفع خطای ۴۲۲ و ارسال مستقیم ویدیوهای اینستاگرام، تیک‌تاک و تلگرام به کانال جدید.</li>
                             <li>📋 <strong>[۱۲ شهریور ۱۴۰۵ - ۱۱:۳۰] افزودن دکمه چسباندن پیوند و شمارنده هوشمند:</strong> قابلیت چسباندن سریع متن کلیپ‌بورد به کادر دانلود با یک کلیک و ثبت دائم تعداد کل لینک‌های منحصربه‌فرد (غیرتکراری) در حافظه دستگاه.</li>
                             <li>🩸 <strong>[۱۰ شهریور ۱۴۰۵ - ۱۶:۴۵] گزارش و عیب‌یابی هوشمند خطاها:</strong> ارائه علت و شرح دقیق عدم دریافت لینک در پیام تلگرام و ارسال فایل متنی پیوست در صورت طولانی بودن لاگ‌ها.</li>
                             <li>🟢 <strong>[۵ شهریور ۱۴۰۵ - ۰۷:۴۶] اتصال لایو دیباگ سرور:</strong> استریم خط‌به‌خط لاگ‌های سرور ابری گیت‌هاب در پنل دیاگ دانلود.</li>
@@ -581,346 +573,23 @@
             </div>
         </div>
 
-        <!-- ==================== تب ۴: استخراج‌کننده فایل‌های فشرده (Zip/Rar/7z) ==================== -->
-        <div class="tab-content" id="tabContent4">
-            <div class="android-native-card" style="background: linear-gradient(145deg, #ffffff, #f0fdfa); border-color: #99f6e4;">
-                <div class="card-title" style="color: #0d9488; border-color: #99f6e4;">
-                    📦 استخراج و انتقال خودکار فایل‌های فشرده (Zip/Rar/7z)
-                </div>
-                <p style="font-size: 0.85rem; line-height: 1.6; color: #334155; margin-top: -6px; margin-bottom: 18px;">
-                    آدرس لینک مستقیم یا anonfiles فایل فشرده (تا حجم ۱۰ گیگابایت) را وارد بفرمایید تا سرور ابری آن را استخراج کرده، نام پوشه‌ها را اعلام کرده و فایل‌ها را به صورت Document به کانال اختصاصی ارسال فرماید.
-                </p>
-
-                <!-- وضعیت زنده موتور استخراج فایل فشرده -->
-                <div class="status-panel" style="border-radius: 20px; background: #ffffff; border: 1px solid #99f6e4; margin-bottom: 18px;">
-                    <span style="font-size: 0.85rem; color: #0f766e; font-weight: 700;">🟢 وضعیت موتور استخراج فایل فشرده:</span>
-                    <div class="status-badge" id="zipEngineStatus">
-                        <span class="status-dot idle"></span>
-                        <span id="zipStatusText">آماده به‌کار 💎</span>
-                    </div>
-                </div>
-
-                <!-- اینپوت آدرس فایل فشرده -->
-                <div class="input-group" style="margin-bottom: 16px;">
-                    <label class="input-label" style="font-size: 0.92rem; color: #0f172a; font-weight: 800; margin-bottom: 4px;">
-                        🔗 آدرس فایل فشرده (Zip / Rar / 7z / Anonfiles):
-                    </label>
-                    <div style="display: flex; gap: 10px; width: 100%; align-items: center;">
-                        <input type="text" id="zipUrlInput" class="input-field" placeholder="https://anonfilesnew.com/content/v4?s=..." style="direction: ltr; font-size: 0.95rem; padding: 16px 18px; border-radius: 20px; flex: 1; border: 2px solid #99f6e4; background: #ffffff;">
-                        <button class="action-btn secondary" id="btnPasteZipUrl" style="width: auto; padding: 0 18px; height: 54px; font-size: 0.92rem; font-weight: 800; border-radius: 20px; white-space: nowrap; flex-shrink: 0; background: #f0fdfa; color: #0d9488; border: 1.5px solid #99f6e4;">
-                            📋 چسباندن
-                        </button>
-                    </div>
-                </div>
-
-                <!-- اینپوت کانال مقصد -->
-                <div class="input-group" style="margin-bottom: 20px;">
-                    <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
-                        🎯 شناسه یا آیدی کانال مقصد (پیش‌فرض: -1004498823531):
-                    </label>
-                    <input type="text" id="zipTargetChannelInput" class="input-field" placeholder="-1004498823531" value="-1004498823531" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
-                </div>
-
-                <!-- دکمه‌های عملیاتی استخراج فایل فشرده -->
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <button class="android-btn-green" id="btnStartZipExtraction" style="background: linear-gradient(135deg, #0d9488, #0f766e); box-shadow: 0 8px 20px -4px rgba(13, 148, 136, 0.4);">
-                        🚀 شروع استخراج فایل فشرده و ارسال پوشه‌ای به کانال
-                    </button>
-                    <button class="android-btn-green" id="btnStopZipServer" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 8px 20px -4px rgba(239, 68, 68, 0.3); font-size: 0.95rem; padding: 14px;">
-                        🛑 توقف فوری سرور استخراج فایل فشرده
-                    </button>
-                </div>
-            </div>
-
-            <!-- کارت آمار پیشرفته استخراج فایل‌های فشرده -->
-            <div class="white-card">
-                <h2 class="card-title" style="color: #0d9488; border-color: #99f6e4;">
-                    📊 آمار زنده و وضعیت انتقال فایل‌های فشرده
-                </h2>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-                    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 18px; padding: 14px; text-align: center;">
-                        <span style="font-size: 0.78rem; color: #0f766e; font-weight: 700; display: block; margin-bottom: 6px;">📄 کل فایل‌های استخراج‌شده:</span>
-                        <span id="zipStatTotalFiles" style="font-size: 1.4rem; font-weight: 800; color: #0d9488;">۰</span>
-                    </div>
-                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 18px; padding: 14px; text-align: center;">
-                        <span style="font-size: 0.78rem; color: #1e40af; font-weight: 700; display: block; margin-bottom: 6px;">📥 فایل‌های فرستاده‌شده:</span>
-                        <span id="zipStatSentFiles" style="font-size: 1.4rem; font-weight: 800; color: #1d4ed8;">۰</span>
-                    </div>
-                    <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 18px; padding: 14px; text-align: center;">
-                        <span style="font-size: 0.78rem; color: #9a3412; font-weight: 700; display: block; margin-bottom: 6px;">💾 حجم کل ارسال‌شده:</span>
-                        <span id="zipStatMbSent" style="font-size: 1.2rem; font-weight: 800; color: #c2410c;">۰ MB</span>
-                    </div>
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 14px; text-align: center;">
-                        <span style="font-size: 0.78rem; color: #475569; font-weight: 700; display: block; margin-bottom: 6px;">🕒 زمان آخرین بروزرسانی:</span>
-                        <span id="zipStatLastUpdated" style="font-size: 0.82rem; font-weight: 700; color: #0f172a;">هنوز ثبت نشده</span>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 10px;">
-                    <button class="action-btn secondary" id="btnRefreshZipStats" style="font-size: 0.85rem; padding: 10px;">
-                        🔄 بروزرسانی آمار زنده
-                    </button>
-                    <button class="action-btn secondary" id="btnClearZipStats" style="font-size: 0.85rem; padding: 10px; color: #ef4444; border-color: #fca5a5;">
-                        🗑️ پاکسازی آمار
-                    </button>
-                </div>
-            </div>
-
-            <!-- کارت کنسول داده‌ها و لاگ زنده سرور استخراج فایل فشرده -->
-            <div class="white-card" style="margin-top: 16px;">
-                <div id="zipDebugHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
-                    <h2 class="card-title" style="margin: 0; border: none; padding: 0; color: #0d9488;">🖥️ کنسول داده‌ها و لاگ زنده سرور (استخراج فایل فشرده)</h2>
-                    <span id="zipDebugToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: #0d9488;">🔽</span>
-                </div>
-
-                <div id="zipDebugContent" style="max-height: 500px; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 12px;">
-                    <p style="font-size: 0.82rem; color: #64748b; margin-top: 4px; margin-bottom: 12px; line-height: 1.5;">
-                        تمامی لاگ‌های دانلود فایل ۱۰ گیگابایتی، استخراج پوشه‌ها، حجم‌ها، وضعیت ارسال ۲ گیگابایتی و خطاهای احتمالی به صورت زنده در این کنسول قابل مشاهده و کپی‌برداری است.
-                    </p>
-                    <textarea id="zipDebugConsole" readonly class="input-field" style="height: 220px; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; color: #2dd4bf; background: #0f172a; line-height: 1.4; resize: none; border-color: #1e293b; direction: ltr; text-align: left; border-radius: 16px; padding: 14px; width: 100%; box-sizing: border-box;"></textarea>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
-                        <button class="action-btn secondary" id="btnCopyZipDebug" style="font-size: 0.88rem; padding: 12px; font-weight: 700; background: #f0fdfa; color: #0d9488; border-color: #99f6e4;">
-                            📋 کپی کامل لاگ‌های سرور
-                        </button>
-                        <button class="action-btn secondary" id="btnClearZipDebug" style="font-size: 0.88rem; padding: 12px; font-weight: 700; color: #ef4444; border-color: #fca5a5;">
-                            🗑️ پاک کردن لاگ‌ها
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== تب ۳: استخراج‌کننده اختصاصی گالری‌های تصویری ==================== -->
-        <div class="tab-content" id="tabContent3">
-            <div class="android-native-card" style="background: linear-gradient(145deg, #ffffff, #f0fdf4); border-color: #bbf7d0;">
-                <div class="card-title" style="color: #15803d; border-color: #bbf7d0;">
-                    🖼️ استخراج‌کننده هوشمند گالری‌های تصویری
-                </div>
-                <p style="font-size: 0.85rem; line-height: 1.6; color: #334155; margin-top: -6px; margin-bottom: 18px;">
-                    آدرس وب‌سایت گالری موردنظر را وارد کنید تا سرور به صورت خودکار تا آخرین عکس قدیمی (غیرتکراری) استخراج کرده و به صورت آلبومی به کانال تلگرام ارسال فرماید.
-                </p>
-
-                <!-- وضعیت زنده موتور استخراج گالری -->
-                <div class="status-panel" style="border-radius: 20px; background: #ffffff; border: 1px solid #bbf7d0; margin-bottom: 18px;">
-                    <span style="font-size: 0.85rem; color: #166534; font-weight: 700;">🟢 وضعیت موتور گالری:</span>
-                    <div class="status-badge" id="galleryEngineStatus">
-                        <span class="status-dot idle"></span>
-                        <span id="galleryStatusText">آماده به‌کار 💎</span>
-                    </div>
-                </div>
-
-                <!-- اینپوت آدرس گالری -->
-                <div class="input-group" style="margin-bottom: 16px;">
-                    <label class="input-label" style="font-size: 0.92rem; color: #0f172a; font-weight: 800; margin-bottom: 4px;">
-                        🔗 آدرس وب‌سایت گالری تصویری:
-                    </label>
-                    <div style="display: flex; gap: 10px; width: 100%; align-items: center;">
-                        <input type="text" id="galleryUrlInput" class="input-field" placeholder="https://kir2kos.net/iranian-sexy-images-gallery/" value="https://kir2kos.net/iranian-sexy-images-gallery/" style="direction: ltr; font-size: 0.95rem; padding: 16px 18px; border-radius: 20px; flex: 1; border: 2px solid #bbf7d0; background: #ffffff;">
-                        <button class="action-btn secondary" id="btnPasteGalleryUrl" style="width: auto; padding: 0 18px; height: 54px; font-size: 0.92rem; font-weight: 800; border-radius: 20px; white-space: nowrap; flex-shrink: 0; background: #f0fdf4; color: #16a34a; border: 1.5px solid #bbf7d0;">
-                            📋 چسباندن
-                        </button>
-                    </div>
-                </div>
-
-                <!-- اینپوت آدرس دیتابیس مستقیم تصاویر (اختیاری جهت دانلود مستقیم) -->
-                <div class="input-group" style="margin-bottom: 16px;">
-                    <label class="input-label" style="font-size: 0.88rem; color: #15803d; font-weight: 800; margin-bottom: 4px;">
-                        🗄️ آدرس دیتابیس مستقیم عکس‌ها (شخم زدن دیتابیس - اختیاری):
-                    </label>
-                    <input type="text" id="galleryCustomDbInput" class="input-field" placeholder="https://kir2kos.net/gallery/Organized_Gallery" value="https://kir2kos.net/gallery/Organized_Gallery" style="direction: ltr; font-size: 0.88rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #bbf7d0; background: #ffffff;">
-                </div>
-
-                <!-- اینپوت شماره صفحه شروع -->
-                <div class="input-group" style="margin-bottom: 16px;">
-                    <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
-                        🔢 شماره صفحه یا پارت شروع (پیش‌فرض 1):
-                    </label>
-                    <input type="number" id="galleryStartPartInput" class="input-field" placeholder="1" value="1" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
-                </div>
-
-                <!-- اینپوت حالت مرتب‌سازی -->
-                <div class="input-group" style="margin-bottom: 16px;">
-                    <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
-                        📊 حالت مرتب‌سازی دریافت تصاویر:
-                    </label>
-                    <select id="gallerySortModeSelect" class="input-field" style="font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
-                        <option value="newest" selected>🆕 جدیدترین‌ها (Newest)</option>
-                        <option value="views">👁️ پربازدیدترین‌ها (Views)</option>
-                        <option value="likes">❤️ محبوب‌ترین‌ها (Likes)</option>
-                        <option value="random">🎲 تصادفی (Random)</option>
-                    </select>
-                </div>
-
-                <!-- اینپوت کانال مقصد -->
-                <div class="input-group" style="margin-bottom: 20px;">
-                    <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
-                        🎯 شناسه یا آیدی کانال مقصد (آرشیو):
-                    </label>
-                    <input type="text" id="galleryTargetChannelInput" class="input-field" placeholder="-1004389912148" value="-1004389912148" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
-                </div>
-
-                <!-- دکمه‌های عملیاتی استخراج گالری -->
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <button class="android-btn-green" id="btnStartGalleryExtraction" style="background: linear-gradient(135deg, #16a34a, #15803d); box-shadow: 0 8px 20px -4px rgba(22, 163, 74, 0.4);">
-                        🚀 شروع استخراج کامل و ارسال آلبومی به تلگرام
-                    </button>
-                    <button class="action-btn secondary" id="btnDiscoverDatabase" style="background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0; font-size: 0.92rem; font-weight: 800; padding: 14px; border-radius: 20px;">
-                        🌾 شخم زدن و کشف دقیق تعداد عکس‌های دیتابیس اصلی
-                    </button>
-                    <button class="android-btn-green" id="btnStopGalleryServer" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 8px 20px -4px rgba(239, 68, 68, 0.3); font-size: 0.95rem; padding: 14px;">
-                        🛑 توقف فوری سرور استخراج گالری
-                    </button>
-                </div>
-            </div>
-
-            <!-- کارت جدید: اسکنر و کشف‌کننده قدرتمند دیتابیس وب‌سایت (gallery-dl & Directory Scanner) -->
-            <div class="white-card" style="background: linear-gradient(145deg, #ffffff, #faf5ff); border: 1.5px solid #e9d5ff;">
-                <div class="card-title" style="color: #7e22ce; border-color: #e9d5ff;">
-                    🔍 اسکنر و کشف‌کننده قدرتمند دیتابیس سایت
-                </div>
-                <p style="font-size: 0.85rem; line-height: 1.6; color: #4c1d95; margin-top: -6px; margin-bottom: 16px;">
-                    این ابزار هوشمند با استفاده از موتور سنگین اوپن‌سورس <code>gallery-dl</code>، اسکن ساختار پوشه‌ها و آنالیز الگوهای مخفی، دیتابیس کلیه تصاویر و پوشه‌های گالری هر وب‌سایتی را عمیقاً ردیابی و کشف می‌کند.
-                </p>
-
-                <div class="input-group" style="margin-bottom: 16px;">
-                    <label class="input-label" style="font-size: 0.88rem; color: #6b21a8; font-weight: 800; margin-bottom: 4px;">
-                        🧭 آدرس وب‌سایت یا دامنه اصلی جهت اسکن دیتابیس:
-                    </label>
-                    <input type="text" id="crawlerTargetInput" class="input-field" placeholder="https://example.com/gallery/" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #d8b4fe; background: #ffffff;">
-                </div>
-
-                <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-                    <button class="action-btn" id="btnRunDatabaseCrawler" style="background: linear-gradient(135deg, #9333ea, #7e22ce); box-shadow: 0 8px 20px -4px rgba(147, 51, 234, 0.4); font-size: 0.95rem; padding: 16px;">
-                        🔍 اسکنر و کشف‌کننده قدرتمند دیتابیس سایت
-                    </button>
-                </div>
-
-                <!-- باکس نمایش دیتابیس کشف‌شده با دکمه اعمال سریع -->
-                <div id="discoveredDbResultContainer" style="display: none; background: #f3e8ff; border: 1px solid #d8b4fe; border-radius: 16px; padding: 14px; margin-top: 10px;">
-                    <span style="font-size: 0.8rem; font-weight: 800; color: #6b21a8; display: block; margin-bottom: 6px;">🎯 آدرس دیتابیس کشف‌شده:</span>
-                    <div id="discoveredDbUrlText" style="font-family: monospace; font-size: 0.82rem; color: #581c87; background: #ffffff; padding: 8px 12px; border-radius: 10px; border: 1px solid #c084fc; word-break: break-all; direction: ltr; text-align: left; margin-bottom: 10px;"></div>
-                    <button class="action-btn secondary" id="btnApplyDiscoveredDb" style="background: #ffffff; color: #7e22ce; border: 1.5px solid #a855f7; font-size: 0.85rem; padding: 10px; font-weight: bold;">
-                        ✅ اعمال خودکار آدرس دیتابیس در فرم استخراج
-                    </button>
-                </div>
-            </div>
-
-            <!-- کارت آمار پیشرفته و زنده گالری -->
-            <div class="white-card">
-                <h2 class="card-title" style="color: #16a34a; border-color: #bbf7d0;">
-                    📊 آمار زنده و وضعیت دیتابیس گالری
-                </h2>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 18px; padding: 14px; text-align: center;">
-                        <span style="font-size: 0.78rem; color: #166534; font-weight: 700; display: block; margin-bottom: 6px;">📸 کل عکس‌های فرستاده‌شده:</span>
-                        <span id="galleryStatTotalSent" style="font-size: 1.4rem; font-weight: 800; color: #15803d;">۰</span>
-                    </div>
-                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 18px; padding: 14px; text-align: center;">
-                        <span style="font-size: 0.78rem; color: #1e40af; font-weight: 700; display: block; margin-bottom: 6px;">⚡ عکس‌های کشف‌شده این گالری:</span>
-                        <span id="galleryStatExtracted" style="font-size: 1.4rem; font-weight: 800; color: #1d4ed8;">۰</span>
-                    </div>
-                    <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 18px; padding: 14px; text-align: center;">
-                        <span style="font-size: 0.78rem; color: #9a3412; font-weight: 700; display: block; margin-bottom: 6px;">🛡️ عکس‌های تکراری ردشده:</span>
-                        <span id="galleryStatDuplicates" style="font-size: 1.4rem; font-weight: 800; color: #c2410c;">۰</span>
-                    </div>
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 14px; text-align: center;">
-                        <span style="font-size: 0.78rem; color: #475569; font-weight: 700; display: block; margin-bottom: 6px;">🕒 زمان آخرین بروزرسانی:</span>
-                        <span id="galleryStatLastUpdated" style="font-size: 0.82rem; font-weight: 700; color: #0f172a;">هنوز ثبت نشده</span>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 10px;">
-                    <button class="action-btn secondary" id="btnRefreshGalleryStats" style="font-size: 0.85rem; padding: 10px;">
-                        🔄 بروزرسانی آمار زنده
-                    </button>
-                    <button class="action-btn secondary" id="btnClearGalleryStats" style="font-size: 0.85rem; padding: 10px; color: #ef4444; border-color: #fca5a5;">
-                        🗑️ پاکسازی آمار
-                    </button>
-                </div>
-            </div>
-
-            <!-- کارت کنسول داده‌ها و لاگ زنده سرور گالری -->
-            <div class="white-card" style="margin-top: 16px;">
-                <div id="galleryDebugHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
-                    <h2 class="card-title" style="margin: 0; border: none; padding: 0; color: #16a34a;">🖥️ کنسول داده‌ها و لاگ زنده سرور (استخراج گالری)</h2>
-                    <span id="galleryDebugToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: #16a34a;">🔽</span>
-                </div>
-
-                <div id="galleryDebugContent" style="max-height: 500px; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 12px;">
-                    <p style="font-size: 0.82rem; color: #64748b; margin-top: 4px; margin-bottom: 12px; line-height: 1.5;">
-                        تمامی لاگ‌های استخراج، ارتباط با سرور گیت‌هاب اکشنز، وضعیت دریافت آلبوم عکس‌ها و خطاهای احتمالی به صورت زنده در این کنسول مستقیم قابل مشاهده و کپی برداری است.
-                    </p>
-                    <textarea id="galleryDebugConsole" readonly class="input-field" style="height: 220px; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; color: #4ade80; background: #0f172a; line-height: 1.4; resize: none; border-color: #1e293b; direction: ltr; text-align: left; border-radius: 16px; padding: 14px; width: 100%; box-sizing: border-box;"></textarea>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
-                        <button class="action-btn secondary" id="btnCopyGalleryDebug" style="font-size: 0.88rem; padding: 12px; font-weight: 700; background: #f0fdf4; color: #16a34a; border-color: #bbf7d0;">
-                            📋 کپی کامل لاگ‌های سرور
-                        </button>
-                        <button class="action-btn secondary" id="btnClearGalleryDebug" style="font-size: 0.88rem; padding: 12px; font-weight: 700; color: #ef4444; border-color: #fca5a5;">
-                            🗑️ پاک کردن لاگ‌ها
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- ==================== تب ۲: تنظیمات و امکانات پیشرفته ==================== -->
         <div class="tab-content" id="tabContent2">
 
-            <!-- کارت مدیریت و پیش‌نمایش اعلان همیشگی نوار وضعیت (سبک نیتیو متریال ۳ اندروید) -->
-            <div class="android-native-card" style="background: linear-gradient(145deg, #ffffff, #f0fdf4); border: 1.5px solid #bbf7d0; margin-bottom: 5px;">
-                <h2 class="card-title" style="color: #15803d; border-color: #bbf7d0;">
-                    🔔 اعلان همیشگی در نوار وضعیت گوشی (شبیه اندروید)
-                </h2>
-                <p style="font-size: 0.85rem; line-height: 1.6; color: #334155; margin-top: -6px; margin-bottom: 16px;">
-                    با فعال‌سازی این بخش، یک اعلان دائمی همراه با <strong>کادر متنی ورودی پیست مستقیم</strong> و دکمه چسباندن آنی در کشوی بالای گوشیتان قرار می‌گیرد تا دقیقاً مانند اپلیکیشن نیتیو اندروید، بدون باز کردن برنامه لینک‌هایتان را ارسال بفرمایید!
+            <!-- کارت مدیریت اعلان همیشگی نوار وضعیت -->
+            <div class="white-card">
+                <h2 class="card-title">🔔 اعلان همیشگی در نوار وضعیت گوشی</h2>
+                <p style="font-size: 0.82rem; line-height: 1.6; color: #64748b; margin-top: -8px; margin-bottom: 16px;">
+                    با روشن کردن این گزینه، یک اعلان دائمی در کشوی بالای گوشیتان قرار می‌گیرد تا هر زمان لینکی کپی کردید، بدون باز کردن برنامه و مستقیم از نوار اعلان‌ها روی دکمه «📋 چسباندن و دانلود سریع» بزنید!
                 </p>
 
-                <!-- پیش‌نمایش زنده اعلان نوار وضعیت (شبیه‌ساز اعلان اندروید) -->
-                <div style="background: #0f172a; border-radius: 20px; padding: 16px; color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.15); margin-bottom: 18px; border: 1px solid #1e293b;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <img src="icon-192.png" style="width: 20px; height: 20px; border-radius: 6px;">
-                            <span style="font-size: 0.82rem; font-weight: 800; color: #38bdf8;">سپر دانلود (فعال)</span>
-                        </div>
-                        <span style="font-size: 0.72rem; color: #94a3b8; background: #1e293b; padding: 2px 8px; border-radius: 8px;">اکنون</span>
-                    </div>
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #f8fafc; margin-bottom: 10px;">
-                        🛡️ شنود هوشمند لینک‌ها و کلیپ‌بورد فعال است
-                    </div>
-
-                    <!-- کادر تعاملی تست اعلان درون صفحه -->
-                    <div style="background: #1e293b; border-radius: 14px; padding: 8px; display: flex; gap: 8px; margin-bottom: 10px; border: 1px solid #334155;">
-                        <input type="text" id="notifSimInput" placeholder="تایپ یا چسباندن لینک (شبیه‌ساز اعلان)..." style="flex: 1; background: transparent; border: none; color: #38bdf8; font-size: 0.82rem; outline: none; padding: 6px 10px; direction: ltr;">
-                        <button id="btnNotifSimSubmit" style="background: #2563eb; color: #ffffff; border: none; border-radius: 10px; padding: 6px 14px; font-size: 0.78rem; font-weight: 800; cursor: pointer; white-space: nowrap;">
-                            📥 ارسال
-                        </button>
-                    </div>
-
-                    <!-- دکمه‌های اکشن اعلان -->
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <span style="font-size: 0.75rem; background: #166534; color: #4ade80; padding: 4px 10px; border-radius: 10px; font-weight: bold; border: 1px solid #22c55e; display: inline-flex; align-items: center; gap: 4px;">
-                            📥 ارسال مستقیم
-                        </span>
-                        <span style="font-size: 0.75rem; background: #1e3a8a; color: #60a5fa; padding: 4px 10px; border-radius: 10px; font-weight: bold; border: 1px solid #3b82f6; display: inline-flex; align-items: center; gap: 4px;">
-                            📋 چسباندن و ارسال آنی
-                        </span>
-                    </div>
-                </div>
-
                 <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <button class="android-btn-green" id="btnTogglePersistentNotification" style="padding: 16px; font-size: 0.98rem; background: linear-gradient(135deg, #10b981, #059669);">
-                        ⚡ فعال‌سازی اعلان همیشگی نوار وضعیت
+                    <button class="action-btn secondary" id="btnTogglePersistentNotification" style="padding: 12px; font-size: 0.88rem; border-radius: 14px; background: #eff6ff; color: #2563eb; border-color: #bfdbfe;">
+                        ⚡ فعال‌سازی اعلان همیشگی
                     </button>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <button class="action-btn secondary" id="btnTestNotifAction" style="padding: 12px; font-size: 0.82rem; border-radius: 16px; background: #eff6ff; color: #2563eb; border-color: #bfdbfe; font-weight: 800;">
-                            🧪 تست ارسال اعلان فوری
-                        </button>
-                        <button class="action-btn secondary" id="btnTestClipboardPerm" style="padding: 12px; font-size: 0.82rem; border-radius: 16px; background: #ffffff; color: #16a34a; border-color: #bbf7d0; font-weight: 800;">
-                            📋 تست کلیپ‌بورد دستگاه
-                        </button>
-                    </div>
+                    <button class="action-btn secondary" id="btnTestClipboardPerm" style="padding: 12px; font-size: 0.88rem; border-radius: 14px; background: #f0fdf4; color: #16a34a; border-color: #bbf7d0;">
+                        📋 تست و تایید مجوز کلیپ‌بورد
+                    </button>
                 </div>
             </div>
 
@@ -1203,41 +872,13 @@
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
 
-        // لاگین دیباگ اختصاصی استخراج فایل فشرده (تب ۴)
-        function logZipDebug(message, type = 'info') {
-            const consoleEl = document.getElementById('zipDebugConsole');
-            if (!consoleEl) return;
-            const now = new Date();
-            const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
-            const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : '📦');
-
-            consoleEl.value += `[${timeStr}] ${prefix} ${message}\n`;
-            consoleEl.scrollTop = consoleEl.scrollHeight;
-        }
-
         // لاگین دیباگ اختصاصی دانلود سریع (تب ۱)
         function logDlDebug(message, type = 'info') {
             const consoleEl = document.getElementById('dlDebugConsole');
-            if (consoleEl) {
-                const now = new Date();
-                const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
-                const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : '📥');
-
-                consoleEl.value += `[${timeStr}] ${prefix} ${message}\n`;
-                consoleEl.scrollTop = consoleEl.scrollHeight;
-            }
-            if (typeof message === 'string' && (message.includes('گالری') || message.includes('gallery') || message.includes('kir2kos'))) {
-                logGalleryDebug(message, type);
-            }
-        }
-
-        // لاگین دیباگ اختصاصی استخراج گالری (تب ۳)
-        function logGalleryDebug(message, type = 'info') {
-            const consoleEl = document.getElementById('galleryDebugConsole');
             if (!consoleEl) return;
             const now = new Date();
             const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
-            const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : '🖼️');
+            const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : '📥');
 
             consoleEl.value += `[${timeStr}] ${prefix} ${message}\n`;
             consoleEl.scrollTop = consoleEl.scrollHeight;
@@ -1279,11 +920,11 @@
                 document.getElementById(id).value = val;
                 localStorage.setItem('restricted_bot_' + id, val);
             } else if (id === 'ghBranch') {
-                document.getElementById(id).value = '157'; // مقدار پیش‌فرض 157
+                document.getElementById(id).value = '81'; // مقدار پیش‌فرض 81
             }
-            if (id === 'ghBranch' && (!document.getElementById(id).value || ['80', '81', '100', '156'].includes(document.getElementById(id).value))) {
-                document.getElementById(id).value = '157';
-                localStorage.setItem('restricted_bot_ghBranch', '157');
+            if (id === 'ghBranch' && (!document.getElementById(id).value || document.getElementById(id).value === '80' || document.getElementById(id).value === '81')) {
+                document.getElementById(id).value = '100';
+                localStorage.setItem('restricted_bot_ghBranch', '100');
             }
 
             // ذخیره خودکار و ضدعفونی همزمان هنگام کپی/پیست یا تایپ
@@ -1344,7 +985,7 @@
                     ghRepo: sanitizeString(document.getElementById('ghRepo').value) || '',
                     ghToken: sanitizeString(document.getElementById('ghPat').value) || '',
                     ghPat: sanitizeString(document.getElementById('ghPat').value) || '',
-                    ghBranch: sanitizeString(document.getElementById('ghBranch').value) || '157',
+                    ghBranch: sanitizeString(document.getElementById('ghBranch').value) || '100',
                     tgApiId: sanitizeString(document.getElementById('tgApiId').value) || '',
                     tgApiHash: sanitizeString(document.getElementById('tgApiHash').value) || '',
                     tgBotToken: sanitizeString(document.getElementById('tgBotToken').value) || '',
@@ -1419,15 +1060,14 @@
         }
 
 
-        // نمایش توست (دقیقاً به مدت ۲ ثانیه)
+        // نمایش توست
         function showToast(msg) {
             const toast = document.getElementById('toast');
-            if (!toast) return;
             toast.innerText = msg;
             toast.classList.add('show');
             setTimeout(() => {
                 toast.classList.remove('show');
-            }, 2000); // بازخورد دقیقاً ۲ ثانیه‌ای روی صفحه
+            }, 3000);
         }
 
         // ==================== سیستم اعلان‌های دائمی و نوار وضعیت سیستم (Persistent Notification Bar) ====================
@@ -1477,8 +1117,7 @@
                 renotify: true,
                 requireInteraction: true, // ماندگار بودن اعلان در نوار وضعیت
                 actions: [
-                    { action: 'direct_submit', title: '📥 ارسال مستقیم', type: 'text', placeholder: 'تایپ یا چسباندن لینک (بدون محدودیت)...' },
-                    { action: 'paste_download', title: '📋 چسباندن و ارسال آنی' },
+                    { action: 'paste_download', title: '📋 چسباندن و دانلود سریع' },
                     { action: 'open_app', title: '📱 باز کردن برنامه' }
                 ],
                 data: { url: window.location.href }
@@ -1514,8 +1153,8 @@
                         showToast("🟢 اعلان دائمی نوار وضعیت فعال گردید!");
                         updateNotificationBtnUI();
                         showPersistentNotification(
-                            "🛡️ سپر دانلود عمارت (نوار وضعیت)",
-                            "کادر ورودی مستقیم لینک و دکمه چسباندن آنی در بالای گوشیتان فعال شد!"
+                            "🛡️ سپر دانلود عمارت آماده به‌کار است",
+                            "برای دانلود سریع فیلم‌ها، فقط روی «📋 چسباندن و دانلود سریع» بزنید!"
                         );
                     } else {
                         showToast("⚠️ اجازه دسترسی به اعلان‌ها تایید نشد!");
@@ -1524,38 +1163,6 @@
             };
         }
         updateNotificationBtnUI();
-
-        const btnNotifSimSubmit = document.getElementById('btnNotifSimSubmit');
-        if (btnNotifSimSubmit) {
-            btnNotifSimSubmit.onclick = () => {
-                const simVal = document.getElementById('notifSimInput') ? document.getElementById('notifSimInput').value.trim() : '';
-                if (simVal) {
-                    handleDirectSubmitFromNotification(simVal);
-                    document.getElementById('notifSimInput').value = '';
-                } else {
-                    showToast("⚠️ لطفاً یک آدرس لینک در کادر شبیه‌ساز وارد کنید!");
-                }
-            };
-        }
-
-        const btnTestNotifAction = document.getElementById('btnTestNotifAction');
-        if (btnTestNotifAction) {
-            btnTestNotifAction.onclick = async () => {
-                const granted = await requestNotificationPermission();
-                if (granted) {
-                    persistentNotificationEnabled = true;
-                    localStorage.setItem('restricted_persistent_notif_enabled', 'true');
-                    updateNotificationBtnUI();
-                    showPersistentNotification(
-                        "🛡️ سپر دانلود عمارت (تست اعلان نوار وضعیت)",
-                        "کادر ورودی لینک در زیر قرار دارد. لینک را پیست کنید و روی «📥 ارسال مستقیم» بزنید!"
-                    );
-                    showToast("🧪 اعلان تست شبیه اندروید به نوار وضعیت ارسال شد!");
-                } else {
-                    showToast("⚠️ اجازه دسترسی به اعلان‌ها تایید نشد!");
-                }
-            };
-        }
 
         const btnTestClip = document.getElementById('btnTestClipboardPerm');
         if (btnTestClip) {
@@ -1580,8 +1187,6 @@
             navigator.serviceWorker.addEventListener('message', async (event) => {
                 if (event.data && event.data.action === 'PASTE_AND_DOWNLOAD') {
                     handlePasteAndDownloadFromNotification();
-                } else if (event.data && event.data.action === 'DIRECT_SUBMIT_LINK' && event.data.link) {
-                    handleDirectSubmitFromNotification(event.data.link);
                 }
             });
         }
@@ -1591,32 +1196,8 @@
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('action') === 'paste_download') {
                 handlePasteAndDownloadFromNotification();
-            } else if (urlParams.get('action') === 'direct_submit' && urlParams.get('link')) {
-                handleDirectSubmitFromNotification(urlParams.get('link'));
             }
         });
-
-        async function handleDirectSubmitFromNotification(link) {
-            try {
-                if (link && link.trim()) {
-                    const cleaned = sanitizeString(link);
-                    const dlField = document.getElementById('dlLink');
-                    if (dlField) dlField.value = cleaned;
-                    showToast("📥 لینک از اعلان دریافت شد... در حال ارسال برای دانلود!");
-                    logDlDebug("پیوند از کادر ورودی اعلان نوار وضعیت دریافت شد: " + cleaned);
-
-                    // اجرای خودکار دانلود
-                    const btnDl = document.getElementById('btnDownload');
-                    if (btnDl) btnDl.click();
-                } else {
-                    showToast("⚠️ لینک وارد شده تهی است!");
-                }
-            } catch (err) {
-                showToast("⚠️ خطا در پردازش لینک اعلان: " + err.message);
-                logDlDebug("خطا در handleDirectSubmitFromNotification: " + err.message, "error");
-            }
-        }
-        window.handleDirectSubmitFromNotification = handleDirectSubmitFromNotification;
 
         async function handlePasteAndDownloadFromNotification() {
             try {
@@ -1690,19 +1271,10 @@
                         const dotClass = (status === 'completed' ? (conclusion === 'success' ? 'completed' : 'failed') : status);
 
                         let persianStatus = "در حال کار";
-                        if (status === 'queued') {
-                            persianStatus = "در صف انتظار ⏳";
-                            isServerCurrentlyRunning = true;
-                        } else if (status === 'in_progress') {
-                            persianStatus = "در حال دانلود / پردازش ⚡";
-                            isServerCurrentlyRunning = true;
-                        } else if (status === 'completed') {
+                        if (status === 'queued') persianStatus = "در صف انتظار ⏳";
+                        else if (status === 'in_progress') persianStatus = "در حال دانلود / پردازش ⚡";
+                        else if (status === 'completed') {
                             persianStatus = conclusion === 'success' ? "آماده به کار (موتور فعال) ✅" : "آخرین اجرا ناموفق ❌";
-                            if (isServerCurrentlyRunning) {
-                                isServerCurrentlyRunning = false;
-                                // در صورت اتمام کار سرور و وجود داشتن لینک جدید در صف، ارسال نوبت بعدی به صورت خودکار
-                                setTimeout(processSmartDownloadQueue, 2000);
-                            }
                         }
 
                         updateUI(dotClass, persianStatus);
@@ -1866,7 +1438,6 @@
                         if (targetHistoryId) {
                             if (isSuccess) {
                                 updateDownloadHistoryStatus(targetHistoryId, 'completed', 'دانلود و ارسال تکمیل شد 📥');
-                                showToast("🎬 کلیپ با موفقیت به تلگرام ارسال شد 🚀");
                                 showPersistentNotification("✅ دانلود با موفقیت انجام شد!", "فایل با موفقیت استخراج و به تلگرام ارسال گردید.");
                             } else {
                                 updateDownloadHistoryStatus(targetHistoryId, 'failed', '❌ خطا در دانلود / اجرای ناموفق', 'اجرای سرور گیت‌هاب با خطا مواجه شد. لطفاً پنل دیاگ یا تلگرام را چک فرمایید.');
@@ -1907,19 +1478,14 @@
 
                                 if (filteredLines.length > 0) {
                                     filteredLines.slice(-100).forEach(line => {
-                                        const cleanL = line.trim();
-                                        logDlDebug(cleanL);
-                                        logGalleryDebug(cleanL);
+                                        logDlDebug(line.trim());
                                     });
                                 } else {
                                     lines.slice(-50).forEach(line => {
-                                        const cleanL = line.trim();
-                                        logDlDebug(cleanL);
-                                        logGalleryDebug(cleanL);
+                                        logDlDebug(line.trim());
                                     });
                                 }
                                 logDlDebug("📄 ===== پایان لاگ‌های سرور =====");
-                                logGalleryDebug("📄 ===== پایان لاگ‌های سرور =====");
                             }
                         } catch (eLogs) {
                             logDlDebug(`⚠️ عدم امکان دریافت لاگ متنی کامل: ${eLogs.message}`);
@@ -1932,13 +1498,13 @@
         }
 
         // صدور دستور شروع سرور یا دانلود یا سرچ
-        async function triggerWorkflow(downloadLink = null, targetHistoryId = null, customWorkflow = null, isDiscoveryMode = false) {
+        async function triggerWorkflow(downloadLink = null, targetHistoryId = null) {
             syncNativeAndroidConfig();
 
             const owner = sanitizeString(document.getElementById('ghOwner').value);
             const repo = sanitizeString(document.getElementById('ghRepo').value);
             const pat = sanitizeString(document.getElementById('ghPat').value);
-            const branch = sanitizeString(document.getElementById('ghBranch').value) || '157';
+            const branch = sanitizeString(document.getElementById('ghBranch').value) || '100';
 
             const tgApiId = sanitizeString(document.getElementById('tgApiId').value);
             const tgApiHash = sanitizeString(document.getElementById('tgApiHash').value);
@@ -1990,111 +1556,30 @@
             pollServerLogs(owner, repo, pat, targetHistoryId, beforeRunId, dispatchTime);
 
             try {
-                let workflowId = customWorkflow || "restricted_bot.yml";
+                const workflowId = "restricted_bot.yml";
+                const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
 
-                let url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
-                logDebug(`در حال ارسال درخواست POST به سرور اختصاصی (${workflowId}): ${url}`);
-                logGalleryDebug(`🌐 درخواست استخراج به ورک‌فلو اختصاصی ${workflowId}`);
+                logDebug(`در حال ارسال درخواست POST به آدرس: ${url}`);
 
-                let payloadInputs = {};
-                if (workflowId === "zip_extractor.yml") {
-                    payloadInputs = {
-                        GH_PAT: pat,
-                        ZIP_URL: downloadLink || '',
-                        TELEGRAM_LINK: downloadLink || '',
-                        TARGET_CHANNEL: (document.getElementById('zipTargetChannelInput') ? sanitizeString(document.getElementById('zipTargetChannelInput').value) : '-1004498823531'),
-                        API_ID: tgApiId,
-                        API_HASH: tgApiHash,
-                        BOT_TOKEN: tgBotToken,
-                        SESSION_STRING: tgSession,
-                        OWNER_ID: tgOwner
-                    };
-                } else if (workflowId === "gallery_extractor.yml") {
-                    payloadInputs = {
-                        GH_PAT: pat,
-                        GALLERY_URL: downloadLink || '',
-                        TELEGRAM_LINK: downloadLink || '',
-                        START_PART: (document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : '1'),
-                        SORT_MODE: (document.getElementById('gallerySortModeSelect') ? sanitizeString(document.getElementById('gallerySortModeSelect').value) : 'newest'),
-                        CUSTOM_DB_BASE: (document.getElementById('galleryCustomDbInput') ? sanitizeString(document.getElementById('galleryCustomDbInput').value) : ''),
-                        IS_DISCOVERY_MODE: isDiscoveryMode ? 'true' : 'false',
-                        TARGET_CHANNEL: (document.getElementById('galleryTargetChannelInput') ? document.getElementById('galleryTargetChannelInput').value : '-1004389912148'),
-                        API_ID: tgApiId,
-                        API_HASH: tgApiHash,
-                        BOT_TOKEN: tgBotToken,
-                        SESSION_STRING: tgSession,
-                        OWNER_ID: tgOwner
-                    };
-                } else {
-                    payloadInputs = {
-                        GH_PAT: pat,
-                        TELEGRAM_LINK: downloadLink || '',
-                        TARGET_CHANNEL: '-1003757877147',
-                        API_ID: tgApiId,
-                        API_HASH: tgApiHash,
-                        BOT_TOKEN: tgBotToken,
-                        SESSION_STRING: tgSession,
-                        OWNER_ID: tgOwner
-                    };
-                }
-
-                const branchesToTry = Array.from(new Set([branch, '157', '156', '100', 'main', 'master']));
-                let response = null;
-
-                for (const tryBranch of branchesToTry) {
-                    try {
-                        logDebug(`در حال ارسال درخواست POST به ${workflowId} روی شاخه ${tryBranch}...`);
-                        response = await fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${pat}`,
-                                'Accept': 'application/vnd.github.v3+json',
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                ref: tryBranch,
-                                inputs: payloadInputs
-                            })
-                        });
-
-                        if (response.status === 204 || response.ok) {
-                            logDebug(`ورک‌فلو با موفقیت روی شاخه ${tryBranch} فعال شد.`, 'success');
-                            break;
-                        } else if (response.status === 422) {
-                            logDebug(`شاخه ${tryBranch} برای ${workflowId} وجود ندارد یا معتبر نیست (HTTP 422). سوئیچ روی شاخه بعدی...`, 'warning');
-                        } else {
-                            break;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${pat}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ref: branch,
+                        inputs: {
+                            TELEGRAM_LINK: downloadLink || '',
+                            API_ID: tgApiId,
+                            API_HASH: tgApiHash,
+                            BOT_TOKEN: tgBotToken,
+                            SESSION_STRING: tgSession,
+                            OWNER_ID: tgOwner
                         }
-                    } catch (eBr) {
-                        logDebug(`خطای ارسال به شاخه ${tryBranch}: ${eBr.message}`, 'error');
-                    }
-                }
-
-                if (!response.ok && workflowId === "gallery_extractor.yml") {
-                    logDebug("⚠️ سرور اختصاصی گالری در دسترس نیست. سوئیچ هوشمند روی restricted_bot.yml...");
-                    workflowId = "restricted_bot.yml";
-                    url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
-                    response = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${pat}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            ref: branch,
-                            inputs: {
-                                TELEGRAM_LINK: downloadLink || '',
-                                TARGET_CHANNEL: '-1003757877147',
-                                API_ID: tgApiId,
-                                API_HASH: tgApiHash,
-                                BOT_TOKEN: tgBotToken,
-                                SESSION_STRING: tgSession,
-                                OWNER_ID: tgOwner
-                            }
-                        })
-                    });
-                }
+                    })
+                });
 
                 if (response.status === 204) {
                     const successToast = isSearch
@@ -2113,7 +1598,7 @@
                     if (response.status === 429) {
                         detailedMsg = "محدودیت تعداد درخواست گیت‌هاب (HTTP 429 Too Many Requests - لطفاً کمی صبر کنید)";
                     } else if (response.status === 422) {
-                        detailedMsg = errData.message ? `خطای ورودی گیت‌هاب یا عدم وجود شاخه (HTTP 422: ${errData.message})` : "شاخه مورد نظر یا ورودی‌های ورک‌فلو معتبر نیستند (HTTP 422 Unprocessable Entity)";
+                        detailedMsg = "درخواست تکراری یا در حال پردازش در سرور (HTTP 422 Unprocessable Entity)";
                     } else if (errData.message) {
                         detailedMsg = errData.message;
                     }
@@ -2178,47 +1663,6 @@
             document.getElementById('dlDebugConsole').value = '';
             showToast("🗑️ لاگ‌های پنل دانلود تب ۱ پاکسازی شدند.");
         };
-
-        // تاشو کردن پنل دیباگ اختصاصی استخراج گالری (تب ۳)
-        const galleryDebugHeader = document.getElementById('galleryDebugHeader');
-        const galleryDebugContent = document.getElementById('galleryDebugContent');
-        const galleryDebugToggleIcon = document.getElementById('galleryDebugToggleIcon');
-
-        if (galleryDebugHeader) {
-            galleryDebugHeader.onclick = () => {
-                if (galleryDebugContent.style.maxHeight === '0px' || !galleryDebugContent.style.maxHeight) {
-                    galleryDebugContent.style.maxHeight = '500px';
-                    galleryDebugToggleIcon.style.transform = 'rotate(180deg)';
-                    logGalleryDebug("کنسول دیاگ اختصاصی تب ۳ (استخراج گالری) باز شد.");
-                } else {
-                    galleryDebugContent.style.maxHeight = '0px';
-                    galleryDebugToggleIcon.style.transform = 'rotate(0deg)';
-                }
-            };
-        }
-
-        const btnCopyGalleryDebug = document.getElementById('btnCopyGalleryDebug');
-        if (btnCopyGalleryDebug) {
-            btnCopyGalleryDebug.onclick = () => {
-                const logs = document.getElementById('galleryDebugConsole').value;
-                if (!logs) {
-                    showToast("⚠️ هیچ لاگی در کنسول گالری وجود ندارد!");
-                    return;
-                }
-                navigator.clipboard.writeText(logs).then(() => {
-                    showToast("📋 لاگ‌های کامل سرور گالری با موفقیت کپی شد!");
-                    logGalleryDebug("تمام لاگ‌های سرور استخراج گالری در کلیپ‌بورد کپی شدند.", "success");
-                });
-            };
-        }
-
-        const btnClearGalleryDebug = document.getElementById('btnClearGalleryDebug');
-        if (btnClearGalleryDebug) {
-            btnClearGalleryDebug.onclick = () => {
-                document.getElementById('galleryDebugConsole').value = '';
-                showToast("🗑️ کنسول لاگ‌های گالری پاکسازی گردید.");
-            };
-        }
 
         // تاشو کردن پنل دیباگ عمومی
         const debugHeader = document.getElementById('debugHeader');
@@ -2557,7 +2001,7 @@
             return matches.map(u => sanitizeString(u.trim())).filter(u => u.length > 5);
         }
 
-        // تابع هوشمند جهت خواندن کلیپ‌بورد از اندروید یا مرورگر استاندارد وب
+        // تابع ۱۰۰٪ نیتیو اندروید جهت خواندن کلیپ‌بورد بدون کوچک‌ترین وابستگی به مرورگر
         async function getClipboardTextSafely() {
             if (window.AndroidNative && typeof window.AndroidNative.getClipboardText === 'function') {
                 try {
@@ -2569,20 +2013,10 @@
                     logDlDebug("خطای خواندن کلیپ‌بورد از پل نیتیو: " + errNative.message, "error");
                 }
             }
-            if (navigator.clipboard && navigator.clipboard.readText) {
-                try {
-                    const webText = await navigator.clipboard.readText();
-                    if (webText && webText.trim()) {
-                        return webText.trim();
-                    }
-                } catch (errWeb) {
-                    logDlDebug("خطای خواندن کلیپ‌بورد از مرورگر وب: " + errWeb.message, "error");
-                }
-            }
             return "";
         }
 
-        // دکمه چسباندن متن از کلیپ‌بورد (اندروید و وب)
+        // دکمه چسباندن متن از کلیپ‌بورد اندروید
         const btnPaste = document.getElementById('btnPaste');
         if (btnPaste) {
             btnPaste.onclick = async () => {
@@ -2590,118 +2024,12 @@
                 if (text && text.trim()) {
                     const cleaned = sanitizeString(text);
                     document.getElementById('dlLink').value = cleaned;
-                    showToast("📋 متن از کلیپ‌بورد چسبانده شد!");
-                    logDlDebug("پیوند با موفقیت از کلیپ‌بورد دستگاه دریافت و جای‌گذاری شد.");
+                    showToast("📋 متن از کلیپ‌بورد اندروید چسبانده شد!");
+                    logDlDebug("پیوند با موفقیت از حافظه اندروید دریافت و جای‌گذاری شد.");
                 } else {
                     showToast("⚠️ کلیپ‌بورد دستگاه خالی است یا پیوندی یافت نشد!");
                 }
             };
-        }
-
-        // سیستم مدیریت صف هوشمند و ترتیبی کلاینت (Smart Queue Engine)
-        const QUEUE_STORAGE_KEY = 'restricted_pending_links_queue_v1';
-        let isDispatchingQueue = false;
-        let isServerCurrentlyRunning = false;
-        let queueDebounceTimer = null;
-
-        function getPendingQueue() {
-            try {
-                const raw = localStorage.getItem(QUEUE_STORAGE_KEY);
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed)) return parsed;
-                }
-            } catch (e) {}
-            return [];
-        }
-
-        function savePendingQueue(q) {
-            try {
-                localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(q));
-            } catch (e) {}
-        }
-
-        async function processSmartDownloadQueue() {
-            if (isDispatchingQueue) return;
-
-            const queue = getPendingQueue();
-            if (queue.length === 0) return;
-
-            isDispatchingQueue = true;
-
-            // برداشتن تمامی لینک‌های موجود در صف و پاکسازی صف محلی
-            const batchToProcess = [...queue];
-            savePendingQueue([]);
-
-            // باز کردن خودکار آکاردئون تاریخچه
-            if (historyAccordionContent) {
-                historyAccordionContent.style.maxHeight = '400px';
-                if (historyAccordionToggleIcon) historyAccordionToggleIcon.style.transform = 'rotate(180deg)';
-            }
-
-            showToast(`🚀 ارسال تجمع ${batchToProcess.length.toLocaleString('fa-IR')} لینک به سرور...`);
-            logDlDebug(`⚡ ارسال یکپارچه ${batchToProcess.length} لینک به سرور پایتون جهت دانلود ترتیبی و مقاوم.`);
-
-            const historyItems = [];
-            batchToProcess.forEach(linkItem => {
-                const link = typeof linkItem === 'string' ? linkItem : linkItem.link;
-                const hId = typeof linkItem === 'object' && linkItem.id ? linkItem.id : null;
-
-                const isNewUnique = registerUniqueLink(link);
-                const activeHId = hId || addDownloadHistoryItem(link, isNewUnique);
-                historyItems.push({ link, id: activeHId });
-            });
-
-            // ادغام تمامی لینک‌ها با کاراکتر نیولاین (\n) برای یک پایتون ران یکپارچه
-            const combinedPayload = historyItems.map(item => item.link).join('\n');
-            const firstHistoryId = historyItems.length > 0 ? historyItems[0].id : null;
-
-            isServerCurrentlyRunning = true;
-            const dispatchResult = await triggerWorkflow(combinedPayload, firstHistoryId);
-            const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
-
-            historyItems.forEach(item => {
-                if (!isSuccess) {
-                    const errDetail = (dispatchResult && dispatchResult.errorMessage)
-                        ? dispatchResult.errorMessage
-                        : 'ارسال درخواست به گیت‌هاب با خطا مواجه شد. لطفاً توکن PAT و تنظیمات گیت‌هاب را بررسی کنید.';
-                    updateDownloadHistoryStatus(item.id, 'failed', '❌ عدم موفقیت در ارسال به گیت‌هاب', errDetail);
-                } else {
-                    updateDownloadHistoryStatus(item.id, 'in_progress', '⚡ در حال پردازش در سرور...');
-                }
-            });
-
-            isDispatchingQueue = false;
-        }
-
-        function enqueueLinksForDownload(links) {
-            if (!links || links.length === 0) return;
-
-            const queue = getPendingQueue();
-            let addedCount = 0;
-
-            links.forEach(l => {
-                const cleaned = sanitizeString(l);
-                if (cleaned && !queue.some(item => (typeof item === 'string' ? item : item.link) === cleaned)) {
-                    const isNewUnique = registerUniqueLink(cleaned);
-                    const hId = addDownloadHistoryItem(cleaned, isNewUnique);
-                    updateDownloadHistoryStatus(hId, 'in_progress', '⏳ در صف انتظار فرانت‌اند...');
-
-                    queue.push({ link: cleaned, id: hId });
-                    addedCount++;
-                }
-            });
-
-            if (addedCount > 0) {
-                savePendingQueue(queue);
-                logDlDebug(`📥 تعداد ${addedCount} پیوند به صف هوشمند فرانت‌اند اضافه شد (مجموع صف: ${queue.length}).`);
-                showToast(`📥 ${addedCount.toLocaleString('fa-IR')} پیوند به صف اضافه شد...`);
-
-                if (queueDebounceTimer) clearTimeout(queueDebounceTimer);
-                queueDebounceTimer = setTimeout(() => {
-                    processSmartDownloadQueue();
-                }, 1500); // مکث ۱.۵ ثانیه‌ای جهت تجمع لینک‌های کلیک شده در فواصل کوتاه
-            }
         }
 
         document.getElementById('btnDownload').onclick = async () => {
@@ -2717,7 +2045,36 @@
                 return;
             }
 
-            enqueueLinksForDownload(links);
+            showToast(`🚀 شناسایی ${links.length.toLocaleString('fa-IR')} لینک معتبر... در حال ارسال به صف دانلود!`);
+            logDlDebug(`⚡ مجموعاً ${links.length} لینک برای دانلود شناسایی شد.`);
+
+            // باز کردن خودکار آکاردئون تاریخچه
+            if (historyAccordionContent) {
+                historyAccordionContent.style.maxHeight = '400px';
+                if (historyAccordionToggleIcon) historyAccordionToggleIcon.style.transform = 'rotate(180deg)';
+            }
+
+            for (let i = 0; i < links.length; i++) {
+                const link = links[i];
+                const isNewUnique = registerUniqueLink(link);
+                const historyId = addDownloadHistoryItem(link, isNewUnique);
+
+                const dispatchResult = await triggerWorkflow(link, historyId);
+                const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
+
+                if (!isSuccess) {
+                    const errDetail = (dispatchResult && dispatchResult.errorMessage)
+                        ? dispatchResult.errorMessage
+                        : 'ارسال درخواست به گیت‌هاب با خطا مواجه شد. لطفاً توکن PAT و تنظیمات گیت‌هاب را بررسی کنید.';
+                    updateDownloadHistoryStatus(historyId, 'failed', '❌ عدم موفقیت در ارسال به گیت‌هاب', errDetail);
+                }
+
+                // وقفه هوشمند ۱۰ ثانیه‌ای بین ارسال‌های متوالی جهت جلوگیری از محدودیت Rate Limit گیت‌هاب (HTTP 429 / 422)
+                if (i < links.length - 1) {
+                    await new Promise(r => setTimeout(r, 10000));
+                }
+            }
+
             document.getElementById('dlLink').value = '';
         };
 
@@ -2947,416 +2304,6 @@
             };
             reader.readAsText(file);
         };
-
-        // ==================== هاندرهای اختصاصی تب ۳ (استخراج‌کننده گالری) ====================
-        const btnPasteGalleryUrl = document.getElementById('btnPasteGalleryUrl');
-        if (btnPasteGalleryUrl) {
-            btnPasteGalleryUrl.onclick = async () => {
-                const text = await getClipboardTextSafely();
-                if (text && text.trim()) {
-                    document.getElementById('galleryUrlInput').value = sanitizeString(text.trim());
-                    showToast("📋 آدرس گالری چسبانده شد!");
-                } else {
-                    showToast("⚠️ کلیپ‌بورد خالی است!");
-                }
-            };
-        }
-
-        // بارگذاری و ذخیره خودکار شماره پارت شروع گالری و آدرس دیتابیس سفارشی
-        const savedStartPart = localStorage.getItem('restricted_gallery_start_part');
-        if (savedStartPart && document.getElementById('galleryStartPartInput')) {
-            document.getElementById('galleryStartPartInput').value = savedStartPart;
-        }
-        if (document.getElementById('galleryStartPartInput')) {
-            document.getElementById('galleryStartPartInput').addEventListener('input', (e) => {
-                localStorage.setItem('restricted_gallery_start_part', sanitizeString(e.target.value.trim()));
-            });
-        }
-
-        const savedCustomDb = localStorage.getItem('restricted_gallery_custom_db');
-        if (savedCustomDb && document.getElementById('galleryCustomDbInput')) {
-            document.getElementById('galleryCustomDbInput').value = savedCustomDb;
-        }
-        if (document.getElementById('galleryCustomDbInput')) {
-            document.getElementById('galleryCustomDbInput').addEventListener('input', (e) => {
-                localStorage.setItem('restricted_gallery_custom_db', sanitizeString(e.target.value.trim()));
-            });
-        }
-
-        // هاندر دکمه اسکنر و کشف‌کننده قدرتمند دیتابیس وب‌سایت (gallery-dl & Crawler)
-        const btnRunDatabaseCrawler = document.getElementById('btnRunDatabaseCrawler');
-        if (btnRunDatabaseCrawler) {
-            btnRunDatabaseCrawler.onclick = async () => {
-                let targetUrl = document.getElementById('crawlerTargetInput') ? sanitizeString(document.getElementById('crawlerTargetInput').value) : '';
-                if (!targetUrl) {
-                    targetUrl = sanitizeString(document.getElementById('galleryUrlInput').value);
-                }
-
-                if (!targetUrl) {
-                    showToast("⚠️ لطفاً آدرس وب‌سایت موردنظر جهت اسکن دیتابیس را وارد کنید!");
-                    return;
-                }
-
-                showToast("🔍 در حال راه‌اندازی موتور سنگین اسکنر و کشف‌کننده دیتابیس...");
-                logDlDebug(`🔍 شروع اسکن عمیق دیتابیس سایت: ${targetUrl}`);
-                logGalleryDebug(`🔍 اجرای اسکنر دیتابیس برای وب‌سایت: ${targetUrl}`);
-
-                updateGalleryStatsUI(0, 0, 0, "موتور اسکنر در حال کاوش دیتابیس... 🔍");
-
-                const historyId = addDownloadHistoryItem("🔍 اسکن دیتابیس: " + targetUrl, true);
-
-                // Dispatch to gallery_extractor.yml with IS_CRAWLER_MODE: "true"
-                const dispatchResult = await triggerWorkflow(targetUrl, historyId, 'gallery_extractor.yml', true);
-                const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
-
-                if (isSuccess) {
-                    showToast("✅ موتور اسکنر دیتابیس با موفقیت فعال شد! لاگ‌های زنده را چک بفرمایید.");
-                } else {
-                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در برپاخاستن سرور اسکنر.';
-                    showToast("❌ " + errDetail);
-                }
-            };
-        }
-
-        const btnApplyDiscoveredDb = document.getElementById('btnApplyDiscoveredDb');
-        if (btnApplyDiscoveredDb) {
-            btnApplyDiscoveredDb.onclick = () => {
-                const dbUrl = document.getElementById('discoveredDbUrlText') ? document.getElementById('discoveredDbUrlText').innerText.trim() : '';
-                if (dbUrl) {
-                    const customDbEl = document.getElementById('galleryCustomDbInput');
-                    if (customDbEl) {
-                        customDbEl.value = dbUrl;
-                        localStorage.setItem('restricted_gallery_custom_db', dbUrl);
-                        showToast("✅ آدرس دیتابیس کشف‌شده در فرم اعمال گردید!");
-                        window.scrollTo({ top: customDbEl.offsetTop - 100, behavior: 'smooth' });
-                    }
-                }
-            };
-        }
-
-        // دکمه شخم زدن و کشف دقیق آمار دیتابیس سرور
-        const btnDiscoverDatabase = document.getElementById('btnDiscoverDatabase');
-        if (btnDiscoverDatabase) {
-            btnDiscoverDatabase.onclick = async () => {
-                const gUrl = sanitizeString(document.getElementById('galleryUrlInput').value);
-                const targetChannel = sanitizeString(document.getElementById('galleryTargetChannelInput').value) || '-1004389912148';
-                const startPart = document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : '';
-
-                if (!gUrl) {
-                    showToast("⚠️ لطفاً آدرس اینترنتی گالری را وارد کنید!");
-                    return;
-                }
-
-                showToast("🌾 در حال ارسال دستور شخم زدن و کشف کامل دیتابیس به سرور...");
-                logDlDebug(`🌾 شخم زدن دیتابیس اصلی گالری: ${gUrl} (پارت شروع: ${startPart || 'خودکار'}) به مقصد ${targetChannel}`);
-                logGalleryDebug(`🌾 شروع شخم زدن دیتابیس اصلی: ${gUrl} (پارت شروع: ${startPart || 'خودکار'})`);
-
-                updateGalleryStatsUI(0, 0, 0, "در حال شخم زدن دیتابیس سرور...");
-
-                const historyId = addDownloadHistoryItem("🌾 شخم زدن: " + gUrl, true);
-
-                const dispatchResult = await triggerWorkflow(gUrl, historyId, 'gallery_extractor.yml', true);
-                const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
-
-                if (isSuccess) {
-                    showToast("✅ دستور شخم زدن دیتابیس صادر شد! سرور در حال تحلیل و کشف کامل عکس‌هاست.");
-                    updateGalleryStatsUI(0, 0, 0, "سرور در حال شخم زدن و کشف دیتابیس 🌾");
-                } else {
-                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در ارسال درخواست به گیت‌هاب.';
-                    showToast("❌ " + errDetail);
-                    updateGalleryStatsUI(0, 0, 0, "خطا در برپاخاستن سرور ❌");
-                }
-            };
-        }
-
-        // دکمه توقف فوری سرور گالری
-        const btnStopGalleryServer = document.getElementById('btnStopGalleryServer');
-        if (btnStopGalleryServer) {
-            btnStopGalleryServer.onclick = () => {
-                const btnStop = document.getElementById('btnStopServer');
-                if (btnStop) {
-                    btnStop.click();
-                } else {
-                    showToast("🛑 دستور توقف سرور صادر شد.");
-                }
-            };
-        }
-
-        const btnStartGalleryExtraction = document.getElementById('btnStartGalleryExtraction');
-        if (btnStartGalleryExtraction) {
-            btnStartGalleryExtraction.onclick = async () => {
-                const gUrl = sanitizeString(document.getElementById('galleryUrlInput').value);
-                const targetChannel = sanitizeString(document.getElementById('galleryTargetChannelInput').value) || '-1004389912148';
-                const startPart = document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : '';
-
-                if (!gUrl) {
-                    showToast("⚠️ لطفاً آدرس اینترنتی گالری را وارد کنید!");
-                    return;
-                }
-
-                showToast("🚀 در حال فرستادن سیگنال استخراج گالری به سرور گیت‌هاب...");
-                logDlDebug(`🖼️ فرستادن سیگنال استخراج گالری: ${gUrl} (پارت شروع: ${startPart || 'خودکار'}) به مقصد ${targetChannel}`);
-                logGalleryDebug(`🚀 شروع استخراج گالری: ${gUrl} (پارت شروع: ${startPart || 'خودکار'}) به کانال مقصد ${targetChannel}`);
-
-                updateGalleryStatsUI(0, 0, 0, "در حال ارسال سیگنال به سرور...");
-
-                const historyId = addDownloadHistoryItem(gUrl, true);
-
-                const dispatchResult = await triggerWorkflow(gUrl, historyId, 'gallery_extractor.yml');
-                const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
-
-                if (isSuccess) {
-                    showToast("✅ درخواست استخراج گالری صادر شد! تصاویر به کانال آرشیو ارسال می‌شوند.");
-                    updateGalleryStatsUI(0, 0, 0, "سرور در حال استخراج و ارسال آلبومی ⚡");
-                } else {
-                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در ارسال درخواست گالری به گیت‌هاب.';
-                    showToast("❌ " + errDetail);
-                    updateGalleryStatsUI(0, 0, 0, "خطا در برپاخاستن سرور ❌");
-                }
-            };
-        }
-
-        async function fetchGalleryStatsFromFiles() {
-            let totalSentFromDb = 0;
-            const dbUrls = [
-                'restricted_sent_photos.json?t=' + Date.now(),
-                'bot/restricted_sent_photos.json?t=' + Date.now(),
-                '../restricted_sent_photos.json?t=' + Date.now()
-            ];
-            for (const u of dbUrls) {
-                try {
-                    const resp = await fetch(u);
-                    if (resp.ok) {
-                        const list = await resp.json();
-                        if (Array.isArray(list)) {
-                            totalSentFromDb = list.length;
-                            break;
-                        }
-                    }
-                } catch (e) {}
-            }
-
-            const urlsToTry = [
-                'restricted_gallery_stats.json?t=' + Date.now(),
-                'bot/restricted_gallery_stats.json?t=' + Date.now(),
-                '../restricted_gallery_stats.json?t=' + Date.now()
-            ];
-            let foundStats = false;
-            for (const u of urlsToTry) {
-                try {
-                    const resp = await fetch(u);
-                    if (resp.ok) {
-                        const stats = await resp.json();
-                        if (stats) {
-                            const sentCount = Math.max(stats.total_sent || 0, totalSentFromDb);
-                            updateGalleryStatsUI(sentCount, stats.total_extracted || 0, stats.duplicates_skipped || 0, stats.status_text || "آماده به‌کار 💎", stats.last_updated_jalali);
-                            foundStats = true;
-                            return;
-                        }
-                    }
-                } catch (e) {
-                    // Try next url
-                }
-            }
-
-            if (!foundStats && totalSentFromDb > 0) {
-                updateGalleryStatsUI(totalSentFromDb, totalSentFromDb, 0, "آماده به‌کار 💎", new Date().toLocaleTimeString('fa-IR'));
-            }
-        }
-
-        function updateGalleryStatsUI(sent, extracted, duplicates, statusText, lastUpdated) {
-            const elSent = document.getElementById('galleryStatTotalSent');
-            const elExtracted = document.getElementById('galleryStatExtracted');
-            const elDuplicates = document.getElementById('galleryStatDuplicates');
-            const elLast = document.getElementById('galleryStatLastUpdated');
-            const elStatus = document.getElementById('galleryStatusText');
-
-            if (elSent) elSent.innerText = Number(sent).toLocaleString('fa-IR');
-            if (elExtracted) elExtracted.innerText = Number(extracted).toLocaleString('fa-IR');
-            if (elDuplicates) elDuplicates.innerText = Number(duplicates).toLocaleString('fa-IR');
-            if (elLast) elLast.innerText = lastUpdated || (new Date().toLocaleTimeString('fa-IR'));
-            if (elStatus) elStatus.innerText = statusText || "آماده به‌کار 💎";
-        }
-
-        const btnRefreshGalleryStats = document.getElementById('btnRefreshGalleryStats');
-        if (btnRefreshGalleryStats) {
-            btnRefreshGalleryStats.onclick = () => {
-                fetchGalleryStatsFromFiles();
-                showToast("🔄 آمار گالری بروزرسانی گردید.");
-            };
-        }
-
-        const btnClearGalleryStats = document.getElementById('btnClearGalleryStats');
-        if (btnClearGalleryStats) {
-            btnClearGalleryStats.onclick = () => {
-                updateGalleryStatsUI(0, 0, 0, "آماده به‌کار 💎", "دیتا پاکسازی شد");
-                showToast("🗑️ آمار گالری پاکسازی شد.");
-            };
-        }
-
-        setInterval(fetchGalleryStatsFromFiles, 20000);
-        fetchGalleryStatsFromFiles();
-
-        // ==================== هاندرهای اختصاصی تب ۴ (استخراج فایل‌های فشرده) ====================
-        const btnPasteZipUrl = document.getElementById('btnPasteZipUrl');
-        if (btnPasteZipUrl) {
-            btnPasteZipUrl.onclick = async () => {
-                const text = await getClipboardTextSafely();
-                if (text && text.trim()) {
-                    document.getElementById('zipUrlInput').value = sanitizeString(text.trim());
-                    showToast("📋 آدرس فایل فشرده چسبانده شد!");
-                } else {
-                    showToast("⚠️ کلیپ‌بورد خالی است!");
-                }
-            };
-        }
-
-        const btnStartZipExtraction = document.getElementById('btnStartZipExtraction');
-        if (btnStartZipExtraction) {
-            btnStartZipExtraction.onclick = async () => {
-                const zUrl = sanitizeString(document.getElementById('zipUrlInput').value);
-                const targetChannel = sanitizeString(document.getElementById('zipTargetChannelInput').value) || '-1004498823531';
-
-                if (!zUrl) {
-                    showToast("⚠️ لطفاً آدرس فایل فشرده (Zip/Rar/7z) را وارد بفرمایید!");
-                    return;
-                }
-
-                showToast("🚀 در حال ارسال درخواست استخراج فایل فشرده به سرور...");
-                logZipDebug(`📦 شروع استخراج فایل فشرده: ${zUrl} به مقصد کانال ${targetChannel}`);
-
-                updateZipStatsUI(0, 0, 0, "در حال برپاخاستن سرور...", "ارسال سیگنال 🚀");
-
-                const historyId = addDownloadHistoryItem("📦 استخراج فشرده: " + zUrl, true);
-
-                const dispatchResult = await triggerWorkflow(zUrl, historyId, 'zip_extractor.yml');
-                const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
-
-                if (isSuccess) {
-                    showToast("✅ درخواست استخراج صادر شد! سرور در حال دانلود و آنزیپ فایل ۱۰ گیگابایتی است.");
-                    updateZipStatsUI(0, 0, 0, "سرور در حال پردازش", "در حال اجرا ⚡");
-                } else {
-                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در برپاخاستن سرور.';
-                    showToast("❌ " + errDetail);
-                    updateZipStatsUI(0, 0, 0, "خطا", "خطا در اتصال ❌");
-                }
-            };
-        }
-
-        const btnStopZipServer = document.getElementById('btnStopZipServer');
-        if (btnStopZipServer) {
-            btnStopZipServer.onclick = () => {
-                const btnStop = document.getElementById('btnStopServer');
-                if (btnStop) {
-                    btnStop.click();
-                } else {
-                    showToast("🛑 دستور توقف سرور صادر شد.");
-                }
-            };
-        }
-
-        // تاشو کردن پنل دیباگ اختصاصی استخراج فایل فشرده (تب ۴)
-        const zipDebugHeader = document.getElementById('zipDebugHeader');
-        const zipDebugContent = document.getElementById('zipDebugContent');
-        const zipDebugToggleIcon = document.getElementById('zipDebugToggleIcon');
-
-        if (zipDebugHeader) {
-            zipDebugHeader.onclick = () => {
-                if (zipDebugContent.style.maxHeight === '0px' || !zipDebugContent.style.maxHeight) {
-                    zipDebugContent.style.maxHeight = '500px';
-                    zipDebugToggleIcon.style.transform = 'rotate(180deg)';
-                    logZipDebug("کنسول دیاگ اختصاصی تب ۴ (استخراج فایل فشرده) باز شد.");
-                } else {
-                    zipDebugContent.style.maxHeight = '0px';
-                    zipDebugToggleIcon.style.transform = 'rotate(0deg)';
-                }
-            };
-        }
-
-        const btnCopyZipDebug = document.getElementById('btnCopyZipDebug');
-        if (btnCopyZipDebug) {
-            btnCopyZipDebug.onclick = () => {
-                const logs = document.getElementById('zipDebugConsole').value;
-                if (!logs) {
-                    showToast("⚠️ لاگی در کنسول استخراج فایل فشرده وجود ندارد!");
-                    return;
-                }
-                navigator.clipboard.writeText(logs).then(() => {
-                    showToast("📋 لاگ‌های کامل سرور استخراج فایل فشرده کپی شد!");
-                    logZipDebug("تمام لاگ‌های سرور استخراج فایل فشرده کپی گردید.", "success");
-                });
-            };
-        }
-
-        const btnClearZipDebug = document.getElementById('btnClearZipDebug');
-        if (btnClearZipDebug) {
-            btnClearZipDebug.onclick = () => {
-                document.getElementById('zipDebugConsole').value = '';
-                showToast("🗑️ لاگ‌های کنسول پاکسازی شد.");
-            };
-        }
-
-        async function fetchZipStatsFromFiles() {
-            const urlsToTry = [
-                'restricted_zip_stats.json?t=' + Date.now(),
-                'bot/restricted_zip_stats.json?t=' + Date.now(),
-                '../restricted_zip_stats.json?t=' + Date.now()
-            ];
-
-            for (const u of urlsToTry) {
-                try {
-                    const resp = await fetch(u);
-                    if (resp.ok) {
-                        const stats = await resp.json();
-                        if (stats) {
-                            updateZipStatsUI(
-                                stats.total_files || 0,
-                                stats.sent_files || 0,
-                                stats.total_mb_sent || 0,
-                                stats.current_folder || "-",
-                                stats.status_text || "آماده به کار 💎",
-                                stats.last_updated_jalali
-                            );
-                            return;
-                        }
-                    }
-                } catch (e) {}
-            }
-        }
-
-        function updateZipStatsUI(totalFiles, sentFiles, mbSent, currentFolder, statusText, lastUpdated) {
-            const elTotal = document.getElementById('zipStatTotalFiles');
-            const elSent = document.getElementById('zipStatSentFiles');
-            const elMb = document.getElementById('zipStatMbSent');
-            const elLast = document.getElementById('zipStatLastUpdated');
-            const elStatus = document.getElementById('zipStatusText');
-
-            if (elTotal) elTotal.innerText = Number(totalFiles).toLocaleString('fa-IR');
-            if (elSent) elSent.innerText = Number(sentFiles).toLocaleString('fa-IR');
-            if (elMb) elMb.innerText = Number(mbSent).toLocaleString('fa-IR') + ' MB';
-            if (elLast) elLast.innerText = lastUpdated || (new Date().toLocaleTimeString('fa-IR'));
-            if (elStatus) elStatus.innerText = statusText || "آماده به‌کار 💎";
-        }
-
-        const btnRefreshZipStats = document.getElementById('btnRefreshZipStats');
-        if (btnRefreshZipStats) {
-            btnRefreshZipStats.onclick = () => {
-                fetchZipStatsFromFiles();
-                showToast("🔄 آمار فایل فشرده بروزرسانی گردید.");
-            };
-        }
-
-        const btnClearZipStats = document.getElementById('btnClearZipStats');
-        if (btnClearZipStats) {
-            btnClearZipStats.onclick = () => {
-                updateZipStatsUI(0, 0, 0, "-", "آماده به‌کار 💎", "دیتا پاکسازی شد");
-                showToast("🗑️ آمار پاکسازی شد.");
-            };
-        }
-
-        setInterval(fetchZipStatsFromFiles, 20000);
-        fetchZipStatsFromFiles();
-
-</script>
+    </script>
 </body>
 </html>

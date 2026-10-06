@@ -1279,11 +1279,11 @@
                 document.getElementById(id).value = val;
                 localStorage.setItem('restricted_bot_' + id, val);
             } else if (id === 'ghBranch') {
-                document.getElementById(id).value = '157'; // مقدار پیش‌فرض 157
+                document.getElementById(id).value = '81'; // مقدار پیش‌فرض 81
             }
-            if (id === 'ghBranch' && (!document.getElementById(id).value || ['80', '81', '100', '156'].includes(document.getElementById(id).value))) {
-                document.getElementById(id).value = '157';
-                localStorage.setItem('restricted_bot_ghBranch', '157');
+            if (id === 'ghBranch' && (!document.getElementById(id).value || document.getElementById(id).value === '80' || document.getElementById(id).value === '81')) {
+                document.getElementById(id).value = '100';
+                localStorage.setItem('restricted_bot_ghBranch', '100');
             }
 
             // ذخیره خودکار و ضدعفونی همزمان هنگام کپی/پیست یا تایپ
@@ -1344,7 +1344,7 @@
                     ghRepo: sanitizeString(document.getElementById('ghRepo').value) || '',
                     ghToken: sanitizeString(document.getElementById('ghPat').value) || '',
                     ghPat: sanitizeString(document.getElementById('ghPat').value) || '',
-                    ghBranch: sanitizeString(document.getElementById('ghBranch').value) || '157',
+                    ghBranch: sanitizeString(document.getElementById('ghBranch').value) || '100',
                     tgApiId: sanitizeString(document.getElementById('tgApiId').value) || '',
                     tgApiHash: sanitizeString(document.getElementById('tgApiHash').value) || '',
                     tgBotToken: sanitizeString(document.getElementById('tgBotToken').value) || '',
@@ -1938,7 +1938,7 @@
             const owner = sanitizeString(document.getElementById('ghOwner').value);
             const repo = sanitizeString(document.getElementById('ghRepo').value);
             const pat = sanitizeString(document.getElementById('ghPat').value);
-            const branch = sanitizeString(document.getElementById('ghBranch').value) || '157';
+            const branch = sanitizeString(document.getElementById('ghBranch').value) || '100';
 
             const tgApiId = sanitizeString(document.getElementById('tgApiId').value);
             const tgApiHash = sanitizeString(document.getElementById('tgApiHash').value);
@@ -2038,7 +2038,7 @@
                     };
                 }
 
-                const branchesToTry = Array.from(new Set([branch, '157', '156', '100', 'main', 'master']));
+                const branchesToTry = Array.from(new Set([branch, '156', '100', 'main', 'master']));
                 let response = null;
 
                 for (const tryBranch of branchesToTry) {
@@ -2113,7 +2113,7 @@
                     if (response.status === 429) {
                         detailedMsg = "محدودیت تعداد درخواست گیت‌هاب (HTTP 429 Too Many Requests - لطفاً کمی صبر کنید)";
                     } else if (response.status === 422) {
-                        detailedMsg = errData.message ? `خطای ورودی گیت‌هاب یا عدم وجود شاخه (HTTP 422: ${errData.message})` : "شاخه مورد نظر یا ورودی‌های ورک‌فلو معتبر نیستند (HTTP 422 Unprocessable Entity)";
+                        detailedMsg = "درخواست تکراری یا در حال پردازش در سرور (HTTP 422 Unprocessable Entity)";
                     } else if (errData.message) {
                         detailedMsg = errData.message;
                     }

@@ -122,10 +122,10 @@ public class TransparentPasteActivity extends Activity {
         if (rawToken == null || rawToken.trim().isEmpty()) {
             rawToken = prefs.getString("restricted_bot_ghPat", "");
         }
-        String rawBranch = prefs.getString("restricted_bot_ghBranch", "157");
+        String rawBranch = prefs.getString("restricted_bot_ghBranch", "100");
 
         final String ghToken = rawToken != null ? rawToken.trim() : "";
-        final String ghBranch = rawBranch != null ? rawBranch.trim() : "157";
+        final String ghBranch = rawBranch != null ? rawBranch.trim() : "100";
 
         if (ghToken.isEmpty()) {
             Toast.makeText(this, "⚠️ توکن گیت‌هاب خالی است! ابتدا تنظیمات را پر کنید.", Toast.LENGTH_LONG).show();
