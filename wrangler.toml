@@ -1,0 +1,10 @@
+# Cloudflare Pages / Workers configuration for Emarat Digital Portal
+name = "emarat-digital-portal"
+compatibility_date = "2024-03-01"
+pages_build_output_dir = "."
+
+[site]
+bucket = "."
+
+[env.production]
+name = "emarat-digital-portal"
