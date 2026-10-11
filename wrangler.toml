@@ -1,0 +1,3 @@
+# Cloudflare Pages configuration for Emarat Digital Portal
+name = "emarat-percent-imana"
+pages_build_output_dir = "."
