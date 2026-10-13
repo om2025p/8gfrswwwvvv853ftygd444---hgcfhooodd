@@ -269,7 +269,7 @@
     <script>
         // تابع فرمول سود مرکب منطبق بر calc2.html
         function runCompoundingCalculation(data, targetYears) {
-            let P_initial_principal = new Decimal(data.initialAmount.replace(/,/g, "") || 0);
+            let P_initial_principal = new Decimal((data.initialAmount || "").replace(/,/g, "") || 0);
             let t_years = new Decimal(targetYears || 0);
             let r_annual_rate_percent = new Decimal(data.rate || 0);
 
@@ -288,12 +288,12 @@
             }
             let n_compound_freq_per_year = new Decimal(freqVal);
 
-            let Dm_initial_monthly_deposit = new Decimal(data.monthlyDeposit.replace(/,/g, "") || 0);
-            let Dm_annual_increase = new Decimal(data.annualIncreaseMonthlyDeposit.replace(/,/g, "") || 0);
-            let Db_bimonthly_deposit = new Decimal(data.biMonthlyDeposit.replace(/,/g, "") || 0);
-
-            let effective_annual_rate = Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), n_compound_freq_per_year).minus(1).times(100);
-            let effective_annual_rate_decimal = effective_annual_rate.div(100);
+            let Dm_initial_monthly_deposit = new Decimal((data.monthlyDeposit || "").replace(/,/g, "") || 0);
+            let Dm_annual_increase = new Decimal((data.annualIncreaseMonthlyDeposit || "").replace(/,/g, "") || 0);
+            let Db_bimonthly_deposit = new Decimal((data.biMonthlyDeposit || "").replace(/,/g, "") || 0);
+            let Dw_weekly_deposit = new Decimal((data.weeklyDeposit || "").replace(/,/g, "") || 0);
+            let Dn_ndays_deposit = new Decimal((data.nDaysDeposit || "").replace(/,/g, "") || 0);
+            let n_days_interval = parseInt(data.nDaysInterval) || 0;
 
             let A_final_amount = P_initial_principal.times(
                 Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), n_compound_freq_per_year.times(t_years))
@@ -345,8 +345,45 @@
                 profit_earned_over_initial_P = profit_earned_over_initial_P.plus(fv_of_this_bimonthly_deposit);
             }
 
-            let total_periodic_deposits_made = Dm_initial_monthly_deposit.times(0); // محاسبه در بالا به صورت مستقیم انجام شد
-            let net_total_profit = A_final_amount.minus(P_initial_principal); // تقریب کلی برای صفحه مجموع
+            // واریزهای هفتگی
+            let total_weekly_periods_in_investment = t_years.times(52);
+            for (let k = 1; k <= total_weekly_periods_in_investment.toNumber(); k++) {
+                let time_of_deposit_in_years_tk = new Decimal(k).div(52);
+                let compounding_periods_for_this_deposit = n_compound_freq_per_year.times(t_years).minus(n_compound_freq_per_year.times(time_of_deposit_in_years_tk));
+
+                if (compounding_periods_for_this_deposit.isNegative()) {
+                    compounding_periods_for_this_deposit = new Decimal(0);
+                }
+
+                let fv_of_this_weekly_deposit = Dw_weekly_deposit.times(
+                    Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), compounding_periods_for_this_deposit)
+                );
+
+                A_final_amount = A_final_amount.plus(fv_of_this_weekly_deposit);
+                profit_earned_over_initial_P = profit_earned_over_initial_P.plus(fv_of_this_weekly_deposit);
+            }
+
+            // واریزهای هر چند روز یک‌بار
+            if (n_days_interval > 0 && Dn_ndays_deposit.greaterThan(0)) {
+                let total_days_of_investment = t_years.times(365).toNumber();
+                let total_ndays_periods = Math.floor(total_days_of_investment / n_days_interval);
+
+                for (let k = 1; k <= total_ndays_periods; k++) {
+                    let time_of_deposit_in_years_tk = new Decimal(k * n_days_interval).div(365);
+                    let compounding_periods_for_this_deposit = n_compound_freq_per_year.times(t_years).minus(n_compound_freq_per_year.times(time_of_deposit_in_years_tk));
+
+                    if (compounding_periods_for_this_deposit.isNegative()) {
+                        compounding_periods_for_this_deposit = new Decimal(0);
+                    }
+
+                    let fv_of_this_ndays_deposit = Dn_ndays_deposit.times(
+                        Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), compounding_periods_for_this_deposit)
+                    );
+
+                    A_final_amount = A_final_amount.plus(fv_of_this_ndays_deposit);
+                    profit_earned_over_initial_P = profit_earned_over_initial_P.plus(fv_of_this_ndays_deposit);
+                }
+            }
 
             return {
                 finalAmount: A_final_amount,
