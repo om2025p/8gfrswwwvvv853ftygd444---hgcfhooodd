@@ -417,7 +417,7 @@
                         <p>بزرگوار، شما در حال حاضر فقط <strong>${markedTabs.length}</strong> تب را علامت‌گذاری کرده‌اید.</p>
                         <p>ضرب‌المثل قدیمی چینی میگه: «تمام تخم‌مرغ‌ها رو در یک سبد نذار!» حداقل باید <strong>۲ تب فعال</strong> را نشانه‌گذاری کنی تا جادوی مجموع کل برات فعال بشه! 🥚🧺</p>
                     </div>
-                    <button class="btn-back" onclick="window.close()">🔙 بازگشت به ماشین‌حساب</button>
+                    <button class="btn-back" onclick="if (history.length > 1) { history.back(); } else { window.location.href='calc2.html'; }">🔙 بازگشت به ماشین‌حساب</button>
                 `;
                 return;
             }
@@ -452,7 +452,7 @@
                     </div>
                 </div>
 
-                <button class="btn-back" onclick="window.close()">🔙 بستن صفحه گزارش</button>
+                <button class="btn-back" onclick="if (history.length > 1) { history.back(); } else { window.location.href='calc2.html'; }">🔙 بازگشت به ماشین‌حساب</button>
             `;
 
             const yearsInput = document.getElementById('target-years');

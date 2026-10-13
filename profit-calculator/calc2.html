@@ -1756,7 +1756,7 @@
                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
             }
 
-            // لیسنر کلیک برای باز کردن صفحه مجموع کل مستقل
+            // لیسنر کلیک برای باز کردن صفحه مجموع کل در همان تب مرورگر
             const openCumBtn = document.getElementById('open-cumulative-total-btn');
             if (openCumBtn) {
                 openCumBtn.addEventListener('click', () => {
@@ -1764,7 +1764,7 @@
                     calculatorInstances.forEach((instanceData, tabId) => {
                         saveInputs(instanceData.element, tabId);
                     });
-                    window.open('total.html', '_blank');
+                    window.location.href = 'total.html';
                 });
             }
 
