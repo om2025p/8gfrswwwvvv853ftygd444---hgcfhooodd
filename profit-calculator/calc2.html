@@ -466,6 +466,14 @@
         </div>
     </div>
 
+    <!-- Total Sum Report Modal (Offline Embedded) -->
+    <div id="totalReportModal" class="history-modal" style="z-index: 1002;">
+        <div class="history-content" style="max-width: 450px; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: #ffffff; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);">
+            <span class="close-history" onclick="closeTotalReportModal()" style="color: #fff;">&times;</span>
+            <div id="totalReportContent"></div>
+        </div>
+    </div>
+
     <!-- Template for calculator instance -->
     <template id="calculator-template">
         <div class="container calculator-instance">
@@ -521,6 +529,15 @@
 
             <label>💵 واریز هر دو ماه یک‌بار (تومان):</label>
             <input type="text" class="biMonthlyDeposit" placeholder="مثال: 200,000">
+
+            <label>💵 واریز هفتگی (تومان):</label>
+            <input type="text" class="weeklyDeposit" placeholder="مثال: 50,000">
+
+            <label>💵 واریز دوره‌ای سفارشی (تومان):</label>
+            <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 5px;">
+                <input type="text" class="nDaysDeposit" placeholder="مثال: 100,000" style="margin: 0; flex: 2;">
+                <input type="number" class="nDaysInterval" placeholder="هر چند روز؟ (مثلاً 5)" style="margin: 0; flex: 1.2;">
+            </div>
 
             <button class="calculateButton">محاسبه سود 📊</button>
             <button class="resetButton">🔄 ریست</button>
@@ -593,6 +610,9 @@
                 monthlyDeposit: instanceElement.querySelector('.monthlyDeposit'),
                 annualIncreaseMonthlyDeposit: instanceElement.querySelector('.annualIncreaseMonthlyDeposit'),
                 biMonthlyDeposit: instanceElement.querySelector('.biMonthlyDeposit'),
+                weeklyDeposit: instanceElement.querySelector('.weeklyDeposit'),
+                nDaysDeposit: instanceElement.querySelector('.nDaysDeposit'),
+                nDaysInterval: instanceElement.querySelector('.nDaysInterval'),
                 calculateButton: instanceElement.querySelector('.calculateButton'),
                 resetButton: instanceElement.querySelector('.resetButton'),
                 historyButton: instanceElement.querySelector('.historyButton'),
@@ -638,6 +658,158 @@
         // بستن مودال تاریخچه
         function closeHistoryModal() {
             document.getElementById('historyModal').style.display = "none";
+        }
+
+        // بستن مودال مجموع کل
+        function closeTotalReportModal() {
+            document.getElementById('totalReportModal').style.display = "none";
+        }
+
+        // باز کردن و رندر هوشمند گزارش مجموع کل (کاملاً درون‌صفحه‌ای و ۱۰۰٪ آفلاین)
+        function openTotalReportModal() {
+            const modal = document.getElementById('totalReportModal');
+            const container = document.getElementById('totalReportContent');
+
+            let savedTabs = JSON.parse(localStorage.getItem('savedTabs')) || [];
+            let markedTabs = [];
+
+            savedTabs.forEach(tabId => {
+                const isMarked = localStorage.getItem(`tabMarked_${tabId}`) === 'true';
+                if (isMarked) {
+                    let data = JSON.parse(localStorage.getItem(`calculatorTab_${tabId}`)) || {};
+                    if (data.initialAmount || data.monthlyDeposit || data.biMonthlyDeposit || data.weeklyDeposit || data.nDaysDeposit) {
+                        markedTabs.push({ id: tabId, data: data });
+                    }
+                }
+            });
+
+            if (markedTabs.length < 2) {
+                container.innerHTML = `
+                    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 15px; padding: 20px; text-align: center; color: #fca5a5; font-size: 1rem; line-height: 1.6;">
+                        <h3 style="color: #fca5a5; margin-top: 0;">⚠️ خطای عدم تمرکز اقتصادی!</h3>
+                        <p>بزرگوار، شما در حال حاضر فقط <strong>${markedTabs.length}</strong> تب را علامت‌گذاری کرده‌اید.</p>
+                        <p>حداقل باید <strong>۲ تب فعال</strong> را نشانه‌گذاری کنی تا جادوی مجموع کل برات فعال بشه! 🥚🧺</p>
+                    </div>
+                    <button onclick="closeTotalReportModal()" style="margin-top: 15px; padding: 10px 20px; background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; font-weight: bold; cursor: pointer;">🔙 بستن</button>
+                `;
+                modal.style.display = "block";
+                return;
+            }
+
+            let savedYears = localStorage.getItem('totalSumYears') || '5';
+
+            container.innerHTML = `
+                <h2 style="color: #4CAF50; margin-top: 0; font-size: 1.3rem;">📊 مجموع کل سرمایه‌گذاری‌ها (${markedTabs.length} تب)</h2>
+
+                <label style="display: block; margin: 15px 0 8px; font-weight: 600; text-align: right; font-size: 0.9rem;">📅 مدت زمان مجموع (سال):</label>
+                <input type="number" id="modal-target-years" value="${savedYears}" min="0" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.07); color: #ffffff; text-align: center; font-size: 1.1rem; outline: none;">
+
+                <div style="margin-top: 20px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 15px; display: flex; flex-direction: column; gap: 12px; text-align: right;">
+                    <div style="background: rgba(255, 255, 255, 0.04); border-radius: 12px; padding: 12px; border-right: 4px solid #00c853;">
+                        <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 4px;">🏆 مجموع کل سرمایه نهایی:</div>
+                        <div id="modal-total-amount-val" style="font-size: 1.15rem; font-weight: bold; direction: ltr; text-align: right;">-- تومان</div>
+                    </div>
+                    <div style="background: rgba(255, 255, 255, 0.04); border-radius: 12px; padding: 12px; border-right: 4px solid #bb86fc;">
+                        <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 4px;">💵 مجموع کل سود مرکب کسب‌شده:</div>
+                        <div id="modal-total-profit-val" style="font-size: 1.15rem; font-weight: bold; direction: ltr; text-align: right;">-- تومان</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px; text-align: right;">
+                    <button id="modal-toggle-accordion-btn" style="width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: #ffffff; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                        <span>📂 تفکیک دارایی و سود صندوق‌ها</span>
+                        <span id="modal-accordion-arrow">▼</span>
+                    </button>
+                    <div id="modal-fund-accordion-content" style="display: none; margin-top: 10px; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto;">
+                    </div>
+                </div>
+
+                <button onclick="closeTotalReportModal()" style="margin-top: 20px; padding: 10px 20px; background: rgba(255, 255, 255, 0.1); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%;">🔙 بستن گزارش</button>
+            `;
+
+            const yearsInput = document.getElementById('modal-target-years');
+            const amountValDiv = document.getElementById('modal-total-amount-val');
+            const profitValDiv = document.getElementById('modal-total-profit-val');
+            const toggleAccordionBtn = document.getElementById('modal-toggle-accordion-btn');
+            const accordionContent = document.getElementById('modal-fund-accordion-content');
+            const accordionArrow = document.getElementById('modal-accordion-arrow');
+
+            toggleAccordionBtn.addEventListener('click', () => {
+                const isHidden = accordionContent.style.display === 'none';
+                accordionContent.style.display = isHidden ? 'flex' : 'none';
+                accordionArrow.innerText = isHidden ? '▲' : '▼';
+            });
+
+            function getFundName(tabId, data) {
+                const customName = localStorage.getItem(`tabCustomName_${tabId}`);
+                if (customName && customName.trim()) {
+                    return customName.trim();
+                }
+                const watchTitles = {
+                    'percents': 'ثبت درصد 1 (صندوق طلا)',
+                    'kian_percents': 'ثبت درصد 2',
+                    'stock____________tas9yl_new_unified': 'ثبت درصد 3',
+                    'mofid_atie_percents': 'ثبت درصد 4',
+                    'energy_fund_synergy': 'ثبت درصد 5',
+                    'cement_factory_percents': 'ثبت درصد 6',
+                    'ahang_kian_percents': 'ثبت درصد 7 (آهنگ سهام کیان)',
+                    'pharma_kian_percents': 'ثبت درصد 8'
+                };
+                if (data.watchSource && watchTitles[data.watchSource]) {
+                    return watchTitles[data.watchSource];
+                }
+                return `تب ${tabId}`;
+            }
+
+            function formatLargeNumber(numDecimal) {
+                let str = numDecimal.toFixed(0);
+                if (str.length > 25 || str.includes('e')) {
+                    return numDecimal.toNumber().toExponential(4) + ' تومان';
+                }
+                return `${str.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} تومان`;
+            }
+
+            function performSum() {
+                let targetYears = parseFloat(yearsInput.value);
+                if (isNaN(targetYears) || targetYears < 0) {
+                    targetYears = 0;
+                }
+                localStorage.setItem('totalSumYears', targetYears);
+
+                let sumAmount = new Decimal(0);
+                let sumProfit = new Decimal(0);
+                let fundHtml = '';
+
+                markedTabs.forEach(tab => {
+                    const res = runCompoundingCalculation(tab.data, targetYears);
+                    sumAmount = sumAmount.plus(res.finalAmount);
+                    sumProfit = sumProfit.plus(res.profitEarned);
+
+                    const fundTitle = getFundName(tab.id, tab.data);
+                    const formattedFinal = formatLargeNumber(res.finalAmount);
+                    const formattedProfit = formatLargeNumber(res.profitEarned);
+
+                    fundHtml += `
+                        <div style="background: rgba(255, 255, 255, 0.04); border-radius: 10px; padding: 10px; border: 1px solid rgba(255, 255, 255, 0.12); border-right: 4px solid #00e676; text-align: right;">
+                            <div style="font-weight: bold; font-size: 0.85rem; color: #64ffda; margin-bottom: 6px; display: flex; justify-content: space-between;">
+                                <span>💎 ${fundTitle}</span>
+                                <span style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">#${tab.id}</span>
+                            </div>
+                            <div style="font-size: 0.8rem; opacity: 0.8;">کل دارایی: <strong style="color: #fff; direction: ltr; display: inline-block;">${formattedFinal}</strong></div>
+                            <div style="font-size: 0.8rem; opacity: 0.8;">سود کسب‌شده: <strong style="color: #e040fb; direction: ltr; display: inline-block;">${formattedProfit}</strong></div>
+                        </div>
+                    `;
+                });
+
+                amountValDiv.innerText = formatLargeNumber(sumAmount);
+                profitValDiv.innerText = formatLargeNumber(sumProfit);
+                accordionContent.innerHTML = fundHtml;
+            }
+
+            yearsInput.addEventListener('input', performSum);
+            performSum();
+
+            modal.style.display = "block";
         }
 
         // اعمال تم
@@ -734,6 +906,9 @@
                 monthlyDeposit: elements.monthlyDeposit.value,
                 annualIncreaseMonthlyDeposit: elements.annualIncreaseMonthlyDeposit.value,
                 biMonthlyDeposit: elements.biMonthlyDeposit.value,
+                weeklyDeposit: elements.weeklyDeposit.value,
+                nDaysDeposit: elements.nDaysDeposit.value,
+                nDaysInterval: elements.nDaysInterval.value,
             };
             localStorage.setItem(`calculatorTab_${tabId}`, JSON.stringify(data));
         }
@@ -758,11 +933,16 @@
             elements.monthlyDeposit.value = data.monthlyDeposit || "";
             elements.annualIncreaseMonthlyDeposit.value = data.annualIncreaseMonthlyDeposit || "";
             elements.biMonthlyDeposit.value = data.biMonthlyDeposit || "";
+            elements.weeklyDeposit.value = data.weeklyDeposit || "";
+            elements.nDaysDeposit.value = data.nDaysDeposit || "";
+            elements.nDaysInterval.value = data.nDaysInterval || "";
 
             formatNumber(elements.initialAmount);
             formatNumber(elements.monthlyDeposit);
             formatNumber(elements.annualIncreaseMonthlyDeposit);
             formatNumber(elements.biMonthlyDeposit);
+            formatNumber(elements.weeklyDeposit);
+            formatNumber(elements.nDaysDeposit);
 
             // به روز رسانی قفل بودن فیلد سود و نوع نرخ سود در صورت اتصال به دیدبان
             handleWatchSync(instanceElement, tabId, false);
@@ -831,9 +1011,12 @@
             }
             let n_compound_freq_per_year = new Decimal(freqVal);
 
-            let Dm_initial_monthly_deposit = new Decimal(data.monthlyDeposit.replace(/,/g, "") || 0);
-            let Dm_annual_increase = new Decimal(data.annualIncreaseMonthlyDeposit.replace(/,/g, "") || 0);
-            let Db_bimonthly_deposit = new Decimal(data.biMonthlyDeposit.replace(/,/g, "") || 0);
+            let Dm_initial_monthly_deposit = new Decimal(data.monthlyDeposit ? data.monthlyDeposit.replace(/,/g, "") : 0);
+            let Dm_annual_increase = new Decimal(data.annualIncreaseMonthlyDeposit ? data.annualIncreaseMonthlyDeposit.replace(/,/g, "") : 0);
+            let Db_bimonthly_deposit = new Decimal(data.biMonthlyDeposit ? data.biMonthlyDeposit.replace(/,/g, "") : 0);
+            let Dw_weekly_deposit = new Decimal(data.weeklyDeposit ? data.weeklyDeposit.replace(/,/g, "") : 0);
+            let Dn_ndays_deposit = new Decimal(data.nDaysDeposit ? data.nDaysDeposit.replace(/,/g, "") : 0);
+            let n_days_interval = parseInt(data.nDaysInterval) || 0;
 
             // نرخ سالانه موثر
             let effective_annual_rate = Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), n_compound_freq_per_year).minus(1).times(100);
@@ -899,8 +1082,58 @@
                 profit_earned_over_initial_P = profit_earned_over_initial_P.plus(fv_of_this_bimonthly_deposit);
             }
 
+            // --- واریزهای هفتگی ---
+            let total_weekly_periods_in_investment = t_years.times(52);
+            let sum_of_actual_weekly_deposits_made = new Decimal(0);
+
+            for (let k = 1; k <= total_weekly_periods_in_investment.toNumber(); k++) {
+                sum_of_actual_weekly_deposits_made = sum_of_actual_weekly_deposits_made.plus(Dw_weekly_deposit);
+
+                let time_of_deposit_in_years_tk = new Decimal(k).div(52);
+                let compounding_periods_for_this_deposit = n_compound_freq_per_year.times(t_years).minus(n_compound_freq_per_year.times(time_of_deposit_in_years_tk));
+
+                if (compounding_periods_for_this_deposit.isNegative()) {
+                    compounding_periods_for_this_deposit = new Decimal(0);
+                }
+
+                let fv_of_this_weekly_deposit = Dw_weekly_deposit.times(
+                    Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), compounding_periods_for_this_deposit)
+                );
+
+                A_final_amount = A_final_amount.plus(fv_of_this_weekly_deposit);
+                profit_earned_over_initial_P = profit_earned_over_initial_P.plus(fv_of_this_weekly_deposit);
+            }
+
+            // --- واریزهای هر چند روز یک‌بار ---
+            let sum_of_actual_ndays_deposits_made = new Decimal(0);
+            if (n_days_interval > 0 && Dn_ndays_deposit.greaterThan(0)) {
+                let total_days_of_investment = t_years.times(365).toNumber();
+                let total_ndays_periods = Math.floor(total_days_of_investment / n_days_interval);
+
+                for (let k = 1; k <= total_ndays_periods; k++) {
+                    sum_of_actual_ndays_deposits_made = sum_of_actual_ndays_deposits_made.plus(Dn_ndays_deposit);
+
+                    let time_of_deposit_in_years_tk = new Decimal(k * n_days_interval).div(365);
+                    let compounding_periods_for_this_deposit = n_compound_freq_per_year.times(t_years).minus(n_compound_freq_per_year.times(time_of_deposit_in_years_tk));
+
+                    if (compounding_periods_for_this_deposit.isNegative()) {
+                        compounding_periods_for_this_deposit = new Decimal(0);
+                    }
+
+                    let fv_of_this_ndays_deposit = Dn_ndays_deposit.times(
+                        Decimal.pow(new Decimal(1).plus(r_annual_rate_decimal.div(n_compound_freq_per_year)), compounding_periods_for_this_deposit)
+                    );
+
+                    A_final_amount = A_final_amount.plus(fv_of_this_ndays_deposit);
+                    profit_earned_over_initial_P = profit_earned_over_initial_P.plus(fv_of_this_ndays_deposit);
+                }
+            }
+
             // --- محاسبات نهایی ---
-            let total_periodic_deposits_made = sum_of_actual_monthly_deposits_made.plus(sum_of_actual_bimonthly_deposits_made);
+            let total_periodic_deposits_made = sum_of_actual_monthly_deposits_made
+                .plus(sum_of_actual_bimonthly_deposits_made)
+                .plus(sum_of_actual_weekly_deposits_made)
+                .plus(sum_of_actual_ndays_deposits_made);
             let net_total_profit = A_final_amount.minus(P_initial_principal).minus(total_periodic_deposits_made);
 
             // محاسبه درآمد ماهیانه
@@ -933,7 +1166,10 @@
                 customFrequency: elements.customFrequency ? elements.customFrequency.value : '',
                 monthlyDeposit: elements.monthlyDeposit.value,
                 annualIncreaseMonthlyDeposit: elements.annualIncreaseMonthlyDeposit.value,
-                biMonthlyDeposit: elements.biMonthlyDeposit.value
+                biMonthlyDeposit: elements.biMonthlyDeposit.value,
+                weeklyDeposit: elements.weeklyDeposit.value,
+                nDaysDeposit: elements.nDaysDeposit.value,
+                nDaysInterval: elements.nDaysInterval.value
             };
 
             const t_years_val = elements.years.value || 0;
@@ -1012,6 +1248,9 @@
             elements.monthlyDeposit.value = "";
             elements.annualIncreaseMonthlyDeposit.value = "";
             elements.biMonthlyDeposit.value = "";
+            elements.weeklyDeposit.value = "";
+            elements.nDaysDeposit.value = "";
+            elements.nDaysInterval.value = "";
 
             elements.result.innerText = "📌 مبلغ نهایی: -- تومان";
             elements.profit.innerText = "💵 سود کسب‌شده: -- تومان";
@@ -1055,6 +1294,9 @@
                         monthlyDeposit: instanceElements.monthlyDeposit.value,
                         annualIncreaseMonthlyDeposit: instanceElements.annualIncreaseMonthlyDeposit.value,
                         biMonthlyDeposit: instanceElements.biMonthlyDeposit.value,
+                        weeklyDeposit: instanceElements.weeklyDeposit.value,
+                        nDaysDeposit: instanceElements.nDaysDeposit.value,
+                        nDaysInterval: instanceElements.nDaysInterval.value,
                     };
                 });
 
@@ -1122,11 +1364,16 @@
                                         instanceElements.monthlyDeposit.value = tabData.monthlyDeposit || "";
                                         instanceElements.annualIncreaseMonthlyDeposit.value = tabData.annualIncreaseMonthlyDeposit || "";
                                         instanceElements.biMonthlyDeposit.value = tabData.biMonthlyDeposit || "";
+                                        instanceElements.weeklyDeposit.value = tabData.weeklyDeposit || "";
+                                        instanceElements.nDaysDeposit.value = tabData.nDaysDeposit || "";
+                                        instanceElements.nDaysInterval.value = tabData.nDaysInterval || "";
 
                                         formatNumber(instanceElements.initialAmount);
                                         formatNumber(instanceElements.monthlyDeposit);
                                         formatNumber(instanceElements.annualIncreaseMonthlyDeposit);
                                         formatNumber(instanceElements.biMonthlyDeposit);
+                                        formatNumber(instanceElements.weeklyDeposit);
+                                        formatNumber(instanceElements.nDaysDeposit);
 
                                         saveInputs(instanceData.element, newTabId);
                                         updateTabName(newTabId, instanceData.element);
@@ -1166,6 +1413,9 @@
                         monthlyDeposit: instanceElements.monthlyDeposit.value,
                         annualIncreaseMonthlyDeposit: instanceElements.annualIncreaseMonthlyDeposit.value,
                         biMonthlyDeposit: instanceElements.biMonthlyDeposit.value,
+                        weeklyDeposit: instanceElements.weeklyDeposit.value,
+                        nDaysDeposit: instanceElements.nDaysDeposit.value,
+                        nDaysInterval: instanceElements.nDaysInterval.value,
                     };
                 });
 
@@ -1214,6 +1464,9 @@
                                         instanceElements.monthlyDeposit.value = tabData.monthlyDeposit || "";
                                         instanceElements.annualIncreaseMonthlyDeposit.value = tabData.annualIncreaseMonthlyDeposit || "";
                                         instanceElements.biMonthlyDeposit.value = tabData.biMonthlyDeposit || "";
+                                        instanceElements.weeklyDeposit.value = tabData.weeklyDeposit || "";
+                                        instanceElements.nDaysDeposit.value = tabData.nDaysDeposit || "";
+                                        instanceElements.nDaysInterval.value = tabData.nDaysInterval || "";
                                     } else if (importedData.initialAmount !== undefined) {
                                         instanceElements.initialAmount.value = importedData.initialAmount || "";
                                         instanceElements.years.value = importedData.years || "";
@@ -1226,12 +1479,17 @@
                                         instanceElements.monthlyDeposit.value = importedData.monthlyDeposit || "";
                                         instanceElements.annualIncreaseMonthlyDeposit.value = importedData.annualIncreaseMonthlyDeposit || "";
                                         instanceElements.biMonthlyDeposit.value = importedData.biMonthlyDeposit || "";
+                                        instanceElements.weeklyDeposit.value = importedData.weeklyDeposit || "";
+                                        instanceElements.nDaysDeposit.value = importedData.nDaysDeposit || "";
+                                        instanceElements.nDaysInterval.value = importedData.nDaysInterval || "";
                                     }
 
                                     formatNumber(instanceElements.initialAmount);
                                     formatNumber(instanceElements.monthlyDeposit);
                                     formatNumber(instanceElements.annualIncreaseMonthlyDeposit);
                                     formatNumber(instanceElements.biMonthlyDeposit);
+                                    formatNumber(instanceElements.weeklyDeposit);
+                                    formatNumber(instanceElements.nDaysDeposit);
 
                                     saveInputs(instanceData.element, newTabId);
                                     updateTabName(newTabId, instanceData.element);
@@ -1451,6 +1709,9 @@
             elements.monthlyDeposit.addEventListener('input', () => { formatNumber(elements.monthlyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
             elements.annualIncreaseMonthlyDeposit.addEventListener('input', () => { formatNumber(elements.annualIncreaseMonthlyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
             elements.biMonthlyDeposit.addEventListener('input', () => { formatNumber(elements.biMonthlyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
+            elements.weeklyDeposit.addEventListener('input', () => { formatNumber(elements.weeklyDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
+            elements.nDaysDeposit.addEventListener('input', () => { formatNumber(elements.nDaysDeposit); saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
+            elements.nDaysInterval.addEventListener('input', () => { saveInputs(newInstance, tabId); updateCumulativeTotal(); updateGroupDropdown(); });
 
             elements.rateType.addEventListener('change', () => {
                 saveInputs(newInstance, tabId);
@@ -1655,15 +1916,15 @@
                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
             }
 
-            // لیسنر کلیک برای باز کردن صفحه مجموع کل مستقل
+            // لیسنر کلیک برای باز کردن گزارش مجموع کل درون‌صفحه‌ای (کاملاً آفلاین)
             const openCumBtn = document.getElementById('open-cumulative-total-btn');
             if (openCumBtn) {
                 openCumBtn.addEventListener('click', () => {
-                    // ذخیره کردن زنده اطلاعات قبل از هدایت
+                    // ذخیره کردن زنده اطلاعات قبل از نمایش
                     calculatorInstances.forEach((instanceData, tabId) => {
                         saveInputs(instanceData.element, tabId);
                     });
-                    window.open('total.html', '_blank');
+                    openTotalReportModal();
                 });
             }
 
