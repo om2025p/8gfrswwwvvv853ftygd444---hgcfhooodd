@@ -136,42 +136,87 @@
             background: #fee2e2;
         }
 
-        .backup-btn-header {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #ecfdf5;
-            border: 1px solid #6ee7b7;
-            color: #059669;
-            padding: 8px 12px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 700;
+        /* Hamburger Dropdown Menu in Header */
+        .hamburger-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .hamburger-btn {
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            color: #0f172a;
+            font-size: 1.25rem;
             cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
             transition: all 0.2s ease;
         }
 
-        .backup-btn-header:hover {
-            background: #d1fae5;
+        .hamburger-btn:hover {
+            transform: scale(1.05);
+            background: #f8fafc;
+            border-color: #94a3b8;
         }
 
-        .restore-btn-header {
-            display: inline-flex;
-            align-items: center;
+        .hamburger-dropdown {
+            position: absolute;
+            top: 48px;
+            left: 0;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border-radius: 16px;
+            padding: 8px;
+            display: none;
+            flex-direction: column;
             gap: 6px;
-            background: #eff6ff;
-            border: 1px solid #93c5fd;
+            z-index: 99999;
+            min-width: 210px;
+            animation: fadeInDown 0.2s ease forwards;
+        }
+
+        .hamburger-dropdown.open {
+            display: flex;
+        }
+
+        .hamburger-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: #1e293b;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: right;
+            width: 100%;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .hamburger-item:hover {
+            background: #f1f5f9;
             color: #2563eb;
-            padding: 8px 12px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
         }
 
-        .restore-btn-header:hover {
-            background: #dbeafe;
+        .hamburger-divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 2px 6px;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Navigation Tabs Header */
@@ -1794,24 +1839,33 @@
             color: #f87171;
         }
 
-        body.dark-mode .backup-btn-header {
-            background: #064e3b;
-            border-color: #047857;
-            color: #6ee7b7;
+        body.dark-mode .hamburger-btn {
+            background: #1f2937;
+            border-color: #374151;
+            color: #f3f4f6;
         }
 
-        body.dark-mode .backup-btn-header:hover {
-            background: #065f46;
+        body.dark-mode .hamburger-btn:hover {
+            background: #374151;
         }
 
-        body.dark-mode .restore-btn-header {
-            background: #1e3a8a;
-            border-color: #1d4ed8;
-            color: #93c5fd;
+        body.dark-mode .hamburger-dropdown {
+            background: #1f2937;
+            border-color: #374151;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
         }
 
-        body.dark-mode .restore-btn-header:hover {
-            background: #1e40af;
+        body.dark-mode .hamburger-item {
+            color: #e5e7eb;
+        }
+
+        body.dark-mode .hamburger-item:hover {
+            background: #374151;
+            color: #38bdf8;
+        }
+
+        body.dark-mode .hamburger-divider {
+            background: #374151;
         }
     </style>
 </head>
@@ -1824,19 +1878,32 @@
                 <h1>نمایشگر کد و ابزار متن عمارت</h1>
             </div>
             <div class="header-actions">
-                <button id="backupBtnHeader" class="backup-btn-header" onclick="exportCodeViewerFullBackup()" title="دانلود بکاپ کامل پروژه‌ها و اطلاعات">
-                    💾 دانلود بکاپ
-                </button>
-                <button id="restoreBtnHeader" class="restore-btn-header" onclick="triggerImportCodeViewerBackup()" title="بازیابی اطلاعات از فایل JSON">
-                    📂 بازیابی
-                </button>
+                <div class="hamburger-container">
+                    <button id="hamburgerBtn" class="hamburger-btn" onclick="toggleHamburgerMenu(event)" title="منوی امکانات">
+                        ☰
+                    </button>
+                    <div id="hamburgerDropdown" class="hamburger-dropdown">
+                        <button id="themeToggleBtn" class="hamburger-item" onclick="toggleThemeMode(); closeHamburgerMenu();">
+                            <span>🌙</span>
+                            <span id="themeToggleLabel">تم شب</span>
+                        </button>
+                        <div class="hamburger-divider"></div>
+                        <button class="hamburger-item" onclick="exportCodeViewerFullBackup(); closeHamburgerMenu();">
+                            <span>💾</span>
+                            <span>دانلود بکاپ کامل</span>
+                        </button>
+                        <button class="hamburger-item" onclick="triggerImportCodeViewerBackup(); closeHamburgerMenu();">
+                            <span>📂</span>
+                            <span>بازیابی اطلاعات (JSON)</span>
+                        </button>
+                        <div class="hamburger-divider"></div>
+                        <button class="hamburger-item" onclick="openDebugConsoleModal(); closeHamburgerMenu();" style="color: #ef4444;">
+                            <span>🐛</span>
+                            <span>کنسول لاگ و عیب‌یابی</span>
+                        </button>
+                    </div>
+                </div>
                 <input type="file" id="codeViewerBackupInput" accept=".json" style="display: none;" onchange="handleImportCodeViewerBackup(event)">
-                <button id="themeToggleBtn" class="btn-small" onclick="toggleThemeMode()" style="background: #334155; color: #ffffff; font-weight: 700; border-color: #475569; padding: 8px 12px; border-radius: 12px; cursor: pointer;">
-                    🌙 تم شب
-                </button>
-                <button id="debugBtnHeader" class="debug-btn-header" onclick="openDebugConsoleModal()">
-                    🐛 لاگ
-                </button>
                 <a href="../index.html" class="back-link">🔙 بازگشت</a>
             </div>
         </div>
@@ -2308,13 +2375,37 @@
             localStorage.setItem('html_viewer_active_tab', tabName);
         }
 
+        /* Hamburger Dropdown Menu Handlers */
+        function toggleHamburgerMenu(event) {
+            if (event) event.stopPropagation();
+            const dropdown = document.getElementById('hamburgerDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('open');
+            }
+        }
+
+        function closeHamburgerMenu() {
+            const dropdown = document.getElementById('hamburgerDropdown');
+            if (dropdown) {
+                dropdown.classList.remove('open');
+            }
+        }
+
+        // Close hamburger dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const container = document.querySelector('.hamburger-container');
+            if (container && !container.contains(e.target)) {
+                closeHamburgerMenu();
+            }
+        });
+
         function toggleThemeMode() {
             const isDark = document.body.classList.toggle('dark-mode');
             const themeBtn = document.getElementById('themeToggleBtn');
-            if (themeBtn) {
-                themeBtn.innerHTML = isDark ? '☀️ تم روز' : '🌙 تم شب';
-                themeBtn.style.background = isDark ? '#f59e0b' : '#334155';
-                themeBtn.style.borderColor = isDark ? '#d97706' : '#475569';
+            const themeLabel = document.getElementById('themeToggleLabel');
+            if (themeBtn && themeLabel) {
+                themeBtn.querySelector('span:first-child').innerText = isDark ? '☀️' : '🌙';
+                themeLabel.innerText = isDark ? 'تم روز' : 'تم شب';
             }
             localStorage.setItem('html_viewer_theme_mode', isDark ? 'dark' : 'light');
             showToast(isDark ? '🌙 تم خاکستری شب فعال شد' : '☀️ تم روز فعال شد');
@@ -2323,19 +2414,18 @@
         function initThemeMode() {
             const savedTheme = localStorage.getItem('html_viewer_theme_mode');
             const themeBtn = document.getElementById('themeToggleBtn');
+            const themeLabel = document.getElementById('themeToggleLabel');
             if (savedTheme === 'dark') {
                 document.body.classList.add('dark-mode');
-                if (themeBtn) {
-                    themeBtn.innerHTML = '☀️ تم روز';
-                    themeBtn.style.background = '#f59e0b';
-                    themeBtn.style.borderColor = '#d97706';
+                if (themeBtn && themeLabel) {
+                    themeBtn.querySelector('span:first-child').innerText = '☀️';
+                    themeLabel.innerText = 'تم روز';
                 }
             } else {
                 document.body.classList.remove('dark-mode');
-                if (themeBtn) {
-                    themeBtn.innerHTML = '🌙 تم شب';
-                    themeBtn.style.background = '#334155';
-                    themeBtn.style.borderColor = '#475569';
+                if (themeBtn && themeLabel) {
+                    themeBtn.querySelector('span:first-child').innerText = '🌙';
+                    themeLabel.innerText = 'تم شب';
                 }
             }
         }
