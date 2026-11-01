@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v52';
+const CACHE_NAME = 'emarat-portal-v54';
 const ASSETS = [
   './',
   './index.html',
@@ -291,7 +291,12 @@ const ASSETS = [
   './daily-report/icon-192-maskable.png',
   './daily-report/icon-512-maskable.png',
   './daily-report/apple-touch-icon.png',
-  './daily-report/favicon.ico'
+  './daily-report/favicon.ico',
+  // Emarat 1-Tap Sync App
+  './sync/index.html',
+  './sync/manifest.json',
+  './sync/icon-192.png',
+  './sync/icon-512.png'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
