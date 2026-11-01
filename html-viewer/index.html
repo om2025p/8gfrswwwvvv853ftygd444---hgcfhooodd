@@ -136,6 +136,44 @@
             background: #fee2e2;
         }
 
+        .backup-btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ecfdf5;
+            border: 1px solid #6ee7b7;
+            color: #059669;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .backup-btn-header:hover {
+            background: #d1fae5;
+        }
+
+        .restore-btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+            color: #2563eb;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .restore-btn-header:hover {
+            background: #dbeafe;
+        }
+
         /* Navigation Tabs Header */
         .tab-navigation {
             display: grid;
@@ -1749,6 +1787,32 @@
             border-color: #374151;
             color: #f9fafb;
         }
+
+        body.dark-mode .debug-btn-header {
+            background: #372024;
+            border-color: #7f1d1d;
+            color: #f87171;
+        }
+
+        body.dark-mode .backup-btn-header {
+            background: #064e3b;
+            border-color: #047857;
+            color: #6ee7b7;
+        }
+
+        body.dark-mode .backup-btn-header:hover {
+            background: #065f46;
+        }
+
+        body.dark-mode .restore-btn-header {
+            background: #1e3a8a;
+            border-color: #1d4ed8;
+            color: #93c5fd;
+        }
+
+        body.dark-mode .restore-btn-header:hover {
+            background: #1e40af;
+        }
     </style>
 </head>
 <body>
@@ -1760,11 +1824,18 @@
                 <h1>نمایشگر کد و ابزار متن عمارت</h1>
             </div>
             <div class="header-actions">
+                <button id="backupBtnHeader" class="backup-btn-header" onclick="exportCodeViewerFullBackup()" title="دانلود بکاپ کامل پروژه‌ها و اطلاعات">
+                    💾 دانلود بکاپ
+                </button>
+                <button id="restoreBtnHeader" class="restore-btn-header" onclick="triggerImportCodeViewerBackup()" title="بازیابی اطلاعات از فایل JSON">
+                    📂 بازیابی
+                </button>
+                <input type="file" id="codeViewerBackupInput" accept=".json" style="display: none;" onchange="handleImportCodeViewerBackup(event)">
                 <button id="themeToggleBtn" class="btn-small" onclick="toggleThemeMode()" style="background: #334155; color: #ffffff; font-weight: 700; border-color: #475569; padding: 8px 12px; border-radius: 12px; cursor: pointer;">
                     🌙 تم شب
                 </button>
                 <button id="debugBtnHeader" class="debug-btn-header" onclick="openDebugConsoleModal()">
-                    🐛 کنسول لاگ
+                    🐛 لاگ
                 </button>
                 <a href="../index.html" class="back-link">🔙 بازگشت</a>
             </div>
@@ -4840,6 +4911,143 @@ ${cleanText}`;
                 showToast('❌ خطا در ایجاد فایل فشرده ZIP پروژه‌ها!');
                 console.error(err);
             }
+        }
+
+        /* =========================================================
+           FULL BACKUP & RESTORE ENGINE (INDEXEDDB + LOCALSTORAGE)
+           ========================================================= */
+        async function exportCodeViewerFullBackup() {
+            try {
+                showToast('⏳ در حال آماده‌سازی فایل بکاپ...');
+                const allProjects = await getAllProjectsFromDB();
+
+                const backupPayload = {
+                    version: "1.0",
+                    appName: "نمایشگر کد و ابزار متن عمارت",
+                    appId: "html-viewer",
+                    exportDate: new Date().toISOString(),
+                    exportJalaliDate: getJalaliDateString(),
+                    timestamp: Date.now(),
+                    projectsCount: allProjects.length,
+                    projects: allProjects,
+                    localStorageData: {
+                        html_viewer_saved_code: localStorage.getItem('html_viewer_saved_code') || '',
+                        html_viewer_saved_text: localStorage.getItem('html_viewer_saved_text') || '',
+                        html_viewer_saved_chat: localStorage.getItem('html_viewer_saved_chat') || '',
+                        html_viewer_saved_deepseek: localStorage.getItem('html_viewer_saved_deepseek') || '',
+                        html_viewer_active_tab: localStorage.getItem('html_viewer_active_tab') || 'html',
+                        html_viewer_theme_mode: localStorage.getItem('html_viewer_theme_mode') || 'light',
+                        html_viewer_saved_format_ext: localStorage.getItem('html_viewer_saved_format_ext') || 'txt',
+                        html_viewer_saved_custom_ext: localStorage.getItem('html_viewer_saved_custom_ext') || '',
+                        html_viewer_download_count: localStorage.getItem('html_viewer_download_count') || '0',
+                        html_viewer_downloaded_hashes: localStorage.getItem('html_viewer_downloaded_hashes') || '[]'
+                    }
+                };
+
+                const jsonStr = JSON.stringify(backupPayload, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+                const datePart = new Date().toISOString().slice(0, 10);
+                const fileName = `emarat_html_viewer_backup_${datePart}.json`;
+
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+
+                showToast(`💾 بکاپ با موفقیت دانلود شد (${toPersianDigits(allProjects.length)} پروژه)`);
+                appendLog(`Backup exported: ${allProjects.length} projects, ${jsonStr.length} bytes`, 'success');
+            } catch (err) {
+                console.error('Backup export error:', err);
+                showToast('❌ خطا در تهیه فایل بکاپ!');
+                appendLog(`Backup export failed: ${err.message}`, 'error');
+            }
+        }
+
+        function triggerImportCodeViewerBackup() {
+            const input = document.getElementById('codeViewerBackupInput');
+            if (input) {
+                input.value = '';
+                input.click();
+            }
+        }
+
+        async function handleImportCodeViewerBackup(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const content = e.target.result;
+                    const data = JSON.parse(content);
+
+                    if (!data || (!data.projects && !data.localStorageData)) {
+                        showToast('❌ فایل بکاپ نامعتبر است!');
+                        return;
+                    }
+
+                    showToast('⏳ در حال بازیابی اطلاعات...');
+
+                    let restoredProjectsCount = 0;
+                    if (Array.isArray(data.projects) && data.projects.length > 0) {
+                        for (const proj of data.projects) {
+                            if (proj && proj.id && proj.content) {
+                                await saveProjectToDB(proj);
+                                restoredProjectsCount++;
+                            }
+                        }
+                    }
+
+                    if (data.localStorageData) {
+                        const ls = data.localStorageData;
+                        if (ls.html_viewer_saved_code !== undefined) {
+                            localStorage.setItem('html_viewer_saved_code', ls.html_viewer_saved_code);
+                            if (codeEditor) {
+                                codeEditor.value = ls.html_viewer_saved_code;
+                                loadedFullHtmlContent = ls.html_viewer_saved_code;
+                                updateEditorStats('html', ls.html_viewer_saved_code);
+                            }
+                        }
+                        if (ls.html_viewer_saved_text !== undefined) {
+                            localStorage.setItem('html_viewer_saved_text', ls.html_viewer_saved_text);
+                            if (textEditor) {
+                                textEditor.value = ls.html_viewer_saved_text;
+                                loadedFullTextContent = ls.html_viewer_saved_text;
+                                updateEditorStats('text', ls.html_viewer_saved_text);
+                            }
+                        }
+                        if (ls.html_viewer_saved_chat) localStorage.setItem('html_viewer_saved_chat', ls.html_viewer_saved_chat);
+                        if (ls.html_viewer_saved_deepseek) localStorage.setItem('html_viewer_saved_deepseek', ls.html_viewer_saved_deepseek);
+                        if (ls.html_viewer_saved_format_ext) {
+                            selectedTextExt = ls.html_viewer_saved_format_ext;
+                            localStorage.setItem('html_viewer_saved_format_ext', ls.html_viewer_saved_format_ext);
+                        }
+                        if (ls.html_viewer_saved_custom_ext) {
+                            customTextExtValue = ls.html_viewer_saved_custom_ext;
+                            localStorage.setItem('html_viewer_saved_custom_ext', ls.html_viewer_saved_custom_ext);
+                        }
+                    }
+
+                    await updateProjectBadges();
+
+                    showToast(`✅ بازیابی موفقیت‌آمیز بود! (${toPersianDigits(restoredProjectsCount)} پروژه)`);
+                    appendLog(`Restored backup successfully: ${restoredProjectsCount} projects`, 'success');
+
+                    // If projects modal is open, re-render
+                    const modal = document.getElementById('projectsModal');
+                    if (modal && modal.style.display === 'flex') {
+                        renderProjectsList();
+                    }
+                } catch (err) {
+                    console.error('Backup import error:', err);
+                    showToast('❌ خطا در خواندن یا بازیابی فایل بکاپ!');
+                    appendLog(`Backup restore failed: ${err.message}`, 'error');
+                }
+            };
+            reader.readAsText(file);
         }
 
         if ('serviceWorker' in navigator) {
