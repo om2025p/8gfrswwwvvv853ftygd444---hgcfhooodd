@@ -185,6 +185,100 @@
             border-color: var(--primary-color);
         }
 
+        .note-editor {
+            margin-top: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            overflow: hidden;
+        }
+
+        .note-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background: var(--row-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nt-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            width: 32px;
+            height: 27px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .nt-btn:active,
+        .nt-btn.on {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .nt-hint {
+            font-size: 0.66rem;
+            color: var(--secondary-color);
+            margin-right: auto;
+            opacity: 0.85;
+        }
+
+        .note-body {
+            max-height: 420px;
+            overflow: hidden;
+            transition: max-height 0.2s ease;
+        }
+
+        .note-body.collapsed {
+            max-height: 86px;
+        }
+
+        .note-content {
+            padding: 8px 10px;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            min-height: 36px;
+            outline: none;
+            direction: rtl;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .note-content:empty::before {
+            content: attr(data-placeholder);
+            color: var(--secondary-color);
+        }
+
+        .note-content b,
+        .note-content strong {
+            font-weight: 700;
+        }
+
+        .note-content u {
+            text-decoration: underline;
+        }
+
+        .note-expand {
+            width: 100%;
+            background: var(--row-bg);
+            border: none;
+            border-top: 1px solid var(--border-color);
+            color: var(--primary-color);
+            padding: 6px;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         .exercise-item {
             border-bottom: 1px solid var(--border-color);
             padding: 15px 0;
@@ -1492,7 +1586,7 @@
 
         const warmupNoteEl = document.getElementById('warmup-note');
         if (warmupNoteEl && sessionState.warmup) {
-            sessionState.warmup.note = warmupNoteEl.value;
+            sessionState.warmup.note = readNoteEl(warmupNoteEl);
         }
 
         const typeEl = document.getElementById('workoutType');
@@ -1510,11 +1604,11 @@
 
                 if (sessionState[rKey]) {
                     if (rValEl) sessionState[rKey].value = rValEl.value;
-                    if (rNoteEl) sessionState[rKey].note = rNoteEl.value;
+                    if (rNoteEl) sessionState[rKey].note = readNoteEl(rNoteEl);
                 }
                 if (sessionState[lKey]) {
                     if (lValEl) sessionState[lKey].value = lValEl.value;
-                    if (lNoteEl) sessionState[lKey].note = lNoteEl.value;
+                    if (lNoteEl) sessionState[lKey].note = readNoteEl(lNoteEl);
                 }
             } else {
                 const key = ex.id;
@@ -1523,7 +1617,7 @@
 
                 if (sessionState[key]) {
                     if (valEl) sessionState[key].value = valEl.value;
-                    if (noteEl) sessionState[key].note = noteEl.value;
+                    if (noteEl) sessionState[key].note = readNoteEl(noteEl);
                 }
             }
         });
@@ -1638,7 +1732,7 @@
                 <button class="check-btn ${sessionState.warmup.done ? 'active' : ''}" id="warmup-btn" onclick="toggleWarmup()">✓</button>
             </div>
             <div style="margin-top: 8px;">
-                <input type="text" id="warmup-note" placeholder="📝 یادداشت این نرمش..." value="${sessionState.warmup.note || ''}" oninput="updateWarmupNote(this.value)" style="padding: 6px 10px; font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                ${noteEditorHtml('warmup-note', '📝 یادداشت این نرمش...', sessionState.warmup.note || '')}
             </div>
         `;
         listDiv.appendChild(warmupCard);
@@ -1666,6 +1760,7 @@
             listDiv.appendChild(card);
             updateExerciseTotalDisplay(ex.id, ex.side, ex.target, ex.unit);
         });
+        initNoteEditors();
     }
 
     function initExerciseSessionState(key, totalTarget, numSets, unit) {
@@ -1738,7 +1833,7 @@
                 <span id="ex-${ex.id}-total-display">...</span>
             </div>
             <div style="margin-top: 6px;">
-                <input type="text" id="ex-${ex.id}-note" placeholder="📝 یادداشت این حرکت..." value="${state.note || ''}" oninput="updateSessionNote(${ex.id}, null, this.value)" style="padding: 6px 10px; font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                ${noteEditorHtml(`ex-${ex.id}-note`, '📝 یادداشت این حرکت...', state.note || '')}
             </div>
             <div id="timer-panel-${ex.id}" class="exercise-timer-panel"></div>
         `;
@@ -1782,7 +1877,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; color: var(--primary-color);">
                     <span id="ex-${ex.id}-r-total-display">...</span>
                 </div>
-                <input type="text" id="ex-${ex.id}-r-note" placeholder="📝 یادداشت سمت راست..." value="${rState.note || ''}" oninput="updateSessionNote(${ex.id}, 'r', this.value)" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); width: 100%;">
+                ${noteEditorHtml(`ex-${ex.id}-r-note`, '📝 یادداشت سمت راست...', rState.note || '')}
             </div>
             <div id="timer-panel-${ex.id}-r" class="exercise-timer-panel"></div>
 
@@ -1799,7 +1894,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; color: var(--primary-color);">
                     <span id="ex-${ex.id}-l-total-display">...</span>
                 </div>
-                <input type="text" id="ex-${ex.id}-l-note" placeholder="📝 یادداشت سمت چپ..." value="${lState.note || ''}" oninput="updateSessionNote(${ex.id}, 'l', this.value)" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); width: 100%;">
+                ${noteEditorHtml(`ex-${ex.id}-l-note`, '📝 یادداشت سمت چپ...', lState.note || '')}
             </div>
             <div id="timer-panel-${ex.id}-l" class="exercise-timer-panel"></div>
         `;
@@ -2165,6 +2260,195 @@
             sessionState[key].value = val;
         }
         saveDraft();
+    }
+
+    const NOTE_ALLOWED_TAGS = { B: 1, STRONG: 1, U: 1, BR: 1, DIV: 1, P: 1 };
+
+    function sanitizeNoteHtml(html) {
+        if (!html) return '';
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        (function walk(node) {
+            const kids = Array.from(node.childNodes);
+            kids.forEach(function(child) {
+                if (child.nodeType === 1) {
+                    if (!NOTE_ALLOWED_TAGS[child.tagName]) {
+                        const frag = document.createDocumentFragment();
+                        while (child.firstChild) frag.appendChild(child.firstChild);
+                        child.parentNode.replaceChild(frag, child);
+                        return;
+                    }
+                    Array.from(child.attributes).forEach(function(a) { child.removeAttribute(a.name); });
+                    if (child.tagName === 'DIV' || child.tagName === 'P') {
+                        const br = document.createElement('br');
+                        child.parentNode.insertBefore(br, child);
+                        const frag = document.createDocumentFragment();
+                        while (child.firstChild) frag.appendChild(child.firstChild);
+                        child.parentNode.replaceChild(frag, child);
+                        return;
+                    }
+                    walk(child);
+                }
+            });
+        })(tmp);
+        return tmp.innerHTML;
+    }
+
+    function renderNoteHtml(html) {
+        const clean = sanitizeNoteHtml(html);
+        if (!clean) return '';
+        return clean;
+    }
+
+    function noteToPlainText(html) {
+        if (!html) return '';
+        const tmp = document.createElement('div');
+        tmp.innerHTML = sanitizeNoteHtml(html);
+        tmp.querySelectorAll('br').forEach(function(br) { br.replaceWith('\n'); });
+        return (tmp.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+    }
+
+    function noteHtmlToEditable(html) {
+        if (!html) return '';
+        const clean = sanitizeNoteHtml(html);
+        if (!clean) return '';
+        return clean.replace(/\n/g, '<br>');
+    }
+
+    function escapeAttr(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function noteEditorHtml(id, placeholder, storedHtml) {
+        const plain = noteHtmlToEditable(storedHtml);
+        return `<div class="note-editor" id="wrap-${id}">
+            <div class="note-toolbar">
+                <button type="button" class="nt-btn" data-ncmd="bold" title="پررنگ"
+                        onmousedown="event.preventDefault()"><b>B</b></button>
+                <button type="button" class="nt-btn" data-ncmd="underline" title="زیرخط"
+                        onmousedown="event.preventDefault()"><u>U</u></button>
+                <span class="nt-hint">انتخاب کن، بعد بزن</span>
+            </div>
+            <div class="note-body" id="body-${id}">
+                <div class="note-content" id="${id}" contenteditable="true"
+                     data-placeholder="${escapeAttr(placeholder)}">${plain}</div>
+            </div>
+            <button type="button" class="note-expand" id="exp-${id}" style="display:none;"
+                    onclick="toggleNoteExpand('${id}')">▾ نمایش بیشتر</button>
+        </div>`;
+    }
+
+    function readNoteEl(el) {
+        if (!el) return '';
+        const raw = el.innerHTML || '';
+        if (!el.textContent.trim()) return '';
+        return sanitizeNoteHtml(raw);
+    }
+
+    function refreshNoteExpand(id) {
+        const body = document.getElementById('body-' + id);
+        const btn = document.getElementById('exp-' + id);
+        if (!body || !btn) return;
+        const full = body.scrollHeight;
+        if (full <= 92) {
+            body.classList.remove('collapsed');
+            btn.style.display = 'none';
+        } else {
+            btn.style.display = 'block';
+            btn.textContent = body.classList.contains('collapsed') ? '▾ نمایش بیشتر' : '▴ نمایش کمتر';
+        }
+    }
+
+    function toggleNoteExpand(id) {
+        const body = document.getElementById('body-' + id);
+        const btn = document.getElementById('exp-' + id);
+        if (!body || !btn) return;
+        body.classList.toggle('collapsed');
+        refreshNoteExpand(id);
+        btn.textContent = body.classList.contains('collapsed') ? '▾ نمایش بیشتر' : '▴ نمایش کمتر';
+    }
+
+    function refreshAllNoteExpand() {
+        document.querySelectorAll('.note-body').forEach(function(b) {
+            refreshNoteExpand(b.id.replace('body-', ''));
+        });
+    }
+
+    function updateNoteToolbarState(id) {
+        const wrap = document.getElementById('wrap-' + id);
+        if (!wrap) return;
+        wrap.querySelectorAll('.nt-btn').forEach(function(btn) {
+            let on = false;
+            try {
+                on = document.queryCommandState(btn.dataset.ncmd);
+            } catch (e) { on = false; }
+            btn.classList.toggle('on', !!on);
+        });
+    }
+
+    function noteCmd(id, cmd) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const sel = window.getSelection();
+        let saved = null;
+        if (sel && sel.rangeCount > 0) saved = sel.getRangeAt(0).cloneRange();
+        el.focus();
+        if (saved) {
+            const s2 = window.getSelection();
+            s2.removeAllRanges();
+            s2.addRange(saved);
+        }
+        try { document.execCommand(cmd, false, null); } catch (e) {}
+        updateNoteToolbarState(id);
+        saveDraft();
+    }
+
+    let _notesDelegated = false;
+    function initNoteEditors() {
+        if (_notesDelegated) { refreshAllNoteExpand(); return; }
+        _notesDelegated = true;
+
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest && e.target.closest('.nt-btn');
+            if (btn) {
+                e.preventDefault();
+                const wrap = btn.closest('.note-editor');
+                const ed = wrap && wrap.querySelector('.note-content');
+                if (ed) noteCmd(ed.id, btn.dataset.ncmd);
+                return;
+            }
+            if (!e.target.closest || !e.target.closest('.note-editor')) {
+                document.querySelectorAll('.note-content').forEach(function(el) {
+                    if (el.innerHTML === '<br>' || !el.textContent.trim()) el.innerHTML = '';
+                });
+            }
+        });
+
+        document.addEventListener('keyup', function(e) {
+            const ed = e.target.closest && e.target.closest('.note-content');
+            if (ed) updateNoteToolbarState(ed.id);
+        });
+
+        document.addEventListener('mouseup', function(e) {
+            const ed = e.target.closest && e.target.closest('.note-content');
+            if (ed) updateNoteToolbarState(ed.id);
+        });
+
+        document.addEventListener('input', function(e) {
+            const ed = e.target.closest && e.target.closest('.note-content');
+            if (!ed) return;
+            refreshNoteExpand(ed.id);
+            clearTimeout(ed._ntTimer);
+            ed._ntTimer = setTimeout(function() {
+                saveDraft();
+                refreshNoteExpand(ed.id);
+            }, 400);
+        });
+
+        document.addEventListener('focusout', function(e) {
+            const ed = e.target.closest && e.target.closest('.note-content');
+            if (ed) { saveDraft(); refreshNoteExpand(ed.id); }
+        });
     }
 
     function updateSessionNote(id, side, note) {
@@ -2580,12 +2864,12 @@
                 if (ex.r !== undefined) {
                     let rSetHtml = ex.rSetDetails ? `<span style="display:block; font-size:0.75rem; color:var(--secondary-color); margin-right:10px;">📊 جزئیات ست راست: ${ex.rSetDetails}</span>` : '';
                     let lSetHtml = ex.lSetDetails ? `<span style="display:block; font-size:0.75rem; color:var(--secondary-color); margin-right:10px;">📊 جزئیات ست چپ: ${ex.lSetDetails}</span>` : '';
-                    let rNoteHtml = ex.rNote ? `<span style="display:block; font-size:0.8rem; color:var(--secondary-color); margin-right:15px;">📝 ${escapeHtml(ex.rNote)}</span>` : '';
-                    let lNoteHtml = ex.lNote ? `<span style="display:block; font-size:0.8rem; color:var(--secondary-color); margin-right:15px;">📝 ${escapeHtml(ex.lNote)}</span>` : '';
+                    let rNoteHtml = ex.rNote ? `<span style="display:block; font-size:0.8rem; color:var(--secondary-color); margin-right:15px;">📝 ${renderNoteHtml(ex.rNote)}</span>` : '';
+                    let lNoteHtml = ex.lNote ? `<span style="display:block; font-size:0.8rem; color:var(--secondary-color); margin-right:15px;">📝 ${renderNoteHtml(ex.lNote)}</span>` : '';
                     return `<div class="ex-row"><b>${escapeHtml(ex.name)}</b><br/>${ex.r !== '-' ? `👉 راست: مجموع ${ex.r} ${ex.unit} (${ex.rTime || ''})${rSetHtml}${rNoteHtml}` : ''}${ex.l !== '-' ? `<br/>👈 چپ: مجموع ${ex.l} ${ex.unit} (${ex.lTime || ''})${lSetHtml}${lNoteHtml}` : ''}</div>`;
                 }
                 let setDetailsHtml = ex.setDetails ? `<span style="display:block; font-size:0.75rem; color:var(--secondary-color); margin-right:10px;">📊 جزئیات ست‌ها: ${ex.setDetails}</span>` : '';
-                let noteHtml = ex.note ? `<span style="display:block; font-size:0.8rem; color:var(--secondary-color); margin-right:10px;">📝 ${escapeHtml(ex.note)}</span>` : '';
+                let noteHtml = ex.note ? `<span style="display:block; font-size:0.8rem; color:var(--secondary-color); margin-right:10px;">📝 ${renderNoteHtml(ex.note)}</span>` : '';
                 return `<div class="ex-row"><b>${escapeHtml(ex.name)}</b>: مجموع ${ex.value} ${ex.unit} (${ex.time || ''})${setDetailsHtml}${noteHtml}</div>`;
             }).join('');
 
@@ -3522,9 +3806,9 @@
             prompt += `لیست حرکات و یادداشت‌های ثبت شده:\n`;
             latestRecord.exercises.forEach(ex => {
                 if (ex.r !== undefined) {
-                    prompt += `- ${ex.name}: راست=${ex.r} (ست‌ها: ${ex.rSetDetails || '-'}) (${ex.rNote || 'بدون یادداشت'}) | چپ=${ex.l} (ست‌ها: ${ex.lSetDetails || '-'}) (${ex.lNote || 'بدون یادداشت'})\n`;
+                    prompt += `- ${ex.name}: راست=${ex.r} (ست‌ها: ${ex.rSetDetails || '-'}) (${noteToPlainText(ex.rNote) || 'بدون یادداشت'}) | چپ=${ex.l} (ست‌ها: ${ex.lSetDetails || '-'}) (${noteToPlainText(ex.lNote) || 'بدون یادداشت'})\n`;
                 } else {
-                    prompt += `- ${ex.name}: مجموع=${ex.value} ${ex.unit} (ست‌ها: ${ex.setDetails || '-'}) (${ex.note || 'بدون یادداشت'})\n`;
+                    prompt += `- ${ex.name}: مجموع=${ex.value} ${ex.unit} (ست‌ها: ${ex.setDetails || '-'}) (${noteToPlainText(ex.note) || 'بدون یادداشت'})\n`;
                 }
             });
 
