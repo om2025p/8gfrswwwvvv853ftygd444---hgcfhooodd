@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.session
+*.session-journal
+.git
+.gitignore
+*.md
+LICENSE
+android/
