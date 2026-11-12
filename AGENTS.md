@@ -108,3 +108,28 @@ async function uploadToGitHub(contentString, fileName) {
 
 ### ۵. همگام‌سازی خودکار و آنی فرانت‌اند با گیت‌هاب (Real-time Background GitHub Auto-Sync):
 در تمامی برنامه‌های ثبت درصد و اتوماسیون‌ها، هر زمان کاربر اقدامی انجام داد که منجر به تغییر داده‌ها گردید (مانند افزودن درصد جدید، حذف، بازیابی، تغییر هدف یا یادداشت)، حتماً تابع ذخیره‌سازی (`saveData`) باید به یک مکانیزم ارسال هوشمند با تاخیر کنترل‌شده (Debounce) مجهز باشد تا آخرین داده‌های تجمیعی برنامه به صورت خودکار و بی‌سروصدا در پس‌زمینه به فایل بکاپ مربوطه در گیت‌هاب (مثلاً `gold5/gold5_backup.json`) آپلود شوند و نیازی به فشردن دستی دکمه ذخیره نباشد.
+
+---
+
+## 🌐 قانون کارکرد آفلاین واقعی (True Offline / No-VPN Rule)
+
+**مشکل ریشه‌ای:** هر `<link rel="stylesheet">` یا `<script src>` که به یک دامنه‌ی خارجی مسدود در ایران اشاره کند (مثل `cdnjs.cloudflare.com`، `fonts.googleapis.com`، `fonts.gstatic.com`، `ajax.googleapis.com`، `unpkg.com`، `jsdelivr.net`)، یک منبع **Render-Blocking** است. بدون VPN، مرورگر تا ۳۰+ ثانیه روی اتصال Hang می‌کند و صفحه **سفید** می‌ماند. Service Worker هم نمی‌تواند نجات دهد چون فقط منابع هم‌دامنه (`same-origin`) را کش می‌کند.
+
+**قانون طلایی:** هیچ صفحه‌ای نباید هیچ وابستگی خارجی برای رندر داشته باشد. همه‌ی کتابخانه‌ها باید در پوشه‌ی `vendor/` میزبانی شوند و مسیرها **نسبی** باشند.
+
+**ساختار استاندارد vendor:**
+```
+vendor/fontawesome/css/all.min.css          # + webfonts/*.woff2 (فقط woff2، ارجاع ttf حذف شود)
+vendor/jszip/jszip.min.js
+vendor/inter/inter.css                       # + fonts/*.woff2 (فقط latin/latin-ext)
+```
+مسیر استفاده از هر زیرپوشه: `../vendor/...`
+
+**چک‌لیست پس از هر تغییر:**
+1. `grep -rnE '<(link|script)[^>]*(href|src)="https?://(cdnjs|fonts\.googleapis|fonts\.gstatic|unpkg|jsdelivr)' --include=*.html .` باید **صفر** نتیجه بدهد.
+2. منابع جدید `vendor/` باید به آرایه‌ی `ASSETS` در `sw.js` اضافه شوند.
+3. `CACHE_NAME` در `sw.js` باید bump شود (مثلاً `v56` → `v57`) تا کش قدیمی پاک شود.
+4. `preconnect`/`dns-prefetch` بی‌خطرند (Render-Blocking نیستند) ولی برای پاکیزگی حذف شوند.
+5. تست واقعی: سرور محلی را بالا بیاور، صفحه را باز کن، سرور را **خاموش** کن و رفرش کن — باید از کش بیاید.
+
+**هشدار داده:** تغییر مسیر CSS/JS هیچ تأثیری روی `localStorage`/`IndexedDB`/`cloud-sync` ندارد و داده‌های کاربر دست‌نخورده می‌مانند.

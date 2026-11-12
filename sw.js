@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v55';
+const CACHE_NAME = 'emarat-portal-v56';
 const ASSETS = [
   './',
   './index.html',
@@ -295,7 +295,17 @@ const ASSETS = [
   './sync/index.html',
   './sync/manifest.json',
   './sync/icon-192.png',
-  './sync/icon-512.png'
+  './sync/icon-512.png',
+  // کتابخانه‌های محلی (بدون CDN مسدود) — Font Awesome، JSZip، فونت Inter
+  './vendor/fontawesome/css/all.min.css',
+  './vendor/fontawesome/webfonts/fa-brands-400.woff2',
+  './vendor/fontawesome/webfonts/fa-regular-400.woff2',
+  './vendor/fontawesome/webfonts/fa-solid-900.woff2',
+  './vendor/fontawesome/webfonts/fa-v4compatibility.woff2',
+  './vendor/jszip/jszip.min.js',
+  './vendor/inter/inter.css',
+  './vendor/inter/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2',
+  './vendor/inter/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa25L7SUc.woff2'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
