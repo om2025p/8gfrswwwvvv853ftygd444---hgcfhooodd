@@ -294,84 +294,21 @@ public class NotificationInputReceiver extends BroadcastReceiver {
         return "om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd";
     }
 
-    private void dispatchToGitHub(Context context, String link) {
-        SharedPreferences prefs = context.getSharedPreferences("restricted_bot_prefs", Context.MODE_PRIVATE);
-        final String fullRepo = getFullRepoPath(prefs);
-
-        String rawToken = prefs.getString("restricted_bot_ghToken", "");
-        if (rawToken == null || rawToken.trim().isEmpty()) {
-            rawToken = prefs.getString("restricted_bot_ghPat", "");
-        }
-        String rawBranch = prefs.getString("restricted_bot_ghBranch", "100");
-
-        if (rawToken == null) {
-            rawToken = "";
-        }
-
-        final String ghToken = rawToken.trim();
-        final String ghBranch = rawBranch.trim();
-
-        if (ghToken.isEmpty()) {
-            Toast.makeText(context, "⚠️ توکن گیت‌هاب خالی است! ابتدا تنظیمات را پر کنید.", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        String tgApiId = prefs.getString("restricted_bot_tgApiId", "").trim();
-        String tgApiHash = prefs.getString("restricted_bot_tgApiHash", "").trim();
-        String tgBotToken = prefs.getString("restricted_bot_tgBotToken", "").trim();
-        String tgSession = prefs.getString("restricted_bot_tgSession", "").trim();
-        String tgOwner = prefs.getString("restricted_bot_tgOwner", "").trim();
-
-        String apiUrl = "https://api.github.com/repos/" + fullRepo + "/actions/workflows/restricted_bot.yml/dispatches";
-
-        org.json.JSONObject inputs = new org.json.JSONObject();
-        try {
-            inputs.put("TELEGRAM_LINK", link);
-            inputs.put("TARGET_CHANNEL", "-1003757877147");
-            inputs.put("API_ID", tgApiId);
-            inputs.put("API_HASH", tgApiHash);
-            inputs.put("BOT_TOKEN", tgBotToken);
-            inputs.put("SESSION_STRING", tgSession);
-            inputs.put("OWNER_ID", tgOwner);
-        } catch (Exception ignored) {}
-
-        org.json.JSONObject payload = new org.json.JSONObject();
-        try {
-            payload.put("ref", ghBranch);
-            payload.put("inputs", inputs);
-        } catch (Exception ignored) {}
-
-        OkHttpClient client = new OkHttpClient();
-        RequestBody body = RequestBody.create(payload.toString(), MediaType.parse("application/json; charset=utf-8"));
-
-        Request request = new Request.Builder()
-                .url(apiUrl)
-                .addHeader("Authorization", "Bearer " + ghToken)
-                .addHeader("Accept", "application/vnd.github.v3+json")
-                .post(body)
-                .build();
-
-        Handler mainHandler = new Handler(Looper.getMainLooper());
-
-        client.newCall(request).enqueue(new Callback() {
+    private void dispatchToGitHub(final Context context, final String link) {
+        DownloadDispatcher.dispatch(context, link, new DownloadDispatcher.Callback2() {
             @Override
-            public void onFailure(Call call, IOException e) {
-                mainHandler.post(() -> Toast.makeText(context, "❌ خطا در ارسال: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            public void onSuccess(String via) {
+                String msg = "server".equals(via)
+                        ? "🎬 لینک به سرور اختصاصی ارسال شد 🚀"
+                        : "🐢 سرور در دسترس نبود؛ از مسیر پشتیبان گیت‌هاب ارسال شد";
+                show2SecondToast(context, msg);
             }
 
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                int code = response.code();
-                if (response.isSuccessful() || code == 204) {
-                    show2SecondToast(context, "🎬 کلیپ با موفقیت به تلگرام ارسال شد 🚀");
-                } else if (code == 404) {
-                    mainHandler.post(() -> Toast.makeText(context, "❌ خطا ۴۰۴: مخزن (" + fullRepo + ") یا ورک‌فلو یافت نشد!", Toast.LENGTH_LONG).show());
-                } else if (code == 401) {
-                    mainHandler.post(() -> Toast.makeText(context, "❌ خطا ۴۰۱: توکن دسترسی گیت‌هاب معتبر نیست!", Toast.LENGTH_LONG).show());
-                } else {
-                    mainHandler.post(() -> Toast.makeText(context, "⚠️ پاسخ گیت‌هاب (" + code + "): لطفا تنظیمات مخزن را چک کنید", Toast.LENGTH_LONG).show());
-                }
-                response.close();
+            public void onFailure(String message, String detail) {
+                Log.w(TAG, "dispatch failed: " + message + " | " + detail);
+                new Handler(Looper.getMainLooper()).post(() ->
+                        Toast.makeText(context, "⚠️ " + message, Toast.LENGTH_LONG).show());
             }
         });
     }

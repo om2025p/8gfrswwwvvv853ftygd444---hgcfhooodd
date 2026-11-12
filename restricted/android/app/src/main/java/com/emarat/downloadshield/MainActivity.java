@@ -407,88 +407,124 @@ public class MainActivity extends AppCompatActivity {
     private long lastHandledCompletedRunId = -1;
 
     private void dispatchToGitHub(String link, String historyId) {
-        SharedPreferences prefs = getSharedPreferences("restricted_bot_prefs", MODE_PRIVATE);
-        final String fullRepo = NotificationInputReceiver.getFullRepoPath(prefs);
+        DownloadDispatcher.dispatch(this, link, new DownloadDispatcher.Callback2() {
+            @Override
+            public void onSuccess(String via) {
+                mainHandler.post(() -> {
+                    boolean viaServer = "server".equals(via);
+                    String okMsg = viaServer
+                            ? "⚡ درخواست به سرور اختصاصی ارسال شد (در حال دانلود...)"
+                            : "🐢 سرور در دسترس نبود؛ درخواست از مسیر پشتیبان گیت‌هاب ارسال شد";
+                    Toast.makeText(MainActivity.this, okMsg, Toast.LENGTH_LONG).show();
+                    isMonitoringServerForCompletion = true;
+                    updateHistoryItemStatus(historyId, "in_progress",
+                            viaServer ? "⚡ در حال دانلود در سرور..." : "🐢 در حال دانلود در گیت‌هاب...", null);
+                    checkServerStatus();
+                });
+            }
 
-        String rawToken = prefs.getString("restricted_bot_ghToken", "");
-        if (rawToken == null || rawToken.trim().isEmpty()) {
-            rawToken = prefs.getString("restricted_bot_ghPat", "");
-        }
-        String rawBranch = prefs.getString("restricted_bot_ghBranch", "100");
-
-        final String ghToken = rawToken != null ? rawToken.trim() : "";
-        final String ghBranch = rawBranch != null ? rawBranch.trim() : "100";
-
-        if (ghToken.isEmpty()) {
-            Toast.makeText(this, "⚠️ توکن گیت‌هاب تنظیم نشده است! تنظیمات را بررسی کنید.", Toast.LENGTH_LONG).show();
-            updateHistoryItemStatus(historyId, "failed", "❌ توکن گیت‌هاب خالی است", "لطفاً توکن دسترسی PAT را در بخش تنظیمات وارد کنید.");
-            return;
-        }
-
-        String tgApiId = prefs.getString("restricted_bot_tgApiId", "").trim();
-        String tgApiHash = prefs.getString("restricted_bot_tgApiHash", "").trim();
-        String tgBotToken = prefs.getString("restricted_bot_tgBotToken", "").trim();
-        String tgSession = prefs.getString("restricted_bot_tgSession", "").trim();
-        String tgOwner = prefs.getString("restricted_bot_tgOwner", "").trim();
-
-        String apiUrl = "https://api.github.com/repos/" + fullRepo + "/actions/workflows/restricted_bot.yml/dispatches";
-
-        try {
-            JSONObject inputs = new JSONObject();
-            inputs.put("TELEGRAM_LINK", link);
-            inputs.put("TARGET_CHANNEL", "-1003757877147");
-            inputs.put("API_ID", tgApiId);
-            inputs.put("API_HASH", tgApiHash);
-            inputs.put("BOT_TOKEN", tgBotToken);
-            inputs.put("SESSION_STRING", tgSession);
-            inputs.put("OWNER_ID", tgOwner);
-
-            JSONObject payload = new JSONObject();
-            payload.put("ref", ghBranch);
-            payload.put("inputs", inputs);
-
-            RequestBody body = RequestBody.create(payload.toString(), MediaType.parse("application/json; charset=utf-8"));
-            Request request = new Request.Builder()
-                    .url(apiUrl)
-                    .addHeader("Authorization", "Bearer " + ghToken)
-                    .addHeader("Accept", "application/vnd.github.v3+json")
-                    .post(body)
-                    .build();
-
-            httpClient.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    mainHandler.post(() -> {
-                        Toast.makeText(MainActivity.this, "❌ خطا در ارسال به گیت‌هاب: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        updateHistoryItemStatus(historyId, "failed", "❌ خطا در اتصال شبکه", e.getMessage());
-                    });
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    int code = response.code();
-                    mainHandler.post(() -> {
-                        if (response.isSuccessful() || code == 204) {
-                            Toast.makeText(MainActivity.this, "⚡ درخواست به سرور ارسال شد (در حال دانلود و ارسال به تلگرام...)", Toast.LENGTH_SHORT).show();
-                            isMonitoringServerForCompletion = true;
-                            updateHistoryItemStatus(historyId, "in_progress", "⚡ در حال دانلود در سرور...", null);
-                            checkServerStatus();
-                        } else {
-                            String msg = "پاسخ گیت‌هاب کد " + code;
-                            Toast.makeText(MainActivity.this, "⚠️ " + msg, Toast.LENGTH_LONG).show();
-                            updateHistoryItemStatus(historyId, "failed", "❌ " + msg, "کد پاسخ HTTP گیت‌هاب: " + code);
-                        }
-                    });
-                    response.close();
-                }
-            });
-        } catch (Exception e) {
-            updateHistoryItemStatus(historyId, "failed", "❌ خطای برنامه", e.getMessage());
-        }
+            @Override
+            public void onFailure(String message, String detail) {
+                mainHandler.post(() -> {
+                    Toast.makeText(MainActivity.this, "⚠️ " + message, Toast.LENGTH_LONG).show();
+                    updateHistoryItemStatus(historyId, "failed", "❌ " + message, detail);
+                });
+            }
+        });
     }
 
     private void checkServerStatus() {
         SharedPreferences prefs = getSharedPreferences("restricted_bot_prefs", MODE_PRIVATE);
+        final String srvUrl = prefs.getString("restricted_bot_srvUrl", "").trim();
+        final String srvToken = prefs.getString("restricted_bot_srvToken", "").trim();
+
+        if (!srvUrl.isEmpty() && !srvToken.isEmpty()) {
+            checkDedicatedServerStatus(prefs, srvUrl, srvToken);
+            return;
+        }
+
+        // سرور تنظیم نشده؛ وضعیت مسیر پشتیبان گیت‌هاب نمایش داده می‌شود.
+        checkGitHubFallbackStatus(prefs);
+    }
+
+    private void checkDedicatedServerStatus(SharedPreferences prefs, String srvUrl, String srvToken) {
+        String url = srvUrl.replaceAll("/+$", "") + "/api/status";
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("X-Auth-Token", srvToken)
+                .get()
+                .build();
+
+        httpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                mainHandler.post(() -> {
+                    tvServerStatus.setText("سرور خاموش یا بدون اینترنت ⚠️ (پشتیبان: گیت‌هاب)");
+                    tvServerStatus.setTextColor(0xFFF59E0B);
+                });
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                int code = response.code();
+                String bodyStr = "";
+                try {
+                    if (response.body() != null) bodyStr = response.body().string();
+                } catch (Exception ignored) {}
+                response.close();
+
+                if (code == 401) {
+                    mainHandler.post(() -> {
+                        tvServerStatus.setText("توکن سرور نادرست است ❌");
+                        tvServerStatus.setTextColor(0xFFEF4444);
+                    });
+                    return;
+                }
+
+                if (code != 200) {
+                    mainHandler.post(() -> {
+                        tvServerStatus.setText("خطای سرور (" + code + ") ❌");
+                        tvServerStatus.setTextColor(0xFFEF4444);
+                    });
+                    return;
+                }
+
+                try {
+                    JSONObject data = new JSONObject(bodyStr);
+                    String status = data.optString("status", "idle");
+                    boolean clients = data.optBoolean("clients", false);
+
+                    mainHandler.post(() -> {
+                        if (!clients) {
+                            tvServerStatus.setText("سرور روشن است ولی موتور تلگرام آماده نیست ⏳");
+                            tvServerStatus.setTextColor(0xFFF59E0B);
+                            return;
+                        }
+                        if ("running".equals(status)) {
+                            isMonitoringServerForCompletion = true;
+                            tvServerStatus.setText("در حال دانلود / پردازش ⚡");
+                            tvServerStatus.setTextColor(0xFF0284C7);
+                        } else if ("done".equals(status)) {
+                            tvServerStatus.setText("آماده به کار (موتور فعال) ✅");
+                            tvServerStatus.setTextColor(0xFF16A34A);
+                            if (isMonitoringServerForCompletion) {
+                                isMonitoringServerForCompletion = false;
+                                show2SecondToast("🎬 کلیپ با موفقیت به تلگرام ارسال شد 🚀");
+                            }
+                        } else if ("error".equals(status)) {
+                            tvServerStatus.setText("آخرین اجرا ناموفق ❌");
+                            tvServerStatus.setTextColor(0xFFEF4444);
+                        } else {
+                            tvServerStatus.setText("آماده به کار (موتور فعال) ✅");
+                            tvServerStatus.setTextColor(0xFF16A34A);
+                        }
+                    });
+                } catch (Exception ignored) {}
+            }
+        });
+    }
+
+    private void checkGitHubFallbackStatus(SharedPreferences prefs) {
         final String fullRepo = NotificationInputReceiver.getFullRepoPath(prefs);
         String rawToken = prefs.getString("restricted_bot_ghToken", "");
         if (rawToken == null || rawToken.trim().isEmpty()) {
@@ -496,7 +532,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (rawToken == null || rawToken.trim().isEmpty()) {
-            tvServerStatus.setText("تنظیمات گیت‌هاب خالی است");
+            tvServerStatus.setText("تنظیمات سرور و گیت‌هاب خالی است");
             tvServerStatus.setTextColor(0xFFEF4444);
             return;
         }
@@ -581,6 +617,8 @@ public class MainActivity extends AppCompatActivity {
             cfg.put("ghRepo", prefs.getString("restricted_bot_ghRepo", ""));
             cfg.put("ghPat", prefs.getString("restricted_bot_ghPat", ""));
             cfg.put("ghBranch", prefs.getString("restricted_bot_ghBranch", "100"));
+            cfg.put("srvUrl", prefs.getString("restricted_bot_srvUrl", ""));
+            cfg.put("srvToken", prefs.getString("restricted_bot_srvToken", ""));
             cfg.put("tgApiId", prefs.getString("restricted_bot_tgApiId", ""));
             cfg.put("tgApiHash", prefs.getString("restricted_bot_tgApiHash", ""));
             cfg.put("tgBotToken", prefs.getString("restricted_bot_tgBotToken", ""));
@@ -607,6 +645,8 @@ public class MainActivity extends AppCompatActivity {
                             if (json.has("ghRepo")) editor.putString("restricted_bot_ghRepo", json.getString("ghRepo").trim());
                             if (json.has("ghPat")) editor.putString("restricted_bot_ghPat", json.getString("ghPat").trim());
                             if (json.has("ghBranch")) editor.putString("restricted_bot_ghBranch", json.getString("ghBranch").trim());
+                            if (json.has("srvUrl")) editor.putString("restricted_bot_srvUrl", json.getString("srvUrl").trim());
+                            if (json.has("srvToken")) editor.putString("restricted_bot_srvToken", json.getString("srvToken").trim());
                             if (json.has("tgApiId")) editor.putString("restricted_bot_tgApiId", json.getString("tgApiId").trim());
                             if (json.has("tgApiHash")) editor.putString("restricted_bot_tgApiHash", json.getString("tgApiHash").trim());
                             if (json.has("tgBotToken")) editor.putString("restricted_bot_tgBotToken", json.getString("tgBotToken").trim());

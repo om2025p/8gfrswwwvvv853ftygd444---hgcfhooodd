@@ -730,7 +730,7 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
                 return _tg_request("sendDocument", {"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"}, {"document": f}, timeout=600)
         ok = await asyncio.to_thread(_do)
         if not ok and str(chat_id) != str(owner_id):
-            await send_media_to_destinations(file_path, [chat_id], caption=caption, as_document=True)
+            await send_media_to_destinations(file_path, caption, owner_id)
         return ok
 
     async def send_tg_media_group(chat_id, media_paths, caption=""):
@@ -758,7 +758,7 @@ async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_i
         ok = await asyncio.to_thread(_do)
         if not ok and str(chat_id) != str(owner_id):
             for p in media_paths:
-                await send_media_to_destinations(p, [chat_id], caption=caption)
+                await send_media_to_destinations(p, caption, owner_id)
                 await asyncio.sleep(1)
         return ok
 

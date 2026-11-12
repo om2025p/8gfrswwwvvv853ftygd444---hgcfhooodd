@@ -1517,11 +1517,18 @@
             };
 
             if ('serviceWorker' in navigator) {
-                const reg = await navigator.serviceWorker.ready;
-                if (reg && reg.showNotification) {
-                    reg.showNotification(title, notifOptions);
-                    return;
-                }
+                // در WebView با پروتکل file:// هیچ service worker ثبت نمی‌شود و
+                // navigator.serviceWorker.ready هرگز resolve نمی‌شود؛ پس مسابقه با تایم‌اوت می‌گذاریم.
+                try {
+                    const reg = await Promise.race([
+                        navigator.serviceWorker.ready,
+                        new Promise(resolve => setTimeout(() => resolve(null), 1500))
+                    ]);
+                    if (reg && reg.showNotification) {
+                        reg.showNotification(title, notifOptions);
+                        return;
+                    }
+                } catch (e) {}
             }
             try {
                 new Notification(title, notifOptions);
