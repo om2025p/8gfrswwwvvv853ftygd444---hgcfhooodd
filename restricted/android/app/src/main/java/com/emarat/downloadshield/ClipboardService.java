@@ -174,7 +174,10 @@ public class ClipboardService extends Service {
         ).addRemoteInput(remoteInput).build();
 
         Intent pasteIntent = new Intent(context, TransparentPasteActivity.class);
-        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        pasteIntent.setAction(TransparentPasteActivity.ACTION_PASTE);
+        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pastePendingIntent = PendingIntent.getActivity(
                 context, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
@@ -222,7 +225,10 @@ public class ClipboardService extends Service {
         ).addRemoteInput(remoteInput).build();
 
         Intent pasteIntent = new Intent(this, TransparentPasteActivity.class);
-        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        pasteIntent.setAction(TransparentPasteActivity.ACTION_PASTE);
+        pasteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pastePendingIntent = PendingIntent.getActivity(
                 this, 3, pasteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );

@@ -32,6 +32,7 @@
         <activity
             android:name=".TransparentPasteActivity"
             android:exported="false"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.Transparent"
             android:excludeFromRecents="true"
             android:noHistory="true"
