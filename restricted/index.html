@@ -1010,13 +1010,13 @@
             <div class="white-card">
                 <h2 class="card-title">⚙️ تنظیمات و متغیرهای محرمانه (پرونده ربات)</h2>
                 <p style="font-size: 0.82rem; line-height: 1.6; color: #64748b; margin-top: -8px; margin-bottom: 16px;">
-                    این تنظیمات صرفاً در حافظه امن برنامه به صورت محلی ذخیره می‌شوند تا بتوانید دستور فعال‌سازی سرور اختصاصی را مستقیم صادر کنید.
+                    این تنظیمات صرفاً در حافظه امن برنامه به صورت محلی ذخیره می‌شوند تا بتوانید دستور فعال‌سازی گیت‌هاب را مستقیم صادر کنید.
                 </p>
 
                 <div class="form-grid">
-                    <!-- سرور اختصاصی Railway -->
+                    <!-- سرور اختصاصی -->
                     <div style="border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px; background: #f8fafc;">
-                        <h4 style="margin: 0 0 12px 0; font-size: 0.88rem; color: var(--accent-green);">🚀 سرور اختصاصی (Railway):</h4>
+                        <h4 style="margin: 0 0 12px 0; font-size: 0.88rem; color: var(--accent-green);">🚀 سرور اختصاصی (بدون نیاز به گیت‌هاب):</h4>
                         <div class="form-grid">
                             <div class="input-group">
                                 <label class="input-label">آدرس سرور (Server URL):</label>
@@ -1027,12 +1027,54 @@
                                 <input type="password" id="srvToken" class="input-field" placeholder="توکن مخفی سرور" style="direction: ltr;">
                             </div>
                         </div>
+                        <p style="font-size: 0.75rem; line-height: 1.5; color: #64748b; margin: 10px 0 0 0;">
+                            اگر آدرس سرور پر باشد، دستورها مستقیماً به سرور اختصاصی ارسال می‌شوند (بدون گیت‌هاب). در غیر این صورت، مسیر گیت‌هاب زیر استفاده می‌شود.
+                        </p>
+                    </div>
+
+                    <!-- گیت هاب -->
+                    <div style="border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px; background: #f8fafc;">
+                        <h4 style="margin: 0 0 12px 0; font-size: 0.88rem; color: var(--accent-blue);">🔑 دسترسی گیت‌هاب (جهت روشن کردن سرور):</h4>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label class="input-label">شناسه کاربری گیت‌هاب (Username):</label>
+                                <input type="text" id="ghOwner" class="input-field" placeholder="مثلا Alendirani" style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">نام مخزن شما (Repository Name):</label>
+                                <input type="text" id="ghRepo" class="input-field" placeholder="مثلا Save-Restricted-Bot" style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">توکن دسترسی گیت‌هاب (Personal Access Token):</label>
+                                <input type="password" id="ghPat" class="input-field" placeholder="github_pat_..." style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">نام شاخه گیت‌هاب (Branch Name):</label>
+                                <input type="text" id="ghBranch" class="input-field" placeholder="مثلا main" style="direction: ltr;">
+                            </div>
+                        </div>
                     </div>
 
                     <!-- متغیرهای ربات تلگرام -->
                     <div style="border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px; background: #f8fafc; margin-top: 5px;">
                         <h4 style="margin: 0 0 12px 0; font-size: 0.88rem; color: var(--accent-purple);">🤖 شناسه‌های تلگرام ربات:</h4>
                         <div class="form-grid">
+                            <div class="input-group">
+                                <label class="input-label">API_ID تلگرام:</label>
+                                <input type="text" id="tgApiId" class="input-field" placeholder="مثلا 123456" style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">API_HASH تلگرام:</label>
+                                <input type="password" id="tgApiHash" class="input-field" placeholder="کد ۳۲ کاراکتری" style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">BOT_TOKEN ربات تلگرام:</label>
+                                <input type="password" id="tgBotToken" class="input-field" placeholder="توکن بات‌فادر" style="direction: ltr;">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">SESSION_STRING اکانت تلگرام:</label>
+                                <input type="password" id="tgSession" class="input-field" placeholder="رشته تولیدشده توسط ربات کمکی" style="direction: ltr;">
+                            </div>
                             <div class="input-group">
                                 <label class="input-label">OWNER_ID شناسه عددی شما:</label>
                                 <input type="text" id="tgOwner" class="input-field" placeholder="مثلا 987654321" style="direction: ltr;">
@@ -1142,8 +1184,31 @@
     <script>
         // دکمه‌ها و المان‌ها
         const inputs = [
-            'srvUrl', 'srvToken', 'tgOwner'
+            'srvUrl', 'srvToken',
+            'ghOwner', 'ghRepo', 'ghPat', 'ghBranch',
+            'tgApiId', 'tgApiHash', 'tgBotToken', 'tgSession', 'tgOwner'
         ];
+
+        // آدرس پیش‌فرض سرور اختصاصی (Railway)
+        const DEFAULT_SRV_URL = 'https://8gfrswwwvvv853ftygd444-hgcfhooodd-production.up.railway.app';
+
+        // آیا مسیر سرور اختصاصی فعال است؟
+        function serverModeEnabled() {
+            const el = document.getElementById('srvUrl');
+            return !!(el && sanitizeString(el.value).trim());
+        }
+
+        function getServerUrl() {
+            return sanitizeString(document.getElementById('srvUrl').value).replace(/\/+$/, '');
+        }
+
+        function getServerToken() {
+            return sanitizeString(document.getElementById('srvToken').value);
+        }
+
+        function serverHeaders() {
+            return { 'X-Auth-Token': getServerToken() };
+        }
 
         let activeRunId = null; // ذخیره شناسه آخرین ورک‌فلو جهت توقف فوری
 
@@ -1253,9 +1318,15 @@
                 val = sanitizeString(val);
                 document.getElementById(id).value = val;
                 localStorage.setItem('restricted_bot_' + id, val);
+            } else if (id === 'ghBranch') {
+                document.getElementById(id).value = '81'; // مقدار پیش‌فرض 81
             } else if (id === 'srvUrl') {
-                document.getElementById(id).value = 'https://8gfrswwwvvv853ftygd444-hgcfhooodd-production.up.railway.app';
-                localStorage.setItem('restricted_bot_srvUrl', document.getElementById(id).value);
+                document.getElementById(id).value = DEFAULT_SRV_URL;
+                localStorage.setItem('restricted_bot_srvUrl', DEFAULT_SRV_URL);
+            }
+            if (id === 'ghBranch' && (!document.getElementById(id).value || document.getElementById(id).value === '80' || document.getElementById(id).value === '81')) {
+                document.getElementById(id).value = '100';
+                localStorage.setItem('restricted_bot_ghBranch', '100');
             }
 
             // ذخیره خودکار و ضدعفونی همزمان هنگام کپی/پیست یا تایپ
@@ -1287,10 +1358,13 @@
 
         // تولید پیش‌نمایش فایل تنظیمات
         function updateEnvPreview() {
-            const srvUrl = sanitizeString(document.getElementById('srvUrl').value) || 'https://xxxx.up.railway.app';
+            const apiId = sanitizeString(document.getElementById('tgApiId').value) || '123456';
+            const apiHash = sanitizeString(document.getElementById('tgApiHash').value) || 'abcdef0123456789';
+            const botToken = sanitizeString(document.getElementById('tgBotToken').value) || '1234567890:ABCDef...';
+            const session = sanitizeString(document.getElementById('tgSession').value) || 'BQB...';
             const ownerId = sanitizeString(document.getElementById('tgOwner').value) || '987654321';
 
-            const previewText = `SERVER_URL=${srvUrl}\nOWNER_ID=${ownerId}`;
+            const previewText = `API_ID=${apiId}\nAPI_HASH=${apiHash}\nBOT_TOKEN=${botToken}\nSESSION_STRING=${session}\nOWNER_ID=${ownerId}`;
             document.getElementById('envPreview').innerText = previewText;
         }
         updateEnvPreview();
@@ -1311,6 +1385,15 @@
                 const configData = {
                     srvUrl: sanitizeString(document.getElementById('srvUrl').value) || '',
                     srvToken: sanitizeString(document.getElementById('srvToken').value) || '',
+                    ghOwner: sanitizeString(document.getElementById('ghOwner').value) || '',
+                    ghRepo: sanitizeString(document.getElementById('ghRepo').value) || '',
+                    ghToken: sanitizeString(document.getElementById('ghPat').value) || '',
+                    ghPat: sanitizeString(document.getElementById('ghPat').value) || '',
+                    ghBranch: sanitizeString(document.getElementById('ghBranch').value) || '100',
+                    tgApiId: sanitizeString(document.getElementById('tgApiId').value) || '',
+                    tgApiHash: sanitizeString(document.getElementById('tgApiHash').value) || '',
+                    tgBotToken: sanitizeString(document.getElementById('tgBotToken').value) || '',
+                    tgSession: sanitizeString(document.getElementById('tgSession').value) || '',
                     tgOwner: sanitizeString(document.getElementById('tgOwner').value) || ''
                 };
                 const jsonString = JSON.stringify(configData, null, 2);
@@ -1359,6 +1442,14 @@
 
                     setVal('srvUrl', 'srvUrl', data.srvUrl);
                     setVal('srvToken', 'srvToken', data.srvToken);
+                    setVal('ghOwner', 'ghOwner', data.ghOwner);
+                    setVal('ghRepo', 'ghRepo', data.ghRepo);
+                    setVal('ghPat', 'ghPat', data.ghToken || data.ghPat);
+                    setVal('ghBranch', 'ghBranch', data.ghBranch);
+                    setVal('tgApiId', 'tgApiId', data.tgApiId);
+                    setVal('tgApiHash', 'tgApiHash', data.tgApiHash);
+                    setVal('tgBotToken', 'tgBotToken', data.tgBotToken);
+                    setVal('tgSession', 'tgSession', data.tgSession);
                     setVal('tgOwner', 'tgOwner', data.tgOwner);
 
                     if (window.AndroidNative && typeof window.AndroidNative.saveConfigData === 'function') {
@@ -1597,8 +1688,211 @@
         }
         window.handlePasteAndDownloadFromNotification = handlePasteAndDownloadFromNotification;
 
+        // ===== مسیر سرور اختصاصی (Railway) =====
+        let serverLogNext = 0;
+        let serverLogPollTimer = null;
+
+        function mapServerStatusToUI(status) {
+            switch (status) {
+                case 'running': return { dot: 'in_progress', text: 'در حال دانلود / پردازش ⚡' };
+                case 'done': return { dot: 'completed', text: 'آماده به کار (موتور فعال) ✅' };
+                case 'error': return { dot: 'failed', text: 'آخرین اجرا ناموفق ❌' };
+                case 'cancelled': return { dot: 'idle', text: 'لغو شد 🛑' };
+                default: return { dot: 'idle', text: 'سرور آماده است' };
+            }
+        }
+
+        async function fetchServerStatus() {
+            const badge1 = document.getElementById('workflowStatus1');
+            const txt1 = document.getElementById('statusText1');
+            const badge2 = document.getElementById('workflowStatus2');
+            const txt2 = document.getElementById('statusText2');
+
+            function updateUI(dotClass, text) {
+                if (badge1 && txt1) {
+                    badge1.querySelector('.status-dot').className = "status-dot " + dotClass;
+                    txt1.innerText = text;
+                }
+                if (badge2 && txt2) {
+                    badge2.querySelector('.status-dot').className = "status-dot " + dotClass;
+                    txt2.innerText = text;
+                }
+            }
+
+            if (!getServerToken()) {
+                updateUI("idle", "توکن امنیتی سرور را وارد کنید");
+                return;
+            }
+
+            try {
+                const resp = await fetch(getServerUrl() + '/api/status', { headers: serverHeaders() });
+                if (!resp.ok) {
+                    updateUI("failed", `خطا در اتصال به سرور (${resp.status})`);
+                    logDebug(`خطا در استعلام وضعیت سرور: کد ${resp.status}`, 'error');
+                    return;
+                }
+                const data = await resp.json();
+                const ui = mapServerStatusToUI(data.status);
+                updateUI(ui.dot, ui.text);
+                logDebug(`وضعیت سرور اختصاصی: ${data.status}${data.job ? ' | کار: ' + data.job : ''}`, 'success');
+
+                if (data.status === 'running') {
+                    isServerCurrentlyRunning = true;
+                    activeRunId = data.job || 'running';
+                } else {
+                    activeRunId = null;
+                    if (isServerCurrentlyRunning) {
+                        isServerCurrentlyRunning = false;
+                        setTimeout(processSmartDownloadQueue, 2000);
+                    }
+                }
+            } catch (err) {
+                updateUI("failed", "عدم اتصال به سرور");
+                logDebug(`خطای عدم اتصال به سرور اختصاصی: ${err.message}`, 'error');
+            }
+        }
+
+        async function pollServerLogsFromServer(targetHistoryId) {
+            if (serverLogPollTimer) clearInterval(serverLogPollTimer);
+
+            logDlDebug("🌐 اتصال زنده به لاگ‌های سرور اختصاصی برقرار شد...");
+            logDebug("🌐 شروع استعلام لاگ‌های زنده سرور اختصاصی (Server Log Poller)...");
+
+            let pollCount = 0;
+            const maxPolls = 300; // ~۱۰ دقیقه با فاصله ۲ ثانیه
+
+            serverLogPollTimer = setInterval(async () => {
+                pollCount++;
+                if (pollCount > maxPolls) {
+                    clearInterval(serverLogPollTimer);
+                    logDlDebug("⏱️ زمان استعلام لاگ‌های سرور به پایان رسید.");
+                    return;
+                }
+                try {
+                    const resp = await fetch(getServerUrl() + '/api/logs?since=' + serverLogNext, { headers: serverHeaders() });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        (data.lines || []).forEach(line => {
+                            const text = line.t;
+                            logDlDebug(text);
+                            if (typeof text === 'string' && (text.includes('گالری') || text.includes('gallery') || text.includes('kir2kos'))) {
+                                logGalleryDebug(text);
+                            }
+                        });
+                        if (typeof data.next === 'number') serverLogNext = data.next;
+                    }
+
+                    const st = await fetch(getServerUrl() + '/api/status', { headers: serverHeaders() });
+                    if (!st.ok) return;
+                    const s = await st.json();
+
+                    if (s.status === 'running') {
+                        if (targetHistoryId) updateDownloadHistoryStatus(targetHistoryId, 'in_progress', '⚡ در حال دانلود و پردازش در سرور...');
+                    } else if (s.status === 'done') {
+                        clearInterval(serverLogPollTimer);
+                        logDlDebug("🏁 اجرای سرور به پایان رسید. نتیجه: موفقیت‌آمیز ✅");
+                        if (targetHistoryId) {
+                            updateDownloadHistoryStatus(targetHistoryId, 'completed', 'دانلود و ارسال تکمیل شد 📥');
+                            showToast("🎬 کلیپ با موفقیت به تلگرام ارسال شد 🚀");
+                            showPersistentNotification("✅ دانلود با موفقیت انجام شد!", "فایل با موفقیت استخراج و به تلگرام ارسال گردید.");
+                        }
+                        fetchServerStatus();
+                    } else if (s.status === 'error') {
+                        clearInterval(serverLogPollTimer);
+                        logDlDebug(`❌ اجرای سرور با خطا مواجه شد: ${s.message || ''}`, 'error');
+                        if (targetHistoryId) updateDownloadHistoryStatus(targetHistoryId, 'failed', '❌ خطا در دانلود / اجرای ناموفق', s.message || 'اجرای سرور با خطا مواجه شد.');
+                        showPersistentNotification("❌ خطا در دانلود رسانه", s.message || "دانلود با خطا مواجه شد.");
+                        fetchServerStatus();
+                    } else if (s.status === 'cancelled') {
+                        clearInterval(serverLogPollTimer);
+                        if (targetHistoryId) updateDownloadHistoryStatus(targetHistoryId, 'failed', '🛑 لغو شد', 'اجرای سرور توسط کاربر لغو شد.');
+                        fetchServerStatus();
+                    }
+                } catch (err) {
+                    console.error("Error polling server logs:", err);
+                }
+            }, 2000);
+        }
+
+        async function serverTriggerWorkflow(downloadLink = null, targetHistoryId = null, customWorkflow = null, isDiscoveryMode = false) {
+            const token = getServerToken();
+            if (!token) {
+                showToast("⚠️ توکن امنیتی سرور را در تب تنظیمات وارد کنید!");
+                logDebug("خطای اعتبارسنجی: توکن امنیتی سرور خالی است.", "error");
+                return { success: false, errorMessage: 'توکن امنیتی سرور تنظیم نشده است.' };
+            }
+
+            const isSearch = downloadLink && downloadLink.startsWith("search:");
+            const actionMsg = isSearch
+                ? "ارسال سیگنال درخواست جستجوی عمیق تلگرام..."
+                : (downloadLink ? "در حال فرستادن سیگنال دانلود پیوند به سرور اختصاصی..." : "🚀 در حال فرستادن سیگنال روشن‌باش به سرور اختصاصی...");
+
+            showToast(actionMsg);
+            logDebug(actionMsg);
+
+            if (downloadLink) {
+                logDebug(`📥 دیاگ لینک دانلود: ${downloadLink}`);
+                logDlDebug(`📥 ارسال لینک جدید برای دانلود سریع (تب ۱): ${downloadLink}`);
+            }
+
+            let endpoint = '/api/download';
+            const payload = { url: downloadLink || '' };
+
+            if (customWorkflow === 'zip_extractor.yml') {
+                endpoint = '/api/zip';
+                payload.targetChannel = document.getElementById('zipTargetChannelInput') ? sanitizeString(document.getElementById('zipTargetChannelInput').value) : '-1004498823531';
+            } else if (customWorkflow === 'gallery_extractor.yml') {
+                endpoint = '/api/gallery';
+                payload.targetChannel = document.getElementById('galleryTargetChannelInput') ? sanitizeString(document.getElementById('galleryTargetChannelInput').value) : '-1004389912148';
+                payload.startPart = document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : '1';
+                payload.sortMode = document.getElementById('gallerySortModeSelect') ? sanitizeString(document.getElementById('gallerySortModeSelect').value) : 'newest';
+                payload.customDb = document.getElementById('galleryCustomDbInput') ? sanitizeString(document.getElementById('galleryCustomDbInput').value) : '';
+                payload.discovery = !!isDiscoveryMode;
+            } else {
+                payload.targetChannel = '-1003757877147';
+            }
+
+            serverLogNext = 0;
+            pollServerLogsFromServer(targetHistoryId);
+
+            try {
+                const resp = await fetch(getServerUrl() + endpoint, {
+                    method: 'POST',
+                    headers: Object.assign({}, serverHeaders(), { 'Content-Type': 'application/json' }),
+                    body: JSON.stringify(payload)
+                });
+
+                if (resp.ok) {
+                    const successToast = isSearch
+                        ? "🔎 درخواست جستجو صادر شد! نتایج تا دقایقی دیگر به پی‌وی تلگرام شما فرستاده می‌شود."
+                        : (downloadLink ? "📥 دانلود درخواست شد! تلگرامتان را چک کنید." : "🚀 سرور اختصاصی با موفقیت روشن شد!");
+                    showToast(successToast);
+                    logDebug("دستور با موفقیت به سرور اختصاصی ارسال شد.", 'success');
+                    setTimeout(fetchServerStatus, 2000);
+                    return true;
+                }
+
+                const errText = await resp.text().catch(() => '');
+                let errData = {};
+                try { errData = JSON.parse(errText); } catch (e) {}
+                let detailedMsg = (errData && errData.error) ? errData.error : `خطای HTTP ${resp.status}`;
+                if (resp.status === 401) detailedMsg = "توکن امنیتی سرور نادرست است.";
+                else if (resp.status === 409) detailedMsg = "یک کار دیگر در حال اجراست؛ کمی صبر کنید.";
+                else if (resp.status === 503) detailedMsg = "کلاینت تلگرام سرور آماده نیست.";
+                showToast("❌ خطا در اجرای سرور: " + detailedMsg);
+                logDebug(`پاسخ خطا از سرور اختصاصی: ${detailedMsg}`, 'error');
+                return { success: false, errorMessage: detailedMsg, statusCode: resp.status };
+            } catch (err) {
+                logDebug(`خطای ارتباطی با سرور اختصاصی: ${err.message}`, 'error');
+                showToast("❌ عدم ارتباط با سرور اختصاصی!");
+                return { success: false, errorMessage: err.message };
+            }
+        }
+
         // دریافت وضعیت گیت هاب به صورت داینامیک
         async function fetchGitHubStatus() {
+            if (serverModeEnabled()) { return fetchServerStatus(); }
+
             const owner = sanitizeString(document.getElementById('ghOwner').value);
             const repo = sanitizeString(document.getElementById('ghRepo').value);
             const pat = sanitizeString(document.getElementById('ghPat').value);
@@ -1889,6 +2183,10 @@
 
         // صدور دستور شروع سرور یا دانلود یا سرچ
         async function triggerWorkflow(downloadLink = null, targetHistoryId = null, customWorkflow = null, isDiscoveryMode = false) {
+            if (serverModeEnabled()) {
+                return serverTriggerWorkflow(downloadLink, targetHistoryId, customWorkflow, isDiscoveryMode);
+            }
+
             syncNativeAndroidConfig();
 
             const owner = sanitizeString(document.getElementById('ghOwner').value);
@@ -2217,6 +2515,34 @@
         document.getElementById('btnLaunchServer').onclick = () => triggerWorkflow();
 
         document.getElementById('btnStopServer').onclick = async () => {
+            if (serverModeEnabled()) {
+                const token = getServerToken();
+                if (!token) {
+                    showToast("⚠️ توکن امنیتی سرور را وارد کنید!");
+                    logDebug("خطای لغو: توکن سرور خالی است.", "error");
+                    return;
+                }
+                showToast("🛑 در حال ارسال دستور خاموشی به سرور اختصاصی...");
+                logDebug("ارسال دستور لغو به سرور اختصاصی...");
+                try {
+                    const resp = await fetch(getServerUrl() + '/api/cancel', { method: 'POST', headers: serverHeaders() });
+                    if (resp.ok) {
+                        showToast("🛑 سرور اختصاصی با موفقیت خاموش شد!");
+                        logDebug("سیگنال لغو با موفقیت به سرور اختصاصی ارسال شد.", "success");
+                        if (serverLogPollTimer) clearInterval(serverLogPollTimer);
+                        setTimeout(fetchServerStatus, 2000);
+                    } else {
+                        const errText = await resp.text().catch(() => '');
+                        logDebug(`خطا در متوقف کردن سرور اختصاصی: کد ${resp.status}. متن: ${errText}`, 'error');
+                        showToast("❌ خطا در متوقف کردن سرور!");
+                    }
+                } catch (err) {
+                    logDebug(`خطای ارتباط شبکه با سرور اختصاصی: ${err.message}`, 'error');
+                    showToast("❌ عدم ارتباط شبکه با سرور اختصاصی!");
+                }
+                return;
+            }
+
             const owner = sanitizeString(document.getElementById('ghOwner').value);
             const repo = sanitizeString(document.getElementById('ghRepo').value);
             const pat = sanitizeString(document.getElementById('ghPat').value);
