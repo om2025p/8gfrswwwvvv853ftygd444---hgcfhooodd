@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v54';
+const CACHE_NAME = 'emarat-portal-v55';
 const ASSETS = [
   './',
   './index.html',
@@ -192,7 +192,6 @@ const ASSETS = [
   './restricted/icon-512.png',
   './restricted/icon-192-maskable.png',
   './restricted/icon-512-maskable.png',
-  './restricted/apple-touch-icon.png',
   './restricted/favicon.ico',
   // Family Tree App
   './family/index.html',
@@ -303,8 +302,12 @@ const ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Caching all assets...');
-      return cache.addAll(ASSETS);
+      // هر فایل مستقل کش می‌شود تا نبودِ یک فایل، کل نصب را خراب نکند
+      return Promise.allSettled(
+        ASSETS.map((asset) =>
+          cache.add(asset).catch((err) => console.warn('Skipped asset:', asset, err))
+        )
+      );
     }).then(() => self.skipWaiting())
   );
 });
@@ -350,6 +353,12 @@ self.addEventListener('fetch', (event) => {
             cache.put(event.request, networkResponse.clone());
           }
           return networkResponse;
+        }).catch(() => {
+          // حالت آفلاین: برای درخواست‌های صفحه، پرتال کش‌شده را برگردان تا صفحه سفید/ارور نبینی
+          if (event.request.mode === 'navigate') {
+            return cache.match('./index.html').then((fallback) => fallback || cache.match('./'));
+          }
+          return Response.error();
         });
       });
     })
