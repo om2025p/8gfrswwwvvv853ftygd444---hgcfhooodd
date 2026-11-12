@@ -14,6 +14,7 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -24,6 +25,13 @@ SERVER_TOKEN = os.environ.get("SERVER_TOKEN", "").strip()
 PORT = int(os.environ.get("PORT", "8080"))
 
 app = FastAPI(title="Download Shield Server")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 _state = {
     "status": "idle",
