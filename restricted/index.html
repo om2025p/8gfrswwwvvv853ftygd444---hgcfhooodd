@@ -392,7 +392,7 @@
             transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* پنل کنترل وضعیت گیت هاب */
+        /* پنل کنترل وضعیت سرور اختصاصی */
         .status-panel {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -571,7 +571,7 @@
                             <li>🚀 <strong>[۱۵ شهریور ۱۴۰۵ - ۲۲:۰۰] رفع تداخل دانلود وب و تنظیم کانال جدید (-1003757877147):</strong> جداسازی متغیرهای گالری و دانلود سریع جهت رفع خطای ۴۲۲ و ارسال مستقیم ویدیوهای اینستاگرام، تیک‌تاک و تلگرام به کانال جدید.</li>
                             <li>📋 <strong>[۱۲ شهریور ۱۴۰۵ - ۱۱:۳۰] افزودن دکمه چسباندن پیوند و شمارنده هوشمند:</strong> قابلیت چسباندن سریع متن کلیپ‌بورد به کادر دانلود با یک کلیک و ثبت دائم تعداد کل لینک‌های منحصربه‌فرد (غیرتکراری) در حافظه دستگاه.</li>
                             <li>🩸 <strong>[۱۰ شهریور ۱۴۰۵ - ۱۶:۴۵] گزارش و عیب‌یابی هوشمند خطاها:</strong> ارائه علت و شرح دقیق عدم دریافت لینک در پیام تلگرام و ارسال فایل متنی پیوست در صورت طولانی بودن لاگ‌ها.</li>
-                            <li>🟢 <strong>[۵ شهریور ۱۴۰۵ - ۰۷:۴۶] اتصال لایو دیباگ سرور:</strong> استریم خط‌به‌خط لاگ‌های سرور ابری گیت‌هاب در پنل دیاگ دانلود.</li>
+                            <li>🟢 <strong>[۵ شهریور ۱۴۰۵ - ۰۷:۴۶] اتصال لایو دیباگ سرور:</strong> استریم خط‌به‌خط لاگ‌های سرور اختصاصی در پنل دیاگ دانلود.</li>
                             <li>⚡ <strong>[۴ شهریور ۱۴۰۵ - ۲۲:۱۵] موتور ۴ لایه مدرن رسانه:</strong> استخراج تیک‌تاک بدون واترمارک HD (TikWM API)، ریلز اینستاگرام (Embed Engine)، yt-dlp 2024 و Direct Parser.</li>
                             <li>📢 <strong>[۳ شهریور ۱۴۰۵ - ۱۹:۳۰] ارسال دوگانه هوشمند:</strong> ارسال همزمان فایل‌های دانلودشده به پی‌وی کاربر و کانال تلگرام «دنیا های قشنگ».</li>
                             <li>🌐 <strong>[۱ شهریور ۱۴۰۵ - ۱۲:۰۰] پشتیبانی کامل پیوندها:</strong> قابلیت دانلود مستقیم لینک‌های عمومی و خصوصی تلگرام، تیک‌تاک و اینستاگرام.</li>
@@ -850,7 +850,7 @@
 
                 <div id="galleryDebugContent" style="max-height: 500px; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 12px;">
                     <p style="font-size: 0.82rem; color: #64748b; margin-top: 4px; margin-bottom: 12px; line-height: 1.5;">
-                        تمامی لاگ‌های استخراج، ارتباط با سرور گیت‌هاب اکشنز، وضعیت دریافت آلبوم عکس‌ها و خطاهای احتمالی به صورت زنده در این کنسول مستقیم قابل مشاهده و کپی برداری است.
+                        تمامی لاگ‌های استخراج، ارتباط با سرور اختصاصی، وضعیت دریافت آلبوم عکس‌ها و خطاهای احتمالی به صورت زنده در این کنسول مستقیم قابل مشاهده و کپی برداری است.
                     </p>
                     <textarea id="galleryDebugConsole" readonly class="input-field" style="height: 220px; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; color: #4ade80; background: #0f172a; line-height: 1.4; resize: none; border-color: #1e293b; direction: ltr; text-align: left; border-radius: 16px; padding: 14px; width: 100%; box-sizing: border-box;"></textarea>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
@@ -926,10 +926,10 @@
 
             <!-- کنترل سرور -->
             <div class="white-card">
-                <h2 class="card-title">🚀 کنترل از راه دور سرور گیت‌هاب</h2>
+                <h2 class="card-title">🚀 کنترل از راه دور سرور اختصاصی</h2>
 
                 <div class="status-panel">
-                    <span style="font-size: 0.88rem; color: #64748b; font-weight: 600;">وضعیت موتور ابری گیت‌هاب:</span>
+                    <span style="font-size: 0.88rem; color: #64748b; font-weight: 600;">وضعیت موتور سرور اختصاصی:</span>
                     <div class="status-badge" id="workflowStatus2">
                         <span class="status-dot idle"></span>
                         <span id="statusText2">در حال دریافت وضعیت...</span>
@@ -1010,13 +1010,13 @@
             <div class="white-card">
                 <h2 class="card-title">⚙️ تنظیمات و متغیرهای محرمانه (پرونده ربات)</h2>
                 <p style="font-size: 0.82rem; line-height: 1.6; color: #64748b; margin-top: -8px; margin-bottom: 16px;">
-                    این تنظیمات صرفاً در حافظه امن برنامه به صورت محلی ذخیره می‌شوند تا بتوانید دستور فعال‌سازی گیت‌هاب را مستقیم صادر کنید.
+                    این تنظیمات صرفاً در حافظه امن برنامه به صورت محلی ذخیره می‌شوند تا بتوانید دستور فعال‌سازی سرور اختصاصی را مستقیم صادر کنید.
                 </p>
 
                 <div class="form-grid">
                     <!-- سرور اختصاصی -->
                     <div style="border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px; background: #f8fafc;">
-                        <h4 style="margin: 0 0 12px 0; font-size: 0.88rem; color: var(--accent-green);">🚀 سرور اختصاصی (بدون نیاز به گیت‌هاب):</h4>
+                        <h4 style="margin: 0 0 12px 0; font-size: 0.88rem; color: var(--accent-green);">🚀 سرور اختصاصی:</h4>
                         <div class="form-grid">
                             <div class="input-group">
                                 <label class="input-label">آدرس سرور (Server URL):</label>
@@ -1028,31 +1028,16 @@
                             </div>
                         </div>
                         <p style="font-size: 0.75rem; line-height: 1.5; color: #64748b; margin: 10px 0 0 0;">
-                            اگر آدرس سرور پر باشد، دستورها مستقیماً به سرور اختصاصی ارسال می‌شوند (بدون گیت‌هاب). در غیر این صورت، مسیر گیت‌هاب زیر استفاده می‌شود.
+                            دستورها مستقیماً به سرور اختصاصی ارسال می‌شوند.
                         </p>
                     </div>
 
-                    <!-- گیت هاب -->
-                    <div style="border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px; background: #f8fafc;">
-                        <h4 style="margin: 0 0 12px 0; font-size: 0.88rem; color: var(--accent-blue);">🔑 دسترسی گیت‌هاب (جهت روشن کردن سرور):</h4>
-                        <div class="form-grid">
-                            <div class="input-group">
-                                <label class="input-label">شناسه کاربری گیت‌هاب (Username):</label>
-                                <input type="text" id="ghOwner" class="input-field" placeholder="مثلا Alendirani" style="direction: ltr;">
-                            </div>
-                            <div class="input-group">
-                                <label class="input-label">نام مخزن شما (Repository Name):</label>
-                                <input type="text" id="ghRepo" class="input-field" placeholder="مثلا Save-Restricted-Bot" style="direction: ltr;">
-                            </div>
-                            <div class="input-group">
-                                <label class="input-label">توکن دسترسی گیت‌هاب (Personal Access Token):</label>
-                                <input type="password" id="ghPat" class="input-field" placeholder="github_pat_..." style="direction: ltr;">
-                            </div>
-                            <div class="input-group">
-                                <label class="input-label">نام شاخه گیت‌هاب (Branch Name):</label>
-                                <input type="text" id="ghBranch" class="input-field" placeholder="مثلا main" style="direction: ltr;">
-                            </div>
-                        </div>
+                    <!-- فیلدهای گیت‌هاب صرفاً جهت سازگاری با بکاپ نسخه اندروید؛ در رابط کاربری نمایش داده نمی‌شوند -->
+                    <div style="display: none;" aria-hidden="true">
+                        <input type="text" id="ghOwner" tabindex="-1">
+                        <input type="text" id="ghRepo" tabindex="-1">
+                        <input type="password" id="ghPat" tabindex="-1">
+                        <input type="text" id="ghBranch" tabindex="-1">
                     </div>
 
                     <!-- متغیرهای ربات تلگرام -->
@@ -1122,7 +1107,7 @@
                     <div class="step-item">
                         <div class="step-num">۴</div>
                         <div class="step-content">
-                            <strong>ذخیره و دریافت توکن گیت‌هاب:</strong> به تنظیمات اکانت گیت‌هاب خود رفته و یک Personal Access Token با دسترسی نوشتن برای بخش <code>Actions</code> و <code>Repo</code> بسازید تا این پورتال بتواند موتور گیت‌هاب را از راه دور فرمان دهد!
+                            <strong>اتصال به سرور اختصاصی:</strong> در بخش «سرور اختصاصی» بالای همین صفحه، آدرس سرور و توکن امنیتی را وارد کنید تا این پورتال بتواند موتور دانلود را از راه دور فرمان دهد. با تنظیم این دو مقدار، هیچ نیازی به گیت‌هاب نیست.
                         </div>
                     </div>
                 </div>
@@ -1154,13 +1139,13 @@
             <!-- پنل دیاگ و عیب‌یابی کلی گیت‌هاب -->
             <div class="white-card" style="margin-top: 10px;">
                 <div id="debugHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
-                    <h2 class="card-title" style="margin: 0; border: none; padding: 0;">🩺📟 پنل دیاگ و عیب‌یابی عمومی سرور و گیت‌هاب</h2>
+                    <h2 class="card-title" style="margin: 0; border: none; padding: 0;">🩺📟 پنل دیاگ و عیب‌یابی عمومی سرور</h2>
                     <span id="debugToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: var(--accent-blue);">🔽</span>
                 </div>
 
                 <div id="debugContent" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 0;">
                     <p style="font-size: 0.82rem; color: #64748b; margin-top: 12px; margin-bottom: 12px; line-height: 1.5;">
-                        تمامی کوئری‌ها، پاسخ‌های شبکه، وضعیت‌های HTTP و متن خطاهای ارتباطی با API گیت‌هاب به صورت عمومی در اینجا ثبت می‌شوند.
+                        تمامی کوئری‌ها، پاسخ‌های شبکه، وضعیت‌های HTTP و متن خطاهای ارتباطی با سرور اختصاصی به صورت عمومی در اینجا ثبت می‌شوند.
                     </p>
                     <textarea id="debugConsole" readonly class="input-field" style="height: 180px; font-family: 'Courier New', Courier, monospace; font-size: 0.78rem; color: #ef4444; background: #0f172a; line-height: 1.4; resize: none; border-color: #334155; direction: ltr; text-align: left;"></textarea>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
@@ -1231,7 +1216,7 @@
             return str.replace(/[\u200b-\u200d\u200e\u200f\u202a-\u202e\ufeff\u2000-\u200f\u2028-\u202f\u205f-\u206f]/g, '').trim();
         }
 
-        // لاگین دیباگ عمومی گیت‌هاب
+        // لاگین دیباگ عمومی سرور
         function logDebug(message, type = 'info') {
             const consoleEl = document.getElementById('debugConsole');
             if (!consoleEl) return;
@@ -1889,495 +1874,14 @@
             }
         }
 
-        // دریافت وضعیت گیت هاب به صورت داینامیک
-        async function fetchGitHubStatus() {
-            if (serverModeEnabled()) { return fetchServerStatus(); }
+        // بررسی وضعیت سرور اختصاصی هر ۱۵ ثانیه یک‌بار
+        setInterval(fetchServerStatus, 15000);
+        fetchServerStatus();
 
-            const owner = sanitizeString(document.getElementById('ghOwner').value);
-            const repo = sanitizeString(document.getElementById('ghRepo').value);
-            const pat = sanitizeString(document.getElementById('ghPat').value);
 
-            const badge1 = document.getElementById('workflowStatus1');
-            const txt1 = document.getElementById('statusText1');
-            const badge2 = document.getElementById('workflowStatus2');
-            const txt2 = document.getElementById('statusText2');
-
-            function updateUI(dotClass, text) {
-                if (badge1 && txt1) {
-                    badge1.querySelector('.status-dot').className = "status-dot " + dotClass;
-                    txt1.innerText = text;
-                }
-                if (badge2 && txt2) {
-                    badge2.querySelector('.status-dot').className = "status-dot " + dotClass;
-                    txt2.innerText = text;
-                }
-            }
-
-            if (!owner || !repo || !pat) {
-                updateUI("idle", "تنظیمات گیت‌هاب را وارد کنید");
-                return;
-            }
-
-            const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs?per_page=1`;
-            logDebug(`استعلام وضعیت زنده ورک‌فلوها از آدرس: ${url}`);
-
-            try {
-                const response = await fetch(url, {
-                    headers: {
-                        'Authorization': `Bearer ${pat}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.workflow_runs && data.workflow_runs.length > 0) {
-                        const run = data.workflow_runs[0];
-                        activeRunId = run.id; // ذخیره شناسه جهت توقف اضطراری
-                        const status = run.status; // queued, in_progress, completed
-                        const conclusion = run.conclusion; // success, failure, cancelled
-
-                        const dotClass = (status === 'completed' ? (conclusion === 'success' ? 'completed' : 'failed') : status);
-
-                        let persianStatus = "در حال کار";
-                        if (status === 'queued') {
-                            persianStatus = "در صف انتظار ⏳";
-                            isServerCurrentlyRunning = true;
-                        } else if (status === 'in_progress') {
-                            persianStatus = "در حال دانلود / پردازش ⚡";
-                            isServerCurrentlyRunning = true;
-                        } else if (status === 'completed') {
-                            persianStatus = conclusion === 'success' ? "آماده به کار (موتور فعال) ✅" : "آخرین اجرا ناموفق ❌";
-                            if (isServerCurrentlyRunning) {
-                                isServerCurrentlyRunning = false;
-                                // در صورت اتمام کار سرور و وجود داشتن لینک جدید در صف، ارسال نوبت بعدی به صورت خودکار
-                                setTimeout(processSmartDownloadQueue, 2000);
-                            }
-                        }
-
-                        updateUI(dotClass, persianStatus);
-                        logDebug(`وضعیت استعلام موفق: ${status} | نتیجه: ${conclusion || 'در حال اجرا'}`, 'success');
-                    } else {
-                        updateUI("idle", "بدون اجرای قبلی");
-                        logDebug("هیچ اجرای قبلی برای ورک‌فلو یافت نشد.");
-                    }
-                } else {
-                    const errText = await response.text().catch(() => '');
-                    updateUI("failed", "خطا در اتصال به گیت‌هاب");
-                    logDebug(`خطا در استعلام وضعیت گیت‌هاب: کد وضعیت HTTP ${response.status} (${response.statusText}). پاسخ: ${errText}`, 'error');
-                }
-            } catch (err) {
-                updateUI("failed", "عدم اتصال به شبکه");
-                logDebug(`خطای عدم اتصال شبکه در استعلام وضعیت: ${err.message}`, 'error');
-            }
-        }
-
-        // بررسی وضعیت هر ۱۵ ثانیه یک‌بار
-        setInterval(fetchGitHubStatus, 15000);
-        fetchGitHubStatus();
-
-        // استعلام زنده لاگ‌های سرور (Live Server Actions Logs)
-        let logPollInterval = null;
-        let lastLoggedStepName = "";
-
-        async function getLatestWorkflowRunId(owner, repo, pat) {
-            try {
-                const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs?per_page=1`;
-                const resp = await fetch(url, {
-                    headers: {
-                        'Authorization': `Bearer ${pat}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data.workflow_runs && data.workflow_runs.length > 0) {
-                        return data.workflow_runs[0].id;
-                    }
-                }
-            } catch (e) {
-                console.error("Error fetching latest run id:", e);
-            }
-            return null;
-        }
-
-        async function pollServerLogs(owner, repo, pat, targetHistoryId, beforeRunId, dispatchTime) {
-            if (logPollInterval) clearInterval(logPollInterval);
-
-            logDlDebug("🌐 اتصال زنده به لاگ‌های سرور ابری گیت‌هاب برقرار شد...");
-            logDebug("🌐 شروع استعلام لاگ‌های زنده سرور گیت‌هاب (Server Log Poller)...");
-
-            let pollCount = 0;
-            const maxPolls = 120; // حداکثر ۱۰ دقیقه (هر ۴ ثانیه)
-            let newRunDetected = false;
-
-            logPollInterval = setInterval(async () => {
-                pollCount++;
-                if (pollCount > maxPolls) {
-                    clearInterval(logPollInterval);
-                    logDlDebug("⏱️ زمان استعلام لاگ‌های سرور به پایان رسید.");
-                    if (targetHistoryId) {
-                        updateDownloadHistoryStatus(targetHistoryId, 'failed', '⚠️ زمان پاسخ سرور به پایان رسید', 'سرور گیت‌هاب در زمان مقرر پاسخی ارسال نکرد.');
-                    }
-                    return;
-                }
-
-                try {
-                    // ۱. دریافت آخرین ورک‌فلو در حال اجرا یا اجرا شده
-                    const runsUrl = `https://api.github.com/repos/${owner}/${repo}/actions/runs?per_page=1`;
-                    const runsResp = await fetch(runsUrl, {
-                        headers: {
-                            'Authorization': `Bearer ${pat}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
-                    });
-
-                    if (!runsResp.ok) return;
-                    const runsData = await runsResp.json();
-                    if (!runsData.workflow_runs || runsData.workflow_runs.length === 0) return;
-
-                    const latestRun = runsData.workflow_runs[0];
-                    const runCreatedAt = new Date(latestRun.created_at).getTime();
-
-                    // اگر آیدی اجرا همان اجرای قدیمی قبلی است یا تاریخ ایجادش قبل از دیسپچ جدید است، هنوز اجرای جدید توسط گیت‌هاب ساخته نشده!
-                    if (!newRunDetected) {
-                        if (beforeRunId && latestRun.id === beforeRunId) {
-                            logDlDebug(`⏳ در انتظار ایجاد جاب جدید گیت‌هاب... (${pollCount * 4} ثانیه)`);
-                            if (targetHistoryId) {
-                                updateDownloadHistoryStatus(targetHistoryId, 'in_progress', '⏳ در صف برپاخاستن سرور...');
-                            }
-                            return;
-                        }
-                        if (dispatchTime && runCreatedAt < dispatchTime - 10000) {
-                            logDlDebug(`⏳ در انتظار ایجاد جاب جدید گیت‌هاب... (${pollCount * 4} ثانیه)`);
-                            if (targetHistoryId) {
-                                updateDownloadHistoryStatus(targetHistoryId, 'in_progress', '⏳ در صف برپاخاستن سرور...');
-                            }
-                            return;
-                        }
-                        // اگر اجرای جدید کشف شد!
-                        newRunDetected = true;
-                        logDlDebug(`🚀 جاب جدید گیت‌هاب شناسایی شد! ID: ${latestRun.id}`);
-                    }
-
-                    activeRunId = latestRun.id;
-
-                    // بروزرسانی وضعیت تاریخچه در صورت فعال بودن اجرا
-                    if (latestRun.status === 'queued') {
-                        if (targetHistoryId) {
-                            updateDownloadHistoryStatus(targetHistoryId, 'in_progress', '⏳ در صف اجرای سرور...');
-                            showPersistentNotification("⏳ دانلود در صف سرور", "درخواست دانلود به صف سرور اضافه شد.");
-                        }
-                    } else if (latestRun.status === 'in_progress') {
-                        if (targetHistoryId) {
-                            updateDownloadHistoryStatus(targetHistoryId, 'in_progress', '⚡ در حال دانلود و پردازش در سرور...');
-                            showPersistentNotification("⚡ در حال دانلود و استخراج", "سرور در حال دانلود و ارسال رسانه است...");
-                        }
-                    }
-
-                    // ۲. دریافت جاب‌های مربوط به این اجرای ورک‌فلو
-                    const jobsUrl = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${latestRun.id}/jobs`;
-                    const jobsResp = await fetch(jobsUrl, {
-                        headers: {
-                            'Authorization': `Bearer ${pat}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
-                    });
-
-                    if (!jobsResp.ok) return;
-                    const jobsData = await jobsResp.json();
-                    if (!jobsData.jobs || jobsData.jobs.length === 0) return;
-
-                    const job = jobsData.jobs[0];
-
-                    // گزارش وضعیت تک تک گام‌ها (Steps) به لاگ‌های تب ۱ و عمومی
-                    if (job.steps && job.steps.length > 0) {
-                        job.steps.forEach(step => {
-                            if (step.status === 'in_progress' && lastLoggedStepName !== step.name) {
-                                lastLoggedStepName = step.name;
-                                logDlDebug(`⚡ گام در حال اجرای سرور: [${step.name}]`);
-                                logDebug(`⚡ سرور در حال اجرای گام: ${step.name}`);
-                            } else if (step.status === 'completed' && step.conclusion === 'failure') {
-                                logDlDebug(`❌ خطای گام سرور: [${step.name}]`, 'error');
-                                if (targetHistoryId) {
-                                    updateDownloadHistoryStatus(targetHistoryId, 'failed', '❌ اجرای گام ناموفق', `خطای گام سرور گیت‌هاب [${step.name}]`);
-                                }
-                            }
-                        });
-                    }
-
-                    // ۳. اگر اجرای سرور به پایان رسید، تمام لاگ‌های کامل متنی را دریافت و وضعیت تاریخچه را بروزرسانی کن
-                    if (latestRun.status === 'completed') {
-                        clearInterval(logPollInterval);
-                        const isSuccess = latestRun.conclusion === 'success';
-                        logDlDebug(`🏁 اجرای سرور به پایان رسید. نتیجه: ${isSuccess ? 'موفقیت‌آمیز ✅' : 'خطا ❌'}`);
-                        logDebug(`🏁 پایان اجرای سرور. نتیجه: ${latestRun.conclusion}`);
-
-                        if (targetHistoryId) {
-                            if (isSuccess) {
-                                updateDownloadHistoryStatus(targetHistoryId, 'completed', 'دانلود و ارسال تکمیل شد 📥');
-                                showToast("🎬 کلیپ با موفقیت به تلگرام ارسال شد 🚀");
-                                showPersistentNotification("✅ دانلود با موفقیت انجام شد!", "فایل با موفقیت استخراج و به تلگرام ارسال گردید.");
-                            } else {
-                                updateDownloadHistoryStatus(targetHistoryId, 'failed', '❌ خطا در دانلود / اجرای ناموفق', 'اجرای سرور گیت‌هاب با خطا مواجه شد. لطفاً پنل دیاگ یا تلگرام را چک فرمایید.');
-                                showPersistentNotification("❌ خطا در دانلود رسانه", "دانلود فیلم با خطا مواجه شد. جهت جزئیات برنامه را باز کنید.");
-                            }
-                        }
-
-                        // دریافت لاگ متنی کامل از API گیت‌هاب
-                        try {
-                            const logsUrl = `https://api.github.com/repos/${owner}/${repo}/actions/jobs/${job.id}/logs`;
-                            const rawLogsResp = await fetch(logsUrl, {
-                                headers: {
-                                    'Authorization': `Bearer ${pat}`,
-                                    'Accept': 'application/vnd.github.v3+json'
-                                }
-                            });
-
-                            if (rawLogsResp.ok) {
-                                const fullLogsText = await rawLogsResp.text();
-                                logDlDebug("📄 ===== متن کامل لاگ‌های سرور (Server Full Logs) =====");
-                                // فیلتر و رندر خطوط مهم در لاگ
-                                const lines = fullLogsText.split('\n');
-                                const filteredLines = lines.filter(l =>
-                                    l.includes('DEBUG') ||
-                                    l.includes('Starting') ||
-                                    l.includes('Error') ||
-                                    l.includes('download') ||
-                                    l.includes('upload') ||
-                                    l.includes('Telegram') ||
-                                    l.includes('https://') ||
-                                    l.includes('Run ') ||
-                                    l.includes('DONE') ||
-                                    l.includes('✅') ||
-                                    l.includes('❌') ||
-                                    l.includes('📥') ||
-                                    l.includes('🎬')
-                                );
-
-                                if (filteredLines.length > 0) {
-                                    filteredLines.slice(-100).forEach(line => {
-                                        const cleanL = line.trim();
-                                        logDlDebug(cleanL);
-                                        logGalleryDebug(cleanL);
-                                    });
-                                } else {
-                                    lines.slice(-50).forEach(line => {
-                                        const cleanL = line.trim();
-                                        logDlDebug(cleanL);
-                                        logGalleryDebug(cleanL);
-                                    });
-                                }
-                                logDlDebug("📄 ===== پایان لاگ‌های سرور =====");
-                                logGalleryDebug("📄 ===== پایان لاگ‌های سرور =====");
-                            }
-                        } catch (eLogs) {
-                            logDlDebug(`⚠️ عدم امکان دریافت لاگ متنی کامل: ${eLogs.message}`);
-                        }
-                    }
-                } catch (err) {
-                    console.error("Error polling server logs:", err);
-                }
-            }, 4000);
-        }
-
-        // صدور دستور شروع سرور یا دانلود یا سرچ
+        // صدور دستور شروع سرور یا دانلود یا سرچ (فقط از طریق سرور اختصاصی)
         async function triggerWorkflow(downloadLink = null, targetHistoryId = null, customWorkflow = null, isDiscoveryMode = false) {
-            if (serverModeEnabled()) {
-                return serverTriggerWorkflow(downloadLink, targetHistoryId, customWorkflow, isDiscoveryMode);
-            }
-
-            syncNativeAndroidConfig();
-
-            const owner = sanitizeString(document.getElementById('ghOwner').value);
-            const repo = sanitizeString(document.getElementById('ghRepo').value);
-            const pat = sanitizeString(document.getElementById('ghPat').value);
-            const branch = sanitizeString(document.getElementById('ghBranch').value) || '100';
-
-            const tgApiId = sanitizeString(document.getElementById('tgApiId').value);
-            const tgApiHash = sanitizeString(document.getElementById('tgApiHash').value);
-            const tgBotToken = sanitizeString(document.getElementById('tgBotToken').value);
-            const tgSession = sanitizeString(document.getElementById('tgSession').value);
-            const tgOwner = sanitizeString(document.getElementById('tgOwner').value);
-
-            if (!owner || !repo || !pat) {
-                showToast("⚠️ لطفاً اطلاعات دسترسی گیت‌هاب را در تب تنظیمات وارد کنید!");
-                logDebug("خطای اعتبارسنجی: اطلاعات دسترسی گیت‌هاب خالی است.", "error");
-                return false;
-            }
-
-            if (!tgApiId || !tgApiHash || !tgBotToken || !tgSession || !tgOwner) {
-                showToast("⚠️ لطفا تمام شناسه‌های تلگرام ربات را در تب تنظیمات پر کنید!");
-                logDebug("خطای اعتبارسنجی: شناسه‌های تلگرام تکمیل نیستند.", "error");
-                return false;
-            }
-
-            const isSearch = downloadLink && downloadLink.startsWith("search:");
-            const actionMsg = isSearch
-                ? "ارسال سیگنال درخواست جستجوی عمیق تلگرام..."
-                : (downloadLink ? "در حال فرستادن سیگنال دانلود پیوند به گیت‌هاب..." : "🚀 در حال فرستادن سیگنال روشن‌باش به گیت‌هاب...");
-
-            showToast(actionMsg);
-            logDebug(`${actionMsg} (شاخه: ${branch})`);
-
-            if (downloadLink) {
-                logDebug(`📥 دیاگ لینک دانلود: ${downloadLink}`);
-                logDlDebug(`📥 ارسال لینک جدید برای دانلود سریع (تب ۱): ${downloadLink}`);
-                if (downloadLink.includes('tiktok.com')) {
-                    logDlDebug(`🎵 تحلیل پلتفرم: ویدیوی تیک‌تاک (استخراج هوشمند TikWM / yt-dlp)`);
-                } else if (downloadLink.includes('instagram.com') || downloadLink.includes('instagr.am')) {
-                    logDlDebug(`📸 تحلیل پلتفرم: اینستاگرام (ریلز / پست / استوری / آلبوم)`);
-                } else if (downloadLink.includes('whatsapp.com') || downloadLink.includes('wa.me')) {
-                    logDlDebug(`💬 تحلیل پلتفرم: لینک رسانه واتساپ`);
-                } else if (downloadLink.includes('t.me')) {
-                    logDlDebug(`💬 تحلیل پلتفرم: فایل / پست / کانال تلگرام`);
-                } else {
-                    logDlDebug(`🌐 تحلیل پلتفرم: لینک مستقیم وب`);
-                }
-            }
-
-            // گرفتن آیدی اجرای قبلی جهت تمایز دقیق اجرای جدید
-            const beforeRunId = await getLatestWorkflowRunId(owner, repo, pat);
-            const dispatchTime = Date.now();
-
-            // شروع استعلام زنده لاگ‌های اجرای سرور (Live Server Actions Logs)
-            pollServerLogs(owner, repo, pat, targetHistoryId, beforeRunId, dispatchTime);
-
-            try {
-                let workflowId = customWorkflow || "restricted_bot.yml";
-
-                let url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
-                logDebug(`در حال ارسال درخواست POST به سرور اختصاصی (${workflowId}): ${url}`);
-                logGalleryDebug(`🌐 درخواست استخراج به ورک‌فلو اختصاصی ${workflowId}`);
-
-                let payloadInputs = {};
-                if (workflowId === "zip_extractor.yml") {
-                    payloadInputs = {
-                        GH_PAT: pat,
-                        ZIP_URL: downloadLink || '',
-                        TELEGRAM_LINK: downloadLink || '',
-                        TARGET_CHANNEL: (document.getElementById('zipTargetChannelInput') ? sanitizeString(document.getElementById('zipTargetChannelInput').value) : '-1004498823531'),
-                        API_ID: tgApiId,
-                        API_HASH: tgApiHash,
-                        BOT_TOKEN: tgBotToken,
-                        SESSION_STRING: tgSession,
-                        OWNER_ID: tgOwner
-                    };
-                } else if (workflowId === "gallery_extractor.yml") {
-                    payloadInputs = {
-                        GH_PAT: pat,
-                        GALLERY_URL: downloadLink || '',
-                        TELEGRAM_LINK: downloadLink || '',
-                        START_PART: (document.getElementById('galleryStartPartInput') ? sanitizeString(document.getElementById('galleryStartPartInput').value) : '1'),
-                        SORT_MODE: (document.getElementById('gallerySortModeSelect') ? sanitizeString(document.getElementById('gallerySortModeSelect').value) : 'newest'),
-                        CUSTOM_DB_BASE: (document.getElementById('galleryCustomDbInput') ? sanitizeString(document.getElementById('galleryCustomDbInput').value) : ''),
-                        IS_DISCOVERY_MODE: isDiscoveryMode ? 'true' : 'false',
-                        TARGET_CHANNEL: (document.getElementById('galleryTargetChannelInput') ? document.getElementById('galleryTargetChannelInput').value : '-1004389912148'),
-                        API_ID: tgApiId,
-                        API_HASH: tgApiHash,
-                        BOT_TOKEN: tgBotToken,
-                        SESSION_STRING: tgSession,
-                        OWNER_ID: tgOwner
-                    };
-                } else {
-                    payloadInputs = {
-                        GH_PAT: pat,
-                        TELEGRAM_LINK: downloadLink || '',
-                        TARGET_CHANNEL: '-1003757877147',
-                        API_ID: tgApiId,
-                        API_HASH: tgApiHash,
-                        BOT_TOKEN: tgBotToken,
-                        SESSION_STRING: tgSession,
-                        OWNER_ID: tgOwner
-                    };
-                }
-
-                const branchesToTry = Array.from(new Set([branch, '156', '100', 'main', 'master']));
-                let response = null;
-
-                for (const tryBranch of branchesToTry) {
-                    try {
-                        logDebug(`در حال ارسال درخواست POST به ${workflowId} روی شاخه ${tryBranch}...`);
-                        response = await fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${pat}`,
-                                'Accept': 'application/vnd.github.v3+json',
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                ref: tryBranch,
-                                inputs: payloadInputs
-                            })
-                        });
-
-                        if (response.status === 204 || response.ok) {
-                            logDebug(`ورک‌فلو با موفقیت روی شاخه ${tryBranch} فعال شد.`, 'success');
-                            break;
-                        } else if (response.status === 422) {
-                            logDebug(`شاخه ${tryBranch} برای ${workflowId} وجود ندارد یا معتبر نیست (HTTP 422). سوئیچ روی شاخه بعدی...`, 'warning');
-                        } else {
-                            break;
-                        }
-                    } catch (eBr) {
-                        logDebug(`خطای ارسال به شاخه ${tryBranch}: ${eBr.message}`, 'error');
-                    }
-                }
-
-                if (!response.ok && workflowId === "gallery_extractor.yml") {
-                    logDebug("⚠️ سرور اختصاصی گالری در دسترس نیست. سوئیچ هوشمند روی restricted_bot.yml...");
-                    workflowId = "restricted_bot.yml";
-                    url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`;
-                    response = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${pat}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            ref: branch,
-                            inputs: {
-                                TELEGRAM_LINK: downloadLink || '',
-                                TARGET_CHANNEL: '-1003757877147',
-                                API_ID: tgApiId,
-                                API_HASH: tgApiHash,
-                                BOT_TOKEN: tgBotToken,
-                                SESSION_STRING: tgSession,
-                                OWNER_ID: tgOwner
-                            }
-                        })
-                    });
-                }
-
-                if (response.status === 204) {
-                    const successToast = isSearch
-                        ? "🔎 درخواست جستجو صادر شد! نتایج تا دقایقی دیگر به پی‌وی تلگرام شما فرستاده می‌شود."
-                        : (downloadLink ? "📥 دانلود درخواست شد! تلگرامتان را چک کنید." : "🚀 سرور گیت‌هاب با موفقیت روشن شد!");
-                    showToast(successToast);
-                    logDebug(`ورک‌فلو گیت‌هاب با موفقیت فعال شد. کد وضعیت HTTP 204.`, 'success');
-                    setTimeout(fetchGitHubStatus, 3000);
-                    return true;
-                } else {
-                    const errText = await response.text().catch(() => '');
-                    logDebug(`پاسخ خطا از سمت گیت‌هاب دریافت شد. وضعیت: ${response.status} (${response.statusText}). متن خطا: ${errText}`, 'error');
-                    let errData = {};
-                    try { errData = JSON.parse(errText); } catch(e){}
-                    let detailedMsg = `خطای HTTP ${response.status} (${response.statusText})`;
-                    if (response.status === 429) {
-                        detailedMsg = "محدودیت تعداد درخواست گیت‌هاب (HTTP 429 Too Many Requests - لطفاً کمی صبر کنید)";
-                    } else if (response.status === 422) {
-                        detailedMsg = "درخواست تکراری یا در حال پردازش در سرور (HTTP 422 Unprocessable Entity)";
-                    } else if (errData.message) {
-                        detailedMsg = errData.message;
-                    }
-                    showToast("❌ خطا در اجرای ورک‌فلو: " + detailedMsg);
-                    return { success: false, errorMessage: detailedMsg, statusCode: response.status };
-                }
-            } catch (err) {
-                logDebug(`خطای مهلک در حین ارسال درخواست دیسپچ: ${err.message}`, 'error');
-                showToast("❌ خطای ارتباطی با سرور گیت‌هاب!");
-            }
+            return serverTriggerWorkflow(downloadLink, targetHistoryId, customWorkflow, isDiscoveryMode);
         }
 
         // تاشو کردن و محاسبه ساعت خورشیدی برای منوی آکاردئونی بروزرسانی‌ها (انتهای تب ۱)
@@ -2515,75 +2019,29 @@
         document.getElementById('btnLaunchServer').onclick = () => triggerWorkflow();
 
         document.getElementById('btnStopServer').onclick = async () => {
-            if (serverModeEnabled()) {
-                const token = getServerToken();
-                if (!token) {
-                    showToast("⚠️ توکن امنیتی سرور را وارد کنید!");
-                    logDebug("خطای لغو: توکن سرور خالی است.", "error");
-                    return;
-                }
-                showToast("🛑 در حال ارسال دستور خاموشی به سرور اختصاصی...");
-                logDebug("ارسال دستور لغو به سرور اختصاصی...");
-                try {
-                    const resp = await fetch(getServerUrl() + '/api/cancel', { method: 'POST', headers: serverHeaders() });
-                    if (resp.ok) {
-                        showToast("🛑 سرور اختصاصی با موفقیت خاموش شد!");
-                        logDebug("سیگنال لغو با موفقیت به سرور اختصاصی ارسال شد.", "success");
-                        if (serverLogPollTimer) clearInterval(serverLogPollTimer);
-                        setTimeout(fetchServerStatus, 2000);
-                    } else {
-                        const errText = await resp.text().catch(() => '');
-                        logDebug(`خطا در متوقف کردن سرور اختصاصی: کد ${resp.status}. متن: ${errText}`, 'error');
-                        showToast("❌ خطا در متوقف کردن سرور!");
-                    }
-                } catch (err) {
-                    logDebug(`خطای ارتباط شبکه با سرور اختصاصی: ${err.message}`, 'error');
-                    showToast("❌ عدم ارتباط شبکه با سرور اختصاصی!");
-                }
+            const token = getServerToken();
+            if (!token) {
+                showToast("⚠️ توکن امنیتی سرور را وارد کنید!");
+                logDebug("خطای لغو: توکن سرور خالی است.", "error");
                 return;
             }
-
-            const owner = sanitizeString(document.getElementById('ghOwner').value);
-            const repo = sanitizeString(document.getElementById('ghRepo').value);
-            const pat = sanitizeString(document.getElementById('ghPat').value);
-
-            if (!owner || !repo || !pat) {
-                showToast("⚠️ تنظیمات دسترسی گیت‌هاب را وارد کنید!");
-                logDebug("خطای لغو: تنظیمات گیت‌هاب تکمیل نیست.", "error");
-                return;
-            }
-
-            if (!activeRunId) {
-                showToast("⚠️ ورک‌فلو در حال اجرایی یافت نشد!");
-                logDebug("خطای لغو: شناسه فعال ورک‌فلو (activeRunId) تهی است.", "error");
-                return;
-            }
-
-            showToast("🛑 در حال ارسال دستور خاموشی به سرور...");
-            logDebug(`ارسال دستور لغو برای ورک‌فلو با شناسه: ${activeRunId}`);
-
+            showToast("🛑 در حال ارسال دستور خاموشی به سرور اختصاصی...");
+            logDebug("ارسال دستور لغو به سرور اختصاصی...");
             try {
-                const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${activeRunId}/cancel`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${pat}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-
-                if (response.status === 202 || response.ok) {
-                    showToast("🛑 موتور ابری گیت‌هاب با موفقیت خاموش شد!");
-                    logDebug("سیگنال لغو ورک‌فلو با موفقیت صادر شد (HTTP 202).", "success");
-                    setTimeout(fetchGitHubStatus, 3000);
+                const resp = await fetch(getServerUrl() + '/api/cancel', { method: 'POST', headers: serverHeaders() });
+                if (resp.ok) {
+                    showToast("🛑 سرور اختصاصی با موفقیت خاموش شد!");
+                    logDebug("سیگنال لغو با موفقیت به سرور اختصاصی ارسال شد.", "success");
+                    if (serverLogPollTimer) clearInterval(serverLogPollTimer);
+                    setTimeout(fetchServerStatus, 2000);
                 } else {
-                    const errText = await response.text().catch(() => '');
-                    logDebug(`پاسخ خطا در متوقف کردن ورک‌فلو: کد ${response.status}. متن: ${errText}`, 'error');
+                    const errText = await resp.text().catch(() => '');
+                    logDebug(`خطا در متوقف کردن سرور اختصاصی: کد ${resp.status}. متن: ${errText}`, 'error');
                     showToast("❌ خطا در متوقف کردن سرور!");
                 }
             } catch (err) {
-                logDebug(`خطا در ارتباط شبکه با گیت‌هاب: ${err.message}`, 'error');
-                showToast("❌ عدم ارتباط شبکه با سرور گیت‌هاب!");
+                logDebug(`خطای ارتباط شبکه با سرور اختصاصی: ${err.message}`, 'error');
+                showToast("❌ عدم ارتباط شبکه با سرور اختصاصی!");
             }
         };
 
@@ -2946,8 +2404,8 @@
                 if (!isSuccess) {
                     const errDetail = (dispatchResult && dispatchResult.errorMessage)
                         ? dispatchResult.errorMessage
-                        : 'ارسال درخواست به گیت‌هاب با خطا مواجه شد. لطفاً توکن PAT و تنظیمات گیت‌هاب را بررسی کنید.';
-                    updateDownloadHistoryStatus(item.id, 'failed', '❌ عدم موفقیت در ارسال به گیت‌هاب', errDetail);
+                        : 'ارسال درخواست به سرور اختصاصی با خطا مواجه شد. لطفاً توکن امنیتی سرور را بررسی کنید.';
+                    updateDownloadHistoryStatus(item.id, 'failed', '❌ عدم موفقیت در ارسال به سرور', errDetail);
                 } else {
                     updateDownloadHistoryStatus(item.id, 'in_progress', '⚡ در حال پردازش در سرور...');
                 }
@@ -3344,7 +2802,7 @@
                     showToast("✅ دستور شخم زدن دیتابیس صادر شد! سرور در حال تحلیل و کشف کامل عکس‌هاست.");
                     updateGalleryStatsUI(0, 0, 0, "سرور در حال شخم زدن و کشف دیتابیس 🌾");
                 } else {
-                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در ارسال درخواست به گیت‌هاب.';
+                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در ارسال درخواست به سرور.';
                     showToast("❌ " + errDetail);
                     updateGalleryStatsUI(0, 0, 0, "خطا در برپاخاستن سرور ❌");
                 }
@@ -3376,7 +2834,7 @@
                     return;
                 }
 
-                showToast("🚀 در حال فرستادن سیگنال استخراج گالری به سرور گیت‌هاب...");
+                showToast("🚀 در حال فرستادن سیگنال استخراج گالری به سرور اختصاصی...");
                 logDlDebug(`🖼️ فرستادن سیگنال استخراج گالری: ${gUrl} (پارت شروع: ${startPart || 'خودکار'}) به مقصد ${targetChannel}`);
                 logGalleryDebug(`🚀 شروع استخراج گالری: ${gUrl} (پارت شروع: ${startPart || 'خودکار'}) به کانال مقصد ${targetChannel}`);
 
@@ -3391,7 +2849,7 @@
                     showToast("✅ درخواست استخراج گالری صادر شد! تصاویر به کانال آرشیو ارسال می‌شوند.");
                     updateGalleryStatsUI(0, 0, 0, "سرور در حال استخراج و ارسال آلبومی ⚡");
                 } else {
-                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در ارسال درخواست گالری به گیت‌هاب.';
+                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در ارسال درخواست گالری به سرور.';
                     showToast("❌ " + errDetail);
                     updateGalleryStatsUI(0, 0, 0, "خطا در برپاخاستن سرور ❌");
                 }
