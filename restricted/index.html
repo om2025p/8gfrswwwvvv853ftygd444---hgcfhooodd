@@ -1010,29 +1010,21 @@
             <div class="white-card">
                 <h2 class="card-title">⚙️ تنظیمات و متغیرهای محرمانه (پرونده ربات)</h2>
                 <p style="font-size: 0.82rem; line-height: 1.6; color: #64748b; margin-top: -8px; margin-bottom: 16px;">
-                    این تنظیمات صرفاً در حافظه امن برنامه به صورت محلی ذخیره می‌شوند تا بتوانید دستور فعال‌سازی گیت‌هاب را مستقیم صادر کنید.
+                    این تنظیمات صرفاً در حافظه امن برنامه به صورت محلی ذخیره می‌شوند تا بتوانید دستور فعال‌سازی سرور اختصاصی را مستقیم صادر کنید.
                 </p>
 
                 <div class="form-grid">
-                    <!-- گیت هاب -->
+                    <!-- سرور اختصاصی Railway -->
                     <div style="border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px; background: #f8fafc;">
-                        <h4 style="margin: 0 0 12px 0; font-size: 0.88rem; color: var(--accent-blue);">🔑 دسترسی گیت‌هاب (جهت روشن کردن سرور):</h4>
+                        <h4 style="margin: 0 0 12px 0; font-size: 0.88rem; color: var(--accent-green);">🚀 سرور اختصاصی (Railway):</h4>
                         <div class="form-grid">
                             <div class="input-group">
-                                <label class="input-label">شناسه کاربری گیت‌هاب (Username):</label>
-                                <input type="text" id="ghOwner" class="input-field" placeholder="مثلا Alendirani" style="direction: ltr;">
+                                <label class="input-label">آدرس سرور (Server URL):</label>
+                                <input type="text" id="srvUrl" class="input-field" placeholder="https://xxxx.up.railway.app" style="direction: ltr;">
                             </div>
                             <div class="input-group">
-                                <label class="input-label">نام مخزن شما (Repository Name):</label>
-                                <input type="text" id="ghRepo" class="input-field" placeholder="مثلا Save-Restricted-Bot" style="direction: ltr;">
-                            </div>
-                            <div class="input-group">
-                                <label class="input-label">توکن دسترسی گیت‌هاب (Personal Access Token):</label>
-                                <input type="password" id="ghPat" class="input-field" placeholder="github_pat_..." style="direction: ltr;">
-                            </div>
-                            <div class="input-group">
-                                <label class="input-label">نام شاخه گیت‌هاب (Branch Name):</label>
-                                <input type="text" id="ghBranch" class="input-field" placeholder="مثلا main" style="direction: ltr;">
+                                <label class="input-label">توکن امنیتی سرور (Server Token):</label>
+                                <input type="password" id="srvToken" class="input-field" placeholder="توکن مخفی سرور" style="direction: ltr;">
                             </div>
                         </div>
                     </div>
@@ -1041,22 +1033,6 @@
                     <div style="border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px; background: #f8fafc; margin-top: 5px;">
                         <h4 style="margin: 0 0 12px 0; font-size: 0.88rem; color: var(--accent-purple);">🤖 شناسه‌های تلگرام ربات:</h4>
                         <div class="form-grid">
-                            <div class="input-group">
-                                <label class="input-label">API_ID تلگرام:</label>
-                                <input type="text" id="tgApiId" class="input-field" placeholder="مثلا 123456" style="direction: ltr;">
-                            </div>
-                            <div class="input-group">
-                                <label class="input-label">API_HASH تلگرام:</label>
-                                <input type="password" id="tgApiHash" class="input-field" placeholder="کد ۳۲ کاراکتری" style="direction: ltr;">
-                            </div>
-                            <div class="input-group">
-                                <label class="input-label">BOT_TOKEN ربات تلگرام:</label>
-                                <input type="password" id="tgBotToken" class="input-field" placeholder="توکن بات‌فادر" style="direction: ltr;">
-                            </div>
-                            <div class="input-group">
-                                <label class="input-label">SESSION_STRING اکانت تلگرام:</label>
-                                <input type="password" id="tgSession" class="input-field" placeholder="رشته تولیدشده توسط ربات کمکی" style="direction: ltr;">
-                            </div>
                             <div class="input-group">
                                 <label class="input-label">OWNER_ID شناسه عددی شما:</label>
                                 <input type="text" id="tgOwner" class="input-field" placeholder="مثلا 987654321" style="direction: ltr;">
@@ -1166,8 +1142,7 @@
     <script>
         // دکمه‌ها و المان‌ها
         const inputs = [
-            'ghOwner', 'ghRepo', 'ghPat', 'ghBranch',
-            'tgApiId', 'tgApiHash', 'tgBotToken', 'tgSession', 'tgOwner'
+            'srvUrl', 'srvToken', 'tgOwner'
         ];
 
         let activeRunId = null; // ذخیره شناسه آخرین ورک‌فلو جهت توقف فوری
@@ -1278,12 +1253,9 @@
                 val = sanitizeString(val);
                 document.getElementById(id).value = val;
                 localStorage.setItem('restricted_bot_' + id, val);
-            } else if (id === 'ghBranch') {
-                document.getElementById(id).value = '81'; // مقدار پیش‌فرض 81
-            }
-            if (id === 'ghBranch' && (!document.getElementById(id).value || document.getElementById(id).value === '80' || document.getElementById(id).value === '81')) {
-                document.getElementById(id).value = '100';
-                localStorage.setItem('restricted_bot_ghBranch', '100');
+            } else if (id === 'srvUrl') {
+                document.getElementById(id).value = 'https://8gfrswwwvvv853ftygd444-hgcfhooodd-production.up.railway.app';
+                localStorage.setItem('restricted_bot_srvUrl', document.getElementById(id).value);
             }
 
             // ذخیره خودکار و ضدعفونی همزمان هنگام کپی/پیست یا تایپ
@@ -1315,13 +1287,10 @@
 
         // تولید پیش‌نمایش فایل تنظیمات
         function updateEnvPreview() {
-            const apiId = sanitizeString(document.getElementById('tgApiId').value) || '123456';
-            const apiHash = sanitizeString(document.getElementById('tgApiHash').value) || 'abcdef0123456789';
-            const botToken = sanitizeString(document.getElementById('tgBotToken').value) || '1234567890:ABCDef...';
-            const session = sanitizeString(document.getElementById('tgSession').value) || 'BQB...';
+            const srvUrl = sanitizeString(document.getElementById('srvUrl').value) || 'https://xxxx.up.railway.app';
             const ownerId = sanitizeString(document.getElementById('tgOwner').value) || '987654321';
 
-            const previewText = `API_ID=${apiId}\nAPI_HASH=${apiHash}\nBOT_TOKEN=${botToken}\nSESSION_STRING=${session}\nOWNER_ID=${ownerId}`;
+            const previewText = `SERVER_URL=${srvUrl}\nOWNER_ID=${ownerId}`;
             document.getElementById('envPreview').innerText = previewText;
         }
         updateEnvPreview();
@@ -1340,15 +1309,8 @@
         if (btnAndroidCfg) {
             btnAndroidCfg.onclick = () => {
                 const configData = {
-                    ghOwner: sanitizeString(document.getElementById('ghOwner').value) || '',
-                    ghRepo: sanitizeString(document.getElementById('ghRepo').value) || '',
-                    ghToken: sanitizeString(document.getElementById('ghPat').value) || '',
-                    ghPat: sanitizeString(document.getElementById('ghPat').value) || '',
-                    ghBranch: sanitizeString(document.getElementById('ghBranch').value) || '100',
-                    tgApiId: sanitizeString(document.getElementById('tgApiId').value) || '',
-                    tgApiHash: sanitizeString(document.getElementById('tgApiHash').value) || '',
-                    tgBotToken: sanitizeString(document.getElementById('tgBotToken').value) || '',
-                    tgSession: sanitizeString(document.getElementById('tgSession').value) || '',
+                    srvUrl: sanitizeString(document.getElementById('srvUrl').value) || '',
+                    srvToken: sanitizeString(document.getElementById('srvToken').value) || '',
                     tgOwner: sanitizeString(document.getElementById('tgOwner').value) || ''
                 };
                 const jsonString = JSON.stringify(configData, null, 2);
@@ -1395,14 +1357,8 @@
                         }
                     };
 
-                    setVal('ghOwner', 'ghOwner', data.ghOwner);
-                    setVal('ghRepo', 'ghRepo', data.ghRepo);
-                    setVal('ghPat', 'ghPat', data.ghToken || data.ghPat);
-                    setVal('ghBranch', 'ghBranch', data.ghBranch);
-                    setVal('tgApiId', 'tgApiId', data.tgApiId);
-                    setVal('tgApiHash', 'tgApiHash', data.tgApiHash);
-                    setVal('tgBotToken', 'tgBotToken', data.tgBotToken);
-                    setVal('tgSession', 'tgSession', data.tgSession);
+                    setVal('srvUrl', 'srvUrl', data.srvUrl);
+                    setVal('srvToken', 'srvToken', data.srvToken);
                     setVal('tgOwner', 'tgOwner', data.tgOwner);
 
                     if (window.AndroidNative && typeof window.AndroidNative.saveConfigData === 'function') {

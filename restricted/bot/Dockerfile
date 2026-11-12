@@ -15,4 +15,6 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
 
-CMD ["bash", "bash.sh"]
+EXPOSE 8080
+
+CMD ["python", "server.py"]
