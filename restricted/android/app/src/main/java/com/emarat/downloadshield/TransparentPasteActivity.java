@@ -34,6 +34,9 @@ public class TransparentPasteActivity extends Activity {
     /** جلوگیری از پردازش دوبارهٔ همان اینتنت در یک چرخهٔ حیات. */
     private boolean handled = false;
 
+    /** شمارندهٔ تلاش‌های خواندن کلیپ‌بورد (اندروید ۱۰+ پیش از فوکوس خالی می‌دهد). */
+    private int attempts = 0;
+
     private static final Pattern URL_PATTERN = Pattern.compile(
             "(https?://[^\\s]+)",
             Pattern.CASE_INSENSITIVE
@@ -68,14 +71,24 @@ public class TransparentPasteActivity extends Activity {
 
     private void arm() {
         handled = false;
-        new Handler(Looper.getMainLooper()).postDelayed(this::tryPaste, 400);
+        attempts = 0;
+        tryPaste();
     }
 
     private void tryPaste() {
         if (handled) return;
-        handled = true;
 
         String freshLink = getFreshClipboardUrl();
+
+        // در اندروید ۱۰+ ممکن است چند صد میلی‌ثانیه طول بکشد تا خواندن کلیپ‌بورد مجاز شود؛
+        // پس چند بار تلاش می‌کنیم تا لینک از دست نرود.
+        if ((freshLink == null || freshLink.isEmpty()) && attempts < 6) {
+            attempts++;
+            new Handler(Looper.getMainLooper()).postDelayed(this::tryPaste, 250);
+            return;
+        }
+
+        handled = true;
 
         if (freshLink != null && !freshLink.isEmpty()) {
             String assembled = NotificationInputReceiver.assembleTextChunks(this, freshLink);
