@@ -174,6 +174,28 @@ gradle assembleRelease assembleDebug --no-daemon
 ```
 خروجی: `app/build/outputs/apk/{release,debug}/`
 
+### 🛡️ اپ اندروید «سپر دانلود» (restricted/android)
+- **applicationId:** `com.emarat.downloadshield` | **SharedPreferences:** `restricted_bot_prefs` | minSdk 24 / targetSdk 34.
+- WebView داخلی `file:///android_asset/restricted/index.html` را لود می‌کند؛ assets باید همگام بمانند.
+- **دام بزرگ (درس گران‌بها):** الگوی `*.png` در `.gitignore` آیکون‌های `mipmap-*` را نادیده می‌گرفت؛ در نتیجه هیچ clone‌ای آیکون نداشت و بیلد با خطای `AAPT: resource mipmap/ic_launcher not found` می‌شکست. **راه‌حل:** استثنای صریح در `.gitignore`:
+  ```
+  !restricted/android/app/src/main/res/mipmap-*/ic_launcher*.png
+  ```
+  پس از هر تغییر در `.gitignore`، با `git check-ignore -v <path>` تأیید کنید که فایل‌های حیاتی ردیابی می‌شوند.
+- آیکون‌ها از `restricted/icon-512.png` ساخته می‌شوند (۵ چگالی + `_round`). اگر پوشه نبود:
+  `python3 -c` با Pillow و `Image.LANCZOS` (نمونه در `.github/workflows/build_android_apk.yml`).
+- امضا: `keystore.properties` (فیلترشده در git) با کلیدهای `storeFile/storePassword/keyAlias/keyPassword`. اگر فایل نباشد، بیلد release بدون امضا انجام می‌شود.
+- `app/proguard-rules.pro` باید وجود داشته باشد (حتی خالی) چون `build.gradle` به آن ارجاع می‌دهد.
+- بیلد خودکار: `.github/workflows/build_android_apk.yml` (workflow_dispatch + آپلود artifact + ارسال اختیاری به تلگرام).
+
+#### 🐛 باگ «دکمه چسباندن اعلان فقط یک بار کار می‌کند» — علت و درمان
+سه علت هم‌زمان داشت و هر سه باید رفع شوند:
+1. **`onNewIntent` پیاده‌سازی نشده بود.** اکتیویتی `TransparentPasteActivity` با `noHistory` و `CLEAR_TOP` باز می‌شد؛ اینتنت دوم به `onNewIntent` تحویل داده می‌شد و چون آن متد وجود نداشت، اینتنت **دور ریخته می‌شد**. باید `onNewIntent` را override و منطق را به متد مشترک (`tryPaste`) منتقل کرد.
+2. **خواندن کلیپ‌بورد پیش از گرفتن فوکوس (اندروید ۱۰+).** خواندن در `onCreate` خالی برمی‌گردد. باید در `onWindowFocusChanged` و با چند تلاش مجدد (مثلاً ۶ بار × ۲۵۰ms) خوانده شود.
+3. **`PendingIntent` بدون `SINGLE_TOP`.** باید اکشن اختصاصی (`ACTION_PASTE`) + `FLAG_ACTIVITY_SINGLE_TOP` داشته باشد تا همیشه به نمونه زندهٔ اکتیویتی برسد؛ و `launchMode="singleTop"` در مانیفست.
+
+**درس کلی:** هر اکتیویتی شفاف/موقتی که از اعلان باز می‌شود، **باید** `onNewIntent` داشته باشد؛ وگرنه فقط بار اول کار می‌کند.
+
 ### 🎬 زیرنویس‌سازی ویدیو (فارسی)
 ابزار: `yt-dlp` (دانلود) + `ffmpeg` (صدا/burn-in) + `faster-whisper` (تشخیص گفتار) + فونت **وزیرمتن**.
 - ffmpeg باید با `libass + libfribidi + libharfbuzz` کامپایل شده باشد تا فارسی درست شکل بگیرد.
