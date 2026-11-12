@@ -6,11 +6,18 @@ on:
       version_name:
         description: "نسخه (مثلا 1.1.0)"
         required: false
-        default: "1.1.0"
+        default: "1.2.0"
       send_to_telegram:
         description: "ارسال APK به تلگرام؟ (true/false)"
         required: false
         default: "true"
+  # ساخت خودکار هنگام تغییر کد اپ اندروید تا APK همیشه با کلید اصلی مخزن امضا شود.
+  # امضای یکسان یعنی کاربر فقط «به‌روزرسانی» می‌زند و داده‌هایش پاک نمی‌شود.
+  push:
+    branches: ['main']
+    paths:
+      - 'restricted/android/**'
+      - '.github/workflows/build_android_apk.yml'
 
 permissions:
   contents: write
@@ -66,10 +73,12 @@ jobs:
           gradle assembleDebug --no-daemon
 
       - name: تغییر نام فایل‌ها
+        env:
+          VER: ${{ github.event.inputs.version_name || '1.2.0' }}
         run: |
           mkdir -p out
-          cp restricted/android/app/build/outputs/apk/release/app-release.apk "out/download-shield-${{ github.event.inputs.version_name }}.apk"
-          cp restricted/android/app/build/outputs/apk/debug/app-debug.apk "out/download-shield-${{ github.event.inputs.version_name }}-debug.apk"
+          cp restricted/android/app/build/outputs/apk/release/app-release.apk "out/download-shield-${VER}.apk"
+          cp restricted/android/app/build/outputs/apk/debug/app-debug.apk "out/download-shield-${VER}-debug.apk"
           ls -la out/
 
       - name: آپلود به عنوان artifact
@@ -79,21 +88,21 @@ jobs:
           path: out/*.apk
 
       - name: ارسال به تلگرام
-        if: ${{ github.event.inputs.send_to_telegram == 'true' }}
+        if: ${{ github.event.inputs.send_to_telegram != 'false' }}
         env:
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          VER: ${{ github.event.inputs.version_name || '1.2.0' }}
         run: |
           if [ -z "$BOT_TOKEN" ] || [ -z "$CHAT_ID" ]; then
             echo "⚠️ تلگرام تنظیم نشده؛ رد می‌شود."
             exit 0
           fi
-          APK="out/download-shield-${{ github.event.inputs.version_name }}.apk"
+          APK="out/download-shield-${VER}.apk"
           SIZE=$(du -h "$APK" | cut -f1)
-          VER="${{ github.event.inputs.version_name }}"
           curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument" \
             -F "chat_id=${CHAT_ID}" \
             -F "document=@${APK}" \
-            -F "caption=🛡️ <b>سپر دانلود ${VER}</b>%0A📦 حجم: ${SIZE}%0A✅ باگ دکمه چسباندن اعلان رفع شد" \
+            -F "caption=🛡️ <b>سپر دانلود ${VER}</b>%0A📦 حجم: ${SIZE}%0A⚡ اتصال مستقیم به سرور اختصاصی (بدون گیت‌هاب)%0A🔁 اگر سرور قطع باشد، خودکار از مسیر پشتیبان ارسال می‌شود" \
             -F "parse_mode=HTML" || echo "ارسال تلگرام ناموفق بود"
         continue-on-error: true
