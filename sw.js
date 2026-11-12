@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v58';
+const CACHE_NAME = 'emarat-portal-v59';
 const ASSETS = [
   './',
   './index.html',
@@ -308,13 +308,25 @@ const ASSETS = [
   './vendor/inter/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa25L7SUc.woff2'
 ];
 
+// منابع حیاتی: نبودشان یعنی صفحه سفید. باید قبل از هر چیز و به‌صورت قطعی کش شوند.
+const CRITICAL_ASSETS = [
+  './',
+  './index.html',
+  './sw.js',
+  './manifest.json',
+  './cloud-sync.js'
+];
+
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // هر فایل مستقل کش می‌شود تا نبودِ یک فایل، کل نصب را خراب نکند
-      return Promise.allSettled(
-        ASSETS.map((asset) =>
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // منابع حیاتی باید کامل کش شوند؛ در غیر این صورت نصب شکست می‌خورد و
+      // سرویس‌ورکر و کش سالم قبلی دست‌نخورده باقی می‌ماند (جلوگیری از صفحه سفید).
+      await Promise.all(CRITICAL_ASSETS.map((asset) => cache.add(asset)));
+      // بقیه منابع اختیاری‌اند؛ خطای یکی نباید کل نصب را خراب کند.
+      await Promise.allSettled(
+        ASSETS.filter((asset) => !CRITICAL_ASSETS.includes(asset)).map((asset) =>
           cache.add(asset).catch((err) => console.warn('Skipped asset:', asset, err))
         )
       );
