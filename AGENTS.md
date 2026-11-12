@@ -179,3 +179,14 @@ gradle assembleRelease assembleDebug --no-daemon
 - ffmpeg باید با `libass + libfribidi + libharfbuzz` کامپایل شده باشد تا فارسی درست شکل بگیرد.
 - برای burn-in: `ffmpeg -i in.mp4 -vf "ass=sub.ass:fontsdir=fontsonly" -c:v libx264 ...`
 - اعتبارسنجی رندر فارسی با OCR (`tesseract -l fas`).
+
+### ☁️ سرور اختصاصی سپر دانلود (restricted/bot)
+اپ «سپر دانلود» به یک سرور FastAPI نیاز دارد که کلاینت تلگرام (Pyrogram) را ۲۴ ساعته زنده نگه دارد.
+- کد: `restricted/bot/server.py` (FastAPI + CORSMiddleware)، `Dockerfile` روی پورت 8080.
+- میزبانی: Railway (پلن trial با ۵ دلار اعتبار یک‌باره — تمدید ماهانه ندارد). مصرف واقعی ~۱ دلار/ماه.
+- متغیرهای محیطی لازم: `AUTH`, `API_ID`, `API_HASH`, `BOT_TOKEN`, `OWNER_ID`, `SERVER_TOKEN`, `SESSION`, `PORT=8080`.
+- احراز هویت: هدر `X-Auth-Token` باید برابر `SERVER_TOKEN` باشد.
+- **CORS الزامی است:** بدون `CORSMiddleware` مرورگر درخواست‌ها را بلاک می‌کند و پیام «عدم اتصال به سرور» نمایش داده می‌شود (curl کار می‌کند ولی مرورگر نه).
+- در فرانت‌اند، آدرس سرور در `DEFAULT_SRV_URL` داخل `restricted/index.html` و توکن در `localStorage` با کلید `restricted_bot_srvToken` نگه‌داری می‌شود.
+- **محدودیت تلگرام:** دو نمونه سرور همزمان با یک `SESSION` باعث خطای `AUTH_KEY_DUPLICATED` می‌شود؛ قبل از راه‌اندازی سرور جدید، قدیمی را خاموش کنید.
+- تعویض میزبان: فقط پروژه Railway جدید + همان متغیرها + به‌روزرسانی `DEFAULT_SRV_URL` کافی است.
