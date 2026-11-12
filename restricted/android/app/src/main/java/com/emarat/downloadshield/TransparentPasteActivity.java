@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -26,6 +27,13 @@ import okhttp3.Response;
 
 public class TransparentPasteActivity extends Activity {
     private static final String TAG = "TransparentPasteAct";
+
+    /** اکشن اختصاصی این اکتیویتی تا اینتنت اعلان با سایر اینتنت‌ها تداخل نکند. */
+    public static final String ACTION_PASTE = "com.emarat.downloadshield.ACTION_PASTE";
+
+    /** جلوگیری از پردازش دوبارهٔ همان اینتنت در یک چرخهٔ حیات. */
+    private boolean handled = false;
+
     private static final Pattern URL_PATTERN = Pattern.compile(
             "(https?://[^\\s]+)",
             Pattern.CASE_INSENSITIVE
@@ -34,6 +42,38 @@ public class TransparentPasteActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        arm();
+    }
+
+    /**
+     * وقتی اکتیویتی از قبل زنده باشد، اندروید اینتنت جدید را به‌جای onCreate به این متد
+     * تحویل می‌دهد. بدون این متد، دکمهٔ «چسباندن» اعلان فقط بار اول کار می‌کرد.
+     */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        arm();
+    }
+
+    /**
+     * در اندروید ۱۰+ خواندن کلیپ‌بورد فقط پس از گرفتن فوکوس پنجره ممکن است؛
+     * پس تا لحظهٔ فوکوس صبر می‌کنیم و یک تایمر پشتیبان هم می‌گذاریم.
+     */
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) tryPaste();
+    }
+
+    private void arm() {
+        handled = false;
+        new Handler(Looper.getMainLooper()).postDelayed(this::tryPaste, 400);
+    }
+
+    private void tryPaste() {
+        if (handled) return;
+        handled = true;
 
         String freshLink = getFreshClipboardUrl();
 

@@ -21,6 +21,7 @@ restricted/android/app/build/
 *.png
 !**/icon-*.png
 !**/apple-touch-icon.png
+!restricted/android/app/src/main/res/mipmap-*/ic_launcher*.png
 *.log
 login_page.png
 credentials_filled.png
@@ -28,3 +29,7 @@ after_login.png
 portfolio_loaded.png
 error_emergency.png
 easytrader_failed.png
+
+# Android signing secrets (NEVER commit)
+restricted/android/keystore.properties
+restricted/android/*.keystore

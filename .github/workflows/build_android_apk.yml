@@ -1,0 +1,99 @@
+name: Build Download Shield APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: "نسخه (مثلا 1.1.0)"
+        required: false
+        default: "1.1.0"
+      send_to_telegram:
+        description: "ارسال APK به تلگرام؟ (true/false)"
+        required: false
+        default: "true"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: دریافت کد
+        uses: actions/checkout@v4
+
+      - name: نصب JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: راه‌اندازی Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: ساخت آیکون‌های mipmap (اگر نبودند)
+        run: |
+          python3 -m pip install --quiet Pillow
+          python3 - <<'PY'
+          import os
+          from PIL import Image
+          src_path = 'restricted/icon-512.png'
+          res = 'restricted/android/app/src/main/res'
+          src = Image.open(src_path).convert('RGBA')
+          for folder, size in {'mipmap-mdpi':48,'mipmap-hdpi':72,'mipmap-xhdpi':96,'mipmap-xxhdpi':144,'mipmap-xxxhdpi':192}.items():
+              d = os.path.join(res, folder)
+              os.makedirs(d, exist_ok=True)
+              src.resize((size, size), Image.LANCZOS).save(os.path.join(d, 'ic_launcher.png'))
+              src.resize((size, size), Image.LANCZOS).save(os.path.join(d, 'ic_launcher_round.png'))
+          print('icons ready')
+          PY
+
+      - name: بازیابی کلید امضا
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > restricted/android/emarat-shield.keystore
+          cat > restricted/android/keystore.properties <<EOF
+          storeFile=emarat-shield.keystore
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      - name: ساخت APK
+        working-directory: restricted/android
+        run: |
+          gradle assembleRelease --no-daemon
+          gradle assembleDebug --no-daemon
+
+      - name: تغییر نام فایل‌ها
+        run: |
+          mkdir -p out
+          cp restricted/android/app/build/outputs/apk/release/app-release.apk "out/download-shield-${{ github.event.inputs.version_name }}.apk"
+          cp restricted/android/app/build/outputs/apk/debug/app-debug.apk "out/download-shield-${{ github.event.inputs.version_name }}-debug.apk"
+          ls -la out/
+
+      - name: آپلود به عنوان artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: download-shield-apk
+          path: out/*.apk
+
+      - name: ارسال به تلگرام
+        if: ${{ github.event.inputs.send_to_telegram == 'true' }}
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$BOT_TOKEN" ] || [ -z "$CHAT_ID" ]; then
+            echo "⚠️ تلگرام تنظیم نشده؛ رد می‌شود."
+            exit 0
+          fi
+          APK="out/download-shield-${{ github.event.inputs.version_name }}.apk"
+          SIZE=$(du -h "$APK" | cut -f1)
+          VER="${{ github.event.inputs.version_name }}"
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendDocument" \
+            -F "chat_id=${CHAT_ID}" \
+            -F "document=@${APK}" \
+            -F "caption=🛡️ <b>سپر دانلود ${VER}</b>%0A📦 حجم: ${SIZE}%0A✅ باگ دکمه چسباندن اعلان رفع شد" \
+            -F "parse_mode=HTML" || echo "ارسال تلگرام ناموفق بود"
+        continue-on-error: true
