@@ -133,3 +133,49 @@ vendor/inter/inter.css                       # + fonts/*.woff2 (فقط latin/lat
 5. تست واقعی: سرور محلی را بالا بیاور، صفحه را باز کن، سرور را **خاموش** کن و رفرش کن — باید از کش بیاید.
 
 **هشدار داده:** تغییر مسیر CSS/JS هیچ تأثیری روی `localStorage`/`IndexedDB`/`cloud-sync` ندارد و داده‌های کاربر دست‌نخورده می‌مانند.
+
+---
+
+## 📱 اپ اندروید بومی «نمایشگر کد» (Native Android App)
+
+### مشخصات فنی
+- **پکیج (applicationId):** `ir.omarat.codeviewer` — عمداً از `com.emarat.*` جدا شد تا با هیچ اپ دیگری تداخل نکند.
+- **نام نمایشی:** «نمایشگر کد» (بدون کلمات حساس).
+- **نسخه:** 1.1.0 (versionCode 2).
+- **آیکون:** دقیقاً از `html-viewer/icon-512.png` ساخته می‌شود (adaptive + همه چگالی‌ها).
+
+### 🔐 قاعده طلایی: جداسازی کامل شناسه‌های ذخیره‌سازی
+هر اپ اندرویدی جدید **باید** شناسه‌های ذخیره‌سازی یکتا داشته باشد تا در کنار سایر اپ‌ها بدون تداخل نصب شود:
+
+| مورد | مقدار (نمایشگر کد) | مقدار (اپ دیگر: سپر دانلود) |
+|---|---|---|
+| applicationId | `ir.omarat.codeviewer` | `com.emarat.downloadshield` |
+| SharedPreferences | `omarat_code_viewer_prefs` | `restricted_bot_prefs` |
+| دیتابیس SQLite | `omarat_code_viewer.db` | — |
+| پوشه دانلود | `Downloads/CodeViewer/` | — |
+
+**نکته:** اندروید هر اپ را در sandbox جدا نگه می‌دارد، ولی برای اطمینان مضاعف:
+1. applicationId نباید زیرمجموعه‌ی اپ دیگری باشد.
+2. نام دیتابیس و SharedPreferences باید پیشوند اختصاصی داشته باشد.
+3. خروجی دانلود باید در **زیرپوشه‌ی اختصاصی** ذخیره شود تا فایل‌ها بازنویسی نشوند.
+
+### 🎨 ساخت آیکون از وب‌اپ
+آیکون اندروید باید **عیناً** از `html-viewer/icon-512.png` تولید شود:
+- همه چگالی‌ها: mdpi(48) hdpi(72) xhdpi(96) xxhdpi(144) xxxhdpi(192)
+- Adaptive icon (اندروید ۸+): `mipmap-anydpi-v26/ic_launcher.xml` + `ic_launcher_foreground.png` با حاشیه امن (~۶۲٪)
+- اعتبارسنجی: مقایسه‌ی aHash آیکون اپ با آیکون وب‌اپ باید **۱۰۰٪** باشد.
+
+### 🏗️ بیلد
+```bash
+export JAVA_HOME=/opt/tools/jdk17
+export ANDROID_HOME=/opt/tools/android-sdk
+export PATH=/opt/tools/gradle/bin:$JAVA_HOME/bin:$PATH
+gradle assembleRelease assembleDebug --no-daemon
+```
+خروجی: `app/build/outputs/apk/{release,debug}/`
+
+### 🎬 زیرنویس‌سازی ویدیو (فارسی)
+ابزار: `yt-dlp` (دانلود) + `ffmpeg` (صدا/burn-in) + `faster-whisper` (تشخیص گفتار) + فونت **وزیرمتن**.
+- ffmpeg باید با `libass + libfribidi + libharfbuzz` کامپایل شده باشد تا فارسی درست شکل بگیرد.
+- برای burn-in: `ffmpeg -i in.mp4 -vf "ass=sub.ass:fontsdir=fontsonly" -c:v libx264 ...`
+- اعتبارسنجی رندر فارسی با OCR (`tesseract -l fas`).
