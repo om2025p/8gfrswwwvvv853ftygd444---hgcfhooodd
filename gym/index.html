@@ -779,6 +779,91 @@
             margin-bottom: 15px;
         }
 
+        /* --- رندر قالب‌بندی‌شدهٔ جواب استاد (فقط بخش هوش مصنوعی) --- */
+        .ai-rich {
+            white-space: normal;
+            word-break: break-word;
+        }
+        .ai-rich .ai-h {
+            margin: 12px 0 6px;
+            line-height: 1.5;
+            color: #8b5cf6;
+        }
+        .ai-rich h3.ai-h { font-size: 1.05rem; }
+        .ai-rich h4.ai-h { font-size: 0.98rem; }
+        .ai-rich h5.ai-h { font-size: 0.92rem; }
+        .ai-rich p { margin: 6px 0; }
+        .ai-rich ul,
+        .ai-rich ol { margin: 6px 20px 6px 0; padding-right: 18px; }
+        .ai-rich li { margin: 3px 0; }
+        .ai-rich code {
+            background: rgba(139,92,246,0.12);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 0.88em;
+            direction: ltr;
+            display: inline-block;
+        }
+        .ai-rich mark {
+            background: #fde68a;
+            color: #78350f;
+            padding: 0 3px;
+            border-radius: 3px;
+        }
+        .ai-rich .ai-note {
+            border-right: 4px solid var(--primary-color);
+            background: rgba(0,123,255,0.08);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+        }
+        .ai-rich .ai-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 0.85rem;
+            display: block;
+            overflow-x: auto;
+        }
+        .ai-rich .ai-table th,
+        .ai-rich .ai-table td {
+            border: 1px solid var(--border-color);
+            padding: 6px 9px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        .ai-rich .ai-table thead th {
+            background: #8b5cf6;
+            color: #fff;
+            font-weight: bold;
+        }
+        .ai-rich .ai-table tbody tr:nth-child(even) { background: rgba(139,92,246,0.07); }
+
+        .ai-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--border-color);
+        }
+        .ai-act-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-family: inherit;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ai-act-btn:hover { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+        .ai-act-btn.tg { border-color: #229ED9; color: #229ED9; }
+        .ai-act-btn.tg:hover { background: #229ED9; color: #fff; border-color: #229ED9; }
+        .ai-act-btn[disabled] { opacity: 0.6; cursor: default; }
+
         .ai-chat-box {
             display: flex;
             flex-direction: column;
@@ -1324,7 +1409,10 @@
             <span>🏋️‍♂️</span>
             <span>استاد و مربی هوشمند تمرین</span>
         </div>
-        <button class="ai-modal-close" onclick="closeAiCoachModal()">✕</button>
+        <div style="display:flex; gap:6px; align-items:center;">
+            <button class="ai-modal-close" onclick="openAiSettingsModal()" title="تنظیمات ارسال به تلگرام" style="font-size:1.2rem;">⚙️</button>
+            <button class="ai-modal-close" onclick="closeAiCoachModal()">✕</button>
+        </div>
     </div>
     <div class="ai-modal-body" id="aiCoachBody">
         <div id="aiHistorySection"></div>
@@ -1343,6 +1431,38 @@
     <div class="ai-input-area">
         <textarea id="aiChatInput" placeholder="سوالی از استاد داری؟ بپرس..." rows="1" oninput="autoGrowAiInput(this)"></textarea>
         <button class="ai-send-btn" id="aiSendBtn" onclick="sendAiChatMessage()">⚡</button>
+    </div>
+</div>
+
+<!-- AI Telegram Settings Modal -->
+<div id="aiSettingsModal" class="ai-modal" style="z-index: 3500;">
+    <div class="ai-modal-header">
+        <div class="ai-modal-title">
+            <span>⚙️</span>
+            <span>تنظیمات ارسال استاد به تلگرام</span>
+        </div>
+        <button class="ai-modal-close" onclick="closeAiSettingsModal()">✕</button>
+    </div>
+    <div class="ai-modal-body">
+        <p style="font-size:0.85rem; line-height:1.8; color:var(--secondary-color); margin:0 0 12px;">
+            این اطلاعات <strong>فقط در مرورگر خودت</strong> ذخیره می‌شود و هرگز در کد برنامه یا سرور قرار نمی‌گیرد.
+            برای ساخت ربات به <code>@BotFather</code> در تلگرام پیام بده و توکن بگیر؛ سپس ربات را در کانال/گروه مقصد
+            <strong>ادمین</strong> کن. Chat ID کانال معمولاً با <code>-100</code> شروع می‌شود.
+        </p>
+        <label style="display:block; font-size:0.85rem; margin:10px 0 4px;">🤖 توکن ربات (Bot Token)</label>
+        <input id="aiTgTokenInput" type="password" placeholder="123456789:AA..." autocomplete="off"
+               style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-color); font-family:inherit; direction:ltr;">
+
+        <label style="display:block; font-size:0.85rem; margin:12px 0 4px;">🆔 شناسهٔ چت یا کانال (Chat ID)</label>
+        <input id="aiTgChatInput" type="text" placeholder="-1002617482597" autocomplete="off"
+               style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-color); font-family:inherit; direction:ltr;">
+
+        <div class="ai-actions" style="border-top:none; margin-top:16px;">
+            <button type="button" class="ai-act-btn" onclick="saveAiSettings()">💾 ذخیره</button>
+            <button type="button" class="ai-act-btn" onclick="aiTestTelegramConnection()">🧪 تست اتصال</button>
+            <button type="button" class="ai-act-btn" onclick="clearAiSettings()">🗑️ پاک کردن</button>
+        </div>
+        <div id="aiTgStatus" style="font-size:0.82rem; margin-top:10px; min-height:20px;"></div>
     </div>
 </div>
 
@@ -3691,7 +3811,26 @@
 5. خلاصه وضعیت تمرین
 6. پایان دادن با جمله «سوالی نیست؟»
 
-مهم: به هیچ عنوان پاسخ تکراری یا قالب ثابت بازنگردان! بر اساس یادداشت‌های واقعی این جلسه، تحلیلی منحصربه‌فرد، کامل و پویا ارائه بده.`;
+مهم: به هیچ عنوان پاسخ تکراری یا قالب ثابت بازنگردان! بر اساس یادداشت‌های واقعی این جلسه، تحلیلی منحصربه‌فرد، کامل و پویا ارائه بده.
+
+ابزارهای قالب‌بندی در اختیار تو هستند و کاملاً اختیاری‌اند؛ هر وقت لازم دیدی از آن‌ها استفاده کن و گرنه ساده بنویس. قوانین:
+- تیتر بخش‌ها: \`## متن تیتر\`
+- پررنگ: \`**متن**\` | مورب: \`*متن*\` | زیرخط: \`__متن__\`
+- هایلایت: \`==متن مهم==\` | رنگ: \`{green:متن}\` (رنگ‌های مجاز: red, green, blue, purple, orange, teal, pink, gray, brown)
+- لیست نشانه‌دار: \`- متن\` | لیست شماره‌دار: \`1. متن\`
+- جعبه نکته/هشدار: \`> متن\`
+- جدول برای مقایسه یا روند (مثلاً چند جلسه): خط اول سرستون‌ها، خط دوم خط جداکننده، سپس ردیف‌ها:
+\`\`\`
+| حرکت | جلسه قبل | این جلسه | تغییر |
+| --- | --- | --- | --- |
+| اسکات | ۱۲ | ۱۵ | {green:+۳} |
+\`\`\`
+هرگاه جدول یا رنگ به خوانایی کمک می‌کند استفاده کن؛ در غیر این صورت پاسخ ساده و صمیمی بنویس.`;
+
+        // نکتهٔ اختیاری: اگر پرامپت حاوی درخواست تحلیل چند جلسه‌ای/تاریخچه است، راهنمای بیشتری بده.
+        if (promptText && /تاریخچه|چند جلسه|روند|همهٔ جلسات|همه جلسات/.test(promptText)) {
+            systemInstruction += `\n\nدر تحلیل چندجلسه‌ای، ابتدا یک جدول روند از آمار کلیدی بده، سپس برای هر جلسه یک بخش کوتاه با تیتر تاریخ بنویس، و در پایان یک خلاصهٔ کلی و توصیهٔ مسیر ادامه بده.`;
+        }
 
         const payload = {
             contents: [{ parts: [{ text: promptText }] }],
@@ -3899,7 +4038,407 @@
     }
 
     function renderAiAnalysis(text) {
-        document.getElementById('aiAnalysisBox').innerText = text;
+        const box = document.getElementById('aiAnalysisBox');
+        if (!box) return;
+        box.innerHTML = '';
+        box.classList.remove('ai-rich');
+        if (!text) { box.innerText = ''; return; }
+        box.appendChild(aiBuildAnswerBlock(text, { telegram: true }));
+    }
+
+    // =======================================================
+    // موتور رندر داخلی جواب استاد (بدون کتابخانه خارجی)
+    // استاد آزاد است هر وقت لازم دید از این ابزارها استفاده کند:
+    // تیتر (#)، پررنگ (**)، مورب (*)، زیرخط (__)، کد (`),
+    // هایلایت (==)، رنگ ({رنگ:متن})، لیست، جدول (|)، نقل‌قول (>).
+    // =======================================================
+    const AI_SAFE_COLORS = {
+        red: '#dc3545', green: '#28a745', blue: '#007bff', purple: '#8b5cf6',
+        orange: '#f59e0b', teal: '#0d9488', pink: '#db2777', gray: '#6c757d',
+        brown: '#92400e'
+    };
+
+    function aiEscapeHtml(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // قالب‌بندی درون‌خطی؛ ورودی باید از قبل escape شده باشد.
+    function aiInline(line) {
+        let s = line;
+        s = s.replace(/`([^`]+)`/g, (m, c) => `<code>${c}</code>`);
+        s = s.replace(/\{\s*([a-zA-Z]+)\s*:\s*([^{}]+?)\s*\}/g, (m, name, txt) => {
+            const hex = AI_SAFE_COLORS[String(name).toLowerCase()];
+            return hex ? `<span style="color:${hex}">${txt}</span>` : m;
+        });
+        s = s.replace(/==([^=]+)==/g, '<mark>$1</mark>');
+        s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        s = s.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+        s = s.replace(/__([^_]+)__/g, '<u>$1</u>');
+        return s;
+    }
+
+    function aiRenderMarkdown(raw) {
+        const lines = String(raw == null ? '' : raw).replace(/\r\n/g, '\n').split('\n');
+        const out = [];
+        let list = null;      // 'ul' | 'ol' | null
+        let note = null;      // آرایهٔ خطوط جعبهٔ نکته
+        let para = [];        // خطوط پاراگراف جاری
+
+        const flushList = () => { if (list) { out.push(`</${list}>`); list = null; } };
+        const flushNote = () => {
+            if (note) {
+                out.push(`<div class="ai-note">${note.map(aiInline).join('<br>')}</div>`);
+                note = null;
+            }
+        };
+        const flushPara = () => {
+            if (para.length) { out.push(`<p>${para.map(aiInline).join('<br>')}</p>`); para = []; }
+        };
+        const flushAll = () => { flushPara(); flushList(); flushNote(); };
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const t = line.trim();
+
+            // جدول: | a | b |  و خط جداکننده بعدی
+            if (t.startsWith('|') && t.endsWith('|') && i + 1 < lines.length &&
+                /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
+                flushAll();
+                const cells = (row) => row.trim().replace(/^\||\|$/g, '').split('|').map((c) => aiInline(aiEscapeHtml(c.trim())));
+                const head = cells(line);
+                i += 2;
+                const rows = [];
+                while (i < lines.length && lines[i].trim().startsWith('|')) {
+                    rows.push(cells(lines[i]));
+                    i++;
+                }
+                i--;
+                let tbl = '<table class="ai-table"><thead><tr>' + head.map((c) => `<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+                tbl += rows.map((r) => '<tr>' + r.map((c) => `<td>${c}</td>`).join('') + '</tr>').join('');
+                tbl += '</tbody></table>';
+                out.push(tbl);
+                continue;
+            }
+
+            if (!t) { flushAll(); continue; }
+
+            // نقل‌قول/نکته: > متن (چند خط پشت‌سرهم در یک جعبه جمع می‌شوند)
+            if (/^>\s?/.test(t)) {
+                flushPara(); flushList();
+                if (!note) note = [];
+                note.push(aiEscapeHtml(t.replace(/^>\s?/, '')));
+                continue;
+            }
+            flushNote();
+
+            // تیتر
+            const h = t.match(/^(#{1,6})\s+(.*)$/);
+            if (h) {
+                flushAll();
+                const lvl = Math.min(6, h[1].length + 2); // # → h3
+                out.push(`<h${lvl} class="ai-h">${aiInline(aiEscapeHtml(h[2]))}</h${lvl}>`);
+                continue;
+            }
+
+            // لیست نشانه‌دار
+            const ul = t.match(/^[-*•]\s+(.*)$/);
+            if (ul) {
+                flushPara(); flushNote();
+                if (list !== 'ul') { flushList(); out.push('<ul>'); list = 'ul'; }
+                out.push(`<li>${aiInline(aiEscapeHtml(ul[1]))}</li>`);
+                continue;
+            }
+
+            // لیست شماره‌دار
+            const ol = t.match(/^\d+[.)]\s+(.*)$/);
+            if (ol) {
+                flushPara(); flushNote();
+                if (list !== 'ol') { flushList(); out.push('<ol>'); list = 'ol'; }
+                out.push(`<li>${aiInline(aiEscapeHtml(ol[1]))}</li>`);
+                continue;
+            }
+
+            flushList();
+            para.push(aiEscapeHtml(line));
+        }
+
+        flushAll();
+        return out.join('\n');
+    }
+
+    function aiRenderRich(container, rawText) {
+        if (!container) return;
+        container.innerHTML = aiRenderMarkdown(rawText);
+        container.classList.add('ai-rich');
+    }
+
+    // --- کپی جواب همراه با قالب‌بندی ---
+    async function aiCopyRich(text) {
+        const html = aiRenderMarkdown(text);
+        const plain = (() => {
+            const d = document.createElement('div');
+            d.innerHTML = html;
+            return aiElementText(d);
+        })();
+
+        try {
+            if (navigator.clipboard && window.ClipboardItem) {
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        'text/html': new Blob([html], { type: 'text/html' }),
+                        'text/plain': new Blob([plain], { type: 'text/plain' })
+                    })
+                ]);
+                return true;
+            }
+        } catch (e) { /* ادامه با روش پشتیبان */ }
+
+        // روش پشتیبان: انتخاب محتوا و execCommand
+        try {
+            const holder = document.createElement('div');
+            holder.contentEditable = 'true';
+            holder.style.position = 'fixed';
+            holder.style.right = '-9999px';
+            holder.innerHTML = html;
+            document.body.appendChild(holder);
+            const range = document.createRange();
+            range.selectNodeContents(holder);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            const ok = document.execCommand('copy');
+            sel.removeAllRanges();
+            holder.remove();
+            return ok;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function aiGetTelegramConfig() {
+        return {
+            token: (localStorage.getItem('ai_tg_bot_token') || '').trim(),
+            chatId: (localStorage.getItem('ai_tg_chat_id') || '').trim()
+        };
+    }
+
+    // --- پنل تنظیمات تلگرام استاد ---
+    function openAiSettingsModal() {
+        const cfg = aiGetTelegramConfig();
+        const tokenEl = document.getElementById('aiTgTokenInput');
+        const chatEl = document.getElementById('aiTgChatInput');
+        if (tokenEl) tokenEl.value = cfg.token;
+        if (chatEl) chatEl.value = cfg.chatId;
+        const status = document.getElementById('aiTgStatus');
+        if (status) status.innerHTML = '';
+        document.getElementById('aiSettingsModal').classList.add('active');
+    }
+
+    function closeAiSettingsModal() {
+        document.getElementById('aiSettingsModal').classList.remove('active');
+    }
+
+    function saveAiSettings() {
+        const token = (document.getElementById('aiTgTokenInput').value || '').trim();
+        const chatId = (document.getElementById('aiTgChatInput').value || '').trim();
+        localStorage.setItem('ai_tg_bot_token', token);
+        localStorage.setItem('ai_tg_chat_id', chatId);
+        const status = document.getElementById('aiTgStatus');
+        if (status) status.innerHTML = '<span style="color:var(--success-color)">✅ ذخیره شد. حالا دکمهٔ «📤 ارسال به تلگرام» زیر هر جواب کار می‌کند.</span>';
+    }
+
+    function clearAiSettings() {
+        localStorage.removeItem('ai_tg_bot_token');
+        localStorage.removeItem('ai_tg_chat_id');
+        const tokenEl = document.getElementById('aiTgTokenInput');
+        const chatEl = document.getElementById('aiTgChatInput');
+        if (tokenEl) tokenEl.value = '';
+        if (chatEl) chatEl.value = '';
+        const status = document.getElementById('aiTgStatus');
+        if (status) status.innerHTML = '<span style="color:var(--secondary-color)">🗑️ تنظیمات تلگرام پاک شد.</span>';
+    }
+
+    async function aiTestTelegramConnection() {
+        const status = document.getElementById('aiTgStatus');
+        const token = (document.getElementById('aiTgTokenInput').value || '').trim();
+        const chatId = (document.getElementById('aiTgChatInput').value || '').trim();
+
+        if (!token || !chatId) {
+            if (status) status.innerHTML = '<span style="color:var(--danger-color)">⚠️ هم توکن ربات و هم Chat ID را وارد کن.</span>';
+            return;
+        }
+
+        if (status) status.innerHTML = '<span style="color:var(--secondary-color)">⏳ در حال تست...</span>';
+
+        try {
+            const meRes = await fetch(`https://api.telegram.org/bot${token}/getMe`);
+            const me = await meRes.json();
+            if (!me.ok) {
+                if (status) status.innerHTML = `<span style="color:var(--danger-color)">❌ توکن نامعتبر است: ${me.description || ''}</span>`;
+                return;
+            }
+
+            const sendRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: '🤖 تست اتصال استاد هوشمند — از این پس جواب‌ها را می‌توانی مستقیم به اینجا بفرستی.',
+                    disable_notification: true
+                })
+            });
+            const send = await sendRes.json();
+
+            if (send.ok) {
+                if (status) status.innerHTML = `<span style="color:var(--success-color)">✅ اتصال موفق! ربات @${me.result.username} پیام تست را فرستاد.</span>`;
+                localStorage.setItem('ai_tg_bot_token', token);
+                localStorage.setItem('ai_tg_chat_id', chatId);
+            } else {
+                if (status) status.innerHTML = `<span style="color:var(--danger-color)">❌ ارسال ناموفق: ${send.description || ''} (آیا ربات را در کانال ادمین کردی؟)</span>`;
+            }
+        } catch (e) {
+            if (status) status.innerHTML = `<span style="color:var(--danger-color)">❌ خطای شبکه: ${e.message}</span>`;
+        }
+    }
+
+    // تقسیم متن بلند به تکه‌های زیر سقف ۴۰۹۶ کاراکتری تلگرام (با حفظ مرز خط)
+    function aiSplitForTelegram(html, limit) {
+        const max = limit || 3900;
+        if (html.length <= max) return [html];
+        const parts = [];
+        let rest = html;
+        while (rest.length > max) {
+            let cut = rest.lastIndexOf('\n', max);
+            if (cut < max * 0.5) cut = max;
+            parts.push(rest.slice(0, cut));
+            rest = rest.slice(cut);
+        }
+        if (rest.trim()) parts.push(rest);
+        return parts;
+    }
+
+    async function aiSendToTelegram(text, btn) {
+        const cfg = aiGetTelegramConfig();
+        if (!cfg.token || !cfg.chatId) {
+            alert('⚠️ اول توکن ربات و Chat ID را در تنظیمات استاد (⚙️) وارد کن.');
+            openAiSettingsModal();
+            return;
+        }
+
+        const original = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ در حال ارسال...'; }
+
+        try {
+            const html = aiToTelegramHtml(text);
+            const chunks = aiSplitForTelegram(html);
+            const url = `https://api.telegram.org/bot${cfg.token}/sendMessage`;
+
+            for (let i = 0; i < chunks.length; i++) {
+                const body = {
+                    chat_id: cfg.chatId,
+                    text: chunks[i],
+                    parse_mode: 'HTML',
+                    disable_web_page_preview: true
+                };
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (!data.ok) {
+                    // اگر HTML مشکل داشت، بدون قالب بفرست تا پیام از دست نرود.
+                    const plainRes = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: cfg.chatId, text: chunks[i].replace(/<[^>]+>/g, ''), disable_web_page_preview: true })
+                    });
+                    const plainData = await plainRes.json();
+                    if (!plainData.ok) throw new Error(data.description || 'خطای تلگرام');
+                }
+            }
+
+            if (btn) { btn.innerHTML = '✅ ارسال شد'; }
+            setTimeout(() => { if (btn) { btn.innerHTML = original; btn.disabled = false; } }, 2000);
+        } catch (err) {
+            alert('❌ ارسال به تلگرام ناموفق بود: ' + (err && err.message ? err.message : 'خطای نامشخص'));
+            if (btn) { btn.innerHTML = original; btn.disabled = false; }
+        }
+    }
+
+    // ساخت بلوک جواب استاد: متن قالب‌بندی‌شده + دکمه‌های کپی و تلگرام
+    function aiBuildAnswerBlock(rawText, options) {
+        const opts = options || {};
+        const wrap = document.createElement('div');
+
+        const content = document.createElement('div');
+        aiRenderRich(content, rawText);
+        wrap.appendChild(content);
+
+        const actions = document.createElement('div');
+        actions.className = 'ai-actions';
+
+        const copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.className = 'ai-act-btn';
+        copyBtn.innerHTML = '📋 کپی با قالب';
+        copyBtn.addEventListener('click', async () => {
+            const ok = await aiCopyRich(rawText);
+            copyBtn.innerHTML = ok ? '✅ کپی شد' : '❌ کپی نشد';
+            setTimeout(() => { copyBtn.innerHTML = '📋 کپی با قالب'; }, 1800);
+        });
+        actions.appendChild(copyBtn);
+
+        if (opts.telegram !== false) {
+            const tgBtn = document.createElement('button');
+            tgBtn.type = 'button';
+            tgBtn.className = 'ai-act-btn tg';
+            tgBtn.innerHTML = '📤 ارسال به تلگرام';
+            tgBtn.addEventListener('click', () => aiSendToTelegram(rawText, tgBtn));
+            actions.appendChild(tgBtn);
+        }
+
+        wrap.appendChild(actions);
+        return wrap;
+    }
+
+    // متن قابل‌خواندن یک عنصر؛ innerText در همهٔ موتورها موجود نیست.
+    function aiElementText(el) {
+        if (!el) return '';
+        return (el.innerText !== undefined && el.innerText !== null) ? el.innerText : (el.textContent || '');
+    }
+
+    // تبدیل جواب استاد به HTML مجاز تلگرام (ParseMode=HTML)
+    function aiToTelegramHtml(raw) {
+        const html = aiRenderMarkdown(raw);
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+
+        // جدول‌ها در تلگرام پشتیبانی نمی‌شوند → به بلوک pre با ستون‌های جدا شده تبدیل می‌شوند.
+        tmp.querySelectorAll('table').forEach((tbl) => {
+            const rows = Array.from(tbl.querySelectorAll('tr')).map((tr) =>
+                Array.from(tr.querySelectorAll('th,td')).map((c) => aiElementText(c).trim()).join(' | ')
+            );
+            const pre = document.createElement('pre');
+            pre.textContent = '\n' + rows.join('\n') + '\n';
+            tbl.replaceWith(pre);
+        });
+
+        // هایلایت و رنگ در تلگرام پشتیبانی نمی‌شوند → فقط متن می‌ماند.
+        tmp.querySelectorAll('mark, span').forEach((el) => {
+            el.replaceWith(...Array.from(el.childNodes));
+        });
+
+        let out = tmp.innerHTML;
+        out = out.replace(/<\/p>/g, '\n').replace(/<p>/g, '');
+        out = out.replace(/<br\s*\/?>/g, '\n');
+        out = out.replace(/<strong>/g, '<b>').replace(/<\/strong>/g, '</b>');
+        out = out.replace(/<em>/g, '<i>').replace(/<\/em>/g, '</i>');
+        out = out.replace(/<h[3-6] class="ai-h">/g, '\n<b>').replace(/<\/h[3-6]>/g, '</b>\n');
+        out = out.replace(/<div class="ai-note">([\s\S]*?)<\/div>/g, '<blockquote>$1</blockquote>');
+        out = out.replace(/\n{3,}/g, '\n\n');
+        return out.trim();
     }
 
     function renderAiChat(chatList) {
@@ -3913,7 +4452,11 @@
         chatList.forEach(msg => {
             const div = document.createElement('div');
             div.className = `ai-msg ${msg.role === 'user' ? 'user' : 'coach'}`;
-            div.innerText = msg.text;
+            if (msg.role === 'user') {
+                div.innerText = msg.text;
+            } else {
+                div.appendChild(aiBuildAnswerBlock(msg.text, { telegram: true }));
+            }
             chatBox.appendChild(div);
         });
 
