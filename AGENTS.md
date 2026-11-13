@@ -225,3 +225,12 @@ gradle assembleRelease assembleDebug --no-daemon
 - در فرانت‌اند، آدرس سرور در `DEFAULT_SRV_URL` داخل `restricted/index.html` و توکن در `localStorage` با کلید `restricted_bot_srvToken` نگه‌داری می‌شود.
 - **محدودیت تلگرام:** دو نمونه سرور همزمان با یک `SESSION` باعث خطای `AUTH_KEY_DUPLICATED` می‌شود؛ قبل از راه‌اندازی سرور جدید، قدیمی را خاموش کنید.
 - تعویض میزبان: فقط پروژه Railway جدید + همان متغیرها + به‌روزرسانی `DEFAULT_SRV_URL` کافی است.
+
+### 🤖 استاد هوشمند اپ ورزشی (gym/index.html)
+- فراخوانی AI در `callGeminiAiCoach()` انجام می‌شود؛ کلید از `getGeminiTokenForWorkout()` می‌آید (اول `localStorage.custom_gemini_api_key`، وگرنه کلید پیش‌فرض تکه‌تکه Base64).
+- **مدل‌ها بازنشسته می‌شوند:** `gemini-flash-latest` و `gemini-2.5-flash` دیگر کار نمی‌کنند (503/NOT_FOUND). زنجیرهٔ فعلی: `AI_MODEL_CHAIN = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"]`. برای یافتن مدل‌های زنده: `GET https://generativelanguage.googleapis.com/v1beta/models?key=...`.
+- استراتژی «مسابقه» (`Promise.any`): همهٔ مسیرها (هر مدل × پروکسی/مستقیم) هم‌زمان فرستاده می‌شوند و اولین پاسخ موفق برنده است. پروکسی Cloudflare گاهی ۲۰ ثانیه طول می‌کشد؛ مسیر مستقیم معمولاً ۱.۵–۴ ثانیه.
+- مهلت `AI_TIMEOUT_MS = 15000`؛ مقدار قبلی ۶ ثانیه بود و تحلیل فارسی طولانی را قطع می‌کرد.
+- آخرین خطا در `localStorage.workout_ai_last_diagnostic` ذخیره می‌شود (برای عیب‌یابی روی گوشی کاربر).
+- **مهم — کدام سرویس‌ورکر فعال است:** پورتال (`/sw.js`) همهٔ سرویس‌ورکرهای زیرپوشه‌ها را `unregister` می‌کند، پس `gym/sw.js` **بی‌اثر** است. برای رسیدن تغییرات به کاربر، فقط `CACHE_NAME` در `sw.js` ریشه را بالا ببرید (الان `emarat-portal-v60`).
+- فرانت‌اند با استراتژی Stale-While-Revalidate کش می‌شود؛ بعد از تغییر، کاربر یک‌بار رفرش کند.
