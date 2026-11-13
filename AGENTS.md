@@ -234,3 +234,11 @@ gradle assembleRelease assembleDebug --no-daemon
 - آخرین خطا در `localStorage.workout_ai_last_diagnostic` ذخیره می‌شود (برای عیب‌یابی روی گوشی کاربر).
 - **مهم — کدام سرویس‌ورکر فعال است:** پورتال (`/sw.js`) همهٔ سرویس‌ورکرهای زیرپوشه‌ها را `unregister` می‌کند، پس `gym/sw.js` **بی‌اثر** است. برای رسیدن تغییرات به کاربر، فقط `CACHE_NAME` در `sw.js` ریشه را بالا ببرید (الان `emarat-portal-v60`).
 - فرانت‌اند با استراتژی Stale-While-Revalidate کش می‌شود؛ بعد از تغییر، کاربر یک‌بار رفرش کند.
+
+### 🎨 قالب‌بندی پاسخ استاد + ارسال به تلگرام (gym/index.html)
+- **موتور رندر داخلی:** `aiRenderMarkdown()` → HTML. پشتیبانی: تیتر `##`، پررنگ `**`، مورب `*`، زیرخط `__`، هایلایت `==`، رنگ `{red:متن}` (پالت `AI_SAFE_COLORS`)، لیست `-`/`1.`، جعبهٔ نکته `>`، جدول `| ... |`. بدون کتابخانه خارجی (آفلاین). همهٔ ورودی‌ها با `aiEscapeHtml()` امن می‌شوند.
+- **رندر:** `aiRenderRich(container, text)` و `aiBuildAnswerBlock(text, {telegram})` که متن + دکمه‌های «📋 کپی با قالب» و «📤 ارسال به تلگرام» را می‌سازد. `renderAiAnalysis()` و `renderAiChat()` از همین استفاده می‌کنند.
+- **پرامپت استاد:** ابزارهای قالب‌بندی **اختیاری** معرفی شده‌اند («هر وقت لازم دیدی استفاده کن»)، نه اجباری.
+- **تلگرام:** `aiToTelegramHtml()` خروجی را به HTML مجاز تلگرام تبدیل می‌کند (جدول → `<pre>`، رنگ/هایلایت حذف). `aiSplitForTelegram()` پیام بلند را زیر ۴۰۹۶ کاراکتر می‌شکند. در صورت خطای HTML، بدون قالب (`plain`) دوباره می‌فرستد.
+- **تنظیمات:** توکن و Chat ID فقط در `localStorage` کاربر با کلیدهای `ai_tg_bot_token` و `ai_tg_chat_id` (بدون hardcode). پنل با دکمهٔ ⚙️ در هدر مودال استاد: `openAiSettingsModal()`, `saveAiSettings()`, `clearAiSettings()`, `aiTestTelegramConnection()`.
+- **نکته:** `innerText` در jsdom پشتیبانی نمی‌شود؛ از `aiElementText()` (innerText با fallback به textContent) استفاده کنید.
