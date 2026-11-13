@@ -3992,7 +3992,7 @@
 
         // پیام «عدم اتصال» فقط برای شکست واقعی شبکه (مثلاً فیلترینگ) است؛
         // اگر اتصال برقرار شد ولی دیر جواب داد (مهلت)، تحلیل محلی می‌دهیم.
-        const netErr = lastError && /Failed to fetch|NetworkError|Load failed|ERR_/i.test(lastError.message || '');
+        const netErr = lastError && /Failed to fetch|NetworkError|Load failed|Network request failed|ENOTFOUND|ECONNREFUSED|ETIMEDOUT|ERR_/i.test(lastError.message || '');
         saveAiDiagnostic("همهٔ " + targets.length + " مسیر ناموفق بود: " + failures.slice(0, 3).join(" | "));
         if (netErr) {
             return "🔌 رفیق، الان نتونستم به استاد وصل بشم (احتمالاً اینترنت یا فیلترینگ یه لحظه قطع و وصل شد). یه بار دیگه دکمه رو بزن؛ مطمئنم این بار جواب میده! 💪";
