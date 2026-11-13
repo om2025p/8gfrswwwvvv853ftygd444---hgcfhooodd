@@ -105,7 +105,7 @@ async def health():
 @app.get("/api/status")
 async def status(x_auth_token: str = Header(default="")):
     _check(x_auth_token)
-    return {"ok": True, **_state}
+    return {"ok": True, "clients": _clients_ready, **_state}
 
 
 @app.get("/api/logs")
