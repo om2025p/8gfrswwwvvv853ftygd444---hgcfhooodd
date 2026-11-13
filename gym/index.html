@@ -935,6 +935,27 @@
             background: #7c3aed;
         }
 
+        .ai-stop-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .ai-stop-btn:hover {
+            transform: scale(1.05);
+            background: #b02a37;
+        }
+
         .ai-loading-spinner {
             display: inline-block;
             width: 20px;
@@ -1431,6 +1452,7 @@
     <div class="ai-input-area">
         <textarea id="aiChatInput" placeholder="سوالی از استاد داری؟ بپرس..." rows="1" oninput="autoGrowAiInput(this)"></textarea>
         <button class="ai-send-btn" id="aiSendBtn" onclick="sendAiChatMessage()">⚡</button>
+        <button class="ai-stop-btn" id="aiStopBtn" onclick="stopAiGeneration()" style="display:none;" title="توقف پاسخ استاد">⏹</button>
     </div>
 </div>
 
@@ -3792,15 +3814,34 @@
 
     // زنجیرهٔ مدل‌ها: اگر مدلی شلوغ یا بازنشسته بود، مدل بعدی امتحان می‌شود.
     const AI_MODEL_CHAIN = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"];
-    const AI_TIMEOUT_MS = 15000;
+    // سقف ایمنی ۳۰ دقیقه: هیچ اتصالی بیشتر از این باز نمی‌ماند تا پیام
+    // «در حال پاسخ دادن» هرگز تا بی‌نهایت نچرخد.
+    const AI_TIMEOUT_MS = 30 * 60 * 1000;
+
+    // کنترلرهای فعال پاسخ استاد؛ برای دکمهٔ «توقف» و لغو همهٔ اتصال‌های موازی.
+    let aiCoachActive = null;
+
+    function aiAbortActiveCoach() {
+        if (aiCoachActive) {
+            aiCoachActive.cancelled = true;
+            aiCoachActive.controllers.forEach((c) => { try { c.abort(); } catch (e) {} });
+        }
+    }
 
     /**
-     * همهٔ مسیرها (هر مدل × پروکسی/مستقیم) هم‌زمان فرستاده می‌شوند و اولین پاسخ
-     * موفق برنده است. این کار هم تأخیر پروکسی کند را پنهان می‌کند و هم اگر مسیر
-     * مستقیم در ایران بسته باشد، پروکسی جواب می‌دهد.
+     * همهٔ مسیرها (هر مدل × پروکسی/مستقیم) هم‌زمان و به‌صورت استریم فرستاده می‌شوند
+     * و اولین مسیری که شروع به تولید متن کند برنده است. متن کلمه‌به‌کلمه از طریق
+     * onDelta تحویل رابط کاربری می‌شود تا کاربر لحظهٔ تایپ استاد را ببیند.
+     * تایمر ایمنی تا پایان کامل خواندن بدنه زنده می‌ماند؛ پس اگر سرور وسط راه
+     * قفل کند، پس از مهلت آزاد می‌شود و دیگر گیر بی‌نهایت رخ نمی‌دهد.
      */
-    async function callGeminiAiCoach(promptText) {
+    async function callGeminiAiCoach(promptText, options) {
+        const opts = options || {};
+        const onDelta = typeof opts.onDelta === 'function' ? opts.onDelta : null;
         const token = getGeminiTokenForWorkout();
+        let lastStreamed = '';
+        const batch = { controllers: [], cancelled: false };
+        aiCoachActive = batch;
 
         const systemInstruction = `تو یک مربی و استاد فوق‌العاده حرفه‌ای، کاملاً واقع‌بین، دقیق و دور از هرگونه توهم در زمینه بدنسازی و تناسب اندام هستی که لحن صمیمی، شوخ‌طبعانه و انگیزشی داری.
 ساختار پاسخ اولیه تحلیل تمرین باید شامل بخش‌های زیر باشد:
@@ -3835,7 +3876,7 @@
         const payload = {
             contents: [{ parts: [{ text: promptText }] }],
             systemInstruction: { parts: [{ text: systemInstruction }] },
-            generationConfig: { maxOutputTokens: 2048 }
+            generationConfig: { maxOutputTokens: 8192 }
         };
 
         const proxyBase = localStorage.getItem("cf_proxy_url") || "https://emarat-ai-chat-worker.qqqggggcc.workers.dev";
@@ -3843,37 +3884,121 @@
 
         const targets = [];
         for (const model of AI_MODEL_CHAIN) {
-            targets.push({ model, url: `${cleanProxy}/v1beta/models/${model}:generateContent`, via: 'proxy' });
-            targets.push({ model, url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(token)}`, via: 'direct' });
+            targets.push({ model, url: `${cleanProxy}/v1beta/models/${model}:streamGenerateContent?alt=sse`, via: 'proxy' });
+            targets.push({ model, url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(token)}`, via: 'direct' });
         }
 
-        const attempt = (target) => new Promise((resolve, reject) => {
+        // مسابقهٔ موازی: همهٔ مسیرها هم‌زمان شروع می‌کنند تا تأخیر پروکسی/فیلترینگ
+        // پنهان شود، اما فقط «اولین» مسیری که واقعاً متن تولید کند برنده می‌شود و
+        // بقیه فوراً بسته می‌شوند؛ پس متن نه تکراری می‌شود و نه ناقص ذخیره می‌گردد.
+        let winner = null;
+        let winnerText = '';
+        let lastError = null;
+        const failures = [];
+
+        const attempt = (target) => new Promise((resolve) => {
             const headers = { 'Content-Type': 'application/json' };
             if (!target.url.includes('key=')) headers['X-goog-api-key'] = token;
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+            batch.controllers.push(controller);
+
             fetch(target.url, { method: 'POST', headers, body: JSON.stringify(payload), signal: controller.signal })
                 .then(async (response) => {
-                    clearTimeout(timeoutId);
                     if (!response.ok) throw new Error('HTTP ' + response.status);
-                    const data = await response.json();
-                    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (!aiText || !aiText.trim()) throw new Error('پاسخ خالی');
-                    resolve({ text: aiText, model: target.model, via: target.via });
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder('utf-8');
+                    let buffer = '';
+
+                    // استریم SSE: هر «data:» یک تکه JSON است که ممکن است بین دو
+                    // chunk شبکه نصفه بیاید؛ با شمارش آکولاد، آبجکت‌های کامل را
+                    // جدا می‌کنیم (رشته‌های فارسی داخل JSON آکولاد ندارند).
+                    // اگر استریم به هر دلیلی قطع نشود، لغو (توقف کاربر یا مهلت ۳۰ دقیقه)
+                    // باید حلقه را بشکند؛ پس read را با سیگنال abort مسابقه می‌دهیم.
+                    const aborted = new Promise((_, reject) => {
+                        const fail = () => reject(new DOMException('Aborted', 'AbortError'));
+                        if (controller.signal.aborted) return fail();
+                        controller.signal.addEventListener('abort', fail);
+                    });
+                    while (true) {
+                        const { done, value } = await Promise.race([reader.read(), aborted]);
+                        if (done) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        const objs = [];
+                        let depth = 0, start = -1;
+                        for (let i = 0; i < buffer.length; i++) {
+                            const ch = buffer[i];
+                            if (ch === '{') { if (depth === 0) start = i; depth++; }
+                            else if (ch === '}') {
+                                depth--;
+                                if (depth === 0 && start !== -1) {
+                                    try { objs.push(JSON.parse(buffer.slice(start, i + 1))); } catch (e) {}
+                                    start = -1;
+                                }
+                            }
+                        }
+                        if (start !== -1) buffer = buffer.slice(start);
+                        else buffer = '';
+
+                        for (const obj of objs) {
+                            const parts = obj && obj.candidates && obj.candidates[0] &&
+                                obj.candidates[0].content && obj.candidates[0].content.parts;
+                            // تکه‌های «فکر خام» مدل‌های فکور (thought) نباید در جواب بیایند.
+                            const chunk = parts && parts.map((p) => (p && !p.thought && p.text) ? p.text : '').join('');
+                            if (!chunk) continue;
+
+                            // اولین مسیری که متن می‌دهد برندهٔ قطعی است؛ بازنده‌ها می‌روند کنار.
+                            if (!winner) {
+                                winner = target;
+                                winnerText = chunk;
+                                lastStreamed = winnerText;
+                                batch.controllers.forEach((c) => { if (c !== controller) { try { c.abort(); } catch (e) {} } });
+                                if (onDelta) { try { onDelta(winnerText); } catch (e) {} }
+                            } else if (target === winner) {
+                                winnerText += chunk;
+                                lastStreamed = winnerText;
+                                if (onDelta) { try { onDelta(winnerText); } catch (e) {} }
+                            }
+                        }
+                    }
+
+                    if (winner && target === winner) {
+                        resolve(winnerText); // برنده تا پایان استریم می‌نویسد
+                    } else if (winner) {
+                        resolve(null);       // بازندهٔ بی‌متن
+                    } else {
+                        resolve('');         // تماس بدون هیچ متن
+                    }
                 })
-                .catch((e) => { clearTimeout(timeoutId); reject(e); });
+                .catch((e) => {
+                    if (!winner) { lastError = e; failures.push((e && e.message) || String(e)); }
+                    resolve(null);
+                })
+                .finally(() => clearTimeout(timeoutId));
         });
 
-        try {
-            const winner = await Promise.any(targets.map(attempt));
+        await Promise.all(targets.map(attempt));
+        aiCoachActive = null;
+
+        if (winner && winnerText.trim()) {
             saveAiDiagnostic("موفق با مدل " + winner.model + " (" + winner.via + ")");
-            return winner.text;
-        } catch (e) {
-            const reasons = (e && e.errors ? e.errors : []).map((x) => x && x.message).filter(Boolean);
-            saveAiDiagnostic("همهٔ " + targets.length + " مسیر ناموفق بود: " + reasons.slice(0, 3).join(" | "));
-            // تحلیل پویا به‌عنوان آخرین چاره، تا کاربر بدون پاسخ نماند.
-            return generateSmartDynamicAnalysis(promptText);
+            return winnerText;
         }
+
+        if (batch.cancelled) {
+            saveAiDiagnostic("لغو توسط کاربر");
+            return lastStreamed;
+        }
+
+        // پیام «عدم اتصال» فقط برای شکست واقعی شبکه (مثلاً فیلترینگ) است؛
+        // اگر اتصال برقرار شد ولی دیر جواب داد (مهلت)، تحلیل محلی می‌دهیم.
+        const netErr = lastError && /Failed to fetch|NetworkError|Load failed|ERR_/i.test(lastError.message || '');
+        saveAiDiagnostic("همهٔ " + targets.length + " مسیر ناموفق بود: " + failures.slice(0, 3).join(" | "));
+        if (netErr) {
+            return "🔌 رفیق، الان نتونستم به استاد وصل بشم (احتمالاً اینترنت یا فیلترینگ یه لحظه قطع و وصل شد). یه بار دیگه دکمه رو بزن؛ مطمئنم این بار جواب میده! 💪";
+        }
+        // تحلیل پویا به‌عنوان آخرین چاره، تا کاربر بدون پاسخ نماند.
+        return generateSmartDynamicAnalysis(promptText);
     }
 
     function saveAiDiagnostic(message) {
@@ -3916,6 +4041,26 @@
     function autoGrowAiInput(el) {
         el.style.height = 'auto';
         el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+
+    // در حین تولید پاسخ استاد: دکمهٔ ارسال پنهان و دکمهٔ توقف نمایان می‌شود.
+    function aiSetGenerating(on) {
+        const sendBtn = document.getElementById('aiSendBtn');
+        const stopBtn = document.getElementById('aiStopBtn');
+        if (sendBtn) sendBtn.style.display = on ? 'none' : 'flex';
+        if (stopBtn) stopBtn.style.display = on ? 'flex' : 'none';
+    }
+
+    // توقف پاسخ در حال تولید: کاربر با دکمهٔ ⏹ می‌تواند وسط کار لغو کند.
+    function stopAiGeneration() {
+        aiAbortActiveCoach();
+        const box = document.getElementById('aiAnalysisBox');
+        if (box && box.querySelector('.ai-loading-spinner')) {
+            box.innerHTML = '<div style="text-align:center; color:var(--secondary-color); font-size:0.9rem; padding:12px;">⏹ پاسخ استاد متوقف شد. هر وقت خواستی دوباره بپرس.</div>';
+        }
+        const typing = document.getElementById('coachTypingMsg');
+        if (typing) typing.remove();
+        aiSetGenerating(false);
     }
 
     async function openAiCoachModal() {
@@ -3970,13 +4115,35 @@
                 prompt += `\nیادداشت‌های کلی تمرین: ${latestRecord.notes}\n`;
             }
 
-            document.getElementById('aiAnalysisBox').innerHTML = `
+            const box = document.getElementById('aiAnalysisBox');
+            box.innerHTML = `
                 <div style="text-align: center; color: var(--secondary-color);">
                     <div class="ai-loading-spinner" style="border-top-color:#8b5cf6; width:24px; height:24px; margin-bottom:10px;"></div>
                     <div>در حال آنالیز تمام یادداشت‌ها و ارزیابی تمرین توسط استاد...</div>
                 </div>`;
 
-            const analysisText = await callGeminiAiCoach(prompt);
+            aiSetGenerating(true);
+            let analysisText = '';
+            try {
+                analysisText = await callGeminiAiCoach(prompt, {
+                    onDelta: (partial) => {
+                        // در اولین تکهٔ متن، اسپینر جایش را به نوشتهٔ زندهٔ استاد می‌دهد.
+                        const liveBox = document.getElementById('aiAnalysisBox');
+                        if (!liveBox) return;
+                        if (liveBox.querySelector('.ai-loading-spinner')) liveBox.innerHTML = '';
+                        aiRenderRich(liveBox, partial);
+                        liveBox.scrollTop = liveBox.scrollHeight;
+                    }
+                });
+            } finally {
+                aiSetGenerating(false);
+            }
+
+            // اگر کاربر وسط کار «توقف» زد، همان متن زندهٔ نمایش‌داده‌شده دست‌نخورده می‌ماند.
+            if (!analysisText || !analysisText.trim()) {
+                renderAiChat((aiStore[recordId] && aiStore[recordId].chat) || []);
+                return;
+            }
 
             if (!aiStore[recordId]) aiStore[recordId] = {};
             aiStore[recordId].analysis = analysisText;
@@ -3990,6 +4157,9 @@
     }
 
     function closeAiCoachModal() {
+        // اگر استادی در حال پاسخ دادن بود، با بستن مودال اتصالش آزاد می‌شود.
+        aiAbortActiveCoach();
+        aiSetGenerating(false);
         document.getElementById('aiCoachModal').classList.remove('active');
     }
 
@@ -4499,13 +4669,37 @@
         });
         promptHistory += `پاسخ استاد با شوخ‌طبعی و مربی‌گری تخصصی:`;
 
-        const coachResponse = await callGeminiAiCoach(promptHistory);
+        // نمایش لحظه‌ای پاسخ: در اولین تکهٔ متن، لودینگ حذف و متن زنده جایگزین می‌شود.
+        let liveDiv = null;
+        let coachResponse = '';
+        aiSetGenerating(true);
+        try {
+            coachResponse = await callGeminiAiCoach(promptHistory, {
+                onDelta: (partial) => {
+                    const typingNode = document.getElementById('coachTypingMsg');
+                    if (typingNode) typingNode.remove();
+                    if (!liveDiv) {
+                        liveDiv = document.createElement('div');
+                        liveDiv.className = 'ai-msg coach';
+                        chatBox.appendChild(liveDiv);
+                    }
+                    liveDiv.innerHTML = '';
+                    aiRenderRich(liveDiv, partial);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+            });
+        } finally {
+            aiSetGenerating(false);
+        }
 
         const typingMsgNode = document.getElementById('coachTypingMsg');
         if (typingMsgNode) typingMsgNode.remove();
 
-        aiStore[recordId].chat.push({ role: 'coach', text: coachResponse });
-        saveAiStore(aiStore);
+        if (liveDiv) liveDiv.remove();
+        if (coachResponse && coachResponse.trim()) {
+            aiStore[recordId].chat.push({ role: 'coach', text: coachResponse });
+            saveAiStore(aiStore);
+        }
 
         renderAiChat(aiStore[recordId].chat);
     }
