@@ -100,37 +100,21 @@ public class NotificationInputReceiver extends BroadcastReceiver {
             }
             linkToDownload = assembled;
 
-            Log.i(TAG, "🚀 شروع ارسال پس‌زمینه به گیت‌هاب برای لینک سرهم‌شده (طول " + linkToDownload.length() + "): " + linkToDownload);
+            Log.i(TAG, "🚀 شروع ارسال پس‌زمینه به سرور برای لینک سرهم‌شده (طول " + linkToDownload.length() + "): " + linkToDownload);
             Toast.makeText(context, "🚀 چسباندن و ارسال پس‌زمینه متن کامل (سرهم‌شده):\n" + linkToDownload.substring(0, Math.min(linkToDownload.length(), 60)) + "...", Toast.LENGTH_LONG).show();
 
             registerNativeUniqueLink(context, linkToDownload);
             saveNativeDownloadHistory(context, linkToDownload, "⚡ چسباندن آنی و سرهم‌شده اعلان");
             dispatchToGitHub(context, linkToDownload);
 
-            // ریست کامل کلیپ‌بورد سیستم و کش سرویس جهت آماده‌سازی دکمه برای ارسال بعدی
-            clearClipboardSystem(context);
+            // فقط کش سرویس را خالی می‌کنیم؛ کلیپ‌بورد سیستم دست‌نخورده می‌ماند تا
+            // خواندن زندهٔ لینک بعدی (که به فوکوس پنجره گره خورده) سالم بماند.
             ClipboardService.lastCopiedUrl = "";
             ClipboardService.lastProcessedClip = "";
             ClipboardService.refreshNotification(context);
         } else {
             Log.w(TAG, "⚠️ کلیپ‌بورد خالی است یا لینک معتبری یافت نشد.");
             Toast.makeText(context, "⚠️ کلیپ‌بورد خالی است یا لینکی یافت نشد!", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    public static void clearClipboardSystem(Context context) {
-        try {
-            ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-            if (clipboardManager != null) {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                    clipboardManager.clearPrimaryClip();
-                } else {
-                    clipboardManager.setPrimaryClip(ClipData.newPlainText("", ""));
-                }
-                Log.d(TAG, "کلیپ‌بورد سیستم با موفقیت ریست شد.");
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error clearing clipboard: " + e.getMessage());
         }
     }
 
