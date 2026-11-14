@@ -663,6 +663,21 @@
             box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
         }
 
+        .ai-retry-btn:disabled {
+            opacity: 0.75;
+            cursor: progress;
+            background: rgba(245, 158, 11, 0.25);
+        }
+
+        .ai-retry-btn .ai-retry-icon { display: inline-block; }
+        .ai-retry-btn.loading .ai-retry-icon { animation: aiSpin 0.9s linear infinite; }
+        @keyframes aiSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .ai-content.loading-text {
+            animation: aiPulse 1.3s ease-in-out infinite;
+        }
+        @keyframes aiPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
         /* فوتر شیک */
         footer {
             margin-top: auto;
@@ -885,9 +900,9 @@
             <div class="ai-content" id="live-ai-content">
                 درحال دریافت تحلیل از جمنای...
             </div>
-            <button class="ai-retry-btn" onclick="triggerGeminiAI(true)">
-                <span>🔄</span>
-                <span>تحلیل مجدد</span>
+            <button class="ai-retry-btn" id="aiRetryBtn" onclick="triggerGeminiAI(true)">
+                <span class="ai-retry-icon">🔄</span>
+                <span class="ai-retry-label">تحلیل مجدد</span>
             </button>
         </div>
     </div>
@@ -2449,7 +2464,9 @@
             });
         }
 
-        const MONITOR_AI_MODEL_CHAIN = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
+        // gemini-3.1-flash-lite سهمیهٔ آزاد دارد و اول زنجیره است تا حتی وقتی مدل‌های flash
+        // پرتقاضا به سقف روزانه خورده‌اند، تحلیل بی‌پاسخ نماند.
+        const MONITOR_AI_MODEL_CHAIN = ['gemini-3.1-flash-lite', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
         const MONITOR_AI_TIMEOUT_MS = 45000;
         const MONITOR_TARGET_PERCENT = 3000;
 
@@ -2575,11 +2592,24 @@
             return parts.join(';');
         }
 
+        function setAiRetryLoading(isLoading, labelText) {
+            const btn = document.getElementById('aiRetryBtn');
+            const content = document.getElementById('live-ai-content');
+            if (btn) {
+                btn.disabled = !!isLoading;
+                btn.classList.toggle('loading', !!isLoading);
+                const label = btn.querySelector('.ai-retry-label');
+                if (label) label.textContent = isLoading ? (labelText || 'در حال تحلیل...') : 'تحلیل مجدد';
+            }
+            if (content) content.classList.toggle('loading-text', !!isLoading);
+        }
+
         async function triggerGeminiAI(forceRetry = false) {
             const aiCard = document.getElementById('live-ai-card');
             const aiContent = document.getElementById('live-ai-content');
             if (!aiCard || !aiContent) return;
             aiCard.style.display = 'flex';
+            setAiRetryLoading(true, 'در حال بررسی...');
 
             const appsInfo = getAppPercentData();
             const todayStr = new Date().toDateString();
@@ -2604,6 +2634,7 @@
                 } else {
                     aiContent.innerText = 'جهت دریافت تحلیل هوشمند، لطفاً درصد ۸ اپلیکیشن را ثبت کنید (' + completedAppsCount + ' از ۸ تکمیل شده).';
                 }
+                setAiRetryLoading(false);
                 return;
             }
 
@@ -2611,10 +2642,12 @@
             const cachedSignature = localStorage.getItem('monitor_gemini_analysis_signature');
             if (!forceRetry && cachedAnalysis && cachedSignature === signature) {
                 aiContent.innerHTML = formatAiTextWith3DCapsules(cachedAnalysis);
+                setAiRetryLoading(false);
                 return;
             }
 
             aiContent.innerText = 'درحال ارتباط با مغز الکترونیک جمنای برای تحلیل درصدهای امروز... 🧠';
+            setAiRetryLoading(true, 'در حال تحلیل...');
 
             const apiKey = getMonitorAiApiKey();
 
@@ -2634,7 +2667,12 @@
                 ۴. یک متن فارسی جذاب، روان، امیدبخش و شوخ‌طبعانه در ۳ خط کوتاه بگو که هم سود امروز و هم پیشرفت تراکمی تا قله ${MONITOR_TARGET_PERCENT}% را منعکس کند.
             `;
 
-            const outcome = await requestMonitorAnalysis(prompt, apiKey);
+            let outcome;
+            try {
+                outcome = await requestMonitorAnalysis(prompt, apiKey);
+            } catch (err) {
+                outcome = { ok: false, message: (err && err.message) ? err.message : String(err) };
+            }
 
             if (outcome.ok) {
                 localStorage.setItem('monitor_last_gemini_analysis', outcome.text);
@@ -2649,6 +2687,7 @@
                     aiContent.innerText = '⚠️ اتصال به جمنای برقرار نشد. لطفاً قندشکن خود را چک کرده و دکمه تحلیل مجدد را بزنید.';
                 }
             }
+            setAiRetryLoading(false);
         }
 
         function renderMonitor() {
