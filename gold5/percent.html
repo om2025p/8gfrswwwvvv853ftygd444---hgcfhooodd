@@ -353,7 +353,7 @@
         body.dark-mode #notesDrawer { background: #1c1f27; }
 
         /* ===== دکمه تم شب/روز ===== */
-        #themeToggle { width: 100%; margin: 10px 0; padding: 10px; border: 1px solid rgba(127,127,127,0.35);
+        #themeToggle { padding: 10px; border: 1px solid rgba(127,127,127,0.35);
             border-radius: 12px; background: transparent; color: inherit; font-weight: bold; cursor: pointer;
             font-size: 0.9rem; font-family: inherit; }
         #themeToggle:hover { opacity: 0.85; }
@@ -375,7 +375,6 @@
 <div id="mainPage" class="page active-page">
     <div class="container">
         <h1>🔌 صندوق گواهی<br>نفت · برق · گاز · سینرژی</h1>
-        <button id="themeToggle" onclick="toggleTheme()">🌙 تم شب</button>
 
         <div class="stats-dropdown">
             <div class="stats-header" onclick="toggleStatsMenu()">
@@ -414,6 +413,7 @@
         <div class="total-percent"> میانگین روزانه (در <span id="daysCount">0</span> روز): <span id="averagePercent">0</span>% </div>
 
         <div class="nav-buttons">
+                <button id="themeToggle" onclick="toggleTheme()">🌙 تم شب</button>
             <button onclick="showPage('chartPage')">📈 نمودار مرکب</button>
             <button onclick="toggleTrash()">🗑️ سطل زباله</button>
             <button onclick="toggleAchievedPeriods()">🏆 دوره‌های سود</button>

@@ -392,7 +392,7 @@
         body.dark-mode .note-content[contenteditable="true"]:focus { background-color: #16181e; }
 
         /* ===== دکمه تم شب/روز ===== */
-        #themeToggle { width: 100%; margin: 10px 0; padding: 10px; border: 1px solid rgba(127,127,127,0.35);
+        #themeToggle { padding: 10px; border: 1px solid rgba(127,127,127,0.35);
             border-radius: 12px; background: transparent; color: inherit; font-weight: bold; cursor: pointer;
             font-size: 0.9rem; font-family: inherit; }
         #themeToggle:hover { opacity: 0.85; }
@@ -417,7 +417,6 @@
     <div id="mainPage" class="page active-page">
         <div class="container">
             <h1>📊 محاسبه سود درآمد ثابت کیان</h1>
-        <button id="themeToggle" onclick="toggleTheme()">🌙 تم شب</button>
 
             <!-- ===== منوی کشویی آمار ===== -->
             <div class="stats-dropdown">
@@ -484,6 +483,7 @@
             </div>
 
             <div class="nav-buttons">
+                <button id="themeToggle" onclick="toggleTheme()">🌙 تم شب</button>
                 <button onclick="showPage('chartPage')">📈 نمودار</button>
                 <button onclick="toggleTrash()">🗑️ سطل زباله</button>
                 <button onclick="backupData()">💾 ذخیره</button>
