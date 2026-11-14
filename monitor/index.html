@@ -2537,13 +2537,31 @@
             return { ok: false, message: lastErrors[0] || 'خطای نامشخص' };
         }
 
+        // جدیدترین رکورد را بر اساس برچسب زمانی برمی‌گرداند، نه بر اساس ترتیب آرایه؛
+        // زیراپ‌ها با unshift ذخیره می‌کنند (جدیدترین-اول) اما اتکا به ایندکس شکننده است.
+        function getNewestPercentItem(data) {
+            if (!data || data.length === 0) return null;
+            let newest = null;
+            let newestTs = -Infinity;
+            data.forEach((item) => {
+                if (!item) return;
+                const ts = new Date(item.timestamp).getTime();
+                const safeTs = isNaN(ts) ? 0 : ts;
+                if (newest === null || safeTs >= newestTs) {
+                    newest = item;
+                    newestTs = safeTs;
+                }
+            });
+            return newest;
+        }
+
         // امضای داده: اگر هیچ رکورد جدیدی ثبت نشده باشد، تحلیل کش‌شده دوباره لود می‌شود.
         function buildMonitorAnalysisSignature(cum) {
             const parts = [];
             for (let appId = 1; appId <= 8; appId++) {
                 let history = [];
                 try { history = JSON.parse(localStorage.getItem(MONITOR_HISTORY_KEYS[appId])) || []; } catch (e) {}
-                const last = history.length > 0 ? history[history.length - 1] : null;
+                const last = getNewestPercentItem(history);
                 if (last) {
                     const ts = new Date(last.timestamp).getTime() || 0;
                     const val = last.rawNew !== undefined ? last.rawNew : last.new;
@@ -2568,10 +2586,8 @@
 
             let completedAppsCount = 0;
             appsInfo.forEach((app) => {
-                if (app.data && app.data.length > 0) {
-                    const lastItem = app.data[app.data.length - 1];
-                    if (new Date(lastItem.timestamp).toDateString() === todayStr) completedAppsCount++;
-                }
+                const newestItem = getNewestPercentItem(app.data);
+                if (newestItem && new Date(newestItem.timestamp).toDateString() === todayStr) completedAppsCount++;
             });
 
             const cum = computeAbovePeakCumulative();
@@ -2647,7 +2663,7 @@
             let liveTomanSum = 0;
 
             appsInfo.forEach(app => {
-                const lastItem = app.data && app.data.length > 0 ? app.data[app.data.length - 1] : null;
+                const lastItem = getNewestPercentItem(app.data);
 
                 const card = document.createElement('div');
                 card.className = 'monitor-card';
