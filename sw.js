@@ -20,6 +20,7 @@ const ASSETS = [
   './detective/favicon.ico',
   // Monitor App
   './monitor/index.html',
+  './monitor/assets/monitor-update-celebration.svg',
   './monitor/manifest.json',
   './monitor/icon-192.png',
   './monitor/icon-512.png',
