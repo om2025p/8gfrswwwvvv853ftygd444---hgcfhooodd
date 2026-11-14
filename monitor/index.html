@@ -1336,92 +1336,101 @@
             });
         }
 
-        function calculateTotalAbovePeakCumulativePercent() {
-            const historyKeys = {
-                1: "gold_history",
-                2: "fixedIncome_history",
-                3: "kian_history",
-                4: "pension_history",
-                5: "sinergy_history",
-                6: "cement_history",
-                7: "ahang_kian_history",
-                8: "pharma_kian_history"
-            };
+        const MONITOR_HISTORY_KEYS = {
+            1: "gold_history",
+            2: "fixedIncome_history",
+            3: "kian_history",
+            4: "pension_history",
+            5: "sinergy_history",
+            6: "cement_history",
+            7: "ahang_kian_history",
+            8: "pharma_kian_history"
+        };
 
-            let totalAbovePeak = 0;
+        function parseMonitorRawNumber(rawValue, fallbackStr) {
+            if (rawValue !== undefined && rawValue !== null && !isNaN(rawValue)) return rawValue;
+            if (fallbackStr) return parseFloat(normalizeToEnglishDigits(fallbackStr).replace(/,/g, '')) || 0;
+            return 0;
+        }
+
+        function inferCalcStatus(calc, rawBase, rawNew, rawPeak) {
+            if (calc.type) return calc.type;
+            if (rawNew < rawBase) return 'decrease';
+            if (rawPeak > 0 && rawNew < rawPeak) return 'recovering';
+            return 'increase';
+        }
+
+        // سود «فوق قله» یعنی رشد نسبت به قلهٔ قبلی، نه نسبت به عدد پایه.
+        // برای هر اپ تاریخچه را صعودی می‌پیماییم و قلهٔ در حال حرکت را نگه می‌داریم
+        // تا درصد هر رکورد با قلهٔ همان لحظه سنجیده شود (هم‌راستا با سود تومانی).
+        function computeAbovePeakCumulative() {
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            const todayStartTs = todayStart.getTime();
+
+            let total = 0;
+            let today = 0;
+            const perApp = {};
 
             for (let appId = 1; appId <= 8; appId++) {
-                const historyKey = historyKeys[appId];
-                let historyRaw = localStorage.getItem(historyKey);
                 let history = [];
-                try { history = JSON.parse(historyRaw) || []; } catch(e) {}
+                try { history = JSON.parse(localStorage.getItem(MONITOR_HISTORY_KEYS[appId])) || []; } catch (e) {}
+                let appTotal = 0;
 
-                if (history && history.length > 0) {
-                    history.forEach(calc => {
-                        let rawBase = 0;
-                        let rawNew = 0;
-                        let rawPeak = 0;
+                if (history.length > 0) {
+                    const ordered = history.slice().sort((a, b) => {
+                        const ta = new Date(a.timestamp).getTime() || 0;
+                        const tb = new Date(b.timestamp).getTime() || 0;
+                        return ta - tb;
+                    });
 
-                        if (calc.rawBase !== undefined && calc.rawBase !== null && !isNaN(calc.rawBase)) {
-                            rawBase = calc.rawBase;
-                        } else if (calc.base) {
-                            rawBase = parseFloat(normalizeToEnglishDigits(calc.base).replace(/,/g, '')) || 0;
-                        }
-
-                        if (calc.rawNew !== undefined && calc.rawNew !== null && !isNaN(calc.rawNew)) {
-                            rawNew = calc.rawNew;
-                        } else if (calc.new) {
-                            rawNew = parseFloat(normalizeToEnglishDigits(calc.new).replace(/,/g, '')) || 0;
-                        }
-
-                        if (calc.rawPeak !== undefined && calc.rawPeak !== null && !isNaN(calc.rawPeak)) {
-                            rawPeak = calc.rawPeak;
-                        } else if (calc.peak) {
-                            rawPeak = parseFloat(normalizeToEnglishDigits(calc.peak).replace(/,/g, '')) || 0;
-                        }
-
-                        let status = calc.type;
-                        if (!status) {
-                            if (rawNew < rawBase) {
-                                status = 'decrease';
-                            } else if (rawPeak > 0 && rawNew < rawPeak) {
-                                status = 'recovering';
-                            } else {
-                                status = 'increase';
-                            }
-                        }
+                    let runningPeak = 0;
+                    ordered.forEach(calc => {
+                        const rawBase = parseMonitorRawNumber(calc.rawBase, calc.base);
+                        const rawNew = parseMonitorRawNumber(calc.rawNew, calc.new);
+                        const rawPeak = parseMonitorRawNumber(calc.rawPeak, calc.peak);
+                        const status = inferCalcStatus(calc, rawBase, rawNew, rawPeak);
 
                         if (status === 'increase') {
+                            const refPeak = rawPeak > 0 ? Math.max(rawPeak, runningPeak) : runningPeak;
                             let val = 0;
-                            if (calc.percent !== undefined && calc.percent !== null) {
-                                if (typeof calc.percent === 'number') {
-                                    val = calc.percent;
-                                } else {
-                                    val = parseFloat(normalizeToEnglishDigits(String(calc.percent)).replace(/[^0-9.-]/g, '')) || 0;
-                                }
+                            if (refPeak > 0 && rawNew > refPeak) {
+                                val = ((rawNew - refPeak) / refPeak) * 100;
                             } else if (rawBase > 0 && rawNew > rawBase) {
                                 val = ((rawNew - rawBase) / rawBase) * 100;
                             }
-
                             if (val > 0) {
-                                totalAbovePeak += val;
+                                appTotal += val;
+                                total += val;
+                                const ts = new Date(calc.timestamp).getTime() || 0;
+                                if (ts >= todayStartTs) today += val;
                             }
                         }
+
+                        if (rawNew > runningPeak) runningPeak = rawNew;
                     });
                 } else {
-                    const appsInfo = getAppPercentData();
-                    const app = appsInfo.find(a => a.id === appId);
+                    const app = getAppPercentData().find(a => a.id === appId);
                     if (app && app.data) {
                         app.data.forEach(item => {
                             if (item.value && item.value > 0) {
-                                totalAbovePeak += item.value;
+                                appTotal += item.value;
+                                total += item.value;
+                                const ts = typeof item.timestamp === 'number' ? item.timestamp : (new Date(item.timestamp).getTime() || 0);
+                                if (ts >= todayStartTs) today += item.value;
                             }
                         });
                     }
                 }
+
+                perApp[appId] = appTotal;
             }
 
-            return totalAbovePeak;
+            return { total, today, perApp };
+        }
+
+        function calculateTotalAbovePeakCumulativePercent() {
+            return computeAbovePeakCumulative().total;
         }
 
         function getLatestTomanProfit(appId) {
@@ -2440,136 +2449,186 @@
             });
         }
 
-        async function triggerGeminiAI(forceRetry = false) {
-            const appsInfo = getAppPercentData();
+        const MONITOR_AI_MODEL_CHAIN = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
+        const MONITOR_AI_TIMEOUT_MS = 45000;
+        const MONITOR_TARGET_PERCENT = 3000;
 
-            let completedAppsCount = 0;
-            let currentDaySum = 0;
+        function getMonitorAiApiKey() {
+            const customKey = localStorage.getItem("custom_gemini_api_key");
+            if (customKey && customKey.trim().length > 10) return customKey.trim();
+            return ['AQ.Ab8RN6IdR-rvbdLr', '5IiTeR9S7R-aPLA-yRT', 'NxKhOy5Nc8WXuqA'].join('');
+        }
+
+        function getMonitorAiTargets() {
+            const proxyBase = (localStorage.getItem('cf_proxy_url') || 'https://emarat-ai-chat-worker.qqqggggcc.workers.dev').replace(/\/$/, '');
+            const targets = [];
+            for (const model of MONITOR_AI_MODEL_CHAIN) {
+                targets.push({ model: model, via: 'proxy', url: proxyBase + '/v1beta/models/' + model + ':generateContent' });
+                targets.push({ model: model, via: 'direct', url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent' });
+            }
+            return targets;
+        }
+
+        // همهٔ مسیرها (هر مدل × پروکسی/مستقیم) هم‌زمان فرستاده می‌شوند و «اولین» مسیری
+        // که واقعاً متن تولید کند برنده است؛ بقیه فوراً بسته می‌شوند تا صفحه معطل نماند.
+        // تایمر ایمنی هر مسیر مستقل است تا یک اتصال قفل‌شده کل تحلیل را زمین نزند.
+        function monitorAiRace(payload, apiKey) {
+            const targets = getMonitorAiTargets();
+            const controllers = [];
+
+            return new Promise((resolve) => {
+                let settled = false;
+                let pending = targets.length;
+                const errors = [];
+
+                const finish = (value) => {
+                    if (settled) return;
+                    settled = true;
+                    controllers.forEach((c) => { try { c.abort(); } catch (e) {} });
+                    resolve(value);
+                };
+
+                targets.forEach((target) => {
+                    const controller = new AbortController();
+                    controllers.push(controller);
+                    const timeoutId = setTimeout(() => controller.abort(), MONITOR_AI_TIMEOUT_MS);
+
+                    const headers = { 'Content-Type': 'application/json' };
+                    let url = target.url;
+                    if (target.via === 'direct') {
+                        url += '?key=' + encodeURIComponent(apiKey);
+                    } else {
+                        headers['X-goog-api-key'] = apiKey;
+                    }
+
+                    fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(payload), signal: controller.signal })
+                        .then(async (response) => {
+                            if (!response.ok) throw new Error('HTTP ' + response.status);
+                            const data = await response.json();
+                            const parts = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+                            const text = parts ? parts.map((p) => p.text || '').join('').trim() : '';
+                            if (!text) throw new Error('پاسخ خالی');
+                            finish({ text: text, model: target.model, via: target.via });
+                        })
+                        .catch((err) => {
+                            if (!settled) errors.push(err && err.message ? err.message : String(err));
+                        })
+                        .finally(() => {
+                            clearTimeout(timeoutId);
+                            pending--;
+                            if (pending === 0) finish({ errors: errors });
+                        });
+                });
+            });
+        }
+
+        async function requestMonitorAnalysis(prompt, apiKey) {
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { maxOutputTokens: 2048 }
+            };
+
+            let lastErrors = [];
+            for (let round = 0; round < 2; round++) {
+                const outcome = await monitorAiRace(payload, apiKey);
+                if (outcome && outcome.text) return { ok: true, text: outcome.text, model: outcome.model };
+                lastErrors = (outcome && outcome.errors) || [];
+            }
+            return { ok: false, message: lastErrors[0] || 'خطای نامشخص' };
+        }
+
+        // امضای داده: اگر هیچ رکورد جدیدی ثبت نشده باشد، تحلیل کش‌شده دوباره لود می‌شود.
+        function buildMonitorAnalysisSignature(cum) {
+            const parts = [];
+            for (let appId = 1; appId <= 8; appId++) {
+                let history = [];
+                try { history = JSON.parse(localStorage.getItem(MONITOR_HISTORY_KEYS[appId])) || []; } catch (e) {}
+                const last = history.length > 0 ? history[history.length - 1] : null;
+                if (last) {
+                    const ts = new Date(last.timestamp).getTime() || 0;
+                    const val = last.rawNew !== undefined ? last.rawNew : last.new;
+                    parts.push(appId + ':' + ts + '|' + val);
+                } else {
+                    parts.push(appId + ':-');
+                }
+            }
+            parts.push('cum:' + cum.total.toFixed(2));
+            parts.push('tgt:' + MONITOR_TARGET_PERCENT);
+            return parts.join(';');
+        }
+
+        async function triggerGeminiAI(forceRetry = false) {
+            const aiCard = document.getElementById('live-ai-card');
+            const aiContent = document.getElementById('live-ai-content');
+            if (!aiCard || !aiContent) return;
+            aiCard.style.display = 'flex';
+
+            const appsInfo = getAppPercentData();
             const todayStr = new Date().toDateString();
 
-            appsInfo.forEach(app => {
+            let completedAppsCount = 0;
+            appsInfo.forEach((app) => {
                 if (app.data && app.data.length > 0) {
                     const lastItem = app.data[app.data.length - 1];
-                    const lastItemDay = new Date(lastItem.timestamp).toDateString();
-                    if (lastItemDay === todayStr) {
-                        completedAppsCount++;
-                        const calcDetails = getLatestAppCalcDetails(app.id);
-                        if (calcDetails.status === 'increase' && lastItem.value > 0) {
-                            currentDaySum += lastItem.value;
-                        }
-                    }
+                    if (new Date(lastItem.timestamp).toDateString() === todayStr) completedAppsCount++;
                 }
             });
 
-            const aiCard = document.getElementById('live-ai-card');
-            const aiContent = document.getElementById('live-ai-content');
+            const cum = computeAbovePeakCumulative();
+            localStorage.setItem('monitor_cumulative_percent_v1', cum.total.toFixed(2));
 
-            if (!aiCard || !aiContent) return;
-
-            aiCard.style.display = 'flex';
+            const remainingToTarget = Math.max(0, MONITOR_TARGET_PERCENT - cum.total);
+            const progressPercent = Math.min(100, (cum.total / MONITOR_TARGET_PERCENT) * 100);
+            const signature = buildMonitorAnalysisSignature(cum);
 
             if (completedAppsCount < 8) {
                 const cachedAnalysis = localStorage.getItem('monitor_last_gemini_analysis');
                 if (cachedAnalysis) {
                     aiContent.innerHTML = formatAiTextWith3DCapsules(cachedAnalysis);
                 } else {
-                    aiContent.innerText = `جهت دریافت تحلیل هوشمند، لطفاً درصد ۸ اپلیکیشن را ثبت کنید (${completedAppsCount} از ۸ تکمیل شده).`;
+                    aiContent.innerText = 'جهت دریافت تحلیل هوشمند، لطفاً درصد ۸ اپلیکیشن را ثبت کنید (' + completedAppsCount + ' از ۸ تکمیل شده).';
                 }
                 return;
             }
 
-            const cachedDate = localStorage.getItem('monitor_gemini_analysis_date');
-            if (cachedDate === todayStr && !forceRetry) {
-                const cachedAnalysis = localStorage.getItem('monitor_last_gemini_analysis');
-                if (cachedAnalysis) {
-                    aiContent.innerHTML = formatAiTextWith3DCapsules(cachedAnalysis);
-                    return;
-                }
+            const cachedAnalysis = localStorage.getItem('monitor_last_gemini_analysis');
+            const cachedSignature = localStorage.getItem('monitor_gemini_analysis_signature');
+            if (!forceRetry && cachedAnalysis && cachedSignature === signature) {
+                aiContent.innerHTML = formatAiTextWith3DCapsules(cachedAnalysis);
+                return;
             }
 
             aiContent.innerText = 'درحال ارتباط با مغز الکترونیک جمنای برای تحلیل درصدهای امروز... 🧠';
 
-            const customKey = localStorage.getItem("custom_gemini_api_key");
-            let apiKey;
-            if (customKey && customKey.trim().length > 10) {
-                apiKey = customKey.trim();
-            } else {
-                const k1 = 'AQ.Ab8RN6IdR-rvbdLr';
-                const k2 = '5IiTeR9S7R-aPLA-yRT';
-                const k3 = 'NxKhOy5Nc8WXuqA';
-                apiKey = k1 + k2 + k3;
-            }
-
-            const modelsToTry = [
-                'gemini-3.6-flash',
-                'gemini-3.5-flash',
-                'gemini-flash-latest'
-            ];
-
-            const totalCumulativePercent = calculateTotalAbovePeakCumulativePercent();
-            localStorage.setItem('monitor_cumulative_percent_v1', totalCumulativePercent.toFixed(2));
-
-            const targetPercent = 3000;
-            const pastCumulative = Math.max(0, totalCumulativePercent - currentDaySum);
-            const remainingToTarget = Math.max(0, targetPercent - totalCumulativePercent);
+            const apiKey = getMonitorAiApiKey();
 
             const prompt = `
                 تو یک هوش مصنوعی بسیار باهوش، رفیق شفیق، با نمک و کمی شوخ‌طبع برای عمارت دیجیتال هستی.
                 امروز هر ۸ درصد ثبت شدند. اطلاعات واقعی و دقیق امروز به شرح زیر است:
-                - سود فوق قله ثبت‌شده امروز: +${currentDaySum.toFixed(2)}%
-                - مجموع سودهای فوق قله تا قبل از امروز: ${pastCumulative.toFixed(2)}%
-                - مجموع کل سود تراکمی فوق قله تا به امروز: ${totalCumulativePercent.toFixed(2)}%
-                - هدف نهایی: رسیدن به 3000% سود تراکمی کل.
-                - فاصله واقعی باقی‌مانده تا قله ۳۰۰۰٪: ${remainingToTarget.toFixed(2)}%
+                - سود فوق قله ثبت‌شده امروز: +${cum.today.toFixed(2)}%
+                - مجموع کل سود تراکمی فوق قله تا به امروز: ${cum.total.toFixed(2)}%
+                - هدف نهایی: رسیدن به ${MONITOR_TARGET_PERCENT}% سود تراکمی کل.
+                - فاصله واقعی باقی‌مانده تا قله ${MONITOR_TARGET_PERCENT}%: ${remainingToTarget.toFixed(2)}%
+                - درصد پیشرفت تا هدف: ${progressPercent.toFixed(1)}%
 
                 دستورالعمل مهم:
-                ۱. حتماً و دقیقاً از همین اعداد داده شده بالا (+${currentDaySum.toFixed(2)}% برای امروز، ${totalCumulativePercent.toFixed(2)}% برای مجموع کل تا کنون، و ${remainingToTarget.toFixed(2)}% برای فاصله باقی‌مانده تا قله ۳۰۰۰٪) استفاده کن و هیچ عدد فرضی یا گردشده‌ی من‌درآوردی دیگری نساز.
-                ۲. درصدها را با علامت % بنویس (مثلاً +${currentDaySum.toFixed(2)}%، ${totalCumulativePercent.toFixed(2)}%، ${remainingToTarget.toFixed(2)}%، 3000%).
-                ۳. یک متن فارسی جذاب، روان، امیدبخش و شوخ‌طبعانه در ۳ خط کوتاه بگو که هم سود امروز و هم پیشرفت تراکمی تا قله ۳۰۰۰٪ را منعکس کند.
+                ۱. حتماً و دقیقاً فقط از همین اعداد داده‌شدهٔ بالا استفاده کن و هیچ عدد فرضی، من‌درآوردی یا گردشده‌ی دیگری نساز.
+                ۲. «سود فوق قله» یعنی رشد نسبت به قلهٔ قبلی هر اپلیکیشن؛ پس عدد امروز از همین جنس است و با مجموع کل هم‌خانواده است.
+                ۳. درصدها را با علامت % بنویس (مثلاً +${cum.today.toFixed(2)}%، ${cum.total.toFixed(2)}%، ${remainingToTarget.toFixed(2)}%، ${MONITOR_TARGET_PERCENT}%).
+                ۴. یک متن فارسی جذاب، روان، امیدبخش و شوخ‌طبعانه در ۳ خط کوتاه بگو که هم سود امروز و هم پیشرفت تراکمی تا قله ${MONITOR_TARGET_PERCENT}% را منعکس کند.
             `;
 
-            let resultText = '';
-            let lastError = null;
+            const outcome = await requestMonitorAnalysis(prompt, apiKey);
 
-            for (const model of modelsToTry) {
-                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-                try {
-                    const response = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [{
-                                    text: prompt
-                                }]
-                            }]
-                        })
-                    });
-
-                    if (!response.ok) continue;
-
-                    const data = await response.json();
-                    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
-                        resultText = data.candidates[0].content.parts[0].text.trim();
-                        if (resultText) break;
-                    }
-                } catch (err) {
-                    lastError = err;
-                }
-            }
-
-            if (resultText) {
-                localStorage.setItem('monitor_last_gemini_analysis', resultText);
+            if (outcome.ok) {
+                localStorage.setItem('monitor_last_gemini_analysis', outcome.text);
                 localStorage.setItem('monitor_gemini_analysis_date', todayStr);
-
-                aiContent.innerHTML = formatAiTextWith3DCapsules(resultText);
+                localStorage.setItem('monitor_gemini_analysis_signature', signature);
+                aiContent.innerHTML = formatAiTextWith3DCapsules(outcome.text);
             } else {
-                if (lastError) console.error(lastError);
-                const cachedAnalysis = localStorage.getItem('monitor_last_gemini_analysis');
+                console.warn('Monitor AI failed:', outcome.message);
                 if (cachedAnalysis) {
-                    aiContent.innerHTML = `⚠️ اتصال به سرور جمنای با خطا مواجه شد. در ادامه آخرین تحلیل موفق لود شد:<br><br>« ${cachedAnalysis} »`;
+                    aiContent.innerHTML = '⚠️ اتصال به سرور جمنای با خطا مواجه شد. در ادامه آخرین تحلیل موفق لود شد:<br><br>« ' + cachedAnalysis + ' »';
                 } else {
                     aiContent.innerText = '⚠️ اتصال به جمنای برقرار نشد. لطفاً قندشکن خود را چک کرده و دکمه تحلیل مجدد را بزنید.';
                 }
@@ -2744,13 +2803,7 @@
                 liveTotalTomanValue.innerText = `💰 ${liveTomanValueSign}${liveTomanSum.toLocaleString('en-US')} تومان`;
                 liveTotalTomanValue.className = isLiveTomanPositive ? 'positive' : 'negative';
 
-                let todayPositiveSum = 0;
-                appsInfo.forEach(app => {
-                    const lastItem = app.data && app.data.length > 0 ? app.data[app.data.length - 1] : null;
-                    if (lastItem && lastItem.value > 0) {
-                        todayPositiveSum += lastItem.value;
-                    }
-                });
+                const todayPositiveSum = computeAbovePeakCumulative().today;
 
                 if (livePositiveTotalValue) {
                     livePositiveTotalValue.innerText = `+${todayPositiveSum.toFixed(2)}%`;
