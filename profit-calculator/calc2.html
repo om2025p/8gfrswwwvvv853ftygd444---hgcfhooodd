@@ -336,6 +336,117 @@
             overflow-y: auto;
         }
 
+        /* مودال تأیید حذف تب */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            z-index: 2002;
+            inset: 0;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+
+        .confirm-content {
+            background-color: #ffffff;
+            color: #111827;
+            margin: 12% auto;
+            padding: 22px;
+            border-radius: 16px;
+            width: 86%;
+            max-width: 430px;
+            box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+            text-align: right;
+            box-sizing: border-box;
+        }
+
+        .dark .confirm-content {
+            background-color: #1e1e1e;
+            color: #f3f4f6;
+        }
+
+        .confirm-step-icon {
+            font-size: 2.4rem;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .confirm-title {
+            margin: 0 0 10px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .confirm-message {
+            margin: 0 0 18px;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .confirm-progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .confirm-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(120,120,120,0.35);
+        }
+
+        .confirm-dot.active {
+            background: #dc2626;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .confirm-actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 11px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+
+        .confirm-actions button:active {
+            transform: scale(0.97);
+        }
+
+        .confirm-cancel-btn {
+            background: rgba(120,120,120,0.18);
+            color: inherit;
+        }
+
+        .confirm-cancel-btn:hover {
+            filter: brightness(0.95);
+        }
+
+        .confirm-danger-btn {
+            background: #dc2626;
+            color: #ffffff;
+        }
+
+        .confirm-danger-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        .confirm-danger-btn:disabled {
+            background: rgba(220,38,38,0.45);
+            cursor: not-allowed;
+        }
+
         .dark .history-content {
             background-color: #1e1e1e;
             color: white;
@@ -463,6 +574,23 @@
             <span class="close-history">&times;</span>
             <h3>📜 تاریخچه محاسبات</h3>
             <div id="historyList"></div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div id="confirmDeleteModal" class="confirm-modal">
+        <div class="confirm-content">
+            <div class="confirm-step-icon" id="confirm-step-icon">🗑️</div>
+            <h3 class="confirm-title" id="confirm-title">حذف تب</h3>
+            <p class="confirm-message" id="confirm-message"></p>
+            <div class="confirm-progress">
+                <span class="confirm-dot active" id="confirm-dot-1"></span>
+                <span class="confirm-dot" id="confirm-dot-2"></span>
+            </div>
+            <div class="confirm-actions">
+                <button type="button" class="confirm-cancel-btn" id="confirm-cancel-btn">انصراف</button>
+                <button type="button" class="confirm-danger-btn" id="confirm-danger-btn">ادامه</button>
+            </div>
         </div>
     </div>
 
@@ -1509,7 +1637,11 @@
 
             tabButton.querySelector('.close-tab').addEventListener('click', (event) => {
                 event.stopPropagation();
-                closeTab(tabId.toString());
+                if (calculatorInstances.size === 1) {
+                    alert("نمی‌توانید تنها تب موجود را حذف کنید.");
+                    return;
+                }
+                requestDeleteTabConfirmation(tabId.toString(), () => closeTab(tabId.toString()));
             });
             tabsContainer.appendChild(tabButton);
 
@@ -1540,6 +1672,95 @@
             localStorage.setItem('activeTabId', strTabId);
 
             updateGroupDropdown();
+        }
+
+        // تأیید دو مرحله‌ای حذف تب با مودال سفارشی
+        function requestDeleteTabConfirmation(tabId, onConfirmed) {
+            const modal = document.getElementById('confirmDeleteModal');
+            const iconEl = document.getElementById('confirm-step-icon');
+            const titleEl = document.getElementById('confirm-title');
+            const msgEl = document.getElementById('confirm-message');
+            const dot1 = document.getElementById('confirm-dot-1');
+            const dot2 = document.getElementById('confirm-dot-2');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+            const dangerBtn = document.getElementById('confirm-danger-btn');
+
+            if (!modal) {
+                // پشتیبان در صورت نبود مودال
+                if (confirm('آیا از حذف این تب مطمئن هستید؟') && confirm('آخرین هشدار! پاک شود؟')) {
+                    onConfirmed();
+                }
+                return;
+            }
+
+            const customName = localStorage.getItem(`tabCustomName_${tabId}`);
+            const tabLabel = customName && customName.trim() ? customName.trim() : `تب ${tabId}`;
+            let step = 1;
+
+            const stepOne = {
+                icon: '🗑️',
+                title: 'حذف تب',
+                message: `آیا می‌خواهید «${tabLabel}» را حذف کنید؟\nتمام داده‌های این تب پاک خواهد شد.`,
+                btn: 'ادامه'
+            };
+            const stepTwo = {
+                icon: '⚠️',
+                title: 'آخرین هشدار',
+                message: `مطمئن هستید؟\nاین عمل قابل بازگشت نیست و داده‌های «${tabLabel}» برای همیشه پاک می‌شود.`,
+                btn: '🗑️ بله، پاک کن'
+            };
+
+            function renderStep() {
+                const cfg = step === 1 ? stepOne : stepTwo;
+                iconEl.innerText = cfg.icon;
+                titleEl.innerText = cfg.title;
+                msgEl.innerText = cfg.message;
+                dangerBtn.innerText = cfg.btn;
+                dot1.classList.toggle('active', true);
+                dot2.classList.toggle('active', step === 2);
+            }
+
+            function cleanup() {
+                modal.style.display = 'none';
+                cancelBtn.removeEventListener('click', onCancel);
+                dangerBtn.removeEventListener('click', onAdvance);
+                modal.removeEventListener('click', onBackdrop);
+                document.removeEventListener('keydown', onKey);
+            }
+
+            function onCancel() {
+                cleanup();
+            }
+
+            function onAdvance() {
+                if (step === 1) {
+                    step = 2;
+                    renderStep();
+                } else {
+                    cleanup();
+                    onConfirmed();
+                }
+            }
+
+            function onBackdrop(event) {
+                if (event.target === modal) {
+                    cleanup();
+                }
+            }
+
+            function onKey(event) {
+                if (event.key === 'Escape') {
+                    cleanup();
+                }
+            }
+
+            cancelBtn.addEventListener('click', onCancel);
+            dangerBtn.addEventListener('click', onAdvance);
+            modal.addEventListener('click', onBackdrop);
+            document.addEventListener('keydown', onKey);
+
+            renderStep();
+            modal.style.display = 'block';
         }
 
         function closeTab(tabId, force = false) {
