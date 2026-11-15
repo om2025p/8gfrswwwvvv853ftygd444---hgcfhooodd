@@ -266,7 +266,7 @@ gradle assembleRelease assembleDebug --no-daemon
 - تیک «احتساب سود» با صفر کردن نرخ پیاده می‌شود → خروجی می‌شود «اصل پول + واریزی‌ها بدون رشد».
 - **مهم:** این کنترلها فقط شبیه‌سازِ محلی هستند؛ **هیچ‌چیز در `localStorage` ذخیره نمی‌شود** و **هیچ اثری روی دادهٔ تب‌های صندوق (`calculatorTab_*`) ندارند**. تنها کلید ذخیره‌شده `totalSumYears` است.
 - رندر مجدد کارت‌ها مقادیر نرخ دستی را از `manualRateCache` بازیابی و فوکوس/مکان‌نما را حفظ می‌کند (`focusTabId`)؛ ورودی نرخ با debounce (۴۰۰ms) و نرخ سراسری با ۲۵۰ms محاسبه می‌شود.
-- `total.html` باید در `ASSETS` فایل `sw.js` ریشه باشد و `CACHE_NAME` بامپ شود (الان `emarat-portal-v71`).
+- `total.html` باید در `ASSETS` فایل `sw.js` ریشه باشد و `CACHE_NAME` بامپ شود (الان `emarat-portal-v72`).
 - باکس کنترل (`#control-toggle-btn` / `#control-content`) به‌صورت آکاردئون و **پیش‌فرض بسته** است (فقط تیتر + فلش ▼) تا صفحه خلوت بماند.
 
 ### 🗑️ تأیید دو مرحله‌ای حذف تب (profit-calculator/calc2.html)
@@ -275,3 +275,4 @@ gradle assembleRelease assembleDebug --no-daemon
 - انصراف، کلید `Escape` و کلیک روی پس‌زمینه (`onBackdrop`) مودال را می‌بندند؛ listenerها در `cleanup()` حذف می‌شوند تا نشتی نداشته باشیم.
 - نشانگر مرحله با دو نقطه (`.confirm-dot`) و نمایش نام دلخواه تب (`tabCustomName_*`) در متن پیام.
 - اگر تب تنها تب موجود باشد، همان `alert` قبلی نمایش داده می‌شود و مودال باز نمی‌شود.
+- مودال با `display:flex` و `align-items/justify-content:center` **وسط صفحه** باز می‌شود (نه بالا)؛ `max-height:85vh` + `overflow-y:auto` برای صفحه‌های کوچک.
