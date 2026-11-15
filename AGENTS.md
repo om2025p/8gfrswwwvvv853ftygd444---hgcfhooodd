@@ -256,3 +256,14 @@ gradle assembleRelease assembleDebug --no-daemon
 - **تلگرام:** `aiToTelegramHtml()` خروجی را به HTML مجاز تلگرام تبدیل می‌کند (جدول → `<pre>`، رنگ/هایلایت حذف). `aiSplitForTelegram()` پیام بلند را زیر ۴۰۹۶ کاراکتر می‌شکند. در صورت خطای HTML، بدون قالب (`plain`) دوباره می‌فرستد.
 - **تنظیمات:** توکن و Chat ID فقط در `localStorage` کاربر با کلیدهای `ai_tg_bot_token` و `ai_tg_chat_id` (بدون hardcode). پنل با دکمهٔ ⚙️ در هدر مودال استاد: `openAiSettingsModal()`, `saveAiSettings()`, `clearAiSettings()`, `aiTestTelegramConnection()`.
 - **نکته:** `innerText` در jsdom پشتیبانی نمی‌شود؛ از `aiElementText()` (innerText با fallback به textContent) استفاده کنید.
+
+### 🎛️ کنترل اجزای محاسبه در صفحه «مجموع کل» (profit-calculator/total.html)
+- دکمهٔ «📊 مشاهده مجموع کل در صفحه مجزا» در `calc2.html` فایل `total.html` را باز می‌کند (فقط وقتی ≥۲ تب علامت‌خورده وجود دارد).
+- تابع محاسبه: `runCompoundingCalculation(data, targetYears, options)` — آرگومان سوم (`options`) فیلترهای کنترل کاربر است:
+  - `includeInitial`, `includeMonthly`, `includeAnnualIncrease`, `includeBimonthly`, `includeProfit`, `manualDailyRate`.
+- **نرخ دستی** همیشه «میانگین سود روزانه به درصد» است و با `×365` به نرخ سالانه تبدیل می‌شود (منطبق بر `calc2.html`).
+- **نرخ سراسری** (`#global-daily-rate`) پیش‌فرض همهٔ صندوق‌هاست؛ اگر کادر نرخ همان صندوق (`.fund-rate-input[data-tab-id]`) پُر باشد، همان غالب می‌شود.
+- تیک «احتساب سود» با صفر کردن نرخ پیاده می‌شود → خروجی می‌شود «اصل پول + واریزی‌ها بدون رشد».
+- **مهم:** این کنترلها فقط شبیه‌سازِ محلی هستند؛ **هیچ‌چیز در `localStorage` ذخیره نمی‌شود** و **هیچ اثری روی دادهٔ تب‌های صندوق (`calculatorTab_*`) ندارند**. تنها کلید ذخیره‌شده `totalSumYears` است.
+- رندر مجدد کارت‌ها مقادیر نرخ دستی را از `manualRateCache` بازیابی و فوکوس/مکان‌نما را حفظ می‌کند (`focusTabId`)؛ ورودی نرخ با debounce (۴۰۰ms) و نرخ سراسری با ۲۵۰ms محاسبه می‌شود.
+- `total.html` باید در `ASSETS` فایل `sw.js` ریشه باشد و `CACHE_NAME` بامپ شود (الان `emarat-portal-v69`).
