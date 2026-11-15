@@ -345,16 +345,22 @@
             background-color: rgba(0,0,0,0.6);
             backdrop-filter: blur(3px);
             -webkit-backdrop-filter: blur(3px);
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-sizing: border-box;
         }
 
         .confirm-content {
             background-color: #ffffff;
             color: #111827;
-            margin: 12% auto;
+            margin: 0;
             padding: 22px;
             border-radius: 16px;
             width: 86%;
             max-width: 430px;
+            max-height: 85vh;
+            overflow-y: auto;
             box-shadow: 0 18px 50px rgba(0,0,0,0.45);
             text-align: right;
             box-sizing: border-box;
@@ -1760,7 +1766,7 @@
             document.addEventListener('keydown', onKey);
 
             renderStep();
-            modal.style.display = 'block';
+            modal.style.display = 'flex';
         }
 
         function closeTab(tabId, force = false) {
