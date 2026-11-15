@@ -261,17 +261,37 @@
 
         .control-box {
             margin-top: 18px;
+        }
+
+        .control-toggle-btn {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .control-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #00c853;
+        }
+
+        .control-content {
+            margin-top: 12px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 14px;
             padding: 14px;
             text-align: right;
-        }
-
-        .control-box h3 {
-            margin: 0 0 10px;
-            font-size: 1rem;
-            color: #64ffda;
         }
 
         .switch-row {
@@ -501,20 +521,25 @@
                 <input type="number" id="target-years" value="${savedYears}" min="0">
 
                 <div class="control-box">
-                    <h3>🎛️ کنترل اجزای محاسبه</h3>
-                    <div class="mini-btns">
-                        <button type="button" id="chk-all">✅ همه روشن</button>
-                        <button type="button" id="chk-none">🚫 هیچ‌کدام</button>
-                    </div>
-                    <label class="switch-row"><input type="checkbox" id="chk-initial" checked><span>💰 احتساب مبلغ اولیه</span></label>
-                    <label class="switch-row"><input type="checkbox" id="chk-monthly" checked><span>💵 احتساب واریز ماهیانه</span></label>
-                    <label class="switch-row"><input type="checkbox" id="chk-annual" checked><span>➕ احتساب افزایش سالانه واریز</span></label>
-                    <label class="switch-row"><input type="checkbox" id="chk-bimonthly" checked><span>💵 احتساب واریز هر دو ماه یک‌بار</span></label>
-                    <label class="switch-row"><input type="checkbox" id="chk-profit" checked><span>📈 احتساب سود</span></label>
+                    <button id="control-toggle-btn" class="control-toggle-btn">
+                        <span>🎛️ کنترل اجزای محاسبه</span>
+                        <span id="control-arrow">▼</span>
+                    </button>
+                    <div id="control-content" class="control-content" style="display: none;">
+                        <div class="mini-btns">
+                            <button type="button" id="chk-all">✅ همه روشن</button>
+                            <button type="button" id="chk-none">🚫 هیچ‌کدام</button>
+                        </div>
+                        <label class="switch-row"><input type="checkbox" id="chk-initial" checked><span>💰 احتساب مبلغ اولیه</span></label>
+                        <label class="switch-row"><input type="checkbox" id="chk-monthly" checked><span>💵 احتساب واریز ماهیانه</span></label>
+                        <label class="switch-row"><input type="checkbox" id="chk-annual" checked><span>➕ احتساب افزایش سالانه واریز</span></label>
+                        <label class="switch-row"><input type="checkbox" id="chk-bimonthly" checked><span>💵 احتساب واریز هر دو ماه یک‌بار</span></label>
+                        <label class="switch-row"><input type="checkbox" id="chk-profit" checked><span>📈 احتساب سود</span></label>
 
-                    <div class="rate-row">
-                        <label>📊 نرخ سراسری میانگین سود روزانه (٪) — خالی = نرخ خود تب:</label>
-                        <input type="number" id="global-daily-rate" class="fund-rate-input" step="0.0001" placeholder="مثال: 0.08 (خالی = نرخ هر تب)">
+                        <div class="rate-row">
+                            <label>📊 نرخ سراسری میانگین سود روزانه (٪) — خالی = نرخ خود تب:</label>
+                            <input type="number" id="global-daily-rate" class="fund-rate-input" step="0.0001" placeholder="مثال: 0.08 (خالی = نرخ هر تب)">
+                        </div>
                     </div>
                 </div>
 
@@ -560,6 +585,16 @@
                 const isHidden = accordionContent.style.display === 'none';
                 accordionContent.style.display = isHidden ? 'flex' : 'none';
                 accordionArrow.innerText = isHidden ? '▲' : '▼';
+            });
+
+            // تابع باز/بسته کردن منوی کشویی کنترل‌ها
+            const controlToggleBtn = document.getElementById('control-toggle-btn');
+            const controlContent = document.getElementById('control-content');
+            const controlArrow = document.getElementById('control-arrow');
+            controlToggleBtn.addEventListener('click', () => {
+                const isHidden = controlContent.style.display === 'none';
+                controlContent.style.display = isHidden ? 'block' : 'none';
+                controlArrow.innerText = isHidden ? '▲' : '▼';
             });
 
             function getFundName(tabId, data) {
