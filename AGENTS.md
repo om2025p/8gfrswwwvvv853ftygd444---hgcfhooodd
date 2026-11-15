@@ -276,3 +276,19 @@ gradle assembleRelease assembleDebug --no-daemon
 - نشانگر مرحله با دو نقطه (`.confirm-dot`) و نمایش نام دلخواه تب (`tabCustomName_*`) در متن پیام.
 - اگر تب تنها تب موجود باشد، همان `alert` قبلی نمایش داده می‌شود و مودال باز نمی‌شود.
 - مودال با `display:flex` و `align-items/justify-content:center` **وسط صفحه** باز می‌شود (نه بالا)؛ `max-height:85vh` + `overflow-y:auto` برای صفحه‌های کوچک.
+
+### 📦 ارسال فایل بزرگ (تا ۲GB) به تلگرام بدون سشن کاربر — ترفند کلیدی
+- **مشکل ۱:** `sendDocument` روی HTTP API بات (`api.telegram.org`) سقفش **۵۰ مگابایت** است.
+- **مشکل ۲:** سشن کاربر ممکن است جای دیگر فعال باشد → خطای `AUTH_KEY_DUPLICATED` (همان چیزی که سرور Railway سپر دانلود باعثش می‌شود؛ چون `main.py` سرور، `userbot` را با همان `SESSION` بالا می‌آورد).
+- **راه‌حل:** بات را با **Pyrogram + MTProto** وصل کن (`bot_token=...`)؛ سقف آپلود بات در MTProto می‌شود **۲ گیگابایت** و به سشن کاربر نیازی نیست.
+- **🪄 ترفند حیاتی (Peer cache):** قبل از `send_document`، حتماً یک `sendMessage` ساده به همان `chat_id` بزن و ~۳ ثانیه صبر کن. بدون این کار خطای `Peer id invalid: -100...` می‌گیری، چون بات هیچ‌وقت کانال را «ندیده» و `access_hash` آن را ندارد.
+  ```python
+  requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+               params={"chat_id": CHAT, "text": "🔔 شروع ارسال..."}, timeout=15)
+  time.sleep(3)
+  app.send_document(CHAT, FILE, force_document=True, progress=cb)
+  ```
+- `app.get_dialogs()` برای بات ممنوع است (`BOT_METHOD_INVALID`).
+- **محدودیت‌ها:** آپلود بات ۲GB / دانلود ۴GB. فایل‌های گیت از قبل فشرده‌اند؛ `xz -9e` فقط چند درصد کم می‌کند (۳۵۱MB → ۳۲۴MB).
+- **بک‌آپ کامل همه مخزن‌ها:** `git clone --mirror` برای هر مخزن (۳۵ مخزن، ~۳۵۴MB)، سپس `tar` + `xz -9e -T0`.
+- **توجه:** توکنی که در `restricted/index.html` و سرور استفاده می‌شود، `SERVER_TOKEN` سرور (هدر `X-Auth-Token`) است، نه توکن Railway. برای خاموش کردن سرویس باید از پنل Railway اقدام شود (توکن API آن جداگانه است).
