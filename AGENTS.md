@@ -226,6 +226,18 @@ gradle assembleRelease assembleDebug --no-daemon
 - **محدودیت تلگرام:** دو نمونه سرور همزمان با یک `SESSION` باعث خطای `AUTH_KEY_DUPLICATED` می‌شود؛ قبل از راه‌اندازی سرور جدید، قدیمی را خاموش کنید.
 - تعویض میزبان: فقط پروژه Railway جدید + همان متغیرها + به‌روزرسانی `DEFAULT_SRV_URL` کافی است.
 
+#### 🎬 باگ «فقط عکس اول + ویدیوی صفر ثانیه» — علت و درمان
+سه باگ هم‌زمان باعث می‌شدند لینک‌هایی مثل `luticlip.com` به‌جای ویدیو، پوستر بفرستند:
+1. **`curl` در ایمیج داکر نصب نبود.** `Dockerfile` فقط `git ffmpeg gcc python3-dev` داشت؛ پس هر مسیر پشتیبان دانلود با `[Errno 2] No such file or directory: 'curl'` می‌مُرد. **درمان:** `curl` به `apt-get install` اضافه شد.
+2. **بعضی CDNها (مثل `luti2425.takcdn.com`) بدون هدر `Range` اتصال را `Connection reset` می‌کنند.** **درمان:** `download_url_robust()` اول بدون Range، بعد با `Range: bytes=0-` و در نهایت با `curl --range` تلاش می‌کند.
+3. **هر فایلی با پسوند شبیه ویدیو کورکورانه با `send_video` ارسال می‌شد؛** پس پوستر (og:image) که با اسم `webpage_video.mp4` ذخیره شده بود، به‌عنوان ویدیوی ۰ ثانیه به تلگرام می‌رفت. **درمان:** `sniff_media_kind()` نوع واقعی فایل را از **magic bytes** تشخیص می‌دهد و گارد پایانی قبل از ارسال، HTML/خالی/پوستر را رد می‌کند و پسوند را با محتوای واقعی هم‌راستا می‌کند.
+
+- توابع کلیدی در `restricted/bot/download_single.py`: `sniff_media_kind()`, `is_usable_media()`, `download_url_robust()`, `download_hls_with_ffmpeg()`.
+- **ترتیب لایه‌ها مهم است:** استخراج‌گر سامسونگ (`Layer 2.9`) باید **قبل از** لایهٔ عمومی اجرا شود، وگرنه پوستر دانلود شده و نوبت به فایل واقعی نمی‌رسد.
+- **Samsung Quick Share:** لینک فایل واقعی داخل `sharedatacontents = JSON.parse('[...]')` در صفحه است (فیلد `original`). برای همهٔ سایت‌های ناشناس، پرامپت Gemini هم اصلاح شد تا اولویت را روی ویدیو بگذارد، نه پوستر.
+- **HLS:** اگر لینک `.m3u8` بود یا محتوای دانلودشده پلی‌لیست بود، با `ffmpeg` به mp4 رمکس می‌شود (ffmpeg از قبل در ایمیج هست).
+- **مهم برای دیپلوی:** این کد روی **Railway** اجرا می‌شود، نه GitHub Pages. پس بعد از هر تغییر، سرویس Railway باید مجدداً بیلد/دیپلوی شود تا فیکس به کاربر برسد.
+
 ### 🤖 استاد هوشمند اپ ورزشی (gym/index.html)
 - فراخوانی AI در `callGeminiAiCoach()` انجام می‌شود؛ کلید از `getGeminiTokenForWorkout()` می‌آید (اول `localStorage.custom_gemini_api_key`، وگرنه کلید پیش‌فرض تکه‌تکه Base64).
 - **مدل‌ها بازنشسته می‌شوند:** `gemini-flash-latest` و `gemini-2.5-flash` دیگر کار نمی‌کنند (503/NOT_FOUND). زنجیرهٔ فعلی: `AI_MODEL_CHAIN = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"]`. برای یافتن مدل‌های زنده: `GET https://generativelanguage.googleapis.com/v1beta/models?key=...`.
