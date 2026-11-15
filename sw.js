@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v68';
+const CACHE_NAME = 'emarat-portal-v69';
 const ASSETS = [
   './',
   './index.html',
@@ -137,6 +137,7 @@ const ASSETS = [
   './profit-calculator/index.html',
   './profit-calculator/calc1.html',
   './profit-calculator/calc2.html',
+  './profit-calculator/total.html',
   './profit-calculator/manifest.json',
   './profit-calculator/icon-192.png',
   './profit-calculator/icon-512.png',
