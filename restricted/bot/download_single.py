@@ -25,6 +25,160 @@ def get_gemini_api_key():
     except Exception:
         return ""
 
+# --- Media sanity helpers -------------------------------------------------
+# Some hosts (e.g. luticlip's takcdn) reset the connection unless the request
+# carries a Range header, and some pages only expose a poster image. These
+# helpers let every download layer verify the real file type instead of
+# trusting a URL's extension.
+
+_MEDIA_MAGIC = {
+    b'ftyp': 'video',            # mp4 / mov / m4v (ftyp box at offset 4)
+    b'\x1aE\xdf\xa3': 'video',   # Matroska / WebM
+    b'RIFF': 'video',            # AVI / WAV (checked further below)
+    b'OggS': 'audio',
+    b'ID3': 'audio',
+    b'fLaC': 'audio',
+    b'\xff\xd8\xff': 'image',    # JPEG
+    b'\x89PNG\r\n\x1a\n': 'image',
+    b'GIF87a': 'image',
+    b'GIF89a': 'image',
+    b'RIFF....WEBP': 'image',
+    b'PK\x03\x04': 'archive',
+}
+
+
+def sniff_media_kind(path):
+    """Detect the real media type of a file from its magic bytes.
+
+    Returns one of: video, audio, image, hls, html, archive, empty, other.
+    """
+    try:
+        with open(path, 'rb') as fh:
+            head = fh.read(8192)
+    except Exception:
+        return 'other'
+    if not head:
+        return 'empty'
+    if head.lstrip()[:1] == b'<' or head[:14].lower().lstrip().startswith(b'<!doctype html'):
+        return 'html'
+    if head.startswith(b'#EXTM3U'):
+        return 'hls'
+    if head[4:8] == b'ftyp':
+        return 'video'
+    for magic, kind in _MEDIA_MAGIC.items():
+        if head.startswith(magic):
+            if magic == b'RIFF' and head[8:12] == b'WEBP':
+                return 'image'
+            if magic == b'RIFF':
+                return 'video' if head[8:12] == b'AVI ' else 'audio'
+            return kind
+    return 'other'
+
+
+def is_usable_media(path, min_bytes=10000):
+    """A file is usable only if it is real media and not a truncated stub."""
+    try:
+        if not os.path.exists(path) or os.path.getsize(path) < min_bytes:
+            return False
+    except Exception:
+        return False
+    return sniff_media_kind(path) in ('video', 'audio', 'image')
+
+
+def download_url_robust(url, out_path, headers=None, referer=None,
+                        min_bytes=10000, timeout=60, want='any'):
+    """Download a direct URL, tolerating hosts that require a Range header.
+
+    Tries, in order: plain GET, GET with ``Range: bytes=0-``, then a curl
+    fallback that also sends the Range header. Returns True when a file of at
+    least ``min_bytes`` was written.
+    """
+    import urllib.request
+
+    base_headers = dict(headers or {})
+    base_headers.setdefault('Accept', '*/*')
+    if referer:
+        base_headers.setdefault('Referer', referer)
+
+    def _valid():
+        if not os.path.exists(out_path):
+            return False
+        if os.path.getsize(out_path) < min_bytes:
+            return False
+        kind = sniff_media_kind(out_path)
+        if want in ('video', 'audio', 'image'):
+            return kind == want
+        # want='any': accept any real file (documents, archives, text) and only
+        # reject an HTML error/login page or an empty body.
+        return kind not in ('html', 'empty')
+
+    # HLS playlists are not a real file; remux them with ffmpeg instead.
+    if '.m3u8' in url.lower():
+        if download_hls_with_ffmpeg(url, out_path, referer=referer, headers=base_headers):
+            return True
+
+    attempts = [dict(base_headers), {**base_headers, 'Range': 'bytes=0-'}]
+    for attempt_headers in attempts:
+        try:
+            req = urllib.request.Request(url, headers=attempt_headers)
+            with urllib.request.urlopen(req, timeout=timeout) as resp, open(out_path, 'wb') as fh:
+                while True:
+                    chunk = resp.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    fh.write(chunk)
+            if _valid():
+                return True
+            # A downloaded .m3u8 playlist (server ignored our intent) -> remux it.
+            if os.path.exists(out_path) and sniff_media_kind(out_path) == 'hls':
+                if download_hls_with_ffmpeg(url, out_path, referer=referer, headers=base_headers):
+                    return True
+        except Exception as exc:
+            print(f"DEBUG: urllib download attempt failed ({exc}); trying next strategy...")
+        try:
+            if os.path.exists(out_path):
+                os.remove(out_path)
+        except Exception:
+            pass
+
+    # curl fallback: some CDNs reject Python's TLS fingerprint but accept curl.
+    try:
+        import subprocess
+        cmd = [
+            "curl", "-s", "-L", "--max-time", str(timeout),
+            "-H", "Accept: */*",
+            "-H", "Range: bytes=0-",
+            "-A", base_headers.get('User-Agent', 'Mozilla/5.0'),
+        ]
+        if referer:
+            cmd.extend(["-e", referer])
+        cmd.extend(["-o", out_path, url])
+        subprocess.run(cmd, timeout=timeout + 15, check=False)
+        if _valid():
+            return True
+    except Exception as exc:
+        print(f"DEBUG: curl download attempt failed ({exc})")
+
+    return False
+
+
+def download_hls_with_ffmpeg(url, out_path, referer=None, headers=None, timeout=600):
+    """Fetch an HLS (.m3u8) stream by remuxing it to mp4 with ffmpeg."""
+    try:
+        import subprocess
+        cmd = ["ffmpeg", "-y", "-loglevel", "error"]
+        if referer:
+            cmd.extend(["-headers", f"Referer: {referer}\r\n"])
+        elif headers and headers.get('Referer'):
+            cmd.extend(["-headers", f"Referer: {headers['Referer']}\r\n"])
+        cmd.extend(["-i", url, "-c", "copy", "-bsf:a", "aac_adtstoasc", out_path])
+        subprocess.run(cmd, timeout=timeout, check=False)
+        return is_usable_media(out_path)
+    except Exception as exc:
+        print(f"DEBUG: ffmpeg HLS download failed ({exc})")
+        return False
+
+
 def send_channel_notice(text):
     token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
     chat_id = os.environ.get("NOTIF_CHAT_ID") or config("NOTIF_CHAT_ID", default=None)
@@ -376,7 +530,9 @@ async def call_gemini_ai_extract(html_snippet, page_url):
         ]
         prompt = (
             f"You are an expert media link extractor. Analyze the webpage HTML snippet for URL '{page_url}'. "
-            "Find the direct downloadable video MP4 URL or high-res image JPG/PNG URL. "
+            "Find the DIRECT downloadable VIDEO file URL (mp4, webm, m3u8 stream, or the real file link). "
+            "Prefer a real video/stream URL. Only return an image URL if the page truly has no video at all. "
+            "Never return a poster/thumbnail/og:image when a video exists. "
             "Return ONLY the direct link URL starting with http, nothing else. No markdown, no quotes, no extra text. "
             "If no direct link is found, return empty text."
         )
@@ -1388,6 +1544,62 @@ async def process_social_media_download(link, owner_id, msg_obj=None, current_id
                     error_logs.append(f"YouTube Fallback Layer: {ex_yt_fallback}")
                     print(f"DEBUG: YouTube fallback layer failed: {ex_yt_fallback}")
 
+            # Layer 2.9: Samsung Quick Share (quickshare.samsungcloud.com) dedicated extractor.
+            # The real file link lives inside a `sharedatacontents` JSON blob in the page,
+            # so this must run BEFORE the generic layer (which would otherwise grab the poster).
+            if 'quickshare.samsungcloud.com' in link and not scan_files():
+                try:
+                    import urllib.request, re, json
+                    sh_headers = get_random_headers()
+                    sh_html = page_html
+                    if not sh_html:
+                        try:
+                            req_sh = urllib.request.Request(link, headers=sh_headers)
+                            with urllib.request.urlopen(req_sh, timeout=20) as resp_sh:
+                                sh_html = resp_sh.read().decode('utf-8', errors='ignore')
+                                page_html = sh_html
+                        except Exception as ex_sh_fetch:
+                            error_logs.append(f"Samsung QuickShare fetch: {ex_sh_fetch}")
+
+                    if sh_html:
+                        match_sh = re.search(r"sharedatacontents\s*=\s*JSON\.parse\('(.*?)'\)", sh_html, re.S)
+                        sh_items = []
+                        if match_sh:
+                            raw_json = match_sh.group(1)
+                            try:
+                                raw_json = raw_json.encode().decode('unicode_escape')
+                            except Exception:
+                                pass
+                            try:
+                                sh_items = json.loads(raw_json)
+                            except Exception as ex_sh_parse:
+                                error_logs.append(f"Samsung QuickShare JSON parse: {ex_sh_parse}")
+
+                        # Fallback: grab the signed direct-content links straight from the HTML.
+                        if not sh_items:
+                            sh_items = [{'original': u} for u in re.findall(
+                                r'https://quickshare\.samsungcloud\.com/ls/public/v1/links/[^"\']+', sh_html)]
+
+                        print(f"DEBUG: Samsung QuickShare found {len(sh_items)} item(s).")
+                        for idx_sh, item_sh in enumerate(sh_items):
+                            direct_url = item_sh.get('original') or item_sh.get('url')
+                            if not direct_url or not str(direct_url).startswith('http'):
+                                continue
+                            name_sh = item_sh.get('name') or f"quickshare_{idx_sh + 1}"
+                            ext_sh = os.path.splitext(name_sh)[1].lower() or '.bin'
+                            out_path_sh = os.path.join(temp_dir, f"samsung_{idx_sh + 1}{ext_sh}")
+                            if download_url_robust(direct_url, out_path_sh, headers=sh_headers,
+                                                   referer=link, want='any', min_bytes=1):
+                                real_kind = sniff_media_kind(out_path_sh)
+                                print(f"DEBUG: Samsung QuickShare item {idx_sh + 1} downloaded ({real_kind}).")
+                                if not caption and item_sh.get('name'):
+                                    caption = item_sh.get('name')
+                            else:
+                                error_logs.append(f"Samsung QuickShare item {idx_sh + 1}: دانلود فایل مستقیم ناموفق بود.")
+                except Exception as ex_samsung:
+                    error_logs.append(f"Samsung QuickShare Extractor: {ex_samsung}")
+                    print(f"DEBUG: Samsung QuickShare extractor failed: {ex_samsung}")
+
             # Layer 3: Generic Webpage Video Extractor (luticlip.com, embedded video blogs, etc.)
             if not scan_files():
                 try:
@@ -1439,50 +1651,28 @@ async def process_social_media_download(link, owner_id, msg_obj=None, current_id
                         if full_u.startswith('http') and full_u not in clean_v_urls:
                             clean_v_urls.append(full_u)
 
-                    # Try downloading from extracted links (prefer highest quality / mp4)
+                    # Try downloading from extracted links. Two passes so a poster
+                    # image can never win over a real video on the same page.
                     downloaded_gen = False
                     out_path_gen = os.path.join(temp_dir, "webpage_video.mp4")
 
-                    for target_v_url in clean_v_urls:
-                        try:
-                            print(f"DEBUG: Trying 1DM+ style direct generic video download: {target_v_url}")
-                            # 1DM+ Header injection: Inject Referer of the source page
-                            v_headers = dict(gen_headers)
-                            v_headers['Referer'] = link
-
+                    for want_kind in ('video', 'any'):
+                        for target_v_url in clean_v_urls:
                             try:
-                                dl_req = urllib.request.Request(target_v_url, headers=v_headers)
-                                with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_path_gen, 'wb') as out_file:
-                                    chunk = dl_resp.read(1024 * 1024)
-                                    if chunk:
-                                        out_file.write(chunk)
-                                        while True:
-                                            c = dl_resp.read(1024 * 1024)
-                                            if not c:
-                                                break
-                                            out_file.write(c)
-                            except Exception as ex_urllib:
-                                print(f"DEBUG: Urllib 1DM+ download failed ({ex_urllib}). Trying curl 1DM+ engine fallback...")
-                                # Fallback: 1DM+ Curl engine with Referer, User-Agent, and Retries
-                                cmd_1dm = [
-                                    "curl", "-s", "-L",
-                                    "-e", link,
-                                    "-A", v_headers['User-Agent'],
-                                    "--retry", "5",
-                                    "--retry-connrefused",
-                                    "--retry-delay", "2",
-                                    "-o", out_path_gen,
-                                    target_v_url
-                                ]
-                                subprocess.run(cmd_1dm, timeout=60)
+                                print(f"DEBUG: Trying generic download (want={want_kind}): {target_v_url}")
+                                v_headers = dict(gen_headers)
+                                v_headers['Referer'] = link
 
-                            if os.path.exists(out_path_gen) and os.path.getsize(out_path_gen) > 50000:
-                                downloaded_gen = True
-                                print(f"DEBUG: Generic webpage video successfully downloaded with 1DM+ engine to {out_path_gen}")
-                                break
-                        except Exception as ex_dl_gen:
-                            error_logs.append(f"Generic Web Extractor URL ({target_v_url[:40]}...): {ex_dl_gen}")
-                            print(f"DEBUG: Failed downloading generic video link {target_v_url}: {ex_dl_gen}")
+                                if download_url_robust(target_v_url, out_path_gen, headers=v_headers,
+                                                       referer=link, want=want_kind):
+                                    downloaded_gen = True
+                                    print(f"DEBUG: Generic webpage media downloaded to {out_path_gen}")
+                                    break
+                            except Exception as ex_dl_gen:
+                                error_logs.append(f"Generic Web Extractor URL ({target_v_url[:40]}...): {ex_dl_gen}")
+                                print(f"DEBUG: Failed downloading generic video link {target_v_url}: {ex_dl_gen}")
+                        if downloaded_gen:
+                            break
 
                     # Fallback to Gemini AI Link Extractor if regex produced no working download
                     if not downloaded_gen and page_html:
@@ -1493,27 +1683,12 @@ async def process_social_media_download(link, owner_id, msg_obj=None, current_id
                             try:
                                 ai_headers = dict(gen_headers)
                                 ai_headers['Referer'] = link
-                                try:
-                                    dl_req = urllib.request.Request(ai_url, headers=ai_headers)
-                                    with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_path_gen, 'wb') as out_file:
-                                        out_file.write(dl_resp.read())
-                                except Exception as ex_ai_u:
-                                    print(f"DEBUG: Gemini AI urllib download failed ({ex_ai_u}). Trying curl 1DM+ engine...")
-                                    cmd_ai_curl = [
-                                        "curl", "-s", "-L",
-                                        "-e", link,
-                                        "-A", ai_headers['User-Agent'],
-                                        "--retry", "5",
-                                        "--retry-connrefused",
-                                        "--retry-delay", "2",
-                                        "-o", out_path_gen,
-                                        ai_url
-                                    ]
-                                    subprocess.run(cmd_ai_curl, timeout=60)
-
-                                if os.path.exists(out_path_gen) and os.path.getsize(out_path_gen) > 50000:
+                                if download_url_robust(ai_url, out_path_gen, headers=ai_headers,
+                                                       referer=link, want='any'):
                                     downloaded_gen = True
-                                    print(f"DEBUG: Gemini AI extracted video successfully downloaded to {out_path_gen}")
+                                    print(f"DEBUG: Gemini AI extracted media downloaded to {out_path_gen}")
+                                else:
+                                    error_logs.append(f"Generic Gemini AI Download: فایل از لینک {ai_url[:50]} قابل دریافت نبود.")
                             except Exception as ex_ai_dl:
                                 error_logs.append(f"Generic Gemini AI Download: {ex_ai_dl}")
                                 print(f"DEBUG: Gemini AI link download failed: {ex_ai_dl}")
@@ -1523,6 +1698,9 @@ async def process_social_media_download(link, owner_id, msg_obj=None, current_id
                 except Exception as ex_gen_layer:
                     error_logs.append(f"Generic Web Extractor Layer: {ex_gen_layer}")
                     print(f"DEBUG: Generic Webpage Video Extractor layer failed: {ex_gen_layer}")
+
+        # Layer 4: Samsung Quick Share handled above (Layer 2.9) so the poster
+        # image from the generic layer can never shadow the real file.
 
         # Retrieve caption / description
         if info:
@@ -1536,15 +1714,57 @@ async def process_social_media_download(link, owner_id, msg_obj=None, current_id
             if len(caption) > 1000:
                 caption = caption[:995] + "..."
 
-        # Scan for downloaded media files
+        # Scan for downloaded media files and verify each one is real media.
+        # This is the final guard against sending a poster image or an HTML page
+        # disguised as a video (which Telegram renders as a 0-second video).
+        _EXT_FOR_KIND = {'video': '.mp4', 'audio': '.mp3', 'image': '.jpg'}
+        _MEDIA_EXTS = ('.mp4', '.mkv', '.webm', '.mov', '.avi', '.jpg', '.jpeg',
+                       '.png', '.webp', '.gif', '.mp3', '.m4a', '.ogg')
+
+        def _is_ytdlp_sidecar(name):
+            low = name.lower()
+            return (low.endswith(('.part', '.ytdl', '.description', '.info'))
+                    or low.endswith('.info.json') or low.endswith('.temp'))
+
         downloaded_files = []
+        rejected_files = []
         for root, _, files in os.walk(temp_dir):
             for file in files:
-                if not file.endswith(('.description', '.json', '.part', '.ytdl', '.txt', '.info')):
-                    downloaded_files.append(os.path.join(root, file))
+                if _is_ytdlp_sidecar(file):
+                    continue
+                fpath = os.path.join(root, file)
+                kind = sniff_media_kind(fpath)
+                cur_ext = os.path.splitext(fpath)[1].lower()
+
+                if kind in ('html', 'empty'):
+                    rejected_files.append(f"{file} (نوع واقعی: {kind})")
+                    continue
+
+                # Decide the truthful extension for this file.
+                if kind in _EXT_FOR_KIND:
+                    wanted_ext = _EXT_FOR_KIND[kind]
+                elif cur_ext in _MEDIA_EXTS:
+                    # Unknown bytes claiming to be media -> send as a plain document.
+                    wanted_ext = '.bin'
+                else:
+                    wanted_ext = cur_ext
+
+                if cur_ext != wanted_ext:
+                    new_path = os.path.splitext(fpath)[0] + wanted_ext
+                    try:
+                        if os.path.exists(new_path):
+                            os.remove(new_path)
+                        os.rename(fpath, new_path)
+                        fpath = new_path
+                    except Exception as ex_ren:
+                        print(f"DEBUG: could not rename {fpath} -> {new_path}: {ex_ren}")
+                downloaded_files.append(fpath)
 
         # Sort files to maintain order
         downloaded_files.sort()
+
+        if rejected_files:
+            error_logs.append("فایل‌های نامعتبر (پوستر/HTML/خراب) رد شدند: " + ", ".join(rejected_files[:5]))
 
         if not downloaded_files:
             await send_detailed_error_notification("رئیس بزرگ، محتوای این لینک در حال حاضر اختصاصی، محدود یا غیرقابل استخراج شده است.")

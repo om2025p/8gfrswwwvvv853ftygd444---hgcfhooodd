@@ -3,8 +3,10 @@ import sys
 import os
 import asyncio
 import time
+import json
 import tempfile
 import shutil
+from datetime import datetime
 import yt_dlp
 from decouple import config
 
@@ -22,6 +24,160 @@ def get_gemini_api_key():
         return base64.b64decode(raw).decode('utf-8')
     except Exception:
         return ""
+
+# --- Media sanity helpers -------------------------------------------------
+# Some hosts (e.g. luticlip's takcdn) reset the connection unless the request
+# carries a Range header, and some pages only expose a poster image. These
+# helpers let every download layer verify the real file type instead of
+# trusting a URL's extension.
+
+_MEDIA_MAGIC = {
+    b'ftyp': 'video',            # mp4 / mov / m4v (ftyp box at offset 4)
+    b'\x1aE\xdf\xa3': 'video',   # Matroska / WebM
+    b'RIFF': 'video',            # AVI / WAV (checked further below)
+    b'OggS': 'audio',
+    b'ID3': 'audio',
+    b'fLaC': 'audio',
+    b'\xff\xd8\xff': 'image',    # JPEG
+    b'\x89PNG\r\n\x1a\n': 'image',
+    b'GIF87a': 'image',
+    b'GIF89a': 'image',
+    b'RIFF....WEBP': 'image',
+    b'PK\x03\x04': 'archive',
+}
+
+
+def sniff_media_kind(path):
+    """Detect the real media type of a file from its magic bytes.
+
+    Returns one of: video, audio, image, hls, html, archive, empty, other.
+    """
+    try:
+        with open(path, 'rb') as fh:
+            head = fh.read(8192)
+    except Exception:
+        return 'other'
+    if not head:
+        return 'empty'
+    if head.lstrip()[:1] == b'<' or head[:14].lower().lstrip().startswith(b'<!doctype html'):
+        return 'html'
+    if head.startswith(b'#EXTM3U'):
+        return 'hls'
+    if head[4:8] == b'ftyp':
+        return 'video'
+    for magic, kind in _MEDIA_MAGIC.items():
+        if head.startswith(magic):
+            if magic == b'RIFF' and head[8:12] == b'WEBP':
+                return 'image'
+            if magic == b'RIFF':
+                return 'video' if head[8:12] == b'AVI ' else 'audio'
+            return kind
+    return 'other'
+
+
+def is_usable_media(path, min_bytes=10000):
+    """A file is usable only if it is real media and not a truncated stub."""
+    try:
+        if not os.path.exists(path) or os.path.getsize(path) < min_bytes:
+            return False
+    except Exception:
+        return False
+    return sniff_media_kind(path) in ('video', 'audio', 'image')
+
+
+def download_url_robust(url, out_path, headers=None, referer=None,
+                        min_bytes=10000, timeout=60, want='any'):
+    """Download a direct URL, tolerating hosts that require a Range header.
+
+    Tries, in order: plain GET, GET with ``Range: bytes=0-``, then a curl
+    fallback that also sends the Range header. Returns True when a file of at
+    least ``min_bytes`` was written.
+    """
+    import urllib.request
+
+    base_headers = dict(headers or {})
+    base_headers.setdefault('Accept', '*/*')
+    if referer:
+        base_headers.setdefault('Referer', referer)
+
+    def _valid():
+        if not os.path.exists(out_path):
+            return False
+        if os.path.getsize(out_path) < min_bytes:
+            return False
+        kind = sniff_media_kind(out_path)
+        if want in ('video', 'audio', 'image'):
+            return kind == want
+        # want='any': accept any real file (documents, archives, text) and only
+        # reject an HTML error/login page or an empty body.
+        return kind not in ('html', 'empty')
+
+    # HLS playlists are not a real file; remux them with ffmpeg instead.
+    if '.m3u8' in url.lower():
+        if download_hls_with_ffmpeg(url, out_path, referer=referer, headers=base_headers):
+            return True
+
+    attempts = [dict(base_headers), {**base_headers, 'Range': 'bytes=0-'}]
+    for attempt_headers in attempts:
+        try:
+            req = urllib.request.Request(url, headers=attempt_headers)
+            with urllib.request.urlopen(req, timeout=timeout) as resp, open(out_path, 'wb') as fh:
+                while True:
+                    chunk = resp.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    fh.write(chunk)
+            if _valid():
+                return True
+            # A downloaded .m3u8 playlist (server ignored our intent) -> remux it.
+            if os.path.exists(out_path) and sniff_media_kind(out_path) == 'hls':
+                if download_hls_with_ffmpeg(url, out_path, referer=referer, headers=base_headers):
+                    return True
+        except Exception as exc:
+            print(f"DEBUG: urllib download attempt failed ({exc}); trying next strategy...")
+        try:
+            if os.path.exists(out_path):
+                os.remove(out_path)
+        except Exception:
+            pass
+
+    # curl fallback: some CDNs reject Python's TLS fingerprint but accept curl.
+    try:
+        import subprocess
+        cmd = [
+            "curl", "-s", "-L", "--max-time", str(timeout),
+            "-H", "Accept: */*",
+            "-H", "Range: bytes=0-",
+            "-A", base_headers.get('User-Agent', 'Mozilla/5.0'),
+        ]
+        if referer:
+            cmd.extend(["-e", referer])
+        cmd.extend(["-o", out_path, url])
+        subprocess.run(cmd, timeout=timeout + 15, check=False)
+        if _valid():
+            return True
+    except Exception as exc:
+        print(f"DEBUG: curl download attempt failed ({exc})")
+
+    return False
+
+
+def download_hls_with_ffmpeg(url, out_path, referer=None, headers=None, timeout=600):
+    """Fetch an HLS (.m3u8) stream by remuxing it to mp4 with ffmpeg."""
+    try:
+        import subprocess
+        cmd = ["ffmpeg", "-y", "-loglevel", "error"]
+        if referer:
+            cmd.extend(["-headers", f"Referer: {referer}\r\n"])
+        elif headers and headers.get('Referer'):
+            cmd.extend(["-headers", f"Referer: {headers['Referer']}\r\n"])
+        cmd.extend(["-i", url, "-c", "copy", "-bsf:a", "aac_adtstoasc", out_path])
+        subprocess.run(cmd, timeout=timeout, check=False)
+        return is_usable_media(out_path)
+    except Exception as exc:
+        print(f"DEBUG: ffmpeg HLS download failed ({exc})")
+        return False
+
 
 def send_channel_notice(text):
     token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
@@ -175,30 +331,37 @@ async def safe_edit_message(owner_id, msg_obj, text, disable_web_page_preview=Fa
 
 def get_notif_config():
     token = os.environ.get("NOTIF_BOT_TOKEN") or config("NOTIF_BOT_TOKEN", default=None)
-    chat_id = os.environ.get("NOTIF_CHAT_ID") or config("NOTIF_CHAT_ID", default="-1002617482597")
+    chat_id = os.environ.get("NOTIF_CHAT_ID") or os.environ.get("TARGET_CHANNEL") or config("NOTIF_CHAT_ID", default="-1003757877147")
     if not token or token == "None":
         token = config("BOT_TOKEN", default=None)
     if not chat_id or str(chat_id).strip() in ["", "None"]:
-        chat_id = "-1002617482597"
+        chat_id = "-1003757877147"
     try:
         chat_id = int(str(chat_id).strip())
     except (ValueError, TypeError):
-        chat_id = -1002617482597
+        chat_id = -1003757877147
     return token, chat_id
 
-async def send_media_to_destinations(filepath, caption, owner_id):
+async def send_media_to_destinations(filepath, caption, owner_id, custom_dest_id=None):
     from main import Bot, bot, userbot, BOT_TOKEN
     ext = os.path.splitext(filepath)[1].lower()
-    token, chat_id = get_notif_config()
+    token, default_chat_id = get_notif_config()
 
     try:
         owner_id = int(str(owner_id).strip())
     except Exception:
         pass
 
+    target_channel = custom_dest_id or os.environ.get("TARGET_CHANNEL") or default_chat_id
+    if target_channel:
+        try:
+            target_channel = int(str(target_channel).strip())
+        except Exception:
+            pass
+
     destinations = [owner_id]
-    if chat_id and chat_id not in destinations:
-        destinations.append(chat_id)
+    if target_channel and target_channel not in destinations:
+        destinations.append(target_channel)
 
     # Strictly enforce Telegram's 1024 media caption character limit (safe buffer at 980 chars)
     if caption and len(str(caption)) > 980:
@@ -360,15 +523,16 @@ async def call_gemini_ai_extract(html_snippet, page_url):
 
     def _do_extract():
         models = [
-            "gemini-1.5-flash",
             "gemini-2.0-flash",
-            "gemini-1.5-pro",
-            "gemini-flash-latest",
-            "gemini-pro"
+            "gemini-2.5-flash",
+            "gemini-3.5-flash",
+            "gemini-flash-latest"
         ]
         prompt = (
             f"You are an expert media link extractor. Analyze the webpage HTML snippet for URL '{page_url}'. "
-            "Find the direct downloadable video MP4 URL or high-res image JPG/PNG URL. "
+            "Find the DIRECT downloadable VIDEO file URL (mp4, webm, m3u8 stream, or the real file link). "
+            "Prefer a real video/stream URL. Only return an image URL if the page truly has no video at all. "
+            "Never return a poster/thumbnail/og:image when a video exists. "
             "Return ONLY the direct link URL starting with http, nothing else. No markdown, no quotes, no extra text. "
             "If no direct link is found, return empty text."
         )
@@ -411,10 +575,564 @@ async def call_gemini_ai_extract(html_snippet, page_url):
 
     return await asyncio.to_thread(_do_extract)
 
-async def process_social_media_download(link, owner_id, msg_obj=None):
+
+SENT_PHOTOS_DB_FILE = "restricted_sent_photos.json"
+GALLERY_STATS_FILE = "restricted_gallery_stats.json"
+
+def get_db_paths(filename):
+    # Strictly target paths within the Download Shield directory hierarchy
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return [
+        os.path.join(os.path.dirname(__file__), filename), # restricted/bot/
+        os.path.join(base_dir, filename),                  # restricted/
+        os.path.join(base_dir, "bot", filename)            # restricted/bot/
+    ]
+
+def load_sent_photos_db():
+    for p in get_db_paths(SENT_PHOTOS_DB_FILE):
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        print(f"DEBUG: Loaded {len(data)} sent photos from {p}")
+                        return set(data)
+            except Exception as e:
+                print(f"DEBUG: Failed loading sent photos from {p}: {e}")
+    return set()
+
+def save_sent_photos_db(sent_set):
+    data = sorted(list(sent_set)) # Save sorted list of URL strings
+    for p in get_db_paths(SENT_PHOTOS_DB_FILE):
+        try:
+            parent = os.path.dirname(p)
+            if parent and not os.path.exists(parent):
+                os.makedirs(parent, exist_ok=True)
+            with open(p, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"DEBUG: Failed saving sent photos to {p}: {e}")
+
+def update_gallery_stats(sent_count, total_extracted, duplicates_skipped, status_text="در حال پردازش"):
+    try:
+        stats = {
+            "total_sent": sent_count,
+            "total_extracted": total_extracted,
+            "duplicates_skipped": duplicates_skipped,
+            "status_text": status_text,
+            "last_updated": time.time(),
+            "last_updated_jalali": time.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        for p in get_db_paths(GALLERY_STATS_FILE):
+            try:
+                parent = os.path.dirname(p)
+                if parent and not os.path.exists(parent):
+                    os.makedirs(parent, exist_ok=True)
+                with open(p, "w", encoding="utf-8") as f:
+                    json.dump(stats, f, ensure_ascii=False, indent=2)
+            except Exception:
+                pass
+    except Exception as e:
+        print("DEBUG: Error saving gallery stats:", e)
+
+async def send_media_group_to_destinations(filepaths, caption, owner_id, custom_dest_id=None):
+    from main import Bot, bot, userbot, BOT_TOKEN
+    token, default_chat_id = get_notif_config()
+
+    try:
+        owner_id = int(str(owner_id).strip())
+    except Exception:
+        pass
+
+    destinations = []
+    target_channel = custom_dest_id or os.environ.get("TARGET_CHANNEL") or default_chat_id
+    if target_channel:
+        try:
+            target_channel = int(str(target_channel).strip())
+        except Exception:
+            pass
+        destinations.append(target_channel)
+
+    if owner_id and owner_id not in destinations:
+        destinations.append(owner_id)
+
+    if not destinations:
+        destinations = [owner_id]
+
+    print("DEBUG: send_media_group_to_destinations starting for", len(filepaths), "files to destinations=", destinations)
+    overall_success = False
+
+    for dest in destinations:
+        if not dest:
+            continue
+        dest_sent = False
+        print(f"DEBUG: Attempting send_media_group to dest={dest}...")
+
+        # Pre-resolve dest with userbot
+        if getattr(userbot, 'is_connected', False):
+            try:
+                if str(dest).startswith('-100'):
+                    try:
+                        await userbot.get_chat(dest)
+                    except Exception:
+                        try:
+                            await userbot.join_chat(dest)
+                        except Exception as e_jc:
+                            print(f"DEBUG: userbot join_chat({dest}) notice:", e_jc)
+                else:
+                    await userbot.get_users(dest)
+            except Exception as e_res:
+                print(f"DEBUG: userbot resolve ({dest}) notice:", e_res)
+
+        # 1. Try Direct Bot API HTTP curl first if BOT_TOKEN available
+        token_to_use = token or BOT_TOKEN
+        if token_to_use:
+            try:
+                import subprocess, json
+                cmd = ['curl', '-s', '-X', 'POST', "https://api.telegram.org/bot" + str(token_to_use) + "/sendMediaGroup"]
+                media_json_list = []
+                for idx, fp in enumerate(filepaths):
+                    attach_name = 'photo' + str(idx)
+                    cmd.extend(['-F', attach_name + '=@' + fp])
+                    item = {'type': 'photo', 'media': 'attach://' + attach_name}
+                    if idx == 0 and caption:
+                        item['caption'] = str(caption)[:980]
+                    media_json_list.append(item)
+
+                cmd.extend(['-F', 'chat_id=' + str(dest)])
+                cmd.extend(['-F', 'media=' + json.dumps(media_json_list)])
+
+                res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+                print(f"DEBUG: sendMediaGroup curl response for dest={dest}: {res.stdout[:200]}")
+                if '"ok":true' in res.stdout:
+                    dest_sent = True
+                    overall_success = True
+                    print(f"DEBUG: Direct Bot API sendMediaGroup HTTP curl succeeded for dest={dest}")
+            except Exception as e_http:
+                print(f"DEBUG: Direct Bot API sendMediaGroup HTTP curl failed for dest={dest}:", e_http)
+
+        # 2. Try Pyrogram Userbot
+        if not dest_sent and getattr(userbot, 'is_connected', False):
+            try:
+                from pyrogram.types import InputMediaPhoto
+                media_list = []
+                for idx, fp in enumerate(filepaths):
+                    cap = caption if idx == 0 else None
+                    media_list.append(InputMediaPhoto(media=fp, caption=cap))
+
+                await userbot.send_media_group(chat_id=dest, media=media_list)
+                dest_sent = True
+                overall_success = True
+                print(f"DEBUG: Pyrogram Userbot send_media_group succeeded for dest={dest}")
+            except Exception as e_ub:
+                print(f"DEBUG: Pyrogram Userbot send_media_group failed for dest={dest}:", e_ub)
+
+        # 3. Try Pyrogram Bot
+        if not dest_sent and getattr(Bot, 'is_connected', False):
+            try:
+                from pyrogram.types import InputMediaPhoto
+                media_list = []
+                for idx, fp in enumerate(filepaths):
+                    cap = caption if idx == 0 else None
+                    media_list.append(InputMediaPhoto(media=fp, caption=cap))
+
+                await Bot.send_media_group(chat_id=dest, media=media_list)
+                dest_sent = True
+                overall_success = True
+                print(f"DEBUG: Pyrogram Bot send_media_group succeeded for dest={dest}")
+            except Exception as e_pbot:
+                print(f"DEBUG: Pyrogram Bot send_media_group failed for dest={dest}:", e_pbot)
+
+        # 4. Fallback to single photo sends for this destination
+        if not dest_sent:
+            print(f"DEBUG: Media group dispatch failed for dest={dest}. Falling back to single sends...")
+            single_sent_count = 0
+            for idx, fp in enumerate(filepaths):
+                cap = caption if idx == 0 else None
+                await send_media_to_destinations(fp, cap, dest)
+                single_sent_count += 1
+                await asyncio.sleep(0.8)
+            if single_sent_count > 0:
+                overall_success = True
+
+    return overall_success
+
+async def probe_photo_url_async(url, headers):
+    def _do_probe():
+        import time, urllib.request, subprocess
+        ua = headers.get('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/125.0.0.0 Safari/537.36')
+        for attempt in range(2):
+            try:
+                req = urllib.request.Request(url, method='HEAD', headers=headers)
+                with urllib.request.urlopen(req, timeout=8) as res:
+                    if res.status == 200:
+                        return True
+            except Exception:
+                try:
+                    cmd = ['curl', '-s', '-I', '-L', '-A', ua, '--retry', '1', '--retry-delay', '1', url]
+                    res_curl = subprocess.run(cmd, capture_output=True, text=True, timeout=8)
+                    first_line = res_curl.stdout.split('\n')[0] if res_curl.stdout else ""
+                    if '200' in first_line or '206' in first_line:
+                        return True
+                except Exception:
+                    pass
+            time.sleep(0.5 + attempt * 0.5)
+        return False
+    return await asyncio.to_thread(_do_probe)
+
+async def fetch_page_html_async(url, headers):
+    def _do_fetch():
+        # Layer 1: urllib standard request
+        try:
+            import urllib.request
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=15) as res:
+                html = res.read().decode('utf-8', errors='ignore')
+                if html and len(html) > 500:
+                    print(f"DEBUG FETCH: urllib fetched HTML successfully ({len(html)} bytes)")
+                    return html
+        except Exception as e_u:
+            print(f"DEBUG FETCH: urllib fetch failed ({e_u}). Trying curl engine fallback...")
+
+        # Layer 2: curl engine with stealth headers and redirect follow
+        try:
+            import subprocess
+            cmd = [
+                'curl', '-s', '-L',
+                '-A', headers.get('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/125.0.0.0 Safari/537.36'),
+                '-e', url,
+                '--retry', '3',
+                '--retry-delay', '1',
+                url
+            ]
+            res_curl = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+            if res_curl.stdout and len(res_curl.stdout) > 500:
+                print(f"DEBUG FETCH: curl engine fetched HTML successfully ({len(res_curl.stdout)} bytes)")
+                return res_curl.stdout
+            else:
+                print(f"DEBUG FETCH: curl returned short response ({len(res_curl.stdout)} bytes). Stderr: {res_curl.stderr[:200]}")
+        except Exception as e_c:
+            print(f"DEBUG FETCH: curl engine fetch failed: {e_c}")
+
+        return ""
+    return await asyncio.to_thread(_do_fetch)
+
+async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_id=None):
+    import json, zipfile, requests, time, os, shutil, tempfile
+    from datetime import datetime
+    from pathlib import Path
+    from PIL import Image
+    from main import Bot, bot, userbot, BOT_TOKEN as MAIN_BOT_TOKEN
+
+    bot_token = os.environ.get("BOT_TOKEN") or MAIN_BOT_TOKEN
+    target_channel = custom_dest_id or os.environ.get("TARGET_CHANNEL") or os.environ.get("CHAT_ID") or "-1004389912148"
+
+    sort_mode = os.environ.get("SORT_MODE", "newest").strip()
+    start_page_env = os.environ.get("START_PAGE") or os.environ.get("START_PART")
+    start_page = int(start_page_env) if start_page_env and start_page_env.isdigit() else 1
+    max_page_env = os.environ.get("MAX_PAGE")
+    max_page = int(max_page_env) if max_page_env and max_page_env.isdigit() else None
+
+    API_BASE = "https://kir2kos.net/wp-json/k2k/v1/photos"
+    SITE_BASE = "https://kir2kos.net"
+    SLEEP_BETWEEN_PAGES = 30
+    DELAY_BETWEEN_ALBUMS = 3
+    ALBUM_SIZE = 10
+
+    status_text = (
+        "🖼️ *شروع استخراج خودکار تصاویر گالری (API-Driven):*\n"
+        f"`{SITE_BASE}`\n"
+        f"🎯 کانال مقصد: `{target_channel}`\n"
+        f"📄 شروع از صفحه: `{start_page}` | حالت: `{sort_mode}`\n\n"
+        "🕒 در حال دانلود، استخراج ابعاد، حجم، کیفیت، ZIP و ارسال آلبومی..."
+    )
+
+    if msg_obj:
+        msg_obj = await safe_edit_message(owner_id, msg_obj, status_text)
+    else:
+        msg_obj = await safe_send_message(owner_id, status_text)
+
+    temp_dir = tempfile.mkdtemp(prefix="emarat_gallery_")
+    download_dir = Path(temp_dir) / "downloads"
+    download_dir.mkdir(parents=True, exist_ok=True)
+
+    sent_photos_db = load_sent_photos_db()
+
+    def _tg_request(endpoint, payload=None, files=None, timeout=180):
+        if not bot_token:
+            return False
+        url = f"https://api.telegram.org/bot{bot_token}/{endpoint}"
+        try:
+            r = requests.post(url, data=payload, files=files, timeout=timeout)
+            if r.status_code == 200 and r.json().get("ok"):
+                return True
+            print(f"DEBUG TG API ({endpoint}): {r.status_code} - {r.text[:200]}")
+            return False
+        except Exception as err:
+            print(f"DEBUG TG API ERR ({endpoint}): {err}")
+            return False
+
+    async def send_tg_message(chat_id, text):
+        def _do():
+            return _tg_request("sendMessage", {"chat_id": chat_id, "text": text, "parse_mode": "HTML"})
+        ok = await asyncio.to_thread(_do)
+        if not ok and str(chat_id) != str(owner_id):
+            await safe_send_message(chat_id, text)
+        return ok
+
+    async def send_tg_document(chat_id, file_path, caption=""):
+        def _do():
+            with open(file_path, "rb") as f:
+                return _tg_request("sendDocument", {"chat_id": chat_id, "caption": caption, "parse_mode": "HTML"}, {"document": f}, timeout=600)
+        ok = await asyncio.to_thread(_do)
+        if not ok and str(chat_id) != str(owner_id):
+            await send_media_to_destinations(file_path, caption, owner_id)
+        return ok
+
+    async def send_tg_media_group(chat_id, media_paths, caption=""):
+        def _do():
+            files = {}
+            payload_media = []
+            for i, img_path in enumerate(media_paths):
+                key = f"photo{i}"
+                files[key] = open(img_path, "rb")
+                entry = {"type": "photo", "media": f"attach://{key}"}
+                if i == 0 and caption:
+                    entry["caption"] = caption
+                    entry["parse_mode"] = "HTML"
+                payload_media.append(entry)
+            data = {"chat_id": chat_id, "media": json.dumps(payload_media)}
+            try:
+                return _tg_request("sendMediaGroup", payload=data, files=files, timeout=300)
+            finally:
+                for f in files.values():
+                    try:
+                        f.close()
+                    except Exception:
+                        pass
+
+        ok = await asyncio.to_thread(_do)
+        if not ok and str(chat_id) != str(owner_id):
+            for p in media_paths:
+                await send_media_to_destinations(p, caption, owner_id)
+                await asyncio.sleep(1)
+        return ok
+
+    def download_single_image(img_url, save_path):
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+        }
+        for attempt in range(3):
+            try:
+                r = requests.get(img_url, timeout=30, headers=headers)
+                if r.status_code == 200 and len(r.content) > 1000:
+                    with open(save_path, "wb") as f:
+                        f.write(r.content)
+                    return True
+            except Exception as e:
+                time.sleep(2)
+        return False
+
+    def fetch_api_page(p_num):
+        url = f"{API_BASE}?page={p_num}&sort={sort_mode}"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        try:
+            r = requests.get(url, timeout=30, headers=headers)
+            if r.status_code != 200:
+                print(f"DEBUG GALLERY: API page {p_num} status {r.status_code}")
+                return None
+            data = r.json()
+            return data if isinstance(data, list) else None
+        except Exception as e:
+            print(f"DEBUG GALLERY: API page {p_num} exception: {e}")
+            return None
+
+    page = start_page
+    empty_pages = 0
+    total_photos_extracted = 0
+
+    try:
+        while True:
+            if max_page and page > max_page:
+                print(f"DEBUG GALLERY: Reached max_page {max_page}")
+                break
+
+            items = await asyncio.to_thread(fetch_api_page, page)
+
+            if items is None:
+                print(f"DEBUG GALLERY: Page {page} error, retrying in 10s...")
+                await asyncio.sleep(10)
+                continue
+
+            if len(items) == 0:
+                empty_pages += 1
+                print(f"DEBUG GALLERY: Page {page} is empty ({empty_pages} consecutive empty pages)")
+                if empty_pages >= 2:
+                    print("DEBUG GALLERY: Reached end of gallery")
+                    break
+                page += 1
+                continue
+
+            empty_pages = 0
+
+            folder = download_dir / f"page_{page:04d}"
+            folder.mkdir(parents=True, exist_ok=True)
+
+            print(f"DEBUG GALLERY: Processing page {page} ({len(items)} photos)...")
+            status_update = (
+                f"📄 *در حال پردازش صفحه {page} ({len(items)} تصویر):*\n"
+                f"🎯 کانال مقصد: `{target_channel}`\n"
+                "📥 دانلود تصاویر، محاسبه ابعاد، حجم و ساخت آرشیو..."
+            )
+            await safe_send_message(owner_id, status_update)
+
+            downloaded = []
+            metadata_lines = [
+                f"صفحه: {page}",
+                f"مرتب‌سازی: {sort_mode}",
+                f"تاریخ دریافت: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                f"تعداد عکس: {len(items)}",
+                "=" * 60,
+                ""
+            ]
+
+            for idx, item in enumerate(items, start=1):
+                raw_rel_url = item.get("url", "")
+                img_url = SITE_BASE + raw_rel_url if raw_rel_url.startswith("/") else raw_rel_url
+                filename = os.path.basename(raw_rel_url) or f"photo_{item.get('id', idx)}.jpg"
+                save_path = folder / filename
+
+                if save_path.exists() and save_path.stat().st_size > 1000:
+                    ok = True
+                else:
+                    ok = await asyncio.to_thread(download_single_image, img_url, save_path)
+
+                if ok:
+                    file_size_bytes = save_path.stat().st_size
+                    file_size_kb = file_size_bytes / 1024.0
+
+                    dims_str = "نامشخص"
+                    img_fmt = "JPEG"
+                    try:
+                        with Image.open(save_path) as img:
+                            w, h = img.size
+                            dims_str = f"{w}x{h} px"
+                            img_fmt = img.format or "JPEG"
+                    except Exception:
+                        pass
+
+                    downloaded.append((idx, save_path, item))
+                    total_photos_extracted += 1
+
+                    metadata_lines.append(
+                        f"[{idx}] {filename}\n"
+                        f"    شناسه ID: {item.get('id', 'N/A')}\n"
+                        f"    لایک: {item.get('likes', 0)} | بازدید: {item.get('views', 0)}\n"
+                        f"    ابعاد (سایز px): {dims_str}\n"
+                        f"    حجم فایل: {file_size_kb:.1f} KB ({file_size_bytes:,} بایت)\n"
+                        f"    فرمت / کیفیت: {img_fmt} (اصلی ✅)\n"
+                        f"    زمان انتشار: {item.get('time_ago', 'N/A')}\n"
+                        f"    آدرس مستقیم: {img_url}\n"
+                    )
+
+                await asyncio.sleep(0.1)
+
+            if not downloaded:
+                print(f"DEBUG GALLERY: No photos downloaded for page {page}")
+                page += 1
+                continue
+
+            # 1. Create TXT Info File
+            txt_path = folder / f"page_{page:04d}_info.txt"
+            with open(txt_path, "w", encoding="utf-8") as f:
+                f.write("\n".join(metadata_lines))
+
+            # 2. Create ZIP Archive File
+            zip_path = download_dir / f"page_{page:04d}_images.zip"
+            def _make_zip():
+                with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                    for _, path, _ in downloaded:
+                        zf.write(path, arcname=path.name)
+            await asyncio.to_thread(_make_zip)
+            zip_mb = zip_path.stat().st_size / (1024 * 1024)
+
+            # 3. Header Message
+            header_text = (
+                f"<b>📄 صفحه {page}</b>\n"
+                f"تعداد عکس: {len(downloaded)}\n"
+                f"حجم آرشیو: {zip_mb:.1f} MB\n"
+                "━━━━━━━━━━━━━━"
+            )
+            await send_tg_message(target_channel, header_text)
+
+            # 4. Send ZIP Document
+            zip_caption = (
+                f"<b>🗜️ آرشیو کامل صفحه {page}</b>\n"
+                f"تعداد: {len(downloaded)} عکس\n"
+                f"حجم: {zip_mb:.1f} MB\n"
+                "کیفیت اصلی ✅"
+            )
+            await send_tg_document(target_channel, zip_path, caption=zip_caption)
+            await asyncio.sleep(2)
+
+            # 5. Send TXT Info Document (with image size & quality details)
+            txt_caption = (
+                f"<b>📋 مشخصات، ابعاد (سایز) و کیفیت عکس‌های صفحه {page}</b>\n"
+                "شامل ID، ابعاد پیکسل، حجم فایل KB، فرمت، لایک، بازدید و لینک مستقیم"
+            )
+            await send_tg_document(target_channel, txt_path, caption=txt_caption)
+            await asyncio.sleep(2)
+
+            # 6. Send Albums (Media Groups of 10)
+            total_albums = (len(downloaded) + ALBUM_SIZE - 1) // ALBUM_SIZE
+            for album_idx in range(total_albums):
+                start = album_idx * ALBUM_SIZE
+                end = start + ALBUM_SIZE
+                chunk = downloaded[start:end]
+                paths = [p for _, p, _ in chunk]
+
+                album_caption = (
+                    f"📄 صفحه {page}\n"
+                    f"🖼 آلبوم {album_idx+1} از {total_albums}\n"
+                    f"عکس‌های {start+1} تا {start+len(chunk)}"
+                )
+
+                await send_tg_media_group(target_channel, paths, caption=album_caption)
+                await asyncio.sleep(DELAY_BETWEEN_ALBUMS)
+
+            # 7. Page Completion Notification
+            completion_text = (
+                f"<b>✅ پایان موفقیت‌آمیز صفحه {page}</b>\n"
+                f"{total_albums} آلبوم + فایل ZIP + فایل TXT مشخصات با ابعاد و کیفیت به کانال ارسال شد.\n"
+                "⏳ ۳۰ ثانیه صبر تا شروع صفحه بعدی..."
+            )
+            await send_tg_message(target_channel, completion_text)
+            await safe_send_message(owner_id, f"✅ *صفحه {page} با موفقیت کامل استخراج و به کانال `{target_channel}` ارسال شد!*")
+
+            update_gallery_stats(total_photos_extracted, total_photos_extracted, 0, f"صفحه {page}")
+
+            page += 1
+            await asyncio.sleep(SLEEP_BETWEEN_PAGES)
+
+        final_summary = (
+            "🎉 *پایان استخراج و ارسال کامل گالری تصویری!*\n"
+            f"📊 تعداد کل صفحات پردازش‌شده: `{page - start_page}`\n"
+            f"🖼️ تعداد کل تصاویر استخراج‌شده: `{total_photos_extracted}`\n"
+            f"🎯 کانال مقصد: `{target_channel}`"
+        )
+        await safe_send_message(owner_id, final_summary)
+
+    except Exception as e:
+        print("DEBUG: Error in process_gallery_extraction:", e)
+        await safe_send_message(owner_id, "❌ *خطا در فرآیند استخراج گالری:*\n`" + str(e) + "`")
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+async def process_social_media_download(link, owner_id, msg_obj=None, current_idx=1, total_count=1):
     from main import Bot, bot, userbot
 
-    status_text = f"📥 *در حال دریافت و تحلیل محتوای شبکه اجتماعی:*\n`{link}`\n\n🕒 لطفاً کمی صبور باشید..."
+    queue_info = f"\n📊 *وضعیت صف:* ویدیو *{current_idx}* از *{total_count}* (⏳ *{total_count - current_idx}* باقی‌مانده)" if total_count > 1 else ""
+    status_text = f"📥 *در حال دریافت و تحلیل محتوای شبکه اجتماعی:*\n`{link}`{queue_info}\n\n🕒 لطفاً کمی صبور باشید..."
     if msg_obj:
         msg_obj = await safe_edit_message(owner_id, msg_obj, status_text)
     else:
@@ -633,7 +1351,7 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
             # Layer 2.5: Try xHamster dedicated metadata parser (shorts & full videos) with anti-429 retry loops
             if 'xhamster.com' in link and not scan_files():
                 try:
-                    import urllib.request, re, json, time, subprocess
+                    import urllib.request, re, json, subprocess
                     html_xh = ""
                     xh_headers = get_random_headers()
 
@@ -826,6 +1544,62 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                     error_logs.append(f"YouTube Fallback Layer: {ex_yt_fallback}")
                     print(f"DEBUG: YouTube fallback layer failed: {ex_yt_fallback}")
 
+            # Layer 2.9: Samsung Quick Share (quickshare.samsungcloud.com) dedicated extractor.
+            # The real file link lives inside a `sharedatacontents` JSON blob in the page,
+            # so this must run BEFORE the generic layer (which would otherwise grab the poster).
+            if 'quickshare.samsungcloud.com' in link and not scan_files():
+                try:
+                    import urllib.request, re, json
+                    sh_headers = get_random_headers()
+                    sh_html = page_html
+                    if not sh_html:
+                        try:
+                            req_sh = urllib.request.Request(link, headers=sh_headers)
+                            with urllib.request.urlopen(req_sh, timeout=20) as resp_sh:
+                                sh_html = resp_sh.read().decode('utf-8', errors='ignore')
+                                page_html = sh_html
+                        except Exception as ex_sh_fetch:
+                            error_logs.append(f"Samsung QuickShare fetch: {ex_sh_fetch}")
+
+                    if sh_html:
+                        match_sh = re.search(r"sharedatacontents\s*=\s*JSON\.parse\('(.*?)'\)", sh_html, re.S)
+                        sh_items = []
+                        if match_sh:
+                            raw_json = match_sh.group(1)
+                            try:
+                                raw_json = raw_json.encode().decode('unicode_escape')
+                            except Exception:
+                                pass
+                            try:
+                                sh_items = json.loads(raw_json)
+                            except Exception as ex_sh_parse:
+                                error_logs.append(f"Samsung QuickShare JSON parse: {ex_sh_parse}")
+
+                        # Fallback: grab the signed direct-content links straight from the HTML.
+                        if not sh_items:
+                            sh_items = [{'original': u} for u in re.findall(
+                                r'https://quickshare\.samsungcloud\.com/ls/public/v1/links/[^"\']+', sh_html)]
+
+                        print(f"DEBUG: Samsung QuickShare found {len(sh_items)} item(s).")
+                        for idx_sh, item_sh in enumerate(sh_items):
+                            direct_url = item_sh.get('original') or item_sh.get('url')
+                            if not direct_url or not str(direct_url).startswith('http'):
+                                continue
+                            name_sh = item_sh.get('name') or f"quickshare_{idx_sh + 1}"
+                            ext_sh = os.path.splitext(name_sh)[1].lower() or '.bin'
+                            out_path_sh = os.path.join(temp_dir, f"samsung_{idx_sh + 1}{ext_sh}")
+                            if download_url_robust(direct_url, out_path_sh, headers=sh_headers,
+                                                   referer=link, want='any', min_bytes=1):
+                                real_kind = sniff_media_kind(out_path_sh)
+                                print(f"DEBUG: Samsung QuickShare item {idx_sh + 1} downloaded ({real_kind}).")
+                                if not caption and item_sh.get('name'):
+                                    caption = item_sh.get('name')
+                            else:
+                                error_logs.append(f"Samsung QuickShare item {idx_sh + 1}: دانلود فایل مستقیم ناموفق بود.")
+                except Exception as ex_samsung:
+                    error_logs.append(f"Samsung QuickShare Extractor: {ex_samsung}")
+                    print(f"DEBUG: Samsung QuickShare extractor failed: {ex_samsung}")
+
             # Layer 3: Generic Webpage Video Extractor (luticlip.com, embedded video blogs, etc.)
             if not scan_files():
                 try:
@@ -877,50 +1651,28 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                         if full_u.startswith('http') and full_u not in clean_v_urls:
                             clean_v_urls.append(full_u)
 
-                    # Try downloading from extracted links (prefer highest quality / mp4)
+                    # Try downloading from extracted links. Two passes so a poster
+                    # image can never win over a real video on the same page.
                     downloaded_gen = False
                     out_path_gen = os.path.join(temp_dir, "webpage_video.mp4")
 
-                    for target_v_url in clean_v_urls:
-                        try:
-                            print(f"DEBUG: Trying 1DM+ style direct generic video download: {target_v_url}")
-                            # 1DM+ Header injection: Inject Referer of the source page
-                            v_headers = dict(gen_headers)
-                            v_headers['Referer'] = link
-
+                    for want_kind in ('video', 'any'):
+                        for target_v_url in clean_v_urls:
                             try:
-                                dl_req = urllib.request.Request(target_v_url, headers=v_headers)
-                                with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_path_gen, 'wb') as out_file:
-                                    chunk = dl_resp.read(1024 * 1024)
-                                    if chunk:
-                                        out_file.write(chunk)
-                                        while True:
-                                            c = dl_resp.read(1024 * 1024)
-                                            if not c:
-                                                break
-                                            out_file.write(c)
-                            except Exception as ex_urllib:
-                                print(f"DEBUG: Urllib 1DM+ download failed ({ex_urllib}). Trying curl 1DM+ engine fallback...")
-                                # Fallback: 1DM+ Curl engine with Referer, User-Agent, and Retries
-                                cmd_1dm = [
-                                    "curl", "-s", "-L",
-                                    "-e", link,
-                                    "-A", v_headers['User-Agent'],
-                                    "--retry", "5",
-                                    "--retry-connrefused",
-                                    "--retry-delay", "2",
-                                    "-o", out_path_gen,
-                                    target_v_url
-                                ]
-                                subprocess.run(cmd_1dm, timeout=60)
+                                print(f"DEBUG: Trying generic download (want={want_kind}): {target_v_url}")
+                                v_headers = dict(gen_headers)
+                                v_headers['Referer'] = link
 
-                            if os.path.exists(out_path_gen) and os.path.getsize(out_path_gen) > 50000:
-                                downloaded_gen = True
-                                print(f"DEBUG: Generic webpage video successfully downloaded with 1DM+ engine to {out_path_gen}")
-                                break
-                        except Exception as ex_dl_gen:
-                            error_logs.append(f"Generic Web Extractor URL ({target_v_url[:40]}...): {ex_dl_gen}")
-                            print(f"DEBUG: Failed downloading generic video link {target_v_url}: {ex_dl_gen}")
+                                if download_url_robust(target_v_url, out_path_gen, headers=v_headers,
+                                                       referer=link, want=want_kind):
+                                    downloaded_gen = True
+                                    print(f"DEBUG: Generic webpage media downloaded to {out_path_gen}")
+                                    break
+                            except Exception as ex_dl_gen:
+                                error_logs.append(f"Generic Web Extractor URL ({target_v_url[:40]}...): {ex_dl_gen}")
+                                print(f"DEBUG: Failed downloading generic video link {target_v_url}: {ex_dl_gen}")
+                        if downloaded_gen:
+                            break
 
                     # Fallback to Gemini AI Link Extractor if regex produced no working download
                     if not downloaded_gen and page_html:
@@ -931,27 +1683,12 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                             try:
                                 ai_headers = dict(gen_headers)
                                 ai_headers['Referer'] = link
-                                try:
-                                    dl_req = urllib.request.Request(ai_url, headers=ai_headers)
-                                    with urllib.request.urlopen(dl_req, timeout=30) as dl_resp, open(out_path_gen, 'wb') as out_file:
-                                        out_file.write(dl_resp.read())
-                                except Exception as ex_ai_u:
-                                    print(f"DEBUG: Gemini AI urllib download failed ({ex_ai_u}). Trying curl 1DM+ engine...")
-                                    cmd_ai_curl = [
-                                        "curl", "-s", "-L",
-                                        "-e", link,
-                                        "-A", ai_headers['User-Agent'],
-                                        "--retry", "5",
-                                        "--retry-connrefused",
-                                        "--retry-delay", "2",
-                                        "-o", out_path_gen,
-                                        ai_url
-                                    ]
-                                    subprocess.run(cmd_ai_curl, timeout=60)
-
-                                if os.path.exists(out_path_gen) and os.path.getsize(out_path_gen) > 50000:
+                                if download_url_robust(ai_url, out_path_gen, headers=ai_headers,
+                                                       referer=link, want='any'):
                                     downloaded_gen = True
-                                    print(f"DEBUG: Gemini AI extracted video successfully downloaded to {out_path_gen}")
+                                    print(f"DEBUG: Gemini AI extracted media downloaded to {out_path_gen}")
+                                else:
+                                    error_logs.append(f"Generic Gemini AI Download: فایل از لینک {ai_url[:50]} قابل دریافت نبود.")
                             except Exception as ex_ai_dl:
                                 error_logs.append(f"Generic Gemini AI Download: {ex_ai_dl}")
                                 print(f"DEBUG: Gemini AI link download failed: {ex_ai_dl}")
@@ -961,6 +1698,9 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
                 except Exception as ex_gen_layer:
                     error_logs.append(f"Generic Web Extractor Layer: {ex_gen_layer}")
                     print(f"DEBUG: Generic Webpage Video Extractor layer failed: {ex_gen_layer}")
+
+        # Layer 4: Samsung Quick Share handled above (Layer 2.9) so the poster
+        # image from the generic layer can never shadow the real file.
 
         # Retrieve caption / description
         if info:
@@ -974,15 +1714,57 @@ async def process_social_media_download(link, owner_id, msg_obj=None):
             if len(caption) > 1000:
                 caption = caption[:995] + "..."
 
-        # Scan for downloaded media files
+        # Scan for downloaded media files and verify each one is real media.
+        # This is the final guard against sending a poster image or an HTML page
+        # disguised as a video (which Telegram renders as a 0-second video).
+        _EXT_FOR_KIND = {'video': '.mp4', 'audio': '.mp3', 'image': '.jpg'}
+        _MEDIA_EXTS = ('.mp4', '.mkv', '.webm', '.mov', '.avi', '.jpg', '.jpeg',
+                       '.png', '.webp', '.gif', '.mp3', '.m4a', '.ogg')
+
+        def _is_ytdlp_sidecar(name):
+            low = name.lower()
+            return (low.endswith(('.part', '.ytdl', '.description', '.info'))
+                    or low.endswith('.info.json') or low.endswith('.temp'))
+
         downloaded_files = []
+        rejected_files = []
         for root, _, files in os.walk(temp_dir):
             for file in files:
-                if not file.endswith(('.description', '.json', '.part', '.ytdl', '.txt', '.info')):
-                    downloaded_files.append(os.path.join(root, file))
+                if _is_ytdlp_sidecar(file):
+                    continue
+                fpath = os.path.join(root, file)
+                kind = sniff_media_kind(fpath)
+                cur_ext = os.path.splitext(fpath)[1].lower()
+
+                if kind in ('html', 'empty'):
+                    rejected_files.append(f"{file} (نوع واقعی: {kind})")
+                    continue
+
+                # Decide the truthful extension for this file.
+                if kind in _EXT_FOR_KIND:
+                    wanted_ext = _EXT_FOR_KIND[kind]
+                elif cur_ext in _MEDIA_EXTS:
+                    # Unknown bytes claiming to be media -> send as a plain document.
+                    wanted_ext = '.bin'
+                else:
+                    wanted_ext = cur_ext
+
+                if cur_ext != wanted_ext:
+                    new_path = os.path.splitext(fpath)[0] + wanted_ext
+                    try:
+                        if os.path.exists(new_path):
+                            os.remove(new_path)
+                        os.rename(fpath, new_path)
+                        fpath = new_path
+                    except Exception as ex_ren:
+                        print(f"DEBUG: could not rename {fpath} -> {new_path}: {ex_ren}")
+                downloaded_files.append(fpath)
 
         # Sort files to maintain order
         downloaded_files.sort()
+
+        if rejected_files:
+            error_logs.append("فایل‌های نامعتبر (پوستر/HTML/خراب) رد شدند: " + ", ".join(rejected_files[:5]))
 
         if not downloaded_files:
             await send_detailed_error_notification("رئیس بزرگ، محتوای این لینک در حال حاضر اختصاصی، محدود یا غیرقابل استخراج شده است.")
@@ -1158,7 +1940,7 @@ async def main_download():
         print("Error: No valid URLs extracted from input.")
         return
 
-    print(f"DEBUG: Extracted {len(extracted_links)} link(s) for processing: {extracted_links}")
+    print(f"DEBUG: Extracted {len(extracted_links)} link(s) for sequential processing: {extracted_links}")
 
     print("Connecting to Telegram clients...")
     # On import, main/__init__.py creates client instances without auto-starting if in async context
@@ -1166,40 +1948,40 @@ async def main_download():
 
     import inspect
 
-    # Start Userbot (the actual user session) - critical blocking start
+    # Start Userbot (the actual user session) - soft non-blocking start fallback
+    userbot_started = False
     try:
         print("Starting Userbot (SESSION_STRING) dynamically...")
         res = userbot.start()
         if inspect.iscoroutine(res):
             await res
         print("Userbot started successfully.")
+        userbot_started = True
     except Exception as e:
         err_msg = str(e)
-        print(f"Fatal error starting Userbot: {err_msg}")
+        print(f"Warning/Notice starting Userbot: {err_msg}")
         if "AUTH_KEY_DUPLICATED" in err_msg:
             friendly_err = (
-                f"\n❌ خطای امنیتی تلگرام [406 AUTH_KEY_DUPLICATED]:\n"
-                f"رئیس بزرگ، سشن تلگرام شما (SESSION_STRING) همزمان در جای دیگری فعال است یا باطل شده است!\n"
-                f"لطفاً ربات‌ها یا اسکریپت‌های دیگر خود را خاموش کنید و یا با استفاده از @TgDevToolBot یک سشن جدید بسازید و جایگزین کنید.\n"
+                f"\n⚠️ توجه تلگرام [406 AUTH_KEY_DUPLICATED]:\n"
+                f"رئیس بزرگ، سشن اکانت شخصی (SESSION_STRING) همزمان در جای دیگری فعال است یا باطل شده است.\n"
+                f"ربات به صورت خودکار روی حالت پشتیبان سوئیچ کرد تا دانلود لینک‌های عمومی و شبکه‌های اجتماعی متوقف نشود! 💎\n"
             )
             print(friendly_err)
-            sys.exit(1)
+            send_channel_notice("⚠️ سشن اکانت شخصی با خطای AUTH_KEY_DUPLICATED مواجه شد. سوئیچ هوشمند روی ربات پشتیبان جهت ادامه دانلود انجام گرفت. 💎")
         elif "FLOOD_WAIT" in err_msg or "FLOOD_WAIT_" in err_msg:
             friendly_err = (
-                f"\n❌ خطای محدودیت تلگرام [420 FLOOD_WAIT]:\n"
-                f"تلگرام اکانت کاربری شما را به دلیل درخواست‌های مکرر به طور موقت محدود کرده است.\n"
-                f"لطفاً چند دقیقه صبر کنید و سپس دوباره تلاش نمایید.\n"
+                f"\n⚠️ محدودیت موقت تلگرام [420 FLOOD_WAIT]:\n"
+                f"اکانت کاربری به دلیل درخواست‌های مکرر موقتاً محدود است. ادامه دانلودها با ربات پشتیبان انجام می‌شود.\n"
             )
             print(friendly_err)
-            sys.exit(1)
+            send_channel_notice("⚠️ اکانت شخصی در حالت FLOOD_WAIT است. ادامه دانلودها با ربات پشتیبان انجام می‌گیرد.")
         else:
             friendly_err = (
-                f"\n❌ خطا در راه‌اندازی اکانت کاربری (Userbot):\n"
+                f"\n⚠️ هشدار راه‌اندازی اکانت کاربری (Userbot):\n"
                 f"متن خطا: {err_msg}\n"
-                f"لطفاً مطمئن شوید SESSION_STRING معتبر است.\n"
+                f"ادامه دانلودها با استفاده از ربات پشتیبان انجام می‌پذیرد.\n"
             )
             print(friendly_err)
-            sys.exit(1)
 
     # Start Pyrogram Bot - Soft, non-blocking fallback start (won't crash on FLOOD_WAIT or Auth errors)
     try:
@@ -1485,18 +2267,29 @@ async def main_download():
             parsed_domain = urlparse(target_link_lower).netloc
             is_telegram_link = 't.me' in parsed_domain or 'telegram.me' in parsed_domain
 
-            is_social = any(domain in target_link_lower for domain in [
+            is_gallery_mode_env = os.environ.get("IS_GALLERY_MODE", "false").lower() == "true" or bool(os.environ.get("CUSTOM_DB_BASE")) or os.environ.get("IS_DISCOVERY_MODE", "false").lower() == "true"
+            is_gallery_link = is_gallery_mode_env and any(kw in target_link_lower for kw in ['kir2kos', 'gallery', 'iranian-sexy-images-gallery', 'organized_gallery', 'images-gallery', 'album', '/gallery/'])
+
+            is_social = (any(domain in target_link_lower for domain in [
                 'instagram.com', 'instagr.am', 'tiktok.com', 'vt.tiktok.com', 'vm.tiktok.com',
                 'whatsapp.com', 'chat.whatsapp.com', 'wa.me', 'youtube.com', 'youtu.be', 'twitter.com', 'x.com',
                 'xhamster.com', 'xvideos.com', 'pornhub.com'
-            ]) or (target_link_lower.startswith(('http://', 'https://')) and not is_telegram_link)
+            ]) or (target_link_lower.startswith(('http://', 'https://')) and not is_telegram_link)) and not is_gallery_link
 
+            print(f"DEBUG ROUTING: link={target_link_str}, is_gallery={is_gallery_link}, is_social={is_social}, is_tg={is_telegram_link}")
             print(f"Starting single download [{link_idx}/{len(extracted_links)}] for link: {target_link_str} to owner: {owner_id}")
 
             try:
-                if is_social and not target_link_lower.startswith("search:"):
-                    msg = await safe_send_message(owner_id, f"🎬 *تشخیص لینک شبکه اجتماعی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
-                    await process_social_media_download(target_link_str, owner_id, msg)
+                queue_status_text = f"\n📊 *وضعیت صف سفارش:* ویدیو *{link_idx}* از *{len(extracted_links)}* (⏳ *{len(extracted_links) - link_idx}* ویدیو باقی‌مانده)" if len(extracted_links) > 1 else ""
+
+                if is_gallery_link:
+                    print("DEBUG ROUTING: Routing to process_gallery_extraction...")
+                    msg = await safe_send_message(owner_id, f"🖼️ *تشخیص لینک گالری تصویری ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`{queue_status_text}\n\n🕒 لطفا صبور باشید...")
+                    await process_gallery_extraction(target_link_str, owner_id, msg)
+                elif is_social and not target_link_lower.startswith("search:"):
+                    print("DEBUG ROUTING: Routing to process_social_media_download...")
+                    msg = await safe_send_message(owner_id, f"🎬 *تشخیص لینک شبکه اجتماعی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`{queue_status_text}\n\n🕒 لطفا صبور باشید...")
+                    await process_social_media_download(target_link_str, owner_id, msg, current_idx=link_idx, total_count=len(extracted_links))
                 elif 't.me/+' in target_link_str or 't.me/joinchat/' in target_link_str:
                     msg = await safe_send_message(owner_id, f"📥 *شروع ورود به کانال خصوصی ({link_idx} از {len(extracted_links)}):*\n`{target_link_str}`\n\n🕒 لطفا صبور باشید...")
                     res = await join(userbot, target_link_str)
