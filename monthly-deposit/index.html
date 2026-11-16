@@ -34,11 +34,11 @@
       --text-strong: #0b1f33;
       --text-head: #1e3a5f;
       --text-body: #0f3a5e;
-      --text-muted: #5a7d9e;
+      --text-muted: #4a6b8a;
       --accent: #2563eb;
       --accent-soft: #eef2ff;
       --accent-soft-border: #c7d2fe;
-      --accent-blue: #3b82f6;
+      --accent-blue: #2563eb;
       --link-blue: #93c5fd;
       --circle-text: #2a4b6e;
       --done-bg: #dcfce7;
@@ -61,6 +61,7 @@
       --btn-active: #d3e0ef;
       --overlay: rgba(15, 23, 42, 0.4);
       --popup-bg: rgba(255, 255, 255, 0.97);
+      --btn-solid-bg: #2563eb;
     }
 
     /* تم تاریک ملایم    /* تم تاریک ملایم — نه سیاه مطلق، نه سفید خیره‌کننده */
@@ -110,6 +111,7 @@
       --btn-active: #374151;
       --overlay: rgba(0, 0, 0, 0.6);
       --popup-bg: rgba(30, 41, 59, 0.98);
+      --btn-solid-bg: #1d4ed8;
     }
 
     body {
@@ -148,7 +150,7 @@
       transition: opacity 0.2s;
       white-space: nowrap;
       backdrop-filter: blur(4px);
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--popup-bg);
     }
     .date-popup.show { opacity: 1; }
 
@@ -158,14 +160,13 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: var(--card-bg);
       color: var(--text-head);
       font-size: 14px;
       font-weight: 500;
       padding: 16px 20px;
       border-radius: 28px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-      border: 1px solid var(--border-2);
+      border: 2px solid var(--accent-soft-border);
       z-index: 10000;
       opacity: 0;
       visibility: hidden;
@@ -174,7 +175,7 @@
       max-width: 320px;
       width: 85%;
       backdrop-filter: blur(8px);
-      background: rgba(255,255,255,0.98);
+      background: var(--popup-bg);
       text-align: center;
     }
     .history-popup.show {
@@ -191,13 +192,18 @@
     .history-popup li {
       font-size: 13px;
       padding: 8px 12px;
-      border-bottom: 1px solid var(--soft-bg);
+      border-bottom: 1px solid var(--border-2);
+      color: var(--text-body);
       font-family: monospace;
       direction: ltr;
       text-align: center;
     }
+    .history-popup li:last-child {
+      border-bottom: none;
+    }
     .close-history {
       background: var(--soft-bg-2);
+      color: var(--text-head);
       border: none;
       padding: 8px 20px;
       border-radius: 40px;
@@ -546,8 +552,8 @@
     .settings-save-btn {
       width: 100%;
       padding: 10px;
-      background: var(--accent);
-      color: white;
+      background: var(--btn-solid-bg);
+      color: #ffffff;
       border: none;
       border-radius: 12px;
       font-weight: bold;
