@@ -268,28 +268,43 @@
       color: #475569;
       border: 0.5px solid #cbd5e1;
     }
-    .tap-badge {
-      width: 44px;
-      height: 44px;
-      border-radius: 44px;
+
+    /* ستون دایره‌های واریز (بزرگ بالا + کوچک زیر، متصل) */
+    .deposit-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 52px;
+      gap: 2px;
+    }
+    .deposit-circle {
       display: flex;
       align-items: center;
       justify-content: center;
+      border-radius: 50%;
       background: #eef3f9;
       border: 1.8px solid #b8cee4;
       color: #2a4b6e;
-      font-size: 22px;
       cursor: pointer;
       transition: 0.15s;
       user-select: none;
+      font-weight: 800;
     }
-    .tap-badge.checked {
-      background: #1b8c5e;
-      border-color: #1b8c5e;
-      color: white;
+    .deposit-circle:active { transform: scale(0.93); }
+    .deposit-circle.big { width: 44px; height: 44px; font-size: 15px; }
+    .deposit-circle.small { width: 28px; height: 28px; font-size: 12px; }
+    .deposit-circle.done {
+      background: #dcfce7;
+      border-color: #22c55e;
+      color: #15803d;
     }
-    .tap-badge.checked::before { content: "✔"; font-weight: bold; }
-    .tap-badge:not(.checked)::before { content: "○"; font-size: 25px; opacity: 0.7; }
+    .deposit-link {
+      width: 3px;
+      height: 7px;
+      background: #93c5fd;
+      border-radius: 2px;
+      margin: -1px 0;
+    }
     .history-icon {
       width: 28px;
       height: 28px;
@@ -454,7 +469,7 @@
 
     <hr style="margin: 16px 0; border: none; border-top: 1px dashed #cbd5e1;">
     <div style="font-size:0.85rem; font-weight:700; color:#1e3a5f; margin-bottom:6px;">🛠️ مدیریت صندوق‌ها (ویرایش و حذف با ۲ تأیید):</div>
-    <div id="settingsFundManageRows" style="display:flex; flex-direction:column; gap:8px; max-height: 200px; overflow-y: auto; padding-left:2px;"></div>
+    <div id="settingsFundManageRows" style="display:flex; flex-direction:column; gap:8px; max-height: 260px; overflow-y: auto; padding-left:2px;"></div>
   </div>
 
   <div class="balance-box">
@@ -633,7 +648,8 @@
 
     // ======================== داده‌های اصلی ========================
     let monthlyAmounts = [];     // [month][fund]
-    let paymentState = [];       // [fund][month] boolean
+    let paymentState = [];       // [fund][month] تعداد واریز (0..N)
+    let depositCounts = [];      // [fund] تعداد واریز در ماه (پیش‌فرض ۱)
     let historyData = [];        // [month][fund] array of timestamps
     let fundNames = [];
 
@@ -652,7 +668,8 @@
           const oldPayments = data.payments;
           const oldFundCount = oldPayments.length;
           fundNames = DEFAULT_FUND_NAMES.slice(0, oldFundCount);
-          paymentState = oldPayments.map(row => row.map(v=> v===1));
+          paymentState = normalizePayments(oldPayments);
+          depositCounts = normalizeDepositCounts([], fundNames.length);
           historyData = [];
           for(let mi=0; mi<12; mi++){
             historyData[mi] = [];
@@ -676,7 +693,8 @@
         historyData[mi] = [];
         for(let fi=0; fi<fundNames.length; fi++) historyData[mi][fi] = [];
       }
-      paymentState = fundNames.map(() => new Array(12).fill(false));
+      paymentState = fundNames.map(() => new Array(12).fill(0));
+      depositCounts = normalizeDepositCounts([], fundNames.length);
     }
 
 
@@ -703,6 +721,24 @@
       8: 'صندوق فارما کیان'
     };
 
+    function normalizePayments(payments){
+      return (payments||[]).map(row => (row||[]).map(v => { const n = Number(v); return (isFinite(n) && n>0) ? Math.floor(n) : 0; }));
+    }
+    function normalizeDepositCounts(arr, n){
+      const out = [];
+      for(let fi=0; fi<n; fi++){
+        let c = (arr && arr[fi]!==undefined) ? Number(arr[fi]) : 1;
+        if(!isFinite(c) || c < 1) c = 1;
+        if(c > 6) c = 6;
+        out.push(Math.floor(c));
+      }
+      return out;
+    }
+    function getFundDepositCount(fi){
+      const c = depositCounts[fi];
+      return (isFinite(c) && c >= 1) ? Math.floor(c) : 1;
+    }
+
     function getFundMapping() {
       try {
         const saved = localStorage.getItem('monthly_deposit_fund_mapping');
@@ -727,13 +763,14 @@
             let latestPayment = null;
             // بررسی دقیق تمامی ۱۲ ماه از آخر به اول برای یافتن آخرین واریز
             for (let mi = 11; mi >= 0; mi--) {
-              if (paymentState[fi] && paymentState[fi][mi]) {
-                const amt = (monthlyAmounts[mi] && monthlyAmounts[mi][fi] !== undefined) ? monthlyAmounts[mi][fi] : 0;
+              const cnt = getFundMonthCount(fi, mi);
+              if (cnt > 0) {
+                const unit = (monthlyAmounts[mi] && monthlyAmounts[mi][fi] !== undefined) ? monthlyAmounts[mi][fi] : 0;
                 const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : [];
                 const lastTsStr = hist.length > 0 ? hist[hist.length - 1] : null;
 
                 latestPayment = {
-                  amount: amt,
+                  amount: unit * cnt,
                   timestampStr: lastTsStr,
                   monthIndex: mi
                 };
@@ -822,6 +859,40 @@
           fnSpan.style.cssText = 'font-size:0.85rem; font-weight:600; color:#1e293b; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
           fnSpan.textContent = fn;
 
+          // انتخاب تعداد واریز در ماه (۱ یا ۲)
+          const countWrap = document.createElement('div');
+          countWrap.style.cssText = 'display:flex; align-items:center; gap:4px;';
+          const countLabel = document.createElement('span');
+          countLabel.style.cssText = 'font-size:0.7rem; color:#64748b; font-weight:700;';
+          countLabel.textContent = 'واریز/ماه:';
+          const countSelect = document.createElement('select');
+          countSelect.className = 'deposit-count-select';
+          countSelect.dataset.fundIndex = fi;
+          countSelect.style.cssText = 'font-size:0.75rem; padding:3px 6px; border-radius:8px; border:1px solid #cbd5e1; background:#fff; font-weight:700;';
+          [1,2].forEach(n => {
+            const o = document.createElement('option');
+            o.value = String(n);
+            o.textContent = n === 1 ? '۱ بار' : '۲ بار';
+            if (getFundDepositCount(fi) === n) o.selected = true;
+            countSelect.appendChild(o);
+          });
+          countSelect.onchange = () => {
+            depositCounts[fi] = parseInt(countSelect.value, 10) === 2 ? 2 : 1;
+            // اگر تعداد کم شد، واریزهای اضافه حذف شوند
+            for(let mi=0; mi<12; mi++){
+              const cap = getFundDepositCount(fi);
+              if(paymentState[fi] && paymentState[fi][mi] > cap){
+                paymentState[fi][mi] = cap;
+                const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : null;
+                if(hist && hist.length > cap) hist.length = cap;
+              }
+            }
+            saveToStorage();
+            renderAll();
+          };
+          countWrap.appendChild(countLabel);
+          countWrap.appendChild(countSelect);
+
           const actionsDiv = document.createElement('div');
           actionsDiv.style.cssText = 'display:flex; gap:6px;';
 
@@ -868,6 +939,7 @@
           actionsDiv.appendChild(editBtn);
           actionsDiv.appendChild(delBtn);
           row.appendChild(fnSpan);
+          row.appendChild(countWrap);
           row.appendChild(actionsDiv);
           fundManageContainer.appendChild(row);
         });
@@ -901,10 +973,11 @@
 
     function saveToStorage(){
       const toStore = {
-        version: 2,
+        version: 3,
         fundNames: fundNames,
         monthlyAmounts: monthlyAmounts,
-        payments: paymentState.map(row => row.map(v=> v?1:0)),
+        payments: paymentState.map(row => row.map(v => v || 0)),
+        depositCounts: depositCounts,
         history: historyData
       };
       localStorage.setItem('fundManagerV10', JSON.stringify(toStore));
@@ -1396,7 +1469,8 @@
         if(data.fundNames && data.monthlyAmounts && data.payments && data.history){
           fundNames = data.fundNames;
           monthlyAmounts = data.monthlyAmounts;
-          paymentState = data.payments.map(row => row.map(v => v === 1));
+          paymentState = normalizePayments(data.payments);
+          depositCounts = normalizeDepositCounts(data.depositCounts, fundNames.length);
           historyData = data.history;
           for(let mi=0; mi<12; mi++){
             if(!monthlyAmounts[mi]) monthlyAmounts[mi]=[];
@@ -1421,7 +1495,8 @@
           if(data.fundNames && data.monthlyAmounts && data.payments && data.history){
             fundNames = data.fundNames;
             monthlyAmounts = data.monthlyAmounts;
-            paymentState = data.payments.map(row => row.map(v=> v===1));
+            paymentState = normalizePayments(data.payments);
+            depositCounts = normalizeDepositCounts(data.depositCounts, fundNames.length);
             historyData = data.history;
             // همسان‌سازی ابعاد
             for(let mi=0; mi<12; mi++){
@@ -1446,11 +1521,18 @@
       return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
+    function getFundMonthCount(fi, mi){
+      const raw = (paymentState[fi] && paymentState[fi][mi]) ? Number(paymentState[fi][mi]) : 0;
+      const cap = getFundDepositCount(fi);
+      return Math.max(0, Math.min(isFinite(raw) ? raw : 0, cap));
+    }
+
     function computeTotalDeposits(){
       let total=0;
       for(let mi=0; mi<12; mi++){
         for(let fi=0; fi<fundNames.length; fi++){
-          if(paymentState[fi] && paymentState[fi][mi]) total += monthlyAmounts[mi][fi];
+          const cnt = getFundMonthCount(fi, mi);
+          if(cnt > 0) total += monthlyAmounts[mi][fi] * cnt;
         }
       }
       return total;
@@ -1459,7 +1541,8 @@
     function getMonthTotal(mi){
       let sum=0;
       for(let fi=0; fi<fundNames.length; fi++){
-        if(paymentState[fi][mi]) sum += monthlyAmounts[mi][fi];
+        const cnt = getFundMonthCount(fi, mi);
+        if(cnt > 0) sum += monthlyAmounts[mi][fi] * cnt;
       }
       return sum;
     }
@@ -1489,7 +1572,8 @@
         if(!historyData[mi]) historyData[mi]=[];
         historyData[mi].push([]);
       }
-      paymentState.push(new Array(12).fill(false));
+      paymentState.push(new Array(12).fill(0));
+      depositCounts.push(1);
       saveToStorage();
       renderAll(); // برای اضافه شدن صندوق نیاز به رندر کامل داریم
     }
@@ -1502,6 +1586,7 @@
         historyData[mi].splice(fundIndex,1);
       }
       paymentState.splice(fundIndex,1);
+      depositCounts.splice(fundIndex,1);
       saveToStorage();
       renderAll();
       return true;
@@ -1515,15 +1600,23 @@
     }
 
     // تابع تیک زدن
-    function togglePaymentOptimized(fundIndex, monthIndex, isCurrentlyChecked, badgeElement, monthIdxForTotal){
-      if(!isCurrentlyChecked){
-        const nowStr = getCurrentJalaliDateTime();
-        if(!historyData[monthIndex]) historyData[monthIndex]=[];
-        if(!historyData[monthIndex][fundIndex]) historyData[monthIndex][fundIndex]=[];
-        historyData[monthIndex][fundIndex].push(nowStr);
-        paymentState[fundIndex][monthIndex] = true;
+    // slotIndex: ۰ = واریز اول (دایره بزرگ) ، ۱ = واریز دوم (دایره کوچک)
+    function toggleDeposit(fundIndex, monthIndex, slotIndex){
+      const cap = getFundDepositCount(fundIndex);
+      if(slotIndex < 0 || slotIndex >= cap) return;
+      const current = getFundMonthCount(fundIndex, monthIndex);
+      if(!historyData[monthIndex]) historyData[monthIndex]=[];
+      if(!historyData[monthIndex][fundIndex]) historyData[monthIndex][fundIndex]=[];
+      const hist = historyData[monthIndex][fundIndex];
+
+      if(current > slotIndex){
+        // برداشتن تیک از این خانه به بعد
+        paymentState[fundIndex][monthIndex] = slotIndex;
+        if(hist.length > slotIndex) hist.length = slotIndex;
       } else {
-        paymentState[fundIndex][monthIndex] = false;
+        // پر کردن تا این خانه (خانه‌های قبل هم تیک می‌خورند)
+        paymentState[fundIndex][monthIndex] = slotIndex + 1;
+        while(hist.length < slotIndex + 1) hist.push(getCurrentJalaliDateTime());
       }
       saveToStorage();
       renderAll();
@@ -1588,14 +1681,36 @@
             elapsedBadge.textContent = elapsedInfo[mi].text;
           }
 
-          const badgeDiv = document.createElement('div');
-          badgeDiv.className = `tap-badge ${paymentState[fi][mi] ? 'checked' : ''}`;
-          // استفاده از رویداد با ارجاع به عنصر جاری برای بهینه بودن
-          badgeDiv.onclick = (e) => {
-            e.stopPropagation();
-            const isChecked = paymentState[fi][mi];
-            togglePaymentOptimized(fi, mi, isChecked, badgeDiv, mi);
+          const cap = getFundDepositCount(fi);
+          const doneCount = getFundMonthCount(fi, mi);
+
+          const depositCol = document.createElement('div');
+          depositCol.className = 'deposit-col';
+
+          const makeCircle = (slotIndex, sizeClass) => {
+            const c = document.createElement('div');
+            c.className = `deposit-circle ${sizeClass} ${slotIndex < doneCount ? 'done' : ''}`;
+            c.textContent = slotIndex < doneCount ? '✔' : String(slotIndex + 1);
+            c.title = slotIndex === 0 ? 'واریز اول ماه' : 'واریز دوم ماه';
+            c.onclick = (e) => {
+              e.stopPropagation();
+              toggleDeposit(fi, mi, slotIndex);
+            };
+            c.addEventListener('dblclick', (e) => {
+              e.stopPropagation();
+              const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : [];
+              showHistoryPopup(hist);
+            });
+            return c;
           };
+
+          depositCol.appendChild(makeCircle(0, 'big'));
+          if (cap >= 2) {
+            const link = document.createElement('div');
+            link.className = 'deposit-link';
+            depositCol.appendChild(link);
+            depositCol.appendChild(makeCircle(1, 'small'));
+          }
 
           const historyIcon = document.createElement('span');
           historyIcon.className = 'history-icon';
@@ -1606,17 +1721,11 @@
             const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : [];
             showHistoryPopup(hist);
           };
-          // دابل کلیک روی دایره هم تاریخچه را نشان دهد
-          badgeDiv.addEventListener('dblclick', (e) => {
-            e.stopPropagation();
-            const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : [];
-            showHistoryPopup(hist);
-          });
 
           item.appendChild(nameSpan);
           item.appendChild(amountSpan);
           if (elapsedBadge) item.appendChild(elapsedBadge);
-          item.appendChild(badgeDiv);
+          item.appendChild(depositCol);
           item.appendChild(historyIcon);
           fundsDiv.appendChild(item);
         }
@@ -1644,7 +1753,7 @@
 
     // پشتیبان و بازیابی (بدون تغییر)
     function exportBackup(){
-      const backup = { version:2, fundNames, monthlyAmounts, payments: paymentState.map(row=>row.map(v=>v?1:0)), history:historyData };
+      const backup = { version:3, fundNames, monthlyAmounts, payments: paymentState.map(row=>row.map(v=>v||0)), depositCounts: depositCounts, history:historyData };
       const blob = new Blob([JSON.stringify(backup,null,2)], {type:'application/json'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -1659,7 +1768,8 @@
           if(data.fundNames && data.monthlyAmounts && data.payments && data.history){
             fundNames = data.fundNames;
             monthlyAmounts = data.monthlyAmounts;
-            paymentState = data.payments.map(row=>row.map(v=>v===1));
+            paymentState = normalizePayments(data.payments);
+            depositCounts = normalizeDepositCounts(data.depositCounts, fundNames.length);
             historyData = data.history;
             saveToStorage();
             renderAll();
