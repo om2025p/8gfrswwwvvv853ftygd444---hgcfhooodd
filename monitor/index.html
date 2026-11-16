@@ -2454,18 +2454,29 @@
                     for (let mi = 0; mi < 12; mi++) {
                         const row = payments[mi] || [];
                         for (let fi = 0; fi < row.length; fi++) {
-                            if (!row[fi]) continue;
-                            const amt = (amounts[mi] && amounts[mi][fi] != null) ? Number(amounts[mi][fi]) : 0;
-                            if (!amt) continue;
+                            const cnt = Number(row[fi]) || 0;
+                            if (cnt <= 0) continue;
+                            const unit = (amounts[mi] && amounts[mi][fi] != null) ? Number(amounts[mi][fi]) : 0;
+                            if (!unit) continue;
                             const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : [];
-                            const tsStr = hist.length ? hist[hist.length - 1] : null;
-                            let dayStr = null;
-                            if (tsStr) {
-                                const dt = parseJalaliDateTimeStr(tsStr);
-                                if (dt) dayStr = getGregorianDayString(dt.getTime());
+                            // هر واریز تایم‌استمپ جدا دارد؛ مبلغ هر واریز = unit
+                            const depositDays = {};
+                            for (let h = 0; h < Math.min(cnt, hist.length); h++) {
+                                const dt = parseJalaliDateTimeStr(hist[h]);
+                                if (dt) {
+                                    const ds = getGregorianDayString(dt.getTime());
+                                    depositDays[ds] = (depositDays[ds] || 0) + unit;
+                                }
                             }
-                            if (dayStr) byDay[dayStr] = (byDay[dayStr] || 0) + amt;
-                            total += amt;
+                            if (Object.keys(depositDays).length > 0) {
+                                Object.keys(depositDays).forEach(ds => {
+                                    byDay[ds] = (byDay[ds] || 0) + depositDays[ds];
+                                });
+                                total += unit * Math.min(cnt, hist.length);
+                            } else {
+                                // بدون تاریخ: همه را روی آخرین تاریخ یا بدون روز حساب کن
+                                total += unit * cnt;
+                            }
                         }
                     }
                 }
