@@ -726,6 +726,82 @@
             transform: scale(0.95);
         }
 
+        .chart-mode-btn {
+            background: rgba(148, 163, 184, 0.12);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 5px 12px;
+            border-radius: 11px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+        }
+        .chart-mode-btn.active {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-color: #3b82f6;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+        }
+
+        .chart-filter-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 10px 20px;
+            background: var(--history-sub-bg);
+            border-bottom: 1px solid var(--card-border);
+        }
+        .chart-filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 11px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--card-border);
+            background: rgba(148, 163, 184, 0.10);
+            color: var(--text-muted);
+            transition: all 0.18s ease;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .chart-filter-chip .chip-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            display: inline-block;
+            background: currentColor;
+            opacity: 0.45;
+        }
+        .chart-filter-chip.on { color: #fff; }
+        .chart-filter-chip.on .chip-dot { opacity: 1; }
+        .chart-filter-chip.on[data-key="growth"] {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: #34d399;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35);
+        }
+        .chart-filter-chip.on[data-key="drop"] {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border-color: #f87171;
+            box-shadow: 0 3px 10px rgba(239, 68, 68, 0.35);
+        }
+        .chart-filter-chip.on[data-key="capital"] {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-color: #fbbf24;
+            box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
+        }
+        .chart-filter-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-inline-end: 2px;
+        }
+
         /* کارت مجزای گروه بندی مثبت‌ها */
         .history-day-group {
             background: var(--card-bg);
@@ -1105,10 +1181,20 @@
                     <span style="font-size: 1.6rem;">🖥️</span>
                     <span id="largeChartModalTitle" style="font-size: 1.25rem; font-weight: 800; color: var(--text-color);">نمودار رشد در ابعاد بزرگ</span>
                 </div>
-                <button onclick="closeLargeChartModal()" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-color); width: 38px; height: 38px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</button>
+                <div id="chartModeSwitch" style="display: flex; align-items: center; gap: 8px;">
+                    <button class="chart-mode-btn" id="chartModeCumBtn" onclick="setChartViewMode('cum')">📈 تجمعی</button>
+                    <button class="chart-mode-btn" id="chartModeDayBtn" onclick="setChartViewMode('day')">📉 روزانه</button>
+                    <button onclick="closeLargeChartModal()" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-color); width: 38px; height: 38px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</button>
+                </div>
             </div>
-            <div style="flex: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; box-sizing: border-box; position: relative;">
-                <div id="largeChartCanvasWrapper" style="min-width: 100%; height: 100%; position: relative;">
+            <div class="chart-filter-row" id="chartFilterRow">
+                <span class="chart-filter-label">🎛️ فیلتر نمایش:</span>
+                <span class="chart-filter-chip on" data-key="growth" id="chipGrowth" onclick="toggleChartFilter('growth')"><i class="chip-dot"></i>رشد</span>
+                <span class="chart-filter-chip on" data-key="drop" id="chipDrop" onclick="toggleChartFilter('drop')"><i class="chip-dot"></i>کاهش</span>
+                <span class="chart-filter-chip on" data-key="capital" id="chipCapital" onclick="toggleChartFilter('capital')"><i class="chip-dot"></i>سرمایه واریزی</span>
+            </div>
+            <div style="flex: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; box-sizing: border-box; position: relative;">
+                <div id="largeChartCanvasWrapper" style="min-width: 100%; height: 100%; min-height: 320px; position: relative;">
                     <canvas id="large-growth-canvas" style="display: block; width: 100%; height: 100%;"></canvas>
                 </div>
             </div>
@@ -2304,6 +2390,11 @@
             }
 
             modal.style.display = 'flex';
+            // در حالت 🔁 زرین نمودار خطی است و سوییچ تجمعی/روزانه معنایی ندارد
+            const hideSwitch = (tabName === 'live' && isOnlyPositivesMode);
+            const switchWrap = document.getElementById('chartModeSwitch');
+            if (switchWrap) switchWrap.style.display = hideSwitch ? 'none' : 'flex';
+            updateChartModeButtons();
             renderGrowthChart('large');
         }
 
@@ -2316,6 +2407,114 @@
         }
 
         // رسم نمودار رشد سبک روی HTML Canvas با افزایش فاصله نقاط
+        let chartViewMode = localStorage.getItem('monitor_chart_view_mode') === 'day' ? 'day' : 'cum';
+
+        // فیلترهای نمایش نمودار (رشد / کاهش / سرمایه واریزی) — پیش‌فرض همه روشن
+        let chartFilters = (function () {
+            try {
+                const raw = localStorage.getItem('monitor_chart_filters');
+                if (raw) {
+                    const f = JSON.parse(raw);
+                    return { growth: f.growth !== false, drop: f.drop !== false, capital: f.capital !== false };
+                }
+            } catch (e) {}
+            return { growth: true, drop: true, capital: true };
+        })();
+
+        function updateChartFilterChips() {
+            const map = { growth: 'chipGrowth', drop: 'chipDrop', capital: 'chipCapital' };
+            Object.keys(map).forEach(k => {
+                const el = document.getElementById(map[k]);
+                if (el) el.classList.toggle('on', chartFilters[k] !== false);
+            });
+        }
+
+        function toggleChartFilter(key) {
+            if (!(key in chartFilters)) return;
+            chartFilters[key] = !chartFilters[key];
+            localStorage.setItem('monitor_chart_filters', JSON.stringify(chartFilters));
+            updateChartFilterChips();
+            const modal = document.getElementById('largeChartModal');
+            if (modal && modal.style.display !== 'none') renderGrowthChart('large');
+            renderGrowthChart('live');
+            renderGrowthChart('analysis');
+        }
+
+        // جمع سرمایه واریزی به تفکیک روز (از fundManagerV10 و در نبود آن از monthly_deposit_sync)
+        function getCumulativeDepositByDay() {
+            const byDay = {};
+            let total = 0;
+            try {
+                const raw = localStorage.getItem('fundManagerV10');
+                if (raw) {
+                    const d = JSON.parse(raw);
+                    const amounts = d.monthlyAmounts || [];
+                    const payments = d.payments || [];
+                    const historyData = d.history || [];
+                    for (let mi = 0; mi < 12; mi++) {
+                        const row = payments[mi] || [];
+                        for (let fi = 0; fi < row.length; fi++) {
+                            if (!row[fi]) continue;
+                            const amt = (amounts[mi] && amounts[mi][fi] != null) ? Number(amounts[mi][fi]) : 0;
+                            if (!amt) continue;
+                            const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : [];
+                            const tsStr = hist.length ? hist[hist.length - 1] : null;
+                            let dayStr = null;
+                            if (tsStr) {
+                                const dt = parseJalaliDateTimeStr(tsStr);
+                                if (dt) dayStr = getGregorianDayString(dt.getTime());
+                            }
+                            if (dayStr) byDay[dayStr] = (byDay[dayStr] || 0) + amt;
+                            total += amt;
+                        }
+                    }
+                }
+            } catch (e) {}
+            if (total === 0) {
+                try {
+                    const raw = localStorage.getItem('monthly_deposit_sync');
+                    if (raw) {
+                        const sd = JSON.parse(raw);
+                        Object.keys(sd).forEach(k => {
+                            const a = sd[k];
+                            if (a && a.hasPayment && a.amount) {
+                                const dt = parseJalaliDateTimeStr(a.timestampStr);
+                                const dayStr = dt ? getGregorianDayString(dt.getTime()) : null;
+                                if (dayStr) byDay[dayStr] = (byDay[dayStr] || 0) + Number(a.amount);
+                                total += Number(a.amount);
+                            }
+                        });
+                    }
+                } catch (e) {}
+            }
+            return { byDay: byDay, total: total };
+        }
+
+        function formatCompactToman(v) {
+            if (v >= 1e9) return (v / 1e9).toFixed(1) + 'B';
+            if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+            if (v >= 1e3) return Math.round(v / 1e3) + 'k';
+            return Math.round(v);
+        }
+
+        function updateChartModeButtons() {
+            const cumBtn = document.getElementById('chartModeCumBtn');
+            const dayBtn = document.getElementById('chartModeDayBtn');
+            if (cumBtn) cumBtn.classList.toggle('active', chartViewMode === 'cum');
+            if (dayBtn) dayBtn.classList.toggle('active', chartViewMode === 'day');
+            updateChartFilterChips();
+        }
+
+        function setChartViewMode(mode) {
+            chartViewMode = (mode === 'day') ? 'day' : 'cum';
+            localStorage.setItem('monitor_chart_view_mode', chartViewMode);
+            updateChartModeButtons();
+            const modal = document.getElementById('largeChartModal');
+            if (modal && modal.style.display !== 'none') renderGrowthChart('large');
+            renderGrowthChart('live');
+            renderGrowthChart('analysis');
+        }
+
         function renderGrowthChart(tabName) {
             const isLarge = tabName === 'large';
             const effectiveTabName = isLarge ? activeLargeChartTab : tabName;
@@ -2346,6 +2545,7 @@
             let runningCumulativeValue = 0;
             let history = filteredHistory.map(item => {
                 let valueToUse = 0;
+                let dailyValue = 0;
                 if (isGoldenTomanMode) {
                     appsInfo.forEach(app => {
                         const appTomanProfit = (dailyTomanProfitAppMap[item.dayString] && dailyTomanProfitAppMap[item.dayString][app.id]) || 0;
@@ -2355,14 +2555,17 @@
                             valueToUse += appTomanProfit;
                         }
                     });
+                    dailyValue = valueToUse;
                 } else {
                     const dailyVal = isTabAnalysis ? (item.value / 7) : item.value;
+                    dailyValue = dailyVal;
                     runningCumulativeValue += dailyVal;
                     valueToUse = runningCumulativeValue;
                 }
                 return {
                     ...item,
-                    value: valueToUse
+                    value: valueToUse,
+                    dailyValue: dailyValue
                 };
             });
 
@@ -2438,16 +2641,122 @@
                 return;
             }
 
-            const padding = { top: 25, bottom: 30, left: 55, right: 25 };
+            // --- چیدمان: حالت میله‌ای دو محور (چپ درصد / راست تومان) ---
+            const isBarMode = !isGoldenTomanMode; // حالت 🔁 زرین خطی می‌ماند
+            const padding = isBarMode
+                ? { top: 30, bottom: 44, left: 58, right: 70 }
+                : { top: 25, bottom: 30, left: 55, right: 25 };
             const chartW = width - padding.left - padding.right;
             const chartH = height - padding.top - padding.bottom;
 
+            if (isBarMode) {
+                const isCumulative = (chartViewMode !== 'day');
+                // تجمعی = مجموع انباشته تا آن روز (همیشه با روند رشد بالا می‌رود)؛
+                // روزانه = تغییر سطح نسبت به روز قبل (سبز=رشد، قرمز=کاهش).
+                const dailyDelta = (i) => (i === 0 ? 0 : history[i].dailyValue - history[i - 1].dailyValue);
+                const barVal = (i) => (isCumulative ? history[i].value : dailyDelta(i));
+
+                const values = history.map((_, i) => barVal(i));
+                let maxVal = Math.max(...values, 0.1);
+                let minVal = Math.min(...values, 0);
+                const padVal = (maxVal - minVal || 1) * 0.08;
+                maxVal += padVal;
+                if (minVal < 0) minVal -= padVal;
+                const yRange = maxVal - minVal || 1;
+                const yFor = (v) => padding.top + chartH - ((v - minVal) / yRange) * chartH;
+                const zeroY = yFor(0);
+
+                // خط صفر
+                ctx.beginPath();
+                ctx.strokeStyle = canvasGridColor;
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.moveTo(padding.left, zeroY);
+                ctx.lineTo(width - padding.right, zeroY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // میله‌های روزانه/تجمعی با فاصله‌ی کافی
+                const barSpacing = chartW / Math.max(history.length, 1);
+                const barCap = isLarge ? 24 : 16;
+                const barW = Math.max(2, Math.min(barSpacing * 0.6, barCap));
+                history.forEach((item, i) => {
+                    const cx = padding.left + barSpacing * (i + 0.5);
+                    const v = barVal(i);
+                    const rising = isCumulative ? (i === 0 || v >= barVal(i - 1)) : (v >= 0);
+                    if (rising && chartFilters.growth === false) return;
+                    if (!rising && chartFilters.drop === false) return;
+                    ctx.fillStyle = rising ? '#10b981' : '#ef4444';
+                    const yTop = yFor(v);
+                    const yBase = yFor(0);
+                    const rectTop = Math.min(yTop, yBase);
+                    const rectH = Math.max(Math.abs(yBase - yTop), 1.2);
+                    ctx.fillRect(cx - barW / 2, rectTop, barW, rectH);
+                });
+
+                // خط سرمایه واریزی (محور راست، پله‌ای)
+                const dep = getCumulativeDepositByDay();
+                if (dep.total > 0 && chartFilters.capital !== false) {
+                    let runningDep = 0;
+                    const depPoints = history.map((item) => {
+                        runningDep += (dep.byDay[item.dayString] || 0);
+                        return runningDep;
+                    });
+                    const depMax = Math.max(...depPoints, 1);
+                    const depFor = (v) => padding.top + chartH - (v / depMax) * chartH;
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 2.5;
+                    ctx.lineJoin = 'round';
+                    depPoints.forEach((v, i) => {
+                        const cx = padding.left + barSpacing * (i + 0.5);
+                        const y = depFor(v);
+                        if (i === 0) ctx.moveTo(cx, y);
+                        else { ctx.lineTo(cx, depFor(depPoints[i - 1])); ctx.lineTo(cx, y); }
+                    });
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.font = '10px Segoe UI, Tahoma';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(formatCompactToman(depMax), width - padding.right + 6, padding.top + 8);
+                    ctx.fillText('0', width - padding.right + 6, padding.top + chartH);
+                }
+
+                // برچسب‌های محور چپ (درصد)
+                ctx.fillStyle = canvasTextColor;
+                ctx.font = '10px Segoe UI, Tahoma';
+                ctx.textAlign = 'right';
+                const labelFmt = (v) => `${v.toFixed(isTabAnalysis ? 2 : 1)}%`;
+                ctx.fillText(labelFmt(maxVal), padding.left - 8, padding.top + 8);
+                ctx.fillText(labelFmt(minVal), padding.left - 8, padding.top + chartH);
+                if (minVal < 0) ctx.fillText('0%', padding.left - 8, zeroY + 3);
+
+                // برچسب تاریخ (کامل و خوانا، با فاصله‌ی کافی)
+                ctx.fillStyle = canvasTextColor;
+                ctx.font = '11px Segoe UI, Tahoma';
+                ctx.textAlign = 'center';
+                const minLabelGap = isLarge ? 86 : 66;
+                const maxLabels = Math.max(2, Math.floor(chartW / minLabelGap));
+                const step = Math.max(1, Math.ceil(history.length / maxLabels));
+                history.forEach((item, i) => {
+                    const isLast = i === history.length - 1;
+                    if (i % step !== 0 && !isLast) return;
+                    const cx = padding.left + barSpacing * (i + 0.5);
+                    ctx.fillText(formatHistoryDate(item.dayString), cx, height - 12);
+                });
+
+                return;
+            }
+
+            // ==== حالت خطی (فقط 🔁 زرین سودهای مثبت) — بدون تغییر ====
             const values = history.map(h => h.value);
             const maxVal = Math.max(...values, 0.1);
             const minVal = Math.min(...values, -0.1);
             const yRange = maxVal - minVal || 1;
 
-            if (minVal < 0 && maxVal > 0 && !isGoldenTomanMode) {
+            if (minVal < 0 && maxVal > 0) {
                 const zeroY = padding.top + chartH - ((0 - minVal) / yRange) * chartH;
                 ctx.beginPath();
                 ctx.strokeStyle = canvasGridColor;
@@ -2466,13 +2775,8 @@
             });
 
             const grad = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-            if (isGoldenTomanMode) {
-                grad.addColorStop(0, 'rgba(52, 211, 153, 0.35)');
-                grad.addColorStop(1, 'rgba(52, 211, 153, 0.0)');
-            } else {
-                grad.addColorStop(0, isDark ? 'rgba(96, 165, 250, 0.3)' : 'rgba(37, 99, 235, 0.2)');
-                grad.addColorStop(1, 'rgba(96, 165, 250, 0.0)');
-            }
+            grad.addColorStop(0, 'rgba(52, 211, 153, 0.35)');
+            grad.addColorStop(1, 'rgba(52, 211, 153, 0.0)');
 
             ctx.beginPath();
             ctx.moveTo(points[0].x, height - padding.bottom);
@@ -2482,7 +2786,7 @@
             ctx.fillStyle = grad;
             ctx.fill();
 
-            const strokeColor = isGoldenTomanMode ? '#10b981' : (isDark ? '#60a5fa' : '#2563eb');
+            const strokeColor = '#10b981';
             ctx.beginPath();
             ctx.strokeStyle = strokeColor;
             ctx.lineWidth = 3;
@@ -2509,29 +2813,21 @@
                     ctx.fillStyle = canvasTextColor;
                     ctx.font = '10px Segoe UI, Tahoma';
                     ctx.textAlign = 'center';
-                    let valText = isGoldenTomanMode ? `${Math.round(p.value).toLocaleString('en-US')}ت` : `${p.value.toFixed(isTabAnalysis ? 2 : 1)}%`;
-                    ctx.fillText(valText, p.x, p.y - 8);
+                    ctx.fillText(`${Math.round(p.value).toLocaleString('en-US')}ت`, p.x, p.y - 8);
                 }
             });
 
             ctx.fillStyle = canvasTextColor;
             ctx.font = '11px Segoe UI, Tahoma';
             ctx.textAlign = 'right';
-
-            if (isGoldenTomanMode) {
-                const formatLabel = (v) => {
-                    if (v >= 1000) return `${Math.round(v/1000)}k`;
-                    return Math.round(v);
-                };
-                ctx.fillText(formatLabel(maxVal), padding.left - 8, padding.top + 8);
-                ctx.fillText(formatLabel(minVal), padding.left - 8, height - padding.bottom);
-            } else {
-                ctx.fillText(`${maxVal.toFixed(isTabAnalysis ? 3 : 1)}%`, padding.left - 8, padding.top + 8);
-                ctx.fillText(`${minVal.toFixed(isTabAnalysis ? 3 : 1)}%`, padding.left - 8, height - padding.bottom);
-            }
+            const formatLabel = (v) => {
+                if (v >= 1000) return `${Math.round(v / 1000)}k`;
+                return Math.round(v);
+            };
+            ctx.fillText(formatLabel(maxVal), padding.left - 8, padding.top + 8);
+            ctx.fillText(formatLabel(minVal), padding.left - 8, height - padding.bottom);
 
             ctx.textAlign = 'center';
-            // برچسب تاریخ فقط در چند نقطه (حداکثر ~۱۲) تا تاریخ‌ها روی هم نیفتند.
             const maxDateLabels = 12;
             const labelStep = Math.max(1, Math.ceil(points.length / maxDateLabels));
             points.forEach((p, i) => {
@@ -4372,6 +4668,7 @@ ${dayBlocksHtml}
 
         // لود اولیه تم و راه‌اندازی دیدبان
         initTheme();
+        updateChartModeButtons();
         resetMonitorCache();
         renderMonitor();
         renderMonthlyPdfList();
