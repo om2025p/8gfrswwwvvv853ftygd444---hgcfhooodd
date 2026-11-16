@@ -586,14 +586,19 @@
 
         .chart-canvas-wrapper {
             width: 100%;
-            height: 150px;
+            height: 200px;
             position: relative;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-x pan-y;
         }
 
+        /* عرض/ارتفاع کانواس با استایل اینلاین از JS تعیین می‌شود؛ پس اینجا
+           نباید از !important استفاده شود، وگرنه عرض واقعی در عرض ظرف له می‌شود. */
         canvas.growth-canvas {
-            width: 100% !important;
-            height: 100% !important;
+            height: 100%;
             display: block;
+            max-width: none;
         }
 
         /* ===== کادر مشکی اولد خالص با حاشیه طلایی درخشان (دیزاین ۵-B) ===== */
@@ -861,7 +866,7 @@
                             <span>نمودار بزرگ</span>
                         </button>
                     </div>
-                    <div class="chart-canvas-wrapper" style="overflow-x: auto; width: 100%;">
+                    <div class="chart-canvas-wrapper" style="width: 100%;">
                         <canvas id="live-growth-canvas" class="growth-canvas"></canvas>
                     </div>
                 </div>
@@ -1102,7 +1107,7 @@
                 </div>
                 <button onclick="closeLargeChartModal()" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-color); width: 38px; height: 38px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</button>
             </div>
-            <div style="flex: 1; padding: 20px; overflow-x: auto; overflow-y: hidden; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; box-sizing: border-box; position: relative;">
+            <div style="flex: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; box-sizing: border-box; position: relative;">
                 <div id="largeChartCanvasWrapper" style="min-width: 100%; height: 100%; position: relative;">
                     <canvas id="large-growth-canvas" style="display: block; width: 100%; height: 100%;"></canvas>
                 </div>
@@ -1146,7 +1151,7 @@
                             <span>نمودار بزرگ</span>
                         </button>
                     </div>
-                    <div class="chart-canvas-wrapper" style="overflow-x: auto; width: 100%;">
+                    <div class="chart-canvas-wrapper" style="width: 100%;">
                         <canvas id="analysis-growth-canvas" class="growth-canvas"></canvas>
                     </div>
                 </div>
@@ -1242,9 +1247,23 @@
         let dailyTomanProfitAppDetailsMap = {};
 
         function getGregorianDayString(ts) {
-            const date = new Date(ts);
-            if (isNaN(date.getTime())) return "";
+            const normalized = normalizeTimestamp(ts);
+            if (normalized === null) return "";
+            const date = new Date(normalized);
             return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        // بکاپ‌های قدیمی ممکن است تایم‌استمپ ثانیه‌ای (۱۰ رقم) یا رشته داشته باشند.
+        // اگر اصلاح نشوند، حلقه‌ی تاریخچه هزاران روز اضافه می‌سازد و نمودار سفید می‌شود.
+        function normalizeTimestamp(rawTs) {
+            let ts = Number(rawTs);
+            if (!isFinite(ts) || ts <= 0) return null;
+            if (ts < 1e11) ts *= 1000; // ثانیه → میلی‌ثانیه
+            const date = new Date(ts);
+            if (isNaN(date.getTime())) return null;
+            const year = date.getFullYear();
+            if (year < 2000 || year > 2100) return null;
+            return ts;
         }
 
         function getLatestAppCalcDetails(appId) {
@@ -1596,12 +1615,9 @@
                         }
                     }
 
-                    let ts = null;
-                    if (calc.timestamp) {
-                        ts = new Date(calc.timestamp).getTime();
-                    }
+                    const ts = normalizeTimestamp(calc.timestamp);
 
-                    if (ts && !isNaN(ts)) {
+                    if (ts !== null) {
                         const dayStr = getGregorianDayString(ts);
                         if (dayStr) {
                             if (!processedAppsPerDay[dayStr]) {
@@ -1877,7 +1893,8 @@
             appsInfo.forEach(app => {
                 if (app.data) {
                     app.data.forEach(item => {
-                        if (item.timestamp) allTimestamps.push(item.timestamp);
+                        const normTs = normalizeTimestamp(item.timestamp);
+                        if (normTs !== null) allTimestamps.push(normTs);
                     });
                 }
             });
@@ -1919,7 +1936,8 @@
                     let lastValueBeforeOrOnThisDay = null;
                     if (app.data) {
                         for (let i = app.data.length - 1; i >= 0; i--) {
-                            if (app.data[i].timestamp <= dayEndTs) {
+                            const itemTs = normalizeTimestamp(app.data[i].timestamp);
+                            if (itemTs !== null && itemTs <= dayEndTs) {
                                 lastValueBeforeOrOnThisDay = app.data[i].value;
                                 break;
                             }
@@ -2308,7 +2326,7 @@
             }) : rawHistory;
 
             let runningCumulativeValue = 0;
-            const history = filteredHistory.map(item => {
+            let history = filteredHistory.map(item => {
                 let valueToUse = 0;
                 if (isGoldenTomanMode) {
                     appsInfo.forEach(app => {
@@ -2330,10 +2348,26 @@
                 };
             });
 
-            // تنظیم فاصله نقاط (نقطه به نقطه با فاصله دلخواه و عالی)
+            // مرورگرها کانواس بزرگ‌تر از ~۳۲۷۶۷ پیکسل (یا مساحت خیلی بزرگ) را بی‌صدا
+            // سفید می‌کنند. تا حد امکان داده‌ی کامل حفظ می‌شود و کاربر افقی اسکرول
+            // می‌کند؛ فقط اگر از سقف ایمن رد شدیم، نقاط فشرده می‌شوند.
+            const MAX_CANVAS_DIM = 32767;
+            const MAX_CANVAS_AREA = 16 * 1024 * 1024;
+
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
             const minPointSpacing = isLarge ? 60 : 45;
             const parentWrapper = canvas.parentElement;
             let calcWidth = parentWrapper ? parentWrapper.clientWidth : 350;
+
+            const maxPointsByWidth = Math.floor((MAX_CANVAS_DIM / dpr - 80) / minPointSpacing) + 1;
+            if (history.length > maxPointsByWidth) {
+                const stride = (history.length - 1) / (maxPointsByWidth - 1);
+                const sampled = [];
+                for (let k = 0; k < maxPointsByWidth; k++) {
+                    sampled.push(history[Math.round(k * stride)]);
+                }
+                history = sampled;
+            }
 
             if (history.length > 1) {
                 const requiredWidth = (history.length - 1) * minPointSpacing + 80;
@@ -2342,15 +2376,35 @@
                 }
             }
 
-            canvas.style.width = calcWidth + 'px';
-
             const rectHeight = parentWrapper ? parentWrapper.clientHeight : (isLarge ? 400 : 150);
-            canvas.width = calcWidth * (window.devicePixelRatio || 1);
-            canvas.height = rectHeight * (window.devicePixelRatio || 1);
-            ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+
+            // سقف ابعاد و مساحت، بر اساس محدودیت واقعی مرورگر
+            let pixelWidth = calcWidth * dpr;
+            let pixelHeight = rectHeight * dpr;
+
+            if (pixelWidth > MAX_CANVAS_DIM) {
+                pixelWidth = MAX_CANVAS_DIM;
+                calcWidth = pixelWidth / dpr;
+            }
+            if (pixelHeight > MAX_CANVAS_DIM) {
+                pixelHeight = MAX_CANVAS_DIM;
+            }
+            if (pixelWidth * pixelHeight > MAX_CANVAS_AREA) {
+                const ratio = MAX_CANVAS_AREA / (pixelWidth * pixelHeight);
+                pixelWidth = Math.floor(pixelWidth * ratio);
+                pixelHeight = Math.floor(pixelHeight * ratio);
+                calcWidth = pixelWidth / dpr;
+            }
+
+            canvas.style.width = calcWidth + 'px';
+            canvas.style.height = (pixelHeight / dpr) + 'px';
+            canvas.width = Math.floor(pixelWidth);
+            canvas.height = Math.floor(pixelHeight);
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.scale(dpr, dpr);
 
             const width = calcWidth;
-            const height = rectHeight;
+            const height = pixelHeight / dpr;
 
             ctx.clearRect(0, 0, width, height);
 
@@ -2459,7 +2513,12 @@
             }
 
             ctx.textAlign = 'center';
-            points.forEach((p) => {
+            // برچسب تاریخ فقط در چند نقطه (حداکثر ~۱۲) تا تاریخ‌ها روی هم نیفتند.
+            const maxDateLabels = 12;
+            const labelStep = Math.max(1, Math.ceil(points.length / maxDateLabels));
+            points.forEach((p, i) => {
+                const isLast = i === points.length - 1;
+                if (i % labelStep !== 0 && !isLast) return;
                 ctx.fillText(formatHistoryDate(p.dateStr), p.x, height - 6);
             });
         }
