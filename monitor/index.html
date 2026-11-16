@@ -1253,17 +1253,35 @@
             return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         }
 
-        // بکاپ‌های قدیمی ممکن است تایم‌استمپ ثانیه‌ای (۱۰ رقم) یا رشته داشته باشند.
-        // اگر اصلاح نشوند، حلقه‌ی تاریخچه هزاران روز اضافه می‌سازد و نمودار سفید می‌شود.
+        // اپ‌های زیرمجموعه تایم‌استمپ را به سه شکل ذخیره می‌کنند:
+        //   • ISO string مثل "2026-11-16T10:12:19.000Z" (calc‌ها)
+        //   • میلی‌ثانیه‌ی عددی مثل 1794823939000 (percent‌ها)
+        //   • ثانیه‌ی عددی (بکاپ‌های قدیمی) مثل 1794823939
+        // اگر رشته‌ی ISO با Number() تبدیل شود NaN می‌شود و رکورد بی‌صدا حذف
+        // می‌گردد؛ پس ابتدا رشته‌ی ISO و سپس عدد بررسی می‌شود.
         function normalizeTimestamp(rawTs) {
-            let ts = Number(rawTs);
+            if (rawTs === null || rawTs === undefined || rawTs === '') return null;
+
+            if (typeof rawTs === 'string') {
+                const str = normalizeToEnglishDigits(rawTs.trim());
+                if (str === '') return null;
+                // رشته‌ی عددی خالص (مثلاً "1794823939000")
+                if (/^-?\d+(\.\d+)?$/.test(str)) {
+                    return normalizeTimestamp(Number(str));
+                }
+                const parsed = Date.parse(str);
+                if (!isNaN(parsed)) return parsed;
+                return null;
+            }
+
+            const ts = Number(rawTs);
             if (!isFinite(ts) || ts <= 0) return null;
-            if (ts < 1e11) ts *= 1000; // ثانیه → میلی‌ثانیه
-            const date = new Date(ts);
+            const ms = ts < 1e11 ? ts * 1000 : ts; // ثانیه → میلی‌ثانیه
+            const date = new Date(ms);
             if (isNaN(date.getTime())) return null;
             const year = date.getFullYear();
             if (year < 2000 || year > 2100) return null;
-            return ts;
+            return ms;
         }
 
         function getLatestAppCalcDetails(appId) {
