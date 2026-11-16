@@ -83,7 +83,7 @@
       --text-strong: #f1f5f9;
       --text-head: #e2e8f0;
       --text-body: #cbd5e1;
-      --text-muted: #94a3b8;
+      --text-muted: #a7b4c6;
       --accent: #3b82f6;
       --accent-soft: #24334d;
       --accent-soft-border: #3b4a63;
@@ -115,6 +115,7 @@
     body {
       font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
       background: var(--app-bg);
+      color: var(--text-head);
       padding: 12px 8px;
       direction: rtl;
       -webkit-tap-highlight-color: transparent;
@@ -311,7 +312,7 @@
       font-weight: 500;
       color: var(--text-head);
       cursor: pointer;
-      background: white;
+      background: var(--card-bg);
     }
     .funds-list {
       padding: 6px 0;
@@ -438,6 +439,7 @@
     .btn-add:active { opacity: 1; background: var(--card-border); }
     .month-total {
       background: var(--panel-bg);
+      color: var(--text-head);
       padding: 8px 14px;
       border-top: 1px dashed var(--border-2);
       font-size: 13px;
@@ -477,6 +479,9 @@
       transform: translate(-50%, -50%) scale(0.9);
       width: 90%;
       max-width: 420px;
+      max-height: 85vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       background: var(--card-bg);
       border-radius: 20px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.25);
@@ -503,9 +508,14 @@
     }
     .settings-overlay.show { display: block; }
     .settings-title {
+      position: sticky;
+      top: -18px;
+      z-index: 2;
+      background: var(--card-bg);
       font-size: 1.05rem;
       font-weight: 700;
       color: var(--text-head);
+      padding: 4px 0 10px;
       margin-bottom: 12px;
       display: flex;
       justify-content: space-between;
