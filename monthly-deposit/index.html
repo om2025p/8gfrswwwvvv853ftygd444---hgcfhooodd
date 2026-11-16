@@ -853,10 +853,10 @@
         fundManageContainer.innerHTML = '';
         fundNames.forEach((fn, fi) => {
           const row = document.createElement('div');
-          row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; gap:8px;';
+          row.style.cssText = 'display:flex; flex-direction:column; align-items:stretch; padding:8px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; gap:6px;';
 
           const fnSpan = document.createElement('span');
-          fnSpan.style.cssText = 'font-size:0.85rem; font-weight:600; color:#1e293b; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+          fnSpan.style.cssText = 'font-size:0.9rem; font-weight:700; color:#1e293b; width:100%; white-space:normal; word-break:break-word; line-height:1.4;';
           fnSpan.textContent = fn;
 
           // انتخاب تعداد واریز در ماه (۱ یا ۲)
@@ -938,9 +938,14 @@
 
           actionsDiv.appendChild(editBtn);
           actionsDiv.appendChild(delBtn);
+
+          const controlsRow = document.createElement('div');
+          controlsRow.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;';
+          controlsRow.appendChild(countWrap);
+          controlsRow.appendChild(actionsDiv);
+
           row.appendChild(fnSpan);
-          row.appendChild(countWrap);
-          row.appendChild(actionsDiv);
+          row.appendChild(controlsRow);
           fundManageContainer.appendChild(row);
         });
       }
