@@ -331,4 +331,5 @@ gradle assembleRelease assembleDebug --no-daemon
 - **تنظیمات:** در `#settingsFundManageRows` هر صندوق یک `<select class="deposit-count-select" data-fund-index="N">` با گزینه‌های «۱ بار»/«۲ بار» دارد؛ با کم کردن تعداد، واریزهای اضافه و تایم‌استمپ‌هایشان کوتاه می‌شوند.
 - **مانیتور (`getCumulativeDepositByDay`):** `payments[mi][fi]` را به‌عنوان تعداد می‌خواند و برای هر واریز از `history` تایم‌استمپ می‌گیرد؛ در نبود تاریخ، `unit × cnt` روی همان روز/کل حساب می‌شود.
 - **چیدمان تنظیمات:** ردیف مدیریت صندوق **دو خطی** است (خط اول نام کامل صندوق، خط دوم کنترل «واریز/ماه» + دکمه‌های ویرایش/حذف). علت: در حالت یک‌خطی، `overflow:hidden` نام صندوق را روی صفحه گوشی به ~۱۴px له می‌کرد.
-- **بعد از تغییر:** `CACHE_NAME` در `sw.js` بامپ شود (الان `emarat-portal-v77`).
+- **تم تاریک/روشن:** کل رنگ‌های اپ در `:root` به‌صورت CSS Variable تعریف شده‌اند و بلوک `body.dark-theme` آن‌ها را برای تم تاریک بازنویسی می‌کند (تاریک ملایم `#0f172a`، نه سیاه مطلق). دکمه‌ی چرخشی `#themeToggleBtn` **داخل ⚙️ تنظیمات** است (`toggleTheme()` / `initTheme()` / `applyTheme()`)، انتخاب در `localStorage.monthly_deposit_theme` (`light`/`dark`) ذخیره می‌شود و متاتگ `#metaThemeColor` هم هماهنگ می‌شود. پیش‌فرض روشن.
+- **بعد از تغییر:** `CACHE_NAME` در `sw.js` بامپ شود (الان `emarat-portal-v78`).
