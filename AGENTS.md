@@ -310,3 +310,13 @@ gradle assembleRelease assembleDebug --no-daemon
 - **درمان:** `normalizeTimestamp()` ابتدا نوع را چک می‌کند: رشتهٔ عددی خالص → عدد؛ در غیر این صورت `Date.parse()` (برای ISO). اعداد فارسی هم با `normalizeToEnglishDigits()` تبدیل می‌شوند. ثانیه‌ای → میلی‌ثانیه و بازهٔ مجاز ۲۰۰۰..۲۱۰۰ حفظ شد.
 - **درس کلی:** هر تابع «نرمال‌سازی» که روی دادهٔ چند‌اپلیکیشنی کار می‌کند، باید **همهٔ فرمت‌های واقعی** (ISO string، ms number، sec number، رشتهٔ عددی، ارقام فارسی) را پوشش دهد؛ وگرنه `null` بی‌صدا داده را حذف می‌کند.
 - **تست رگرسیون:** با Puppeteer + `file://` می‌توان `gold_history` را با رشتهٔ ISO و `percents` را با عدد میلی‌ثانیه seed کرد و سپس `calculateDailyHistory().length` و `Object.keys(dailyTomanProfitMap).length` را سنجید؛ هر دو باید برابر تعداد روزهای داده باشند.
+
+### 📊 نمودار ستونی روزانه/تجمعی + خط سرمایه واریزی + فیلترها (monitor/index.html)
+- **حالت‌ها:** سوییچ `📈 تجمعی` / `📉 روزانه` در هدر مودال (`#chartModeSwitch`, `#chartModeCumBtn`, `#chartModeDayBtn`). پیش‌فرض **تجمعی**. انتخاب در `localStorage.monitor_chart_view_mode` ذخیره می‌شود.
+- **معنای داده:** `history[i].value` = مجموع انباشته تا آن روز (تجمعی)؛ `history[i].dailyValue` = سطح خام همان روز. **حالت روزانه = تفاضل سطح روز جاری و روز قبل** (`dailyDelta`)، نه خود سطح. اگر از سطح خام استفاده شود، میله‌های قرمز هرگز ظاهر نمی‌شوند (اشتباه رایجی که یک‌بار رخ داد).
+- **حالت 🔁 زرین (سودهای مثبت):** همچنان **نمودار خطی سبز** است و سوییچ حالت پنهان می‌شود (`openLargeChartModal` مقدار `display:none` می‌دهد).
+- **خط سرمایه واریزی:** `getCumulativeDepositByDay()` از `fundManagerV10` (`monthlyAmounts` + `payments` + `history` با تایم‌استمپ شمسی) می‌سازد؛ در نبود آن به `monthly_deposit_sync` fallback می‌کند. خط پله‌ای نارنجی روی محور راست (تومان)، برچسب‌ها با `formatCompactToman()`.
+- **فیلترها:** سه چیپ `رشد`/`کاهش`/`سرمایه واریزی` (`toggleChartFilter`) که در `localStorage.monitor_chart_filters` ذخیره می‌شوند (پیش‌فرض همه روشن). `chartFilters.growth===false` میله‌های صعودی و `chartFilters.drop===false` میله‌های نزولی را حذف می‌کند؛ `chartFilters.capital===false` خط نارنجی را حذف می‌کند.
+- **چیدمان:** نمودار به **کف مودال** چسبیده (`justify-content: flex-end` روی بدنه). فاصله‌ی تاریخ‌ها با `minLabelGap = 86` (large) / `66` (کوچک) تعیین می‌شود تا تاریخ‌ها کامل و خوانا بمانند.
+- **تست:** با Puppeteer روی `file://` می‌توان با `canvas.drawImage` روی کانواس کوچک + `getImageData` تعداد پیکسل سبز/قرمز/نارنجی را شمرد؛ با داده‌ی نوسانی قوی (مثلاً مقادیر یک‌درمیان ۵ و ۱) باید هم سبز و هم قرمز ظاهر شود.
+- **بعد از تغییر:** `CACHE_NAME` در `sw.js` بامپ شود (الان `emarat-portal-v75`).
