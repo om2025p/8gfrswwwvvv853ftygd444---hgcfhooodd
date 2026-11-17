@@ -1181,10 +1181,12 @@
                     <span style="font-size: 1.6rem;">🖥️</span>
                     <span id="largeChartModalTitle" style="font-size: 1.25rem; font-weight: 800; color: var(--text-color);">نمودار رشد در ابعاد بزرگ</span>
                 </div>
-                <div id="chartModeSwitch" style="display: flex; align-items: center; gap: 8px;">
-                    <button class="chart-mode-btn" id="chartModeCumBtn" onclick="setChartViewMode('cum')">📈 تجمعی</button>
-                    <button class="chart-mode-btn" id="chartModeDayBtn" onclick="setChartViewMode('day')">📉 روزانه</button>
-                    <button onclick="closeLargeChartModal()" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-color); width: 38px; height: 38px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">✕</button>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div id="chartModeSwitch" style="display: flex; align-items: center; gap: 8px;">
+                        <button class="chart-mode-btn" id="chartModeCumBtn" onclick="setChartViewMode('cum')">📈 تجمعی</button>
+                        <button class="chart-mode-btn" id="chartModeDayBtn" onclick="setChartViewMode('day')">📉 روزانه</button>
+                    </div>
+                    <button onclick="closeLargeChartModal()" title="بازگشت (Esc)" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-color); width: 38px; height: 38px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">✕</button>
                 </div>
             </div>
             <div class="chart-filter-row" id="chartFilterRow">
@@ -2390,10 +2392,12 @@
             }
 
             modal.style.display = 'flex';
-            // در حالت 🔁 زرین نمودار خطی است و سوییچ تجمعی/روزانه معنایی ندارد
+            // در حالت 🔁 زرین نمودار خطی است و سوییچ تجمعی/روزانه و فیلترها معنایی ندارند
             const hideSwitch = (tabName === 'live' && isOnlyPositivesMode);
             const switchWrap = document.getElementById('chartModeSwitch');
             if (switchWrap) switchWrap.style.display = hideSwitch ? 'none' : 'flex';
+            const filterRow = document.getElementById('chartFilterRow');
+            if (filterRow) filterRow.style.display = hideSwitch ? 'none' : 'flex';
             updateChartModeButtons();
             renderGrowthChart('large');
         }
@@ -2405,6 +2409,13 @@
             document.documentElement.style.overflow = '';
             document.body.style.overflow = '';
         }
+
+        // بستن نمودار بزرگ با کلید Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const modal = document.getElementById('largeChartModal');
+            if (modal && modal.style.display !== 'none') closeLargeChartModal();
+        });
 
         // رسم نمودار رشد سبک روی HTML Canvas با افزایش فاصله نقاط
         let chartViewMode = localStorage.getItem('monitor_chart_view_mode') === 'day' ? 'day' : 'cum';
