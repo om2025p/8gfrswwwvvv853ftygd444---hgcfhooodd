@@ -795,7 +795,7 @@
                 const dateFormatted = formatterTime.format(new Date(item.timestamp));
                 return `
                     <li class="percent-item ${item.value >= 0 ? 'positive' : 'negative'} ${highlightedStates[index] ? 'highlighted-persist' : ''}" data-index="${index}">
-                        ${item.value}%
+                        ${item.value}%${item.source === 'automation' ? ' 🤖' : ''}
                         <div>
                             <span class="date-time" style="font-size: 10px; color: #666;" onclick="toggleHighlight(${index})">
                                 ${dateFormatted}
@@ -1442,6 +1442,21 @@
         // اگه داده‌ای توی مرورگر داری، توی کنسول لاگ کن
         console.log("✅ داده‌های ذخیره شده:", percents.length, "مورد");
     
+        // ===== به‌روزرسانی زندهٔ فهرست وقتی تب محاسبه درصد می‌نویسد =====
+        window.__emaratAutoSync = function () {
+            percents = JSON.parse(localStorage.getItem(STORAGE_PREFIX + 'percents')) || [];
+            trash = JSON.parse(localStorage.getItem(STORAGE_PREFIX + 'trash')) || [];
+            goal = JSON.parse(localStorage.getItem(STORAGE_PREFIX + 'goal')) || null;
+            highlightedStates = JSON.parse(localStorage.getItem(STORAGE_PREFIX + 'highlightedStates')) || {};
+            highlightedPointIndices = JSON.parse(localStorage.getItem(STORAGE_PREFIX + 'highlightedPointIndices')) || [];
+            notes = JSON.parse(localStorage.getItem(STORAGE_PREFIX + 'notes')) || [];
+            percents.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+            updateUI();
+        };
+        window.addEventListener('storage', function (e) {
+            if (!e.key || e.key === 'kian_percents' || e.key === 'emarat_last_modified') window.__emaratAutoSync();
+        });
+
         /* ===== کنترل تم شب/روز (افزوده‌شده) ===== */
         window.getThemeColor = function(lightColor, darkColor) {
             return document.body.classList.contains('dark-mode') ? darkColor : lightColor;
