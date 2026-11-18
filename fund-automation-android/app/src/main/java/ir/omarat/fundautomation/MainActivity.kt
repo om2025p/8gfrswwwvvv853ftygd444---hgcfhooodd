@@ -170,13 +170,13 @@ class MainActivity : AppCompatActivity() {
                 var synergyBase = synergyBasePref
                 runCatching {
                     val reader = WebAppReader(this@MainActivity)
-                    reader.lastHistoryBase(WebAppReader.ATIE_PAGE)?.let {
+                    reader.lastHistoryBase(WebAppReader.ATIE_PAGE, "atie")?.let {
                         if (it.value > 0) {
                             atieBase = it.value
                             appendLog("📚 پایهٔ آتیه از تاریخچهٔ وب‌اپ خوانده شد: ${fmt(it.value)} ریال", AutomationEngine.LogLevel.INFO)
                         }
                     }
-                    reader.lastHistoryBase(WebAppReader.SYNERGY_PAGE)?.let {
+                    reader.lastHistoryBase(WebAppReader.SYNERGY_PAGE, "synergy")?.let {
                         if (it.value > 0) {
                             synergyBase = it.value
                             appendLog("📚 پایهٔ سینرژی از تاریخچهٔ وب‌اپ خوانده شد: ${fmt(it.value)} ریال", AutomationEngine.LogLevel.INFO)
@@ -209,12 +209,12 @@ class MainActivity : AppCompatActivity() {
                         e.putString("atie_percent", fmt(o.result.percent) + "%")
                         e.putString("atie_base", fmt(o.newValue))
                         e.putString("atie_base_num", o.newValue.toString())
-                        e.putString("atie_peak", FundCalculator.newPeak(o.result).toString())
+                        e.putString("atie_peak", (o.enginePeak ?: FundCalculator.newPeak(o.result)).toString())
                     } else {
                         e.putString("synergy_percent", fmt(o.result.percent) + "%")
                         e.putString("synergy_base", fmt(o.newValue))
                         e.putString("synergy_base_num", o.newValue.toString())
-                        e.putString("synergy_peak", FundCalculator.newPeak(o.result).toString())
+                        e.putString("synergy_peak", (o.enginePeak ?: FundCalculator.newPeak(o.result)).toString())
                     }
                     e.apply()
                     savedOk = true
@@ -232,9 +232,10 @@ class MainActivity : AppCompatActivity() {
                         base = o.base,
                         newValue = o.newValue,
                         percent = o.result.percent,
-                        type = o.result.type.name.lowercase(),
+                        type = o.engineType ?: o.result.type.name.lowercase(),
                         jalaliDate = jalaliWithTime,
-                        timestampMs = now
+                        timestampMs = now,
+                        peak = o.enginePeak
                     )
                     val wr = WebAppWriter(this@MainActivity).write(pageUrl, script) { wv ->
                         runOnUiThread { attachAutomationWebView(wv) }

@@ -61,7 +61,8 @@ object WebAppStore {
         percent: Double,
         type: String,
         jalaliDate: String,
-        timestampMs: Long
+        timestampMs: Long,
+        peak: Long? = null
     ): String {
         val percentStr = String.format(java.util.Locale.US, "%.2f", percent)
         // عدد خام درصد جداگانه نگه داشته می‌شود: فیلد نمایشی `percent` باید
@@ -69,9 +70,9 @@ object WebAppStore {
         // ذخیره شود، تغییرهای ریز (۰٫۰۰۳۴٪) برای همیشه صفر می‌مانند.
         val rawPercent = roundTo6(percent)
         return if (fund == "synergy") {
-            synergyScript(base, newValue, percentStr, rawPercent, type, jalaliDate, timestampMs)
+            synergyScript(base, newValue, percentStr, rawPercent, type, jalaliDate, timestampMs, peak)
         } else {
-            atieScript(base, newValue, percentStr, rawPercent, type, jalaliDate, timestampMs)
+            atieScript(base, newValue, percentStr, rawPercent, type, jalaliDate, timestampMs, peak)
         }
     }
 
@@ -79,7 +80,7 @@ object WebAppStore {
 
     private fun atieScript(
         base: Long, newValue: Long, percent: String, rawPercent: Double, type: String,
-        jalaliDate: String, ts: Long
+        jalaliDate: String, ts: Long, peak: Long?
     ): String {
         val historyItem = JSONObject().apply {
             put("id", ts)
@@ -110,6 +111,7 @@ object WebAppStore {
             var newVal = $newValue;
             var historyItem = $historyItem;
             var percentItem = $percentItem;
+            var peakVal = ${peak ?: newValue};
             function hasRecord(key){
               try {
                 var arr = JSON.parse(localStorage.getItem(key)) || [];
@@ -135,6 +137,9 @@ object WebAppStore {
 
             // --- پایهٔ mofid_atie_* ---
             localStorage.setItem(P + "baseNumber", String(newVal));
+
+            // --- قلهٔ اعلامی موتور وب‌اپ (اگر داده نشده باشد، همان مقدار جدید) ---
+            localStorage.setItem("$PENSION_PEAK", String(peakVal));
 
             // --- دستهٔ موازی pension_* (برای calculator و دیدبان) ---
             var pHist = [];
@@ -166,7 +171,7 @@ object WebAppStore {
 
     private fun synergyScript(
         base: Long, newValue: Long, percent: String, rawPercent: Double, type: String,
-        jalaliDate: String, ts: Long
+        jalaliDate: String, ts: Long, peak: Long?
     ): String {
         val historyItem = JSONObject().apply {
             put("id", ts)
@@ -196,6 +201,7 @@ object WebAppStore {
             var newVal = $newValue;
             var historyItem = $historyItem;
             var percentItem = $percentItem;
+            var peakVal = ${peak ?: newValue};
             function hasRecord(key){
               try {
                 var arr = JSON.parse(localStorage.getItem(key)) || [];
@@ -221,6 +227,9 @@ object WebAppStore {
 
             // --- پایهٔ سینرژی ---
             localStorage.setItem("$SYNERGY_BASE", String(newVal));
+
+            // --- قلهٔ اعلامی موتور وب‌اپ ---
+            localStorage.setItem("$SYNERGY_PEAK", String(peakVal));
 
             // --- شیء کامل energy_fund_synergy ---
             var obj = obj0;

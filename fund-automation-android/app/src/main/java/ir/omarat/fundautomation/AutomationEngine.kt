@@ -78,7 +78,17 @@ class AutomationEngine(
         val result: PercentResult,
         val method: String,
         /** تاریخ به‌روزرسانی دارایی که منبع اعلام کرده (برای توضیح ۰٪ بودن). */
-        val sourceUpdatedAt: String? = null
+        val sourceUpdatedAt: String? = null,
+        /**
+         * نوع تغییر و قلهٔ اعلامی **موتور خود وب‌اپ** (`calculateAndSave`).
+         *
+         * چرا جدا از [result]؟ چون قله در وب‌اپ معنای دقیقی دارد و اگر اپ
+         * منطق قله را دوباره پیاده کند، با هر تغییر وب‌اپ دو عدد ناسازگار
+         * می‌شود. درصد همچنان با دقت کامل از خود اپ می‌آید (وب‌اپ فقط دو رقم
+         * می‌دهد و همان باعث باگ «۰٫۰۰٪» بود)، ولی قله و نوع از موتور وب‌اپ.
+         */
+        val engineType: String? = null,
+        val enginePeak: Long? = null
     )
 
     /**
@@ -119,9 +129,9 @@ class AutomationEngine(
             val today = JalaliDate.format(System.currentTimeMillis(), withTime = false)
             runCatching {
                 val reader = WebAppReader(context)
-                manualDaysByFund["atie"] = reader.manualEntries(WebAppReader.ATIE_PAGE)
+                manualDaysByFund["atie"] = reader.manualEntries(WebAppReader.ATIE_PAGE, "atie")
                     .map { JalaliDate.format(it.timestampMs, withTime = false) }.toSet()
-                manualDaysByFund["synergy"] = reader.manualEntries(WebAppReader.SYNERGY_PAGE)
+                manualDaysByFund["synergy"] = reader.manualEntries(WebAppReader.SYNERGY_PAGE, "synergy")
                     .map { JalaliDate.format(it.timestampMs, withTime = false) }.toSet()
             }.onFailure { log("ℹ️ بررسی ثبت تکراری ناموفق: ${it.message}", LogLevel.INFO) }
 
@@ -143,10 +153,29 @@ class AutomationEngine(
                     continue
                 }
                 val result = FundCalculator.calculate(base, value, peak) ?: continue
+
+                // محاسبه با موتور خودِ وب‌اپ: نوع تغییر و قله از همان منطقی
+                // می‌آید که کاربر در صفحهٔ «ماشین‌حساب» می‌بیند. درصد با دقت
+                // کامل از خود اپ می‌ماند (وب‌اپ دو رقم می‌دهد).
+                val engine = runCatching {
+                    WebAppCalculator(context).calculate(
+                        pageUrl = if (fund == "synergy") WebAppCalculator.SYNERGY_CALC
+                        else WebAppCalculator.ATIE_CALC,
+                        fund = fund, base = base, newValue = value
+                    )
+                }.getOrNull()
+                if (engine != null) {
+                    log("🧮 موتور وب‌اپ: نوع=${engine.type}، قله=${fmt(engine.peak)} ریال", LogLevel.INFO)
+                } else {
+                    log("ℹ️ موتور وب‌اپ پاسخ نداد؛ از محاسبهٔ داخلی استفاده می‌شود.", LogLevel.INFO)
+                }
+
                 outcomes += FundOutcome(
                     fund, base, value, result,
                     methodByFund[fund] ?: "unknown",
-                    sourceUpdatedAtByFund[fund]
+                    sourceUpdatedAtByFund[fund],
+                    engine?.type,
+                    engine?.peak
                 )
             }
             outcomes

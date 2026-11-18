@@ -635,3 +635,19 @@ gradle test assembleRelease assembleDebug --no-daemon
 
 ### 🧪 تست‌ها (v1.8.0)
 - **۳۷ تست JVM** (دیباگ) — قبلاً ۲۳ بود. فایل‌های جدید: `PercentPrecisionTest` (۷ تست دقت درصد با عدد واقعی ۷٬۵۱۱ ریال) و `FundWindowResilienceTest` (۷ تست پایداری پنجره + تاریخ منبع).
+
+### 💥 باگ بحرانی «هر دو صندوق دست‌نخورده رها شد» + «پایهٔ سینرژی = عدد آتیه» (v1.9.0)
+سه ریشهٔ هم‌زمان که با هم لاگ «اتوماسیون هیچ کاری نکرد» را ساختند:
+1. **پایهٔ سینرژی، عدد آتیه شد.** صفحات وب‌اپ روی `file://` هستند و در WebView اندروید **همه یک origin مشترک** دارند، پس `localStorage` مشترک است. اسکریپت خواندن مشترک (`READ_SCRIPT`) همیشه اول `mofid_atie_history` را می‌خواند و برای صفحهٔ سینرژی هم همان را برمی‌گرداند. **درمان:** اسکریپت جدا برای هر صندوق (`ATIE_READ_SCRIPT` / `SYNERGY_READ_SCRIPT`) + پارامتر الزامی `fund` در `WebAppReader.manualEntries/lastHistoryBase`.
+2. **«امروز دستی ثبت شده» دروغین.** `manualEntries` نامش «دستی» بود ولی فیلتر `manual` را اعمال نمی‌کرد و **همهٔ** رکوردها را برمی‌گرداند؛ پس رکورد خودِ اتوماسیون (`source=automation`) هم «ثبت دستی امروز» شمرده می‌شد و اپ خودش را رد می‌کرد. **درمان:** `.filter { it.manual }`.
+3. **استخراج آتیه هرگز اجرا نشد** — نتیجهٔ زنجیره‌ای باگ ۲ (هر دو صندوق `skip` شدند).
+
+**افزوده‌های v1.9.0 (موتور محاسبهٔ خود وب‌اپ):**
+- فایل جدید `WebAppCalculator.kt`: صفحهٔ `goldN/calculator.html` را در WebView باز می‌کند، دو عدد را در فیلدهای خودش می‌گذارد و **تابع خودش** (`calculateAndSave(false)`) را صدا می‌زند تا **نوع تغییر** (increase/recovering/decrease) و **قله** عیناً از منطق وب‌اپ بیاید. درصد همچنان با **دقت ۶ رقم از اپ** محاسبه می‌شود (وب‌اپ فقط `toFixed(2)` می‌دهد و همان باگ «۰٫۰۰٪» بود).
+- `calculateAndSave(false)` یعنی **تاریخچه را وب‌اپ نمی‌نویسد**؛ نوشتن با اسکریپت اپ انجام می‌شود تا فیلد `source=automation` حفظ شود. اگر مستقیم `addPercent()` صدا زده می‌شد، رکورد **بدون `source`** ذخیره می‌شد و باگ تشخیص تکراری **برمی‌گشت**.
+- `WebAppStore.buildInjectScript` پارامتر `peak: Long?` گرفت و قله را در `pension_peakNumber`/`sinergy_peakNumber` می‌نویسد (وگرنه قلهٔ موتور وب‌اپ گم می‌شد).
+- نگاشت «کلاس CSS → نوع تغییر» در `WebAppCalculator.typeFromClassName` و در **کاتلین** انجام می‌شود (نه در رشتهٔ JS) تا مستقل از مرورگر و قابل تست باشد.
+- `FundOutcome` دو فیلد `engineType` و `enginePeak` گرفت؛ `MainActivity` قلهٔ موتور را در `prefs` و در حافظهٔ وب‌اپ هر دو ذخیره می‌کند.
+- **تست‌های جدید:** `ManualEntryFilterTest` (۲ تست) + `EngineTypeMappingTest` (۵ تست) → **جمع ۴۴ تست، ۰ شکست**.
+- نسخه: versionCode 9→10، versionName 1.8.0→1.9.0؛ امضای APK پایدار (SHA-256: `4603b639...`).
+
