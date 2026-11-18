@@ -920,7 +920,7 @@
             showToast('⚠️ این درصد امروز قبلاً در تب ثبت درصد هست');
             return;
         }
-        data.list.push({ value: value, timestamp: ts, source: 'automation' });
+        data.list.push({ value: value, timestamp: ts, source: 'manual' });
         data.list.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
         writePercentList(data.list, data.unified);
         showToast('✅ درصد در تب «ثبت درصد» هم ثبت شد');
