@@ -513,7 +513,7 @@ class AutomationEngine(
         log("🔎 استخراج مقدار صندوق «${displayName(fund)}»…", LogLevel.INFO)
         log("🌐 نشانی فعلی: ${currentUrl(webView)}", LogLevel.INFO)
 
-        openOtherTab(webView)
+        navigateToFund(webView, fund)
 
         // لایهٔ ۱: شنود شبکه
         sniffFromNetwork(webView, fund)?.let {
@@ -561,42 +561,166 @@ class AutomationEngine(
     }
 
     /**
-     * باز کردن تب صندوق‌ها در صفحهٔ پرتفوی.
+     * هدایت به تب/صفحهٔ صندوق موردنظر.
      *
      * صندوق‌های مفید (سینرژی، آتیه) در تب پیش‌فرض «سهام» نیستند. اسکریپت
-     * پایتون **دو کلیک** می‌زند: اول «سایر»، بعد «صندوق‌های مفید». نسخهٔ
-     * پیشین فقط «سایر» را می‌گشت و چون در لاگ جدید «سایر» در فهرست تب‌ها
-     * نبود، آتیه هرگز پیدا نمی‌شد.
+     * پایتون **دو کلیک** می‌زند: اول «سایر»، بعد «صندوق‌های مفید».
      *
-     * اینجا هر دو کلیک به‌ترتیب زده می‌شوند؛ اما اگر تب‌ها از قبل باز باشند
-     * (سینرژی/آتیه در متن دیده شوند) کلیک تکراری انجام نمی‌شود.
+     * اینجا ناوبری گام‌به‌گام و **با تأیید هر گام** انجام می‌شود: پس از هر
+     * کلیک، بررسی می‌کنیم آیا صفحه تغییر کرد یا کلیدواژهٔ صندوق پیدا شد.
+     * اگر در پایان کلیدواژه پیدا نشد، **دامپ عیب‌یابی** ثبت می‌شود تا آدرس
+     * و ساختار واقعی صفحه لو برود (به‌جای عیب‌یابی کورکورانه).
      */
-    private suspend fun openOtherTab(webView: WebView) {
+    private suspend fun navigateToFund(webView: WebView, fund: String) {
+        val keywords = if (fund == "synergy") SYNERGY_KEYWORDS else ATIE_KEYWORDS
         logTabProbe(webView)
 
-        val clickResult = clickTab(webView, listOf("سایر", "سایرین"))
-        when {
-            clickResult.startsWith("CLICKED") -> {
-                log("🗂 تب «سایر» باز شد.", LogLevel.INFO)
-                delay(3_000)
+        // گام ۱: تب «سایر» — تب میانی صندوق‌ها
+        tryClickTab(webView, listOf("سایر", "سایرین"), "سایر", 3_000)
+
+        // گام ۲: تب «صندوق‌های مفید»
+        tryClickTab(
+            webView,
+            listOf("صندوق‌های مفید", "صندوق ها", "صندوق‌ها", "صندوق‌های مفید", "صندوق هاي مفيد"),
+            "صندوق‌های مفید",
+            4_000
+        )
+
+        // گام ۳: خودِ صندوق — فقط اگر هنوز در متن صفحه نیست
+        if (!pageHasKeyword(webView, keywords)) {
+            val fundNames = if (fund == "atie") {
+                listOf("آتیه مفید", "آتیه", "بازنشستگی")
+            } else {
+                listOf("سینرژی", "انرژی")
             }
-            clickResult == "ALREADY" ->
-                log("🗂 تب «سایر» از قبل باز بود.", LogLevel.INFO)
-            else ->
-                log("ℹ️ تب «سایر» نبود؛ شاید ساختار عوض شده.", LogLevel.INFO)
+            tryClickLink(webView, fundNames, displayName(fund))
         }
 
-        // کلیک دوم: «صندوق‌های مفید» — کلید دیدن آتیه در پرتفوی
-        val fundsResult = clickTab(webView, listOf("صندوق‌های مفید", "صندوق ها", "صندوق‌ها", "صندوق هاي مفيد"))
-        when {
-            fundsResult.startsWith("CLICKED") -> {
-                log("🗂 تب «صندوق‌های مفید» باز شد.", LogLevel.INFO)
-                delay(4_000)
+        // اگر همچنان کلیدواژه نیست، دامپ عیب‌یابی
+        if (!pageHasKeyword(webView, keywords)) {
+            dumpNavigationDiagnostics(webView, fund)
+        }
+    }
+
+    /** یک کلیک تب با لاگ خوانا. */
+    private suspend fun tryClickTab(
+        webView: WebView,
+        texts: List<String>,
+        label: String,
+        waitMs: Long
+    ) {
+        when (val r = clickTab(webView, texts)) {
+            "ALREADY" -> log("🗂 تب «$label» از قبل فعال بود.", LogLevel.INFO)
+            "NOTFOUND" -> log("ℹ️ تب «$label» روی صفحه نبود.", LogLevel.INFO)
+            else -> {
+                log("🗂 تب «$label» کلیک شد ($r).", LogLevel.INFO)
+                delay(waitMs)
             }
-            fundsResult == "ALREADY" ->
-                log("🗂 تب «صندوق‌های مفید» از قبل باز بود.", LogLevel.INFO)
-            else ->
-                log("ℹ️ تب «صندوق‌های مفید» نبود (شاید صندوق‌ها در همین صفحه‌اند).", LogLevel.INFO)
+        }
+    }
+
+    /**
+     * کلیک روی **لینک**ی که متنش یکی از [texts] است.
+     *
+     * فقط عناصر لینک‌دار (`a[href]`) یا نقش دکمه/تب کلیک می‌شوند — هرگز
+     * دکمه‌های عملیاتی مثل «خرید/فروش» لمس نمی‌شوند (قانون امنیتی پروژه).
+     */
+    private suspend fun tryClickLink(webView: WebView, texts: List<String>, label: String): Boolean {
+        val arr = texts.joinToString(",") { "'${jsonEscape(it)}'" }
+        val js = """
+        (function(){
+          var texts = [$arr];
+          var cands = document.querySelectorAll('a[href],[role="button"],[role="tab"]');
+          for (var i=0;i<cands.length;i++){
+            var el = cands[i];
+            var t = (el.innerText || '').trim();
+            if (!t || t.length > 30) continue;
+            var hit = false;
+            for (var k=0;k<texts.length;k++){
+              if (t === texts[k] || t.indexOf(texts[k]) >= 0) { hit = true; break; }
+            }
+            if (!hit) continue;
+            // محافظ امنیتی: دکمه‌های عملیاتی ممنوع
+            if (/خرید|فروش|برداشت|واریز|انتقال|سفارش/.test(t)) continue;
+            var vis = !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+            if (!vis) continue;
+            try { el.click(); return 'CLICKED:' + t; } catch(e){}
+          }
+          return 'NOTFOUND';
+        })();
+        """.trimIndent()
+        val r = decodeJsonString(evaluate(webView, js) ?: "NOTFOUND")
+        return if (r.startsWith("CLICKED")) {
+            log("🔗 لینک «$label» کلیک شد ($r).", LogLevel.INFO)
+            delay(4_000)
+            true
+        } else {
+            log("ℹ️ لینک «$label» پیدا نشد.", LogLevel.INFO)
+            false
+        }
+    }
+
+    /** آیا متن نمایان صفحه یکی از کلیدواژه‌ها را دارد؟ */
+    private suspend fun pageHasKeyword(webView: WebView, keywords: List<String>): Boolean {
+        val body = bodyText(webView)
+        return keywords.any { body.contains(it) }
+    }
+
+    /**
+     * دامپ عیب‌یابی ناوبری — وقتی هیچ راهی به صندوق نبرد.
+     *
+     * همهٔ لینک‌های صفحه (`href` + متن) و عناصر حاوی «صندوق»/«آتیه»/«سینرژی»
+     * را برمی‌گرداند تا **آدرس واقعی صفحهٔ صندوق** در لاگ ظاهر شود. دفعهٔ بعد
+     * می‌توان ناوبری مستقیم با `loadUrl` گذاشت که از هر کلیکی پایدارتر است.
+     */
+    private suspend fun dumpNavigationDiagnostics(webView: WebView, fund: String) {
+        log("🔬 دامپ عیب‌یابی ناوبری برای «${displayName(fund)}»…", LogLevel.WARN)
+        log("🌐 نشانی فعلی: ${currentUrl(webView)}", LogLevel.INFO)
+
+        val js = """
+        (function(){
+          try {
+            var links = [];
+            var as = document.querySelectorAll('a[href]');
+            for (var i=0;i<as.length && links.length<40;i++){
+              var a = as[i];
+              var t = (a.innerText || '').trim().replace(/\s+/g,' ');
+              if (!t) continue;
+              links.push(t.substring(0,40) + ' → ' + a.getAttribute('href'));
+            }
+            var fundish = [];
+            var all = document.querySelectorAll('*');
+            for (var j=0;j<all.length && fundish.length<30;j++){
+              var el = all[j];
+              if (el.children.length > 0) continue;
+              var s = (el.innerText || '').trim();
+              if (!s || s.length > 40) continue;
+              if (/صندوق|آتیه|بازنشستگی|سینرژی|سایر/.test(s)) fundish.push(s);
+            }
+            return JSON.stringify({ links: links, fundish: fundish });
+          } catch(e){ return JSON.stringify({ links: [], fundish: [], err: ''+e }); }
+        })();
+        """.trimIndent()
+
+        val raw = decodeJsonString(evaluate(webView, js) ?: "{}")
+        try {
+            val obj = org.json.JSONObject(raw)
+            val links = obj.optJSONArray("links")
+            val fundish = obj.optJSONArray("fundish")
+            if (links != null && links.length() > 0) {
+                log("🔗 لینک‌های صفحه:", LogLevel.INFO)
+                for (i in 0 until links.length()) log("   • ${links.optString(i)}", LogLevel.INFO)
+            } else {
+                log("🔗 هیچ لینک href داری در صفحه نبود.", LogLevel.INFO)
+            }
+            if (fundish != null && fundish.length() > 0) {
+                val list = (0 until fundish.length()).map { fundish.optString(it) }
+                log("🏷 عناصر مرتبط با صندوق: ${list.joinToString(" | ")}", LogLevel.INFO)
+            } else {
+                log("🏷 عنصر مرتبط با صندوق پیدا نشد.", LogLevel.INFO)
+            }
+        } catch (e: Exception) {
+            log("🔬 دامپ خام: ${raw.take(400)}", LogLevel.WARN)
         }
     }
 
@@ -615,28 +739,49 @@ class AutomationEngine(
     /**
      * کلیک روی نخستین عنصری که متنش دقیقاً یکی از [texts] است.
      *
-     * @return `"CLICKED:<متن>"`، `"ALREADY"` (باز بود)، یا `"NOTFOUND"`.
+     * @return `"CLICKED:<متن>"`، `"ALREADY"` (خودِ عنصر فعال بود)، یا `"NOTFOUND"`.
+     *
+     * ⚠️ باگ نسخهٔ پیشین: شرط «از قبل باز است» روی **کل متن صفحه** سنجیده
+     * می‌شد (`/سینرژی|آتیه/.test(document.body.innerText)`). روی صفحهٔ
+     * پرتفوی، واژهٔ «سینرژی» به‌عنوان **نام یک نماد سهام** در جدول هست، نه
+     * به‌عنوان تب. پس همیشه `ALREADY` برمی‌گشت و **هرگز کلیک نمی‌شد** →
+     * هرگز به تب «صندوق‌های مفید» و صفحهٔ آتیه نمی‌رسیدیم.
+     *
+     * اکنون «فعال بودن» فقط از وضعیت **خودِ عنصر** خوانده می‌شود
+     * (`aria-selected`، `aria-current`، یا کلاس فعال). و اگر شک داشتیم،
+     * محتاطانه کلیک می‌کنیم — کلیک تکراری روی یک تب بی‌خطر است، ولی
+     * کلیک‌نکردن، ناوبری را برای همیشه متوقف می‌کند.
      */
     private suspend fun clickTab(webView: WebView, texts: List<String>): String {
         val arr = texts.joinToString(",") { "'${jsonEscape(it)}'" }
         val js = """
         (function(){
           var texts = [$arr];
-          var all = document.querySelectorAll('span,a,button,div,li');
+          var all = document.querySelectorAll('span,a,button,div,li,[role="tab"],[role="button"]');
           for (var i=0;i<all.length;i++){
             var el = all[i];
             var t = (el.innerText || '').trim();
             if (el.children.length > 1 || t.length > 20) continue;
-            if (texts.indexOf(t) >= 0){
-              var vis = !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
-              if (!vis) continue;
-              var already = /سینرژی|آتیه/.test(document.body.innerText || '');
-              if (already) return 'ALREADY';
-              try { el.click(); } catch(e){ return 'NOTFOUND'; }
-              return 'CLICKED:' + t;
-            }
+            if (texts.indexOf(t) < 0) continue;
+            var vis = !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+            if (!vis) continue;
+            if (isActive(el)) return 'ALREADY';
+            try { el.click(); } catch(e){ return 'NOTFOUND'; }
+            return 'CLICKED:' + t;
           }
           return 'NOTFOUND';
+
+          function isActive(node){
+            var n = node;
+            for (var lvl=0; lvl<4 && n; lvl++){
+              var a = n.getAttribute && (n.getAttribute('aria-selected') || n.getAttribute('aria-current'));
+              if (a === 'true' || a === 'page') return true;
+              var cls = (n.className && typeof n.className === 'string') ? n.className : '';
+              if (/\b(active|selected|current|is-active|tab-active)\b/i.test(cls)) return true;
+              n = n.parentElement;
+            }
+            return false;
+          }
         })();
         """.trimIndent()
         return decodeJsonString(evaluate(webView, js) ?: "NOTFOUND")

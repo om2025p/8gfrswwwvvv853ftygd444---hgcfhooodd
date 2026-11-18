@@ -356,7 +356,7 @@ gradle assembleRelease assembleDebug --no-daemon
 |---|---|
 | ورود به ایزی‌تریدر (SSO + auth-callback) | ✅ **حل شد** (v1.5.0) |
 | استخراج سینرژی (صندوق ۵) | ✅ کار می‌کند (لایهٔ هوش مصنوعی) |
-| استخراج آتیه مفید (صندوق ۴) | ❌ **خراب** — باگ ناوبری «ALREADY» (بخش ۷) |
+| استخراج آتیه مفید (صندوق ۴) | 🔧 **رفع شد** (v1.6.0) — منتظر تأیید روی گوشی |
 | ثبت در صفحهٔ وب‌اپ (localStorage) | ✅ کار می‌کند |
 | بکاپ گیت‌هاب با ادغام دوطرفه | ✅ **حل شد** (v1.5.0) |
 | تست واحد (BackupMerger) | ✅ ۱۱ تست پاس |
@@ -435,26 +435,25 @@ gradle assembleRelease assembleDebug --no-daemon
 - **درمان:** کلاس `WebAppWriter` ساخته شد: صفحهٔ صندوق را در یک WebView با `allowFileAccess` بارگذاری می‌کند و اسکریپت را همان‌جا اجرا می‌کند. در `MainActivity` بعد از استخراج، برای هر صندوق `write()` صدا زده می‌شود.
 - **ریشه ۳ — باگ ظریف `beforeunload` در gold4:** `gold4/percent.html` روی `beforeunload` به `saveData()` وصل است و `saveData` آرایهٔ **درون‌حافظه** را روی `localStorage` بازنویسی می‌کند. اگر فقط `localStorage` تزریق شود، هنگام بستن WebView رکورد **پاک می‌شود**. درمان: در پایان اسکریپت `window.reloadLocalData()` + `window.saveData()` صدا زده می‌شود (gold4 این توابع را گلوبال دارد). gold5 این مشکل را ندارد چون `beforeunload` ندارد.
 
-#### ۷. 🚨 آتیه مفید اصلاً استخراج نمی‌شود — باگ «ALREADY» در ناوبری (کشف‌شده، **در انتظار رفع**)
-- **وضعیت:** این باگ **تشخیص داده شده ولی هنوز رفع نشده است**. تا رفع نشدنش، صندوق ۴ (آتیه) همیشه «ناموفق» است.
-- **نشانه در لاگ:** ورود موفق ✅، سینرژی از لایهٔ هوش مصنوعی استخراج شد ✅، ولی آتیه از هیچ لایه‌ای نیامد:
+#### ۷. 🚨 آتیه مفید اصلاً استخراج نمی‌شد — باگ «ALREADY» در ناوبری (رفع‌شده در v1.6.0)
+- **نشانه در لاگ (v1.5.0):** ورود موفق ✅، سینرژی از لایهٔ هوش مصنوعی استخراج شد ✅، ولی آتیه از هیچ لایه‌ای نیامد:
   ```
   🗂 تب «سایر» از قبل باز بود.        ← دروغ! هیچ کلیکی رخ نداد
   ℹ️ تب «صندوق‌های مفید» نبود (شاید صندوق‌ها در همین صفحه‌اند).
   ```
-- **ریشه:** در `clickTab()` (AutomationEngine.kt) شرط «از قبل باز است» روی **کل متن صفحه** تست می‌شود:
+- **ریشه:** در `clickTab()` (AutomationEngine.kt) شرط «از قبل باز است» روی **کل متن صفحه** تست می‌شد:
   ```javascript
   var already = /سینرژی|آتیه/.test(document.body.innerText || '');
   if (already) return 'ALREADY';
   ```
-  روی صفحهٔ پرتفوی، واژهٔ «سینرژی» **به‌عنوان نام یک نماد سهام** در جدول هست (نه به‌عنوان تب صندوق). پس همیشه `ALREADY` برمی‌گردد و **هرگز روی تب کلیک نمی‌شود** → به تب «صندوق‌های مفید» و صفحهٔ آتیه نمی‌رسیم.
+  روی صفحهٔ پرتفوی، واژهٔ «سینرژی» **به‌عنوان نام یک نماد سهام** در جدول هست (نه به‌عنوان تب صندوق). پس همیشه `ALREADY` برمی‌گشت و **هرگز روی تب کلیک نمی‌شد** → به تب «صندوق‌های مفید» و صفحهٔ آتیه نمی‌رسیدیم.
 - **چرا هوش مصنوعی هم نجات نداد:** داده‌ای که **بارگذاری نشده** است، در متن صفحه نیست. آتیه در صفحهٔ پرتفوی وجود ندارد؛ پس لایهٔ ۴ هم دستش خالی بود. **مشکل، مسیریابی است نه استخراج.**
 - **نکتهٔ کلیدی صفحهٔ آتیه:** مقدار ۳۹۷٬۶۱۵٬۸۶۹ ریال در صفحهٔ **جداگانهٔ صندوق** است («دارایی شما» با واحد ریال)، نه در جدول پرتفوی. آن صفحه برچسب «واحد» (۷٬۵۸۱) و «ریال» (۳۹۷٬۶۱۵٬۸۶۹) دارد و دکمه‌های «خرید/فروش/تراکنش‌ها».
-- **راه‌حل پیشنهادی (تأییدنشده):**
-  1. شرط `already` فقط وضعیت **خودِ عنصر** را بسنجد، نه کل صفحه (یا حذف کامل این شرط).
-  2. ناوبری گام‌به‌گام با تأیید هر گام: «سایر» → «صندوق‌های مفید» → «آتیه مفید».
-  3. **بهترین راه:** ناوبری مستقیم با `loadUrl` (پایدارتر از کلیک). نیازمند دانستن آدرس دقیق صفحهٔ صندوق.
-  4. در صورت شکست، دامپ عیب‌یابی: همهٔ لینک‌های صفحه با `href`+متن + عناصر حاوی «صندوق»/«آتیه».
+- **درمان (v1.6.0):**
+  1. شرط «فعال بودن» فقط از وضعیت **خودِ عنصر** خوانده می‌شود (`isActive()`: `aria-selected`/`aria-current`/کلاس فعال در ۴ سطح والد). اگر شک داشتیم، محتاطانه کلیک می‌کنیم — کلیک تکراری بی‌خطر است، ولی کلیک‌نکردن ناوبری را متوقف می‌کند.
+  2. `openOtherTab()` → `navigateToFund()`: ناوبری **گام‌به‌گام با تأیید** (سایر → صندوق‌های مفید → خودِ صندوق).
+  3. `tryClickLink()`: کلیک روی `a[href]`/`[role=button]`/`[role=tab]` — با **محافظ امنیتی** که هرگز دکمه‌های «خرید/فروش/برداشت/واریز/انتقال/سفارش» را لمس نمی‌کند.
+  4. `dumpNavigationDiagnostics()`: اگر در پایان کلیدواژه پیدا نشد، همهٔ لینک‌های صفحه (`href`+متن) و عناصر صندوقی در لاگ ثبت می‌شوند تا **آدرس واقعی صفحه** لو برود.
 - **درس:** ناوبری با کلیک شکننده است؛ ناوبری با URL پایدار است. همیشه شرط «وضعیت» را روی عنصر بسنجید، نه روی کل صفحه.
 
 #### ۸. ⚠️ آتیه در پرتفوی پیدا نمی‌شد — کلیک دوم گم‌شده (v1.4.0)
@@ -500,14 +499,41 @@ gradle assembleRelease assembleDebug --no-daemon
 
 ### 🛠️ بیلد
 ```bash
-export JAVA_HOME=/opt/tools/jdk17
-export ANDROID_HOME=/opt/tools/android-sdk
-export PATH=/opt/tools/gradle/bin:$JAVA_HOME/bin:$PATH
+export JAVA_HOME=/tmp/androidbuild/jdk17
+export ANDROID_HOME=/tmp/androidbuild/android-sdk
+export ANDROID_SDK_ROOT=$ANDROID_HOME
+export PATH=$JAVA_HOME/bin:/tmp/androidbuild/gradle-8.7/bin:$PATH
 cd fund-automation-android
-gradle assembleRelease assembleDebug --no-daemon
+gradle testDebugUnitTest assembleDebug assembleRelease --no-daemon
 ```
 خروجی: `app/build/outputs/apk/{release,debug}/`
 بیلد خودکار: `.github/workflows/build_fund_apk.yml` (workflow_dispatch + push روی `main`/`S-15`).
+
+#### ⚠️ درس گران‌بها: محیط بیلد `/tmp` **موقتی** است
+در 1405/08/27 پوشهٔ `/tmp/androidbuild` (JDK 17 + Android SDK + Gradle) **به‌کلی پاک شد** — چون `/tmp` موقتی است. **کدها در گیت سالم ماندند** (این ارزش «همه‌چیز در گیت» را ثابت کرد)، ولی بیلد محلی از صفر لازم شد.
+
+**بازسازی سریع محیط (۳ دانلود):**
+```bash
+mkdir -p /tmp/androidbuild && cd /tmp/androidbuild
+# ۱) JDK 17
+curl -sL -o jdk.tar.gz "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse?project=jdk"
+tar xzf jdk.tar.gz && mv jdk-17* jdk17
+# ۲) Gradle 8.7 (unzip نصب نیست → با پایتون استخراج کن)
+curl -sL -o gradle.zip "https://services.gradle.org/distributions/gradle-8.7-bin.zip"
+python3 -c "import zipfile; zipfile.ZipFile('gradle.zip').extractall('.')"
+# ۳) Android cmdline-tools + SDK
+curl -sL -o cmdtools.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+python3 -c "import zipfile; zipfile.ZipFile('cmdtools.zip').extractall('android-sdk-tmp')"
+mkdir -p android-sdk/cmdline-tools && mv android-sdk-tmp/cmdline-tools android-sdk/cmdline-tools/latest
+chmod +x android-sdk/cmdline-tools/latest/bin/*
+export JAVA_HOME=/tmp/androidbuild/jdk17; export PATH=$JAVA_HOME/bin:$PATH
+yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$PWD/android-sdk \
+  "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+chmod +x gradle-8.7/bin/gradle
+echo "sdk.dir=/tmp/androidbuild/android-sdk" > <repo>/fund-automation-android/local.properties
+```
+**نکات:** `unzip` در این محیط نصب نیست → از `zipfile` پایتون استفاده کن. `sdkmanager` و `gradle` بدون `chmod +x` خطای Permission denied می‌دهند. `local.properties` در `.gitignore` است و باید دستی ساخته شود.
+**راه امن‌تر:** به‌جای بیلد محلی، از **GitHub Actions** استفاده کن — روی سرور گیت‌هاب اجرا می‌شود و به این محیط وابسته نیست.
 
 ### 🐛 نکات و تله‌ها
 - `local.properties` (شامل `sdk.dir`) باید در `.gitignore` باشد (اینجا هست).

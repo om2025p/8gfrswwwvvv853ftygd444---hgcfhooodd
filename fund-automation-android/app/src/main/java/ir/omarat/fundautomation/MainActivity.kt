@@ -222,7 +222,7 @@ class MainActivity : AppCompatActivity() {
                     )
                     val r = backup.uploadToGitHub(payload, "gold4/gold4_backup.json", "بکاپ خودکار آتیه - $jalali")
                     if (r.success) backupOk = true
-                    appendLog(if (r.success) "📦 پشتیبان آتیه در گیت‌هاب ذخیره شد." else "⚠️ پشتیبان آتیه: ${r.message}", AutomationEngine.LogLevel.WARN)
+                    appendLog(if (r.success) "📦 پشتیبان آتیه در گیت‌هاب ذخیره شد." else "⚠️ پشتیبان آتیه: ${r.message}", if (r.success) AutomationEngine.LogLevel.OK else AutomationEngine.LogLevel.WARN)
                 }
 
                 if (synergyOutcome != null) {
@@ -231,7 +231,7 @@ class MainActivity : AppCompatActivity() {
                     )
                     val r = backup.uploadToGitHub(payload, "gold5/gold5_backup.json", "بکاپ خودکار سینرژی - $jalali")
                     if (r.success) backupOk = true
-                    appendLog(if (r.success) "📦 پشتیبان سینرژی در گیت‌هاب ذخیره شد." else "⚠️ پشتیبان سینرژی: ${r.message}", AutomationEngine.LogLevel.WARN)
+                    appendLog(if (r.success) "📦 پشتیبان سینرژی در گیت‌هاب ذخیره شد." else "⚠️ پشتیبان سینرژی: ${r.message}", if (r.success) AutomationEngine.LogLevel.OK else AutomationEngine.LogLevel.WARN)
                 }
 
                 prefs.edit().putString("last_run", jalali).apply()
