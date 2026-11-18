@@ -158,6 +158,15 @@ class MainActivity : AppCompatActivity() {
                     appendLog(if (r.success) "📦 پشتیبان آتیه در گیت‌هاب ذخیره شد." else "⚠️ پشتیبان آتیه: ${r.message}", AutomationEngine.LogLevel.WARN)
                 }
 
+                if (synergyOutcome != null) {
+                    val payload = WebAppStore.buildSynergyBackupPayload(
+                        synergyOutcome.result.percent, synergyOutcome.base, synergyOutcome.newValue, now
+                    )
+                    val r = backup.uploadToGitHub(payload, "gold5/gold5_backup.json", "بکاپ خودکار سینرژی - $jalali")
+                    if (r.success) backupOk = true
+                    appendLog(if (r.success) "📦 پشتیبان سینرژی در گیت‌هاب ذخیره شد." else "⚠️ پشتیبان سینرژی: ${r.message}", AutomationEngine.LogLevel.WARN)
+                }
+
                 prefs.edit().putString("last_run", jalali).apply()
                 if (backupOk) prefs.edit().putString("last_backup", jalali).apply()
 
@@ -215,6 +224,16 @@ class MainActivity : AppCompatActivity() {
 
         val userField = field("نام کاربری کارگزاری", session.username)
         val passField = field("رمز عبور", session.password, isPassword = true)
+        val atieBaseField = field(
+            "مقدار پایهٔ آتیه مفید (ریال)",
+            prefs.getString("atie_base_num", "") ?: "",
+            number = true
+        )
+        val synergyBaseField = field(
+            "مقدار پایهٔ سینرژی (ریال)",
+            prefs.getString("synergy_base_num", "") ?: "",
+            number = true
+        )
         val geminiField = field("کلید Gemini (اختیاری)", session.geminiApiKey)
         val ghTokenField = field("توکن گیت‌هاب (بکاپ)", session.githubToken, isPassword = true)
         val ghRepoField = field("مخزن گیت‌هاب (owner/repo)", session.githubRepo)
@@ -222,6 +241,8 @@ class MainActivity : AppCompatActivity() {
 
         container.addView(userField)
         container.addView(passField)
+        container.addView(atieBaseField)
+        container.addView(synergyBaseField)
         container.addView(geminiField)
         container.addView(ghTokenField)
         container.addView(ghRepoField)
@@ -237,6 +258,10 @@ class MainActivity : AppCompatActivity() {
                 session.githubToken = ghTokenField.text.toString().trim()
                 session.githubRepo = ghRepoField.text.toString().trim()
                 session.githubBranch = ghBranchField.text.toString().trim().ifBlank { "main" }
+                prefs.edit()
+                    .putString("atie_base_num", digits(atieBaseField.text.toString()))
+                    .putString("synergy_base_num", digits(synergyBaseField.text.toString()))
+                    .apply()
                 toast("ذخیره شد (رمزنگاری‌شده).")
                 refreshStatus()
             }
@@ -244,14 +269,34 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun field(hint: String, value: String, isPassword: Boolean = false): EditText =
+    private fun field(
+        hint: String,
+        value: String,
+        isPassword: Boolean = false,
+        number: Boolean = false
+    ): EditText =
         EditText(this).apply {
             this.hint = hint
             setText(value)
-            inputType = if (isPassword)
-                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            else InputType.TYPE_CLASS_TEXT
+            inputType = when {
+                number -> InputType.TYPE_CLASS_NUMBER
+                isPassword -> InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                else -> InputType.TYPE_CLASS_TEXT
+            }
         }
+
+    /** حذف کاما و ارقام غیرانگلیسی از ورودی عددی. */
+    private fun digits(raw: String): String {
+        val persian = "۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩"
+        val sb = StringBuilder()
+        for (c in raw) {
+            when {
+                c.isDigit() -> sb.append(c)
+                c in persian -> sb.append(persian.indexOf(c) % 10)
+            }
+        }
+        return sb.toString()
+    }
 
     // ------------------------------------------------------------------ Helpers
 

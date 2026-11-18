@@ -303,10 +303,15 @@ class AutomationEngine(
 
     /**
      * استخراج مقدار یک صندوق با سه لایه + لایهٔ هوش مصنوعی.
+     *
+     * پیش از اسکن، تب «سایر» باز می‌شود؛ چون صندوق‌های مفید زیر آن تب قرار
+     * دارند و در تب پیش‌فرض «سهام» هیچ‌کدام دیده نمی‌شوند.
      */
     private suspend fun extractFund(webView: WebView, fund: String): Long? {
         val keywords = if (fund == "synergy") SYNERGY_KEYWORDS else ATIE_KEYWORDS
         log("🔎 استخراج مقدار صندوق «${displayName(fund)}»…", LogLevel.INFO)
+
+        openOtherTab(webView)
 
         // لایهٔ ۱: شنود شبکه
         sniffFromNetwork(webView, fund)?.let {
@@ -343,6 +348,38 @@ class AutomationEngine(
         return null
     }
 
+    /**
+     * باز کردن تب «سایر» در صفحهٔ پرتفوی.
+     *
+     * صندوق‌های مفید (سینرژی، آتیه) در تب پیش‌فرض «سهام» نیستند و بدون این
+     * کلیک، `innerText` صفحه هیچ‌کدام را نشان نمی‌دهد.
+     */
+    private suspend fun openOtherTab(webView: WebView) {
+        val js = """
+        (function(){
+          var texts = ['سایر','سایرین','صندوق‌های مفید','صندوق ها','صندوق‌ها'];
+          var all = document.querySelectorAll('span,a,button,div,li');
+          for (var i=0;i<all.length;i++){
+            var el = all[i];
+            var t = (el.innerText || '').trim();
+            if (el.children.length > 1 || t.length > 20) continue;
+            if (texts.indexOf(t) >= 0){
+              var already = document.body.innerText.indexOf('سینرژی') >= 0;
+              if (already) return 'ALREADY';
+              el.click();
+              return 'CLICKED:' + t;
+            }
+          }
+          return 'NOTFOUND';
+        })();
+        """.trimIndent()
+        val r = evaluate(webView, js)
+        if (r?.contains("CLICKED") == true) {
+            log("🗂 تب «سایر» باز شد.", LogLevel.INFO)
+            delay(4_000)
+        }
+    }
+
     private suspend fun sniffFromNetwork(webView: WebView, fund: String): Long? {
         val varName = if (fund == "synergy") "__emaratSynergyRaw" else "__emaratAtieRaw"
         val js = "window.$varName ? String(window.$varName).substring(0, 60000) : ''"
@@ -356,21 +393,35 @@ class AutomationEngine(
         return numbers.maxOrNull()
     }
 
+    /**
+     * یافتن مقدار ریالی یک صندوق از متن صفحه.
+     *
+     * `innerText` در WebView اندروید، برخلاف Playwright، بین عناصر `\n` نمی‌گذارد؛
+     * پس «سینرژی۲۵۰,۰۰۰,۰۰۰همسنگ ۲۵,۰۰۰,۰۰۰» به‌هم‌چسبیده می‌آید. به‌جای پیمایش
+     * خط‌به‌خط، یک پنجرهٔ کاراکتری بعد از کلیدواژه اسکن می‌شود و تا اولین نشانهٔ
+     * پایان («همسنگ» یا «تومان») ادامه می‌یابد؛ سپس بزرگ‌ترین عدد ۶رقمی+ برگردانده می‌شود.
+     */
     private fun scanBodyText(text: String, keywords: List<String>): Long? {
         val normalized = toEnglishDigits(text)
-        val lines = normalized.split("\n").map { it.trim() }.filter { it.isNotEmpty() }
-        for ((idx, line) in lines.withIndex()) {
-            if (keywords.any { line.contains(it) }) {
-                val candidates = mutableListOf<Long>()
-                for (offset in 1..12) {
-                    val target = lines.getOrNull(idx + offset) ?: break
-                    if (target.contains("همسنگ")) break
-                    Regex("[\\d,]+").findAll(target).forEach { m ->
-                        val clean = m.value.replace(",", "")
-                        if (clean.length >= 6) clean.toLongOrNull()?.let { candidates.add(it) }
-                    }
-                }
-                candidates.filter { it >= MIN_ASSET_VALUE }.maxOrNull()?.let { return it }
+        for (keyword in keywords) {
+            var from = normalized.indexOf(keyword)
+            while (from >= 0) {
+                val window = normalized.substring(
+                    from + keyword.length,
+                    minOf(from + keyword.length + WINDOW_CHARS, normalized.length)
+                )
+                val endIndex = listOf(
+                    window.indexOf("همسنگ"), window.indexOf("تومان"), window.indexOf("کارگزاری")
+                ).filter { it >= 0 }.minOrNull() ?: window.length
+                val segment = window.substring(0, endIndex)
+
+                val candidates = Regex("[\\d,]{6,}").findAll(segment)
+                    .mapNotNull { it.value.replace(",", "").toLongOrNull() }
+                    .filter { it >= MIN_ASSET_VALUE }
+                    .toList()
+                candidates.maxOrNull()?.let { return it }
+
+                from = normalized.indexOf(keyword, from + keyword.length)
             }
         }
         return null
@@ -481,6 +532,9 @@ class AutomationEngine(
         private const val PORTFOLIO_URL = "https://m.easytrader.ir/portfolio-fill"
         private const val HYDRATION_DELAY_MS = 8_000L
         private const val MIN_ASSET_VALUE = 1_000_000L
+
+        /** پنجرهٔ کاراکتری اسکن متن بعد از کلیدواژهٔ صندوق. */
+        private const val WINDOW_CHARS = 200
 
         private val SYNERGY_KEYWORDS = listOf("سینرژی", "synergy")
         private val ATIE_KEYWORDS = listOf("آتیه", "بازنشستگی", "atie")

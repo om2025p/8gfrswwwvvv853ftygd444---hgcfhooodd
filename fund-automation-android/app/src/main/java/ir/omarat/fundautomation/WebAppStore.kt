@@ -179,21 +179,8 @@ object WebAppStore {
     fun buildAtieBackupPayload(percent: Double, base: Long, newValue: Long, ts: Long): String {
         val obj = JSONObject().apply {
             put("baseNumber", newValue)
-            put("percents", JSONArray().put(JSONObject().apply {
-                put("value", percent); put("timestamp", ts)
-                put("source", "automation"); put("auto", true)
-            }))
-            put("history", JSONArray().put(JSONObject().apply {
-                put("id", ts)
-                put("base", formatNumber(base))
-                put("new", formatNumber(newValue))
-                put("percent", String.format(java.util.Locale.US, "%.2f", percent))
-                put("rawBase", base.toDouble())
-                put("rawNew", newValue.toDouble())
-                put("timestamp", ts)
-                put("source", "automation")
-                put("auto", true)
-            }))
+            put("percents", JSONArray().put(percentRecord(percent, ts)))
+            put("history", JSONArray().put(historyRecord(base, newValue, percent, ts)))
             put("trash", JSONArray())
             put("goal", JSONObject.NULL)
             put("highlightedStates", JSONObject())
@@ -203,6 +190,38 @@ object WebAppStore {
         }
         return obj.toString(2)
     }
+
+    /** ساخت بدنهٔ بکاپ صندوق ۵ برای فایل gold5_backup.json. */
+    fun buildSynergyBackupPayload(percent: Double, base: Long, newValue: Long, ts: Long): String {
+        val obj = JSONObject().apply {
+            put("baseNumber", newValue)
+            put("percents", JSONArray().put(percentRecord(percent, ts)))
+            put("history", JSONArray().put(historyRecord(base, newValue, percent, ts)))
+            put("trash", JSONArray())
+            put("goal", JSONObject.NULL)
+        }
+        return obj.toString(2)
+    }
+
+    private fun percentRecord(percent: Double, ts: Long): JSONObject = JSONObject().apply {
+        put("value", percent)
+        put("timestamp", ts)
+        put("source", "automation")
+        put("auto", true)
+    }
+
+    private fun historyRecord(base: Long, newValue: Long, percent: Double, ts: Long): JSONObject =
+        JSONObject().apply {
+            put("id", ts)
+            put("base", formatNumber(base))
+            put("new", formatNumber(newValue))
+            put("percent", String.format(java.util.Locale.US, "%.2f", percent))
+            put("rawBase", base.toDouble())
+            put("rawNew", newValue.toDouble())
+            put("timestamp", ts)
+            put("source", "automation")
+            put("auto", true)
+        }
 
     private fun formatNumber(n: Long): String = String.format("%,d", n)
 }
