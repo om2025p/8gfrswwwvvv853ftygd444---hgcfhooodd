@@ -338,3 +338,57 @@ gradle assembleRelease assembleDebug --no-daemon
   3. پاپ‌آپ‌های بلند باید `max-height: 85vh` + `overflow-y: auto` + تیتر `position: sticky` داشته باشند؛ وگرنه روی موبایل بلندتر از صفحه می‌شوند و **دکمه‌ی بستن بیرون صفحه می‌افتد** (کاربر گیر می‌کند).
   4. اعتبارسنجی کنتراست: با Puppeteer نسبت کنتراست WCAG هر سلکتور را حساب کنید؛ حداقل باید ≥ ۴.۵ (AA) و ترجیحاً ≥ ۶ باشد.
 - **بعد از تغییر:** `CACHE_NAME` در `sw.js` بامپ شود (الان `emarat-portal-v79`).
+
+---
+
+## 📱 اپ اندروید اتوماسیون ثبت درصد ۴ و ۵ (fund-automation-android/)
+
+### مشخصات فنی
+- **applicationId:** `ir.omarat.fundautomation` (جدا از سایر اپ‌ها، بدون تداخل)
+- **SharedPreferences:** `omarat_fund_automation_prefs` (رمزنگاری‌شده با Android Keystore)
+- **SharedPreferences وضعیت:** `omarat_fund_automation_state`
+- **نسخه:** 1.0.0 (versionCode 1) | minSdk 24 / targetSdk 34
+- **آیکون:** از `gold4/icon-512.png` ساخته می‌شود (۵ چگالی + round + adaptive)
+- **زبان:** Kotlin + ViewBinding + OkHttp + EncryptedSharedPreferences
+
+### 🏛️ معماری Local-First (بدون VPS، بدون سرور، بدون GitHub Actions)
+- اپ خودش یک WebView می‌سازد، وارد `login.emofid.com/Login` می‌شود، تیک «این دستگاه را به خاطر بسپار» می‌زند، سپس به `m.easytrader.ir/portfolio-fill` می‌رود.
+- **کروم نمی‌تواند اتوماسیون کند** — فقط WebView خودِ اپ.
+- درصد در حافظهٔ داخلی اپ ذخیره می‌شود + بکاپ JSON با **GitHub API مستقیم** آپلود می‌شود (نه Actions).
+
+### 🧩 فایل‌های کد
+| فایل | مسئولیت |
+|---|---|
+| `MainActivity.kt` | صفحهٔ اصلی، دکمهٔ اجرا، OTP تعاملی، تنظیمات ⚙️، گزارش |
+| `AutomationEngine.kt` | WebView + ورود + استخراج ۴ لایه (network/text/dom/ai) |
+| `FundCalculator.kt` | فرمول درصد + منطق قله (INCREASE/RECOVERING/DECREASE/NEUTRAL) |
+| `SessionStore.kt` | رمز و کوکی با Keystore (EncryptedSharedPreferences) |
+| `BackupManager.kt` | آپلود بکاپ به گیت‌هاب با API + SHA lookup |
+| `WebAppStore.kt` | ساخت payload بکاپ + اسکریپت تزریق localStorage |
+| `AiPageReader.kt` | لایهٔ Gemini (زنجیرهٔ مدل‌ها) |
+| `JalaliDate.kt` | تبدیل میلادی به شمسی |
+| `ReportBuilder.kt` | گزارش فارسی پایان اجرا |
+| `WebViewActivity.kt` | نمایش صفحات محلی ثبت درصد |
+
+### 🔄 کانال نمایش در وب‌اپ‌ها (مهم)
+اپ بکاپ را در `gold4/gold4_backup.json` و `gold5/gold5_backup.json` آپلود می‌کند.
+- `gold5/percent.html` خودش `autoSyncFromBackup` دارد → عدد را می‌بیند.
+- `gold4/percent.html` و `monitor/index.html` باید تکهٔ مشابه اضافه کنند (فاز بعد).
+
+### 🛠️ بیلد
+```bash
+export JAVA_HOME=/opt/tools/jdk17
+export ANDROID_HOME=/opt/tools/android-sdk
+export PATH=/opt/tools/gradle/bin:$JAVA_HOME/bin:$PATH
+cd fund-automation-android
+gradle assembleRelease assembleDebug --no-daemon
+```
+خروجی: `app/build/outputs/apk/{release,debug}/`
+بیلد خودکار: `.github/workflows/build_fund_apk.yml` (workflow_dispatch + push روی `main`/`S-15`).
+
+### 🐛 نکات و تله‌ها
+- `local.properties` (شامل `sdk.dir`) باید در `.gitignore` باشد (اینجا هست).
+- الگوی `*.png` در `.gitignore` آیکون‌های mipmap را نادیده می‌گرفت → استثنا اضافه شد:
+  `!fund-automation-android/app/src/main/res/mipmap-*/ic_launcher*.png`
+- در پوشهٔ `drawable` نباید هم `ic_launcher_foreground.png` و هم `.xml` باشد (تعارض AAPT).
+- رمز و توکن‌ها **فقط** در `SessionStore` (رمزنگاری‌شده) — هیچ‌گاه hardcode یا در گزارش.

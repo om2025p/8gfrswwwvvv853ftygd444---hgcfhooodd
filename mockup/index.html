@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ماکت تعاملی — اتوماسیون ثبت درصد ۴ و ۵</title>
+<style>
+  :root{
+    --bg:#0b1220; --bg2:#0f172a; --card:#141d33; --card2:#1b2740;
+    --line:#26344f; --text:#e8eefc; --muted:#93a4c4;
+    --blue:#3b82f6; --green:#22c55e; --red:#ef4444;
+    --amber:#f59e0b; --purple:#8b5cf6; --cyan:#06b6d4;
+    --shadow:0 18px 40px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:
+      radial-gradient(1200px 600px at 15% -10%, #16233d 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, #1a1430 0%, transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:Tahoma,"Segoe UI",Geneva,Verdana,sans-serif;
+    min-height:100vh; padding:18px;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+  header.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:24px;
+        background:linear-gradient(135deg,var(--blue),var(--purple));box-shadow:var(--shadow)}
+  h1{font-size:1.15rem;margin:0}
+  .sub{color:var(--muted);font-size:.8rem;margin-top:3px}
+  .badge{background:#3b2a6b;color:#c9b8ff;border:1px solid #5b46a0;padding:6px 12px;border-radius:999px;font-size:.72rem;font-weight:bold}
+
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+  .phone{
+    background:#05080f;border:10px solid #1e2a44;border-radius:38px;box-shadow:var(--shadow);
+    padding:10px;position:relative;height:720px;display:flex;flex-direction:column;overflow:hidden;
+  }
+  .notch{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:110px;height:20px;background:#1e2a44;border-radius:0 0 14px 14px;z-index:5}
+  .screen{flex:1;background:var(--bg2);border-radius:28px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+
+  .appbar{background:linear-gradient(135deg,#0d6efd,#5b46a0);padding:26px 14px 12px;display:flex;align-items:center;justify-content:space-between}
+  .appbar .t{font-weight:bold;font-size:.95rem}
+  .appbar .gear{font-size:1.1rem;opacity:.9}
+  .screen-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+  .screen-body::-webkit-scrollbar{width:6px}
+  .screen-body::-webkit-scrollbar-thumb{background:#2b3a58;border-radius:9px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
+  .card h3{margin:0 0 8px;font-size:.82rem;color:var(--muted);font-weight:bold;display:flex;gap:6px;align-items:center}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px dashed #22304a;font-size:.85rem}
+  .row:last-child{border-bottom:none}
+  .row .k{color:var(--muted)}
+  .row .v{font-weight:bold;font-variant-numeric:tabular-nums}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-inline-end:6px}
+  .g{background:var(--green);box-shadow:0 0 8px var(--green)}
+  .r{background:var(--red);box-shadow:0 0 8px var(--red)}
+  .a{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+
+  .funds{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .fund{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+  .fund .name{font-size:.72rem;color:var(--muted)}
+  .fund .pct{font-size:1.5rem;font-weight:bold;font-variant-numeric:tabular-nums;margin:4px 0}
+  .fund .base{font-size:.66rem;color:var(--muted);font-variant-numeric:tabular-nums}
+  .up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--muted)}
+
+  .run-btn{
+    margin:auto 0 0; padding:15px;border:none;border-radius:16px;font-size:1rem;font-weight:bold;color:#fff;
+    background:linear-gradient(135deg,#16a34a,#22c55e);cursor:pointer;box-shadow:0 10px 24px rgba(34,197,94,.35);
+    transition:transform .15s, filter .15s;font-family:inherit
+  }
+  .run-btn:hover{filter:brightness(1.08)}
+  .run-btn:active{transform:scale(.98)}
+  .run-btn:disabled{background:#334155;box-shadow:none;cursor:not-allowed;color:#94a3b8}
+
+  .prog{height:7px;background:#1b2740;border-radius:9px;overflow:hidden;margin-top:8px}
+  .prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--blue));transition:width .35s}
+  .stage-label{font-size:.74rem;color:var(--muted);margin-top:6px;text-align:center;min-height:16px}
+
+  .webview{position:absolute;inset:0;background:#0a0f1c;display:none;flex-direction:column;z-index:4}
+  .webview.show{display:flex}
+  .wv-bar{background:#111a2e;padding:8px 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);font-size:.72rem;color:var(--muted)}
+  .wv-url{flex:1;background:#0a0f1c;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:.68rem;overflow:hidden;white-space:nowrap;direction:ltr;text-align:left}
+  .wv-body{flex:1;padding:14px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;text-align:center}
+  .wv-spinner{width:44px;height:44px;border-radius:50%;border:4px solid #22304a;border-top-color:var(--cyan);animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .wv-msg{font-size:.82rem;color:#cfe0ff}
+  .wv-form{width:100%;max-width:250px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:none;flex-direction:column;gap:9px}
+  .wv-form.show{display:flex}
+  .wv-form label{font-size:.72rem;color:var(--muted);text-align:right}
+  .wv-form input{background:#0a0f1c;border:1px solid var(--line);border-radius:10px;padding:11px;color:var(--text);font-size:1rem;text-align:center;letter-spacing:6px;font-family:inherit}
+  .wv-form input:focus{outline:none;border-color:var(--cyan)}
+  .wv-form button{background:linear-gradient(135deg,var(--blue),var(--purple));border:none;color:#fff;padding:11px;border-radius:10px;font-weight:bold;cursor:pointer;font-family:inherit}
+  .trust{display:flex;gap:8px;align-items:center;justify-content:center;font-size:.72rem;color:var(--muted)}
+  .tick{color:var(--green);font-weight:bold}
+
+  .found{background:#0f2e1c;border:1px solid #1f6b3f;color:#7ef0a8;border-radius:12px;padding:10px;font-size:.78rem;display:none}
+  .found.show{display:block;animation:pop .4s}
+  @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+
+  .panel{display:flex;flex-direction:column;gap:14px}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow)}
+  .box h2{margin:0 0 10px;font-size:.95rem;display:flex;gap:8px;align-items:center}
+  .now{font-size:.88rem;line-height:1.9}
+  .now .big{font-size:1rem;font-weight:bold;color:#cfe0ff}
+  .now .hint{color:var(--muted);font-size:.82rem;display:block;margin-top:6px;border-inline-start:3px solid var(--blue);padding-inline-start:10px}
+
+  .steps{list-style:none;margin:0;padding:0;max-height:250px;overflow-y:auto}
+  .steps li{display:flex;gap:10px;padding:8px 6px;border-radius:10px;font-size:.8rem;color:var(--muted);align-items:flex-start}
+  .steps li .n{width:22px;height:22px;border-radius:50%;background:#22304a;display:grid;place-items:center;font-size:.68rem;flex:0 0 auto;color:#9fb3d6}
+  .steps li.active{background:#16233d;color:var(--text)}
+  .steps li.active .n{background:var(--blue);color:#fff;animation:pulse 1.2s infinite}
+  .steps li.done{color:#7ef0a8}
+  .steps li.done .n{background:#14532d;color:#7ef0a8}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,.6)}50%{box-shadow:0 0 0 7px rgba(59,130,246,0)}}
+
+  .log{background:#060a12;border:1px solid var(--line);border-radius:14px;padding:12px;height:200px;overflow-y:auto;font-size:.74rem;line-height:1.9;direction:rtl}
+  .log div{border-bottom:1px solid #101a2b;padding:2px 0}
+  .log .ts{color:#4b5f80;margin-inline-end:6px;font-variant-numeric:tabular-nums}
+  .log .ok{color:#7ef0a8}.log .warn{color:#fcd34d}.log .err{color:#fca5a5}.log .info{color:#93c5fd}
+
+  .ctrls{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{border:none;border-radius:12px;padding:11px 18px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:.85rem;color:#fff;transition:filter .15s}
+  .btn:hover{filter:brightness(1.1)}
+  .btn.primary{background:linear-gradient(135deg,#0d6efd,#8b5cf6)}
+  .btn.ghost{background:#1b2740;border:1px solid var(--line)}
+  .btn.green{background:linear-gradient(135deg,#16a34a,#22c55e)}
+  .note{font-size:.72rem;color:var(--muted);margin-top:8px}
+  .kbd{background:#1b2740;border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:.72rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo">📊</div>
+      <div>
+        <h1>ماکت تعاملی — اتوماسیون ثبت درصد ۴ و ۵</h1>
+        <div class="sub">شبیه‌سازی کامل یک لمس تا گزارش نهایی · بدون هیچ اتصال واقعی</div>
+      </div>
+    </div>
+    <span class="badge">🧪 حالت ماکت (نمایشی)</span>
+  </header>
+
+  <div class="grid">
+
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="appbar">
+          <span class="gear">⚙️</span>
+          <span class="t">اتوماسیون ثبت درصد</span>
+          <span class="gear">🔔</span>
+        </div>
+
+        <div class="screen-body" id="homeBody">
+          <div class="card">
+            <h3>🩺 وضعیت سیستم</h3>
+            <div class="row"><span class="k"><span class="dot g"></span>اینترنت</span><span class="v">متصل</span></div>
+            <div class="row"><span class="k"><span class="dot g"></span>ایزی‌تریدر</span><span class="v" id="stConn">کوکی معتبر ✅</span></div>
+            <div class="row"><span class="k">آخرین اجرای موفق</span><span class="v" id="stLast">۱۴۰۵/۰۶/۲۵ — ۱۶:۳۹</span></div>
+            <div class="row"><span class="k">ذخیره‌سازی</span><span class="v">داخلی گوشی ✅</span></div>
+            <div class="row"><span class="k">آخرین پشتیبان</span><span class="v">امروز · gold4 + gold5</span></div>
+          </div>
+
+          <div class="card">
+            <h3>💰 مقدار پایه و آخرین درصد</h3>
+            <div class="funds">
+              <div class="fund">
+                <div class="name">آتیه مفید (۴)</div>
+                <div class="pct up" id="p4">+۰.۵۵٪</div>
+                <div class="base" id="b4">۳۲۱,۰۴۷,۷۴۸ ریال</div>
+              </div>
+              <div class="fund">
+                <div class="name">سینرژی (۵)</div>
+                <div class="pct up" id="p5">+۰.۱۵٪</div>
+                <div class="base" id="b5">۱۳۸,۰۲۹,۶۸۱ ریال</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" id="runCard">
+            <h3>⚡ اجرای اتوماسیون</h3>
+            <div class="stage-label" id="stageLabel">آماده — برای شروع یک لمس کن</div>
+            <div class="prog"><i id="progBar"></i></div>
+          </div>
+
+          <button class="run-btn" id="runBtn">▶️ اجرای اتوماسیون</button>
+        </div>
+
+        <div class="webview" id="webview">
+          <div class="wv-bar">
+            <span>🔒</span>
+            <div class="wv-url" id="wvUrl">login.emofid.com</div>
+            <span id="wvClose" style="cursor:pointer">✕</span>
+          </div>
+          <div class="wv-body">
+            <div class="wv-spinner" id="wvSpin"></div>
+            <div class="wv-msg" id="wvMsg">در حال بارگذاری صفحهٔ ورود…</div>
+
+            <div class="wv-form" id="wvForm">
+              <label>کد تأیید (OTP) را وارد کن</label>
+              <input id="otpInput" maxlength="6" placeholder="——————" inputmode="numeric">
+              <div class="trust"><span class="tick">☑</span> این دستگاه را به خاطر بسپار (خودکار تیک خورده)</div>
+              <button id="otpSubmit">تأیید و ادامه</button>
+            </div>
+
+            <div class="found" id="foundBox"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="box">
+        <h2>🧭 الان دقیقاً چه اتفاقی می‌افتد؟</h2>
+        <div class="now" id="nowText">
+          <span class="big">آمادهٔ شروع</span>
+          <span class="hint">دکمهٔ «▶️ اجرای اتوماسیون» را بزن تا کل مسیر، مرحله‌به‌مرحله جلوی چشمت اجرا شود. در مرحلهٔ کد تأیید، ماکت از تو یک کد می‌خواهد تا تعامل واقعی را حس کنی.</span>
+        </div>
+        <div class="ctrls" style="margin-top:12px">
+          <button class="btn green" id="btnRun">▶️ اجرا</button>
+          <button class="btn ghost" id="btnStop">⏹ توقف</button>
+          <button class="btn primary" id="btnReset">🔄 از نو</button>
+        </div>
+        <div class="note">میان‌بر: <span class="kbd">Enter</span> اجرا · <span class="kbd">Esc</span> توقف</div>
+      </div>
+
+      <div class="box">
+        <h2>🗺️ مراحل کار</h2>
+        <ul class="steps" id="stepsList"></ul>
+      </div>
+
+      <div class="box">
+        <h2>📜 گزارش زنده</h2>
+        <div class="log" id="logBox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE4 = 321047748, BASE5 = 138029681;
+const NEW4  = 322812000, NEW5  = 138265000;
+
+const STEPS = [
+  { id:'net',   t:'بررسی اینترنت و آماده‌سازی',      d:'اپ بررسی می‌کند اینترنت وصل است و موتور آماده است.',
+    hint:'انتظار: هیچ کاری از تو لازم نیست. فقط یک لایهٔ سبز «آماده» می‌بینی.', ms:900 },
+  { id:'open',  t:'باز کردن صفحهٔ ورود ایزی‌تریدر',   d:'یک WebView مخفی باز می‌شود و به صفحهٔ ورود مفید می‌رود.',
+    hint:'انتظار: یک پنجرهٔ کوچک «در حال بارگذاری…» می‌بینی. تو کاری نمی‌کنی.', ms:1500 },
+  { id:'login', t:'ورود خودکار با رمز ذخیره‌شده',      d:'رمز از حافظهٔ امن (Keystore) خوانده و در فرم وارد می‌شود.',
+    hint:'انتظار: رمز هرگز نمایش داده نمی‌شود؛ فقط «در حال ورود…» می‌بینی.', ms:1600 },
+  { id:'trust', t:'تیک «این دستگاه را به خاطر بسپار»', d:'اپ خودکار تیک را می‌زند تا بار بعد OTP نخواهی.',
+    hint:'انتظار: یک تیک سبز ☑ ظاهر می‌شود. این یعنی «دستگاه مورد اعتماد» ثبت شد.', ms:1200 },
+  { id:'cookie',t:'بررسی اعتبار کوکی نشست',           d:'اگر کوکی معتبر باشد، از مرحلهٔ OTP رد می‌شویم.',
+    hint:'انتظار: اگر نشست زنده باشد، هیچ کدی از تو خواسته نمی‌شود. اگر نه، مرحلهٔ بعد می‌آید.', ms:1100 },
+  { id:'otp',   t:'درخواست کد تأیید (OTP)',            d:'نشست منقضی است؛ اپ متوقف می‌شود و از تو کد می‌خواهد.',
+    hint:'تعاملی: کد ۶ رقمی را در گوشی بنویس و «تأیید» بزن (در ماکت هر عددی قبول است).', ms:0, otp:true },
+  { id:'wait',  t:'انتظار برای بارگذاری کامل اعداد',   d:'صفحه‌ها اول لود می‌شوند و اعداد چند ثانیه بعد تزریق می‌شوند.',
+    hint:'انتظار: یک مکث ~۸ ثانیه‌ای. این برای جلوگیری از خواندن عدد خالی است.', ms:1800 },
+  { id:'ext4',  t:'استخراج دارایی «آتیه مفید (۴)»',    d:'لایهٔ ۱: شنود API · لایهٔ ۲: اسکن متن · لایهٔ ۳: پیمایش DOM.',
+    hint:'انتظار: عدد ریالی صندوق ۴ با یک هایلایت سبز ظاهر می‌شود.', ms:1700, found:'4' },
+  { id:'ext5',  t:'استخراج دارایی «سینرژی (۵)»',        d:'همان سه لایه، مستقل برای صندوق ۵ اجرا می‌شود.',
+    hint:'انتظار: عدد ریالی صندوق ۵ هم با هایلایت سبز ظاهر می‌شود.', ms:1700, found:'5' },
+  { id:'calc',  t:'محاسبهٔ درصد',                       d:'فرمول: (جدید − پایه) ÷ پایه × ۱۰۰ با دو رقم اعشار.',
+    hint:'انتظار: دو درصد محاسبه‌شده را در کارت‌های گوشی می‌بینی (مثبت/منفی/صفر).', ms:1400 },
+  { id:'save',  t:'ذخیره در حافظهٔ اپ',                 d:'نوشتن در هر دو دسته کلید: mofid_atie_* و pension_* و sinergy_* و energy_fund_synergy.',
+    hint:'انتظار: پیام «ذخیره شد». این همان جایی است که وب‌اپ‌ها به‌روز می‌شوند.', ms:1500 },
+  { id:'base',  t:'به‌روزرسانی مقدار پایه',             d:'فقط پس از ذخیرهٔ موفق تاریخچه، پایه به مقدار جدید تغییر می‌کند.',
+    hint:'انتظار: عدد پایه در گوشی عوض می‌شود. برای روز بعد آماده است.', ms:1200 },
+  { id:'backup',t:'پشتیبان‌گیری JSON',                  d:'ساخت gold4_backup.json و gold5_backup.json در حافظهٔ گوشی.',
+    hint:'انتظار: پیام «پشتیبان ساخته شد». از این فایل هر وقت خواستی بازیابی می‌کنی.', ms:1400 },
+  { id:'report',t:'ساخت گزارش فارسی',                   d:'گزارش کامل با تاریخ شمسی و همهٔ وضعیت‌ها ساخته می‌شود.',
+    hint:'انتظار: گزارش نهایی نمایش داده می‌شود. پایان! 🎉', ms:1200 },
+];
+
+const $ = id => document.getElementById(id);
+const stepsList=$('stepsList'), logBox=$('logBox'), nowText=$('nowText'),
+      stageLabel=$('stageLabel'), progBar=$('progBar'), webview=$('webview'),
+      wvMsg=$('wvMsg'), wvUrl=$('wvUrl'), wvSpin=$('wvSpin'), wvForm=$('wvForm'),
+      foundBox=$('foundBox'), runBtn=$('runBtn'), otpInput=$('otpInput'), otpSubmit=$('otpSubmit');
+
+let idx=-1, running=false, timers=[], otpResolver=null;
+
+function buildSteps(){
+  stepsList.innerHTML='';
+  STEPS.forEach((s,i)=>{
+    const li=document.createElement('li');
+    li.id='step-'+i;
+    li.innerHTML=`<span class="n">${i+1}</span><span>${s.t}</span>`;
+    stepsList.appendChild(li);
+  });
+}
+
+function log(msg, cls='info'){
+  const t=new Date().toLocaleTimeString('en-GB',{hour12:false});
+  const d=document.createElement('div');
+  d.innerHTML=`<span class="ts">${t}</span><span class="${cls}">${msg}</span>`;
+  logBox.appendChild(d);
+  logBox.scrollTop=logBox.scrollHeight;
+}
+
+const fa = n => n.toLocaleString('en-US');
+function faDigits(s){ return String(s).replace(/[0-9]/g, d=>'۰۱۲۳۴۵۶۷۸۹'[d]); }
+function fmtPct(p){ const s=p>=0?'+':'−'; return faDigits(s+Math.abs(p).toFixed(2)+'٪'); }
+function sleep(ms){ return new Promise(r=>{ const t=setTimeout(r,ms); timers.push(t); }); }
+
+function setNow(title, detail, hint){
+  nowText.innerHTML = `<span class="big">${title}</span><br>${detail}
+    <span class="hint">${hint}</span>`;
+}
+
+function highlight(i){
+  document.querySelectorAll('.steps li').forEach(l=>l.classList.remove('active'));
+  const li=$('step-'+i);
+  if(li){ li.classList.add('active'); li.scrollIntoView({block:'nearest'}); }
+}
+function markDone(i){ const li=$('step-'+i); if(li){ li.classList.remove('active'); li.classList.add('done'); } }
+
+function askOtp(){
+  return new Promise(res=>{
+    wvSpin.style.display='none';
+    wvMsg.textContent='کارگزاری کد تأیید می‌خواهد';
+    wvForm.classList.add('show');
+    otpInput.value=''; otpInput.focus();
+    otpResolver = (code)=>{ wvForm.classList.remove('show'); wvSpin.style.display=''; res(code); };
+  });
+}
+otpSubmit.onclick = ()=>{
+  const v=(otpInput.value||'').replace(/\D/g,'');
+  if(v.length<4){ otpInput.style.borderColor='#ef4444'; return; }
+  otpInput.style.borderColor='';
+  log('کد تأیید دریافت شد ✔ (ماکت)','ok');
+  otpResolver && otpResolver(v);
+};
+otpInput.addEventListener('keydown', e=>{ if(e.key==='Enter') otpSubmit.click(); });
+
+async function run(){
+  if(running) return;
+  running=true; idx=-1;
+  runBtn.disabled=true; runBtn.textContent='⏳ در حال اجرا…';
+  logBox.innerHTML=''; buildSteps();
+  webview.classList.add('show');
+  wvUrl.textContent='login.emofid.com';
+  log('🚀 شروع اتوماسیون (ماکت)','info');
+
+  for(let i=0;i<STEPS.length;i++){
+    if(!running) break;
+    idx=i;
+    const s=STEPS[i];
+    highlight(i);
+    setNow(s.t, s.d, s.hint);
+    stageLabel.textContent = `مرحله ${faDigits(i+1)} از ${faDigits(STEPS.length)} — ${s.t}`;
+    progBar.style.width = ((i)/STEPS.length*100)+'%';
+    log(`▶ ${s.t}`,'info');
+
+    if(s.id==='open'){ wvUrl.textContent='login.emofid.com/Login'; wvMsg.textContent='در حال باز کردن صفحهٔ ورود…'; }
+    if(s.id==='login'){ wvMsg.textContent='در حال ورود با رمز ذخیره‌شده…'; }
+    if(s.id==='trust'){ log('☑ تیک «این دستگاه را به خاطر بسپار» زده شد','ok'); }
+    if(s.id==='cookie'){ log('🍪 بررسی کوکی نشست…','info'); }
+    if(s.id==='wait'){ wvUrl.textContent='m.easytrader.ir/portfolio-fill'; wvMsg.textContent='در حال بارگذاری پرتفوی…'; }
+
+    if(s.otp){
+      await askOtp();
+      wvMsg.textContent='کد تأیید شد — ادامهٔ ورود…';
+      log('✅ احراز هویت دو مرحله‌ای عبور کرد','ok');
+      await sleep(1200);
+    } else {
+      await sleep(s.ms);
+    }
+    if(!running) break;
+
+    if(s.found){
+      const val = s.found==='4'? NEW4 : NEW5;
+      foundBox.textContent = `✅ مقدار «${s.found==='4'?'آتیه مفید':'سینرژی'}» پیدا شد: ${fa(faDigits(val))} ریال`;
+      foundBox.classList.add('show');
+      log(`✔ مقدار استخراج شد: ${fa(faDigits(val))} ریال`,'ok');
+      await sleep(700);
+    }
+
+    if(s.id==='calc'){
+      const p4=((NEW4-BASE4)/BASE4)*100, p5=((NEW5-BASE5)/BASE5)*100;
+      $('p4').textContent=fmtPct(p4); $('p4').className='pct '+(p4>=0?'up':'down');
+      $('p5').textContent=fmtPct(p5); $('p5').className='pct '+(p5>=0?'up':'down');
+      log(`🧮 درصد آتیه: ${p4.toFixed(2)}%  |  سینرژی: ${p5.toFixed(2)}%`,'info');
+    }
+    if(s.id==='save'){ log('💾 در localStorage هر دو دسته کلید ذخیره شد','ok'); }
+    if(s.id==='base'){
+      $('b4').textContent=fa(faDigits(NEW4))+' ریال';
+      $('b5').textContent=fa(faDigits(NEW5))+' ریال';
+      log('🔁 مقدار پایه به‌روزرسانی شد','ok');
+    }
+    if(s.id==='backup'){ log('📦 gold4_backup.json و gold5_backup.json ساخته شد','ok'); }
+
+    markDone(i);
+    progBar.style.width = ((i+1)/STEPS.length*100)+'%';
+  }
+
+  if(running){
+    webview.classList.remove('show');
+    stageLabel.textContent='✅ اجرا با موفقیت تمام شد';
+    log('🎉 اتوماسیون با موفقیت کامل شد','ok');
+    setNow('پایان — گزارش آماده است',
+      `درصد آتیه: <b class="up">${fmtPct(((NEW4-BASE4)/BASE4)*100)}</b> · درصد سینرژی: <b class="up">${fmtPct(((NEW5-BASE5)/BASE5)*100)}</b>`,
+      'گزارش کامل فارسی ساخته شد. پایه‌ها به‌روز شدند و پشتیبان ساخته شد. برای اجرای بعدی فقط یک لمس کافی است.');
+    $('stLast').textContent = 'همین حالا — موفق ✅';
+    renderReport();
+  }
+  running=false;
+  runBtn.disabled=false; runBtn.textContent='▶️ اجرای اتوماسیون';
+}
+
+function renderReport(){
+  const p4=((NEW4-BASE4)/BASE4)*100, p5=((NEW5-BASE5)/BASE5)*100;
+  const box=document.createElement('div');
+  box.className='card report-card';
+  box.style.marginTop='8px';
+  box.innerHTML=`
+    <h3>📄 گزارش اجرا — ۱۴۰۵/۰۶/۲۶</h3>
+    <div class="row"><span class="k">صندوق</span><span class="v">آتیه مفید (۴)</span></div>
+    <div class="row"><span class="k">پایهٔ قبلی</span><span class="v">${fa(faDigits(BASE4))}</span></div>
+    <div class="row"><span class="k">مقدار جدید</span><span class="v">${fa(faDigits(NEW4))}</span></div>
+    <div class="row"><span class="k">درصد</span><span class="v up">${fmtPct(p4)}</span></div>
+    <div class="row"><span class="k">وضعیت</span><span class="v">استخراج ✅ · محاسبه ✅ · ذخیره ✅ · پشتیبان ✅</span></div>
+    <div style="height:8px"></div>
+    <div class="row"><span class="k">صندوق</span><span class="v">سینرژی (۵)</span></div>
+    <div class="row"><span class="k">پایهٔ قبلی</span><span class="v">${fa(faDigits(BASE5))}</span></div>
+    <div class="row"><span class="k">مقدار جدید</span><span class="v">${fa(faDigits(NEW5))}</span></div>
+    <div class="row"><span class="k">درصد</span><span class="v up">${fmtPct(p5)}</span></div>
+    <div class="row"><span class="k">وضعیت</span><span class="v">استخراج ✅ · محاسبه ✅ · ذخیره ✅ · پشتیبان ✅</span></div>`;
+  $('homeBody').appendChild(box);
+}
+
+function stop(){
+  if(!running){ log('⏹ چیزی در حال اجرا نیست','warn'); return; }
+  running=false;
+  timers.forEach(t=>clearTimeout(t)); timers=[];
+  if(otpResolver){ wvForm.classList.remove('show'); otpResolver(''); otpResolver=null; }
+  webview.classList.remove('show');
+  stageLabel.textContent='⏹ توسط کاربر متوقف شد';
+  log('⏹ اجرا متوقف شد','warn');
+  setNow('متوقف شد','اجرا به‌خواست تو متوقف شد.',
+    'مقدار پایه دست‌نخورده ماند. هیچ دادهٔ نیمه‌کاری ثبت نشد. با «▶️ اجرا» می‌توانی از نو شروع کنی.');
+  runBtn.disabled=false; runBtn.textContent='▶️ اجرای اتوماسیون';
+}
+function reset(){
+  stop(); running=false;
+  logBox.innerHTML=''; buildSteps();
+  progBar.style.width='0';
+  stageLabel.textContent='آماده — برای شروع یک لمس کن';
+  webview.classList.remove('show'); foundBox.classList.remove('show');
+  $('p4').textContent='+۰.۵۵٪'; $('p5').textContent='+۰.۱۵٪';
+  $('b4').textContent='۳۲۱,۰۴۷,۷۴۸ ریال'; $('b5').textContent='۱۳۸,۰۲۹,۶۸۱ ریال';
+  $('stLast').textContent='۱۴۰۵/۰۶/۲۵ — ۱۶:۳۹';
+  document.querySelectorAll('.report-card').forEach(e=>e.remove());
+  setNow('آمادهٔ شروع','دکمهٔ «▶️ اجرای اتوماسیون» را بزن تا کل مسیر مرحله‌به‌مرحله اجرا شود.',
+    'در مرحلهٔ کد تأیید، ماکت از تو یک کد می‌خواهد تا تعامل واقعی را حس کنی.');
+}
+
+runBtn.onclick = run;
+$('btnRun').onclick = run;
+$('btnStop').onclick = stop;
+$('btnReset').onclick = reset;
+$('wvClose').onclick = stop;
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && document.activeElement!==otpInput){ run(); }
+  if(e.key==='Escape'){ stop(); }
+});
+
+buildSteps();
+log('ماکت آماده است. روی «▶️ اجرای اتوماسیون» بزن.','info');
+</script>
+</body>
+</html>

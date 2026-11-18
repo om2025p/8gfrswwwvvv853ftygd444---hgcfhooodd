@@ -33,3 +33,15 @@ easytrader_failed.png
 # Android signing secrets (NEVER commit)
 restricted/android/keystore.properties
 restricted/android/*.keystore
+
+# Fund automation Android app (NEW)
+fund-automation-android/keystore.properties
+fund-automation-android/*.keystore
+!fund-automation-android/app/src/main/res/mipmap-*/ic_launcher*.png
+!fund-automation-android/app/src/main/res/drawable/ic_launcher_foreground.png
+
+# Fund automation Android — local SDK path (never commit)
+fund-automation-android/local.properties
+
+# Full conversation transcript: working artifact (sent to Telegram), not a project file
+docs/CONVERSATION-full-transcript.md

@@ -1,0 +1,83 @@
+name: Build Fund Automation APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: "نسخه (مثلا 1.0.0)"
+        required: false
+        default: "1.0.0"
+      send_to_telegram:
+        description: "ارسال APK به تلگرام؟ (true/false)"
+        required: false
+        default: "true"
+  push:
+    branches: ['main', 'S-15']
+    paths:
+      - 'fund-automation-android/**'
+      - '.github/workflows/build_fund_apk.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: دریافت کد
+        uses: actions/checkout@v4
+
+      - name: نصب JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: راه‌اندازی Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: راه‌اندازی Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: بازیابی کلید امضا
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        working-directory: fund-automation-android
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > emarat-fund.keystore
+          cat > keystore.properties <<EOF
+          storeFile=emarat-fund.keystore
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      - name: ساخت APK
+        working-directory: fund-automation-android
+        run: |
+          gradle assembleRelease --no-daemon
+          gradle assembleDebug --no-daemon
+
+      - name: تغییر نام فایل‌ها
+        env:
+          VER: ${{ github.event.inputs.version_name || '1.0.0' }}
+        run: |
+          mkdir -p out
+          cp fund-automation-android/app/build/outputs/apk/release/app-release.apk "out/fund-automation-${VER}.apk"
+          cp fund-automation-android/app/build/outputs/apk/debug/app-debug.apk "out/fund-automation-${VER}-debug.apk"
+
+      - name: آپلود artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fund-automation-apk
+          path: out/*.apk
+          retention-days: 30
+
+      - name: ارسال APK به تلگرام
+        if: ${{ (github.event.inputs.send_to_telegram == 'true' || github.event_name == 'push') && secrets.TELEGRAM_BOT_TOKEN != '' }}
+        env:
+          VER: ${{ github.event.inputs.version_name || '1.0.0' }}
+        run: |
+          curl -s -F "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+               -F "document=@out/fund-automation-${VER}.apk" \
+               -F "caption=📱 APK اتوماسیون ثبت درصد — نسخه ${VER}" \
+               "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
