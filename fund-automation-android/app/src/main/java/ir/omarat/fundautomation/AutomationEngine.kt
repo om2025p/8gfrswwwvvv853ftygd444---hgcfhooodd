@@ -80,9 +80,10 @@ class AutomationEngine(
         val outcomes = mutableListOf<FundOutcome>()
 
         try {
-            log("🌐 باز کردن صفحهٔ ورود ایزی‌تریدر…", LogLevel.INFO)
-            webView.loadUrl(LOGIN_URL)
+            log("🌐 باز کردن صفحهٔ پرتفوی ایزی‌تریدر…", LogLevel.INFO)
+            webView.loadUrl(PORTFOLIO_URL)
             awaitPageLoaded(webView, timeoutMs = 45_000)
+            delay(3_000)
 
             performLoginIfNeeded(webView)
 
@@ -169,17 +170,31 @@ class AutomationEngine(
 
     // ------------------------------------------------------------------ Login
 
+    /**
+     * اطمینان از رسیدن به صفحهٔ پرتفوی.
+     *
+     * جریان «پرتفوی-اول» است: پیش از این تابع، `portfolio-fill` لود شده است.
+     * اگر واقعاً روی پرتفوی باشیم، کار تمام است؛ وگرنه ورود انجام می‌شود.
+     *
+     * تشخیص «روی پرتفوی بودن» **سختگیرانه** است: هاست باید `m.easytrader.ir`
+     * باشد و مسیر باید `portfolio` داشته باشد. صفحهٔ تبلیغاتی عمومی
+     * (`https://easytrader.ir/`) هرگز پرتفوی محسوب نمی‌شود؛ نسخهٔ پیشین با
+     * شرط شل `url.contains("easytrader")` آن را پرتفوی می‌پنداشت و بدون ورود
+     * از آن رد می‌شد — ریشهٔ شکست هر چهار لایه.
+     */
     private suspend fun performLoginIfNeeded(webView: WebView) {
-        val url = currentUrl(webView)
-        val body = bodyText(webView)
-
-        if (url.contains("portfolio-fill") || (url.contains("easytrader") && !body.contains("رمز"))) {
-            log("✅ نشست فعال است؛ نیازی به ورود مجدد نیست.", LogLevel.OK)
+        if (isOnPortfolio(webView)) {
+            log("✅ نشست فعال است؛ مستقیم روی پرتفوی هستیم.", LogLevel.OK)
+            dismissModals(webView)
             installNetworkSnifferAsync(webView)
             return
         }
 
-        log("🔑 ورود خودکار با رمز ذخیره‌شده…", LogLevel.INFO)
+        log("🔑 نشست معتبر نیست (${describeLocation(webView)})؛ ورود لازم است…", LogLevel.WARN)
+        webView.loadUrl(LOGIN_URL)
+        awaitPageLoaded(webView, timeoutMs = 45_000)
+        delay(1_500)
+
         fillLoginForm(webView)
         awaitNavigation(webView, timeoutMs = 45_000)
 
@@ -193,7 +208,89 @@ class AutomationEngine(
         log("🌐 رفتن به صفحهٔ پرتفوی…", LogLevel.INFO)
         webView.loadUrl(PORTFOLIO_URL)
         awaitPageLoaded(webView, timeoutMs = 45_000)
+        delay(4_000)
+
+        dismissModals(webView)
         installNetworkSnifferAsync(webView)
+
+        if (!isOnPortfolio(webView)) {
+            throw IllegalStateException(
+                "پس از ورود هم به صفحهٔ پرتفوی نرسیدیم (${describeLocation(webView)}). " +
+                    "احتمالاً رمز/نام کاربری نادرست است یا ورود کامل نشد."
+            )
+        }
+        log("✅ ورود موفق و روی پرتفوی هستیم.", LogLevel.OK)
+    }
+
+    /** نشانی واقعی را برای لاگ توصیف می‌کند. */
+    private suspend fun describeLocation(webView: WebView): String {
+        val u = currentUrl(webView)
+        return if (u.isBlank()) "نشانی نامعلوم" else u
+    }
+
+    /**
+     * آیا WebView واقعاً روی صفحهٔ پرتفوی است؟
+     *
+     * فقط هاست `m.easytrader.ir` با مسیر `portfolio` پذیرفته می‌شود. صفحهٔ
+     * تبلیغاتی `easytrader.ir` (بدون زیردامنهٔ `m.` و بدون مسیر پرتفوی)
+     * پذیرفته **نمی‌شود**.
+     */
+    private suspend fun isOnPortfolio(webView: WebView): Boolean {
+        val u = currentUrl(webView)
+        if (!u.contains("m.easytrader.ir")) return false
+        if (!u.contains("portfolio")) return false
+        // صفحهٔ ورود یا تأیید، پرتفوی نیست
+        return !isLoginOrVerify(webView)
+    }
+
+    private suspend fun isLoginOrVerify(webView: WebView): Boolean {
+        val u = currentUrl(webView).lowercase()
+        if (u.contains("login.emofid.com") || u.contains("verify")) return true
+        val body = bodyText(webView)
+        return body.contains("رمز عبور") && body.contains("ورود")
+    }
+
+    /**
+     * بستن مودال‌های مزاحمی که ممکن است روی اعداد پرتفوی بیفتند.
+     *
+     * اسکریپت پایتون همین کار را می‌کند؛ بدون آن، مودال می‌تواند اعداد را
+     * پنهان کند و استخراج را بی‌نتیجه بگذارد.
+     */
+    private suspend fun dismissModals(webView: WebView) {
+        val js = """
+        (function(){
+          var sels = ['button[aria-label*="close" i]','button[class*="close"]','div[class*="close"]',
+                      'span[class*="close"]','button[class*="Close"]','[class*="modal"] button'];
+          var texts = ['✕','×','بستن','انصراف','باشه','متوجه شدم','تایید'];
+          var closed = 0;
+          var cands = document.querySelectorAll(sels.join(','));
+          for (var i=0;i<cands.length;i++){
+            var el = cands[i];
+            var t = (el.innerText || el.getAttribute('aria-label') || '').trim();
+            var visible = !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+            if (!visible) continue;
+            if (t.length > 25) continue;
+            try { el.click(); closed++; } catch(e){}
+          }
+          for (var j=0;j<texts.length;j++){
+            var all = document.querySelectorAll('button,span,a,div');
+            for (var k=0;k<all.length;k++){
+              var e2 = all[k];
+              if (e2.children.length > 0) continue;
+              if ((e2.innerText || '').trim() !== texts[j]) continue;
+              var vis2 = !!(e2.offsetWidth || e2.offsetHeight || e2.getClientRects().length);
+              if (!vis2) continue;
+              try { e2.click(); closed++; } catch(e){}
+            }
+          }
+          return String(closed);
+        })();
+        """.trimIndent()
+        val n = decodeJsonString(evaluate(webView, js) ?: "0").toIntOrNull() ?: 0
+        if (n > 0) {
+            log("🧹 $n مودال/پاپ‌آپ مزاحم بسته شد.", LogLevel.INFO)
+            delay(1_500)
+        }
     }
 
     private suspend fun fillLoginForm(webView: WebView) {

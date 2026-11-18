@@ -392,13 +392,20 @@ gradle assembleRelease assembleDebug --no-daemon
 #### ۳. بکاپ سینرژی آپلود نمی‌شد
 - فقط `gold4` آپلود می‌شد. `buildSynergyBackupPayload()` + آپلود `gold5/gold5_backup.json` اضافه شد.
 
-#### ۴. ⚠️ بحرانی‌ترین باگ — WebView به صفحه اضافه نمی‌شد (v1.2.0)
+#### ۴. ⚠️ دروغ «نشست فعال» — صفحهٔ تبلیغاتی به‌جای پرتفوی (v1.3.0)
+- **نشانه:** لاگ می‌گفت «✅ نشست فعال است» ولی آدرس بعدی `https://easytrader.ir/` بود و تب‌های پیداشده منوی سایت تبلیغاتی بودند (`پرتفوی | بازدهی | طرح حامی | دانلود اَپ | ...`)، نه تب‌های پرتفوی.
+- **ریشه:** `run()` **اول** صفحهٔ ورود را لود می‌کرد و بعد `performLoginIfNeeded` با شرط شل `url.contains("portfolio-fill") || (url.contains("easytrader") && !body.contains("رمز"))` قضاوت می‌کرد. صفحهٔ تبلیغاتی `https://easytrader.ir/` هر دو شرط را رد می‌کرد (شامل «easytrader» و بدون «رمز») → «نشست فعال» دروغین → `return` بدون لود پرتفوی → هر ۴ لایه روی صفحهٔ اشتباه.
+- **تفاوت با پایتون:** `easytrader_automation.py` **اول** به `portfolio-fill` می‌رود و **بعد** قضاوت می‌کند (`if "login.emofid.com" not in current_url and "ورود" not in body_text`). اپ برعکس عمل می‌کرد.
+- **درمان:** (۱) جریان «پرتفوی-اول»: `run()` مستقیم `PORTFOLIO_URL` را لود می‌کند. (۲) `isOnPortfolio()` سختگیرانه: هاست باید `m.easytrader.ir` + مسیر `portfolio` داشته باشد و صفحهٔ ورود/تأیید نباشد. (۳) `dismissModals()` بستن پاپ‌آپ‌ها. (۴) اگر پس از ورود هم به پرتفوی نرسیدیم → `IllegalStateException` با آدرس واقعی.
+- **درس:** تشخیص «وضعیت» را هرگز با شرط شلِ زیررشته‌ای روی دامنه انجام نده؛ دامنهٔ تبلیغاتی و زیردامنهٔ اپ (که زیررشتهٔ هم‌نام دارند) با `contains` از هم تفکیک نمی‌شوند.
+
+#### ۵. ⚠️ بحرانی‌ترین باگ — WebView به صفحه اضافه نمی‌شد (v1.2.0)
 - **نشانه:** همهٔ چهار لایهٔ استخراج شکست می‌خوردند، در حالی که لاگ می‌گفت «نشست فعال است» و هیچ لاگی از `openOtherTab` نبود.
 - **ریشه:** در `MainActivity` کال‌بک این بود `{ /* WebView آماده شد */ }` و **هیچ‌جا `addView(webView)` صدا زده نمی‌شد.** یک WebView وصل‌نشده به پنجره، layout/render ندارد و **`document.body.innerText` رشتهٔ خالی برمی‌گرداند** (`innerText` به رندر نیاز دارد، برخلاف `textContent`). پس هر ۴ لایه روی متن خالی کار می‌کردند.
 - **دو مدرک از لاگ:** (۱) «نشست فعال» → یعنی `bodyText()` خالی بود و شرط `!body.contains("رمز")` برقرار شد. (۲) پیام «تب سایر باز شد» غایب بود → `openOtherTab` عنصری ندید.
 - **درمان:** ریشهٔ `activity_main.xml` از `ScrollView` به `FrameLayout` تغییر کرد + پنل `automationPanel` شامل `webViewContainer` (و `txtWebStatus`). در `MainActivity.attachAutomationWebView()` نمونهٔ WebView داخل کانتینر قرار می‌گیرد و پنل `VISIBLE` می‌شود؛ در `finally` پنل بسته می‌شود. **درس:** هر WebView اتوماسیون باید واقعاً به سلسله‌مراتب ویو وصل و دیده شود، وگرنه `innerText` همیشه خالی است.
 
-#### ۵. باگ ظریف JSON در خواندن خروجی `evaluateJavascript` (v1.2.0)
+#### ۶. باگ ظریف JSON در خواندن خروجی `evaluateJavascript` (v1.2.0)
 - `evaluateJavascript` خروجی رشته‌ای را **JSON-encode** می‌کند: `"{\"inner\":\"خط۱\\nخط۲\"}"`.
 - نسخهٔ اول `JSONObject(diag)` می‌زد → روی نقل‌قول شکست می‌خورد. `unquote` سادهٔ قبلی هم `\n` را زودتر از موعد به newline واقعی تبدیل می‌کرد و JSON را می‌شکست.
 - **درمان:** `decodeJsonString()` با `JSONTokener` (ترتیب درست escapeها) در `bodyText`، `scanDom`، `sniffFromNetwork` و `openOtherTab`.
