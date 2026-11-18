@@ -82,19 +82,29 @@ object WebAppStore {
           try {
             var P = "$ATIE_PREFIX";
             var ts = $ts;
-            var base = $base, newVal = $newValue;
+            var newVal = $newValue;
             var historyItem = $historyItem;
             var percentItem = $percentItem;
+            function hasRecord(key){
+              try {
+                var arr = JSON.parse(localStorage.getItem(key)) || [];
+                for (var i=0;i<arr.length;i++){ if (arr[i] && arr[i].id === ts) return true; }
+              } catch(e){}
+              return false;
+            }
+            if (hasRecord(P + "history") || hasRecord("$PENSION_HISTORY")) return "SKIP";
 
             // --- تاریخچهٔ mofid_atie_* ---
             var hist = [];
             try { hist = JSON.parse(localStorage.getItem(P + "history")) || []; } catch(e){ hist = []; }
+            if (!(hist instanceof Array)) hist = [];
             hist.push(historyItem);
             localStorage.setItem(P + "history", JSON.stringify(hist));
 
             // --- فهرست درصدهای mofid_atie_* ---
             var percents = [];
             try { percents = JSON.parse(localStorage.getItem(P + "percents")) || []; } catch(e){ percents = []; }
+            if (!(percents instanceof Array)) percents = [];
             percents.push(percentItem);
             localStorage.setItem(P + "percents", JSON.stringify(percents));
 
@@ -104,11 +114,25 @@ object WebAppStore {
             // --- دستهٔ موازی pension_* (برای calculator و دیدبان) ---
             var pHist = [];
             try { pHist = JSON.parse(localStorage.getItem("$PENSION_HISTORY")) || []; } catch(e){ pHist = []; }
+            if (!(pHist instanceof Array)) pHist = [];
             pHist.push(historyItem);
             localStorage.setItem("$PENSION_HISTORY", JSON.stringify(pHist));
             localStorage.setItem("$PENSION_BASE", String(newVal));
 
             localStorage.setItem("emarat_last_modified", String(ts));
+
+            // ⚠️ حیاتی: gold4 روی `beforeunload` متصل به saveData() است و
+            // saveData آرایهٔ «درون‌حافظه» را روی localStorage بازنویسی می‌کند.
+            // اگر فقط localStorage را تزریق کنیم، هنگام بسته شدن WebView رکورد
+            // ما پاک می‌شود. پس حافظهٔ درون‌صفحه را هم از localStorage بازخوانی
+            // می‌کنیم تا saveData همان دادهٔ درست را بنویسد.
+            try {
+              if (typeof window.reloadLocalData === 'function') {
+                window.reloadLocalData();
+                if (typeof window.saveData === 'function') window.saveData();
+              }
+            } catch(e){}
+
             return "OK";
           } catch(err) { return "ERR:" + err.message; }
         })();
@@ -146,10 +170,26 @@ object WebAppStore {
             var newVal = $newValue;
             var historyItem = $historyItem;
             var percentItem = $percentItem;
+            function hasRecord(key){
+              try {
+                var arr = JSON.parse(localStorage.getItem(key)) || [];
+                for (var i=0;i<arr.length;i++){ if (arr[i] && arr[i].id === ts) return true; }
+              } catch(e){}
+              return false;
+            }
+            var obj0 = {};
+            try { obj0 = JSON.parse(localStorage.getItem("$SYNERGY_OBJECT")) || {}; } catch(e){ obj0 = {}; }
+            if (hasRecord("$SYNERGY_HISTORY")) return "SKIP";
+            if (obj0.history instanceof Array) {
+              for (var j=0;j<obj0.history.length;j++){
+                if (obj0.history[j] && obj0.history[j].id === ts) return "SKIP";
+              }
+            }
 
             // --- تاریخچهٔ sinergy_history ---
             var hist = [];
             try { hist = JSON.parse(localStorage.getItem("$SYNERGY_HISTORY")) || []; } catch(e){ hist = []; }
+            if (!(hist instanceof Array)) hist = [];
             hist.push(historyItem);
             localStorage.setItem("$SYNERGY_HISTORY", JSON.stringify(hist));
 
@@ -157,15 +197,12 @@ object WebAppStore {
             localStorage.setItem("$SYNERGY_BASE", String(newVal));
 
             // --- شیء کامل energy_fund_synergy ---
-            var obj = {};
-            try { obj = JSON.parse(localStorage.getItem("$SYNERGY_OBJECT")) || {}; } catch(e){ obj = {}; }
-            var pList = obj.percents || [];
-            pList.push(percentItem);
-            obj.percents = pList;
+            var obj = obj0;
+            if (!(obj.percents instanceof Array)) obj.percents = [];
+            obj.percents.push(percentItem);
             obj.baseNumber = newVal;
-            var hList = obj.history || [];
-            hList.push(historyItem);
-            obj.history = hList;
+            if (!(obj.history instanceof Array)) obj.history = [];
+            obj.history.push(historyItem);
             localStorage.setItem("$SYNERGY_OBJECT", JSON.stringify(obj));
 
             localStorage.setItem("emarat_last_modified", String(ts));

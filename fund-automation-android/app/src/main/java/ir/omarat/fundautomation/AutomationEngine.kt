@@ -454,53 +454,85 @@ class AutomationEngine(
     }
 
     /**
-     * باز کردن تب «سایر» در صفحهٔ پرتفوی.
+     * باز کردن تب صندوق‌ها در صفحهٔ پرتفوی.
      *
-     * صندوق‌های مفید (سینرژی، آتیه) در تب پیش‌فرض «سهام» نیستند و بدون این
-     * کلیک، `innerText` صفحه هیچ‌کدام را نشان نمی‌دهد. همهٔ تب‌های پیداشده
-     * در لاگ ثبت می‌شوند تا اگر نام تب عوض شد، سریع بفهمیم.
+     * صندوق‌های مفید (سینرژی، آتیه) در تب پیش‌فرض «سهام» نیستند. اسکریپت
+     * پایتون **دو کلیک** می‌زند: اول «سایر»، بعد «صندوق‌های مفید». نسخهٔ
+     * پیشین فقط «سایر» را می‌گشت و چون در لاگ جدید «سایر» در فهرست تب‌ها
+     * نبود، آتیه هرگز پیدا نمی‌شد.
+     *
+     * اینجا هر دو کلیک به‌ترتیب زده می‌شوند؛ اما اگر تب‌ها از قبل باز باشند
+     * (سینرژی/آتیه در متن دیده شوند) کلیک تکراری انجام نمی‌شود.
      */
     private suspend fun openOtherTab(webView: WebView) {
-        val probe = evaluate(webView, TAB_PROBE)
-        if (probe != null) {
-            try {
-                val arr = org.json.JSONArray(decodeJsonString(probe))
-                val tabs = (0 until arr.length()).map { arr.optString(it) }
-                log("🗂 تب‌های پیداشده در صفحه: ${if (tabs.isEmpty()) "(هیچ)" else tabs.joinToString(" | ")}", LogLevel.INFO)
-            } catch (e: Exception) {
-                log("🗂 کاوش تب‌ها ناموفق: ${probe.take(150)}", LogLevel.WARN)
+        logTabProbe(webView)
+
+        val clickResult = clickTab(webView, listOf("سایر", "سایرین"))
+        when {
+            clickResult.startsWith("CLICKED") -> {
+                log("🗂 تب «سایر» باز شد.", LogLevel.INFO)
+                delay(3_000)
             }
+            clickResult == "ALREADY" ->
+                log("🗂 تب «سایر» از قبل باز بود.", LogLevel.INFO)
+            else ->
+                log("ℹ️ تب «سایر» نبود؛ شاید ساختار عوض شده.", LogLevel.INFO)
         }
 
+        // کلیک دوم: «صندوق‌های مفید» — کلید دیدن آتیه در پرتفوی
+        val fundsResult = clickTab(webView, listOf("صندوق‌های مفید", "صندوق ها", "صندوق‌ها", "صندوق هاي مفيد"))
+        when {
+            fundsResult.startsWith("CLICKED") -> {
+                log("🗂 تب «صندوق‌های مفید» باز شد.", LogLevel.INFO)
+                delay(4_000)
+            }
+            fundsResult == "ALREADY" ->
+                log("🗂 تب «صندوق‌های مفید» از قبل باز بود.", LogLevel.INFO)
+            else ->
+                log("ℹ️ تب «صندوق‌های مفید» نبود (شاید صندوق‌ها در همین صفحه‌اند).", LogLevel.INFO)
+        }
+    }
+
+    /** کاوشگر تب‌ها را اجرا و نتیجه را در لاگ ثبت می‌کند. */
+    private suspend fun logTabProbe(webView: WebView) {
+        val probe = evaluate(webView, TAB_PROBE) ?: return
+        try {
+            val arr = org.json.JSONArray(decodeJsonString(probe))
+            val tabs = (0 until arr.length()).map { arr.optString(it) }
+            log("🗂 تب‌های پیداشده در صفحه: ${if (tabs.isEmpty()) "(هیچ)" else tabs.joinToString(" | ")}", LogLevel.INFO)
+        } catch (e: Exception) {
+            log("🗂 کاوش تب‌ها ناموفق: ${probe.take(150)}", LogLevel.WARN)
+        }
+    }
+
+    /**
+     * کلیک روی نخستین عنصری که متنش دقیقاً یکی از [texts] است.
+     *
+     * @return `"CLICKED:<متن>"`، `"ALREADY"` (باز بود)، یا `"NOTFOUND"`.
+     */
+    private suspend fun clickTab(webView: WebView, texts: List<String>): String {
+        val arr = texts.joinToString(",") { "'${jsonEscape(it)}'" }
         val js = """
         (function(){
-          var texts = ['سایر','سایرین','صندوق‌های مفید','صندوق ها','صندوق‌ها'];
+          var texts = [$arr];
           var all = document.querySelectorAll('span,a,button,div,li');
           for (var i=0;i<all.length;i++){
             var el = all[i];
             var t = (el.innerText || '').trim();
             if (el.children.length > 1 || t.length > 20) continue;
             if (texts.indexOf(t) >= 0){
-              var already = document.body.innerText.indexOf('سینرژی') >= 0;
+              var vis = !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+              if (!vis) continue;
+              var already = /سینرژی|آتیه/.test(document.body.innerText || '');
               if (already) return 'ALREADY';
-              el.click();
+              try { el.click(); } catch(e){ return 'NOTFOUND'; }
               return 'CLICKED:' + t;
             }
           }
           return 'NOTFOUND';
         })();
         """.trimIndent()
-        val r = evaluate(webView, js)
-        when {
-            r?.contains("CLICKED") == true -> {
-                log("🗂 تب «سایر» باز شد.", LogLevel.INFO)
-                delay(4_000)
-            }
-            r?.contains("ALREADY") == true ->
-                log("🗂 تب «سایر» از قبل باز بود (سینرژی در صفحه دیده می‌شود).", LogLevel.INFO)
-            else ->
-                log("⚠️ تب «سایر» پیدا نشد؛ شاید ساختار صفحه عوض شده یا صفحه هنوز لود نشده.", LogLevel.WARN)
-        }
+        return decodeJsonString(evaluate(webView, js) ?: "NOTFOUND")
     }
 
     private suspend fun sniffFromNetwork(webView: WebView, fund: String): Long? {

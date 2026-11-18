@@ -68,6 +68,7 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<TextView>(R.id.btnRun).setOnClickListener { startAutomation() }
         findViewById<TextView>(R.id.btnSettings).setOnClickListener { openSettings() }
+        findViewById<TextView>(R.id.btnCopyLog).setOnClickListener { copyLogToClipboard() }
         findViewById<TextView>(R.id.btnOpenWeb).setOnClickListener {
             startActivity(Intent(this, WebViewActivity::class.java))
         }
@@ -182,6 +183,33 @@ class MainActivity : AppCompatActivity() {
                     }
                     e.apply()
                     savedOk = true
+                }
+
+                // ثبت رکورد در حافظهٔ خودِ وب‌اپ — تا کاربر در صفحهٔ صندوق ببیندش.
+                // این کار باید در WebView با origin وب‌اپ (file://) انجام شود،
+                // نه در WebView اتوماسیون که روی m.easytrader.ir است.
+                val jalaliWithTime = JalaliDate.format(now, withTime = true)
+                for (o in outcomes) {
+                    val isAtie = o.fund == "atie"
+                    val pageUrl = if (isAtie) WebAppWriter.ATIE_PAGE else WebAppWriter.SYNERGY_PAGE
+                    val script = WebAppStore.buildInjectScript(
+                        fund = o.fund,
+                        base = o.base,
+                        newValue = o.newValue,
+                        percent = o.result.percent,
+                        type = o.result.type.name.lowercase(),
+                        jalaliDate = jalaliWithTime,
+                        timestampMs = now
+                    )
+                    val wr = WebAppWriter(this@MainActivity).write(pageUrl, script) { wv ->
+                        runOnUiThread { attachAutomationWebView(wv) }
+                    }
+                    appendLog(
+                        if (wr.success) "🖥 در صفحهٔ ${if (isAtie) "آتیه مفید" else "سینرژی"} ثبت شد (${wr.message})."
+                        else "⚠️ ثبت در صفحهٔ ${if (isAtie) "آتیه مفید" else "سینرژی"} ناموفق: ${wr.message}",
+                        if (wr.success) AutomationEngine.LogLevel.OK else AutomationEngine.LogLevel.WARN
+                    )
+                    detachAutomationWebView()
                 }
 
                 // پشتیبان‌گیری گیت‌هاب — این همان کانالی است که وب‌اپ‌ها و دیدبان از آن می‌خوانند
@@ -352,6 +380,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun toast(m: String) = Toast.makeText(this, m, Toast.LENGTH_SHORT).show()
+
+    /** کپی کل گزارش زنده در کلیپ‌بورد، برای فرستادن به پشتیبانی/توسعه‌دهنده. */
+    private fun copyLogToClipboard() {
+        val text = logLines.toString().trim()
+        if (text.isEmpty()) {
+            toast("گزارشی برای کپی نیست.")
+            return
+        }
+        val clip = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        clip.setPrimaryClip(android.content.ClipData.newPlainText("گزارش اتوماسیون", text))
+        toast("📋 گزارش کپی شد (${text.length} کاراکتر).")
+    }
 
     private fun fmt(v: Double): String = String.format(Locale.US, "%.2f", v)
 
