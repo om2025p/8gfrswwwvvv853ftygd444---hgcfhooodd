@@ -26,6 +26,24 @@ object WebAppStore {
     private const val SYNERGY_PEAK = "sinergy_peakNumber"
 
     /**
+     * کلیدهای کامل هر صندوق برای پشتیبان‌گیری/بازیابی.
+     *
+     * صندوق ۴ دو دستهٔ موازی دارد (`mofid_atie_*` و `pension_*`) و هر دو باید
+     * پشتیبان شوند؛ وگرنه پس از بازیابی، یکی از بخش‌ها (calculator یا دیدبان)
+     * دادهٔ قدیمی نشان می‌دهد.
+     */
+    val ATIE_KEYS = listOf(
+        "mofid_atie_history", "mofid_atie_baseNumber", "mofid_atie_percents",
+        "mofid_atie_trash", "mofid_atie_goal", "mofid_atie_highlightedStates",
+        "mofid_atie_periodTarget", "mofid_atie_achievedPeriods", "mofid_atie_notes",
+        PENSION_HISTORY, PENSION_BASE, PENSION_PEAK
+    )
+
+    val SYNERGY_KEYS = listOf(
+        SYNERGY_OBJECT, SYNERGY_BASE, SYNERGY_HISTORY, SYNERGY_PEAK
+    )
+
+    /**
      * اسکریپت جاوااسکریپت برای ثبت یک درصد جدید در حافظهٔ وب‌اپ.
      *
      * @param fund         `"atie"` یا `"synergy"`

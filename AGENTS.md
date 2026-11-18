@@ -562,3 +562,51 @@ echo "sdk.dir=/tmp/androidbuild/android-sdk" > <repo>/fund-automation-android/lo
   `!fund-automation-android/app/src/main/res/mipmap-*/ic_launcher*.png`
 - در پوشهٔ `drawable` نباید هم `ic_launcher_foreground.png` و هم `.xml` باشد (تعارض AAPT).
 - رمز و توکن‌ها **فقط** در `SessionStore` (رمزنگاری‌شده) — هیچ‌گاه hardcode یا در گزارش.
+
+---
+
+## 📱 اپ اندروید اتوماسیون صندوق‌ها (`fund-automation-android/`)
+
+### معماری
+- **applicationId:** `ir.omarat.fundautomation` | versionName 1.7.0 (versionCode 8)
+- minSdk 24 / targetSdk 34 | Kotlin + WebView + Room-less (SharedPreferences + فایل JSON)
+- ورود به ایزی‌تریدر: WebView واقعی + رمز ذخیره‌شده در `EncryptedSharedPreferences` (Android Keystore)
+- OTP دستی از کاربر | کوکی نشست در WebView باقی می‌ماند
+- فقط دکمهٔ «▶️ شروع اتوماسیون» (بدون زمان‌بندی، طبق تصمیم کاربر)
+
+### 🐛 باگ بحرانی استخراج — جداکنندهٔ هزارگان فارسی (v1.7.0)
+- **ریشه:** `toEnglishDigits` فقط ارقام را تبدیل می‌کرد، ولی `٬` (U+066C) و `،` (U+060C) را نه. پس «۲۲۰٬۳۵۱٬۲۶۰» → «220٬351٬260» و regex `[\d,]{6,}` هیچ عددی پیدا نمی‌کرد → **هر چهار لایهٔ استخراج می‌شکست**، حتی وقتی صفحهٔ درست باز بود.
+- **درمان:** کلاس خالص `FundTextScanner` (بدون Android) که نرمال‌سازی را انجام می‌دهد: ارقام فارسی/عربی → لاتین، `٬`/`،` → `,`، حذف فاصلهٔ نازک/نیم‌فاصله/کنترل RTL. **نقطهٔ اعشار دست‌نخورده می‌ماند** (تبدیل `.` به `,` باعث عدد غلط در درصدها می‌شد).
+- **تست:** `FundTextScannerTest` — ۱۲ تست با دادهٔ واقعی اسکرین‌شات‌های کاربر (۳۹۷٬۶۱۵٬۸۶۹ آتیه و ۲۲۰٬۳۵۱٬۲۶۰ سینرژی).
+
+### 🗺️ ناوبری — دو صندوق در دو صفحهٔ متفاوت
+- **سینرژی (۵)** روی **پرتفوی** (`/portfolio-fill`) است، در جدول نمادها. **نباید از پرتفوی خارج شد.** نسخهٔ پیشین همیشه اول به تب «سایر» می‌رفت → سینرژی هرگز خوانده نمی‌شد.
+- **آتیه (۴)** روی **صندوق‌های مفید** (`/menu/funds`) است. با `loadUrl` **مستقیم** می‌رود؛ کلیک روی `span` در SPA ناوبری نمی‌کند (درس گران‌بهای v1.6.0).
+- **الگوی ستونی:** در پرتفوی، «ارزش فعلی» بزرگ‌ترین عدد ۶رقمی+ پنجره تا نماد بعدی («همسنگ») است. در صندوق‌ها، مرز پنجرهٔ آتیه «ممتاز»/«امید توسعه» است تا اعداد صندوق‌های دیگر قاطی نشوند.
+
+### 🔐 ترتیب طلایی OTP (از `easytrader_automation.py`)
+۱. کد را در فیلد بگذار → ۲. تیک «تایید دو مرحله برای این سیستم لازم نیست» را بزن → ۳. **آخر** فرم را ارسال کن.
+نسخهٔ پیشین اول submit می‌کرد و بعد تیک می‌زد؛ صفحه عوض می‌شد و تیک هرگز زده نمی‌شد → هر بار OTP دوباره.
+
+### 🚫 جلوگیری از ثبت تکراری
+`WebAppReader` درصدهای وب‌اپ را می‌خواند؛ اگر کاربر امروز **دستی** ثبت کرده باشد (`source != "automation"`)، اتوماسیون آن صندوق را دست‌نخورده رها می‌کند. ثبت‌های خودِ اتوماسیون نادیده گرفته می‌شوند تا دوباره‌اجرا در همان روز مسدود نشود.
+
+### 📦 پشتیبان‌گیری و بازیابی داخل اپ
+- `LocalBackupManager`: فایل JSON در `filesDir/backups/` با نام `fund-backup-<stamp>-<manual|auto>.json`؛ نگه‌داشت ۲۰ تای آخر.
+- `WebAppWriter.readKeys/writeKeys`: خواندن/نوشتن `localStorage` وب‌اپ (origin جداگانه).
+- **قبل از هر بازیابی، یک بکاپ ایمنی (`-auto`) از وضعیت فعلی گرفته می‌شود.**
+- اشتراک‌گذاری بکاپ با `FileProvider` (`${applicationId}.fileprovider` + `res/xml/file_paths.xml`).
+- بازیابی هم قالب خود اپ (`{data:{...}}`) و هم قالب خام بکاپ وب‌اپ‌ها را می‌پذیرد.
+
+### 🎨 استایل اعداد پایه
+`txtAtieBase`/`txtSynergyBase` = ۲۱sp سبز پررنگ | `txtAtiePercent`/`txtSynergyPercent` = ۲۶sp سبز پررنگ. برچسب‌های کوچک («مقدار پایه» / «آخرین درصد») بالای اعداد.
+
+### 🏗️ بیلد
+```bash
+export JAVA_HOME=/tmp/androidbuild/jdk17
+export ANDROID_HOME=/tmp/androidbuild/android-sdk
+export PATH=/tmp/androidbuild/gradle-8.7/bin:$JAVA_HOME/bin:$PATH
+gradle test assembleRelease assembleDebug --no-daemon
+```
+خروجی: `app/build/outputs/apk/{release,debug}/` | امضا: `emarat-fund.keystore` + `keystore.properties`
+- **تست:** ۲۳ تست JVM (دیباگ) / ۴۶ در کل — همه پاس.

@@ -72,6 +72,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.btnOpenWeb).setOnClickListener {
             startActivity(Intent(this, WebViewActivity::class.java))
         }
+        findViewById<TextView>(R.id.btnBackup).setOnClickListener { createLocalBackup() }
+        findViewById<TextView>(R.id.btnRestore).setOnClickListener { showRestoreDialog() }
+        findViewById<TextView>(R.id.btnBackupShare).setOnClickListener { shareLatestBackup() }
 
         refreshStatus()
     }
@@ -109,10 +112,21 @@ class MainActivity : AppCompatActivity() {
         txtLastRun.text = "آخرین اجرای موفق: " + (prefs.getString("last_run", null) ?: "—")
         txtStorage.text = "وضعیت ذخیره‌سازی: " + if (session.hasCredentials) "آماده (اطلاعات ورود ذخیره شده)" else "نیازمند تنظیم اطلاعات ورود"
         txtBackup.text = "آخرین پشتیبان: " + (prefs.getString("last_backup", null) ?: "—")
-        txtAtieBase.text = "پایه: " + (prefs.getString("atie_base", "—") ?: "—")
-        txtAtiePercent.text = "آخرین درصد: " + (prefs.getString("atie_percent", "—") ?: "—")
-        txtSynergyBase.text = "پایه: " + (prefs.getString("synergy_base", "—") ?: "—")
-        txtSynergyPercent.text = "آخرین درصد: " + (prefs.getString("synergy_percent", "—") ?: "—")
+
+        // اعداد پایه و درصد — بزرگ و سبز، فقط عدد (بدون برچسب متنی)
+        txtAtieBase.text = prefs.getString("atie_base", "—") ?: "—"
+        txtAtiePercent.text = formatPercent(prefs.getString("atie_percent", null))
+        txtSynergyBase.text = prefs.getString("synergy_base", "—") ?: "—"
+        txtSynergyPercent.text = formatPercent(prefs.getString("synergy_percent", null))
+    }
+
+    /** «1.23%» → «+1.23%» با علامت رنگ‌آمیزی‌شده. */
+    private fun formatPercent(raw: String?): String {
+        if (raw.isNullOrBlank() || raw == "—") return "—"
+        val clean = raw.removeSuffix("%").trim()
+        val v = clean.toDoubleOrNull() ?: return raw
+        val sign = if (v > 0) "+" else ""
+        return "$sign${fmt(v)}%"
     }
 
     private fun isOnline(): Boolean {
@@ -257,6 +271,149 @@ class MainActivity : AppCompatActivity() {
                 refreshStatus()
             }
         }
+    }
+
+    // ------------------------------------------------------------------ Backup / Restore
+
+    /**
+     * پشتیبان‌گیری محلی: همهٔ کلیدهای هر دو صندوق را از حافظهٔ وب‌اپ می‌خواند
+     * و در یک فایل JSON داخل پوشهٔ خصوصی اپ ذخیره می‌کند.
+     */
+    private fun createLocalBackup() {
+        toast("در حال ساخت پشتیبان…")
+        lifecycleScope.launch {
+            try {
+                val writer = WebAppWriter(this@MainActivity)
+                val atie = writer.readKeys(WebAppWriter.ATIE_PAGE, WebAppStore.ATIE_KEYS).orEmpty()
+                val synergy = writer.readKeys(WebAppWriter.SYNERGY_PAGE, WebAppStore.SYNERGY_KEYS).orEmpty()
+                if (atie.isEmpty() && synergy.isEmpty()) {
+                    toast("⚠️ داده‌ای برای پشتیبان‌گیری پیدا نشد.")
+                    return@launch
+                }
+                val pairs = LinkedHashMap<String, String>()
+                pairs.putAll(atie)
+                pairs.putAll(synergy)
+                val mgr = LocalBackupManager(this@MainActivity)
+                val snapshot = mgr.buildSnapshot(pairs)
+                val file = mgr.save(snapshot, source = "manual")
+                mgr.prune(20)
+                prefs.edit().putString("last_backup", JalaliDate.format(System.currentTimeMillis())).apply()
+                appendLog("📦 پشتیبان محلی ساخته شد: ${file.name} (${file.length() / 1024} KB، ${pairs.size} کلید)", AutomationEngine.LogLevel.OK)
+                toast("✅ پشتیبان ذخیره شد (${pairs.size} کلید).")
+                refreshStatus()
+            } catch (e: Exception) {
+                appendLog("❌ خطای پشتیبان‌گیری: ${e.message}", AutomationEngine.LogLevel.ERROR)
+                toast("خطای پشتیبان‌گیری: ${e.message}")
+            }
+        }
+    }
+
+    /** آخرین بکاپ را با «اشتراک‌گذاری» به تلگرام/درایو/ایمیل می‌فرستد. */
+    private fun shareLatestBackup() {
+        val mgr = LocalBackupManager(this)
+        val latest = mgr.list().firstOrNull()
+        if (latest == null) {
+            toast("بکاپی موجود نیست؛ اول «📦 پشتیبان‌گیری» را بزن.")
+            return
+        }
+        try {
+            startActivity(Intent.createChooser(mgr.shareIntent(latest.file), "اشتراک‌گذاری بکاپ"))
+        } catch (e: Exception) {
+            toast("اشتراک‌گذاری ممکن نشد: ${e.message}")
+        }
+    }
+
+    /** فهرست بکاپ‌ها را نشان می‌دهد؛ با انتخاب هرکدام، بازیابی انجام می‌شود. */
+    private fun showRestoreDialog() {
+        val mgr = LocalBackupManager(this)
+        val backups = mgr.list()
+        if (backups.isEmpty()) {
+            toast("بکاپی برای بازیابی وجود ندارد.")
+            return
+        }
+        val labels = backups.map { it.label }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("♻️ بازیابی از پشتیبان")
+            .setItems(labels) { _, which -> confirmRestore(backups[which]) }
+            .setNegativeButton("انصراف", null)
+            .show()
+    }
+
+    /**
+     * بازیابی با تأیید دو مرحله‌ای.
+     *
+     * پیش از بازیابی، از اطلاعات فعلی یک بکاپ ایمنی گرفته می‌شود تا اگر
+     * کاربر اشتباه کرد، قابل برگشت باشد.
+     */
+    private fun confirmRestore(picked: LocalBackupManager.BackupFile) {
+        AlertDialog.Builder(this)
+            .setTitle("⚠️ تأیید بازیابی")
+            .setMessage(
+                "اطلاعات فعلی با محتوای این بکاپ جایگزین می‌شود:\n\n" +
+                    "${picked.label}\n\n" +
+                    "پیش از جایگزینی، از اطلاعات فعلی یک نسخهٔ ایمنی گرفته می‌شود."
+            )
+            .setPositiveButton("♻️ بله، بازیابی کن") { _, _ -> performRestore(picked) }
+            .setNegativeButton("انصراف", null)
+            .show()
+    }
+
+    private fun performRestore(picked: LocalBackupManager.BackupFile) {
+        toast("در حال بازیابی…")
+        lifecycleScope.launch {
+            val mgr = LocalBackupManager(this@MainActivity)
+            try {
+                // ۱) بکاپ ایمنی از وضعیت فعلی
+                val writer = WebAppWriter(this@MainActivity)
+                val curAtie = writer.readKeys(WebAppWriter.ATIE_PAGE, WebAppStore.ATIE_KEYS).orEmpty()
+                val curSynergy = writer.readKeys(WebAppWriter.SYNERGY_PAGE, WebAppStore.SYNERGY_KEYS).orEmpty()
+                val curPairs = LinkedHashMap<String, String>().apply {
+                    putAll(curAtie); putAll(curSynergy)
+                }
+                if (curPairs.isNotEmpty()) {
+                    mgr.save(mgr.buildSnapshot(curPairs), source = "auto")
+                    appendLog("🛡 نسخهٔ ایمنی از وضعیت فعلی ساخته شد.", AutomationEngine.LogLevel.INFO)
+                }
+
+                // ۲) خواندن و پارس بکاپ انتخابی
+                val json = mgr.read(picked.file)
+                val values = mgr.parseSnapshot(json)
+                if (values == null || values.isEmpty()) {
+                    appendLog("❌ بکاپ قابل خواندن نبود یا خالی است.", AutomationEngine.LogLevel.ERROR)
+                    toast("بکاپ نامعتبر است.")
+                    return@launch
+                }
+
+                // ۳) تفکیک کلیدهای هر صندوق و نوشتن در حافظهٔ وب‌اپ
+                val atieVals = values.filterKeys { it in WebAppStore.ATIE_KEYS || it.startsWith("mofid_atie_") || it.startsWith("pension_") }
+                val synVals = values.filterKeys { it in WebAppStore.SYNERGY_KEYS || it.startsWith("sinergy_") || it == "energy_fund_synergy" }
+
+                var written = 0
+                if (atieVals.isNotEmpty()) written += writer.writeKeys(WebAppWriter.ATIE_PAGE, atieVals)
+                if (synVals.isNotEmpty()) written += writer.writeKeys(WebAppWriter.SYNERGY_PAGE, synVals)
+
+                appendLog("♻️ بازیابی انجام شد ($written کلید از ${picked.label}).", AutomationEngine.LogLevel.OK)
+                toast("✅ بازیابی موفق ($written کلید).")
+
+                // ۴) همگام‌سازی اعداد نمایش‌داده‌شده با داده‌های بازیابی‌شده
+                syncDisplayedNumbers(atieVals, synVals)
+                refreshStatus()
+            } catch (e: Exception) {
+                appendLog("❌ خطای بازیابی: ${e.message}", AutomationEngine.LogLevel.ERROR)
+                toast("خطای بازیابی: ${e.message}")
+            }
+        }
+    }
+
+    /** پس از بازیابی، پایه/درصد نمایش‌داده‌شده را از دادهٔ بازگردانده‌شده به‌روز می‌کند. */
+    private fun syncDisplayedNumbers(atie: Map<String, String>, synergy: Map<String, String>) {
+        val e = prefs.edit()
+        atie["mofid_atie_baseNumber"]?.let { e.putString("atie_base_num", it) }
+        atie["pension_baseNumber"]?.let { e.putString("atie_base_num", it) }
+        synergy["sinergy_baseNumber"]?.let { e.putString("synergy_base_num", it) }
+        atie["mofid_atie_baseNumber"]?.let { e.putString("atie_base", fmt(it.toLongOrNull() ?: 0L)) }
+        synergy["sinergy_baseNumber"]?.let { e.putString("synergy_base", fmt(it.toLongOrNull() ?: 0L)) }
+        e.apply()
     }
 
     // ------------------------------------------------------------------ OTP

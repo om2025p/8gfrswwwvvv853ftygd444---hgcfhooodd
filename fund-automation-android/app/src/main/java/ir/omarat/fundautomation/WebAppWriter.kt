@@ -91,6 +91,116 @@ class WebAppWriter(private val context: Context) {
         return s.replace("\\\"", "\"").replace("\\n", "\n")
     }
 
+    /**
+     * خواندن همهٔ کلیدهای مرتبط با صندوق از `localStorage` صفحهٔ وب‌اپ.
+     *
+     * @return نگاشت کلید → مقدار رشته‌ای، یا `null` اگر صفحه بارگذاری نشد.
+     */
+    @SuppressLint("SetJavaScriptEnabled")
+    suspend fun readKeys(pageUrl: String, keys: List<String>): Map<String, String>? =
+        withContext(Dispatchers.Main) {
+            val webView = newWebView()
+            var loaded = false
+            webView.webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView, url: String) {
+                    loaded = true
+                }
+            }
+            try {
+                webView.loadUrl(pageUrl)
+                withTimeoutOrNull(20_000) { while (!loaded) delay(200) }
+                delay(1_000)
+                val keyList = keys.joinToString(",") { "'${jsonEscape(it)}'" }
+                val js = """
+                (function(){
+                  var out = {};
+                  var keys = [$keyList];
+                  for (var i=0;i<keys.length;i++){
+                    var v = localStorage.getItem(keys[i]);
+                    if (v !== null && v !== undefined) out[keys[i]] = v;
+                  }
+                  return JSON.stringify(out);
+                })();
+                """.trimIndent()
+                parseMap(evaluate(webView, js))
+            } catch (e: Exception) {
+                null
+            } finally {
+                webView.destroy()
+            }
+        }
+
+    /**
+     * نوشتن نگاشت کلید/مقدار در `localStorage` صفحهٔ وب‌اپ (برای بازیابی).
+     *
+     * @return تعداد کلیدهای نوشته‌شده، یا `-1` در صورت خطا.
+     */
+    @SuppressLint("SetJavaScriptEnabled")
+    suspend fun writeKeys(pageUrl: String, values: Map<String, String>): Int =
+        withContext(Dispatchers.Main) {
+            val webView = newWebView()
+            var loaded = false
+            webView.webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView, url: String) {
+                    loaded = true
+                }
+            }
+            try {
+                webView.loadUrl(pageUrl)
+                withTimeoutOrNull(20_000) { while (!loaded) delay(200) }
+                delay(1_500)
+                val pairs = values.entries.joinToString(",") {
+                    "'${jsonEscape(it.key)}':'${jsonEscape(it.value)}'"
+                }
+                val js = """
+                (function(){
+                  try {
+                    var data = {$pairs};
+                    var n = 0;
+                    for (var k in data){ localStorage.setItem(k, data[k]); n++; }
+                    try {
+                      if (typeof window.reloadLocalData === 'function') window.reloadLocalData();
+                      if (typeof window.saveData === 'function') window.saveData();
+                    } catch(e){}
+                    return String(n);
+                  } catch(e){ return '-1'; }
+                })();
+                """.trimIndent()
+                decodeResult(evaluate(webView, js)).toIntOrNull() ?: -1
+            } catch (e: Exception) {
+                -1
+            } finally {
+                webView.destroy()
+            }
+        }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun newWebView(): WebView = WebView(context).apply {
+        settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            allowFileAccess = true
+            cacheMode = WebSettings.LOAD_DEFAULT
+        }
+    }
+
+    private fun parseMap(raw: String?): Map<String, String>? {
+        if (raw == null || raw == "null") return null
+        val json = decodeResult(raw)
+        return try {
+            val obj = org.json.JSONObject(json)
+            val out = LinkedHashMap<String, String>()
+            for (k in obj.keys()) out[k] = obj.getString(k)
+            out
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun jsonEscape(s: String): String =
+        org.json.JSONObject.quote(s).removeSurrounding("\"")
+
     private suspend fun evaluate(webView: WebView, js: String): String? =
         withContext(Dispatchers.Main) {
             suspendCancellableCoroutine { cont ->

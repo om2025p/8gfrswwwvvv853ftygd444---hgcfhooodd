@@ -43,6 +43,21 @@ class AutomationEngine(
     /** روشی که برای استخراج هر صندوق موفق شد (برای گزارش). */
     private val methodByFund = HashMap<String, String>()
 
+    /**
+     * تاریخچهٔ دستی امروز (از کد قدیمی پایتون: `is_already_recorded_today`).
+     *
+     * اگر کاربر امروز خودش درصدی را دستی ثبت کرده باشد، اتوماسیون نباید
+     * رکورد تکراری بسازد. ثبت‌های خودِ اتوماسیون (`source == "automation"`)
+     * نادیده گرفته می‌شوند تا دوباره‌اجرا کردن در همان روز مسدود نشود.
+     *
+     * کلید: `"atie"` یا `"synergy"` — مقدار: مجموعهٔ روزهای شمسی ثبت‌شدهٔ دستی.
+     */
+    private val manualDaysByFund = HashMap<String, Set<String>>()
+
+    /** آیا کاربر امروز برای این صندوق دستی ثبت کرده است؟ */
+    private fun isRecordedTodayByUser(fund: String, jalaliDay: String): Boolean =
+        manualDaysByFund[fund]?.contains(jalaliDay) == true
+
     /** برای درخواست کد OTP از کاربر (در صورت انقضای نشست). */
     fun setOtpProvider(provider: suspend () -> String?) {
         otpProvider = provider
@@ -90,10 +105,29 @@ class AutomationEngine(
             log("⏳ انتظار برای بارگذاری کامل اعداد (۸ ثانیه)…", LogLevel.INFO)
             delay(HYDRATION_DELAY_MS)
 
+            // ── جلوگیری از ثبت تکراری ──────────────────────────────────────
+            // اگر کاربر امروز دستی ثبت کرده باشد، صندوق دست‌نخورده می‌ماند.
+            val today = JalaliDate.format(System.currentTimeMillis(), withTime = false)
+            runCatching {
+                val reader = WebAppReader(context)
+                manualDaysByFund["atie"] = reader.manualEntries(WebAppReader.ATIE_PAGE)
+                    .map { JalaliDate.format(it.timestampMs, withTime = false) }.toSet()
+                manualDaysByFund["synergy"] = reader.manualEntries(WebAppReader.SYNERGY_PAGE)
+                    .map { JalaliDate.format(it.timestampMs, withTime = false) }.toSet()
+            }.onFailure { log("ℹ️ بررسی ثبت تکراری ناموفق: ${it.message}", LogLevel.INFO) }
+
             for ((fund, base, peak) in listOf(
                 Triple("synergy", baseSynergy, peakSynergy),
                 Triple("atie", baseAtie, peakAtie)
             )) {
+                if (isRecordedTodayByUser(fund, today)) {
+                    log(
+                        "ℹ️ صندوق «${displayName(fund)}» امروز ($today) دستی ثبت شده؛ " +
+                            "اتوماسیون دست‌نخورده رهایش می‌کند.",
+                        LogLevel.WARN
+                    )
+                    continue
+                }
                 val value = extractFund(webView, fund) ?: continue
                 if (base == null || base <= 0) {
                     log("⚠️ پایهٔ صندوق «${displayName(fund)}» تنظیم نشده؛ محاسبه رد شد.", LogLevel.WARN)
@@ -223,11 +257,14 @@ class AutomationEngine(
         awaitNavigation(webView, timeoutMs = 45_000)
 
         if (isOtpScreen(webView)) {
+            // handleOtp خودش ترتیب درست را رعایت می‌کند: پر کردن کد → تیک دستگاه → ارسال
             handleOtp(webView)
+        } else {
+            // صفحهٔ OTP نبود؛ شاید تیک «دستگاه مورد اعتماد» روی همین صفحه باشد.
+            if (tickTrustDevice(webView)) {
+                log("☑ تیک «دستگاه مورد اعتماد» روی صفحهٔ ورود زده شد.", LogLevel.OK)
+            }
         }
-
-        // تیک «این دستگاه را به خاطر بسپار» — برای عبور از تأیید دو مرحله‌ای در بارهای بعد
-        tickTrustDevice(webView)
 
         // اگر ورود واقعاً شکست خورده باشد، مفید دوباره صفحهٔ فرم را نشان می‌دهد.
         if (submitted && isStillOnLoginForm(webView)) {
@@ -452,6 +489,17 @@ class AutomationEngine(
         return evaluate(webView, js)?.contains("YES") == true
     }
 
+    /**
+     * پر کردن کد تأیید و **سپس** تیک «دستگاه مورد اعتماد» و **آخر** ارسال فرم.
+     *
+     * ⚠️ ترتیب حیاتی است و از کد قدیمی پایتون (`easytrader_automation.py`) گرفته
+     * شده که با همین ترتیب کار می‌کرد:
+     *   ۱. کد را در فیلد بگذار
+     *   ۲. تیک «تایید دو مرحله برای این سیستم لازم نیست» را بزن
+     *   ۳. دکمهٔ تأیید را بزن
+     * نسخهٔ پیشین ابتدا فرم را ارسال می‌کرد و بعد می‌کوشید تیک بزند؛ ولی
+     * صفحه عوض می‌شد و تیک هرگز زده نمی‌شد → هر بار OTP دوباره لازم بود.
+     */
     private suspend fun handleOtp(webView: WebView) {
         log("🔐 کارگزاری کد تأیید (OTP) می‌خواهد. لطفاً کد را وارد کن…", LogLevel.WARN)
         val code = otpProvider?.invoke()
@@ -459,45 +507,120 @@ class AutomationEngine(
             throw IllegalStateException("کد تأیید دریافت نشد؛ عملیات متوقف شد.")
         }
         val safeCode = jsonEscape(code)
-        val js = """
+
+        // گام ۱: پر کردن کد (بدون ارسال)
+        val fillJs = """
         (function(){
-          var el = document.querySelector('input[inputmode="numeric"], input[name*="code" i], input[name*="otp" i], input[type="tel"], input[type="text"]');
-          if(!el) return 'NOINPUT';
-          el.focus(); el.value = "$safeCode";
+          var sel = ['input[name="Token"]','input#Token','input[name="token"]','input#token',
+                     'input[inputmode="numeric"]','input[type="tel"]','input[type="number"]',
+                     'input[name*="code" i]','input[name*="otp" i]','input[placeholder*="کد"]',
+                     'input[placeholder*="code"]','input[type="text"]'];
+          var el = null;
+          for (var i=0;i<sel.length && !el;i++){
+            var c = document.querySelector(sel[i]);
+            if (c && (c.offsetWidth || c.offsetHeight || c.getClientRects().length)) el = c;
+          }
+          if (!el) return 'NOINPUT';
+          el.focus();
+          el.value = "$safeCode";
           el.dispatchEvent(new Event('input', {bubbles:true}));
           el.dispatchEvent(new Event('change', {bubbles:true}));
-          var btn = document.querySelector('button[type="submit"], input[type="submit"], form button');
-          if(btn) btn.click();
-          return 'OK';
+          el.dispatchEvent(new Event('blur', {bubbles:true}));
+          return 'FILLED';
         })();
         """.trimIndent()
-        evaluate(webView, js)
-        log("✅ کد تأیید ارسال شد.", LogLevel.OK)
+        val fillRes = evaluate(webView, fillJs)
+        if (fillRes?.contains("NOINPUT") == true) {
+            log("⚠️ فیلد کد تأیید روی صفحه پیدا نشد.", LogLevel.WARN)
+        } else {
+            log("✅ کد تأیید در فیلد گذاشته شد.", LogLevel.OK)
+        }
+        delay(400)
+
+        // گام ۲: تیک «تایید دو مرحله برای این سیستم لازم نیست»
+        val ticked = tickTrustDevice(webView)
+        delay(300)
+
+        // گام ۳: ارسال فرم
+        val submitJs = """
+        (function(){
+          var sel = ['button[type="submit"]','button#verifyBtn','button.btn-primary',
+                     'input[type="submit"]','button'];
+          for (var i=0;i<sel.length;i++){
+            var b = document.querySelector(sel[i]);
+            if (!b) continue;
+            if (!(b.offsetWidth || b.offsetHeight || b.getClientRects().length)) continue;
+            var t = (b.innerText || '').trim();
+            if (t && !/ادامه|ورود|تایید|تأیید|ارسال|ثبت|submit|verify|confirm/i.test(t)) continue;
+            b.click();
+            return 'SUBMITTED';
+          }
+          var form = document.querySelector('form');
+          if (form) { form.submit(); return 'SUBMITTED_FORM'; }
+          return 'NOBUTTON';
+        })();
+        """.trimIndent()
+        val submitRes = evaluate(webView, submitJs)
+        log(
+            if (ticked) "☑ تیک «دستگاه مورد اعتماد» زده شد و فرم ارسال گردید."
+            else "📤 فرم تأیید ارسال شد (تیک دستگاه روی صفحه نبود).",
+            LogLevel.OK
+        )
+        if (submitRes?.contains("NOBUTTON") == true) {
+            log("⚠️ دکمهٔ تأیید پیدا نشد؛ ممکن است فرم با Enter ارسال شود.", LogLevel.WARN)
+        }
         awaitNavigation(webView, timeoutMs = 45_000)
     }
 
-    private suspend fun tickTrustDevice(webView: WebView) {
+    /**
+     * تیک «تایید دو مرحله برای این سیستم لازم نیست».
+     *
+     * متن دقیق تیک از کد قدیمی پایتون گرفته شده؛ نسخهٔ پیشین فقط به کلیدواژه‌های
+     * انگلیسی (`trust`/`remember`/`device`) تکیه می‌کرد و تیک فارسی را نمی‌دید.
+     *
+     * @return `true` اگر چک‌باکسی تیک خورد.
+     */
+    private suspend fun tickTrustDevice(webView: WebView): Boolean {
         val js = """
         (function(){
-          var boxes = document.querySelectorAll("input[type='checkbox']");
-          var done = 0;
-          for (var i=0;i<boxes.length;i++){
-            var b = boxes[i];
-            var n = (b.id + ' ' + b.name + ' ' + (b.parentElement?b.parentElement.innerText:'')).toLowerCase();
-            if (n.indexOf('trust')>=0 || n.indexOf('remember')>=0 || n.indexOf('device')>=0 || n.indexOf('یاد')>=0 || n.indexOf('اعتماد')>=0){
-              if(!b.checked){ b.click(); }
-              done++;
+          function isVisible(el){
+            return !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
+          }
+          var direct = ['input#TrustDevice','input[name*="TrustDevice" i]','input[name*="trust" i]',
+                        'input[name*="remember" i]','input[name*="device" i]'];
+          for (var i=0;i<direct.length;i++){
+            var b = document.querySelector(direct[i]);
+            if (b && isVisible(b)) {
+              if (!b.checked) { b.click(); }
+              return b.checked ? 'TRUST:1' : 'TRUST:0';
             }
           }
-          return 'TRUST:' + done;
+          // جستجوی متنی: هر چک‌باکسی که برچسبش «دستگاه/اعتماد/دو مرحله/به خاطر بسپار» دارد
+          var boxes = document.querySelectorAll('input[type="checkbox"]');
+          for (var j=0;j<boxes.length;j++){
+            var c = boxes[j];
+            if (!isVisible(c)) continue;
+            var labelText = '';
+            if (c.id) {
+              var lab = document.querySelector('label[for="' + c.id + '"]');
+              if (lab) labelText += ' ' + (lab.innerText || '');
+            }
+            var parent = c.parentElement;
+            for (var lvl=0; lvl<3 && parent; lvl++){
+              labelText += ' ' + (parent.innerText || '');
+              parent = parent.parentElement;
+            }
+            labelText = labelText.replace(/\s+/g, ' ');
+            if (/اعتماد|دستگاه|دو ?مرحله|به ?خاطر|یاد|trust|remember|device/i.test(labelText)) {
+              if (!c.checked) { c.click(); }
+              return c.checked ? 'TRUST:1' : 'TRUST:0';
+            }
+          }
+          return 'TRUST:NONE';
         })();
         """.trimIndent()
-        val r = evaluate(webView, js)
-        if (r?.contains("TRUST:0") == true) {
-            log("ℹ️ تیک «این دستگاه را به خاطر بسپار» روی صفحه نبود (یا از قبل تیک بود).", LogLevel.INFO)
-        } else {
-            log("☑ تیک «این دستگاه را به خاطر بسپار» زده شد.", LogLevel.OK)
-        }
+        val r = evaluate(webView, js) ?: return false
+        return r.contains("TRUST:1")
     }
 
     // ------------------------------------------------------------------ Extraction
@@ -528,8 +651,8 @@ class AutomationEngine(
             log("⛔ متن صفحه خالی است؛ اسکن متن و DOM بی‌فایده‌اند.", LogLevel.ERROR)
         }
 
-        // لایهٔ ۲: اسکن متن بدنه
-        scanBodyText(bodyText, keywords)?.let {
+        // لایهٔ ۲: اسکن متن بدنه (با الگوی اختصاصی هر صندوق)
+        scanBodyTextForFund(bodyText, keywords, fund)?.let {
             log("✔ [لایهٔ ۲ · اسکن متن] مقدار ${fmt(it)} ریال", LogLevel.OK)
             methodByFund[fund] = "text"
             return it
@@ -561,43 +684,50 @@ class AutomationEngine(
     }
 
     /**
-     * هدایت به تب/صفحهٔ صندوق موردنظر.
+     * بردن WebView به صفحه‌ای که مقدار صندوق در آن دیده می‌شود.
      *
-     * صندوق‌های مفید (سینرژی، آتیه) در تب پیش‌فرض «سهام» نیستند. اسکریپت
-     * پایتون **دو کلیک** می‌زند: اول «سایر»، بعد «صندوق‌های مفید».
-     *
-     * اینجا ناوبری گام‌به‌گام و **با تأیید هر گام** انجام می‌شود: پس از هر
-     * کلیک، بررسی می‌کنیم آیا صفحه تغییر کرد یا کلیدواژهٔ صندوق پیدا شد.
-     * اگر در پایان کلیدواژه پیدا نشد، **دامپ عیب‌یابی** ثبت می‌شود تا آدرس
-     * و ساختار واقعی صفحه لو برود (به‌جای عیب‌یابی کورکورانه).
+     * ⚠️ دو مسیر متفاوت، چون دو صندوق در دو صفحهٔ متفاوت‌اند:
+     *   • **سینرژی (۵)** روی **پرتفوی** است، در جدول نمادهای سهام
+     *     (`/portfolio-fill`). نباید از پرتفوی خارج شویم، وگرنه مقدار از دست می‌رود.
+     *     نسخهٔ پیشین همیشه اول به تب «سایر» می‌رفت → سینرژی هرگز خوانده نمی‌شد.
+     *   • **آتیه (۴)** روی **صندوق‌های مفید** است (`/menu/funds`). رفتن مستقیم با
+     *     `loadUrl` انجام می‌شود؛ کلیک روی `span` در SPA ناوبری نمی‌کند.
      */
     private suspend fun navigateToFund(webView: WebView, fund: String) {
-        val keywords = if (fund == "synergy") SYNERGY_KEYWORDS else ATIE_KEYWORDS
-        logTabProbe(webView)
-
-        // گام ۱: تب «سایر» — تب میانی صندوق‌ها
-        tryClickTab(webView, listOf("سایر", "سایرین"), "سایر", 3_000)
-
-        // گام ۲: تب «صندوق‌های مفید»
-        tryClickTab(
-            webView,
-            listOf("صندوق‌های مفید", "صندوق ها", "صندوق‌ها", "صندوق‌های مفید", "صندوق هاي مفيد"),
-            "صندوق‌های مفید",
-            4_000
-        )
-
-        // گام ۳: خودِ صندوق — فقط اگر هنوز در متن صفحه نیست
-        if (!pageHasKeyword(webView, keywords)) {
-            val fundNames = if (fund == "atie") {
-                listOf("آتیه مفید", "آتیه", "بازنشستگی")
-            } else {
-                listOf("سینرژی", "انرژی")
+        if (fund == "synergy") {
+            // سینرژی روی پرتفوی است؛ اگر از آن خارج شده‌ایم، برگردیم.
+            val url = currentUrl(webView)
+            if (!url.contains("portfolio")) {
+                log("🌐 بازگشت به پرتفوی برای خواندن سینرژی…", LogLevel.INFO)
+                webView.loadUrl(PORTFOLIO_URL)
+                awaitPageLoaded(webView, timeoutMs = 45_000)
+                delay(3_000)
             }
-            tryClickLink(webView, fundNames, displayName(fund))
+            return
         }
 
-        // اگر همچنان کلیدواژه نیست، دامپ عیب‌یابی
-        if (!pageHasKeyword(webView, keywords)) {
+        // آتیه: صفحهٔ «صندوق‌های مفید»
+        if (pageHasKeyword(webView, ATIE_KEYWORDS)) return
+
+        log("🌐 رفتن به صفحهٔ صندوق‌های مفید…", LogLevel.INFO)
+        webView.loadUrl(FUNDS_URL)
+        awaitPageLoaded(webView, timeoutMs = 45_000)
+        delay(4_000)
+
+        if (!pageHasKeyword(webView, ATIE_KEYWORDS)) {
+            // پشتیبان: اگر URL مستقیم کار نکرد، با کلیک تب تلاش کن.
+            log("ℹ️ صفحهٔ صندوق‌ها با URL مستقیم باز نشد؛ تلاش با کلیک تب…", LogLevel.INFO)
+            logTabProbe(webView)
+            tryClickTab(webView, listOf("سایر", "سایرین"), "سایر", 3_000)
+            tryClickTab(
+                webView,
+                listOf("صندوق‌های مفید", "صندوق ها", "صندوق‌ها", "صندوق هاي مفيد"),
+                "صندوق‌های مفید",
+                4_000
+            )
+        }
+
+        if (!pageHasKeyword(webView, ATIE_KEYWORDS)) {
             dumpNavigationDiagnostics(webView, fund)
         }
     }
@@ -813,35 +943,13 @@ class AutomationEngine(
      * یافتن مقدار ریالی یک صندوق از متن صفحه.
      *
      * `innerText` در WebView اندروید، برخلاف Playwright، بین عناصر `\n` نمی‌گذارد؛
-     * پس «سینرژی۲۵۰,۰۰۰,۰۰۰همسنگ ۲۵,۰۰۰,۰۰۰» به‌هم‌چسبیده می‌آید. به‌جای پیمایش
-     * خط‌به‌خط، یک پنجرهٔ کاراکتری بعد از کلیدواژه اسکن می‌شود و تا اولین نشانهٔ
-     * پایان («همسنگ» یا «تومان») ادامه می‌یابد؛ سپس بزرگ‌ترین عدد ۶رقمی+ برگردانده می‌شود.
+     * پس «سینرژی۲۲۰,۳۵۱,۲۶۰همسنگ ۲۲۰,۳۵۱,۲۶۰» به‌هم‌چسبیده می‌آید. به‌جای پیمایش
+     * خط‌به‌خط، یک پنجرهٔ کاراکتری بعد از کلیدواژه اسکن می‌شود و بزرگ‌ترین عدد
+     * ۶رقمی+ برگردانده می‌شود. منطق کامل در [FundTextScanner] است تا در تست JVM
+     * مستقیماً سنجیده شود.
      */
-    private fun scanBodyText(text: String, keywords: List<String>): Long? {
-        val normalized = toEnglishDigits(text)
-        for (keyword in keywords) {
-            var from = normalized.indexOf(keyword)
-            while (from >= 0) {
-                val window = normalized.substring(
-                    from + keyword.length,
-                    minOf(from + keyword.length + WINDOW_CHARS, normalized.length)
-                )
-                val endIndex = listOf(
-                    window.indexOf("همسنگ"), window.indexOf("تومان"), window.indexOf("کارگزاری")
-                ).filter { it >= 0 }.minOrNull() ?: window.length
-                val segment = window.substring(0, endIndex)
-
-                val candidates = Regex("[\\d,]{6,}").findAll(segment)
-                    .mapNotNull { it.value.replace(",", "").toLongOrNull() }
-                    .filter { it >= MIN_ASSET_VALUE }
-                    .toList()
-                candidates.maxOrNull()?.let { return it }
-
-                from = normalized.indexOf(keyword, from + keyword.length)
-            }
-        }
-        return null
-    }
+    private fun scanBodyTextForFund(text: String, keywords: List<String>, fund: String?): Long? =
+        FundTextScanner.extractValue(text, keywords, fund ?: "")
 
     private suspend fun scanDom(webView: WebView, keywords: List<String>): Long? {
         val kw = keywords.joinToString("|")
@@ -984,17 +1092,6 @@ class AutomationEngine(
         }
     }
 
-    private fun toEnglishDigits(input: String): String {
-        val map = mapOf(
-            '۰' to '0', '۱' to '1', '۲' to '2', '۳' to '3', '۴' to '4',
-            '۵' to '5', '۶' to '6', '۷' to '7', '۸' to '8', '۹' to '9',
-            '٠' to '0', '١' to '1', '٢' to '2', '٣' to '3', '٤' to '4',
-            '٥' to '5', '٦' to '6', '٧' to '7', '٨' to '8', '٩' to '9'
-        )
-        val sb = StringBuilder(input.length)
-        for (c in input) sb.append(map[c] ?: c)
-        return sb.toString()
-    }
 
     private fun jsonEscape(s: String): String = JSONObject.quote(s).removeSurrounding("\"")
 
@@ -1005,11 +1102,17 @@ class AutomationEngine(
     companion object {
         private const val LOGIN_URL = "https://login.emofid.com/Login"
         private const val PORTFOLIO_URL = "https://m.easytrader.ir/portfolio-fill"
+
+        /**
+         * صفحهٔ «صندوق‌های مفید» — محل نمایش دارایی «آتیه».
+         *
+         * آدرس از دامپ ناوبری تأیید شد. نسخهٔ پیشین می‌کوشید با کلیک روی
+         * تب‌ها به این صفحه برسد، ولی کلیک روی `span` در SPA ناوبری نمی‌کند؛
+         * رفتن مستقیم با `loadUrl` پایدار و مستقل از ظاهر است.
+         */
+        private const val FUNDS_URL = "https://m.easytrader.ir/menu/funds"
         private const val HYDRATION_DELAY_MS = 8_000L
         private const val MIN_ASSET_VALUE = 1_000_000L
-
-        /** پنجرهٔ کاراکتری اسکن متن بعد از کلیدواژهٔ صندوق. */
-        private const val WINDOW_CHARS = 200
 
         private val SYNERGY_KEYWORDS = listOf("سینرژی", "synergy")
         private val ATIE_KEYWORDS = listOf("آتیه", "بازنشستگی", "atie")
