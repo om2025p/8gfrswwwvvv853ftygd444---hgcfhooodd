@@ -7,7 +7,11 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.text.InputType
+import android.view.View
+import android.view.ViewGroup
+import android.webkit.WebView
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -34,6 +38,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var txtSynergyBase: TextView
     private lateinit var txtSynergyPercent: TextView
 
+    private lateinit var automationPanel: View
+    private lateinit var webViewContainer: FrameLayout
+    private lateinit var txtWebStatus: TextView
+
     private val prefs by lazy { getSharedPreferences("omarat_fund_automation_state", Context.MODE_PRIVATE) }
     private val logLines = StringBuilder()
 
@@ -54,6 +62,10 @@ class MainActivity : AppCompatActivity() {
         txtSynergyBase = findViewById(R.id.txtSynergyBase)
         txtSynergyPercent = findViewById(R.id.txtSynergyPercent)
 
+        automationPanel = findViewById(R.id.automationPanel)
+        webViewContainer = findViewById(R.id.webViewContainer)
+        txtWebStatus = findViewById(R.id.txtWebStatus)
+
         findViewById<TextView>(R.id.btnRun).setOnClickListener { startAutomation() }
         findViewById<TextView>(R.id.btnSettings).setOnClickListener { openSettings() }
         findViewById<TextView>(R.id.btnOpenWeb).setOnClickListener {
@@ -61,6 +73,31 @@ class MainActivity : AppCompatActivity() {
         }
 
         refreshStatus()
+    }
+
+    /**
+     * WebView اتوماسیون را داخل پنل قرار می‌دهد و پنل را نمایان می‌کند.
+     *
+     * بدون این کار، WebView به پنجره وصل نیست؛ رندر و layout انجام نمی‌شود و
+     * `document.body.innerText` خالی برمی‌گردد — همان چیزی که باعث شکست
+     * هر چهار لایهٔ استخراج می‌شد.
+     */
+    private fun attachAutomationWebView(webView: WebView) {
+        (webView.parent as? ViewGroup)?.removeView(webView)
+        webViewContainer.removeAllViews()
+        webViewContainer.addView(
+            webView,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+        automationPanel.visibility = View.VISIBLE
+    }
+
+    private fun detachAutomationWebView() {
+        webViewContainer.removeAllViews()
+        automationPanel.visibility = View.GONE
     }
 
     // ------------------------------------------------------------------ Status
@@ -121,7 +158,9 @@ class MainActivity : AppCompatActivity() {
                     baseSynergy = synergyBase,
                     peakAtie = atiePeak,
                     peakSynergy = synergyPeak
-                ) { /* WebView آماده شد */ }
+                ) { webView ->
+                    runOnUiThread { attachAutomationWebView(webView) }
+                }
 
                 var savedOk = false
                 var backupOk = false
@@ -186,6 +225,7 @@ class MainActivity : AppCompatActivity() {
                 appendLog("❌ خطا: ${e.message}", AutomationEngine.LogLevel.ERROR)
             } finally {
                 findViewById<TextView>(R.id.btnRun).isEnabled = true
+                detachAutomationWebView()
                 refreshStatus()
             }
         }

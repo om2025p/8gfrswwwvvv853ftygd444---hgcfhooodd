@@ -1,16 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  ریشه FrameLayout است تا بتوان WebView اتوماسیون را به‌صورت overlay
+  روی محتوای اصلی نشاند. بدون افزودن WebView به سلسله‌مراتب ویو،
+  document.body.innerText خالی برمی‌گردد و استخراج شکست می‌خورد.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg"
-    android:layoutDirection="rtl"
-    android:fillViewport="true">
+    android:layoutDirection="rtl">
 
-    <LinearLayout
+    <ScrollView
+        android:id="@+id/mainScroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
 
         <!-- سرصفحه -->
         <LinearLayout
@@ -235,7 +245,39 @@
                 android:text="هنوز اجرایی انجام نشده است."
                 android:textColor="@color/muted"
                 android:textSize="12sp" />
-        </LinearLayout>
+            </LinearLayout>
 
+        </LinearLayout>
+    </ScrollView>
+
+    <!--
+      پنل اتوماسیون: WebView واقعی که حین اجرا نمایش داده می‌شود.
+      دیده‌شدن لازم است چون innerText به رندر و layout نیاز دارد.
+    -->
+    <LinearLayout
+        android:id="@+id/automationPanel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/bg"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/txtWebStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/card2"
+            android:padding="10dp"
+            android:text="🤖 اتوماسیون در حال اجراست…"
+            android:textColor="@color/text"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:id="@+id/webViewContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
     </LinearLayout>
-</ScrollView>
+
+</FrameLayout>

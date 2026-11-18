@@ -392,6 +392,29 @@ gradle assembleRelease assembleDebug --no-daemon
 #### ۳. بکاپ سینرژی آپلود نمی‌شد
 - فقط `gold4` آپلود می‌شد. `buildSynergyBackupPayload()` + آپلود `gold5/gold5_backup.json` اضافه شد.
 
+#### ۴. ⚠️ بحرانی‌ترین باگ — WebView به صفحه اضافه نمی‌شد (v1.2.0)
+- **نشانه:** همهٔ چهار لایهٔ استخراج شکست می‌خوردند، در حالی که لاگ می‌گفت «نشست فعال است» و هیچ لاگی از `openOtherTab` نبود.
+- **ریشه:** در `MainActivity` کال‌بک این بود `{ /* WebView آماده شد */ }` و **هیچ‌جا `addView(webView)` صدا زده نمی‌شد.** یک WebView وصل‌نشده به پنجره، layout/render ندارد و **`document.body.innerText` رشتهٔ خالی برمی‌گرداند** (`innerText` به رندر نیاز دارد، برخلاف `textContent`). پس هر ۴ لایه روی متن خالی کار می‌کردند.
+- **دو مدرک از لاگ:** (۱) «نشست فعال» → یعنی `bodyText()` خالی بود و شرط `!body.contains("رمز")` برقرار شد. (۲) پیام «تب سایر باز شد» غایب بود → `openOtherTab` عنصری ندید.
+- **درمان:** ریشهٔ `activity_main.xml` از `ScrollView` به `FrameLayout` تغییر کرد + پنل `automationPanel` شامل `webViewContainer` (و `txtWebStatus`). در `MainActivity.attachAutomationWebView()` نمونهٔ WebView داخل کانتینر قرار می‌گیرد و پنل `VISIBLE` می‌شود؛ در `finally` پنل بسته می‌شود. **درس:** هر WebView اتوماسیون باید واقعاً به سلسله‌مراتب ویو وصل و دیده شود، وگرنه `innerText` همیشه خالی است.
+
+#### ۵. باگ ظریف JSON در خواندن خروجی `evaluateJavascript` (v1.2.0)
+- `evaluateJavascript` خروجی رشته‌ای را **JSON-encode** می‌کند: `"{\"inner\":\"خط۱\\nخط۲\"}"`.
+- نسخهٔ اول `JSONObject(diag)` می‌زد → روی نقل‌قول شکست می‌خورد. `unquote` سادهٔ قبلی هم `\n` را زودتر از موعد به newline واقعی تبدیل می‌کرد و JSON را می‌شکست.
+- **درمان:** `decodeJsonString()` با `JSONTokener` (ترتیب درست escapeها) در `bodyText`، `scanDom`، `sniffFromNetwork` و `openOtherTab`.
+
+### 📋 لاک‌گذاری فراوان (v1.2.0 — برای عیب‌یابی از راه دور)
+- `BODY_TEXT_PROBE`: طول `innerText` و `textContent`، `attached`، اندازهٔ viewport.
+- نمونهٔ ۳۰۰ کاراکتر اول متن صفحه.
+- `TAB_PROBE`: فهرست همهٔ متن‌های کوتاه صفحه (تب‌ها) — اگر نام تب عوض شد، سریع معلوم می‌شود.
+- نتیجهٔ خام هر لایه (`✖ [لایهٔ N] نتیجه‌ای نداد`) + تعداد برخورد کلیدواژه‌ها در متن.
+- URL فعلی صفحه پیش از هر استخراج.
+- **درس:** در محیطی که به دستگاه کاربر دسترسی نداری، لاگ باید جای چشم تو را بگیرد.
+
+### 🛰️ تزریق زودهنگام شنود شبکه (v1.2.0)
+- `WebViewCompat.addDocumentStartJavaScript(webView, SNIFFER_JS, setOf("*"))` در `onPageStarted` — اسکریپت **پیش از** اسکریپت‌های صفحه اجرا می‌شود، پس `fetch` و `XMLHttpRequest` قبل از اولین درخواست SPA بازنویسی می‌شوند (نسخهٔ قبلی فقط `fetch` و فقط بعد از `onPageFinished`).
+- XHR هم پوشش داده می‌شود؛ بعضی SPAها از XHR استفاده می‌کنند.
+
 ### 🆕 v1.1.0 — امکانات جدید
 - **صفحهٔ انتخاب صندوق** (`assets/webapp/index.html`): دو دکمهٔ آتیه/سینرژی. پیش از این مسیر `gold4` در `WebViewActivity` هاردکد بود و سینرژی هیچ راه دسترسی نداشت. دکمهٔ بازگشت هم `canGoBack()` را رعایت می‌کند.
 - **دو فیلد «مقدار پایه» در ⚙️:** بدون آن، اولین اجرا «پایه تنظیم نشده» می‌داد. ورودی ارقام فارسی/عربی را هم می‌پذیرد (`digits()`).

@@ -8,12 +8,14 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.webkit.WebViewCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
+import org.json.JSONTokener
 import kotlin.coroutines.resume
 
 /**
@@ -128,6 +130,14 @@ class AutomationEngine(
                 return null
             }
 
+            override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+                lastPageFinishedAt = 0
+                // تزریق زودهنگام شنود: پیش از اجرای اسکریپت‌های صفحه انجام می‌شود،
+                // پس درخواست‌های اولیهٔ SPA (که حامل مقدار صندوق‌ها هستند) از دست نمی‌روند.
+                installNetworkSniffer(view)
+            }
+
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
                 lastPageFinishedAt = System.currentTimeMillis()
@@ -137,37 +147,24 @@ class AutomationEngine(
     }
 
     /**
-     * تزریق یک اسکریپت کوچک برای شنود پاسخ‌های شبکه‌ای که کلمهٔ صندوق‌ها
-     * را دارند. چون WebView اندروید به بدنهٔ پاسخ‌ها دسترسی مستقیم نمی‌دهد،
-     * از `fetch` صفحه استفاده می‌کنیم تا پاسخ‌ها را ببینیم.
+     * نصب شنود شبکه با تزریق در «شروع سند».
+     *
+     * `WebViewCompat.addDocumentStartJavaScript` اسکریپت را پیش از هر اسکریپت
+     * صفحه اجرا می‌کند؛ پس `window.fetch` پیش از آنکه اپ SPA اولین درخواست‌ها
+     * را بفرستد بازنویسی می‌شود. نسخهٔ پیشین فقط بعد از پایان بارگذاری تزریق
+     * می‌کرد و درخواست‌های اولیه (حاوی مقادیر صندوق) را از دست می‌داد.
      */
-    private suspend fun installNetworkSniffer(webView: WebView) {
-        val js = """
-        (function(){
-          if (window.__emaratSniffer) return 'already';
-          window.__emaratSniffer = true;
-          var origFetch = window.fetch;
-          window.fetch = function(){
-            return origFetch.apply(this, arguments).then(function(res){
-              try {
-                res.clone().text().then(function(t){
-                  if (!t) return;
-                  if (t.indexOf('سینرژی') >= 0 || t.indexOf('synergy') >= 0) {
-                    var m = t.match(/"(?:totalValue|assetValue|value|totalPrice|marketValue|sumPrice)"\s*:\s*"?([\d,]+)"?/g);
-                    if (m) { window.__emaratSynergyRaw = t; }
-                  }
-                  if (t.indexOf('آتیه') >= 0 || t.indexOf('بازنشستگی') >= 0 || t.indexOf('atie') >= 0) {
-                    window.__emaratAtieRaw = t;
-                  }
-                });
-              } catch(e){}
-              return res;
-            });
-          };
-          return 'installed';
-        })();
-        """.trimIndent()
-        evaluate(webView, js)
+    private fun installNetworkSniffer(webView: WebView) {
+        try {
+            WebViewCompat.addDocumentStartJavaScript(webView, SNIFFER_JS, setOf("*"))
+        } catch (e: Exception) {
+            log("⚠️ تزریق زودهنگام شنود ناموفق (fallback به روش قدیمی): ${e.message}", LogLevel.WARN)
+        }
+    }
+
+    /** نسخهٔ async قدیمی برای سازگاری با مرورگرهای قدیمی که addDocumentStart را ندارند. */
+    private suspend fun installNetworkSnifferAsync(webView: WebView) {
+        evaluate(webView, SNIFFER_JS)
     }
 
     // ------------------------------------------------------------------ Login
@@ -178,7 +175,7 @@ class AutomationEngine(
 
         if (url.contains("portfolio-fill") || (url.contains("easytrader") && !body.contains("رمز"))) {
             log("✅ نشست فعال است؛ نیازی به ورود مجدد نیست.", LogLevel.OK)
-            installNetworkSniffer(webView)
+            installNetworkSnifferAsync(webView)
             return
         }
 
@@ -196,7 +193,7 @@ class AutomationEngine(
         log("🌐 رفتن به صفحهٔ پرتفوی…", LogLevel.INFO)
         webView.loadUrl(PORTFOLIO_URL)
         awaitPageLoaded(webView, timeoutMs = 45_000)
-        installNetworkSniffer(webView)
+        installNetworkSnifferAsync(webView)
     }
 
     private suspend fun fillLoginForm(webView: WebView) {
@@ -310,6 +307,7 @@ class AutomationEngine(
     private suspend fun extractFund(webView: WebView, fund: String): Long? {
         val keywords = if (fund == "synergy") SYNERGY_KEYWORDS else ATIE_KEYWORDS
         log("🔎 استخراج مقدار صندوق «${displayName(fund)}»…", LogLevel.INFO)
+        log("🌐 نشانی فعلی: ${currentUrl(webView)}", LogLevel.INFO)
 
         openOtherTab(webView)
 
@@ -319,8 +317,12 @@ class AutomationEngine(
             methodByFund[fund] = "network"
             return it
         }
+        log("✖ [لایهٔ ۱ · شنود API] نتیجه‌ای نداد.", LogLevel.INFO)
 
         val bodyText = bodyText(webView)
+        if (bodyText.isBlank()) {
+            log("⛔ متن صفحه خالی است؛ اسکن متن و DOM بی‌فایده‌اند.", LogLevel.ERROR)
+        }
 
         // لایهٔ ۲: اسکن متن بدنه
         scanBodyText(bodyText, keywords)?.let {
@@ -328,6 +330,11 @@ class AutomationEngine(
             methodByFund[fund] = "text"
             return it
         }
+        log(
+            "✖ [لایهٔ ۲ · اسکن متن] نتیجه‌ای نداد. کلیدواژه‌های «${keywords.joinToString("، ")}» " +
+                "در متن: ${keywords.count { bodyText.contains(it) }} مورد",
+            LogLevel.INFO
+        )
 
         // لایهٔ ۳: پیمایش DOM
         scanDom(webView, keywords)?.let {
@@ -335,6 +342,7 @@ class AutomationEngine(
             methodByFund[fund] = "dom"
             return it
         }
+        log("✖ [لایهٔ ۳ · DOM] نتیجه‌ای نداد.", LogLevel.INFO)
 
         // لایهٔ ۴: هوش مصنوعی
         log("🤖 سه لایهٔ معمولی شکست خورد؛ لایهٔ هوش مصنوعی امتحان می‌شود…", LogLevel.WARN)
@@ -352,9 +360,21 @@ class AutomationEngine(
      * باز کردن تب «سایر» در صفحهٔ پرتفوی.
      *
      * صندوق‌های مفید (سینرژی، آتیه) در تب پیش‌فرض «سهام» نیستند و بدون این
-     * کلیک، `innerText` صفحه هیچ‌کدام را نشان نمی‌دهد.
+     * کلیک، `innerText` صفحه هیچ‌کدام را نشان نمی‌دهد. همهٔ تب‌های پیداشده
+     * در لاگ ثبت می‌شوند تا اگر نام تب عوض شد، سریع بفهمیم.
      */
     private suspend fun openOtherTab(webView: WebView) {
+        val probe = evaluate(webView, TAB_PROBE)
+        if (probe != null) {
+            try {
+                val arr = org.json.JSONArray(decodeJsonString(probe))
+                val tabs = (0 until arr.length()).map { arr.optString(it) }
+                log("🗂 تب‌های پیداشده در صفحه: ${if (tabs.isEmpty()) "(هیچ)" else tabs.joinToString(" | ")}", LogLevel.INFO)
+            } catch (e: Exception) {
+                log("🗂 کاوش تب‌ها ناموفق: ${probe.take(150)}", LogLevel.WARN)
+            }
+        }
+
         val js = """
         (function(){
           var texts = ['سایر','سایرین','صندوق‌های مفید','صندوق ها','صندوق‌ها'];
@@ -374,22 +394,37 @@ class AutomationEngine(
         })();
         """.trimIndent()
         val r = evaluate(webView, js)
-        if (r?.contains("CLICKED") == true) {
-            log("🗂 تب «سایر» باز شد.", LogLevel.INFO)
-            delay(4_000)
+        when {
+            r?.contains("CLICKED") == true -> {
+                log("🗂 تب «سایر» باز شد.", LogLevel.INFO)
+                delay(4_000)
+            }
+            r?.contains("ALREADY") == true ->
+                log("🗂 تب «سایر» از قبل باز بود (سینرژی در صفحه دیده می‌شود).", LogLevel.INFO)
+            else ->
+                log("⚠️ تب «سایر» پیدا نشد؛ شاید ساختار صفحه عوض شده یا صفحه هنوز لود نشده.", LogLevel.WARN)
         }
     }
 
     private suspend fun sniffFromNetwork(webView: WebView, fund: String): Long? {
         val varName = if (fund == "synergy") "__emaratSynergyRaw" else "__emaratAtieRaw"
         val js = "window.$varName ? String(window.$varName).substring(0, 60000) : ''"
-        val raw = evaluate(webView, js) ?: return null
-        if (raw.isBlank()) return null
+        val raw = decodeJsonString(evaluate(webView, js) ?: "")
+        if (raw.isBlank()) {
+            log("   ↳ شنود API: هیچ پاسخ حاوی کلیدواژهٔ این صندوق ثبت نشد.", LogLevel.INFO)
+            return null
+        }
+        log("   ↳ شنود API: ${raw.length} کاراکتر پاسخ ثبت شد؛ در جستجوی مقدار…", LogLevel.INFO)
 
         val numbers = Regex("\"(?:totalValue|assetValue|value|totalPrice|marketValue|sumPrice)\"\\s*:\\s*\"?([\\d,]+)\"?")
             .findAll(raw)
             .mapNotNull { it.groupValues[1].replace(",", "").toLongOrNull() }
             .filter { it >= MIN_ASSET_VALUE }
+            .toList()
+        if (numbers.isEmpty()) {
+            log("   ↳ در پاسخ، عدد معتبری (≥ ${fmt(MIN_ASSET_VALUE)}) یافت نشد.", LogLevel.INFO)
+            return null
+        }
         return numbers.maxOrNull()
     }
 
@@ -457,7 +492,7 @@ class AutomationEngine(
           return '';
         })();
         """.trimIndent()
-        return evaluate(webView, js)?.toLongOrNull()
+        return decodeJsonString(evaluate(webView, js) ?: "").toLongOrNull()
     }
 
     // ------------------------------------------------------------------ Helpers
@@ -481,9 +516,50 @@ class AutomationEngine(
     private suspend fun currentUrl(webView: WebView): String =
         withContext(Dispatchers.Main) { webView.url ?: "" }
 
+    /**
+     * متن نمایان صفحه با تشخیص دقیق.
+     *
+     * `innerText` به رندر نیاز دارد و اگر WebView به پنجره وصل نباشد خالی
+     * برمی‌گردد؛ پس در صورت خالی بودن، `textContent` جایگزین می‌شود و علت
+     * در لاگ ثبت می‌گردد تا دفعهٔ بعد کورکورانه عیب‌یابی نکنیم.
+     */
     private suspend fun bodyText(webView: WebView): String {
-        val res = evaluate(webView, "document.body ? document.body.innerText : ''")
-        return unquote(res)
+        val raw = evaluate(webView, BODY_TEXT_PROBE) ?: return ""
+        val diag = decodeJsonString(raw)
+        val obj = try {
+            JSONObject(diag)
+        } catch (e: Exception) {
+            log("⚠️ خواندن متن صفحه ناموفق: ${diag.take(120)}", LogLevel.WARN)
+            return diag
+        }
+
+        val inner = obj.optString("inner")
+        val textContent = obj.optString("text")
+        val attached = obj.optBoolean("attached")
+        val w = obj.optInt("w")
+        val h = obj.optInt("h")
+
+        log(
+            "🔬 متن صفحه: innerText=${inner.length} کاراکتر | textContent=${textContent.length} " +
+                "| اندازه=${w}×${h} | متصل=$attached",
+            LogLevel.INFO
+        )
+
+        val chosen = when {
+            inner.isNotBlank() -> inner
+            textContent.isNotBlank() -> {
+                log("⚠️ innerText خالی بود؛ از textContent استفاده می‌شود.", LogLevel.WARN)
+                textContent
+            }
+            else -> ""
+        }
+
+        if (chosen.isNotBlank()) {
+            log("👀 نمونهٔ متن صفحه: «${chosen.take(300).replace("\n", " ⏎ ")}»", LogLevel.INFO)
+        } else {
+            log("❌ صفحه هیچ متنی ندارد (حتی textContent) — احتمالاً هنوز بارگذاری نشده.", LogLevel.ERROR)
+        }
+        return chosen
     }
 
     /** اجرای جاوااسکریپت و برگرداندن نتیجهٔ خام. */
@@ -507,6 +583,24 @@ class AutomationEngine(
             s = s.substring(1, s.length - 1)
         }
         return s.replace("\\n", "\n").replace("\\\"", "\"").replace("\\/", "/")
+    }
+
+    /**
+     * باز کردن رشتهٔ JSON-encoded که `evaluateJavascript` برمی‌گرداند.
+     *
+     * `evaluateJavascript` خروجی رشته‌ای را با escape کامل JSON می‌دهد
+     * (`"{\"inner\":\"خط۱\\nخط۲\"}"`). `unquote` سادهٔ قبلی `\n` را زودتر از
+     * موعد به newline واقعی تبدیل می‌کرد و JSON را می‌شکست؛ `JSONTokener`
+     * ترتیب درست escapeها را رعایت می‌کند.
+     */
+    private fun decodeJsonString(raw: String): String {
+        if (raw == "null" || raw.isEmpty()) return ""
+        if (!raw.startsWith("\"")) return raw
+        return try {
+            JSONTokener(raw).nextValue() as? String ?: unquote(raw)
+        } catch (e: Exception) {
+            unquote(raw)
+        }
     }
 
     private fun toEnglishDigits(input: String): String {
@@ -539,8 +633,103 @@ class AutomationEngine(
         private val SYNERGY_KEYWORDS = listOf("سینرژی", "synergy")
         private val ATIE_KEYWORDS = listOf("آتیه", "بازنشستگی", "atie")
 
+        /**
+         * کاوشگر متن صفحه: هر سه معیار را یک‌جا برمی‌گرداند تا در لاگ ببینیم
+         * دقیقاً کدام‌یک خالی است. `attached` می‌گوید WebView به پنجره وصل است یا نه.
+         */
+        private val BODY_TEXT_PROBE = """
+        (function(){
+          try {
+            var b = document.body;
+            return JSON.stringify({
+              inner: b ? (b.innerText || '') : '',
+              text: b ? (b.textContent || '') : '',
+              attached: !!(document.documentElement && document.documentElement.isConnected),
+              w: window.innerWidth || 0,
+              h: window.innerHeight || 0
+            });
+          } catch(e){ return JSON.stringify({inner:'',text:'',attached:false,w:0,h:0,err:''+e}); }
+        })();
+        """.trimIndent()
+
+        /**
+         * کاوشگر تب‌ها: متن همهٔ عناصر کوچک (کمتر از ۲۰ کاراکتر) را برمی‌گرداند
+         * تا در لاگ ببینیم تب‌های واقعی صفحه چه نامی دارند.
+         */
+        private val TAB_PROBE = """
+        (function(){
+          try {
+            var out = [];
+            var all = document.querySelectorAll('span,a,button,li,[role="tab"],[role="button"]');
+            for (var i=0;i<all.length;i++){
+              var el = all[i];
+              if (el.children.length > 1) continue;
+              var t = (el.innerText || '').trim();
+              if (!t || t.length > 20) continue;
+              if (out.indexOf(t) < 0) out.push(t);
+              if (out.length >= 40) break;
+            }
+            return JSON.stringify(out);
+          } catch(e){ return '[]'; }
+        })();
+        """.trimIndent()
+
         private const val MOBILE_UA =
             "Mozilla/5.0 (Linux; Android 13; SM-S911B) AppleWebKit/537.36 " +
             "(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+
+        /**
+         * شنود `fetch` و `XMLHttpRequest` برای گرفتن بدنهٔ پاسخ‌های API.
+         *
+         * هم `fetch` و هم XHR پوشش داده می‌شوند؛ بعضی SPAها از XHR استفاده
+         * می‌کنند و نسخهٔ پیشین فقط `fetch` را می‌گرفت.
+         */
+        private val SNIFFER_JS = """
+        (function(){
+          if (window.__emaratSniffer) return 'already';
+          window.__emaratSniffer = true;
+
+          function inspect(t){
+            if (!t || typeof t !== 'string') return;
+            try {
+              if (t.indexOf('سینرژی') >= 0 || t.indexOf('synergy') >= 0) {
+                window.__emaratSynergyRaw = t;
+              }
+              if (t.indexOf('آتیه') >= 0 || t.indexOf('بازنشستگی') >= 0 || t.indexOf('atie') >= 0) {
+                window.__emaratAtieRaw = t;
+              }
+            } catch(e){}
+          }
+
+          try {
+            var origFetch = window.fetch;
+            if (origFetch) {
+              window.fetch = function(){
+                return origFetch.apply(this, arguments).then(function(res){
+                  try { res.clone().text().then(inspect).catch(function(){}); } catch(e){}
+                  return res;
+                });
+              };
+            }
+          } catch(e){}
+
+          try {
+            var OrigXHR = window.XMLHttpRequest;
+            if (OrigXHR) {
+              var origOpen = OrigXHR.prototype.open;
+              OrigXHR.prototype.open = function(){
+                try {
+                  this.addEventListener('load', function(){
+                    try { inspect(this.responseText); } catch(e){}
+                  });
+                } catch(e){}
+                return origOpen.apply(this, arguments);
+              };
+            }
+          } catch(e){}
+
+          return 'installed';
+        })();
+        """.trimIndent()
     }
 }
