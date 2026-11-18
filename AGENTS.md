@@ -678,3 +678,11 @@ gradle test assembleRelease assembleDebug --no-daemon
 - **عدد پایه عمداً خودکار به‌روز نمی‌شود** (تصمیم کاربر: خودش دستی می‌زند).
 - **تست:** ۵۸ تست jsdom روی هر ۸ اپ (ثبت، تکراری، حفظ دادهٔ شیء، به‌روزرسانی زنده) + ۱۱ تست منطق خالص — همه موفق.
 - **بامپ:** `CACHE_NAME` → `emarat-portal-v82`؛ `gold4/gold5` در `fund-automation-android/.../assets/webapp/` همگام شد.
+
+### 📱 APK اندروید v1.10.0 (نسخهٔ ثبت خودکار درصد)
+- `versionCode 10→11`، `versionName 1.9.0→1.10.0` در `fund-automation-android/app/build.gradle`.
+- **دلیل نسخه:** assets وب‌اپ (`gold4`/`gold5`) با قابلیت «ثبت خودکار درصد در تب ثبت درصد» همگام شدند.
+- **امضای APK پایدار:** SHA-256 گواهی `4603b639c0ed4480630c6db3598e5112f97b85f4aed6ac55d501b886b94e9585` (بدون تغییر نسبت به v1.9.0) → **نصب درجا روی نسخهٔ قبلی کار می‌کند** و `localStorage` کاربر حفظ می‌شود.
+- **بیلد محلی (بدون VPN):** `JAVA_HOME=/tmp/androidbuild/jdk17`, `ANDROID_HOME=/tmp/androidbuild/android-sdk`, `gradle` از `/tmp/androidbuild/gradle-8.7/bin`. خروجی: `app/build/outputs/apk/{release,debug}/`.
+- **تأیید محتوا:** با `zipfile` پایتون چک شد که `assets/webapp/gold4|gold5/{calculator,percent}.html` کد جدید (`syncPercentToList`, `__emaratAutoSync`) را دارند.
+- **تحویل:** APK در `.gitignore` است (`*.apk`)؛ پس از طریق **GitHub Release** منتشر می‌شود (مثل نسخه‌های قبلی)، نه کامیت.
