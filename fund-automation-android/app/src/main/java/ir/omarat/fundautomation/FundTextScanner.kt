@@ -67,10 +67,15 @@ object FundTextScanner {
     /**
      * الگوی سینرژی روی پرتفوی: بزرگ‌ترین عدد ۶رقمی+ پس از نام نماد، تا
      * رسیدن به نماد بعدی («همسنگ»). «ارزش فعلی» بزرگ‌ترین عدد پنجره است.
+     *
+     * مرزهای پایان متعددند چون چیدمان پرتفوی ممکن است تغییر کند؛ اگر «همسنگ»
+     * نبود، سراغ ستون‌های بعدی جدول می‌رویم تا پنجره بی‌مرز نشود و اعداد
+     * صندوق‌های دیگر را نبلعد.
      */
     fun synergyWindow(text: String, startIndex: Int): Long? {
         val window = safeWindow(text, startIndex)
-        val end = window.indexOf("همسنگ").takeIf { it >= 0 } ?: window.length
+        val end = listOf("همسنگ", "خرید", "فروش", "کل دارایی", "یادداشت", "هشدار", "سود و زیان")
+            .map { window.indexOf(it) }.filter { it >= 0 }.minOrNull() ?: window.length
         return largestNumber(window.substring(0, end))
     }
 
@@ -80,8 +85,8 @@ object FundTextScanner {
      */
     fun atieWindow(text: String, startIndex: Int): Long? {
         val window = safeWindow(text, startIndex)
-        val end = listOf(window.indexOf("ممتاز"), window.indexOf("امید توسعه"))
-            .filter { it >= 0 }.minOrNull() ?: window.length
+        val end = listOf("ممتاز", "امید توسعه", "سایر صندوق‌های مفید", "تاریخ بروز رسانی")
+            .map { window.indexOf(it) }.filter { it >= 0 }.minOrNull() ?: window.length
         return largestNumber(window.substring(0, end))
     }
 

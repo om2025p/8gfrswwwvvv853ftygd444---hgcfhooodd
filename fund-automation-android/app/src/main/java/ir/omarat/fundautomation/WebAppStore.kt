@@ -64,15 +64,21 @@ object WebAppStore {
         timestampMs: Long
     ): String {
         val percentStr = String.format(java.util.Locale.US, "%.2f", percent)
+        // عدد خام درصد جداگانه نگه داشته می‌شود: فیلد نمایشی `percent` باید
+        // دو رقم اعشار باشد، ولی اگر همان رشتهٔ گردشده در `percents[].value`
+        // ذخیره شود، تغییرهای ریز (۰٫۰۰۳۴٪) برای همیشه صفر می‌مانند.
+        val rawPercent = roundTo6(percent)
         return if (fund == "synergy") {
-            synergyScript(base, newValue, percentStr, type, jalaliDate, timestampMs)
+            synergyScript(base, newValue, percentStr, rawPercent, type, jalaliDate, timestampMs)
         } else {
-            atieScript(base, newValue, percentStr, type, jalaliDate, timestampMs)
+            atieScript(base, newValue, percentStr, rawPercent, type, jalaliDate, timestampMs)
         }
     }
 
+    private fun roundTo6(v: Double): Double = Math.round(v * 1_000_000.0) / 1_000_000.0
+
     private fun atieScript(
-        base: Long, newValue: Long, percent: String, type: String,
+        base: Long, newValue: Long, percent: String, rawPercent: Double, type: String,
         jalaliDate: String, ts: Long
     ): String {
         val historyItem = JSONObject().apply {
@@ -80,6 +86,7 @@ object WebAppStore {
             put("base", formatNumber(base))
             put("new", formatNumber(newValue))
             put("percent", percent)
+            put("rawPercent", rawPercent)
             put("type", type)
             put("rawBase", base.toDouble())
             put("rawNew", newValue.toDouble())
@@ -89,7 +96,7 @@ object WebAppStore {
             put("auto", true)
         }
         val percentItem = JSONObject().apply {
-            put("value", percent.toDouble())
+            put("value", rawPercent)
             put("timestamp", ts)
             put("source", "automation")
             put("auto", true)
@@ -158,7 +165,7 @@ object WebAppStore {
     }
 
     private fun synergyScript(
-        base: Long, newValue: Long, percent: String, type: String,
+        base: Long, newValue: Long, percent: String, rawPercent: Double, type: String,
         jalaliDate: String, ts: Long
     ): String {
         val historyItem = JSONObject().apply {
@@ -166,6 +173,7 @@ object WebAppStore {
             put("base", formatNumber(base))
             put("new", formatNumber(newValue))
             put("percent", percent)
+            put("rawPercent", rawPercent)
             put("type", type)
             put("rawBase", base.toDouble())
             put("rawNew", newValue.toDouble())
@@ -175,7 +183,7 @@ object WebAppStore {
             put("auto", true)
         }
         val percentItem = JSONObject().apply {
-            put("value", percent.toDouble())
+            put("value", rawPercent)
             put("timestamp", ts)
             put("source", "automation")
             put("auto", true)
@@ -259,7 +267,7 @@ object WebAppStore {
     }
 
     private fun percentRecord(percent: Double, ts: Long): JSONObject = JSONObject().apply {
-        put("value", percent)
+        put("value", roundTo6(percent))
         put("timestamp", ts)
         put("source", "automation")
         put("auto", true)
@@ -271,6 +279,7 @@ object WebAppStore {
             put("base", formatNumber(base))
             put("new", formatNumber(newValue))
             put("percent", String.format(java.util.Locale.US, "%.2f", percent))
+            put("rawPercent", roundTo6(percent))
             put("rawBase", base.toDouble())
             put("rawNew", newValue.toDouble())
             put("timestamp", ts)

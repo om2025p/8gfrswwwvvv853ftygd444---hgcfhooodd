@@ -120,13 +120,12 @@ class MainActivity : AppCompatActivity() {
         txtSynergyPercent.text = formatPercent(prefs.getString("synergy_percent", null))
     }
 
-    /** «1.23%» → «+1.23%» با علامت رنگ‌آمیزی‌شده. */
+    /** «1.23%» → «+1.23%» با دقت تطبیقی (تا تغییرهای ریز صفر نشوند). */
     private fun formatPercent(raw: String?): String {
         if (raw.isNullOrBlank() || raw == "—") return "—"
-        val clean = raw.removeSuffix("%").trim()
+        val clean = raw.removeSuffix("%").trim().replace("−", "-")
         val v = clean.toDoubleOrNull() ?: return raw
-        val sign = if (v > 0) "+" else ""
-        return "$sign${fmt(v)}%"
+        return PercentFormatter.format(v)
     }
 
     private fun isOnline(): Boolean {
@@ -158,10 +157,32 @@ class MainActivity : AppCompatActivity() {
                 val now = System.currentTimeMillis()
                 val jalali = JalaliDate.format(now)
 
-                val atieBase = prefs.getString("atie_base_num", null)?.toLongOrNull()
-                val synergyBase = prefs.getString("synergy_base_num", null)?.toLongOrNull()
+                val atieBasePref = prefs.getString("atie_base_num", null)?.toLongOrNull()
+                val synergyBasePref = prefs.getString("synergy_base_num", null)?.toLongOrNull()
                 val atiePeak = prefs.getString("atie_peak", null)?.toLongOrNull()
                 val synergyPeak = prefs.getString("synergy_peak", null)?.toLongOrNull()
+
+                // پایه از تاریخچهٔ خودِ وب‌اپ خوانده می‌شود (منبع حقیقت واحد)، چون
+                // کاربر ممکن است داخل صفحهٔ وب‌اپ دستی مقداری ثبت کرده باشد که اپ
+                // از آن بی‌خبر است. اگر وب‌اپ تاریخی نداشت، به مقدار ذخیره‌شده در
+                // تنظیمات اپ برمی‌گردیم.
+                var atieBase = atieBasePref
+                var synergyBase = synergyBasePref
+                runCatching {
+                    val reader = WebAppReader(this@MainActivity)
+                    reader.lastHistoryBase(WebAppReader.ATIE_PAGE)?.let {
+                        if (it.value > 0) {
+                            atieBase = it.value
+                            appendLog("📚 پایهٔ آتیه از تاریخچهٔ وب‌اپ خوانده شد: ${fmt(it.value)} ریال", AutomationEngine.LogLevel.INFO)
+                        }
+                    }
+                    reader.lastHistoryBase(WebAppReader.SYNERGY_PAGE)?.let {
+                        if (it.value > 0) {
+                            synergyBase = it.value
+                            appendLog("📚 پایهٔ سینرژی از تاریخچهٔ وب‌اپ خوانده شد: ${fmt(it.value)} ریال", AutomationEngine.LogLevel.INFO)
+                        }
+                    }
+                }.onFailure { appendLog("ℹ️ خواندن پایه از وب‌اپ ناموفق: ${it.message} (از تنظیمات اپ استفاده می‌شود)", AutomationEngine.LogLevel.INFO) }
 
                 val engine = AutomationEngine(this@MainActivity, session) { msg, level ->
                     runOnUiThread { appendLog(msg, level) }
@@ -182,7 +203,7 @@ class MainActivity : AppCompatActivity() {
 
                 for (o in outcomes) {
                     val isAtie = o.fund == "atie"
-                    appendLog("📊 ${if (isAtie) "آتیه مفید" else "سینرژی"}: ${fmt(o.result.percent)}%", AutomationEngine.LogLevel.OK)
+                    appendLog("📊 ${if (isAtie) "آتیه مفید" else "سینرژی"}: ${PercentFormatter.format(o.result.percent)}", AutomationEngine.LogLevel.OK)
                     val e = prefs.edit()
                     if (isAtie) {
                         e.putString("atie_percent", fmt(o.result.percent) + "%")
@@ -254,8 +275,8 @@ class MainActivity : AppCompatActivity() {
                 val report = ReportBuilder.build(
                     jalaliDate = jalali,
                     funds = listOf(
-                        ReportBuilder.FundReport("آتیه مفید (۴)", atieOutcome?.base ?: atieBase, atieOutcome?.newValue, atieOutcome?.result?.percent, atieOutcome?.result?.type?.name ?: "-", atieOutcome != null, atieOutcome?.method ?: "-"),
-                        ReportBuilder.FundReport("سینرژی (۵)", synergyOutcome?.base ?: synergyBase, synergyOutcome?.newValue, synergyOutcome?.result?.percent, synergyOutcome?.result?.type?.name ?: "-", synergyOutcome != null, synergyOutcome?.method ?: "-")
+                        ReportBuilder.FundReport("آتیه مفید (۴)", atieOutcome?.base ?: atieBase, atieOutcome?.newValue, atieOutcome?.result?.percent, atieOutcome?.result?.type?.name ?: "-", atieOutcome != null, atieOutcome?.method ?: "-", atieOutcome?.sourceUpdatedAt),
+                        ReportBuilder.FundReport("سینرژی (۵)", synergyOutcome?.base ?: synergyBase, synergyOutcome?.newValue, synergyOutcome?.result?.percent, synergyOutcome?.result?.type?.name ?: "-", synergyOutcome != null, synergyOutcome?.method ?: "-", synergyOutcome?.sourceUpdatedAt)
                     ),
                     savedOk = savedOk,
                     backupOk = backupOk

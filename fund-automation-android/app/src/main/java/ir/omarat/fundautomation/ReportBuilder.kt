@@ -14,7 +14,9 @@ object ReportBuilder {
         val percent: Double?,
         val type: String,
         val extractionOk: Boolean,
-        val method: String
+        val method: String,
+        /** تاریخ به‌روزرسانی دارایی که منبع اعلام کرده (توضیح ۰٪ بودن). */
+        val sourceUpdatedAt: String? = null
     )
 
     fun build(
@@ -32,9 +34,19 @@ object ReportBuilder {
             sb.appendLine("🏦 ${f.fundName}")
             sb.appendLine("  • مقدار پایهٔ قبلی: ${f.base?.let { fmt(it) } ?: "—"}")
             sb.appendLine("  • مقدار جدید: ${f.newValue?.let { fmt(it) } ?: "—"}")
-            sb.appendLine("  • درصد تغییر: ${f.percent?.let { pct(it) } ?: "—"}")
+            sb.appendLine("  • درصد تغییر: ${f.percent?.let { PercentFormatter.format(it) } ?: "—"}")
+            if (f.base != null && f.newValue != null) {
+                val diff = f.newValue - f.base
+                sb.appendLine("  • تغییر مبلغ: ${if (diff >= 0) "+" else "−"}${fmt(kotlin.math.abs(diff))}")
+            }
             sb.appendLine("  • وضعیت استخراج: ${if (f.extractionOk) "✅ موفق (${methodLabel(f.method)})" else "❌ ناموفق"}")
             sb.appendLine("  • وضعیت محاسبه: ${if (f.percent != null) "✅" else "—"}")
+            if (f.sourceUpdatedAt != null) {
+                sb.appendLine("  • آخرین به‌روزرسانی منبع: ${f.sourceUpdatedAt}")
+            }
+            if (f.percent == 0.0 && f.base != null && f.newValue != null && f.base == f.newValue) {
+                sb.appendLine("  ℹ️ مقدار منبع تغییر نکرده؛ صفر درصد درست است.")
+            }
             sb.appendLine()
         }
 
@@ -45,11 +57,6 @@ object ReportBuilder {
     }
 
     private fun fmt(n: Long): String = String.format("%,d ریال", n)
-
-    private fun pct(p: Double): String {
-        val sign = if (p >= 0) "+" else "−"
-        return String.format(java.util.Locale.US, "%s%.2f%%", sign, kotlin.math.abs(p))
-    }
 
     private fun methodLabel(m: String): String = when (m) {
         "network" -> "شنود API"

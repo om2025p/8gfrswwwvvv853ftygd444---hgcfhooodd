@@ -44,6 +44,13 @@ class AutomationEngine(
     private val methodByFund = HashMap<String, String>()
 
     /**
+     * تاریخ «آخرین به‌روزرسانی دارایی» که سایت صندوق‌های مفید اعلام می‌کند
+     * (مثل `1405/08/25`). برای توضیح ۰٪ بودن مفید است: اگر تاریخ امروز نباشد،
+     * یعنی منبع هنوز عدد تازه‌ای نداده و تغییر صفر طبیعی است.
+     */
+    private val sourceUpdatedAtByFund = HashMap<String, String>()
+
+    /**
      * تاریخچهٔ دستی امروز (از کد قدیمی پایتون: `is_already_recorded_today`).
      *
      * اگر کاربر امروز خودش درصدی را دستی ثبت کرده باشد، اتوماسیون نباید
@@ -69,7 +76,9 @@ class AutomationEngine(
         val base: Long,
         val newValue: Long,
         val result: PercentResult,
-        val method: String
+        val method: String,
+        /** تاریخ به‌روزرسانی دارایی که منبع اعلام کرده (برای توضیح ۰٪ بودن). */
+        val sourceUpdatedAt: String? = null
     )
 
     /**
@@ -102,8 +111,8 @@ class AutomationEngine(
 
             performLoginIfNeeded(webView)
 
-            log("⏳ انتظار برای بارگذاری کامل اعداد (۸ ثانیه)…", LogLevel.INFO)
-            delay(HYDRATION_DELAY_MS)
+            log("⏳ انتظار برای بارگذاری کامل اعداد…", LogLevel.INFO)
+            awaitNumbersReady(webView, timeoutMs = 30_000)
 
             // ── جلوگیری از ثبت تکراری ──────────────────────────────────────
             // اگر کاربر امروز دستی ثبت کرده باشد، صندوق دست‌نخورده می‌ماند.
@@ -134,7 +143,11 @@ class AutomationEngine(
                     continue
                 }
                 val result = FundCalculator.calculate(base, value, peak) ?: continue
-                outcomes += FundOutcome(fund, base, value, result, methodByFund[fund] ?: "unknown")
+                outcomes += FundOutcome(
+                    fund, base, value, result,
+                    methodByFund[fund] ?: "unknown",
+                    sourceUpdatedAtByFund[fund]
+                )
             }
             outcomes
         } finally {
@@ -707,7 +720,10 @@ class AutomationEngine(
         }
 
         // آتیه: صفحهٔ «صندوق‌های مفید»
-        if (pageHasKeyword(webView, ATIE_KEYWORDS)) return
+        if (pageHasKeyword(webView, ATIE_KEYWORDS)) {
+            captureSourceUpdatedAt(webView, fund)
+            return
+        }
 
         log("🌐 رفتن به صفحهٔ صندوق‌های مفید…", LogLevel.INFO)
         webView.loadUrl(FUNDS_URL)
@@ -729,6 +745,56 @@ class AutomationEngine(
 
         if (!pageHasKeyword(webView, ATIE_KEYWORDS)) {
             dumpNavigationDiagnostics(webView, fund)
+        }
+        captureSourceUpdatedAt(webView, fund)
+    }
+
+    /**
+     * صبر هوشمند تا آماده شدن اعداد.
+     *
+     * چرا ثابت ۸ ثانیه کافی نیست: صفحهٔ پرتفوی ابتدا با **صفر** رندر می‌شود و
+     * اعداد واقعی چند ثانیه بعد از سرور تزریق می‌شوند (در لاگ واقعی، ۱۱:۵۰:۲۶
+     * صفر بود و ۱۱:۵۰:۴۰ درست شد). اگر در آن فاصله بخوانیم، عدد صفر یا ناقص
+     * ثبت می‌شود. پس تا آمدن اولین عدد معتبر صبر می‌کنیم و در این فاصله
+     * مودال‌های مزاحم را هم می‌بندیم.
+     */
+    private suspend fun awaitNumbersReady(webView: WebView, timeoutMs: Long) {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        delay(HYDRATION_DELAY_MS)
+        var lastModalDismissAt = 0L
+        while (System.currentTimeMillis() < deadline) {
+            val text = bodyText(webView)
+            val synergy = FundTextScanner.extractValue(text, SYNERGY_KEYWORDS, "synergy")
+            val atie = FundTextScanner.extractValue(text, ATIE_KEYWORDS, "atie")
+            if (synergy != null || atie != null) {
+                log("✅ اعداد صفحه آماده شد (سینرژی=${synergy ?: "—"}، آتیه=${atie ?: "—"}).", LogLevel.OK)
+                return
+            }
+            // اگر صفحه هنوز صفر است، ممکن است مودالی جلوی اعداد را گرفته باشد.
+            if (System.currentTimeMillis() - lastModalDismissAt > 5_000) {
+                dismissModals(webView)
+                lastModalDismissAt = System.currentTimeMillis()
+            }
+            delay(1_500)
+        }
+        log("⚠️ در ${timeoutMs / 1000} ثانیه عدد معتبری روی صفحه نیامد؛ ادامه می‌دهیم.", LogLevel.WARN)
+    }
+
+    /**
+     * ضبط تاریخ «آخرین به‌روزرسانی دارایی» از متن صفحه.
+     *
+     * سایت صندوق‌های مفید تاریخی مثل `1405/08/25` نشان می‌دهد. اگر این تاریخ
+     * امروز نباشد، عدد دارایی تازه نیست و درصد صفر کاملاً طبیعی است — همین
+     * نکته در گزارش می‌آید تا کاربر گمان نکند محاسبه خراب است.
+     */
+    private suspend fun captureSourceUpdatedAt(webView: WebView, fund: String) {
+        val text = FundTextScanner.normalize(bodyText(webView))
+        val match = Regex("(?:تاریخ\\s*بروز\\s*رسانی\\s*دارایی|آخرین\\s*به\\s*روزرسانی)[^0-9]{0,30}(\\d{4}/\\d{1,2}/\\d{1,2})")
+            .find(text)?.groupValues?.get(1)
+            ?: Regex("(\\d{4}/\\d{1,2}/\\d{1,2})").find(text)?.groupValues?.get(1)
+        if (match != null) {
+            sourceUpdatedAtByFund[fund] = match
+            log("🗓 آخرین به‌روزرسانی منبع (${displayName(fund)}): $match", LogLevel.INFO)
         }
     }
 

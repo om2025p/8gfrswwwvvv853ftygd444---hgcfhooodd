@@ -35,7 +35,10 @@ object FundCalculator {
 
         val peak = previousPeak?.takeIf { it > 0 } ?: base
         val percent = ((newValue - base).toDouble() / base.toDouble()) * 100.0
-        val percentFixed = roundTo2(percent)
+        // درصد با دقت بالا نگه داشته می‌شود؛ اگر همین‌جا به ۲ رقم گرد شود،
+        // تغییرهای ریز (مثلاً ۰٫۰۰۳۴٪ برای ۷٬۵۱۱ ریال) بی‌صدا صفر می‌شوند.
+        // گرد کردن فقط هنگام نمایش، توسط PercentFormatter انجام می‌شود.
+        val percentFixed = roundTo(percent, 6)
 
         val type: ChangeType
         val tomanProfit: Long
@@ -76,5 +79,8 @@ object FundCalculator {
     fun changeAmount(result: PercentResult): Long =
         abs(((result.percent / 100.0) * result.base).roundToLong())
 
-    private fun roundTo2(v: Double): Double = (v * 100.0).roundToLong() / 100.0
+    private fun roundTo(v: Double, decimals: Int): Double {
+        val factor = Math.pow(10.0, decimals.toDouble())
+        return Math.round(v * factor) / factor
+    }
 }
