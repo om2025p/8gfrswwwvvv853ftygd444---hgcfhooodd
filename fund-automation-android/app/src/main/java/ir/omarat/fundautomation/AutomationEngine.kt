@@ -183,6 +183,7 @@ class AutomationEngine(
      * از آن رد می‌شد — ریشهٔ شکست هر چهار لایه.
      */
     private suspend fun performLoginIfNeeded(webView: WebView) {
+        // ── حالت ۱: از قبل روی پرتفوی هستیم ────────────────────────────────
         if (isOnPortfolio(webView)) {
             log("✅ نشست فعال است؛ مستقیم روی پرتفوی هستیم.", LogLevel.OK)
             dismissModals(webView)
@@ -190,12 +191,35 @@ class AutomationEngine(
             return
         }
 
+        // ── حالت ۲: وسط فرایند ورود (auth-callback) ─────────────────────────
+        // مفید کد مجوز صادر کرده؛ فقط باید صبر کنیم تا سایت خودش به پرتفوی برود.
+        // اینجا **هرگز** به فرم ورود برنمی‌گردیم و **هرگز** رمز را دوباره
+        // نمی‌فرستیم — همان اشتباهی که خطای دروغین «رمز اشتباه» را می‌ساخت.
+        if (isAuthCallback(webView)) {
+            log("🔁 ایستگاه ورود (auth-callback) شناسایی شد؛ انتظار برای تکمیل ورود…", LogLevel.INFO)
+            if (waitForPortfolio(webView, timeoutMs = 45_000)) {
+                log("✅ ورود کامل شد و روی پرتفوی هستیم.", LogLevel.OK)
+                dismissModals(webView)
+                installNetworkSnifferAsync(webView)
+                return
+            }
+            log("⚠️ پس از auth-callback در ۴۵ ثانیه به پرتفوی نرسیدیم؛ دوباره تلاش می‌کنیم.", LogLevel.WARN)
+        }
+
+        // ── حالت ۳: واقعاً باید وارد شویم ───────────────────────────────────
         log("🔑 نشست معتبر نیست (${describeLocation(webView)})؛ ورود لازم است…", LogLevel.WARN)
         webView.loadUrl(LOGIN_URL)
         awaitPageLoaded(webView, timeoutMs = 45_000)
         delay(1_500)
 
-        fillLoginForm(webView)
+        // اگر SSO از قبل نشست دارد، بی‌درنگ به auth-callback می‌رود و فرمی
+        // نشان نمی‌دهد؛ در این حالت `fillLoginForm` مقدار false برمی‌گرداند.
+        val submitted = fillLoginForm(webView)
+        if (submitted) {
+            log("📤 نام کاربری و رمز ارسال شد.", LogLevel.INFO)
+        } else {
+            log("ℹ️ فرم ورودی نبود؛ فرض می‌کنیم نشست SSO از قبل فعال است.", LogLevel.INFO)
+        }
         awaitNavigation(webView, timeoutMs = 45_000)
 
         if (isOtpScreen(webView)) {
@@ -205,21 +229,43 @@ class AutomationEngine(
         // تیک «این دستگاه را به خاطر بسپار» — برای عبور از تأیید دو مرحله‌ای در بارهای بعد
         tickTrustDevice(webView)
 
+        // اگر ورود واقعاً شکست خورده باشد، مفید دوباره صفحهٔ فرم را نشان می‌دهد.
+        if (submitted && isStillOnLoginForm(webView)) {
+            throw IllegalStateException(
+                "ورود ناموفق بود؛ صفحهٔ ورود دوباره نشان داده شد. " +
+                    "نام کاربری یا رمز عبور را در تنظیمات بررسی کنید."
+            )
+        }
+
+        // ── رفتن به پرتفوی + صبر هوشمند ────────────────────────────────────
         log("🌐 رفتن به صفحهٔ پرتفوی…", LogLevel.INFO)
         webView.loadUrl(PORTFOLIO_URL)
         awaitPageLoaded(webView, timeoutMs = 45_000)
-        delay(4_000)
-
+        delay(2_000)
         dismissModals(webView)
         installNetworkSnifferAsync(webView)
 
-        if (!isOnPortfolio(webView)) {
+        if (!waitForPortfolio(webView, timeoutMs = 45_000)) {
             throw IllegalStateException(
                 "پس از ورود هم به صفحهٔ پرتفوی نرسیدیم (${describeLocation(webView)}). " +
-                    "احتمالاً رمز/نام کاربری نادرست است یا ورود کامل نشد."
+                    "اگر نشست منقضی شده، یک‌بار با دکمهٔ «باز کردن وب‌اپ» وارد شوید و بعد دوباره اجرا کنید."
             )
         }
         log("✅ ورود موفق و روی پرتفوی هستیم.", LogLevel.OK)
+    }
+
+    /**
+     * آیا هنوز روی فرم ورود ایستاده‌ایم؟ (نشانهٔ قطعی رمز/نام کاربری نادرست)
+     *
+     * فقط وقتی معنا دارد که فرم را واقعاً پر و ارسال کرده باشیم؛ اگر نشست SSO
+     * فعال باشد، فرمی وجود ندارد و این تابع همیشه false می‌دهد.
+     */
+    private suspend fun isStillOnLoginForm(webView: WebView): Boolean {
+        val u = currentUrl(webView).lowercase()
+        if (!u.contains("login.emofid.com")) return false
+        if (isAuthCallback(webView)) return false
+        val body = bodyText(webView)
+        return body.contains("رمز عبور") || body.contains("Password")
     }
 
     /** نشانی واقعی را برای لاگ توصیف می‌کند. */
@@ -241,6 +287,52 @@ class AutomationEngine(
         if (!u.contains("portfolio")) return false
         // صفحهٔ ورود یا تأیید، پرتفوی نیست
         return !isLoginOrVerify(webView)
+    }
+
+    /**
+     * آیا صفحه در «میانهٔ فرایند ورود» است؟
+     *
+     * `auth-callback` ایستگاه میانی OIDC است: مفید کد مجوز (`code=...`) را
+     * صادر کرده و سایت ایزی‌تریدر در حال تبدیل آن به نشست است. در این لحظه
+     * URL نه «ورود» است و نه «پرتفوی»؛ یک وضعیت میانیِ کاملاً مشروع.
+     *
+     * نسخهٔ پیشین این ایستگاه را نمی‌شناخت و چون `auth-callback` واژهٔ
+     * `portfolio` ندارد، آن را «ورود ناموفق» می‌پنداشت و به فرم ورود برمی‌گشت
+     * → خطای دروغین «رمز/نام کاربری نادرست است».
+     */
+    private suspend fun isAuthCallback(webView: WebView): Boolean {
+        val u = currentUrl(webView).lowercase()
+        return u.contains("auth-callback") ||
+            u.contains("signin-oidc") ||
+            u.contains("callback") && u.contains("code=")
+    }
+
+    /**
+     * انتظار فعال برای رسیدن به صفحهٔ پرتفوی.
+     *
+     * به‌جای یک مکث کور، هر ۱ ثانیه URL را می‌خواند و به‌محض رسیدن به
+     * پرتفوی برمی‌گردد. اگر وسط راه صفحهٔ OTP ظاهر شد، آن را به کاربر
+     * می‌سپارد و منتظر می‌ماند.
+     *
+     * @return `true` اگر در مهلت به پرتفوی رسیدیم.
+     */
+    private suspend fun waitForPortfolio(webView: WebView, timeoutMs: Long): Boolean {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        var lastUrl = ""
+        while (System.currentTimeMillis() < deadline) {
+            if (isOnPortfolio(webView)) return true
+            val u = currentUrl(webView)
+            if (u != lastUrl) {
+                log("   ↳ ایستگاه میانی: ${u.take(140)}", LogLevel.INFO)
+                lastUrl = u
+            }
+            if (isOtpScreen(webView)) {
+                log("🔐 صفحهٔ کد تأیید ظاهر شد؛ منتظر ورود دستی شما…", LogLevel.WARN)
+                handleOtp(webView)
+            }
+            delay(1_000)
+        }
+        return isOnPortfolio(webView)
     }
 
     private suspend fun isLoginOrVerify(webView: WebView): Boolean {
@@ -293,7 +385,18 @@ class AutomationEngine(
         }
     }
 
-    private suspend fun fillLoginForm(webView: WebView) {
+    /**
+     * پر کردن فرم ورود.
+     *
+     * @return `true` اگر هر دو فیلد پر شدند؛ `false` اگر فرمی روی صفحه نبود.
+     *
+     * نکتهٔ مهم: «نبودن فرم» همیشه خطا نیست. اگر نشست SSO از قبل فعال باشد،
+     * `login.emofid.com` بی‌درنگ به `auth-callback` ریدایرکت می‌کند و هیچ فرمی
+     * نشان نمی‌دهد. نسخهٔ پیشین این حالت را «فرم پیدا نشد» لاگ می‌کرد و بعد
+     * به‌سراغ ارسال فرم می‌رفت — همان زنجیره‌ای که به خطای دروغین «رمز اشتباه»
+     * می‌رسید.
+     */
+    private suspend fun fillLoginForm(webView: WebView): Boolean {
         val user = jsonEscape(session.username)
         val pass = jsonEscape(session.password)
         val js = """
@@ -316,11 +419,14 @@ class AutomationEngine(
         })();
         """.trimIndent()
         val res = evaluate(webView, js)
-        if (res?.contains("OK") != true) {
-            log("⚠️ فرم ورود پیدا نشد؛ ممکن است ظاهر صفحه تغییر کرده باشد.", LogLevel.WARN)
+        val filled = res?.contains("OK") == true
+        if (!filled) {
+            log("ℹ️ فرم ورودی روی صفحه نبود (احتمالاً نشست SSO از قبل فعال است).", LogLevel.INFO)
         }
 
         delay(600)
+        if (!filled) return false
+
         val submitJs = """
         (function(){
           var btn = document.querySelector('button[type="submit"], input[type="submit"], button.btn-primary, form button');
@@ -331,6 +437,7 @@ class AutomationEngine(
         })();
         """.trimIndent()
         evaluate(webView, submitJs)
+        return true
     }
 
     private suspend fun isOtpScreen(webView: WebView): Boolean {

@@ -51,9 +51,18 @@ class BackupManager(private val session: SessionStore) {
         val url = "https://api.github.com/repos/$repo/contents/$filePath"
 
         try {
-            val sha = fetchExistingSha(url, branch, token)
+            val existing = fetchExistingFile(url, branch, token)
+            val sha = existing?.first
+
+            // ── ادغام دوطرفه: فایل موجود را با محتوای تازه ترکیب می‌کنیم ────
+            // بدون این کار، هر آپلود کل تاریخچهٔ گیت‌هاب را با یک رکورد
+            // جایگزین می‌کرد و سوابق ارزشمند کاربر نابود می‌شد.
+            val mergedContent = if (existing != null) {
+                BackupMerger.merge(existing.second, contentString)
+            } else contentString
+
             val base64Content = Base64.encodeToString(
-                contentString.toByteArray(Charsets.UTF_8),
+                mergedContent.toByteArray(Charsets.UTF_8),
                 Base64.NO_WRAP
             )
             val body = JSONObject().apply {
@@ -79,7 +88,15 @@ class BackupManager(private val session: SessionStore) {
         }
     }
 
-    private fun fetchExistingSha(url: String, branch: String, token: String): String? {
+    /**
+     * خواندن SHA و **محتوای** فایل موجود.
+     *
+     * نسخهٔ پیشین فقط SHA را می‌خواند؛ نتیجه این بود که فایل گیت‌هاب به‌طور
+     * کامل بازنویسی می‌شد و تاریخچه از دست می‌رفت.
+     *
+     * @return جفت `(sha, محتوای متنی)` یا `null` اگر فایل نبود.
+     */
+    private fun fetchExistingFile(url: String, branch: String, token: String): Pair<String, String>? {
         return try {
             val request = Request.Builder()
                 .url("$url?ref=$branch")
@@ -88,9 +105,13 @@ class BackupManager(private val session: SessionStore) {
                 .get()
                 .build()
             client.newCall(request).execute().use { resp ->
-                if (resp.code == 200) {
-                    JSONObject(resp.body?.string() ?: "{}").optString("sha").ifBlank { null }
-                } else null
+                if (resp.code != 200) return null
+                val json = JSONObject(resp.body?.string() ?: "{}")
+                val sha = json.optString("sha").ifBlank { return null }
+                val b64 = json.optString("content").replace("\n", "").replace("\r", "")
+                if (b64.isBlank()) return sha to ""
+                val decoded = String(Base64.decode(b64, Base64.DEFAULT), Charsets.UTF_8)
+                sha to decoded
             }
         } catch (e: Exception) {
             null

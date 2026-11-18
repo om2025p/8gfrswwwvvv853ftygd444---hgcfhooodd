@@ -17,8 +17,8 @@ android {
         applicationId "ir.omarat.fundautomation"
         minSdk 24
         targetSdk 34
-        versionCode 5
-        versionName "1.4.0"
+        versionCode 6
+        versionName "1.5.0"
     }
 
     signingConfigs {
@@ -62,4 +62,9 @@ dependencies {
     implementation 'androidx.security:security-crypto:1.1.0-alpha06'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+    // android.jar فقط stub خالی org.json دارد؛ در تست JVM به پیاده‌سازی واقعی
+    // نیاز داریم تا BackupMerger با همان API واقعی سنجیده شود.
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20231013'
 }
