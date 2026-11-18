@@ -651,3 +651,30 @@ gradle test assembleRelease assembleDebug --no-daemon
 - **تست‌های جدید:** `ManualEntryFilterTest` (۲ تست) + `EngineTypeMappingTest` (۵ تست) → **جمع ۴۴ تست، ۰ شکست**.
 - نسخه: versionCode 9→10، versionName 1.8.0→1.9.0؛ امضای APK پایدار (SHA-256: `4603b639...`).
 
+
+### 🔁 ثبت خودکار درصد در «تب ثبت درصد» (v1.10.0 وب‌اپ)
+**مسئله:** کاربر در تب «🏆 محاسبه تغییرات» عدد جدید را می‌زد و درصد فقط در **تاریخچه** ذخیره می‌شد؛ برای دیدن آن در «📊 ثبت درصد» (تب اول) باید دستی هم وارد می‌کرد.
+
+**راه‌حل (گزینهٔ امن با تشخیص تکراری):** بعد از `addToHistory(...)` در هر `goldN/calculator.html`، تابع `syncPercentToList(percentFixed, Date.now())` صدا زده می‌شود و درصد را در **فهرست تب اول** هم می‌نویسد — **فقط اگر** همان **روز شمسی** با همان مقدار (تلورانس ۰٫۰۰۵) قبلاً ثبت نشده باشد.
+
+- **کلید ذخیره‌سازی هر اپ (مهم!):**
+
+| اپ | فایل | کلید فهرست درصد | شکل داده |
+|---|---|---|---|
+| gold | `gold/` | `percents` | آرایه |
+| gold2 | `gold2/` | `kian_percents` | آرایه |
+| gold3 | `gold3/` | `stock____________tas9yl_new_unified` | **شیء** (`percents` داخلش) |
+| gold4 | `gold4/` | `mofid_atie_percents` | آرایه |
+| gold5 | `gold5/` | `energy_fund_synergy` | **شیء** |
+| gold6 | `gold6/` | `cement_factory_percents` | **شیء** |
+| gold7 | `gold7/` | `ahang_kian_percents` | **شیء** |
+| gold8 | `gold8/` | `pharma_kian_percents` | **شیء** |
+
+- **حفظ دادهٔ شیء‌محور:** `writePercentList` شیء را **merge** می‌کند (فقط `percents` را عوض می‌کند) تا `goal`/`notes`/`trash`/`periodTarget`/`achievedPeriods`/`initialCapital` **دست‌نخورده** بمانند.
+- **روز شمسی:** با `Intl.DateTimeFormat('fa-IR', {year,month,day})` — همان تقویمی که کاربر می‌بیند (تصمیم تأییدشدهٔ کاربر).
+- **رکورد خودکار** با `source: 'automation'` ذخیره می‌شود → در فهرست با نشان 🤖 نمایش داده می‌شود.
+- **پیام‌ها:** موفق → «✅ درصد در تب «ثبت درصد» هم ثبت شد»؛ تکراری → «⚠️ این درصد امروز قبلاً در تب ثبت درصد هست».
+- **به‌روزرسانی زنده:** در هر `goldN/percent.html` شنوندهٔ `storage` اضافه شد که با تغییر کلید فهرست، `window.__emaratAutoSync()` را صدا می‌زند و فهرست را بدون رفرش به‌روز می‌کند. (gold4 از قبل شنونده داشت → دست‌نخورده.)
+- **عدد پایه عمداً خودکار به‌روز نمی‌شود** (تصمیم کاربر: خودش دستی می‌زند).
+- **تست:** ۵۸ تست jsdom روی هر ۸ اپ (ثبت، تکراری، حفظ دادهٔ شیء، به‌روزرسانی زنده) + ۱۱ تست منطق خالص — همه موفق.
+- **بامپ:** `CACHE_NAME` → `emarat-portal-v82`؛ `gold4/gold5` در `fund-automation-android/.../assets/webapp/` همگام شد.

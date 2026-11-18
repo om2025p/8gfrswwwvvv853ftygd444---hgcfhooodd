@@ -570,6 +570,56 @@
     }
 
     // ========== محاسبه اصلی ==========
+    // ===== ثبت خودکار درصد در «فهرست تب ثبت درصد» =====
+    const PERCENT_LIST_KEY = "percents";
+
+    function percentListJalaliDay(ts) {
+        return new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ts));
+    }
+
+    function readPercentList() {
+        try {
+            const raw = localStorage.getItem(PERCENT_LIST_KEY);
+            if (!raw) return { list: [], unified: null };
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return { list: parsed, unified: null };
+            if (parsed && typeof parsed === 'object') return { list: parsed.percents || [], unified: parsed };
+        } catch (e) {}
+        return { list: [], unified: null };
+    }
+
+    function writePercentList(list, unified) {
+        try {
+            if (unified) {
+                unified.percents = list;
+                localStorage.setItem(PERCENT_LIST_KEY, JSON.stringify(unified));
+            } else {
+                localStorage.setItem(PERCENT_LIST_KEY, JSON.stringify(list));
+            }
+        } catch (e) {}
+    }
+
+    function syncPercentToList(percentStr, timestamp) {
+        const value = parseFloat(percentStr);
+        if (isNaN(value)) return;
+        const ts = timestamp || Date.now();
+        const data = readPercentList();
+        const dayKey = percentListJalaliDay(ts);
+        const isDup = data.list.some(p => {
+            const pv = parseFloat(p && p.value);
+            if (isNaN(pv) || Math.abs(pv - value) > 0.005) return false;
+            return percentListJalaliDay(p.timestamp) === dayKey;
+        });
+        if (isDup) {
+            showToast('⚠️ این درصد امروز قبلاً در تب ثبت درصد هست');
+            return;
+        }
+        data.list.push({ value: value, timestamp: ts, source: 'automation' });
+        data.list.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        writePercentList(data.list, data.unified);
+        showToast('✅ درصد در تب «ثبت درصد» هم ثبت شد');
+    }
+
     function calculateAndSave(saveToHistory = true) {
         let baseStr = num1Input.value;
         let newStr = num2Input.value;
@@ -658,6 +708,7 @@
                 prevPeak,
                 calculatedTomanProfit
             );
+            syncPercentToList(percentFixed, Date.now());
         }
         return true;
     }

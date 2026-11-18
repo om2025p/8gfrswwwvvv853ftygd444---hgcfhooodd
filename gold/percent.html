@@ -437,7 +437,7 @@
         let formatter = new Intl.DateTimeFormat('fa-IR-u-nu-latn', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
         list.innerHTML = percents.map((p,i) => `
             <li class="percent-item ${p.value>=0 ? 'positive' : 'negative'} ${highlightedStates[i] ? 'highlighted-persist' : ''}" data-index="${i}">
-                ${p.value}%
+                ${p.value}%${p.source === 'automation' ? ' 🤖' : ''}${p.source === 'automation' ? ' 🤖' : ''}
                 <div>
                     <span class="date-time" onclick="toggleHighlight(${i})">${formatter.format(new Date(p.timestamp))}</span>
                     <button class="delete-btn" onclick="deletePercent(${i})">حذف</button>
@@ -1034,6 +1034,20 @@
 
     initStatsMenu();
     updateUI();
+
+    // ===== به‌روزرسانی زندهٔ فهرست وقتی تب محاسبه درصد می‌نویسد =====
+    window.__emaratAutoSync = function () {
+        percents = JSON.parse(localStorage.getItem('percents')) || [];
+        trash = JSON.parse(localStorage.getItem('trash')) || [];
+        goal = JSON.parse(localStorage.getItem('goal')) || null;
+        highlightedStates = JSON.parse(localStorage.getItem('highlightedStates')) || {};
+        highlightedPointIndices = JSON.parse(localStorage.getItem('highlightedPointIndices')) || [];
+        percents.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        updateUI();
+    };
+    window.addEventListener('storage', function (e) {
+        if (!e.key || e.key === 'percents' || e.key === 'emarat_last_modified') window.__emaratAutoSync();
+    });
 
         /* ===== کنترل تم شب/روز (افزوده‌شده) ===== */
         window.getThemeColor = function(lightColor, darkColor) {

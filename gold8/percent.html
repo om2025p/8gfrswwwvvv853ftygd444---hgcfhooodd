@@ -901,7 +901,7 @@
             const formatter = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' });
             list.innerHTML = percents.map((item, idx) => `
                 <li class="percent-item ${highlightedStates[idx] ? 'highlighted-persist' : ''}" onclick="toggleHighlight(${idx})">
-                    <span class="${item.value>=0 ? 'positive' : 'negative'}">${item.value.toFixed(2)}%</span>
+                    <span class="${item.value>=0 ? 'positive' : 'negative'}">${item.value.toFixed(2)}%${item.source === 'automation' ? ' 🤖' : ''}</span>
                     <div style="display: flex; gap: 8px; align-items:center;">
                         <span class="date-time">${formatter.format(new Date(item.timestamp))}</span>
                         <button class="delete-btn" onclick="deletePercent(${idx}, event)">حذف</button>
@@ -1623,7 +1623,16 @@
         saveData();
 
         autoSyncFromBackup();
-    })();
+            // ===== به‌روزرسانی زندهٔ فهرست وقتی تب محاسبه درصد می‌نویسد =====
+        window.__emaratAutoSync = function () {
+            loadData();
+            updateUI();
+        };
+        window.addEventListener('storage', function (e) {
+            if (!e.key || e.key === 'pharma_kian_percents' || e.key === 'emarat_last_modified') window.__emaratAutoSync();
+        });
+
+})();
 
         /* ===== کنترل تم شب/روز (افزوده‌شده) ===== */
         window.getThemeColor = function(lightColor, darkColor) {
