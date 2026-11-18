@@ -509,6 +509,27 @@ gradle testDebugUnitTest assembleDebug assembleRelease --no-daemon
 خروجی: `app/build/outputs/apk/{release,debug}/`
 بیلد خودکار: `.github/workflows/build_fund_apk.yml` (workflow_dispatch + push روی `main`/`S-15`).
 
+#### 🔑 کلید امضای پایدار (Signing Key) — حل باگ «بسته با بستهٔ موجود تداخل دارد»
+- **نشانه:** هنگام نصب APK جدید، اندروید می‌گفت «برنامه نصب نشد چون بسته با بستهٔ موجود تداخل دارد».
+- **ریشه:** APK قبلی با **debug keystore** امضا شده بود که در `/tmp` بود و **پاک شد**. پس بیلد جدید یک `debug.keystore` **تازه** ساخت (SHA-256 متفاوت) → اندروید نصب را رد کرد. این مشکل **هر بار** تکرار می‌شد چون کلید debug موقتی است.
+- **درمان:** یک **کلید release پایدار** ساخته شد (`emarat-fund.keystore`، RSA 2048، اعتبار ۱۰۰۰۰ روز، alias=`emarat-fund`) و APK release با آن امضا می‌شود.
+- **فایل‌های حساس (در `.gitignore` — هرگز commit نشوند):**
+  - `fund-automation-android/emarat-fund.keystore`
+  - `fund-automation-android/keystore.properties`
+  - تأیید: `git check-ignore -v <path>` باید هر دو را نشان دهد.
+- **بیلد محلی امضاشده:**
+  ```bash
+  cd fund-automation-android
+  gradle assembleRelease --no-daemon
+  # خروجی: app/build/outputs/apk/release/app-release.apk
+  # تأیید امضا:
+  apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk
+  ```
+- **GitHub Secrets لازم** (تا بیلد Actions هم امضاشده باشد):
+  `ANDROID_KEYSTORE_BASE64` (کلید به base64)، `ANDROID_STORE_PASSWORD`، `ANDROID_KEY_ALIAS` (`emarat-fund`)، `ANDROID_KEY_PASSWORD`.
+- **⚠️ محدودیت قطعی (غیرقابل دور زدن):** امضا بخشی از **هویت** اپ است. اگر اپ نصب‌شده با کلید A امضا شده باشد، فقط APKی با **همان کلید A** روی آن آپدیت می‌شود. اگر کلید A گم شده باشد، **هیچ راهی** برای آپدیت بدون حذف نصب وجود ندارد — نه با Android Studio، نه با ابزار دیگر. تنها راه: حذف اپ و نصب مجدد (دادهٔ محلی اپ پاک می‌شود؛ تاریخچهٔ صندوق‌ها در بکاپ گیت‌هاب سالم می‌ماند).
+- **درس:** کلید امضا را **هرگز** در `/tmp` نگه ندار. از روز اول یک کلید release بساز و در GitHub Secrets ذخیره کن. `debug.keystore` برای انتشار مناسب نیست.
+
 #### ⚠️ درس گران‌بها: محیط بیلد `/tmp` **موقتی** است
 در 1405/08/27 پوشهٔ `/tmp/androidbuild` (JDK 17 + Android SDK + Gradle) **به‌کلی پاک شد** — چون `/tmp` موقتی است. **کدها در گیت سالم ماندند** (این ارزش «همه‌چیز در گیت» را ثابت کرد)، ولی بیلد محلی از صفر لازم شد.
 
