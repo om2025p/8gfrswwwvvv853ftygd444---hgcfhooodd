@@ -1,5 +1,14 @@
 # Project: 8gfrswwwvvv853ftygd444---hgcfhooodd
 
+> ## 🚨 اول این را بخوان — اگر سرور ریست شد
+> **`PROJECT-STATE.md`** در ریشهٔ مخزن، وضعیت کامل کار جاری، تصمیم‌های گرفته‌شده،
+> باگ‌های رفع‌شده و قدم بعدی را دارد. **قبل از هر کاری آن را بخوان.**
+>
+> خلاصهٔ ۳۰ ثانیه‌ای: کار جاری **بازطراحی رابط کاربری شجره‌نامه** است.
+> `family-lab/index.html` (آزمایشگاه ۵ تب با ویرایش کامل) و
+> `tree-samples/m1..m6.html` (۶ مدل رسم درختی) تحویل داده شده و
+> **منتظر انتخاب کاربر** هستیم تا مدل برنده در `family/index.html` اصلی پیاده شود.
+
 - This project is a personal activity tracker.
 - Deployment is targeted at Netlify (https://netlify.app).
 - All UI text must avoid sensitive keywords like "gym" or "varzesh" (ورزش) in titles or metadata.
