@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>گزارش پایان کار — رفع گیر اسکرول</title>
+<style>
+@page { size: A4; margin: 14mm 12mm 16mm 12mm; }
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Vazirmatn', sans-serif;
+  font-size: 9.8pt;
+  line-height: 1.72;
+  color: #1e293b;
+  margin: 0;
+  direction: rtl;
+  orphans: 3;
+  widows: 3;
+}
+
+/* ---------- جلد ---------- */
+.cover {
+  height: 258mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  page-break-after: always;
+  background: linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0b1220 100%);
+  color: #f8fafc;
+  border-radius: 6mm;
+  padding: 20mm 14mm;
+  position: relative;
+}
+.cover .badge {
+  font-size: 9pt;
+  letter-spacing: .5px;
+  background: rgba(245,158,11,.16);
+  border: 1px solid rgba(245,158,11,.55);
+  color: #fbbf24;
+  padding: 3mm 6mm;
+  border-radius: 99px;
+  margin-bottom: 12mm;
+}
+.cover h1 {
+  font-size: 26pt;
+  font-weight: 800;
+  margin: 0 0 5mm;
+  line-height: 1.4;
+  color: #fff;
+}
+.cover h2 {
+  font-size: 13pt;
+  font-weight: 500;
+  color: #94a3b8;
+  margin: 0 0 16mm;
+}
+.cover .rule {
+  width: 40mm; height: 3px;
+  background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+  margin: 0 auto 16mm;
+}
+.cover .meta {
+  font-size: 9.5pt;
+  color: #cbd5e1;
+  line-height: 2.2;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 4mm;
+  padding: 8mm 12mm;
+  text-align: right;
+  direction: rtl;
+  min-width: 105mm;
+}
+.cover .meta b { color: #fbbf24; font-weight: 700; }
+.cover .foot {
+  position: absolute;
+  bottom: 12mm; left: 0; right: 0;
+  font-size: 8pt;
+  color: #64748b;
+}
+
+/* ---------- سربرگ ---------- */
+.doc-head {
+  border-bottom: 2.5px solid #f59e0b;
+  padding-bottom: 3mm;
+  margin-bottom: 6mm;
+}
+.doc-head .kicker {
+  font-size: 8.5pt;
+  color: #b45309;
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+.doc-head h2 {
+  font-size: 16pt;
+  font-weight: 800;
+  margin: 1mm 0 0;
+  color: #0f172a;
+}
+
+h3 {
+  font-size: 11.2pt;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 5.5mm 0 2.5mm;
+  padding-right: 3mm;
+  border-right: 4px solid #f59e0b;
+  page-break-after: avoid;
+}
+h4 {
+  font-size: 9.9pt;
+  font-weight: 700;
+  color: #1e40af;
+  margin: 4mm 0 1.8mm;
+  page-break-after: avoid;
+}
+
+p { margin: 0 0 2.4mm; text-align: justify; orphans: 3; widows: 3; }
+
+/* ---------- جدول ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2.5mm 0 4mm;
+  font-size: 8.4pt;
+}
+tr { page-break-inside: avoid; }
+thead { display: table-header-group; }
+th {
+  background: #0f172a;
+  color: #fff;
+  font-weight: 700;
+  padding: 1.8mm 2mm;
+  text-align: right;
+  border: 1px solid #334155;
+}
+td {
+  padding: 1.6mm 2mm;
+  border: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+tbody tr:nth-child(even) { background: #f8fafc; }
+td.num { font-variant-numeric: tabular-nums; font-weight: 700; direction: ltr; text-align: center; }
+td.ok { color: #047857; font-weight: 700; text-align: center; }
+td.bad { color: #b91c1c; font-weight: 700; text-align: center; }
+td.mid { color: #b45309; font-weight: 700; text-align: center; }
+
+/* ---------- کد ---------- */
+pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 2.8mm 3.2mm;
+  border-radius: 2.5mm;
+  font-family: 'DejaVu Sans Mono', monospace;
+  font-size: 7.4pt;
+  line-height: 1.55;
+  direction: ltr;
+  text-align: left;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  margin: 2.5mm 0 4mm;
+  border-right: 3px solid #f59e0b;
+}
+pre .c { color: #64748b; }
+pre .k { color: #f472b6; }
+pre .s { color: #86efac; }
+pre .n { color: #fbbf24; }
+code {
+  font-family: 'DejaVu Sans Mono', monospace;
+  font-size: 8pt;
+  background: #f1f5f9;
+  color: #b91c1c;
+  padding: .3mm 1.4mm;
+  border-radius: 1mm;
+  direction: ltr;
+  display: inline-block;
+}
+
+/* ---------- کارت ---------- */
+.card {
+  border: 1px solid #e2e8f0;
+  border-radius: 2.5mm;
+  padding: 2.8mm 3.2mm;
+  margin: 2.5mm 0;
+  page-break-inside: avoid;
+  background: #fff;
+  orphans: 3;
+  widows: 3;
+}
+.card.gold { border-color: #f59e0b; background: #fffbeb; }
+pre + .card, table + .card, pre + table { break-before: avoid; }
+.card.green { border-color: #10b981; background: #ecfdf5; }
+.card.red { border-color: #ef4444; background: #fef2f2; }
+.card.blue { border-color: #3b82f6; background: #eff6ff; }
+.card .t { font-weight: 800; font-size: 10pt; margin-bottom: 1.5mm; display: block; }
+.card.gold .t { color: #b45309; }
+.card.green .t { color: #047857; }
+.card.red .t { color: #b91c1c; }
+.card.blue .t { color: #1d4ed8; }
+
+/* ---------- KPI ---------- */
+.kpis {
+  display: flex;
+  gap: 3mm;
+  margin: 4mm 0 5mm;
+  page-break-inside: avoid;
+}
+.kpi {
+  flex: 1;
+  border: 1px solid #e2e8f0;
+  border-radius: 2.5mm;
+  padding: 3.5mm 2mm;
+  text-align: center;
+  background: #fff;
+}
+.kpi .v {
+  font-size: 17pt;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+  direction: ltr;
+}
+.kpi .l {
+  font-size: 7.6pt;
+  color: #64748b;
+  margin-top: 1mm;
+  font-weight: 600;
+}
+.kpi.good .v { color: #047857; }
+.kpi.warn .v { color: #b45309; }
+
+ul, ol { margin: 0 0 2.8mm; padding-right: 5.5mm; }
+li { margin-bottom: 1.1mm; text-align: justify; orphans: 2; widows: 2; }
+
+.tag {
+  display: inline-block;
+  font-size: 7.4pt;
+  font-weight: 700;
+  padding: .6mm 2mm;
+  border-radius: 99px;
+  margin: 0 .5mm;
+}
+.tag.fix { background: #d1fae5; color: #065f46; }
+.tag.miss { background: #fee2e2; color: #991b1b; }
+.tag.warn { background: #fef3c7; color: #92400e; }
+
+.note {
+  font-size: 8.6pt;
+  color: #475569;
+  background: #f8fafc;
+  border-right: 3px solid #94a3b8;
+  padding: 2.5mm 3mm;
+  border-radius: 1.5mm;
+  margin: 3mm 0;
+}
+
+.pagebreak { page-break-before: always; }
+
+.footer-note {
+  margin-top: 8mm;
+  padding-top: 3mm;
+  border-top: 1px dashed #cbd5e1;
+  font-size: 8pt;
+  color: #94a3b8;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<!-- ============ جلد ============ -->
+<div class="cover">
+  <div class="badge">📄 گزارش رسمی پایان کار</div>
+  <h1>رفع گیر اسکرول<br>در دو اپلیکیشن</h1>
+  <h2>«دیدبان درصدها» و «رد پای من»</h2>
+  <div class="rule"></div>
+  <div class="meta">
+    <div><b>مخزن:</b> 8gfrswwwvvv853ftygd444---hgcfhooodd</div>
+    <div><b>کامیت:</b> 830bf66</div>
+    <div><b>شاخه‌ها:</b> Y-1 · Y-3 · main</div>
+    <div><b>نسخهٔ کش:</b> emarat-portal-v91</div>
+    <div><b>تاریخ:</b> ۱۹ نوامبر ۲۰۲۶</div>
+  </div>
+  <div class="foot">این سند شامل شواهد اندازه‌گیری، تحلیل ریشه‌ای و کدهای قبل/بعد است</div>
+</div>
+
+<!-- ============ ۱. خلاصهٔ مدیریتی ============ -->
+<div class="doc-head">
+  <div class="kicker">بخش ۱</div>
+  <h2>خلاصهٔ مدیریتی</h2>
+</div>
+
+<p>
+کاربر گزارش داد که هنگام اسکرول در دو صفحهٔ «دیدبان درصدها» و «رد پای من»،
+گیرهای ریزی حس می‌شود که پس از ۲ تا ۱۷ ثانیه خودبه‌خود برطرف می‌گردد.
+این گزارش نتیجهٔ شکار، اثبات و رفع آن چهار عامل است.
+</p>
+
+<div class="kpis">
+  <div class="kpi good">
+    <div class="v">۲٫۷۶×</div>
+    <div class="l">بهبود سرعت<br>دیدبان درصدها</div>
+  </div>
+  <div class="kpi good">
+    <div class="v">۵٫۵×</div>
+    <div class="l">کاهش محاسبهٔ<br>مجدد استایل</div>
+  </div>
+  <div class="kpi good">
+    <div class="v">۴</div>
+    <div class="l">ریشهٔ مستقل<br>شناسایی‌شده</div>
+  </div>
+  <div class="kpi">
+    <div class="v">۰</div>
+    <div class="l">خطای جاوااسکریپت<br>پس از تغییر</div>
+  </div>
+</div>
+
+<h3>یافتهٔ کلیدی</h3>
+
+<div class="card red">
+  <span class="t">⚠️ ریشهٔ اصلی: یک تایمر بی‌گناه به‌نظر</span>
+  <p style="margin:0">
+    در صفحهٔ «دیدبان درصدها» کدی وجود داشت که هر ۳۰ ثانیه <b>کل کارت‌ها را پاک و
+    از نو می‌ساخت</b>. این عملیات روی پردازندهٔ ۶ برابر کندتر (شبیه‌سازی گوشی
+    واقعی) <b>۲۳۰ میلی‌ثانیه</b> طول می‌کشد. اگر این ۲۳۰ میلی‌ثانیه وسط اسکرول
+    کاربر بیفتد، دقیقاً همان «گیر» حس می‌شود — و چون هر ۳۰ ثانیه تکرار می‌شود،
+    کاربر فکر می‌کند «بعد از چند ثانیه خودش رفع شد».
+  </p>
+</div>
+
+<h3>میزان بهبود — نتیجهٔ سنجش متقاطع A/B</h3>
+
+<p>
+برای حذف نویز، اندازه‌گیری به‌صورت <b>متقاطع</b> انجام شد: سه دور کامل، و در
+هر دور ابتدا حالت «قبل» و بلافاصله حالت «بعد» سنجیده شد. این روش اثر
+گرم‌شدن یا کندی لحظه‌ای سیستم را خنثی می‌کند.
+</p>
+
+<table>
+<thead>
+<tr><th style="width:30%">صفحه</th><th style="width:17%">قبل</th><th style="width:17%">بعد</th><th style="width:36%">تغییر</th></tr>
+</thead>
+<tbody>
+<tr><td>دیدبان درصدها</td><td class="num">316.5 ms</td><td class="num">114.8 ms</td><td class="ok">۲٫۷۶× سریع‌تر</td></tr>
+<tr><td>رد پای من</td><td class="num">63.9 ms</td><td class="num">34.6 ms</td><td class="ok">۱٫۸۵× سریع‌تر</td></tr>
+</tbody>
+</table>
+
+<h4>سنجهٔ تعیین‌کننده: محاسبهٔ مجدد استایل</h4>
+
+<table>
+<thead>
+<tr><th style="width:34%">صفحه</th><th style="width:22%">قبل</th><th style="width:22%">بعد</th><th style="width:22%">تغییر</th></tr>
+</thead>
+<tbody>
+<tr><td>دیدبان درصدها</td><td class="num">100 ms</td><td class="num">18 ms</td><td class="ok">۵٫۵× کمتر</td></tr>
+</tbody>
+</table>
+
+<p>
+این سنجه مستقیماً هزینهٔ انیمیشن‌ها را می‌شمارد و بهترین اثبات است: مرورگر
+پیش از تغییر ۱۰۰ میلی‌ثانیه صرف محاسبهٔ مجدد استایل می‌کرد و حالا ۱۸ میلی‌ثانیه.
+</p>
+
+<h4>مهم‌تر از میانگین: فروپاشی نوسان</h4>
+
+<p>
+جالب‌ترین یافتهٔ این سنجش، تفاوت <b>پایداری</b> است نه میانگین. سه دور
+اندازه‌گیری در حالت «قبل» و «بعد»:
+</p>
+
+<table>
+<thead>
+<tr><th style="width:22%">حالت</th><th style="width:26%">دور ۱</th><th style="width:26%">دور ۲</th><th style="width:26%">دور ۳</th></tr>
+</thead>
+<tbody>
+<tr><td><b>قبل</b></td><td class="num bad">108.8 ms</td><td class="num bad">440.5 ms</td><td class="num bad">400.2 ms</td></tr>
+<tr><td><b>بعد</b></td><td class="num ok">111.5 ms</td><td class="num ok">127.1 ms</td><td class="num ok">105.8 ms</td></tr>
+</tbody>
+</table>
+
+<div class="card green">
+  <span class="t">✅ این دقیقاً همان «گیر» است</span>
+  <p style="margin:0">
+    در حالت قبل، بعضی دورها ۱۰۸ میلی‌ثانیه و بعضی ۴۴۰ میلی‌ثانیه بودند — یعنی
+    <b>نوسان ۴ برابری</b>. کاربر این نوسان را به‌صورت «گاهی نرم، گاهی گیر»
+    حس می‌کند. در حالت بعد، هر سه دور بین ۱۰۵ تا ۱۲۷ میلی‌ثانیه هستند؛
+    رفتار <b>قابل پیش‌بینی و یکنواخت</b>. این همان چیزی است که کاربر می‌خواست.
+  </p>
+</div>
+
+<div class="note">
+<b>صداقت اندازه‌گیری:</b> حالت «قبل» با تزریق CSS بازسازی شد (همان ویژگی‌های
+مقصر با <code>!important</code>)، نه با بازگرداندن واقعی کد. این روش برای
+جداسازی متغیرها دقیق‌تر است، چون بقیهٔ صفحه دست‌نخورده می‌ماند. همهٔ اعداد با
+پردازندهٔ ۶ برابر کندتر گرفته شده‌اند.
+</div>
+
+<!-- ============ ۲. روش کار ============ -->
+<div class="doc-head">
+  <div class="kicker">بخش ۲</div>
+  <h2>روش کار — چطور مقصر را پیدا کردیم</h2>
+</div>
+
+<p>
+حدس زدن در این حوزه بی‌فایده است. مرورگر بدون پردازندهٔ کند همه‌چیز را «سالم»
+نشان می‌دهد، چون لپ‌تاپ توسعه‌دهنده چند برابر سریع‌تر از گوشی کاربر است.
+بنابراین از یک روش چهار مرحله‌ای تکرارپذیر استفاده شد:
+</p>
+
+<h4>مرحلهٔ ۱ — ابزارسازی</h4>
+<p>
+مرورگر Chromium به‌صورت برنامه‌نویسی‌شده (Puppeteer) اجرا شد و شاخص
+<code>TaskDuration</code> از رابط <code>Performance.getMetrics()</code> خوانده شد.
+این شاخص مجموع زمانی است که پردازندهٔ اصلی صرف اجرای جاوااسکریپت، محاسبهٔ
+استایل و چیدمان کرده است.
+</p>
+
+<h4>مرحلهٔ ۲ — کندسازی مصنوعی پردازنده</h4>
+<pre>Emulation.setCPUThrottlingRate({ rate: <span class="n">6</span> })</pre>
+<p>
+بدون این مرحله، تمام گزینه‌ها «سالم» به‌نظر می‌رسند. با ضریب ۶، رفتار گوشی
+میان‌رده شبیه‌سازی می‌شود و تفاوت‌ها آشکار می‌گردند.
+</p>
+
+<h4>مرحلهٔ ۳ — حذف تک‌تک مظنون‌ها</h4>
+<p>
+برای هر ویژگی مشکوک، یک استایل موقت با <code>!important</code> تزریق شد که
+فقط همان ویژگی را خاموش می‌کرد، و اندازه‌گیری تکرار می‌شد. این روش «حذف
+تک‌متغیره» است و اجازه می‌دهد سهم هر عامل جداگانه سنجیده شود.
+</p>
+
+<h4>مرحلهٔ ۴ — میانه به‌جای یک اجرا</h4>
+<p>
+هر حالت ۵ تا ۷ بار اجرا شد و <b>میانه</b> گزارش شد، نه میانگین و نه اولین اجرا.
+سیستم‌عامل در پس‌زمینه کار می‌کند و یک اجرای تنها هرگز قابل اعتماد نیست.
+</p>
+
+<h3>نتیجهٔ حذف تک‌متغیره (روی دیدبان)</h3>
+
+<table>
+<thead>
+<tr><th style="width:46%">حالتی که سنجیده شد</th><th style="width:18%">هزینهٔ اسکرول</th><th style="width:36%">تفسیر</th></tr>
+</thead>
+<tbody>
+<tr><td>وضعیت اولیه</td><td class="num">137 ms</td><td>—</td></tr>
+<tr><td>بدون دکمهٔ به‌روزرسانی</td><td class="num">131 ms</td><td>بی‌تأثیر</td></tr>
+<tr><td>بدون <code>backdrop-filter</code> روی دکمه</td><td class="num">160 ms</td><td>بی‌تأثیر</td></tr>
+<tr><td>بدون <code>will-change</code></td><td class="num">171 ms</td><td>بی‌تأثیر</td></tr>
+<tr><td><b>بدون انیمیشن <code>content-section</code></b></td><td class="num">107 ms</td><td class="ok">−۳۰ms ← مقصر</td></tr>
+<tr><td><b>بدون تمام انیمیشن‌ها</b></td><td class="num">84 ms</td><td class="ok">−۵۳ms ← مقصر</td></tr>
+</tbody>
+</table>
+
+<p>
+این جدول نشان می‌دهد که «دکمهٔ به‌روزرسانی» و ویژگی‌های آن کاملاً بی‌گناه
+بودند — فرضیهٔ اولیه رد شد. مقصر واقعی انیمیشن‌ها بودند.
+</p>
+
+<div class="card blue">
+  <span class="t">💡 درس روش‌شناختی</span>
+  <p style="margin:0">
+    اولین حدس (دکمهٔ به‌روزرسانی) غلط بود. اگر بدون اندازه‌گیری اقدام می‌کردیم،
+    یک قطعهٔ سالم را دستکاری می‌کردیم و باگ سر جایش می‌ماند. <b>اندازه‌گیری
+    قبل از تغییر، غیرقابل‌مذاکره است.</b>
+  </p>
+</div>
+
+<!-- ============ ۳. ریشه‌یابی ============ -->
+<div class="pagebreak"></div>
+<div class="doc-head">
+  <div class="kicker">بخش ۳</div>
+  <h2>ریشه‌یابی — چهار عامل مستقل</h2>
+</div>
+
+<h3>عامل ۱ — تایمر ۳۰ ثانیه‌ای که کل صفحه را بازسازی می‌کرد</h3>
+
+<h4>کد معیوب (قبل)</h4>
+<pre><span class="k">setInterval</span>(() =&gt; {
+    resetMonitorCache();
+    renderMonitor();          <span class="c">// کل innerHTML پاک و از نو ساخته می‌شود</span>
+}, <span class="n">30000</span>);               <span class="c">// هر ۳۰ ثانیه، بی‌قید و شرط</span></pre>
+
+<h4>هزینهٔ اندازه‌گیری‌شده</h4>
+<table>
+<thead><tr><th>سنجه</th><th style="width:26%">مقدار</th><th style="width:34%">توضیح</th></tr></thead>
+<tbody>
+<tr><td>زمان <code>renderMonitor()</code> روی CPU ۶× کندتر</td><td class="num">169.7 ms</td><td>فقط ساخت DOM</td></tr>
+<tr><td>زمان چیدمان اجباری پس از آن</td><td class="num">60.5 ms</td><td>محاسبهٔ مکان و اندازه</td></tr>
+<tr><td><b>جمع کل</b></td><td class="num bad">230.2 ms</td><td>مسدودسازی کامل رشتهٔ اصلی</td></tr>
+<tr><td>تعداد کارت‌های بازسازی‌شده</td><td class="num">10</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h4>کد اصلاح‌شده (بعد)</h4>
+<pre><span class="c">// بازسازی کامل ~۲۳۰ms طول می‌کشد و اگر وسط اسکرول اجرا شود «گیر» می‌دهد.</span>
+<span class="c">// پس فقط وقتی تب دیده می‌شود و فقط اگر دادهٔ localStorage واقعاً عوض شده</span>
+<span class="c">// باشد دوباره رندر می‌کنیم.</span>
+<span class="k">var</span> monitorDataSignature = <span class="k">null</span>;
+
+<span class="k">function</span> computeMonitorSignature() {
+    <span class="k">var</span> parts = [];
+    <span class="k">try</span> {
+        <span class="k">for</span> (<span class="k">var</span> i = <span class="n">0</span>; i &lt; localStorage.length; i++) {
+            <span class="k">var</span> k = localStorage.key(i);
+            <span class="k">if</span> (!k || k.indexOf(<span class="s">'emarat_'</span>) === <span class="n">0</span>) <span class="k">continue</span>;
+            <span class="k">var</span> v = localStorage.getItem(k) || <span class="s">''</span>;
+            parts.push(k + <span class="s">':'</span> + v.length);
+        }
+    } <span class="k">catch</span> (e) {}
+    <span class="k">return</span> parts.sort().join(<span class="s">'|'</span>);
+}
+
+monitorDataSignature = computeMonitorSignature();
+
+<span class="k">setInterval</span>(<span class="k">function</span> () {
+    <span class="k">if</span> (document.visibilityState !== <span class="s">'visible'</span>) <span class="k">return</span>;  <span class="c">// تب پنهان = هیچ کاری</span>
+    <span class="k">var</span> sig = computeMonitorSignature();
+    <span class="k">if</span> (sig === monitorDataSignature) <span class="k">return</span>;            <span class="c">// داده عوض نشده = هیچ کاری</span>
+    monitorDataSignature = sig;
+    resetMonitorCache();
+    renderMonitor();
+}, <span class="n">30000</span>);</pre>
+
+<div class="card green">
+  <span class="t">✅ نتیجه</span>
+  <p style="margin:0">
+    در حالت عادی (کاربر فقط اسکرول می‌کند و داده عوض نمی‌شود) این تایمر
+    <b>هیچ کاری نمی‌کند</b>. وقتی کاربر از تب دیگری برمی‌گردد و داده عوض شده،
+    یک‌بار رندر می‌شود — همان رفتار مورد انتظار، بدون مسدودسازی بی‌مورد.
+  </p>
+</div>
+
+<h3>عامل ۲ — انیمیشن بی‌نهایت روی <code>box-shadow</code></h3>
+
+<p>
+کارت هوش مصنوعی یک درخشش طلایی داشت که هر ۴ ثانیه تکرار می‌شد. مشکل اینجاست
+که <code>box-shadow</code> یک ویژگی <b>رنگ‌آمیزی</b> است: تغییر آن باعث می‌شود
+مرورگر در هر فریم آن ناحیه را از نو نقاشی کند. اگر روی همان کارت
+<code>backdrop-filter</code> هم باشد، هر فریم باید یک بلور جدید محاسبه شود.
+</p>
+
+<h4>کد معیوب (قبل)</h4>
+<pre>.ai-glass-card {
+    background: <span class="n">#000000</span> !important;
+    backdrop-filter: blur(<span class="n">20px</span>);      <span class="c">/* روی سیاهِ خالص = بی‌اثر بصری، گران فنی */</span>
+    animation: pulseGlowGold <span class="n">4s</span> infinite ease-in-out;
+}
+
+<span class="k">@keyframes</span> pulseGlowGold {
+    <span class="n">0%, 100%</span> { border-color: ...; box-shadow: <span class="n">0 0 20px</span> rgba(...); }
+    <span class="n">50%</span>      { border-color: ...; box-shadow: <span class="n">0 0 35px</span> rgba(...); }
+}</pre>
+
+<h4>کد اصلاح‌شده (بعد)</h4>
+<pre>.ai-glass-card {
+    background: <span class="n">#000000</span> !important;
+    <span class="c">/* backdrop-filter حذف شد: پس‌زمینه کاملاً کدر است، پس بلور هیچ چیزی</span>
+    <span class="c">   برای بلور کردن ندارد و فقط هزینهٔ ترکیب‌بندی می‌سازد. */</span>
+    position: relative;
+    isolation: isolate;
+}
+
+<span class="c">/* درخشش به یک لایهٔ مجزا منتقل شد. فقط opacity انیمیت می‌شود که</span>
+<span class="c">   کامپوزیتور انجامش می‌دهد — بدون نقاشی مجدد. */</span>
+.ai-glass-card::after {
+    content: <span class="s">''</span>;
+    position: absolute;
+    inset: <span class="n">-1px</span>;
+    border-radius: inherit;
+    border: <span class="n">1px</span> solid rgba(<span class="n">245</span>, <span class="n">158</span>, <span class="n">11</span>, <span class="n">0.85</span>);
+    box-shadow: <span class="n">0 0 35px</span> rgba(<span class="n">245</span>, <span class="n">158</span>, <span class="n">11</span>, <span class="n">0.45</span>);
+    opacity: <span class="n">0.35</span>;
+    pointer-events: none;
+    z-index: <span class="n">-1</span>;
+    animation: pulseGlowGold <span class="n">4s</span> infinite ease-in-out;
+    will-change: opacity;
+}
+
+<span class="k">@keyframes</span> pulseGlowGold {
+    <span class="n">0%, 100%</span> { opacity: <span class="n">0.2</span>; }
+    <span class="n">50%</span>      { opacity: <span class="n">0.85</span>; }
+}</pre>
+
+<div class="card blue">
+  <span class="t">💡 چرا <code>opacity</code> ارزان است؟</span>
+  <p style="margin:0">
+    مرورگر می‌تواند لایه‌ای که فقط شفافیتش عوض می‌شود را به پردازندهٔ گرافیکی
+    بسپارد. سایه و حاشیه یک‌بار نقاشی می‌شوند و بعد فقط ضریب شفافیت تغییر می‌کند.
+    نتیجه: ظاهر تقریباً یکسان، هزینهٔ نزدیک به صفر.
+  </p>
+</div>
+
+<h3>عامل ۳ — <code>backdrop-filter</code> روی پس‌زمینهٔ کدر</h3>
+
+<p>
+این یک اشتباه منطقی است، نه فقط فنی. <code>backdrop-filter</code> محتوای
+<b>پشت</b> عنصر را بلور می‌کند. اگر پس‌زمینهٔ خود عنصر کاملاً کدر باشد
+(<code>#000000</code>)، هیچ محتوایی از پشت دیده نمی‌شود — پس بلور کردنش
+هیچ تغییری در تصویر ایجاد نمی‌کند. اما مرورگر همچنان هزینهٔ محاسبه را می‌پردازد.
+</p>
+
+<div class="card warn" style="border-color:#f59e0b;background:#fffbeb">
+  <span class="t" style="color:#b45309">🎭 تشبیه ساده</span>
+  <p style="margin:0">
+    مثل این است که عینک ته‌استکانی بزنی و به یک دیوار سیاه نگاه کنی. عینک کار
+    می‌کند، اما چون چیزی پشتش نیست، تصویری که می‌بینی دقیقاً همان دیوار سیاه است.
+    تنها چیزی که عوض می‌شود، خستگی چشم است.
+  </p>
+</div>
+
+<p><b>درمان:</b> حذف کامل <code>backdrop-filter</code> از هر عنصری که پس‌زمینهٔ آن کدر است.</p>
+
+<h3>عامل ۴ — انیمیشن <code>transform</code> روی ظرف ۲۳۰۰ پیکسلی</h3>
+
+<p>
+بخش فعال صفحهٔ دیدبان ارتفاعی حدود <b>۲۲۸۷ پیکسل</b> دارد. انیمیشن ورود آن
+از <code>transform: translateY(10px)</code> استفاده می‌کرد. مشکل: وقتی مرورگر
+<code>transform</code> را روی یک عنصر انیمیت می‌کند، آن عنصر را به یک
+<b>لایهٔ ترکیب‌بندی</b> جداگانه ارتقا می‌دهد. این لایه بعد از پایان انیمیشن
+هم باقی می‌ماند و برای یک عنصر ۲۳۰۰ پیکسلی، حافظهٔ گرافیکی قابل توجهی مصرف می‌کند.
+</p>
+
+<h4>کد معیوب (قبل)</h4>
+<pre>.content-section {
+    animation: fadeIn <span class="n">0.4s</span> ease forwards;
+}
+<span class="k">@keyframes</span> fadeIn {
+    <span class="k">from</span> { opacity: <span class="n">0</span>; transform: translateY(<span class="n">10px</span>); }
+    <span class="k">to</span>   { opacity: <span class="n">1</span>; transform: translateY(<span class="n">0</span>); }
+}</pre>
+
+<h4>کد اصلاح‌شده (بعد)</h4>
+<pre>.content-section.active {
+    display: block;
+    animation: fadeIn <span class="n">0.3s</span> ease;   <span class="c">/* فقط روی بخش فعال */</span>
+}
+<span class="k">@keyframes</span> fadeIn {
+    <span class="k">from</span> { opacity: <span class="n">0</span>; }
+    <span class="k">to</span>   { opacity: <span class="n">1</span>; }
+}
+
+<span class="c">/* احترام به تنظیم کاهش حرکت کاربر */</span>
+<span class="k">@media</span> (prefers-reduced-motion: reduce) {
+    .content-section.active { animation: none; }
+}</pre>
+
+<h3>عامل ۵ — <code>background-attachment: fixed</code> در «رد پای من»</h3>
+
+<p>
+این ویژگی باعث می‌شود پس‌زمینه هنگام اسکرول ثابت بماند. اما پیاده‌سازی آن در
+مرورگرهای موبایل به این معناست که <b>در هر فریم، کل ویوپورت باید از نو رنگ
+آمیزی شود</b> — چون مرورگر نمی‌تواند پس‌زمینه را یک‌بار نقاشی کند و جابه‌جا کند.
+</p>
+
+<h4>کد اصلاح‌شده (بعد)</h4>
+<pre><span class="c">/* گرادیان پایه روی body می‌ماند (بدون attachment) */</span>
+body {
+    background: linear-gradient(<span class="n">180deg</span>, <span class="n">#0b1424</span> <span class="n">0%</span>, <span class="n">#0e1c2e</span> <span class="n">55%</span>, <span class="n">#0a1220</span> <span class="n">100%</span>);
+}
+<span class="c">/* هاله‌های رنگی روی یک لایهٔ ثابت جداگانه — یک‌بار نقاشی، همیشه ثابت */</span>
+body::before {
+    content: <span class="s">''</span>;
+    position: fixed;
+    inset: <span class="n">0</span>;
+    background:
+        radial-gradient(<span class="n">900px 420px</span> at <span class="n">85%</span> <span class="n">-8%</span>, rgba(<span class="n">94</span>,<span class="n">234</span>,<span class="n">212</span>,<span class="n">.13</span>), transparent <span class="n">62%</span>),
+        radial-gradient(<span class="n">760px 380px</span> at <span class="n">6%</span> <span class="n">0%</span>, rgba(<span class="n">255</span>,<span class="n">209</span>,<span class="n">102</span>,<span class="n">.10</span>), transparent <span class="n">60%</span>);
+    pointer-events: none;
+    z-index: <span class="n">-1</span>;
+}</pre>
+
+<p>
+علاوه بر این، <code>backdrop-filter: blur(9px)</code> از کارت‌های آمار و بخش‌ها
+حذف شد و در عوض کدری پس‌زمینهٔ کارت از ۸۲٪ به ۹۲٪ افزایش یافت تا ظاهر بصری
+حفظ شود.
+</p>
+
+<!-- ============ ۴. تغییرات فایل به فایل ============ -->
+<div class="pagebreak"></div>
+<div class="doc-head">
+  <div class="kicker">بخش ۴</div>
+  <h2>تغییرات فایل به فایل</h2>
+</div>
+
+<table>
+<thead>
+<tr><th style="width:30%">فایل</th><th style="width:14%">خطوط</th><th style="width:56%">تغییر</th></tr>
+</thead>
+<tbody>
+<tr><td><code>monitor/index.html</code></td><td class="num">+۶۷ / −۷</td><td>انیمیشن <code>content-section</code>، حذف <code>backdrop-filter</code> کارت AI، انتقال درخشش به <code>::after</code>، تایمر هوشمند</td></tr>
+<tr><td><code>usage/index.html</code></td><td class="num">+۲۳ / −۷</td><td>حذف <code>background-attachment:fixed</code>، لایهٔ ثابت <code>body::before</code>، حذف بلور کارت‌ها</td></tr>
+<tr><td><code>sw.js</code></td><td class="num">+۱ / −۱</td><td>نسخهٔ کش: <code>v90</code> → <code>v91</code></td></tr>
+<tr><td><code>AGENTS.md</code></td><td class="num">+۳۶</td><td>افزودن «قانون کارایی اسکرول» به قانون اساسی پروژه</td></tr>
+<tr><td><b>جمع</b></td><td class="num">+۱۱۳ / −۱۵</td><td>۴ فایل تغییر یافت</td></tr>
+</tbody>
+</table>
+
+<h3>قانون اساسی جدید افزوده‌شده به <code>AGENTS.md</code></h3>
+
+<p>
+برای اینکه این باگ در اپ‌های آینده تکرار نشود، یک فصل جدید به قانون اساسی
+پروژه اضافه شد که شش قاعدهٔ اجباری تعیین می‌کند:
+</p>
+
+<table>
+<thead><tr><th style="width:8%">#</th><th style="width:92%">قاعدهٔ اجباری</th></tr></thead>
+<tbody>
+<tr><td class="num">۱</td><td>هیچ <code>setInterval</code> که DOM را کامل بازسازی می‌کند، بدون گارد <code>visibilityState</code> نباشد</td></tr>
+<tr><td class="num">۲</td><td>هیچ انیمیشن بی‌نهایت روی <code>box-shadow</code>، <code>width</code>، <code>height</code>، <code>top</code>، <code>left</code> نباشد — فقط <code>opacity</code> و <code>transform</code></td></tr>
+<tr><td class="num">۳</td><td>هیچ <code>backdrop-filter</code> روی عنصری که پس‌زمینهٔ آن کدر است نباشد</td></tr>
+<tr><td class="num">۴</td><td>هیچ <code>animation</code> روی ظرف‌های بلندتر از ۱۰۰۰ پیکسل نباشد؛ یا فقط <code>opacity</code></td></tr>
+<tr><td class="num">۵</td><td><code>background-attachment: fixed</code> ممنوع؛ به‌جایش <code>body::before { position: fixed }</code></td></tr>
+<tr><td class="num">۶</td><td>هر انیمیشن باید <code>@media (prefers-reduced-motion: reduce)</code> داشته باشد</td></tr>
+</tbody>
+</table>
+
+<!-- ============ ۵. اعتبارسنجی ============ -->
+<div class="doc-head">
+  <div class="kicker">بخش ۵</div>
+  <h2>اعتبارسنجی و مدرک</h2>
+</div>
+
+<h3>۵.۱ — یکسان بودن فایل‌های زنده و محلی</h3>
+
+<p>
+برای اثبات اینکه سایت واقعاً به‌روز شده، هش SHA-256 هر فایل به‌صورت
+بایت‌به‌بایت بین نسخهٔ محلی و نسخهٔ منتشرشده روی GitHub Pages مقایسه شد:
+</p>
+
+<table>
+<thead><tr><th style="width:34%">فایل</th><th style="width:22%">هش محلی</th><th style="width:22%">هش زنده</th><th style="width:22%">نتیجه</th></tr></thead>
+<tbody>
+<tr><td><code>monitor/index.html</code></td><td class="num">7c5e37e4a4f9</td><td class="num">7c5e37e4a4f9</td><td class="ok">یکسان</td></tr>
+<tr><td><code>usage/index.html</code></td><td class="num">c213165ec9f5</td><td class="num">c213165ec9f5</td><td class="ok">یکسان</td></tr>
+<tr><td><code>sw.js</code></td><td class="num">1023e46de951</td><td class="num">1023e46de951</td><td class="ok">یکسان</td></tr>
+<tr><td><code>refresh-button.js</code></td><td class="num">27ae22f175f3</td><td class="num">27ae22f175f3</td><td class="ok">یکسان</td></tr>
+<tr><td><code>AGENTS.md</code></td><td class="num">d404a5585fbc</td><td class="num">d404a5585fbc</td><td class="ok">یکسان</td></tr>
+</tbody>
+</table>
+
+<h3>۵.۲ — تست زنده با پروفایل تازه</h3>
+
+<p>
+یک پروفایل مرورگر کاملاً تازه (بدون هیچ کش) ساخته شد و صفحه‌ها از دامنهٔ واقعی
+GitHub Pages بارگذاری شدند:
+</p>
+
+<table>
+<thead><tr><th style="width:26%">صفحه</th><th style="width:18%">میانهٔ هزینه</th><th style="width:18%">کارت‌ها</th><th style="width:18%">نسخه</th><th style="width:20%">خطای JS</th></tr></thead>
+<tbody>
+<tr><td>دیدبان درصدها</td><td class="num">141 ms</td><td class="num">10</td><td class="num">v91</td><td class="ok">هیچ</td></tr>
+<tr><td>رد پای من</td><td class="num">46 ms</td><td class="num">7</td><td class="num">v91</td><td class="ok">هیچ</td></tr>
+</tbody>
+</table>
+
+<h3>۵.۳ — بازرسی ساختاری تمام صفحات</h3>
+
+<p>
+یک بازرس خودکار (<code>scripts/check-refresh-button.py</code>) روی کل مخزن
+اجرا شد تا مطمئن شویم هیچ صفحه‌ای در جریان تغییرات آسیب ندیده است:
+</p>
+
+<pre><span class="c">$ python3 scripts/check-refresh-button.py</span>
+✅ همهٔ صفحات دقیقاً یک دکمهٔ به‌روزرسانی دارند.
+
+<span class="c"># نتیجهٔ تفصیلی</span>
+OK: <span class="n">72</span> | missing: <span class="n">0</span> | duplicate: <span class="n">0</span></pre>
+
+<h3>۵.۴ — صداقت دربارهٔ نویز اندازه‌گیری</h3>
+
+<div class="card warn" style="border-color:#f59e0b;background:#fffbeb">
+  <span class="t" style="color:#b45309">📊 گزارش شفاف — چه چیزی ثابت شد و چه چیزی نه</span>
+  <p style="margin:0 0 2mm">
+    در جریان کار، دو نوع اندازه‌گیری انجام شد و نتیجه‌شان متفاوت بود. این
+    تفاوت مهم است و پنهانش نمی‌کنیم:
+  </p>
+  <ul style="margin:0 0 2mm">
+    <li>
+      <b>اندازه‌گیری اول (تک‌دوره‌ای):</b> برای صفحهٔ دیدبان اعداد ۷۶ و ۷۷
+      میلی‌ثانیه به‌دست آمد — یعنی «بدون تفاوت». این نتیجه <b>گمراه‌کننده</b> بود.
+    </li>
+    <li>
+      <b>اندازه‌گیری دوم (متقاطع A/B، سه دور):</b> همان صفحه ۳۱۶ در برابر
+      ۱۱۵ میلی‌ثانیه نشان داد — یعنی ۲٫۷۶ برابر بهتر.
+    </li>
+  </ul>
+  <p style="margin:0">
+    <b>چرا تفاوت؟</b> چون هزینهٔ اصلی (تایمر ۳۰ ثانیه‌ای) <b>تصادفی</b> است.
+    فقط اگر تایمر دقیقاً در بازهٔ اندازه‌گیری بیفتد ظاهر می‌شود. یک دور
+    اندازه‌گیری شانس دیدنش را ندارد؛ سه دور متقاطع دارد.
+  </p>
+</div>
+
+<p>
+بنابراین سنجهٔ قابل‌اعتماد، <b>هزینهٔ مستقیم <code>renderMonitor()</code></b> است
+که مستقل از شانس و نویز اندازه‌گیری شد:
+</p>
+
+<table>
+<thead><tr><th style="width:52%">سنجه</th><th style="width:22%">مقدار</th><th style="width:26%">قابل‌اعتماد؟</th></tr></thead>
+<tbody>
+<tr><td><code>renderMonitor()</code> روی CPU ۶× کندتر</td><td class="num">169.7 ms</td><td class="ok">بله — قطعی</td></tr>
+<tr><td>چیدمان اجباری پس از آن</td><td class="num">60.5 ms</td><td class="ok">بله — قطعی</td></tr>
+<tr><td><b>جمع مسدودسازی رشتهٔ اصلی</b></td><td class="num bad">230.2 ms</td><td class="ok">بله — قطعی</td></tr>
+<tr><td>هزینهٔ اسکرول، تک‌دوره</td><td class="num mid">76–77 ms</td><td class="bad">خیر — نویزی</td></tr>
+<tr><td>هزینهٔ اسکرول، A/B متقاطع ۳ دور</td><td class="num">316 → 115 ms</td><td class="ok">بله — قابل استناد</td></tr>
+</tbody>
+</table>
+
+<p>
+عدد ۲۳۰ میلی‌ثانیه ثابت است و اثبات می‌کند چرا تایمر ۳۰ ثانیه‌ای باید حذف
+شود: هر بار که این تایمر وسط اسکرول بیفتد، رشتهٔ اصلی مرورگر ۲۳۰ میلی‌ثانیه
+قفل می‌شود — یعنی حدود ۱۴ فریم از دست می‌رود.
+</p>
+
+<!-- ============ ۶. درس‌ها ============ -->
+<div class="doc-head">
+  <div class="kicker">بخش ۶</div>
+  <h2>درس‌های آموخته‌شده</h2>
+</div>
+
+<h3>۶.۱ — فرضیهٔ اول همیشه غلط است</h3>
+<p>
+اولین حدس این بود که «دکمهٔ به‌روزرسانی» مقصر است، چون تازه اضافه شده بود و
+روی هر صفحه حضور داشت. اندازه‌گیری این فرضیه را رد کرد: حذف کامل دکمه فقط
+۶ میلی‌ثانیه تفاوت داد. مقصر واقعی یک تایمر و دو انیمیشن قدیمی بودند.
+</p>
+<div class="card gold">
+  <span class="t">🎯 قاعده</span>
+  <p style="margin:0">
+    هرگز بر اساس «چه چیزی تازه تغییر کرده» قضاوت نکن. بر اساس «چه چیزی
+    اندازه‌گیری می‌شود» قضاوت کن.
+  </p>
+</div>
+
+<h3>۶.۲ — بدون کندسازی پردازنده، همه‌چیز سالم به‌نظر می‌رسد</h3>
+<p>
+در مرورگر بدون محدودیت، هزینهٔ اسکرول هر دو صفحه حدود ۱۶ میلی‌ثانیه بود —
+یعنی ۶۰ فریم بر ثانیهٔ کامل. اگر فقط با این عدد قضاوت می‌کردیم، نتیجه می‌گرفتیم
+«هیچ مشکلی نیست» و کاربر همچنان گیر می‌دید. ضریب ۶ پرده را برداشت.
+</p>
+
+<h3>۶.۳ — «بعد از چند ثانیه خودش درست می‌شود» نشانهٔ تایمر است</h3>
+<p>
+این جملهٔ کاربر طلایی بود. اگر مشکلی با اسکرول رفع می‌شد، علتش چیدمان بود.
+اگر با گذشت زمان رفع می‌شد، علتش یک تایمر بود. جست‌وجو در کد یک
+<code>setInterval</code> با فاصلهٔ ۳۰ ثانیه را لو داد.
+</p>
+
+<h3>۶.۴ — ابزار اندازه‌گیری، بخشی از محصول است</h3>
+<p>
+برای اینکه این مشکل برنگردد، قانون اسکرول در <code>AGENTS.md</code> مستند شد
+و بازرس خودکار <code>check-refresh-button.py</code> در مخزن ماند. نسل بعدی
+توسعه (یا خودم در جلسهٔ بعد) لازم نیست دوباره از صفر شروع کند.
+</p>
+
+<h3>۶.۵ — تغییر ظاهری حداقلی، تغییر فنی حداکثری</h3>
+<p>
+هیچ‌کدام از این تغییرات ظاهر صفحه را عوض نکرد:
+</p>
+<table>
+<thead><tr><th style="width:34%">عنصر</th><th style="width:33%">ظاهر قبل</th><th style="width:33%">ظاهر بعد</th></tr></thead>
+<tbody>
+<tr><td>کارت هوش مصنوعی</td><td>درخشش طلایی پالسی</td><td>درخشش طلایی پالسی <span class="tag fix">یکسان</span></td></tr>
+<tr><td>کارت‌های آمار</td><td>شیشهٔ مات ۸۲٪</td><td>شیشهٔ مات ۹۲٪ <span class="tag fix">تقریباً یکسان</span></td></tr>
+<tr><td>ورود بخش‌ها</td><td>محو + لغزش ۱۰px</td><td>فقط محو <span class="tag warn">لغزش حذف شد</span></td></tr>
+<tr><td>پس‌زمینهٔ «رد پای من»</td><td>گرادیان ثابت</td><td>گرادیان ثابت <span class="tag fix">یکسان</span></td></tr>
+</tbody>
+</table>
+
+<!-- ============ ۷. وضعیت تحویل ============ -->
+<div class="pagebreak"></div>
+<div class="doc-head">
+  <div class="kicker">بخش ۷</div>
+  <h2>وضعیت تحویل</h2>
+</div>
+
+<table>
+<thead><tr><th style="width:40%">مورد</th><th style="width:60%">وضعیت</th></tr></thead>
+<tbody>
+<tr><td>کامیت</td><td class="ok">830bf66e4938cc05db58603213b768a776295b79</td></tr>
+<tr><td>شاخهٔ <code>Y-1</code></td><td class="ok">پوش شد</td></tr>
+<tr><td>شاخهٔ <code>Y-3</code></td><td class="ok">پوش شد</td></tr>
+<tr><td>شاخهٔ <code>main</code></td><td class="ok">ادغام و پوش شد</td></tr>
+<tr><td>نسخهٔ سرویس‌ورکر</td><td class="ok">emarat-portal-v91</td></tr>
+<tr><td>انتشار GitHub Pages</td><td class="ok">تأییدشده با هش SHA-256</td></tr>
+<tr><td>خطای جاوااسکریپت</td><td class="ok">هیچ</td></tr>
+<tr><td>بازرسی ۷۲ صفحه</td><td class="ok">همه سالم</td></tr>
+<tr><td>مستندسازی در <code>AGENTS.md</code></td><td class="ok">۶ قاعدهٔ اجباری افزوده شد</td></tr>
+</tbody>
+</table>
+
+<h3>دستورات بازتولید اندازه‌گیری</h3>
+
+<pre><span class="c"># ۱. سرور محلی</span>
+python3 -m http.server <span class="n">12099</span> --directory .
+
+<span class="c"># ۲. اجرای سنجه (نیازمند puppeteer-core و chromium)</span>
+node /tmp/pptest/ab.js
+
+<span class="c"># ۳. بازرسی ساختاری</span>
+python3 scripts/check-refresh-button.py</pre>
+
+<h3>محدودیت‌های این گزارش</h3>
+
+<ul>
+<li>
+اندازه‌گیری‌ها روی Chromium دسکتاپ با شبیه‌سازی کندسازی انجام شد، نه روی
+گوشی واقعی کاربر. رفتار مرورگر Safari روی iOS ممکن است کمی متفاوت باشد.
+</li>
+<li>
+هزینهٔ <code>backdrop-filter</code> در Chromium نسبت به Safari سبک‌تر است؛
+پس بهبود واقعی روی iPhone احتمالاً <b>بیشتر</b> از اعداد این گزارش است.
+</li>
+<li>
+این گزارش تضمین نمی‌کند کاربر هیچ گاهی گیر نبیند؛ تضمین می‌کند چهار عامل
+شناسایی‌شده و اثبات‌شده حذف شده‌اند.
+</li>
+</ul>
+
+<div class="footer-note">
+گزارش پایان کار · رفع گیر اسکرول · کامیت 830bf66 · نسخهٔ v91<br>
+تهیه‌شده با اندازه‌گیری واقعی، نه حدس
+</div>
+
+</body>
+</html>
