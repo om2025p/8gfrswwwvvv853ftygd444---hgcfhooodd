@@ -690,6 +690,164 @@
             transform: translateX(-50%) translateY(0);
         }
 
+        /* Zoom / fit controls (bottom-left) */
+        .zoom-controls {
+            bottom: 20px;
+            left: 15px;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .zoom-controls button {
+            width: 46px;
+            height: 46px;
+            padding: 0 !important;
+            border-radius: 50% !important;
+            font-size: 1.05rem !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Member list drawer */
+        .member-list-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: min(340px, 86vw);
+            height: 100dvh;
+            background: var(--card-bg);
+            box-shadow: -8px 0 32px rgba(0, 0, 0, 0.18);
+            z-index: 1200;
+            transform: translateX(105%);
+            transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            gap: 12px;
+        }
+
+        .member-list-panel.open {
+            transform: translateX(0);
+        }
+
+        .member-list-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .member-list-head b {
+            font-size: 1rem;
+            color: var(--primary-green);
+        }
+
+        .member-list-head button {
+            border: none;
+            background: var(--light-green);
+            color: var(--primary-green);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        .member-list-scroll {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-bottom: 20px;
+        }
+
+        .member-list-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(46, 125, 50, 0.18);
+            background: #FCFBF8;
+            cursor: pointer;
+            text-align: right;
+            font-size: 0.86rem;
+        }
+
+        .member-list-item:active {
+            background: var(--light-green);
+        }
+
+        .member-list-item .ml-avatar {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .member-list-item .ml-body {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .member-list-item .ml-name {
+            font-weight: 700;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .member-list-item .ml-rel {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .member-list-empty {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 24px 8px;
+        }
+
+        /* Reference-person picker (phase 6) */
+        .link-candidates {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            max-height: 210px;
+            overflow-y: auto;
+            margin-top: 8px;
+            padding: 2px;
+        }
+
+        .link-candidate {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 11px;
+            border-radius: 11px;
+            border: 1.5px solid rgba(46, 125, 50, 0.2);
+            background: #FCFBF8;
+            cursor: pointer;
+            font-size: 0.84rem;
+            text-align: right;
+        }
+
+        .link-candidate.selected {
+            border-color: var(--primary-green);
+            background: var(--light-green);
+            font-weight: 700;
+        }
+
+        .link-candidate .lc-rel {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-right: auto;
+            white-space: nowrap;
+        }
+
         /* Mobile Optimization tweaks */
         @media (max-width: 480px) {
             .member-card {
@@ -702,11 +860,31 @@
                 font-size: 1.5rem;
             }
             .tree-layout {
-                gap: 40px;
+                gap: 28px;
+            }
+            /* Tighten row spacing so the whole tree fits a phone width at 60% zoom */
+            .grandparents-row {
+                gap: 14px;
+            }
+            .parents-row {
+                gap: 18px;
+            }
+            .center-group {
+                gap: 14px;
+            }
+            .children-row {
+                gap: 14px;
+                /* Narrow wrap so a large family grows downward, not sideways,
+                   keeping the tree fittable on a phone at the 60% zoom floor. */
+                max-width: 430px;
             }
             .ui-overlay button {
                 padding: 10px 14px;
                 font-size: 0.85rem;
+            }
+            .zoom-controls button {
+                width: 42px;
+                height: 42px;
             }
         }
     </style>
@@ -717,6 +895,12 @@
 
     <!-- UI Overlay Controls -->
     <div class="ui-overlay top-right">
+        <button id="btn-add-member" onclick="openQuickAddDialog()" style="font-weight: 700; background: var(--primary-green); color: #fff; border-color: var(--primary-green);">
+            ➕ افزودن فرد
+        </button>
+        <button id="btn-member-list" onclick="openMemberList()">
+            👥 افراد (<span id="member-count-badge">0</span>)
+        </button>
         <button id="btn-back-portal" onclick="window.location.href='../index.html'">
             🚪 بازگشت به پرتال
         </button>
@@ -726,6 +910,21 @@
         <button id="btn-reset-data" onclick="confirmReset()">
             🧹 پاکسازی کلی
         </button>
+    </div>
+
+    <div class="ui-overlay zoom-controls">
+        <button id="btn-zoom-in" onclick="zoomBy(1.25)" title="بزرگ‌نمایی">🔍+</button>
+        <button id="btn-zoom-out" onclick="zoomBy(0.8)" title="کوچک‌نمایی">🔍−</button>
+        <button id="btn-fit-tree" onclick="fitTreeToViewport(true)" title="جا دادن کل درخت در صفحه">🎯</button>
+    </div>
+
+    <!-- Member list drawer -->
+    <div class="member-list-panel" id="memberListPanel">
+        <div class="member-list-head">
+            <b>👥 افراد شجره‌نامه</b>
+            <button onclick="closeMemberList()" aria-label="بستن">×</button>
+        </div>
+        <div class="member-list-scroll" id="memberListScroll"></div>
     </div>
 
     <div class="ui-overlay bottom-controls">
@@ -799,6 +998,7 @@
                 <div class="step-dot" data-step="3">۳</div>
                 <div class="step-dot" data-step="4">۴</div>
                 <div class="step-dot" data-step="5">۵</div>
+                <div class="step-dot" data-step="6">۶</div>
             </div>
 
             <div class="dialog-body">
@@ -933,6 +1133,25 @@
                         <textarea id="member-bio" class="input-text" rows="4" placeholder="خاطرات کوتاه، سرگذشت، ویژگی‌های بارز یا نکات خاص فرد..." style="resize: vertical; font-family: inherit;"></textarea>
                     </div>
                 </div>
+
+                <!-- PHASE 6: Choose who this person is related to -->
+                <div class="form-phase" data-step="6">
+                    <div class="form-group">
+                        <label class="form-label">این فرد چه نسبتی با چه کسی دارد؟</label>
+                        <div class="btn-toggle-group" style="flex-wrap: wrap;">
+                            <button type="button" class="btn-toggle active" id="link-none" onclick="setLinkMode('none')">بدون نسبت</button>
+                            <button type="button" class="btn-toggle" id="link-parent" onclick="setLinkMode('parent')">والدِ</button>
+                            <button type="button" class="btn-toggle" id="link-child" onclick="setLinkMode('child')">فرزندِ</button>
+                            <button type="button" class="btn-toggle" id="link-spouse" onclick="setLinkMode('spouse')">همسرِ</button>
+                            <button type="button" class="btn-toggle" id="link-sibling" onclick="setLinkMode('sibling')">خواهر/برادرِ</button>
+                        </div>
+                    </div>
+                    <div class="form-group" id="link-target-group" style="display: none;">
+                        <label class="form-label">فرد مرجع را انتخاب کنید</label>
+                        <input type="text" id="link-search" class="input-text" placeholder="🔍 جستجوی نام..." oninput="renderLinkCandidates(this.value)" style="margin-bottom: 4px;">
+                        <div class="link-candidates" id="linkCandidates"></div>
+                    </div>
+                </div>
             </div>
 
             <div class="dialog-footer">
@@ -953,6 +1172,12 @@
         // Form Temp State
         let formMode = 'add'; // 'add' or 'edit'
         let currentPhase = 1;
+        const TOTAL_PHASES = 6;
+        // Reference-person linking chosen in phase 6 ('' = standalone person)
+        let formLinkMode = 'none';
+        let formLinkTargetId = null;
+        const ZOOM_MIN = 0.6;
+        const ZOOM_MAX = 2.2;
         let formGender = 'male';
         let formHasPhoto = false;
         let formPhotoData = null;
@@ -1064,6 +1289,7 @@
             });
 
             window.addEventListener('pointerup', () => {
+                if (isDragging) clampPan();
                 isDragging = false;
                 canvas.style.cursor = 'grab';
             });
@@ -1076,13 +1302,12 @@
                 if (tapLength < 300 && tapLength > 0) {
                     e.preventDefault();
                     if (scale > 1.2) {
-                        scale = 1;
-                        panX = 0;
-                        panY = 0;
+                        // "Reset view" means fit the tree, not pan to the canvas origin
+                        fitTreeToViewport(true);
                     } else {
-                        scale = 1.4;
+                        scale = Math.min(1.4, ZOOM_MAX);
+                        updateTransform();
                     }
-                    updateTransform();
                 }
                 lastTap = currentTime;
             });
@@ -1098,7 +1323,7 @@
                         initialDistance = dist;
                     } else {
                         const factor = dist / initialDistance;
-                        scale = Math.min(Math.max(scale * factor, 0.5), 3);
+                        scale = Math.min(Math.max(scale * factor, ZOOM_MIN), ZOOM_MAX);
                         initialDistance = dist;
                         updateTransform();
                     }
@@ -1115,6 +1340,40 @@
         function updateTransform() {
             const canvas = document.getElementById('canvas');
             canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        }
+
+        // Keep at least a slice of the tree on screen so dragging can never lose it
+        function clampPan() {
+            const container = document.getElementById('canvasContainer');
+            const canvas = document.getElementById('canvas');
+            if (!container || !canvas) return;
+            const cards = Array.from(canvas.querySelectorAll('.member-card'));
+            if (cards.length === 0) return;
+
+            const cRect = container.getBoundingClientRect();
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            cards.forEach(c => {
+                const b = getRelativeCoords(c, canvas);
+                if (!isFinite(b.left) || !isFinite(b.top)) return;
+                minX = Math.min(minX, b.left);
+                minY = Math.min(minY, b.top);
+                maxX = Math.max(maxX, b.left + b.width);
+                maxY = Math.max(maxY, b.top + b.height);
+            });
+            if (!isFinite(minX) || !isFinite(minY)) return;
+
+            const margin = 80;
+            const left = minX * scale + panX;
+            const right = maxX * scale + panX;
+            const top = minY * scale + panY;
+            const bottom = maxY * scale + panY;
+
+            if (right < margin) panX += margin - right;
+            if (left > cRect.width - margin) panX -= left - (cRect.width - margin);
+            if (bottom < margin) panY += margin - bottom;
+            if (top > cRect.height - margin) panY -= top - (cRect.height - margin);
+
+            updateTransform();
         }
 
         // Focus camera helper without forced auto-zoom scale changes
@@ -1159,11 +1418,23 @@
         }
 
         function saveToLocalStorage() {
-            localStorage.setItem('emarat_family_tree', JSON.stringify(members));
-            if (focusedId) {
-                localStorage.setItem('emarat_family_focused', focusedId);
-            } else {
-                localStorage.removeItem('emarat_family_focused');
+            try {
+                localStorage.setItem('emarat_family_tree', JSON.stringify(members));
+                if (focusedId) {
+                    localStorage.setItem('emarat_family_focused', focusedId);
+                } else {
+                    localStorage.removeItem('emarat_family_focused');
+                }
+                return true;
+            } catch (err) {
+                const isQuota = err && (err.name === 'QuotaExceededError' ||
+                    err.name === 'NS_ERROR_DOM_QUOTA_REACHED' || err.code === 22);
+                if (isQuota) {
+                    showToast('⚠️ حافظهٔ مرورگر پر است. لطفاً از «📥 ذخیره فایل شجره‌نامه» پشتیبان بگیرید و عکس‌های کم‌اهمیت را حذف کنید.');
+                } else {
+                    showToast('⚠️ ذخیره‌سازی ناموفق بود: ' + (err && err.message ? err.message : 'خطای نامشخص'));
+                }
+                return false;
             }
         }
 
@@ -1212,6 +1483,9 @@
             const parentsRow = document.getElementById('parentsRow');
             const centerGroup = document.getElementById('centerGroup');
             const childrenRow = document.getElementById('childrenRow');
+
+            const badge = document.getElementById('member-count-badge');
+            if (badge) badge.textContent = Object.keys(members).length;
 
             if (Object.keys(members).length === 0) {
                 emptyState.style.display = 'flex';
@@ -1343,8 +1617,8 @@
                     centerCameraOnCard('.chain-attention');
                     showToast('💡 کادر درخشانِ متصل بعدی را پر کنید!');
                 } else {
-                    // زوم بک خودکار بعد از اتمام ثبت برای نمایش کامل درخت
-                    centerCameraOnCard('.active-focus');
+                    // Fit the whole tree so no card is ever left outside the viewport
+                    fitTreeToViewport(false);
                 }
             }, 50);
         }
@@ -1734,9 +2008,10 @@
 
         // Vine connection renderer with organic leaf elements
         function drawSpouseConnection(svg, box1, box2) {
-            const x1 = box1.centerX < box2.centerX ? box1.x + box1.width : box1.x;
-            const x2 = box1.centerX < box2.centerX ? box2.x : box2.x + box2.width;
+            const x1 = box1.centerX < box2.centerX ? box1.left + box1.width : box1.left;
+            const x2 = box1.centerX < box2.centerX ? box2.left : box2.left + box2.width;
             const y = (box1.centerY + box2.centerY) / 2;
+            if (![x1, x2, y].every(isFinite)) return;
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('d', `M ${x1} ${y} L ${x2} ${y}`);
@@ -1794,6 +2069,185 @@
             leaf2.setAttribute('fill', '#4CAF50');
             leaf2.setAttribute('transform', `translate(${midX - 5}, ${midY + 5}) rotate(-30) scale(0.7)`);
             svg.appendChild(leaf2);
+        }
+
+        // --- QUICK ADD / REFERENCE PICKER / MEMBER LIST / ZOOM ---
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function openQuickAddDialog() {
+            openAddDialog(null, 'standalone');
+            setLinkMode('none');
+        }
+
+        function setLinkMode(mode) {
+            formLinkMode = mode;
+            const modes = ['none', 'parent', 'child', 'spouse', 'sibling'];
+            modes.forEach(m => {
+                const btn = document.getElementById('link-' + m);
+                if (btn) btn.classList.toggle('active', m === mode);
+            });
+            const targetGroup = document.getElementById('link-target-group');
+            targetGroup.style.display = mode === 'none' ? 'none' : 'block';
+            if (mode === 'none') {
+                formLinkTargetId = null;
+            }
+            renderLinkCandidates(document.getElementById('link-search').value || '');
+        }
+
+        function renderLinkCandidates(query) {
+            const box = document.getElementById('linkCandidates');
+            if (!box) return;
+            const q = (query || '').trim().toLowerCase();
+            const list = Object.values(members)
+                .filter(m => !q || (m.name || '').toLowerCase().includes(q))
+                .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fa'));
+
+            box.innerHTML = '';
+            if (list.length === 0) {
+                box.innerHTML = '<div class="member-list-empty">فردی پیدا نشد.</div>';
+                return;
+            }
+            list.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'link-candidate' + (m.id === formLinkTargetId ? ' selected' : '');
+                const icon = document.createElement('span');
+                icon.textContent = m.gender === 'male' ? '👨' : '👩';
+                const nm = document.createElement('span');
+                nm.textContent = m.name || 'نامشخص';
+                const rl = document.createElement('span');
+                rl.className = 'lc-rel';
+                rl.textContent = m.relation || '';
+                item.appendChild(icon);
+                item.appendChild(nm);
+                item.appendChild(rl);
+                item.onclick = () => {
+                    formLinkTargetId = m.id;
+                    renderLinkCandidates(document.getElementById('link-search').value || '');
+                };
+                box.appendChild(item);
+            });
+        }
+
+        function openMemberList() {
+            const panel = document.getElementById('memberListPanel');
+            const scroll = document.getElementById('memberListScroll');
+            const list = Object.values(members).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fa'));
+            scroll.innerHTML = '';
+            if (list.length === 0) {
+                scroll.innerHTML = '<div class="member-list-empty">هنوز کسی ثبت نشده است.</div>';
+            } else {
+                list.forEach(m => {
+                    const item = document.createElement('div');
+                    item.className = 'member-list-item';
+                    const av = document.createElement('span');
+                    av.className = 'ml-avatar';
+                    av.textContent = m.gender === 'male' ? '👨' : '👩';
+                    const body = document.createElement('div');
+                    body.className = 'ml-body';
+                    const nm = document.createElement('div');
+                    nm.className = 'ml-name';
+                    nm.textContent = m.name || 'نامشخص';
+                    const rl = document.createElement('div');
+                    rl.className = 'ml-rel';
+                    rl.textContent = [m.relation, m.isAlive ? 'در قید حیات' : 'فوت شده'].filter(Boolean).join(' · ');
+                    body.appendChild(nm);
+                    body.appendChild(rl);
+                    item.appendChild(av);
+                    item.appendChild(body);
+                    item.onclick = () => {
+                        closeMemberList();
+                        highlightChainNodeId = null;
+                        focusedId = m.id;
+                        saveToLocalStorage();
+                        renderTree();
+                    };
+                    scroll.appendChild(item);
+                });
+            }
+            panel.classList.add('open');
+        }
+
+        function closeMemberList() {
+            document.getElementById('memberListPanel').classList.remove('open');
+        }
+
+        function zoomBy(factor) {
+            const container = document.getElementById('canvasContainer');
+            const rect = container.getBoundingClientRect();
+            const cx = rect.width / 2;
+            const cy = rect.height / 2;
+            const newScale = Math.min(Math.max(scale * factor, ZOOM_MIN), ZOOM_MAX);
+            const ratio = newScale / scale;
+            // Keep the viewport centre anchored while zooming
+            panX = cx - (cx - panX) * ratio;
+            panY = cy - (cy - panY) * ratio;
+            scale = newScale;
+            updateTransform();
+        }
+
+        // Fit every rendered card inside the viewport, never below ZOOM_MIN
+        function fitTreeToViewport(animate) {
+            const container = document.getElementById('canvasContainer');
+            const canvas = document.getElementById('canvas');
+            if (!container || !canvas) return;
+            const cards = Array.from(canvas.querySelectorAll('.member-card'));
+            if (cards.length === 0) return;
+
+            const cRect = container.getBoundingClientRect();
+            if (!cRect.width || !cRect.height) return;
+
+            // Bounding box of all cards in canvas coordinates (scale-independent)
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            cards.forEach(c => {
+                const b = getRelativeCoords(c, canvas);
+                if (!isFinite(b.left) || !isFinite(b.top)) return;
+                minX = Math.min(minX, b.left);
+                minY = Math.min(minY, b.top);
+                maxX = Math.max(maxX, b.left + b.width);
+                maxY = Math.max(maxY, b.top + b.height);
+            });
+            if (!isFinite(minX) || !isFinite(minY)) return;
+
+            const boxW = Math.max(maxX - minX, 1);
+            const boxH = Math.max(maxY - minY, 1);
+            const pad = 26;
+            const availW = Math.max(cRect.width - pad * 2, 60);
+            const availH = Math.max(cRect.height - pad * 2, 60);
+
+            const targetScale = Math.min(availW / boxW, availH / boxH, 1);
+            scale = Math.min(Math.max(targetScale, ZOOM_MIN), ZOOM_MAX);
+
+            // Centre the bounding box. When the tree is wider/taller than the
+            // viewport at this scale, keep the top-left edge reachable instead
+            // of letting the pan run past the content.
+            const centreX = (minX + maxX) / 2;
+            const centreY = (minY + maxY) / 2;
+            const scaledW = boxW * scale;
+            const scaledH = boxH * scale;
+
+            if (scaledW <= cRect.width - pad * 2) {
+                panX = cRect.width / 2 - centreX * scale;
+            } else {
+                panX = Math.min(pad, Math.max(cRect.width - scaledW - pad, cRect.width / 2 - centreX * scale));
+            }
+            if (scaledH <= cRect.height - pad * 2) {
+                panY = cRect.height / 2 - centreY * scale;
+            } else {
+                panY = Math.min(pad, Math.max(cRect.height - scaledH - pad, cRect.height / 2 - centreY * scale));
+            }
+
+            if (animate) {
+                canvas.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+                setTimeout(() => { canvas.style.transition = ''; }, 380);
+            }
+            updateTransform();
         }
 
         // --- FOCUS MODE FORM PROTOCOL ---
@@ -1960,6 +2414,19 @@
             document.getElementById('death-year').value = '';
             document.getElementById('death-month').value = '';
             document.getElementById('death-day').value = '';
+
+            // Reset relation linking (phase 6)
+            formLinkMode = 'none';
+            formLinkTargetId = null;
+            const search = document.getElementById('link-search');
+            if (search) search.value = '';
+            const modes = ['none', 'parent', 'child', 'spouse', 'sibling'];
+            modes.forEach(m => {
+                const btn = document.getElementById('link-' + m);
+                if (btn) btn.classList.toggle('active', m === 'none');
+            });
+            const targetGroup = document.getElementById('link-target-group');
+            if (targetGroup) targetGroup.style.display = 'none';
         }
 
         function setPhase(phase) {
@@ -1995,6 +2462,8 @@
             }
 
             if (phase === 5) {
+                nextBtn.innerText = formMode === 'edit' ? '💾 ثبت نهایی' : 'بعدی';
+            } else if (phase === TOTAL_PHASES) {
                 nextBtn.innerText = '💾 ثبت نهایی';
             } else {
                 nextBtn.innerText = 'بعدی';
@@ -2002,18 +2471,26 @@
         }
 
         function nextPhase() {
-            if (currentPhase < 5) {
-                // Validations on phase 2
-                if (currentPhase === 2) {
-                    const name = document.getElementById('member-name').value.trim();
-                    if (!name) {
-                        showToast('نام و نام خانوادگی الزامی است.');
-                        return;
-                    }
+            // Ignore stray calls while the dialog is closed (a closed form must never save)
+            const overlay = document.getElementById('focusOverlay');
+            if (!overlay || !overlay.classList.contains('active')) return;
+
+            // Name is required before leaving phase 2
+            if (currentPhase === 2) {
+                const name = document.getElementById('member-name').value.trim();
+                if (!name) {
+                    showToast('نام و نام خانوادگی الزامی است.');
+                    return;
                 }
+            }
+            // A reference person must be picked when a relation was chosen
+            if (currentPhase === TOTAL_PHASES && formLinkMode !== 'none' && !formLinkTargetId) {
+                showToast('یک نفر را به‌عنوان مرجع انتخاب کنید، یا «بدون نسبت» را بزنید.');
+                return;
+            }
+            if (currentPhase < TOTAL_PHASES) {
                 setPhase(currentPhase + 1);
             } else {
-                // Save and complete
                 saveFormAndRegister();
             }
         }
@@ -2240,20 +2717,60 @@
                     }
                 }
 
+                // Link to the reference person picked in phase 6
+                const linkTarget = formLinkTargetId ? members[formLinkTargetId] : null;
+                if (linkTarget && formLinkMode !== 'none') {
+                    if (formLinkMode === 'parent') {
+                        // The new person is a parent of the target
+                        newMember.children.push(linkTarget.id);
+                        linkTarget.parents = linkTarget.parents || [];
+                        if (!linkTarget.parents.includes(newId)) linkTarget.parents.push(newId);
+                    } else if (formLinkMode === 'child') {
+                        // The new person is a child of the target
+                        newMember.parents.push(linkTarget.id);
+                        linkTarget.children = linkTarget.children || [];
+                        if (!linkTarget.children.includes(newId)) linkTarget.children.push(newId);
+                    } else if (formLinkMode === 'spouse') {
+                        newMember.spouses.push(linkTarget.id);
+                        linkTarget.spouses = linkTarget.spouses || [];
+                        if (!linkTarget.spouses.includes(newId)) linkTarget.spouses.push(newId);
+                        newMember.isMarried = true;
+                        linkTarget.isMarried = true;
+                    } else if (formLinkMode === 'sibling') {
+                        // Share the same parents as the target
+                        const sharedParents = (linkTarget.parents || []).filter(pid => members[pid]);
+                        sharedParents.forEach(pid => {
+                            if (!newMember.parents.includes(pid)) newMember.parents.push(pid);
+                            const p = members[pid];
+                            p.children = p.children || [];
+                            if (!p.children.includes(newId)) p.children.push(newId);
+                        });
+                        // With no known parents, still record the sibling bond as a spouse-free link
+                        newMember.siblingOf = newMember.siblingOf || [];
+                        newMember.siblingOf.push(linkTarget.id);
+                        linkTarget.siblingOf = linkTarget.siblingOf || [];
+                        if (!linkTarget.siblingOf.includes(newId)) linkTarget.siblingOf.push(newId);
+                    }
+                }
+
                 members[newId] = newMember;
-                // در اینجا فوکوس اصلی را روی جد بزرگ/والد متصل قبلی (focusedId فعلی) نگه می‌داریم تا بقیه کادرها و اتصالات غیب نشوند!
-                // اگر عضو اول بود که والدی نداشت، طبیعتا خودش فوکوس می‌گیرد.
+                // Focus follows the new person only when nothing was focused yet;
+                // otherwise the current branch stays in view so placeholders never vanish.
                 let oldFocusedId = focusedId;
                 if (!oldFocusedId) {
                     focusedId = newId;
+                }
+                // Jumping to the reference person keeps the new card next to its relative
+                if (formLinkMode !== 'none' && formLinkTargetId && members[formLinkTargetId]) {
+                    focusedId = formLinkTargetId;
                 }
 
                 showToast(`عضو جدید "${name}" با موفقیت ثبت شد.`);
 
                 // تعیین کادر خالیِ بعدی برای افکت درخشش هوشمند و راهنمایی کاربر
-                if (relationType === 'child') {
+                const activeNode = oldFocusedId ? members[oldFocusedId] : null;
+                if (relationType === 'child' && activeNode) {
                     // اگر فرزند اضافه شد، بررسی می‌کنیم فرزند بعدی وجود دارد یا خیر
-                    const activeNode = members[oldFocusedId];
                     const targetChildrenCount = activeNode.isMarried ? parseInt(activeNode.childrenCount || 0) : 0;
                     const renderedChildren = activeNode.children ? activeNode.children.length : 0;
                     if (targetChildrenCount > renderedChildren) {
@@ -2261,8 +2778,7 @@
                     } else {
                         highlightChainNodeId = null;
                     }
-                } else if (relationType === 'spouse') {
-                    const activeNode = members[oldFocusedId];
+                } else if (relationType === 'spouse' && activeNode) {
                     const targetSpousesCount = activeNode.isMarried ? parseInt(activeNode.spousesCount || 1) : 0;
                     const renderedSpouses = activeNode.spouses ? activeNode.spouses.length : 0;
                     if (targetSpousesCount > renderedSpouses) {
@@ -2296,6 +2812,12 @@
                 showToast(`مشخصات "${name}" با موفقیت بروزرسانی شد.`);
             }
 
+            // Saving and rendering must always run, even if storage is full:
+            // the dialog closing is what previously got stuck on QuotaExceededError.
+            saveToLocalStorageSafeAndRender();
+        }
+
+        function saveToLocalStorageSafeAndRender() {
             saveToLocalStorage();
             closeFocusDialog();
             renderTree();
