@@ -1164,3 +1164,57 @@ assets وب‌اپ اندروید (`fund-automation-android/app/src/main/assets/
 4. تب جدید → `opens` +۱ (sessionStorage تازه است).
 5. آفلاین واقعی: سرور را خاموش کن، رفرش کن → عنوان و نمودار و آیکون می‌آیند.
 6. `cloud-sync` نباید `emarat_usage_stats` را در ابر ذخیره/بازیابی کند.
+
+---
+
+## 🌳 شجره‌نامه خانوادگی عمارت — چهار نمای رابط کاربری (`family/`)
+
+### هویت
+- **فایل:** `family/index.html` (تک‌فایل، ~۱۲۱KB → ~۱۳۰KB) | **پوشه:** `family/`
+- **کلیدهای ذخیره‌سازی:** `emarat_family_tree` (اعضا)، `emarat_family_focused`، و **`emarat_family_theme`** (نما).
+
+### 🎨 سیستم چهار نما (Themes)
+| نما | کلید | پیش‌فرض | حس |
+|---|---|---|---|
+| گلستان | `garden` | ✅ | باغ ایرانی، سبز/طلایی، روشن |
+| شب زمرد | `emerald` | — | تیرهٔ لوکس، زمرد درخشان |
+| مینیمال | `minimal` | — | روشن/تخت، بیشترین خوانایی |
+| طومار | `scroll` | — | کاغذ کهنه، قاب‌های اصیل |
+
+- پیاده‌سازی: `html[data-theme="..."]` + توکن‌های CSS در `:root` هر نما. تابع‌ها: `applyTheme(key)` / `initTheme()`.
+- سوییچر: دکمهٔ شناور `.theme-fab` (🎨، `top:64px; left:15px`) + پنل `.theme-panel`. کلیک بیرون پنل آن را می‌بندد.
+- **قانون:** هر رنگ جدید باید توکن باشد، نه هاردکد. رنگ خطوط SVG درخت از `--line-color`/`--line-alt` می‌آید (کلاس‌های `.vine`/`.marriage-line`/`.leaf`)، پس تعویض نما **بدون رسم دوباره** انجام می‌شود.
+
+### 🔤 فونت آفلاین
+- `vendor/vazirmatn/fonts.css` + ۵ فایل `woff2` (Vazirmatn 400/500/700 + Noto Naskh Arabic 400/700).
+- **بدون CDN** — طبق «قانون کارکرد آفلاین واقعی». فایل‌ها در `ASSETS` فایل `sw.js` هستند.
+- نمای «طومار» از `Naskh` برای تیترها استفاده می‌کند (`--font-head`).
+
+### ⚡ کارایی پن/زوم (اندازه‌گیری‌شده، نه حدس)
+- **قبل:** ۶۶۲ms | **بعد:** ۳۳۸ms — کاهش ~۴۹٪ (`TaskDuration` با CPU throttling ۶×، میانهٔ ۵ اجرا، ۱۲۰ حرکت درگ).
+- سه تغییر مؤثر: (۱) نوشتن `transform` در یک `requestAnimationFrame` (`pendingTransform`/`flushTransform`)، (۲) حذف `flushTransform()` از `getRelativeCoords()` (layout thrash)، (۳) `contain: layout paint` روی بوم.
+- انیمیشن بی‌نهایت `box-shadow` حذف و با انیمیشن `opacity` روی شبه‌عنصر جایگزین شد؛ `backdrop-filter` از کارت‌های کدر حذف شد.
+- **تله:** هر `flushTransform()` که داخل یک حلقهٔ اندازه‌گیری صدا زده شود، هر بار `getBoundingClientRect` را باطل می‌کند → layout thrash. اندازه‌گیری‌ها را اول جمع کن، بعد یک‌بار بنویس.
+
+### ⚠️ کنتراست — اندازه‌گیری اجباری
+- ابزار: Puppeteer + محاسبهٔ WCAG روی زنجیرهٔ واقعی `backgroundColor` والدها (نه حدس).
+- **سه ایراد واقعی که پیدا شد:**
+  | مورد | قبل | بعد |
+  |---|---|---|
+  | متن دکمهٔ اصلی در «شب زمرد» | **۱.۹۲** (سفید روی سبز روشن) | ۹.۶۵ (توکن `--on-primary`) |
+  | رنگ متوفی (هاردکد `#777`) | ۳.۵۲ | ۵.۱۹ (حذف رنگ، فقط `opacity:0.75`) |
+  | `--text-muted` مینیمال (`#7C7C76`) | ۴.۲۰ | ۵.۳۶ (`#6B6B65`) |
+- **قانون:** هر تم تیره/روشن باید توکن `--on-primary` داشته باشد؛ `color: #fff` روی `background: var(--primary-green)` در تم‌های روشن می‌شکند.
+
+### 🐛 برخورد کنترل‌ها
+- دکمهٔ 🎨 اول وسط-بالا بود و روی استک دکمه‌های بالا-راست می‌افتاد؛ به `left:15px; top:64px` منتقل شد.
+- `.zoom-controls` از `bottom:20px` به `bottom:112px` رفت (روی نوار پایین می‌افتاد — باگ از قبل موجود).
+- **تست:** با Puppeteer جعبه‌های `.theme-fab`/`.top-right`/`.top-left`/`.bottom-controls`/`.zoom-controls` را بگیر و برخورد را چک کن؛ باید `collisions: []` باشد.
+
+### ✅ چک‌لیست پس از تغییر
+1. `python3 scripts/check-refresh-button.py` → پاس.
+2. `grep -rnE '<(link|script)[^>]*(href|src)="https?://(cdnjs|fonts\.googleapis|fonts\.gstatic|unpkg|jsdelivr)' --include=*.html .` → **صفر**.
+3. `grep -c "refresh-button.js" family/index.html` → **۱**.
+4. کنتراست همهٔ ۴ نما ≥ ۴.۵ (اندازه‌گیری، نه حدس).
+5. آفلاین واقعی: از **پورتال** باز کن (سرویس‌ورکر فقط از `/sw.js` ریشه ثبت می‌شود)، بعد `setOfflineMode(true)` و رفرش → کارت‌ها + فونت باید بیایند.
+6. `CACHE_NAME` بامپ شود (الان `emarat-portal-v93`).
