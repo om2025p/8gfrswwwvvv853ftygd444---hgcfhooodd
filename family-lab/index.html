@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0E1512">
+<title>آزمایشگاه رابط کاربری · شجره‌نامه</title>
+<link rel="stylesheet" href="../vendor/vazirmatn/fonts.css">
+<style>
+:root{
+  --bg:#0E1512; --surface:#16211D; --surface2:#1D2A25; --surface3:#22332C;
+  --line:#2A3A33; --line2:#35493F;
+  --text:#EAF2ED; --text2:#A8BFB3; --text3:#7E9588;
+  --accent:#3DDC97; --accent-dim:#1E9E6A; --gold:#C9A227;
+  --blue:#5B8FB9; --violet:#8A7BB5; --danger:#E8654F; --pink:#F2A8D0;
+  --r:18px; --r-sm:12px; --r-xs:9px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overscroll-behavior:none}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Vazirmatn',system-ui,Tahoma,sans-serif;font-size:14px;
+  overflow:hidden;
+}
+button{font-family:inherit}
+::-webkit-scrollbar{width:0;height:0}
+
+.shell{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.topbar{
+  flex:0 0 auto;padding:10px 13px 9px;
+  background:linear-gradient(180deg,#17231E,#111A16);
+  border-bottom:1px solid var(--line);z-index:20;
+}
+.brand{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.brand-mark{
+  width:31px;height:31px;border-radius:10px;flex:0 0 auto;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dim));font-size:15px;
+}
+.brand-txt{flex:1;min-width:0}
+.brand h1{margin:0;font-size:14.5px;font-weight:700;letter-spacing:-.2px}
+.brand small{display:block;font-size:10px;color:var(--text3);margin-top:1px}
+.data-chip{
+  display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;
+  border:1px solid var(--line2);background:var(--surface);color:var(--text2);
+  font-size:10px;font-weight:600;cursor:pointer;flex:0 0 auto;
+}
+.data-chip.live{color:#7BE8B6;border-color:#2A5C45;background:#12241C}
+.data-chip.demo{color:#F0C674;border-color:#5C4A20;background:#241E10}
+
+.seg{display:flex;gap:4px;background:#0A100E;border:1px solid var(--line);border-radius:13px;padding:4px}
+.seg button{
+  flex:1;border:0;background:transparent;color:var(--text3);font-size:11.5px;font-weight:600;
+  padding:8px 4px;border-radius:9px;cursor:pointer;transition:background .18s,color .18s;white-space:nowrap;
+}
+.seg button.on{background:var(--accent);color:#04170F}
+
+.stage{flex:1 1 auto;position:relative;overflow:hidden}
+.view{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;opacity:0;pointer-events:none;transition:opacity .2s}
+.view.on{opacity:1;pointer-events:auto}
+
+.hintbar{
+  flex:0 0 auto;padding:6px 13px calc(6px + var(--safe-b));
+  background:#0A100E;border-top:1px solid var(--line);
+  font-size:10px;color:var(--text3);text-align:center;line-height:1.5;
+}
+
+.av{
+  border-radius:50%;display:grid;place-items:center;font-weight:700;overflow:hidden;
+  background:linear-gradient(140deg,#2B4A3D,#1B3028);color:var(--accent);
+  border:1.5px solid #33544A;flex:0 0 auto;
+}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.av.f{background:linear-gradient(140deg,#4A2B42,#301B2A);color:var(--pink);border-color:#5A3350}
+.av.dead{filter:grayscale(.8);opacity:.6}
+.pill{
+  display:inline-flex;align-items:center;gap:4px;padding:2.5px 8px;border-radius:999px;
+  background:var(--surface2);border:1px solid var(--line);font-size:10px;color:var(--text2);white-space:nowrap;
+}
+.pill.live{color:#7BE8B6;border-color:#2A5C45;background:#12241C}
+.pill.dead{color:#E2A99C;border-color:#4A2E2A;background:#221514}
+.pill.gold{color:#EBD08A;border-color:#5C4A20;background:#241E10}
+
+.gen-wrap{padding:12px 0 26px}
+.gen-row{display:flex;align-items:flex-start;margin-bottom:9px}
+.gen-label{
+  flex:0 0 58px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:10px 2px;position:sticky;right:0;z-index:3;
+  background:linear-gradient(90deg,var(--bg) 70%,transparent);
+}
+.gen-num{
+  width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+  font-size:11.5px;font-weight:700;background:var(--surface2);border:1px solid var(--line2);color:var(--accent);
+}
+.gen-name{font-size:8.5px;color:var(--text3);white-space:nowrap}
+.gen-track{
+  display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;padding:2px 6px 8px;
+  flex:1 1 auto;scroll-snap-type:x proximity;scrollbar-width:none;
+}
+.gen-track::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;width:100px;padding:9px 8px;border-radius:var(--r-sm);scroll-snap-align:start;
+  background:var(--surface);border:1px solid var(--line);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;
+  transition:border-color .16s,transform .16s,background .16s;
+}
+.chip:active{transform:scale(.95)}
+.chip.sel{border-color:var(--accent);background:var(--surface2)}
+.chip .av{width:38px;height:38px;font-size:14px}
+.chip .nm{font-size:11px;font-weight:700;line-height:1.3;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip .jb{font-size:9px;color:var(--text3);line-height:1.3;min-height:12px;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip .yr{font-size:8.5px;color:var(--text3);direction:ltr;letter-spacing:.2px}
+.gen-sep{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:0 58px 9px 14px}
+
+.deck{padding:13px 13px 30px;display:flex;flex-direction:column;gap:11px}
+.deck-hero{
+  background:linear-gradient(165deg,var(--surface2),var(--surface));
+  border:1px solid var(--line2);border-radius:var(--r);padding:18px 16px 15px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:7px;position:relative;overflow:hidden;
+}
+.deck-hero::before{
+  content:'';position:absolute;top:-40%;left:50%;transform:translateX(-50%);
+  width:190px;height:190px;border-radius:50%;
+  background:radial-gradient(circle,rgba(61,220,151,.14),transparent 70%);pointer-events:none;
+}
+.deck-hero .av{width:84px;height:84px;font-size:31px;border-width:2.5px;box-shadow:0 6px 22px rgba(0,0,0,.45)}
+.deck-name{font-size:20px;font-weight:700;margin:3px 0 0;letter-spacing:-.4px;line-height:1.25}
+.deck-rel{font-size:11.5px;color:var(--accent);font-weight:600}
+.deck-meta{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:1px}
+.deck-bio{
+  font-size:11.5px;color:var(--text2);line-height:1.9;background:#0E1714;
+  border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;
+  width:100%;text-align:right;margin-top:5px;
+}
+.deck-facts{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%;margin-top:4px}
+.fact{background:#0E1714;border:1px solid var(--line);border-radius:11px;padding:8px 10px;text-align:right}
+.fact b{display:block;font-size:9px;color:var(--text3);font-weight:500;margin-bottom:1px}
+.fact span{font-size:11.5px;font-weight:600}
+
+.dtabs{display:flex;gap:5px;background:#0A100E;border:1px solid var(--line);border-radius:11px;padding:3px}
+.dtabs button{
+  flex:1;border:0;background:transparent;color:var(--text3);font-size:11px;font-weight:600;
+  padding:7px 4px;border-radius:8px;cursor:pointer;transition:.18s;
+}
+.dtabs button.on{background:var(--surface3);color:var(--text)}
+
+.panel{display:none;flex-direction:column;gap:9px}
+.panel.on{display:flex}
+.rel-block{display:flex;flex-direction:column;gap:6px}
+.rel-title{font-size:10.5px;color:var(--text3);font-weight:600;display:flex;align-items:center;gap:6px}
+.rel-title::after{content:'';flex:1;height:1px;background:var(--line)}
+.rel-row{display:flex;gap:6px;flex-wrap:wrap}
+.rel-chip{
+  display:flex;align-items:center;gap:6px;padding:5px 11px 5px 6px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--line);cursor:pointer;
+  font-size:10.5px;color:var(--text);font-weight:600;transition:.16s;
+}
+.rel-chip:active{transform:scale(.95)}
+.rel-chip .av{width:21px;height:21px;font-size:8.5px;border-width:1px}
+.rel-empty{font-size:10.5px;color:var(--text3);padding:4px 2px}
+
+.tl{position:relative;padding:4px 4px 4px 0;display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:10px;position:relative;padding-bottom:13px}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot{
+  flex:0 0 auto;width:9px;height:9px;border-radius:50%;background:var(--accent);
+  margin-top:4px;position:relative;z-index:1;box-shadow:0 0 0 3px rgba(61,220,151,.16);
+}
+.tl-dot.gold{background:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.16)}
+.tl-dot.muted{background:var(--text3);box-shadow:0 0 0 3px rgba(126,149,136,.14)}
+.tl-item::before{
+  content:'';position:absolute;right:4px;top:13px;bottom:0;width:1px;background:var(--line);
+}
+.tl-item:last-child::before{display:none}
+.tl-body{flex:1;min-width:0}
+.tl-ttl{font-size:11.5px;font-weight:600;line-height:1.4}
+.tl-sub{font-size:9.5px;color:var(--text3);margin-top:1px}
+
+.table-wrap{padding:13px 12px 30px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:11px}
+.stat{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 8px;
+  display:flex;flex-direction:column;gap:1px;text-align:center;
+}
+.stat b{font-size:16px;font-weight:700;line-height:1.1;color:var(--accent)}
+.stat.dead b{color:#D89A8C}
+.stat small{font-size:8.5px;color:var(--text3);line-height:1.3}
+.tools{display:flex;gap:6px;margin-bottom:9px}
+.tools input{
+  flex:1;background:var(--surface);border:1px solid var(--line);border-radius:11px;
+  padding:10px 11px;color:var(--text);font-size:11.5px;outline:none;min-width:0;
+}
+.tools input:focus{border-color:var(--accent)}
+.tools input::placeholder{color:var(--text3)}
+.icon-btn{
+  border:1px solid var(--line);background:var(--surface);color:var(--text2);
+  font-size:10.5px;font-weight:600;padding:0 11px;border-radius:11px;cursor:pointer;white-space:nowrap;
+}
+.icon-btn.on{border-color:var(--accent);color:var(--accent)}
+.filters{display:flex;gap:5px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px}
+.filters button{
+  flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--text3);
+  font-size:10px;font-weight:600;padding:5px 10px;border-radius:999px;cursor:pointer;
+}
+.filters button.on{background:var(--surface3);color:var(--text);border-color:var(--line2)}
+.tbl{width:100%;border-collapse:separate;border-spacing:0 5px}
+.tbl th{font-size:9px;color:var(--text3);font-weight:600;text-align:right;padding:0 9px 2px}
+.tbl td{
+  background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  padding:8px 9px;font-size:11px;vertical-align:middle;
+}
+.tbl tr td:first-child{border-right:1px solid var(--line);border-radius:0 11px 11px 0}
+.tbl tr td:last-child{border-left:1px solid var(--line);border-radius:11px 0 0 11px}
+.tbl tbody tr{cursor:pointer;transition:transform .14s}
+.tbl tbody tr:active{transform:scale(.99)}
+.tbl .who{display:flex;align-items:center;gap:6px;min-width:0}
+.tbl .who .av{width:25px;height:25px;font-size:10px}
+.tbl .who span{font-weight:600;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gen-tag{display:inline-block;padding:1.5px 6px;border-radius:5px;background:var(--surface2);font-size:9px;color:var(--text2);border:1px solid var(--line)}
+.empty{text-align:center;color:var(--text3);font-size:11.5px;padding:26px 0}
+
+.radial{position:relative;height:100%;overflow:hidden}
+.radial svg{position:absolute;inset:0;width:100%;height:100%}
+.ring{fill:none;stroke:var(--line);stroke-width:1;stroke-dasharray:3 6}
+.node{
+  position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:2px;cursor:pointer;transition:transform .16s;z-index:2;
+}
+.node:active{transform:translate(-50%,-50%) scale(.92)}
+.node .av{width:40px;height:40px;font-size:14px;box-shadow:0 3px 12px rgba(0,0,0,.5);border-width:2px}
+.node .lbl{font-size:8.5px;color:var(--text2);font-weight:600;max-width:62px;text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.node.center{z-index:3}
+.node.center .av{width:62px;height:62px;font-size:22px;border-width:2.5px;box-shadow:0 0 0 5px rgba(61,220,151,.14),0 6px 20px rgba(0,0,0,.55)}
+.node.center .lbl{font-size:10.5px;color:var(--text);font-weight:700;max-width:92px}
+.radial-top{
+  position:absolute;top:8px;right:8px;left:8px;display:flex;gap:5px;align-items:center;z-index:5;
+}
+.crumb{
+  flex:1;min-width:0;display:flex;align-items:center;gap:4px;background:rgba(11,18,16,.94);
+  border:1px solid var(--line2);border-radius:999px;padding:5px 10px;font-size:9.5px;color:var(--text2);
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+.crumb b{color:var(--accent);font-weight:700}
+.radial-legend{
+  position:absolute;bottom:9px;right:50%;transform:translateX(50%);
+  display:flex;gap:9px;background:rgba(11,18,16,.94);border:1px solid var(--line2);
+  border-radius:999px;padding:5px 12px;font-size:9px;color:var(--text3);white-space:nowrap;z-index:5;
+}
+.radial-legend i{display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:3px;vertical-align:middle}
+
+.scrim{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;
+  transition:opacity .22s;z-index:60;backdrop-filter:blur(2px);
+}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:61;max-height:86vh;overflow-y:auto;
+  background:linear-gradient(180deg,#1A2620,#141E19);
+  border-top:1px solid var(--line2);border-radius:20px 20px 0 0;
+  transform:translateY(102%);transition:transform .28s cubic-bezier(.22,.9,.3,1);
+  padding:8px 14px calc(18px + var(--safe-b));
+}
+.sheet.on{transform:translateY(0)}
+.sheet-grip{width:36px;height:4px;border-radius:99px;background:var(--line2);margin:0 auto 11px}
+.sheet-head{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.sheet-head .av{width:52px;height:52px;font-size:19px;border-width:2px}
+.sheet-name{font-size:16px;font-weight:700;line-height:1.25}
+.sheet-sub{font-size:10.5px;color:var(--text3);margin-top:2px}
+.sheet-x{
+  margin-right:auto;width:28px;height:28px;border-radius:50%;border:1px solid var(--line2);
+  background:var(--surface2);color:var(--text2);font-size:14px;cursor:pointer;line-height:1;
+}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:11px}
+.kv div{background:#101917;border:1px solid var(--line);border-radius:9px;padding:6px 9px}
+.kv b{display:block;font-size:8.5px;color:var(--text3);font-weight:500}
+.kv span{font-size:11px;font-weight:600}
+.sheet-actions{display:flex;gap:6px;margin-top:11px}
+.sheet-actions button{
+  flex:1;border:1px solid var(--line2);background:var(--surface2);color:var(--text);
+  font-size:11px;font-weight:600;padding:10px;border-radius:11px;cursor:pointer;
+}
+.sheet-actions button.primary{background:var(--accent);color:#04170F;border-color:var(--accent)}
+
+.toast{
+  position:fixed;bottom:calc(64px + var(--safe-b));right:50%;transform:translate(50%,20px);
+  background:#1F2E28;border:1px solid var(--line2);color:var(--text);font-size:11.5px;
+  padding:9px 16px;border-radius:999px;z-index:90;opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s;max-width:88vw;text-align:center;
+}
+.toast.on{opacity:1;transform:translate(50%,0)}
+
+.nodata{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
+  height:100%;padding:30px 26px;text-align:center;
+}
+.nodata .big{font-size:44px;opacity:.5}
+.nodata h3{margin:0;font-size:14px}
+.nodata p{margin:0;font-size:11px;color:var(--text3);line-height:1.8}
+.nodata button{
+  margin-top:6px;border:1px solid var(--accent);background:rgba(61,220,151,.1);color:var(--accent);
+  font-size:11.5px;font-weight:600;padding:9px 18px;border-radius:11px;cursor:pointer;
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">🌳</div>
+      <div class="brand-txt">
+        <h1>آزمایشگاه رابط کاربری</h1>
+        <small>شجره‌نامه عمارت · چهار چیدمان متفاوت</small>
+      </div>
+      <button class="data-chip demo" id="dataChip">دادهٔ نمونه</button>
+    </div>
+    <div class="seg" id="seg">
+      <button data-v="gen" class="on">نسل‌ها</button>
+      <button data-v="deck">پرونده</button>
+      <button data-v="table">جدول</button>
+      <button data-v="radial">شعاعی</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="view on" id="v-gen"></div>
+    <div class="view" id="v-deck"></div>
+    <div class="view" id="v-table"></div>
+    <div class="view" id="v-radial"></div>
+  </div>
+
+  <div class="hintbar" id="hint"></div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const LS_TREE = 'emarat_family_tree';
+const LS_FOCUS = 'emarat_family_focused';
+
+const DEMO = {
+  g1:{id:'g1',name:'مظفر رضایی',gender:'male',job:'کشاورز',relation:'جد بزرگ پدری',birthplace:'گلبهار',isAlive:false,birthDate:{y:1290,m:1,d:10},deathDate:{y:1355,m:5,d:2},grave:'گلبهار',bio:'بنیان‌گذار خاندان؛ مردی سخت‌کوش و خوش‌رو که باغ خانوادگی را آباد کرد.',spouses:['g2'],children:['p1']},
+  g2:{id:'g2',name:'زهرا کاظمی',gender:'female',job:'خانه‌دار',relation:'مادربزرگ پدری',birthplace:'نیشابور',isAlive:false,birthDate:{y:1298,m:3,d:20},deathDate:{y:1370,m:9,d:14},grave:'گلبهار',bio:'به یاد همه با آش رشته‌اش!',spouses:['g1'],children:['p1']},
+  g3:{id:'g3',name:'حسن موسوی',gender:'male',job:'آهنگر',relation:'جد بزرگ مادری',birthplace:'سبزوار',isAlive:false,birthDate:{y:1295,m:7,d:1},deathDate:{y:1368,m:2,d:9},grave:'سبزوار',bio:'',spouses:['g4'],children:['p2']},
+  g4:{id:'g4',name:'فاطمه صادقی',gender:'female',job:'خانه‌دار',relation:'مادربزرگ مادری',birthplace:'سبزوار',isAlive:true,birthDate:{y:1302,m:11,d:5},location:'مشهد',bio:'هنوز با ماست؛ ۹۳ ساله و پرانرژی.',spouses:['g3'],children:['p2']},
+  p1:{id:'p1',name:'رحیم رضایی',gender:'male',job:'مهندس عمران',relation:'پدر',birthplace:'گلبهار',isAlive:true,birthDate:{y:1325,m:4,d:12},location:'مشهد',bio:'',spouses:['p2'],children:['m1','m2','m3']},
+  p2:{id:'p2',name:'مریم موسوی',gender:'female',job:'دبیر ریاضی',relation:'مادر',birthplace:'سبزوار',isAlive:true,birthDate:{y:1328,m:8,d:3},location:'مشهد',bio:'',spouses:['p1'],children:['m1','m2','m3']},
+  m1:{id:'m1',name:'علی رضایی',gender:'male',job:'برنامه‌نویس',relation:'فرزند ارشد',birthplace:'مشهد',isAlive:true,birthDate:{y:1352,m:2,d:18},location:'تهران',bio:'',spouses:['s1'],children:['c1','c2']},
+  s1:{id:'s1',name:'نگار احمدی',gender:'female',job:'معمار',relation:'همسر',birthplace:'تهران',isAlive:true,birthDate:{y:1354,m:6,d:22},location:'تهران',bio:'',spouses:['m1'],children:['c1','c2']},
+  m2:{id:'m2',name:'سارا رضایی',gender:'female',job:'پزشک',relation:'فرزند دوم',birthplace:'مشهد',isAlive:true,birthDate:{y:1356,m:9,d:9},location:'شیراز',bio:'',spouses:[],children:['c3']},
+  m3:{id:'m3',name:'مجید رضایی',gender:'male',job:'دانشجو',relation:'فرزند سوم',birthplace:'مشهد',isAlive:true,birthDate:{y:1360,m:1,d:27},location:'مشهد',bio:'',spouses:[],children:[]},
+  c1:{id:'c1',name:'آوا رضایی',gender:'female',job:'دانش‌آموز',relation:'نوه',birthplace:'تهران',isAlive:true,birthDate:{y:1380,m:5,d:4},location:'تهران',bio:'',spouses:[],children:[]},
+  c2:{id:'c2',name:'آرش رضایی',gender:'male',job:'دانش‌آموز',relation:'نوه',birthplace:'تهران',isAlive:true,birthDate:{y:1383,m:10,d:15},location:'تهران',bio:'',spouses:[],children:[]},
+  c3:{id:'c3',name:'هانا رضایی',gender:'female',job:'—',relation:'نوه',birthplace:'شیراز',isAlive:true,birthDate:{y:1385,m:12,d:1},location:'شیراز',bio:'',spouses:[],children:[]}
+};
+
+let M = {}, ids = [], source = 'demo', focusId = null, depth = {}, maxDepth = 0;
+
+function deriveLinks(obj) {
+  Object.keys(obj).forEach(id => {
+    const m = obj[id];
+    m.id = m.id || id;
+    m.parents = Array.isArray(m.parents) ? m.parents : [];
+    m.spouses = Array.isArray(m.spouses) ? m.spouses : [];
+    m.children = Array.isArray(m.children) ? m.children : [];
+  });
+  Object.keys(obj).forEach(id => {
+    (obj[id].children || []).forEach(cid => {
+      if (!obj[cid]) return;
+      if (!obj[cid].parents.includes(id)) obj[cid].parents.push(id);
+    });
+  });
+  Object.keys(obj).forEach(id => {
+    (obj[id].spouses || []).forEach(sid => {
+      if (obj[sid] && !obj[sid].spouses.includes(id)) obj[sid].spouses.push(id);
+    });
+  });
+  return obj;
+}
+
+function computeDepth() {
+  const memo = {};
+  function d(id, stack) {
+    if (memo[id] !== undefined) return memo[id];
+    if (stack.has(id)) return 0;
+    stack.add(id);
+    const ps = (M[id].parents || []).filter(p => M[p]);
+    const v = ps.length ? 1 + Math.max(...ps.map(p => d(p, stack))) : 0;
+    stack.delete(id);
+    memo[id] = v;
+    return v;
+  }
+  ids.forEach(id => depth[id] = d(id, new Set()));
+  maxDepth = ids.length ? Math.max(...Object.values(depth)) : 0;
+}
+
+function loadData() {
+  let raw = null;
+  try { raw = localStorage.getItem(LS_TREE); } catch (e) {}
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      const obj = Array.isArray(parsed)
+        ? Object.fromEntries(parsed.filter(Boolean).map(m => [m.id, m]))
+        : parsed;
+      if (obj && Object.keys(obj).length) {
+        M = deriveLinks(obj);
+        source = 'live';
+      }
+    } catch (e) { console.warn('bad tree json', e); }
+  }
+  if (source !== 'live') {
+    M = deriveLinks(JSON.parse(JSON.stringify(DEMO)));
+    source = 'demo';
+  }
+  ids = Object.keys(M);
+  computeDepth();
+  let f = null;
+  try { f = localStorage.getItem(LS_FOCUS); } catch (e) {}
+  focusId = (f && M[f]) ? f : (ids.find(id => (M[id].children || []).length) || ids[0] || null);
+}
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const initial = n => (n || '؟').trim().charAt(0);
+const jy = d => d && d.y ? String(d.y) : '—';
+const isDead = m => m.isAlive === false;
+const lifeSpan = m => `${jy(m.birthDate)}${isDead(m) ? ' — ' + jy(m.deathDate) : ''}`;
+
+function avatar(m, size) {
+  const cls = ['av', m.gender === 'female' ? 'f' : '', isDead(m) ? 'dead' : ''].join(' ');
+  const st = size ? ` style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.4)}px"` : '';
+  if (m.photoData) return `<div class="${cls}"${st}><img src="${esc(m.photoData)}" alt=""></div>`;
+  return `<div class="${cls}"${st}>${esc(initial(m.name))}</div>`;
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('on'), 2400);
+}
+
+function renderGen() {
+  const host = document.getElementById('v-gen');
+  if (!ids.length) { host.innerHTML = emptyState(); return; }
+  const rows = [];
+  for (let d = 0; d <= maxDepth; d++) {
+    const people = ids.filter(id => depth[id] === d);
+    if (!people.length) continue;
+    const label = d === 0 ? 'ریشه' : d === maxDepth ? 'نوادگان' : `نسل ${d + 1}`;
+    rows.push(`
+      <div class="gen-row">
+        <div class="gen-label">
+          <div class="gen-num">${d + 1}</div>
+          <div class="gen-name">${label}</div>
+        </div>
+        <div class="gen-track">
+          ${people.map(id => {
+            const m = M[id];
+            return `<div class="chip ${id === focusId ? 'sel' : ''}" data-id="${esc(id)}">
+              ${avatar(m)}
+              <div class="nm">${esc(m.name)}</div>
+              <div class="jb">${esc(m.job || '')}</div>
+              <div class="yr">${lifeSpan(m)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      ${d < maxDepth ? '<div class="gen-sep"></div>' : ''}`);
+  }
+  host.innerHTML = `<div class="gen-wrap">${rows.join('')}</div>`;
+  host.querySelectorAll('.chip').forEach(c =>
+    c.addEventListener('click', () => select(c.dataset.id)));
+}
+
+let deckTab = 'info';
+
+function renderDeck() {
+  const host = document.getElementById('v-deck');
+  if (!ids.length || !M[focusId]) { host.innerHTML = emptyState(); return; }
+  const m = M[focusId];
+
+  const parents = (m.parents || []).filter(x => M[x]);
+  const spouses = (m.spouses || []).filter(x => M[x]);
+  const children = (m.children || []).filter(x => M[x]);
+  const sibs = ids.filter(id => id !== focusId &&
+    (M[id].parents || []).some(p => (m.parents || []).includes(p)));
+
+  const relRow = (list, title, emptyTxt) => `
+    <div class="rel-block">
+      <div class="rel-title">${title}</div>
+      ${list.length
+        ? `<div class="rel-row">${list.map(id => `<button class="rel-chip" data-id="${esc(id)}">${avatar(M[id])}${esc(M[id].name)}</button>`).join('')}</div>`
+        : `<div class="rel-empty">${emptyTxt}</div>`}
+    </div>`;
+
+  host.innerHTML = `
+    <div class="deck">
+      <div class="deck-hero">
+        ${avatar(m)}
+        <div class="deck-name">${esc(m.name)}</div>
+        <div class="deck-rel">${esc(m.relation || '')}</div>
+        <div class="deck-meta">
+          <span class="pill ${isDead(m) ? 'dead' : 'live'}">${isDead(m) ? 'مرحوم' : 'در قید حیات'}</span>
+          ${m.job ? `<span class="pill">${esc(m.job)}</span>` : ''}
+          ${m.location ? `<span class="pill">📍 ${esc(m.location)}</span>` : ''}
+        </div>
+        ${m.bio ? `<div class="deck-bio">${esc(m.bio)}</div>` : ''}
+        <div class="deck-facts">
+          <div class="fact"><b>تولد</b><span>${jy(m.birthDate)}</span></div>
+          <div class="fact"><b>${isDead(m) ? 'فوت' : 'وضعیت'}</b><span>${isDead(m) ? jy(m.deathDate) : 'در قید حیات'}</span></div>
+          <div class="fact"><b>زادگاه</b><span>${esc(m.birthplace || '—')}</span></div>
+          <div class="fact"><b>آرامگاه</b><span>${esc(m.grave || '—')}</span></div>
+        </div>
+      </div>
+
+      <div class="dtabs" id="dtabs">
+        <button data-t="info" class="${deckTab === 'info' ? 'on' : ''}">اطلاعات</button>
+        <button data-t="rel" class="${deckTab === 'rel' ? 'on' : ''}">خویشاوندان</button>
+        <button data-t="time" class="${deckTab === 'time' ? 'on' : ''}">خط زمان</button>
+      </div>
+
+      <div class="panel ${deckTab === 'info' ? 'on' : ''}" id="p-info">
+        <div class="kv">
+          <div><b>نام کامل</b><span>${esc(m.name)}</span></div>
+          <div><b>نسبت</b><span>${esc(m.relation || '—')}</span></div>
+          <div><b>شغل</b><span>${esc(m.job || '—')}</span></div>
+          <div><b>زادگاه</b><span>${esc(m.birthplace || '—')}</span></div>
+          <div><b>محل سکونت</b><span>${esc(m.location || '—')}</span></div>
+          <div><b>نسل</b><span>نسل ${depth[m.id] + 1}</span></div>
+        </div>
+        ${m.bio ? '' : '<div class="rel-empty">زندگی‌نامه‌ای ثبت نشده است.</div>'}
+      </div>
+
+      <div class="panel ${deckTab === 'rel' ? 'on' : ''}" id="p-rel">
+        ${relRow(parents, 'والدین', 'والدی ثبت نشده')}
+        ${relRow(spouses, 'همسر', 'همسری ثبت نشده')}
+        ${relRow(children, 'فرزندان', 'فرزندی ثبت نشده')}
+        ${relRow(sibs, 'خواهر و برادر', 'خواهر یا برادری ثبت نشده')}
+      </div>
+
+      <div class="panel ${deckTab === 'time' ? 'on' : ''}" id="p-time">
+        <div class="tl">${buildTimeline(m)}</div>
+      </div>
+    </div>`;
+
+  host.querySelectorAll('.rel-chip').forEach(b =>
+    b.addEventListener('click', () => select(b.dataset.id)));
+  host.querySelectorAll('#dtabs button').forEach(b =>
+    b.addEventListener('click', () => {
+      deckTab = b.dataset.t;
+      host.querySelectorAll('#dtabs button').forEach(x => x.classList.toggle('on', x === b));
+      host.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + deckTab));
+    }));
+}
+
+function buildTimeline(m) {
+  const ev = [];
+  if (m.birthDate && m.birthDate.y) ev.push({ t: 'تولد', s: `${jy(m.birthDate)} · ${m.birthplace || '—'}`, c: '' });
+  (m.spouses || []).filter(x => M[x]).forEach(sid =>
+    ev.push({ t: `ازدواج با ${M[sid].name}`, s: 'همسر', c: 'gold' }));
+  (m.children || []).filter(x => M[x]).forEach(cid =>
+    ev.push({ t: `تولد فرزند: ${M[cid].name}`, s: jy(M[cid].birthDate), c: 'muted' }));
+  if (m.job) ev.push({ t: `شغل: ${m.job}`, s: 'حرفه', c: 'muted' });
+  if (isDead(m)) ev.push({ t: 'فوت', s: `${jy(m.deathDate)}${m.grave ? ' · ' + m.grave : ''}`, c: 'muted' });
+  if (!ev.length) return '<div class="rel-empty">رویدادی ثبت نشده است.</div>';
+  return ev.map(e => `
+    <div class="tl-item">
+      <div class="tl-dot ${e.c}"></div>
+      <div class="tl-body">
+        <div class="tl-ttl">${esc(e.t)}</div>
+        <div class="tl-sub">${esc(e.s)}</div>
+      </div>
+    </div>`).join('');
+}
+
+let sortBy = 'gen', query = '', lifeFilter = 'all';
+
+function renderTable() {
+  const host = document.getElementById('v-table');
+  if (!ids.length) { host.innerHTML = emptyState(); return; }
+
+  let list = ids.slice();
+  if (query.trim()) {
+    const q = query.trim();
+    list = list.filter(id => (M[id].name || '').includes(q) || (M[id].job || '').includes(q) || (M[id].relation || '').includes(q));
+  }
+  if (lifeFilter === 'alive') list = list.filter(id => !isDead(M[id]));
+  if (lifeFilter === 'dead') list = list.filter(id => isDead(M[id]));
+
+  list.sort((a, b) => {
+    if (sortBy === 'name') return (M[a].name || '').localeCompare(M[b].name || '', 'fa');
+    if (sortBy === 'age') return ((M[a].birthDate && M[a].birthDate.y) || 9999) - ((M[b].birthDate && M[b].birthDate.y) || 9999);
+    if (sortBy === 'kids') return (M[b].children || []).length - (M[a].children || []).length;
+    return depth[a] - depth[b] || (M[a].name || '').localeCompare(M[b].name || '', 'fa');
+  });
+
+  const alive = ids.filter(id => !isDead(M[id])).length;
+  const sortLabel = { gen: 'نسل', name: 'نام', age: 'سن', kids: 'فرزند' }[sortBy];
+
+  host.innerHTML = `
+    <div class="table-wrap">
+      <div class="stats">
+        <div class="stat"><b>${ids.length}</b><small>کل افراد</small></div>
+        <div class="stat"><b>${maxDepth + 1}</b><small>نسل</small></div>
+        <div class="stat"><b>${alive}</b><small>زنده</small></div>
+        <div class="stat dead"><b>${ids.length - alive}</b><small>مرحوم</small></div>
+      </div>
+      <div class="tools">
+        <input id="q" placeholder="جست‌وجوی نام، شغل یا نسبت…" value="${esc(query)}" autocomplete="off">
+        <button class="icon-btn" id="sortBtn">${sortLabel} ⇅</button>
+      </div>
+      <div class="filters" id="filters">
+        <button data-f="all" class="${lifeFilter === 'all' ? 'on' : ''}">همه</button>
+        <button data-f="alive" class="${lifeFilter === 'alive' ? 'on' : ''}">در قید حیات</button>
+        <button data-f="dead" class="${lifeFilter === 'dead' ? 'on' : ''}">مرحوم</button>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>نام</th><th>نسبت</th><th>نسل</th><th>وضعیت</th></tr></thead>
+        <tbody>
+          ${list.length ? list.map(id => {
+            const m = M[id];
+            return `<tr data-id="${esc(id)}">
+              <td><div class="who">${avatar(m)}<span>${esc(m.name)}</span></div></td>
+              <td style="color:var(--text2);font-size:10px">${esc(m.relation || '—')}</td>
+              <td><span class="gen-tag">${depth[id] + 1}</span></td>
+              <td><span class="pill ${isDead(m) ? 'dead' : 'live'}">${isDead(m) ? 'مرحوم' : 'زنده'}</span></td>
+            </tr>`;
+          }).join('') : `<tr><td colspan="4" class="empty">کسی با این مشخصات پیدا نشد</td></tr>`}
+        </tbody>
+      </table>
+      <div style="text-align:center;font-size:9.5px;color:var(--text3);padding-top:9px">
+        ${list.length} نفر از ${ids.length} نفر نمایش داده شده
+      </div>
+    </div>`;
+
+  const q = document.getElementById('q');
+  q.addEventListener('input', e => {
+    query = e.target.value;
+    const pos = q.selectionStart;
+    renderTable();
+    const nq = document.getElementById('q');
+    nq.focus();
+    nq.setSelectionRange(pos, pos);
+  });
+  document.getElementById('sortBtn').onclick = () => {
+    sortBy = { gen: 'name', name: 'age', age: 'kids', kids: 'gen' }[sortBy];
+    renderTable();
+  };
+  host.querySelectorAll('#filters button').forEach(b =>
+    b.addEventListener('click', () => { lifeFilter = b.dataset.f; renderTable(); }));
+  host.querySelectorAll('tbody tr[data-id]').forEach(tr =>
+    tr.addEventListener('click', () => select(tr.dataset.id)));
+}
+
+function renderRadial() {
+  const host = document.getElementById('v-radial');
+  if (!ids.length || !M[focusId]) { host.innerHTML = emptyState(); return; }
+  const m = M[focusId];
+
+  const W = host.clientWidth || 360;
+  const H = host.clientHeight || 560;
+  const cx = W / 2, cy = H / 2 + 6;
+  const base = Math.min(W, H);
+
+  const ring1 = [...(m.parents || []), ...(m.spouses || [])].filter(x => M[x]);
+  const ring2 = (m.children || []).filter(x => M[x]);
+  const ring3 = ids.filter(id => id !== focusId && !ring1.includes(id) && !ring2.includes(id) &&
+    depth[id] === depth[focusId]).slice(0, 8);
+  const rings = [ring1, ring2, ring3];
+  const radii = [base * 0.185, base * 0.315, base * 0.425];
+
+  const pos = [];
+  rings.forEach((ring, ri) => {
+    const n = ring.length;
+    ring.forEach((id, i) => {
+      const a = (i / n) * Math.PI * 2 - Math.PI / 2 + (ri % 2 ? Math.PI / n : 0);
+      pos.push({ id, x: cx + Math.cos(a) * radii[ri], y: cy + Math.sin(a) * radii[ri], ri });
+    });
+  });
+
+  host.innerHTML = `
+    <div class="radial">
+      <div class="radial-top">
+        <div class="crumb">مرکز: <b>${esc(m.name)}</b></div>
+      </div>
+      <svg>
+        ${radii.map(r => `<circle class="ring" cx="${cx}" cy="${cy}" r="${r}"/>`).join('')}
+        ${pos.map(p => {
+          const col = p.ri === 0 ? '#5B8FB9' : p.ri === 1 ? '#C9A227' : '#8A7BB5';
+          return `<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="${col}" stroke-opacity=".28" stroke-width="1" stroke-dasharray="2 4"/>`;
+        }).join('')}
+      </svg>
+      <div class="node center" style="left:${cx}px;top:${cy}px">
+        ${avatar(m)}
+        <div class="lbl">${esc(m.name)}</div>
+      </div>
+      ${pos.map(p => `
+        <div class="node" data-id="${esc(p.id)}" style="left:${p.x}px;top:${p.y}px">
+          ${avatar(M[p.id])}
+          <div class="lbl">${esc((M[p.id].name || '').split(' ')[0])}</div>
+        </div>`).join('')}
+      <div class="radial-legend">
+        <span><i style="background:#3DDC97"></i>خود</span>
+        <span><i style="background:#5B8FB9"></i>والد/همسر</span>
+        <span><i style="background:#C9A227"></i>فرزند</span>
+        <span><i style="background:#8A7BB5"></i>هم‌نسل</span>
+      </div>
+    </div>`;
+
+  host.querySelectorAll('.node[data-id]').forEach(n =>
+    n.addEventListener('click', () => select(n.dataset.id)));
+}
+
+function openSheet(id) {
+  const m = M[id];
+  if (!m) return;
+  const parents = (m.parents || []).filter(x => M[x]);
+  const children = (m.children || []).filter(x => M[x]);
+  const spouses = (m.spouses || []).filter(x => M[x]);
+
+  document.getElementById('sheet').innerHTML = `
+    <div class="sheet-grip"></div>
+    <div class="sheet-head">
+      ${avatar(m)}
+      <div style="min-width:0">
+        <div class="sheet-name">${esc(m.name)}</div>
+        <div class="sheet-sub">${esc(m.relation || '')} · نسل ${depth[id] + 1}</div>
+      </div>
+      <button class="sheet-x" id="sheetX">✕</button>
+    </div>
+    <div class="kv">
+      <div><b>تولد</b><span>${jy(m.birthDate)}</span></div>
+      <div><b>${isDead(m) ? 'فوت' : 'وضعیت'}</b><span>${isDead(m) ? jy(m.deathDate) : 'زنده'}</span></div>
+      <div><b>شغل</b><span>${esc(m.job || '—')}</span></div>
+      <div><b>زادگاه</b><span>${esc(m.birthplace || '—')}</span></div>
+    </div>
+    <div class="rel-row" style="margin-bottom:2px">
+      ${parents.length ? `<span class="pill">👤 ${parents.length} والد</span>` : ''}
+      ${spouses.length ? `<span class="pill">💍 ${spouses.length} همسر</span>` : ''}
+      ${children.length ? `<span class="pill">👶 ${children.length} فرزند</span>` : ''}
+    </div>
+    <div class="sheet-actions">
+      <button id="sheetDeck" class="primary">پروندهٔ کامل</button>
+      <button id="sheetCenter">مرکز نقشه</button>
+    </div>`;
+
+  document.getElementById('scrim').classList.add('on');
+  document.getElementById('sheet').classList.add('on');
+  document.getElementById('sheetX').onclick = closeSheet;
+  document.getElementById('sheetDeck').onclick = () => { closeSheet(); focusId = id; go('deck'); };
+  document.getElementById('sheetCenter').onclick = () => { closeSheet(); focusId = id; go('radial'); };
+}
+
+function closeSheet() {
+  document.getElementById('scrim').classList.remove('on');
+  document.getElementById('sheet').classList.remove('on');
+}
+document.getElementById('scrim').addEventListener('click', closeSheet);
+
+const HINTS = {
+  gen: 'هر ردیف یک نسل · کارت‌ها را افقی بکشید · لمس = باز کردن پرونده',
+  deck: 'یک نفر تمام‌صفحه · تب‌های اطلاعات / خویشاوندان / خط زمان',
+  table: 'آمار زنده · جست‌وجو · مرتب‌سازی · فیلتر زنده/مرحوم',
+  radial: 'فاصله از مرکز = نزدیکی نسبت · لمس هر گره = مرکز جدید'
+};
+let cur = 'gen';
+
+function go(v) {
+  cur = v;
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('on'));
+  const el = document.getElementById('v-' + v);
+  if (el) el.classList.add('on');
+  document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  document.getElementById('hint').textContent = HINTS[v] || '';
+  if (v === 'gen') renderGen();
+  if (v === 'deck') renderDeck();
+  if (v === 'table') renderTable();
+  if (v === 'radial') requestAnimationFrame(renderRadial);
+  if (location.hash !== '#' + v) history.replaceState(null, '', '#' + v);
+}
+
+function select(id) {
+  focusId = id;
+  try { localStorage.setItem(LS_FOCUS, id); } catch (e) {}
+  if (cur === 'gen') { renderGen(); openSheet(id); }
+  else if (cur === 'deck') renderDeck();
+  else if (cur === 'table') { renderTable(); openSheet(id); }
+  else if (cur === 'radial') renderRadial();
+}
+
+function emptyState() {
+  return `<div class="nodata">
+    <div class="big">🌱</div>
+    <h3>هنوز عضوی ثبت نشده</h3>
+    <p>در اپ اصلی شجره‌نامه چند نفر اضافه کنید، سپس این صفحه را باز کنید تا داده‌های واقعی خودتان را ببینید.</p>
+    <button id="useDemo">نمایش با دادهٔ نمونه</button>
+  </div>`;
+}
+
+function updateChip() {
+  const c = document.getElementById('dataChip');
+  if (source === 'live') {
+    c.className = 'data-chip live';
+    c.textContent = `دادهٔ شما · ${ids.length} نفر`;
+    c.title = 'داده از حافظهٔ همین مرورگر خوانده شد';
+  } else {
+    c.className = 'data-chip demo';
+    c.textContent = 'دادهٔ نمونه';
+    c.title = 'کلیک برای بررسی راهنما';
+  }
+}
+
+document.getElementById('dataChip').addEventListener('click', () => {
+  if (source === 'live') toast(`✅ ${ids.length} نفر از حافظهٔ مرورگر خوانده شد`);
+  else toast('ℹ️ دادهٔ نمونه. در اپ اصلی عضو اضافه کنید تا اینجا بیاید.');
+});
+
+document.querySelectorAll('#seg button').forEach(b =>
+  b.addEventListener('click', () => go(b.dataset.v)));
+
+window.addEventListener('resize', () => { if (cur === 'radial') renderRadial(); });
+
+document.addEventListener('click', e => {
+  if (e.target && e.target.id === 'useDemo') {
+    M = deriveLinks(JSON.parse(JSON.stringify(DEMO)));
+    ids = Object.keys(M);
+    computeDepth();
+    focusId = ids.find(id => (M[id].children || []).length) || ids[0];
+    source = 'demo';
+    updateChip();
+    go(cur);
+  }
+});
+
+loadData();
+updateChip();
+const startView = (location.hash || '').replace('#', '');
+go(['gen', 'deck', 'table', 'radial'].includes(startView) ? startView : 'gen');
+</script>
+<script src="../usage-tracker.js" data-app="family-lab"></script>
+<script src="../refresh-button.js"></script>
+</body>
+</html>
