@@ -867,3 +867,65 @@ assets وب‌اپ اندروید (`fund-automation-android/app/src/main/assets/
 | gold7 | `NAV ابطال` | ۱۱ | ۱۲٬۹۷۱ |
 | gold8 | `NAV ابطال` | ۱۱ | ۱۲٬۹۷۱ |
 | gold9 | `قیمت ابطال واحد ممتاز` | ۱۱ | ۵۱٬۹۳۸ |
+
+---
+
+## 🔄 دکمهٔ «به‌روزرسانی» سراسری (refresh-button.js)
+
+### هدف
+هر وقت سایت آپدیت شد، کاربر با **یک ضربه** نسخهٔ تازه را می‌گیرد؛ بدون رفتن به تنظیمات مرورگر و بدون پاک‌کردن داده‌ها.
+
+### محل و ظاهر
+- **پایین‌وسط صفحه**، `position: fixed`، `z-index: 2147483000`
+- حالت عادی **نیم‌شفاف** (`opacity: .20`) و کمی پایین‌تر/کوچک‌تر
+- با **هاور / فوکوس / لمس** کاملاً پدیدار می‌شود (`opacity: 1`, `transform: none`)
+- متن دکمه شامل **شمارهٔ نسخهٔ کش** است (از `CACHE_NAME` در `sw.js` خوانده می‌شود): `🔄 به‌روزرسانی · v88`
+- زیر دکمه یک **ناحیهٔ لمس نامرئی ۱۳۲×۲۶px** هست (`emr-rb-zone`) که با لمس، دکمه را ۴ ثانیه نمایان می‌کند — برای موبایل که هاور ندارد.
+
+### جریان دو مرحله‌ای (ضد کلیک اتفاقی)
+1. کلیک اول → `⚠️ مطمئنی؟ دوباره بزن` (۳٫۵ ثانیه مهلت، بعد خودکار لغو)
+2. کلیک دوم → پاک‌سازی کش + `unregister` سرویس‌ورکر + `location.replace` با پارامتر `_r=<timestamp>`
+
+### رفتار آفلاین
+اگر `navigator.onLine === false` باشد، به‌جای رفرش، پیام `📡 اینترنت قطع است` می‌دهد و کش را پاک **نمی‌کند** (تا کاربر صفحه سفید نبیند).
+
+### 🚨 قاعدهٔ حیاتی: داده‌ها دست‌نخورده می‌مانند
+فقط `caches` و `ServiceWorkerRegistration` پاک می‌شوند. **`localStorage`، `IndexedDB`، کوکی و `cloud-sync` هیچ تغییری نمی‌کنند.**
+تست واقعی: `localStorage.__probe = 'kept-value'` قبل از رفرش ست شد و بعد از رفرش هم `kept-value` بود ✅
+
+### جلوگیری از تداخل (auto-lift)
+اگر دکمه روی یک کنترل بایندد (نوار تایپ چت `#chatInput`، دکمهٔ پایین صفحه و…) بیفتد، کلاس `.emr-rb.lifted` می‌گیرد و ۷۴px بالا می‌رود.
+سلکتور کنترل‌ها: `textarea, input, button, select, [contenteditable="true"]` — عناصر کوچک‌تر از ۲۴×۱۶ و نامرئی نادیده گرفته می‌شوند.
+زمان‌بندی بررسی: ۶۰ms، ۹۰۰ms، ۲۴۰۰ms بعد از mount + روی `resize`/`orientationchange`/`transitionend` (با debounce ۱۲۰ms).
+
+### نصب در هر صفحه
+یک خط قبل از `</body>`:
+```html
+<script src="../refresh-button.js"></script>   <!-- صفحات زیرپوشه -->
+<script src="refresh-button.js"></script>      <!-- index.html ریشه -->
+```
+
+### 🐛 دام بزرگ: `</body>` داخل template literal
+در `monitor/index.html` و `family/index.html` تابعی وجود دارد که **یک HTML کامل می‌سازد** (سند بانکی / نقشهٔ ذهنی) و آن را در `Blob` می‌ریزد. آن HTML هم `</body>` دارد!
+تزریق سادهٔ `s.replace('</body>', ...)` در **اولین** occurrence، اسکریپت را داخل رشتهٔ JS می‌انداخت → `Unexpected end of input` و **دکمه اصلاً mount نمی‌شد**.
+**درمان:** همیشه از `s.rfind('</body>')` (آخرین occurrence) استفاده کن، یا بهتر: قبل از `</html>` انتهایی.
+**درس:** هر «تزریق اسکریپت» سراسری باید با `rfind` انجام شود، نه `replace` ساده.
+
+### داخل iframe غیرفعال است
+`if (window.top !== window.self) return;` — چون پوستهٔ تب‌ها (`goldN/index.html`) خودش دکمه را دارد و دکمهٔ تکراری داخل iframe هم بی‌فایده و هم شلوغ است.
+تأییدشده با تست: در هر ۳۵ صفحه، `count === 1` و `inIframe === false`.
+
+### پوشش (۳۵ صفحه، تست‌شده)
+`index.html` (پورتال) · `gold`..`gold9` (همهٔ زیرصفحه‌ها) · `gym` · `monitor` · `monthly-deposit` · `profit-calculator` (۴ صفحه) · `html-viewer` (۳ صفحه) · `ai-chat` · `simple-chat` · `clipboard` · `daily-report` · `detective` · `family` · `funds` · `image-enhancer` · `jules-agent` · `jules-bot` · `liquidity` · `peace` · `restricted` · `skincare` · `sync` · `tabdeal` · `vault` · `yandex` · `mockup`
+
+### همگام‌سازی اندروید
+- `fund-automation-android/app/src/main/assets/webapp/refresh-button.js`
+- `restricted/android/app/src/main/assets/refresh-button.js`
+- `restricted/android/app/src/main/assets/restricted/index.html` (کپی `restricted/index.html`)
+
+### چک‌لیست پس از تغییر
+1. `grep -c "refresh-button.js" <page>` → دقیقاً **۱** در هر صفحه.
+2. تزریق با `rfind('</body>')` — نه `replace`.
+3. `CACHE_NAME` بامپ شود (الان `emarat-portal-v88`) — تا خود دکمه هم تازه بیاید.
+4. تست Puppeteer: `count===1`، `inIframe===false`، `opacity==='0.2'`، هاور → `opacity==='1'`، کلیک اول → `confirm`، کلیک دوم → `_r=` در URL و `localStorage` سالم.
+5. تست تداخل: در `ai-chat` و `simple-chat`، `overlap` باید `false` باشد.
