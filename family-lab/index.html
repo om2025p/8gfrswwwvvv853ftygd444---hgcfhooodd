@@ -452,19 +452,48 @@ const LS_TREE = 'emarat_family_tree';
 const LS_FOCUS = 'emarat_family_focused';
 
 const DEMO = {
-  g1:{id:'g1',name:'مظفر رضایی',gender:'male',job:'کشاورز',relation:'جد بزرگ پدری',birthplace:'گلبهار',isAlive:false,birthDate:{y:1290,m:1,d:10},deathDate:{y:1355,m:5,d:2},grave:'گلبهار',bio:'بنیان‌گذار خاندان؛ مردی سخت‌کوش و خوش‌رو که باغ خانوادگی را آباد کرد.',spouses:['g2'],children:['p1']},
-  g2:{id:'g2',name:'زهرا کاظمی',gender:'female',job:'خانه‌دار',relation:'مادربزرگ پدری',birthplace:'نیشابور',isAlive:false,birthDate:{y:1298,m:3,d:20},deathDate:{y:1370,m:9,d:14},grave:'گلبهار',bio:'به یاد همه با آش رشته‌اش!',spouses:['g1'],children:['p1']},
-  g3:{id:'g3',name:'حسن موسوی',gender:'male',job:'آهنگر',relation:'جد بزرگ مادری',birthplace:'سبزوار',isAlive:false,birthDate:{y:1295,m:7,d:1},deathDate:{y:1368,m:2,d:9},grave:'سبزوار',bio:'',spouses:['g4'],children:['p2']},
-  g4:{id:'g4',name:'فاطمه صادقی',gender:'female',job:'خانه‌دار',relation:'مادربزرگ مادری',birthplace:'سبزوار',isAlive:true,birthDate:{y:1302,m:11,d:5},location:'مشهد',bio:'هنوز با ماست؛ ۹۳ ساله و پرانرژی.',spouses:['g3'],children:['p2']},
-  p1:{id:'p1',name:'رحیم رضایی',gender:'male',job:'مهندس عمران',relation:'پدر',birthplace:'گلبهار',isAlive:true,birthDate:{y:1325,m:4,d:12},location:'مشهد',bio:'',spouses:['p2'],children:['m1','m2','m3']},
-  p2:{id:'p2',name:'مریم موسوی',gender:'female',job:'دبیر ریاضی',relation:'مادر',birthplace:'سبزوار',isAlive:true,birthDate:{y:1328,m:8,d:3},location:'مشهد',bio:'',spouses:['p1'],children:['m1','m2','m3']},
-  m1:{id:'m1',name:'علی رضایی',gender:'male',job:'برنامه‌نویس',relation:'فرزند ارشد',birthplace:'مشهد',isAlive:true,birthDate:{y:1352,m:2,d:18},location:'تهران',bio:'',spouses:['s1'],children:['c1','c2']},
-  s1:{id:'s1',name:'نگار احمدی',gender:'female',job:'معمار',relation:'همسر',birthplace:'تهران',isAlive:true,birthDate:{y:1354,m:6,d:22},location:'تهران',bio:'',spouses:['m1'],children:['c1','c2']},
-  m2:{id:'m2',name:'سارا رضایی',gender:'female',job:'پزشک',relation:'فرزند دوم',birthplace:'مشهد',isAlive:true,birthDate:{y:1356,m:9,d:9},location:'شیراز',bio:'',spouses:[],children:['c3']},
-  m3:{id:'m3',name:'مجید رضایی',gender:'male',job:'دانشجو',relation:'فرزند سوم',birthplace:'مشهد',isAlive:true,birthDate:{y:1360,m:1,d:27},location:'مشهد',bio:'',spouses:[],children:[]},
-  c1:{id:'c1',name:'آوا رضایی',gender:'female',job:'دانش‌آموز',relation:'نوه',birthplace:'تهران',isAlive:true,birthDate:{y:1380,m:5,d:4},location:'تهران',bio:'',spouses:[],children:[]},
-  c2:{id:'c2',name:'آرش رضایی',gender:'male',job:'دانش‌آموز',relation:'نوه',birthplace:'تهران',isAlive:true,birthDate:{y:1383,m:10,d:15},location:'تهران',bio:'',spouses:[],children:[]},
-  c3:{id:'c3',name:'هانا رضایی',gender:'female',job:'—',relation:'نوه',birthplace:'شیراز',isAlive:true,birthDate:{y:1385,m:12,d:1},location:'شیراز',bio:'',spouses:[],children:[]}
+  g1:{"id":"g1","name":"مظفر رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"کشاورز و باغدار","relation":"جد بزرگ پدری","birthplace":"گلبهار","isAlive":false,"birthDate":"1288/2/10","deathDate":"1355/5/2","location":"","grave":"گلبهار","isMarried":true,"spousesCount":1,"childrenCount":2,"bio":"بنیان‌گذار خاندان. باغ انگور خانوادگی را با دست خودش ساخت و ۴۰ سال آب داد.","parents":[],"spouses":["g2"],"children":["p1","p3"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  g2:{"id":"g2","name":"زهرا کاظمی","gender":"female","hasPhoto":false,"photoData":"","job":"خانه‌دار","relation":"مادربزرگ پدری","birthplace":"نیشابور","isAlive":false,"birthDate":"1296/3/20","deathDate":"1370/9/14","location":"","grave":"گلبهار","isMarried":true,"spousesCount":1,"childrenCount":2,"bio":"آش رشته‌اش هنوز در خانواده ضرب‌المثل است. سواد قرآنی داشت و به همه بچه‌های محل قرآن یاد می‌داد.","parents":[],"spouses":["g1"],"children":["p1","p3"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  g3:{"id":"g3","name":"حسن موسوی","gender":"male","hasPhoto":false,"photoData":"","job":"آهنگر","relation":"جد بزرگ مادری","birthplace":"سبزوار","isAlive":false,"birthDate":"1292/7/1","deathDate":"1368/2/9","location":"","grave":"سبزوار","isMarried":true,"spousesCount":1,"childrenCount":2,"bio":"در بازار سبزوار کارگاه آهنگری داشت. دست‌هایش از کار مدام سوخته بود.","parents":[],"spouses":["g4"],"children":["p2","p4"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  g4:{"id":"g4","name":"فاطمه صادقی","gender":"female","hasPhoto":false,"photoData":"","job":"قالی‌باف","relation":"مادربزرگ مادری","birthplace":"سبزوار","isAlive":true,"birthDate":"1302/11/5","deathDate":"","location":"مشهد","grave":"","isMarried":true,"spousesCount":1,"childrenCount":2,"bio":"۹۳ ساله و هنوز هر روز صبح چای می‌دمد. قالی‌هایش در سه استان فروخته شده.","parents":[],"spouses":["g3"],"children":["p2","p4"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  g5:{"id":"g5","name":"ابراهیم رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"راننده کامیون","relation":"عموی بزرگ","birthplace":"گلبهار","isAlive":false,"birthDate":"1294/5/12","deathDate":"1345/8/3","location":"","grave":"گلبهار","isMarried":true,"spousesCount":1,"childrenCount":1,"bio":"برادر مظفر. مسیر گلبهار–مشهد را ۲۰ سال رانندگی کرد.","parents":[],"spouses":["g6"],"children":["u1"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  g6:{"id":"g6","name":"رقیّه نوری","gender":"female","hasPhoto":false,"photoData":"","job":"خانه‌دار","relation":"همسر عموی بزرگ","birthplace":"گلبهار","isAlive":false,"birthDate":"1300/1/8","deathDate":"1378/4/20","location":"","grave":"گلبهار","isMarried":true,"spousesCount":1,"childrenCount":1,"bio":"","parents":[],"spouses":["g5"],"children":["u1"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  p1:{"id":"p1","name":"رحیم رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"مهندس عمران","relation":"پدر","birthplace":"گلبهار","isAlive":true,"birthDate":"1325/4/12","deathDate":"","location":"مشهد","grave":"","isMarried":true,"spousesCount":1,"childrenCount":4,"bio":"پل‌های زیادی در جاده مشهد–نیشابور ساخته. بازنشستهٔ اداره راه است.","parents":["g1","g2"],"spouses":["p2"],"children":["m1","m2","m3","m4"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  p2:{"id":"p2","name":"مریم موسوی","gender":"female","hasPhoto":false,"photoData":"","job":"دبیر ریاضی","relation":"مادر","birthplace":"سبزوار","isAlive":true,"birthDate":"1328/8/3","deathDate":"","location":"مشهد","grave":"","isMarried":true,"spousesCount":1,"childrenCount":4,"bio":"۳۲ سال ریاضی درس داده. هنوز شاگردان قدیمی‌اش به دیدنش می‌آیند.","parents":["g3","g4"],"spouses":["p1"],"children":["m1","m2","m3","m4"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  p3:{"id":"p3","name":"کریم رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"معلم","relation":"عمو","birthplace":"گلبهار","isAlive":true,"birthDate":"1322/9/5","deathDate":"","location":"تهران","grave":"","isMarried":true,"spousesCount":1,"childrenCount":1,"bio":"برادر کوچک‌تر پدر. در تهران معلم ادبیات بود.","parents":["g1","g2"],"spouses":["p5"],"children":["c4"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  p5:{"id":"p5","name":"شهناز بهرامی","gender":"female","hasPhoto":false,"photoData":"","job":"پرستار","relation":"زن‌عمو","birthplace":"تهران","isAlive":true,"birthDate":"1329/2/17","deathDate":"","location":"تهران","grave":"","isMarried":true,"spousesCount":1,"childrenCount":0,"bio":["p3"],"parents":[],"spouses":["c4","p3"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  p4:{"id":"p4","name":"زینب موسوی","gender":"female","hasPhoto":false,"photoData":"","job":"خیاط","relation":"خاله","birthplace":"سبزوار","isAlive":true,"birthDate":"1324/6/22","deathDate":"","location":"سبزوار","grave":"","isMarried":true,"spousesCount":1,"childrenCount":2,"bio":"خواهر مادر. خیاط محله بود و لباس عروسی خیلی‌ها را دوخته.","parents":["g3","g4"],"spouses":["p6"],"children":["c5","c6"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  p6:{"id":"p6","name":"جواد صابری","gender":"male","hasPhoto":false,"photoData":"","job":"بقال","relation":"شوهرخاله","birthplace":"سبزوار","isAlive":true,"birthDate":"1320/12/3","deathDate":"","location":"سبزوار","grave":"","isMarried":true,"spousesCount":2,"childrenCount":0,"bio":["p4"],"parents":[],"spouses":["c5","c6","p4"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  m1:{"id":"m1","name":"علی رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"برنامه‌نویس","relation":"فرزند ارشد","birthplace":"مشهد","isAlive":true,"birthDate":"1352/2/18","deathDate":"","location":"تهران","grave":"","isMarried":true,"spousesCount":1,"childrenCount":2,"bio":"در تهران نرم‌افزار می‌نویسد. عاشق کوه و قهوه.","parents":["p1","p2"],"spouses":["s1"],"children":["c1","c2"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  s1:{"id":"s1","name":"نگار احمدی","gender":"female","hasPhoto":false,"photoData":"","job":"معمار","relation":"همسر","birthplace":"تهران","isAlive":true,"birthDate":"1354/6/22","deathDate":"","location":"تهران","grave":"","isMarried":true,"spousesCount":1,"childrenCount":2,"bio":"معمار داخلی. پروژه‌هایش در مجله چاپ شده.","parents":[],"spouses":["m1"],"children":["c1","c2"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  m2:{"id":"m2","name":"سارا رضایی","gender":"female","hasPhoto":false,"photoData":"","job":"پزشک","relation":"فرزند دوم","birthplace":"مشهد","isAlive":true,"birthDate":"1356/9/9","deathDate":"","location":"شیراز","grave":"","isMarried":false,"spousesCount":1,"childrenCount":1,"bio":"متخصص اطفال در شیراز. سه شیفت در هفته.","parents":["p1","p2"],"spouses":[],"children":["c3"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  m3:{"id":"m3","name":"مجید رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"مهندس برق","relation":"فرزند سوم","birthplace":"مشهد","isAlive":true,"birthDate":"1360/1/27","deathDate":"","location":"مشهد","grave":"","isMarried":true,"spousesCount":1,"childrenCount":1,"bio":"در شرکت توزیع برق مشهد کار می‌کند.","parents":["p1","p2"],"spouses":["s2"],"children":["c7"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  s2:{"id":"s2","name":"الهام رستمی","gender":"female","hasPhoto":false,"photoData":"","job":"حسابدار","relation":"زن‌برادر","birthplace":"مشهد","isAlive":true,"birthDate":"1362/4/11","deathDate":"","location":"مشهد","grave":"","isMarried":true,"spousesCount":1,"childrenCount":0,"bio":["m3"],"parents":[],"spouses":["c7","m3"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  m4:{"id":"m4","name":"مینا رضایی","gender":"female","hasPhoto":false,"photoData":"","job":"گرافیست","relation":"فرزند چهارم","birthplace":"مشهد","isAlive":true,"birthDate":"1358/11/30","deathDate":"","location":"اصفهان","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":"طراح گرافیک freelance. در اصفهان زندگی می‌کند.","parents":["p1","p2"],"spouses":[],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  c4:{"id":"c4","name":"امیرحسین رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"وکیل","relation":"پسرعمو","birthplace":"تهران","isAlive":true,"birthDate":"1355/3/14","deathDate":"","location":"تهران","grave":"","isMarried":true,"spousesCount":1,"childrenCount":1,"bio":"وکیل دادگستری در تهران.","parents":["p3"],"spouses":["s3","p5"],"children":["c8"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  s3:{"id":"s3","name":"نازنین کریمی","gender":"female","hasPhoto":false,"photoData":"","job":"مترجم","relation":"زن‌پسرعمو","birthplace":"تهران","isAlive":true,"birthDate":"1357/7/19","deathDate":"","location":"تهران","grave":"","isMarried":true,"spousesCount":1,"childrenCount":0,"bio":["c4"],"parents":[],"spouses":["c8","c4"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  c5:{"id":"c5","name":"حمیده صابری","gender":"female","hasPhoto":false,"photoData":"","job":"آرایشگر","relation":"دخترخاله","birthplace":"سبزوار","isAlive":true,"birthDate":"1350/8/8","deathDate":"","location":"سبزوار","grave":"","isMarried":false,"spousesCount":1,"childrenCount":1,"bio":"سالن زیبایی دارد.","parents":["p4"],"spouses":["p6"],"children":["c9"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  c6:{"id":"c6","name":"سعید صابری","gender":"male","hasPhoto":false,"photoData":"","job":"مکانیک","relation":"پسرخاله","birthplace":"سبزوار","isAlive":true,"birthDate":"1353/5/25","deathDate":"","location":"سبزوار","grave":"","isMarried":true,"spousesCount":1,"childrenCount":2,"bio":"تعمیرگاه خودرو در سبزوار.","parents":["p4"],"spouses":["s4","p6"],"children":["c10","c11"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  s4:{"id":"s4","name":"پریسا اکبری","gender":"female","hasPhoto":false,"photoData":"","job":"خانه‌دار","relation":"زن‌پسرخاله","birthplace":"سبزوار","isAlive":true,"birthDate":"1356/10/2","deathDate":"","location":"سبزوار","grave":"","isMarried":true,"spousesCount":2,"childrenCount":0,"bio":["c6"],"parents":[],"spouses":["c10","c11","c6"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  c1:{"id":"c1","name":"آوا رضایی","gender":"female","hasPhoto":false,"photoData":"","job":"دانشجوی پزشکی","relation":"نوه","birthplace":"تهران","isAlive":true,"birthDate":"1380/5/4","deathDate":"","location":"تهران","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":"دانشجوی سال چهارم پزشکی. مثل عمه‌اش سارا.","parents":["m1","s1"],"spouses":[],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  c2:{"id":"c2","name":"آرش رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"دانش‌آموز","relation":"نوه","birthplace":"تهران","isAlive":true,"birthDate":"1383/10/15","deathDate":"","location":"تهران","grave":"","isMarried":false,"spousesCount":1,"childrenCount":1,"bio":"دبیرستانی، تیم رباتیک مدرسه.","parents":["m1","s1"],"spouses":[],"children":["n6"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  c3:{"id":"c3","name":"هانا رضایی","gender":"female","hasPhoto":false,"photoData":"","job":"دانش‌آموز","relation":"نوه","birthplace":"شیراز","isAlive":true,"birthDate":"1385/12/1","deathDate":"","location":"شیراز","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":[],"parents":["m2"],"spouses":[],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  c7:{"id":"c7","name":"رادین رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"دانش‌آموز","relation":"نوه","birthplace":"مشهد","isAlive":true,"birthDate":"1390/3/20","deathDate":"","location":"مشهد","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":[],"parents":["m3"],"spouses":["s2"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  c8:{"id":"c8","name":"آرمین رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"دانش‌آموز","relation":"نوهٔ عمو","birthplace":"تهران","isAlive":true,"birthDate":"1384/6/9","deathDate":"","location":"تهران","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":[],"parents":["c4"],"spouses":["s3"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  c9:{"id":"c9","name":"مهسا صابری","gender":"female","hasPhoto":false,"photoData":"","job":"دانشجو","relation":"نوهٔ خاله","birthplace":"سبزوار","isAlive":true,"birthDate":"1378/2/14","deathDate":"","location":"سبزوار","grave":"","isMarried":false,"spousesCount":1,"childrenCount":1,"bio":"دانشجوی حقوق.","parents":["c5"],"spouses":[],"children":["n5"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  c10:{"id":"c10","name":"کیان صابری","gender":"male","hasPhoto":false,"photoData":"","job":"دانش‌آموز","relation":"نوهٔ خاله","birthplace":"سبزوار","isAlive":true,"birthDate":"1388/9/7","deathDate":"","location":"سبزوار","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":[],"parents":["c6"],"spouses":["s4"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  c11:{"id":"c11","name":"نیلوفر صابری","gender":"female","hasPhoto":false,"photoData":"","job":"دانش‌آموز","relation":"نوهٔ خاله","birthplace":"سبزوار","isAlive":true,"birthDate":"1392/1/25","deathDate":"","location":"سبزوار","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":[],"parents":["c6"],"spouses":["s4"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  n1:{"id":"n1","name":"بردیا رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"—","relation":"نتیجه","birthplace":"تهران","isAlive":true,"birthDate":"1401/7/12","deathDate":"","location":"تهران","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":"پسر آوا. تازه راه افتاده.","parents":[],"spouses":[],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  n2:{"id":"n2","name":"روژان رضایی","gender":"female","hasPhoto":false,"photoData":"","job":"—","relation":"نتیجه","birthplace":"تهران","isAlive":true,"birthDate":"1404/2/3","deathDate":"","location":"تهران","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":"","parents":[],"spouses":[],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  n3:{"id":"n3","name":"سام رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"—","relation":"نتیجه","birthplace":"شیراز","isAlive":true,"birthDate":"1403/5/19","deathDate":"","location":"شیراز","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":[],"parents":[],"spouses":[],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  n4:{"id":"n4","name":"آیلین رضایی","gender":"female","hasPhoto":false,"photoData":"","job":"—","relation":"نتیجه","birthplace":"مشهد","isAlive":true,"birthDate":"1402/11/8","deathDate":"","location":"مشهد","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":[],"parents":[],"spouses":[],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  u1:{"id":"u1","name":"غلامرضا رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"راننده تاکسی","relation":"پسرعموی پدر","birthplace":"گلبهار","isAlive":true,"birthDate":"1327/3/3","deathDate":"","location":"گلبهار","grave":"","isMarried":true,"spousesCount":1,"childrenCount":2,"bio":"پسر عموی بزرگ. در گلبهار تاکسی دارد.","parents":["g5","g6"],"spouses":["u2"],"children":["u3","u4"],"maternalGrandparents":[],"paternalGrandparents":[]},
+  u2:{"id":"u2","name":"طاهره رحیمی","gender":"female","hasPhoto":false,"photoData":"","job":"خانه‌دار","relation":"زن‌پسرعموی پدر","birthplace":"گلبهار","isAlive":true,"birthDate":"1330/7/27","deathDate":"","location":"گلبهار","grave":"","isMarried":true,"spousesCount":2,"childrenCount":0,"bio":["u1"],"parents":[],"spouses":["u3","u4","u1"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  u3:{"id":"u3","name":"بهنام رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"باغدار","relation":"پسرعموی پدر","birthplace":"گلبهار","isAlive":true,"birthDate":"1354/1/16","deathDate":"","location":"گلبهار","grave":"","isMarried":true,"spousesCount":1,"childrenCount":0,"bio":[],"parents":["u1"],"spouses":["u5","u2"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  u4:{"id":"u4","name":"سمیرا رضایی","gender":"female","hasPhoto":false,"photoData":"","job":"پرستار","relation":"دخترعموی پدر","birthplace":"گلبهار","isAlive":true,"birthDate":"1358/4/4","deathDate":"","location":"نیشابور","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":[],"parents":["u1"],"spouses":["u2"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  u5:{"id":"u5","name":"پویا رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"دانش‌آموز","relation":"پسرعموی دوم","birthplace":"گلبهار","isAlive":true,"birthDate":"1389/8/21","deathDate":"","location":"گلبهار","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":[],"parents":[],"spouses":["u3"],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  n5:{"id":"n5","name":"آوا صابری","gender":"female","hasPhoto":false,"photoData":"","job":"—","relation":"نتیجه","birthplace":"سبزوار","isAlive":true,"birthDate":"1402/3/6","deathDate":"","location":"سبزوار","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":"","parents":["c9"],"spouses":[],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]},
+  n6:{"id":"n6","name":"تیام رضایی","gender":"male","hasPhoto":false,"photoData":"","job":"—","relation":"نتیجه","birthplace":"تهران","isAlive":true,"birthDate":"1405/1/22","deathDate":"","location":"تهران","grave":"","isMarried":false,"spousesCount":1,"childrenCount":0,"bio":"","parents":["c2"],"spouses":[],"children":[],"maternalGrandparents":[],"paternalGrandparents":[]}
 };
 
 let M = {}, ids = [], source = 'demo', focusId = null, depth = {}, maxDepth = 0;
@@ -499,6 +528,10 @@ function deriveLinks(obj) {
   return obj;
 }
 
+/* Depth is primarily parent-based. People with no recorded parents (spouses
+   marrying in, cousins whose branch was never filled) are then placed by
+   their spouse's generation, or one above their children's. Without this
+   they all pile up in the first row and the generation view lies. */
 function computeDepth() {
   const memo = {};
   function d(id, stack) {
@@ -511,7 +544,29 @@ function computeDepth() {
     memo[id] = v;
     return v;
   }
-  ids.forEach(id => depth[id] = d(id, new Set()));
+  ids.forEach(id => d(id, new Set()));
+
+  const hasParents = id => (M[id].parents || []).some(p => M[p]);
+  for (let pass = 0; pass < 6; pass++) {
+    let changed = false;
+    ids.forEach(id => {
+      if (hasParents(id)) return;
+      const fromSpouse = (M[id].spouses || []).filter(x => M[x] && memo[x] !== undefined).map(x => memo[x]);
+      if (fromSpouse.length) {
+        const v = Math.min(...fromSpouse);
+        if (memo[id] !== v) { memo[id] = v; changed = true; }
+        return;
+      }
+      const kids = (M[id].children || []).filter(x => M[x] && memo[x] > 0).map(x => memo[x]);
+      if (kids.length) {
+        const v = Math.max(0, Math.min(...kids) - 1);
+        if (memo[id] !== v) { memo[id] = v; changed = true; }
+      }
+    });
+    if (!changed) break;
+  }
+
+  ids.forEach(id => depth[id] = memo[id]);
   maxDepth = ids.length ? Math.max(...Object.values(depth)) : 0;
 }
 
@@ -986,7 +1041,17 @@ document.addEventListener('click', e => {
    ================================================================== */
 const LS_BACKUP = 'emarat_family_lab_backup';
 
-function readRawTree() {
+/* the working copy edits are applied to: real storage when live, the
+   in-memory demo set otherwise (so demo edits never silently drop people) */
+function currentTree() {
+  if (source === 'demo') {
+    const copy = {};
+    Object.keys(M).forEach(id => {
+      copy[id] = JSON.parse(JSON.stringify(M[id]));
+      copy[id].id = id;
+    });
+    return copy;
+  }
   try {
     const raw = localStorage.getItem(LS_TREE);
     if (!raw) return {};
@@ -996,6 +1061,8 @@ function readRawTree() {
       : parsed;
   } catch (e) { return {}; }
 }
+
+function readRawTree() { return currentTree(); }
 
 /* snapshot before every write so nothing is ever lost */
 function snapshot(label) {
@@ -1011,6 +1078,12 @@ function snapshot(label) {
 }
 
 function persistTree(obj) {
+  if (source === 'demo') {
+    M = obj;
+    ids = Object.keys(M);
+    computeDepth();
+    return;
+  }
   snapshot('auto');
   localStorage.setItem(LS_TREE, JSON.stringify(obj));
   if (window.EmaratCloudSync && typeof window.EmaratCloudSync.push === 'function') {
@@ -1236,7 +1309,8 @@ function openEditor(id) {
       });
       persistTree(raw);
       closeEditor();
-      loadData();
+      if (source !== 'demo') loadData();
+      else { ids = Object.keys(M); computeDepth(); }
       focusId = ids[0] || null;
       go(cur);
       toast('🗑️ عضو حذف شد');
@@ -1296,7 +1370,8 @@ function saveEditor() {
   const keepFocus = editingId;
   persistTree(raw);
   closeEditor();
-  loadData();
+  if (source !== 'demo') loadData();
+  else { ids = Object.keys(M); computeDepth(); }
   focusId = keepFocus && M[keepFocus] ? keepFocus : (ids[0] || null);
   go(cur);
   toast('✅ ذخیره شد');
