@@ -29,10 +29,10 @@
         }
         .brand-header {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: 2px;
+            gap: 9px;
             padding: 8px 12px 7px;
             background: linear-gradient(160deg, #24301a 0%, #1b2410 100%);
             border-bottom: 1px solid #3d4a24;
@@ -40,6 +40,42 @@
             position: relative;
             z-index: 101;
             flex-shrink: 0;
+        }
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 0 1px rgba(163,181,68,0.35);
+        }
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1px;
+            min-width: 0;
+        }
+        /* ---------- آیکون‌های تصویری اختصاصی (assets/aNN.png) ---------- */
+        .ico {
+            width: 1.15em;
+            height: 1.15em;
+            display: inline-block;
+            vertical-align: -0.22em;
+            object-fit: contain;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+        .ico-lg { width: 1.6em; height: 1.6em; vertical-align: -0.35em; }
+        .ico-sm { width: 0.95em; height: 0.95em; vertical-align: -0.14em; }
+        .ico-tab {
+            width: 1.1em;
+            height: 1.1em;
+            vertical-align: -0.2em;
+            margin-inline-end: 3px;
+            object-fit: contain;
+            flex-shrink: 0;
+            pointer-events: none;
         }
         .brand-title {
             font-size: 1.05rem;
@@ -114,14 +150,17 @@
 <body>
     <div class="app-wrapper">
         <div class="brand-header">
-            <div class="brand-title">سهم غبهار</div>
-            <div class="brand-subtitle">کشت وصنعت بهاران گلبهار خراسان</div>
+            <img src="icon-192.png" alt="" class="brand-mark" width="34" height="34">
+            <div class="brand-text">
+                <div class="brand-title">سهم غبهار</div>
+                <div class="brand-subtitle">کشت وصنعت بهاران گلبهار خراسان</div>
+            </div>
         </div>
         <div class="tabs">
-            <div class="tab active" onclick="switchTab(0)">📊 ثبت درصد</div>
-            <div class="tab" onclick="switchTab(1)">🏆 محاسبه تغییرات</div>
-            <div class="tab" onclick="switchTab(2)">🏷️ ثبت ابطال</div>
-            <div class="tab" onclick="switchTab(3)">📈 مدیریت رشد</div>
+            <div class="tab active" onclick="switchTab(0)"><img src="assets/a01.png" alt="" class="ico-tab">ثبت درصد</div>
+            <div class="tab" onclick="switchTab(1)"><img src="assets/a02.png" alt="" class="ico-tab">محاسبه تغییرات</div>
+            <div class="tab" onclick="switchTab(2)"><img src="assets/a03.png" alt="" class="ico-tab">ثبت ابطال</div>
+            <div class="tab" onclick="switchTab(3)"><img src="assets/a04.png" alt="" class="ico-tab">مدیریت رشد</div>
         </div>
         <div class="tab-container">
             <div id="content0" class="tab-content active">

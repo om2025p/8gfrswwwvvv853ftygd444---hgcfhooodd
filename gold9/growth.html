@@ -50,8 +50,19 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     margin-bottom: 16px;
     position: relative;
+  }
+  .header .page-brand { justify-content: flex-start; margin-bottom: 0; flex: 1; min-width: 0; }
+  .hero-banner {
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    display: block;
+    margin: 2px 0 12px;
+    border: 1px solid rgba(163,181,68,0.25);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.45);
   }
 
   .header h1 {
@@ -1024,6 +1035,32 @@
             letter-spacing: 0.2px;
             opacity: 0.92;
         }
+
+        /* ---------- آیکون‌های تصویری اختصاصی (assets/aNN.png) ---------- */
+        .ico {
+            width: 1.15em;
+            height: 1.15em;
+            display: inline-block;
+            vertical-align: -0.22em;
+            object-fit: contain;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+        .ico-sm { width: 0.95em; height: 0.95em; vertical-align: -0.14em; }
+        .page-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 2px;
+        }
+        .page-brand img {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.45), 0 0 0 1px rgba(163,181,68,0.3);
+        }
 </style>
 </head>
 <body>
@@ -1031,7 +1068,10 @@
 <div class="container">
   <div class="brand-sub">کشت وصنعت بهاران گلبهار خراسان</div>
   <div class="header">
-    <h1>🌾 مدیریت رشد · سهم غبهار</h1>
+    <div class="page-brand">
+      <img src="icon-192.png" alt="">
+      <h1>🌾 مدیریت رشد · سهم غبهار</h1>
+    </div>
     <button class="menu-toggle" id="menuToggle">☰</button>
     <div class="dropdown-menu" id="dropdownMenu">
       <button class="dropdown-item" id="addRowBtn">➕ افزودن ردیف جدید</button>
@@ -1043,6 +1083,8 @@
       <input type="file" id="restoreInput" accept=".json,application/json" style="display:none">
     </div>
   </div>
+
+  <img src="assets/b04.webp" alt="" class="hero-banner" loading="lazy" decoding="async" width="768" height="432">
 
   <div class="capital-box">
     <label for="capital">سرمایه فعلی:</label>
