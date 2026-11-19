@@ -1,9 +1,21 @@
-const CACHE_NAME = 'emarat-portal-v88';
+const CACHE_NAME = 'emarat-portal-v89';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './cloud-sync.js',
+  './refresh-button.js',
+  './price-import.js',
+  './usage-tracker.js',
+  // Usage App
+  './usage/index.html',
+  './usage/manifest.json',
+  './usage/icon-192.png',
+  './usage/icon-512.png',
+  './usage/icon-192-maskable.png',
+  './usage/icon-512-maskable.png',
+  './usage/apple-touch-icon.png',
+  './usage/favicon.ico',
   './icon-192.png',
   './icon-512.png',
   './icon-192-maskable.png',
