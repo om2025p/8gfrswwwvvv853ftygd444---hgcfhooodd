@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v86';
+const CACHE_NAME = 'emarat-portal-v87';
 const ASSETS = [
   './',
   './index.html',
@@ -352,6 +352,7 @@ const ASSETS = [
   './vendor/fontawesome/webfonts/fa-solid-900.woff2',
   './vendor/fontawesome/webfonts/fa-v4compatibility.woff2',
   './vendor/jszip/jszip.min.js',
+  './price-import.js',
   './vendor/inter/inter.css',
   './vendor/inter/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2',
   './vendor/inter/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa25L7SUc.woff2'

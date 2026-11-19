@@ -897,5 +897,22 @@
 
     renderAll();
 </script>
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../price-import.js"></script>
+
+<script>
+/* قابلیت «ورود قیمت ابطال از فایل سایت» — فقط کپی عدد، بدون محاسبه */
+document.addEventListener('DOMContentLoaded', function () {
+  if (!window.EmaratPriceImport) return;
+  window.EmaratPriceImport.mount({
+    container: document.querySelector('.container'),
+    storageKey: STORAGE_PRICES,
+    getPrices: function () { return getPrices(); },
+    savePrices: function (list) { savePrices(list); },
+    accent: '#a3b544',
+    accentFg: '#1b2410'
+  });
+});
+</script>
 </body>
 </html>
