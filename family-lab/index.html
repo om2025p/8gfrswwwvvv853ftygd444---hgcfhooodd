@@ -137,6 +137,11 @@ button{font-family:inherit}
 .fact b{display:block;font-size:9px;color:var(--text3);font-weight:500;margin-bottom:1px}
 .fact span{font-size:11.5px;font-weight:600}
 
+.deck-edit{
+  width:100%;border:1px solid var(--line2);background:var(--surface2);color:var(--text2);
+  font-family:inherit;font-size:11.5px;font-weight:600;padding:9px;border-radius:11px;cursor:pointer;
+}
+.deck-edit:active{transform:scale(.98)}
 .dtabs{display:flex;gap:5px;background:#0A100E;border:1px solid var(--line);border-radius:11px;padding:3px}
 .dtabs button{
   flex:1;border:0;background:transparent;color:var(--text3);font-size:11px;font-weight:600;
@@ -300,6 +305,100 @@ button{font-family:inherit}
   margin-top:6px;border:1px solid var(--accent);background:rgba(61,220,151,.1);color:var(--accent);
   font-size:11.5px;font-weight:600;padding:9px 18px;border-radius:11px;cursor:pointer;
 }
+
+/* ---------------- editor ---------------- */
+.fab-add{
+  position:absolute;bottom:16px;left:14px;z-index:40;
+  width:52px;height:52px;border-radius:50%;border:0;cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dim));color:#04170F;
+  font-size:26px;line-height:1;font-weight:700;
+  box-shadow:0 6px 20px rgba(61,220,151,.36),0 2px 8px rgba(0,0,0,.5);
+  transition:transform .16s;
+}
+.fab-add:active{transform:scale(.92)}
+.ed-scrim{
+  position:fixed;inset:0;background:rgba(0,0,0,.66);opacity:0;pointer-events:none;
+  transition:opacity .22s;z-index:70;
+}
+.ed-scrim.on{opacity:1;pointer-events:auto}
+.ed{
+  position:fixed;inset:0;z-index:71;display:flex;flex-direction:column;
+  background:var(--bg);transform:translateY(100%);transition:transform .28s cubic-bezier(.22,.9,.3,1);
+}
+.ed.on{transform:translateY(0)}
+.ed-head{
+  flex:0 0 auto;display:flex;align-items:center;gap:9px;padding:12px 13px;
+  background:linear-gradient(180deg,#17231E,#121B17);border-bottom:1px solid var(--line);
+}
+.ed-title{flex:1;font-size:14px;font-weight:700}
+.ed-close{
+  width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);flex:0 0 auto;
+  background:var(--surface2);color:var(--text2);font-size:16px;cursor:pointer;line-height:1;
+}
+.ed-save{
+  border:0;background:var(--accent);color:#04170F;font-size:12.5px;font-weight:700;
+  padding:0 20px;border-radius:10px;cursor:pointer;min-height:40px;
+}
+.ed-body{flex:1 1 auto;overflow-y:auto;padding:13px 13px 34px}
+.fld{margin-bottom:11px}
+.fld label{display:block;font-size:10.5px;color:var(--text3);font-weight:600;margin-bottom:5px}
+.fld input,.fld select,.fld textarea{
+  width:100%;background:var(--surface);border:1px solid var(--line);border-radius:11px;
+  padding:10px 11px;color:var(--text);font-family:inherit;font-size:12.5px;outline:none;
+}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent)}
+.fld textarea{resize:vertical;min-height:64px;line-height:1.8}
+.fld select{appearance:none;background-image:none}
+.fld-row{display:flex;gap:8px}
+.fld-row .fld{flex:1;min-width:0}
+.seg2{display:flex;gap:5px;background:#0A100E;border:1px solid var(--line);border-radius:11px;padding:3px}
+.seg2 button{
+  flex:1;border:0;background:transparent;color:var(--text3);font-size:12px;font-weight:600;
+  padding:11px 4px;border-radius:8px;cursor:pointer;transition:.16s;min-height:44px;
+}
+.seg2 button.on{background:var(--surface3);color:var(--text)}
+.sec-title{
+  font-size:10.5px;color:var(--text3);font-weight:600;margin:16px 0 8px;
+  display:flex;align-items:center;gap:7px;
+}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--line)}
+.rel-edit{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px}
+.rel-tag{
+  display:flex;align-items:center;gap:6px;padding:3px 4px 3px 11px;border-radius:999px;
+  background:var(--surface2);border:1px solid var(--line2);font-size:11.5px;font-weight:600;
+  min-height:32px;
+}
+.rel-tag button{
+  width:24px;height:24px;border-radius:50%;border:0;background:#3A2A28;color:#E2A99C;
+  font-size:11px;line-height:1;cursor:pointer;padding:0;
+}
+.rel-add{
+  display:flex;gap:6px;align-items:center;
+}
+.rel-add select{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px 10px;color:var(--text);font-family:inherit;font-size:12px;min-height:44px}
+.rel-add button{
+  border:1px solid var(--accent);background:rgba(61,220,151,.12);color:var(--accent);
+  font-size:11.5px;font-weight:700;padding:0 15px;border-radius:10px;cursor:pointer;
+  white-space:nowrap;min-height:44px;
+}
+.danger-zone{margin-top:22px;padding-top:14px;border-top:1px solid #3A2A28}
+.del-btn{
+  width:100%;border:1px solid #4A2E2A;background:#221514;color:#E2A99C;
+  font-size:12px;font-weight:700;padding:11px;border-radius:11px;cursor:pointer;
+}
+.del-btn.armed{background:#5A1F18;color:#FFD9D2;border-color:#8A3025}
+.save-hint{
+  font-size:10px;color:var(--text3);text-align:center;line-height:1.7;
+  padding:10px 6px 0;
+}
+.photo-pick{
+  display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);
+  border-radius:11px;padding:9px 11px;cursor:pointer;
+}
+.photo-pick .av{width:42px;height:42px;font-size:16px}
+.photo-pick div{flex:1;min-width:0}
+.photo-pick b{display:block;font-size:11.5px}
+.photo-pick small{font-size:9.5px;color:var(--text3)}
 </style>
 </head>
 <body>
@@ -335,6 +434,18 @@ button{font-family:inherit}
 <div class="sheet" id="sheet"></div>
 <div class="toast" id="toast"></div>
 
+<button class="fab-add" id="fabAdd" title="افزودن عضو جدید">+</button>
+
+<div class="ed-scrim" id="edScrim"></div>
+<div class="ed" id="ed">
+  <div class="ed-head">
+    <button class="ed-close" id="edClose">✕</button>
+    <div class="ed-title" id="edTitle">افزودن عضو</div>
+    <button class="ed-save" id="edSave">ذخیره</button>
+  </div>
+  <div class="ed-body" id="edBody"></div>
+</div>
+
 <script>
 const LS_TREE = 'emarat_family_tree';
 const LS_FOCUS = 'emarat_family_focused';
@@ -357,10 +468,18 @@ const DEMO = {
 
 let M = {}, ids = [], source = 'demo', focusId = null, depth = {}, maxDepth = 0;
 
+function normDate(d) {
+  if (!d) return '';
+  if (typeof d === 'string') return d;
+  return d.y ? [d.y, d.m, d.d].filter(Boolean).join('/') : '';
+}
+
 function deriveLinks(obj) {
   Object.keys(obj).forEach(id => {
     const m = obj[id];
     m.id = m.id || id;
+    m.birthDate = normDate(m.birthDate);
+    m.deathDate = normDate(m.deathDate);
     m.parents = Array.isArray(m.parents) ? m.parents : [];
     m.spouses = Array.isArray(m.spouses) ? m.spouses : [];
     m.children = Array.isArray(m.children) ? m.children : [];
@@ -423,7 +542,26 @@ function loadData() {
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const initial = n => (n || '؟').trim().charAt(0);
-const jy = d => d && d.y ? String(d.y) : '—';
+const yearOf = d => {
+  if (!d) return 0;
+  if (typeof d === 'string') { const y = parseInt(d.split('/')[0], 10); return isNaN(y) ? 0 : y; }
+  return d.y || 0;
+};
+const jy = d => {
+  if (!d) return '—';
+  if (typeof d === 'string') { const p = d.split('/'); return p[0] ? p[0] : '—'; }
+  return d.y ? String(d.y) : '—';
+};
+const jfull = d => {
+  if (!d) return '—';
+  if (typeof d === 'string') return d.split('/').join('/');
+  return d.y ? [d.y, d.m, d.d].filter(Boolean).join('/') : '—';
+};
+const dateStr = d => {
+  if (!d) return '';
+  if (typeof d === 'string') return d;
+  return d.y ? [d.y, d.m, d.d].filter(Boolean).join('/') : '';
+};
 const isDead = m => m.isAlive === false;
 const lifeSpan = m => `${jy(m.birthDate)}${isDead(m) ? ' — ' + jy(m.deathDate) : ''}`;
 
@@ -509,12 +647,14 @@ function renderDeck() {
         </div>
         ${m.bio ? `<div class="deck-bio">${esc(m.bio)}</div>` : ''}
         <div class="deck-facts">
-          <div class="fact"><b>تولد</b><span>${jy(m.birthDate)}</span></div>
-          <div class="fact"><b>${isDead(m) ? 'فوت' : 'وضعیت'}</b><span>${isDead(m) ? jy(m.deathDate) : 'در قید حیات'}</span></div>
+          <div class="fact"><b>تولد</b><span>${jfull(m.birthDate)}</span></div>
+          <div class="fact"><b>${isDead(m) ? 'فوت' : 'وضعیت'}</b><span>${isDead(m) ? jfull(m.deathDate) : 'در قید حیات'}</span></div>
           <div class="fact"><b>زادگاه</b><span>${esc(m.birthplace || '—')}</span></div>
           <div class="fact"><b>آرامگاه</b><span>${esc(m.grave || '—')}</span></div>
         </div>
       </div>
+
+      <button class="deck-edit" id="deckEdit">✏️ ویرایش این عضو</button>
 
       <div class="dtabs" id="dtabs">
         <button data-t="info" class="${deckTab === 'info' ? 'on' : ''}">اطلاعات</button>
@@ -546,6 +686,8 @@ function renderDeck() {
       </div>
     </div>`;
 
+  const de = host.querySelector('#deckEdit');
+  if (de) de.onclick = () => openEditor(focusId);
   host.querySelectorAll('.rel-chip').forEach(b =>
     b.addEventListener('click', () => select(b.dataset.id)));
   host.querySelectorAll('#dtabs button').forEach(b =>
@@ -558,13 +700,13 @@ function renderDeck() {
 
 function buildTimeline(m) {
   const ev = [];
-  if (m.birthDate && m.birthDate.y) ev.push({ t: 'تولد', s: `${jy(m.birthDate)} · ${m.birthplace || '—'}`, c: '' });
+  if (yearOf(m.birthDate)) ev.push({ t: 'تولد', s: `${jfull(m.birthDate)} · ${m.birthplace || '—'}`, c: '' });
   (m.spouses || []).filter(x => M[x]).forEach(sid =>
     ev.push({ t: `ازدواج با ${M[sid].name}`, s: 'همسر', c: 'gold' }));
   (m.children || []).filter(x => M[x]).forEach(cid =>
     ev.push({ t: `تولد فرزند: ${M[cid].name}`, s: jy(M[cid].birthDate), c: 'muted' }));
   if (m.job) ev.push({ t: `شغل: ${m.job}`, s: 'حرفه', c: 'muted' });
-  if (isDead(m)) ev.push({ t: 'فوت', s: `${jy(m.deathDate)}${m.grave ? ' · ' + m.grave : ''}`, c: 'muted' });
+  if (isDead(m)) ev.push({ t: 'فوت', s: `${jfull(m.deathDate)}${m.grave ? ' · ' + m.grave : ''}`, c: 'muted' });
   if (!ev.length) return '<div class="rel-empty">رویدادی ثبت نشده است.</div>';
   return ev.map(e => `
     <div class="tl-item">
@@ -592,7 +734,7 @@ function renderTable() {
 
   list.sort((a, b) => {
     if (sortBy === 'name') return (M[a].name || '').localeCompare(M[b].name || '', 'fa');
-    if (sortBy === 'age') return ((M[a].birthDate && M[a].birthDate.y) || 9999) - ((M[b].birthDate && M[b].birthDate.y) || 9999);
+    if (sortBy === 'age') return (yearOf(M[a].birthDate) || 9999) - (yearOf(M[b].birthDate) || 9999);
     if (sortBy === 'kids') return (M[b].children || []).length - (M[a].children || []).length;
     return depth[a] - depth[b] || (M[a].name || '').localeCompare(M[b].name || '', 'fa');
   });
@@ -732,8 +874,8 @@ function openSheet(id) {
       <button class="sheet-x" id="sheetX">✕</button>
     </div>
     <div class="kv">
-      <div><b>تولد</b><span>${jy(m.birthDate)}</span></div>
-      <div><b>${isDead(m) ? 'فوت' : 'وضعیت'}</b><span>${isDead(m) ? jy(m.deathDate) : 'زنده'}</span></div>
+      <div><b>تولد</b><span>${jfull(m.birthDate)}</span></div>
+      <div><b>${isDead(m) ? 'فوت' : 'وضعیت'}</b><span>${isDead(m) ? jfull(m.deathDate) : 'زنده'}</span></div>
       <div><b>شغل</b><span>${esc(m.job || '—')}</span></div>
       <div><b>زادگاه</b><span>${esc(m.birthplace || '—')}</span></div>
     </div>
@@ -743,6 +885,7 @@ function openSheet(id) {
       ${children.length ? `<span class="pill">👶 ${children.length} فرزند</span>` : ''}
     </div>
     <div class="sheet-actions">
+      <button id="sheetEdit">✏️ ویرایش</button>
       <button id="sheetDeck" class="primary">پروندهٔ کامل</button>
       <button id="sheetCenter">مرکز نقشه</button>
     </div>`;
@@ -750,6 +893,7 @@ function openSheet(id) {
   document.getElementById('scrim').classList.add('on');
   document.getElementById('sheet').classList.add('on');
   document.getElementById('sheetX').onclick = closeSheet;
+  document.getElementById('sheetEdit').onclick = () => { closeSheet(); openEditor(id); };
   document.getElementById('sheetDeck').onclick = () => { closeSheet(); focusId = id; go('deck'); };
   document.getElementById('sheetCenter').onclick = () => { closeSheet(); focusId = id; go('radial'); };
 }
@@ -834,6 +978,334 @@ document.addEventListener('click', e => {
     go(cur);
   }
 });
+
+
+/* ==================================================================
+   WRITE LAYER — safe save with automatic backup
+   ================================================================== */
+const LS_BACKUP = 'emarat_family_lab_backup';
+
+function readRawTree() {
+  try {
+    const raw = localStorage.getItem(LS_TREE);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? Object.fromEntries(parsed.filter(Boolean).map(m => [m.id, m]))
+      : parsed;
+  } catch (e) { return {}; }
+}
+
+/* snapshot before every write so nothing is ever lost */
+function snapshot(label) {
+  try {
+    const raw = localStorage.getItem(LS_TREE) || '';
+    if (!raw) return;
+    const rec = { at: new Date().toISOString(), label, bytes: raw.length, data: raw };
+    let list = [];
+    try { list = JSON.parse(localStorage.getItem(LS_BACKUP) || '[]'); } catch (e) { list = []; }
+    list.unshift(rec);
+    localStorage.setItem(LS_BACKUP, JSON.stringify(list.slice(0, 8)));
+  } catch (e) { console.warn('snapshot failed', e); }
+}
+
+function persistTree(obj) {
+  snapshot('auto');
+  localStorage.setItem(LS_TREE, JSON.stringify(obj));
+  if (window.EmaratCloudSync && typeof window.EmaratCloudSync.push === 'function') {
+    try { window.EmaratCloudSync.push(); } catch (e) {}
+  }
+}
+
+function nextId() {
+  return 'mem_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+}
+
+/* ==================================================================
+   EDITOR
+   ================================================================== */
+let editingId = null;
+let formPhoto = '';
+
+function nameOptions(excludeId) {
+  return ids.filter(id => id !== excludeId)
+    .sort((a, b) => (M[a].name || '').localeCompare(M[b].name || '', 'fa'))
+    .map(id => `<option value="${esc(id)}">${esc(M[id].name)}</option>`).join('');
+}
+
+function relEditor(kind, label, list, excludeId) {
+  return `
+    <div class="sec-title">${label}</div>
+    <div class="rel-edit" id="relEdit-${kind}">
+      ${list.length ? list.map(id => `
+        <span class="rel-tag">${esc(M[id].name)}
+          <button data-rel="${kind}" data-id="${esc(id)}" title="حذف">✕</button>
+        </span>`).join('') : '<span style="font-size:10.5px;color:var(--text3)">هیچ‌کس ثبت نشده</span>'}
+    </div>
+    <div class="rel-add">
+      <select id="relSel-${kind}"><option value="">— انتخاب کنید —</option>${nameOptions(excludeId)}</select>
+      <button data-addrel="${kind}">افزودن</button>
+    </div>`;
+}
+
+function openEditor(id) {
+  editingId = id || null;
+  const m = id ? M[id] : null;
+  formPhoto = m ? (m.photoData || '') : '';
+
+  const draft = m || {
+    name: '', gender: 'male', job: '', relation: '', birthplace: '',
+    isAlive: true, birthDate: '', deathDate: '', location: '', grave: '',
+    isMarried: false, bio: ''
+  };
+  const isDeadNow = draft.isAlive === false;
+
+  document.getElementById('edTitle').textContent = id ? 'ویرایش عضو' : 'افزودن عضو جدید';
+
+  document.getElementById('edBody').innerHTML = `
+    <div class="fld">
+      <label>نام و نام خانوادگی *</label>
+      <input id="f-name" value="${esc(draft.name)}" placeholder="مثلاً علی رضایی">
+    </div>
+
+    <div class="fld-row">
+      <div class="fld">
+        <label>جنسیت</label>
+        <div class="seg2" id="f-gender">
+          <button data-g="male" class="${draft.gender !== 'female' ? 'on' : ''}">مرد</button>
+          <button data-g="female" class="${draft.gender === 'female' ? 'on' : ''}">زن</button>
+        </div>
+      </div>
+      <div class="fld">
+        <label>وضعیت</label>
+        <div class="seg2" id="f-alive">
+          <button data-a="1" class="${!isDeadNow ? 'on' : ''}">زنده</button>
+          <button data-a="0" class="${isDeadNow ? 'on' : ''}">مرحوم</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fld-row">
+      <div class="fld"><label>شغل</label><input id="f-job" value="${esc(draft.job || '')}" placeholder="کشاورز"></div>
+      <div class="fld"><label>نسبت</label><input id="f-relation" value="${esc(draft.relation || '')}" placeholder="پدر"></div>
+    </div>
+
+    <div class="fld">
+      <label>زادگاه</label>
+      <input id="f-birthplace" value="${esc(draft.birthplace || '')}" placeholder="گلبهار">
+    </div>
+
+    <div class="fld">
+      <label>تاریخ تولد (شمسی) — سال/ماه/روز</label>
+      <input id="f-birth" value="${esc(dateStr(draft.birthDate))}" placeholder="1352/2/18" inputmode="numeric">
+    </div>
+
+    <div id="deathWrap" style="display:${isDeadNow ? 'block' : 'none'}">
+      <div class="fld">
+        <label>تاریخ فوت (شمسی)</label>
+        <input id="f-death" value="${esc(dateStr(draft.deathDate))}" placeholder="1400/5/2" inputmode="numeric">
+      </div>
+      <div class="fld">
+        <label>آرامگاه</label>
+        <input id="f-grave" value="${esc(draft.grave || '')}" placeholder="گلبهار">
+      </div>
+    </div>
+
+    <div id="locWrap" style="display:${isDeadNow ? 'none' : 'block'}">
+      <div class="fld">
+        <label>محل سکونت</label>
+        <input id="f-location" value="${esc(draft.location || '')}" placeholder="مشهد">
+      </div>
+    </div>
+
+    <div class="fld">
+      <label>زندگی‌نامه / یادداشت</label>
+      <textarea id="f-bio" placeholder="هرچه می‌خواهید دربارهٔ این نفر بماند…">${esc(draft.bio || '')}</textarea>
+    </div>
+
+    <div class="sec-title">عکس</div>
+    <label class="photo-pick">
+      <span id="f-photo-preview">${formPhoto ? `<div class="av"><img src="${esc(formPhoto)}" alt=""></div>` : avatar(draft)}</span>
+      <div>
+        <b>${formPhoto ? 'تغییر عکس' : 'انتخاب عکس'}</b>
+        <small>اختیاری · روی گوشی از گالری</small>
+      </div>
+      <input type="file" id="f-photo" accept="image/*" style="display:none">
+    </label>
+    ${formPhoto ? '<button class="del-btn" id="f-photo-del" style="margin-top:7px;font-size:11px;padding:8px">حذف عکس</button>' : ''}
+
+    ${id ? `
+      <div class="sec-title">خویشاوندان</div>
+      ${relEditor('parents', 'والدین', (m.parents || []).filter(x => M[x]), id)}
+      ${relEditor('spouses', 'همسر', (m.spouses || []).filter(x => M[x]), id)}
+      ${relEditor('children', 'فرزندان', (m.children || []).filter(x => M[x]), id)}
+    ` : '<div class="save-hint">پس از ذخیره می‌توانید والدین، همسر و فرزندان را اضافه کنید.</div>'}
+
+    ${id ? `
+      <div class="danger-zone">
+        <button class="del-btn" id="f-del">🗑️ حذف این عضو</button>
+      </div>` : ''}
+
+    <div class="save-hint">
+      پیش از هر ذخیره، یک نسخهٔ پشتیبان خودکار در همین مرورگر نگه داشته می‌شود.
+    </div>`;
+
+  /* --- gender / alive toggles --- */
+  let gender = draft.gender === 'female' ? 'female' : 'male';
+  document.querySelectorAll('#f-gender button').forEach(b => b.onclick = () => {
+    gender = b.dataset.g;
+    document.querySelectorAll('#f-gender button').forEach(x => x.classList.toggle('on', x === b));
+  });
+
+  let alive = !isDeadNow;
+  document.querySelectorAll('#f-alive button').forEach(b => b.onclick = () => {
+    alive = b.dataset.a === '1';
+    document.querySelectorAll('#f-alive button').forEach(x => x.classList.toggle('on', x === b));
+    document.getElementById('deathWrap').style.display = alive ? 'none' : 'block';
+    document.getElementById('locWrap').style.display = alive ? 'block' : 'none';
+  });
+
+  /* --- photo --- */
+  const photoInput = document.getElementById('f-photo');
+  photoInput.onchange = e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (f.size > 2.5 * 1024 * 1024) { toast('⚠️ عکس بزرگ‌تر از ۲.۵ مگابایت است'); e.target.value = ''; return; }
+    const r = new FileReader();
+    r.onload = () => {
+      formPhoto = r.result;
+      document.getElementById('f-photo-preview').innerHTML = `<div class="av"><img src="${formPhoto}" alt=""></div>`;
+      toast('✅ عکس انتخاب شد');
+    };
+    r.readAsDataURL(f);
+  };
+  const pd = document.getElementById('f-photo-del');
+  if (pd) pd.onclick = () => {
+    formPhoto = '';
+    document.getElementById('f-photo-preview').innerHTML = avatar(draft);
+    toast('عکس حذف شد (با ذخیره اعمال می‌شود)');
+  };
+
+  /* --- relation add/remove --- */
+  document.querySelectorAll('[data-addrel]').forEach(btn => btn.onclick = () => {
+    const kind = btn.dataset.addrel;
+    const sel = document.getElementById('relSel-' + kind);
+    const target = sel.value;
+    if (!target) { toast('یک نفر را انتخاب کنید'); return; }
+    if (kind === 'spouses') { m.spouses = m.spouses || []; if (!m.spouses.includes(target)) m.spouses.push(target); M[target].spouses = M[target].spouses || []; if (!M[target].spouses.includes(id)) M[target].spouses.push(id); }
+    if (kind === 'children') { m.children = m.children || []; if (!m.children.includes(target)) m.children.push(target); M[target].parents = M[target].parents || []; if (!M[target].parents.includes(id)) M[target].parents.push(id); }
+    if (kind === 'parents') { m.parents = m.parents || []; if (!m.parents.includes(target)) m.parents.push(target); M[target].children = M[target].children || []; if (!M[target].children.includes(id)) M[target].children.push(id); }
+    persistTree(M);
+    openEditor(id);
+    toast('✅ اضافه شد');
+  });
+  document.querySelectorAll('[data-rel]').forEach(btn => btn.onclick = () => {
+    const kind = btn.dataset.rel, target = btn.dataset.id;
+    if (kind === 'spouses') { m.spouses = (m.spouses || []).filter(x => x !== target); M[target].spouses = (M[target].spouses || []).filter(x => x !== id); }
+    if (kind === 'children') { m.children = (m.children || []).filter(x => x !== target); M[target].parents = (M[target].parents || []).filter(x => x !== id); }
+    if (kind === 'parents') { m.parents = (m.parents || []).filter(x => x !== target); M[target].children = (M[target].children || []).filter(x => x !== id); }
+    persistTree(M);
+    openEditor(id);
+    toast('حذف شد');
+  });
+
+  /* --- delete member (two-step) --- */
+  const delBtn = document.getElementById('f-del');
+  if (delBtn) {
+    let armed = false;
+    delBtn.onclick = () => {
+      if (!armed) {
+        armed = true;
+        delBtn.classList.add('armed');
+        delBtn.textContent = '⚠️ مطمئنی؟ دوباره بزن';
+        setTimeout(() => {
+          if (!armed) return;
+          armed = false;
+          delBtn.classList.remove('armed');
+          delBtn.textContent = '🗑️ حذف این عضو';
+        }, 4000);
+        return;
+      }
+      const raw = readRawTree();
+      delete raw[id];
+      Object.values(raw).forEach(x => {
+        ['parents', 'spouses', 'children'].forEach(k => {
+          if (Array.isArray(x[k])) x[k] = x[k].filter(y => y !== id);
+        });
+      });
+      persistTree(raw);
+      closeEditor();
+      loadData();
+      focusId = ids[0] || null;
+      go(cur);
+      toast('🗑️ عضو حذف شد');
+    };
+  }
+
+  document.getElementById('edScrim').classList.add('on');
+  document.getElementById('ed').classList.add('on');
+  document.getElementById('edBody').scrollTop = 0;
+}
+
+function closeEditor() {
+  document.getElementById('edScrim').classList.remove('on');
+  document.getElementById('ed').classList.remove('on');
+  editingId = null;
+}
+
+function saveEditor() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { toast('⚠️ نام را وارد کنید'); document.getElementById('f-name').focus(); return; }
+
+  const gender = document.querySelector('#f-gender button.on').dataset.g;
+  const alive = document.querySelector('#f-alive button.on').dataset.a === '1';
+  const birthDate = document.getElementById('f-birth').value.trim();
+  const deathDate = alive ? '' : (document.getElementById('f-death') || {}).value?.trim() || '';
+  const grave = alive ? '' : (document.getElementById('f-grave') || {}).value?.trim() || '';
+  const location = alive ? (document.getElementById('f-location') || {}).value?.trim() || '' : '';
+
+  const raw = readRawTree();
+
+  if (editingId && raw[editingId]) {
+    const m = raw[editingId];
+    Object.assign(m, {
+      name, gender, isAlive: alive, birthDate, deathDate, grave, location,
+      job: document.getElementById('f-job').value.trim(),
+      relation: document.getElementById('f-relation').value.trim(),
+      birthplace: document.getElementById('f-birthplace').value.trim(),
+      bio: document.getElementById('f-bio').value.trim(),
+      hasPhoto: !!formPhoto, photoData: formPhoto
+    });
+  } else {
+    const nid = nextId();
+    raw[nid] = {
+      id: nid, name, gender, hasPhoto: !!formPhoto, photoData: formPhoto,
+      job: document.getElementById('f-job').value.trim(),
+      relation: document.getElementById('f-relation').value.trim(),
+      birthplace: document.getElementById('f-birthplace').value.trim(),
+      isAlive: alive, birthDate, deathDate, location, grave,
+      isMarried: false, spousesCount: 1, childrenCount: 0,
+      bio: document.getElementById('f-bio').value.trim(),
+      parents: [], spouses: [], children: [],
+      maternalGrandparents: [], paternalGrandparents: []
+    };
+    editingId = nid;
+  }
+
+  const keepFocus = editingId;
+  persistTree(raw);
+  closeEditor();
+  loadData();
+  focusId = keepFocus && M[keepFocus] ? keepFocus : (ids[0] || null);
+  go(cur);
+  toast('✅ ذخیره شد');
+}
+
+document.getElementById('fabAdd').onclick = () => openEditor(null);
+document.getElementById('edClose').onclick = closeEditor;
+document.getElementById('edScrim').onclick = closeEditor;
+document.getElementById('edSave').onclick = saveEditor;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEditor(); });
 
 loadData();
 updateChip();
