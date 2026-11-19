@@ -88,6 +88,54 @@
             opacity: 0.92;
         }
 
+        /* ---------- آیکون‌های تصویری اختصاصی (assets/aNN.png) ---------- */
+        .ico {
+            width: 1.15em;
+            height: 1.15em;
+            display: inline-block;
+            vertical-align: -0.22em;
+            object-fit: contain;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+        .ico-lg { width: 1.6em; height: 1.6em; vertical-align: -0.35em; }
+        .ico-sm { width: 0.95em; height: 0.95em; vertical-align: -0.14em; }
+        .page-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 2px;
+        }
+        .page-brand img {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.45), 0 0 0 1px rgba(163,181,68,0.3);
+        }
+        .stat-label .ico { margin-inline-end: 2px; }
+
+        .empty-state {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 10px 16px;
+            text-align: center;
+        }
+        .empty-banner {
+            width: 100%;
+            max-width: 320px;
+            border-radius: 14px;
+            display: block;
+            border: 1px solid rgba(163,181,68,0.25);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        }
+        .empty-title { font-size: 0.88rem; font-weight: bold; color: #c9d95c; }
+        .empty-hint { font-size: 0.72rem; color: #9fb178; }
+
         .stats-dropdown {
             margin: 10px 0 15px 0;
             border-radius: 16px;
@@ -406,24 +454,27 @@
 
 <div id="mainPage" class="page active-page">
     <div class="container">
-        <h1>🌾 سهم غبهار</h1>
+        <div class="page-brand">
+            <img src="icon-192.png" alt="">
+            <h1>🌾 سهم غبهار</h1>
+        </div>
         <div class="brand-sub">کشت وصنعت بهاران گلبهار خراسان</div>
 
         <div class="stats-dropdown">
             <div class="stats-header" onclick="toggleStatsMenu()">
-                <span>📈 آمار و میانگین‌های سود</span>
+                <span><img src="assets/a02.png" alt="" class="ico"> آمار و میانگین‌های سود</span>
                 <span class="arrow" id="statsArrow">▼</span>
             </div>
             <div class="stats-content" id="statsContent">
                 <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-value" id="statTotalProfit">0%</div><div class="stat-label">💰 سود کل</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statTotalProfit">0%</div><div class="stat-label"><img src="assets/a05.png" alt="" class="ico-sm"> سود کل</div></div>
                     <div class="stat-card"><div class="stat-value" id="statAvgDaily">0%</div><div class="stat-label">📅 میانگین روزانه</div></div>
                     <div class="stat-card"><div class="stat-value" id="statAvgWeekly">0%</div><div class="stat-label">📆 میانگین هفتگی</div></div>
                     <div class="stat-card"><div class="stat-value" id="statAvgMonthly">0%</div><div class="stat-label">🗓️ میانگین ماهانه</div></div>
-                    <div class="stat-card"><div class="stat-value" id="statBestTrade">0%</div><div class="stat-label">🏆 بهترین معامله</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statBestTrade">0%</div><div class="stat-label"><img src="assets/a07.png" alt="" class="ico-sm"> بهترین معامله</div></div>
                     <div class="stat-card"><div class="stat-value" id="statWorstTrade">0%</div><div class="stat-label">💔 بدترین معامله</div></div>
                     <div class="stat-card"><div class="stat-value" id="statDaysCount">0</div><div class="stat-label">⏱️ روزهای معاملاتی</div></div>
-                    <div class="stat-card"><div class="stat-value" id="statTradesCount">0</div><div class="stat-label">💹 تعداد معاملات</div></div>
+                    <div class="stat-card"><div class="stat-value" id="statTradesCount">0</div><div class="stat-label"><img src="assets/a06.png" alt="" class="ico-sm"> تعداد معاملات</div></div>
                 </div>
             </div>
         </div>
@@ -450,10 +501,10 @@
             <button onclick="showPage('chartPage')">📈 نمودار مرکب</button>
             <button onclick="toggleTrash()">🗑️ سطل زباله</button>
             <button onclick="toggleAchievedPeriods()">🏆 دوره‌های سود</button>
-            <button onclick="backupData()">💾 ذخیره فایل</button>
+            <button onclick="backupData()"><img src="assets/a12.png" alt="" class="ico-sm"> ذخیره فایل</button>
             <button onclick="exportToCSV()">📊 خروجی CSV</button>
             <button onclick="document.getElementById('fileInput').click()">📤 بازیابی فایل</button>
-            <button onclick="openGithubSettings()" style="grid-column: span 2; background-color: #1b2410; color: white;">⚙️ تنظیمات گیت‌هاب</button>
+            <button onclick="openGithubSettings()" style="grid-column: span 2; background-color: #1b2410; color: white;"><img src="assets/a12.png" alt="" class="ico-sm"> تنظیمات گیت‌هاب</button>
         </div>
 
         <!-- GitHub Settings Modal -->
@@ -499,7 +550,7 @@
                 </div>
 
                 <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button onclick="saveGithubSettings()" style="flex:1; background-color:#7fa336; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;">ذخیره</button>
+                    <button onclick="saveGithubSettings()" style="flex:1; background-color:#5f7d24; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;">ذخیره</button>
                     <button onclick="closeGithubSettings()" style="flex:1; background-color:#64748b; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold;">انصراف</button>
                 </div>
             </div>
@@ -913,6 +964,14 @@
         function renderPercentList() {
             const list = document.getElementById('percentList');
             const formatter = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' });
+            if (!percents.length) {
+                list.innerHTML = `<li class="empty-state">
+                    <img src="assets/b01.webp" alt="" class="empty-banner" loading="lazy" decoding="async">
+                    <div class="empty-title">هنوز درصدی ثبت نشده</div>
+                    <div class="empty-hint">اولین درصد را از کادر پایین اضافه کنید</div>
+                </li>`;
+                return;
+            }
             list.innerHTML = percents.map((item, idx) => `
                 <li class="percent-item ${highlightedStates[idx] ? 'highlighted-persist' : ''}" onclick="toggleHighlight(${idx})">
                     <span class="${item.value>=0 ? 'positive' : 'negative'}">${item.value.toFixed(2)}%${item.source === 'automation' ? ' 🤖' : ''}</span>

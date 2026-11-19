@@ -22,6 +22,7 @@ restricted/android/app/build/
 !**/icon-*.png
 !**/apple-touch-icon.png
 !restricted/android/app/src/main/res/mipmap-*/ic_launcher*.png
+!gold9/assets/*.png
 *.log
 login_page.png
 credentials_filled.png
