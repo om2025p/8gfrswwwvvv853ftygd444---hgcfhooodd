@@ -23,6 +23,8 @@ restricted/android/app/build/
 !**/apple-touch-icon.png
 !restricted/android/app/src/main/res/mipmap-*/ic_launcher*.png
 !gold9/assets/*.png
+# تصویر مدرک گزارش‌های پایان کار (مستندات، نه اسکرین‌شات دیباگ)
+!docs/reports/*.png
 *.log
 login_page.png
 credentials_filled.png

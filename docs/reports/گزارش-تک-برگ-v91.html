@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>گزارش تک‌برگ — رفع گیر اسکرول</title>
+<style>
+@page { size: A4; margin: 9mm 9mm 8mm 9mm; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Vazirmatn', sans-serif;
+  font-size: 11.76pt;
+  line-height: 1.62;
+  color: #1e293b;
+  direction: rtl;
+}
+
+/* ---------- سربرگ ---------- */
+.hd {
+  background: linear-gradient(120deg, #0f172a 0%, #1e293b 60%, #0b1220 100%);
+  color: #fff;
+  border-radius: 2.5mm;
+  padding: 5mm 6mm;
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+  margin-bottom: 3.5mm;
+}
+.hd .l { flex: 1; }
+.hd .badge {
+  display: inline-block;
+  font-size: 9.29pt;
+  font-weight: 700;
+  background: rgba(245,158,11,.2);
+  border: 1px solid rgba(245,158,11,.6);
+  color: #fbbf24;
+  padding: .7mm 2.5mm;
+  border-radius: 99px;
+  margin-bottom: 1.5mm;
+  letter-spacing: .3px;
+}
+.hd h1 { font-size: 21.67pt; font-weight: 800; line-height: 1.3; }
+.hd .sub { font-size: 12.38pt; color: #94a3b8; margin-top: .8mm; }
+.hd .meta {
+  font-size: 9.91pt;
+  color: #cbd5e1;
+  line-height: 1.85;
+  border-right: 1px solid rgba(255,255,255,.18);
+  padding-right: 4mm;
+  min-width: 46mm;
+}
+.hd .meta b { color: #fbbf24; }
+
+/* ---------- KPI ---------- */
+.kpis { display: flex; gap: 2mm; margin-bottom: 3mm; }
+.kpi {
+  flex: 1;
+  border: 1px solid #e2e8f0;
+  border-top: 2.5px solid #10b981;
+  border-radius: 1.8mm;
+  padding: 2mm 1mm;
+  text-align: center;
+  background: #f8fafc;
+}
+.kpi .v { font-size: 18.57pt; font-weight: 800; color: #047857; line-height: 1.1; direction: ltr; }
+.kpi .l { font-size: 9.29pt; color: #475569; margin-top: .6mm; font-weight: 600; }
+
+/* ---------- عنوان بخش ---------- */
+h2 {
+  font-size: 12.69pt;
+  font-weight: 800;
+  color: #0f172a;
+  border-right: 3px solid #f59e0b;
+  padding-right: 2mm;
+  margin: 3mm 0 1.6mm;
+}
+h2:first-of-type { margin-top: 0; }
+
+/* ---------- جدول ---------- */
+table { width: 100%; border-collapse: collapse; font-size: 10.68pt; margin-bottom: 1.5mm; }
+th {
+  background: #0f172a; color: #fff; font-weight: 700;
+  padding: 1.2mm 1.6mm; text-align: right; border: 1px solid #334155;
+}
+td { padding: 1.1mm 1.6mm; border: 1px solid #e2e8f0; vertical-align: middle; }
+tbody tr:nth-child(even) { background: #f8fafc; }
+td.n { font-variant-numeric: tabular-nums; font-weight: 700; direction: ltr; text-align: center; }
+td.ok { color: #047857; font-weight: 700; text-align: center; }
+td.bad { color: #b91c1c; font-weight: 700; text-align: center; }
+
+/* ---------- دو ستون ---------- */
+.cols { display: flex; gap: 3mm; }
+.cols > div { flex: 1; min-width: 0; }
+
+/* ---------- لیست ریشه‌ها ---------- */
+.root {
+  border: 1px solid #e2e8f0;
+  border-right: 2.5px solid #ef4444;
+  border-radius: 1.5mm;
+  padding: 1.4mm 2mm;
+  margin-bottom: 1.4mm;
+  background: #fff;
+}
+.root .t { font-weight: 800; font-size: 10.83pt; color: #b91c1c; display: block; }
+.root .d { font-size: 10.06pt; color: #475569; }
+
+/* ---------- کارت نتیجه ---------- */
+.box {
+  border-radius: 1.8mm;
+  padding: 2mm 2.5mm;
+  font-size: 10.37pt;
+  line-height: 1.55;
+}
+.box.g { background: #ecfdf5; border: 1px solid #10b981; color: #065f46; }
+.box.g b { color: #047857; }
+.box.y { background: #fffbeb; border: 1px solid #f59e0b; color: #78350f; }
+.box.y b { color: #b45309; }
+
+code {
+  font-family: 'DejaVu Sans Mono', monospace;
+  font-size: 9.59pt;
+  background: #f1f5f9;
+  color: #b91c1c;
+  padding: .1mm 1mm;
+  border-radius: .8mm;
+  direction: ltr;
+  display: inline-block;
+}
+
+/* ---------- چک‌لیست ---------- */
+.chk { list-style: none; font-size: 10.37pt; }
+.chk li { padding: .5mm 0; }
+.chk li::before { content: '✓ '; color: #047857; font-weight: 800; }
+
+/* ---------- پانویس ---------- */
+.ft {
+  margin-top: 2.5mm;
+  padding-top: 1.5mm;
+  border-top: 1px dashed #cbd5e1;
+  font-size: 9.13pt;
+  color: #94a3b8;
+  display: flex;
+  justify-content: space-between;
+}
+</style>
+</head>
+<body>
+
+<!-- ============ سربرگ ============ -->
+<div class="hd">
+  <div class="l">
+    <div class="badge">📄 گزارش تک‌برگ پایان کار</div>
+    <h1>رفع گیر اسکرول در «دیدبان درصدها» و «رد پای من»</h1>
+    <div class="sub">چهار ریشهٔ مستقل شناسایی، اثبات و رفع شد — با اندازه‌گیری واقعی، نه حدس</div>
+  </div>
+  <div class="meta">
+    <div><b>کامیت:</b> 830bf66</div>
+    <div><b>شاخه‌ها:</b> main · Y-1 · Y-3</div>
+    <div><b>نسخهٔ کش:</b> emarat-portal-v91</div>
+    <div><b>تاریخ:</b> ۱۹ نوامبر ۲۰۲۶</div>
+  </div>
+</div>
+
+<!-- ============ KPI ============ -->
+<div class="kpis">
+  <div class="kpi"><div class="v">۲٫۷۶×</div><div class="l">دیدبان: ۳۱۶→۱۱۵ ms</div></div>
+  <div class="kpi"><div class="v">۵٫۵×</div><div class="l">محاسبهٔ استایل: ۱۰۰→۱۸ ms</div></div>
+  <div class="kpi"><div class="v">۱٫۸۵×</div><div class="l">رد پای من: ۶۴→۳۵ ms</div></div>
+  <div class="kpi"><div class="v">۰</div><div class="l">خطای JS در ۷۲ صفحه</div></div>
+</div>
+
+<!-- ============ مدرک اصلی ============ -->
+<h2>🎯 مدرک اصلی — فروپاشی نوسان (سه دور A/B متقاطع)</h2>
+
+<table>
+<thead>
+<tr><th style="width:14%">حالت</th><th style="width:20%">دور ۱</th><th style="width:20%">دور ۲</th><th style="width:20%">دور ۳</th><th style="width:26%">تفسیر</th></tr>
+</thead>
+<tbody>
+<tr>
+  <td><b>قبل</b></td>
+  <td class="n">۱۰۸٫۸ ms</td><td class="n bad">۴۴۰٫۵ ms</td><td class="n bad">۴۰۰٫۲ ms</td>
+  <td class="bad">نوسان ۴ برابری = «گیر»</td>
+</tr>
+<tr>
+  <td><b>بعد</b></td>
+  <td class="n">۱۱۱٫۵ ms</td><td class="n ok">۱۲۷٫۱ ms</td><td class="n ok">۱۰۵٫۸ ms</td>
+  <td class="ok">یکنواخت و قابل پیش‌بینی</td>
+</tr>
+</tbody>
+</table>
+
+<div class="box g" style="margin-bottom:2.5mm">
+  <b>چرا این سنجه تعیین‌کننده است:</b> کاربر نوسان را حس می‌کند، نه میانگین را. در حالت قبل بعضی اسکرول‌ها ۱۰۸ms و بعضی ۴۴۰ms بودند — همان «گاهی نرم، گاهی گیر». حالا هر سه دور در بازهٔ باریک ۱۰۶–۱۲۷ms هستند.
+</div>
+
+<!-- ============ ریشه‌ها ============ -->
+<h2>🔍 چهار ریشهٔ مستقل (هر کدام با کد قبل/بعد در سند کامل)</h2>
+
+<div class="cols">
+<div>
+  <div class="root">
+    <span class="t">۱ — تایمر ۳۰ ثانیه‌ای که کل صفحه را بازسازی می‌کرد</span>
+    <div class="d">
+      <code>setInterval(renderMonitor, 30000)</code> هر ۳۰ ثانیه <b>۲۳۰٫۲ms</b> رشتهٔ اصلی را قفل می‌کرد.
+      حالا فقط اگر تب دیده شود <b>و</b> امضای دادهٔ <code>localStorage</code> عوض شده باشد اجرا می‌شود.
+    </div>
+  </div>
+
+  <div class="root">
+    <span class="t">۲ — انیمیشن بی‌نهایت روی <code>box-shadow</code></span>
+    <div class="d">
+      <code>pulseGlowGold</code> هر فریم رنگ‌آمیزی مجدد می‌ساخت. سایه به <code>::after</code> منتقل شد و
+      فقط <code>opacity</code> انیمیت می‌شود (کامپوزیتور، بدون paint).
+    </div>
+  </div>
+</div>
+
+<div>
+  <div class="root">
+    <span class="t">۳ — <code>backdrop-filter</code> روی پس‌زمینهٔ کاملاً کدر</span>
+    <div class="d">
+      کارت <code>#000000</code> کدر بود، پس <code>blur(20px)</code> هیچ چیزی بلور نمی‌کرد —
+      فقط هزینهٔ ترکیب‌بندی داشت. حذف شد.
+    </div>
+  </div>
+
+  <div class="root">
+    <span class="t">۴ — <code>transform</code> روی ظرف ۲۲۸۷ پیکسلی</span>
+    <div class="d">
+      <code>fadeIn</code> با <code>translateY</code> کل بخش بلند را به لایهٔ ترکیب‌بندی دائمی ارتقا می‌داد.
+      حالا فقط <code>opacity</code> + <code>prefers-reduced-motion</code>.
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============ اعتبارسنجی ============ -->
+<h2>✅ اعتبارسنجی و مدرک تحویل</h2>
+
+<div class="cols">
+<div style="flex:1.15">
+<table>
+<thead><tr><th style="width:44%">فایل</th><th style="width:26%">هش محلی</th><th style="width:30%">هش زنده</th></tr></thead>
+<tbody>
+<tr><td><code>monitor/index.html</code></td><td class="n">7c5e37e4a4f9</td><td class="ok">یکسان ✓</td></tr>
+<tr><td><code>usage/index.html</code></td><td class="n">c213165ec9f5</td><td class="ok">یکسان ✓</td></tr>
+<tr><td><code>sw.js</code></td><td class="n">1023e46de951</td><td class="ok">یکسان ✓</td></tr>
+<tr><td><code>refresh-button.js</code></td><td class="n">27ae22f175f3</td><td class="ok">یکسان ✓</td></tr>
+</tbody>
+</table>
+<div style="font-size: 9.59pt;color:#64748b;margin-top:-.5mm">
+مقایسهٔ SHA-256 بایت‌به‌بایت بین نسخهٔ محلی و GitHub Pages
+</div>
+</div>
+
+<div style="flex:1">
+  <div class="box y" style="margin-bottom:1.5mm">
+    <b>صداقت اندازه‌گیری:</b> اندازه‌گیری تک‌دوره‌ای ۷۶ در برابر ۷۷ms داد و گمراه‌کننده بود.
+    هزینهٔ تایمر <b>تصادفی</b> است — فقط سه دور متقاطع آن را آشکار می‌کند.
+  </div>
+  <ul class="chk">
+    <li>OCR فارسی: متن کامل و روان خوانده شد</li>
+    <li>صفر محتوای بیرون‌زده از حاشیه</li>
+    <li>بازرس خودکار: ۷۲/۷۲ صفحه سالم</li>
+    <li>صفر خطای جاوااسکریپت در تست زنده</li>
+  </ul>
+</div>
+</div>
+
+<!-- ============ پانویس ============ -->
+<div class="ft">
+  <span>گزارش تک‌برگ · رفع گیر اسکرول · کامیت 830bf66 · نسخهٔ v91</span>
+  <span>سند کامل ۱۲ صفحه‌ای: docs/reports/</span>
+</div>
+
+</body>
+</html>
