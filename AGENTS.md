@@ -779,3 +779,91 @@ gradle test assembleRelease assembleDebug --no-daemon
 3. حذف آخرین درصد → `.empty-state` با بنر `b01.webp` و `naturalWidth > 0`.
 4. آفلاین واقعی: سرور را خاموش کن، رفرش کن → عنوان/زیرعنوان/۴ تب باید بیایند.
 5. کنتراست: بدترین حالت ≥ ۴.۵ (اینجا ۱۰.۲).
+
+---
+
+## 📥 قابلیت «ورود قیمت ابطال از فایل سایت» (price-import.js)
+
+### دامنهٔ پوشش
+فقط اپ‌هایی که **تب «ثبت ابطال»** دارند: `gold3`, `gold5`, `gold6`, `gold7`, `gold8`, `gold9`.
+`gold`, `gold2`, `gold4` این تب (و فایل `price.html`) را ندارند → این قابلیت هم ندارند.
+
+### قانون طلایی: کپی محض عدد
+عدد دقیقاً همان‌طور که در فایل اکسل است ذخیره می‌شود. **هیچ تقسیم، ضرب، تبدیل ریال↔تومان یا گرد کردن انجام نمی‌شود.**
+اگر مقیاس اعداد فایل با دادهٔ موجود خیلی فرق کند (بیش از ۸ برابر)، فقط یک **هشدار** نشان داده می‌شود و کاربر خودش تصمیم می‌گیرد.
+
+### تشخیص ستون قیمت (به ترتیب اولویت)
+1. ستونی که هم `قیمت` دارد هم `ابطال` → مثلاً `قیمت ابطال واحد ممتاز` در غبهار (`51938`)
+2. ستونی که هم `NAV` دارد هم `ابطال` → مثلاً `NAV ابطال` در دارونو/سیمان
+3. هر ستون `ابطال` که `ارزش|تعداد|بازدهی` نباشد
+- غلط تایپی رایج سایت `ابظال` (ظ به‌جای ط) هم پذیرفته می‌شود.
+- فایل‌هایی که فقط درصد بازدهی دارند (مثل `DailyAssetStructure.xlsx`) → پیام واضح و رد.
+
+### منطق ضدتکرار
+- کلید مقایسه: **تاریخ شمسی نرمال‌شده** (`YYYY.MM.DD`، صفر پیشرو اجباری).
+- ۴ وضعیت: `new` (🟢 بعد از آخرین تاریخ) / `duplicate` (🟡 همان تاریخ قبلاً ثبت شده) / `old` (🟠 قبل از آخرین تاریخ) / `invalid` (🔴 قیمت نامعتبر).
+- فقط `new`ها ثبت می‌شوند؛ هیچ رکوردی بازنویسی یا حذف نمی‌شود.
+- رکورد واردشده: `{id, date, timestamp, price, source:'excel-import'}`.
+- دکمهٔ ثبت وقتی `new === 0` باشد **غیرفعال** است.
+
+### خواندن فایل بدون CDN
+`JSZip` از `vendor/jszip/jszip.min.js` (همان نسخهٔ مخزن) — `xlsx` یک zip است و با `DOMParser` پارس می‌شود. هیچ وابستگی خارجی ندارد.
+مسیرها **نسبی** هستند: `../vendor/jszip/jszip.min.js` و `../price-import.js` (فایل در ریشهٔ مخزن است، مشترک بین همهٔ اپ‌ها).
+
+### تم‌دهی
+ماژول از CSS Variable استفاده می‌کند: `--pi-accent`, `--pi-accent-fg`, `--pi-border`, `--pi-head-bg`, `--pi-drop-bg`, `--pi-hot-bg`.
+هر اپ رنگ خودش را در `mount({accent, accentFg})` می‌دهد:
+
+| اپ | accent | accentFg |
+|---|---|---|
+| gold3 | `#60a5fa` | `#04203a` |
+| gold5 | `#47cfb1` | `#06251f` |
+| gold6 | `#3bc9b0` | `#0a2f28` |
+| gold7 | `#a78bfa` | `#1b1035` |
+| gold8 | `#14b8a6` | `#032726` |
+| gold9 | `#a3b544` | `#1b2410` |
+
+### نحوهٔ mount در هر price.html
+```html
+<script src="../vendor/jszip/jszip.min.js"></script>
+<script src="../price-import.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  window.EmaratPriceImport.mount({
+    container: document.querySelector('.container'),
+    storageKey: STORAGE_PRICES,
+    getPrices: function () { return getPrices(); },
+    savePrices: function (list) { savePrices(list); },
+    accent: '...', accentFg: '...'
+  });
+});
+</script>
+```
+کارت با `container.appendChild` به **انتهای** `.container` اضافه می‌شود و پیش‌فرض **بسته** است.
+
+### API عمومی
+`window.EmaratPriceImport.mount(opts)` + `window.EmaratPriceImport._internal` برای تست:
+`normDate`, `parseNumber`, `detectColumns`, `extractRows`, `classify`, `unitMismatch`, `readWorkbook`, `lastSavedDate`.
+
+### همگام‌سازی اندروید
+assets وب‌اپ اندروید (`fund-automation-android/app/src/main/assets/webapp/`) فقط `gold4` و `gold5` را دارد.
+پس فقط این‌ها لازم است همگام بمانند:
+- `price-import.js`
+- `vendor/jszip/jszip.min.js`
+- `gold5/price.html`
+
+### چک‌لیست پس از تغییر
+1. `grep -c "price-import.js" <app>/price.html` باید ۱ باشد در ۶ اپ.
+2. `grep -rnE '<(link|script)[^>]*(href|src)="https?://' --include=*.html .` → صفر.
+3. `CACHE_NAME` در `sw.js` بامپ شود (الان `emarat-portal-v87`).
+4. تست واقعی با Puppeteer/Chromium روی `file://` یا سرور محلی: آپلود فایل نمونه → پیش‌نمایش درست → ثبت → آپلود دوباره → همه 🟡 و دکمه غیرفعال.
+
+### نتایج تست واقعی (۶ اپ)
+| اپ | ستون تشخیص‌داده‌شده | ردیف جدید | آخرین قیمت |
+|---|---|---|---|
+| gold3 | `NAV ابطال` | ۱۱ | ۱۲٬۹۷۱ |
+| gold5 | `NAV ابطال` | ۱۱ | ۱۲٬۹۷۱ |
+| gold6 | `NAV ابطال` | ۱۱ | ۱۲٬۹۷۱ |
+| gold7 | `NAV ابطال` | ۱۱ | ۱۲٬۹۷۱ |
+| gold8 | `NAV ابطال` | ۱۱ | ۱۲٬۹۷۱ |
+| gold9 | `قیمت ابطال واحد ممتاز` | ۱۱ | ۵۱٬۹۳۸ |
