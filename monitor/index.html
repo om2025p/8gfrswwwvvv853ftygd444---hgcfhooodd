@@ -253,16 +253,23 @@
             padding: 0 15px 30px;
             box-sizing: border-box;
             display: none;
-            animation: fadeIn 0.4s ease forwards;
         }
 
+        /* بخش فعال یک ظرف بسیار بلند (~۲۳۰۰px) است. انیمیت کردن transform
+           روی آن کل ظرف را به یک لایهٔ ترکیب‌بندی دائمی تبدیل می‌کرد و اسکرول
+           را کند می‌ساخت؛ فقط opacity کافی است. */
         .content-section.active {
             display: block;
+            animation: fadeIn 0.3s ease;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .content-section.active { animation: none; }
         }
 
         /* کارت‌ها */
@@ -603,8 +610,9 @@
 
         /* ===== کادر مشکی اولد خالص با حاشیه طلایی درخشان (دیزاین ۵-B) ===== */
         .ai-glass-card {
+            /* پس‌زمینه کاملاً کدر است، پس backdrop-filter هیچ چیزی برای بلور کردن
+               ندارد و فقط هزینهٔ ترکیب‌بندی می‌سازد (به‌ویژه همراه با انیمیشن). */
             background: #000000 !important;
-            backdrop-filter: blur(20px);
             border: 1px solid rgba(245, 158, 11, 0.6) !important;
             border-radius: 24px;
             padding: 22px;
@@ -614,12 +622,33 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            position: relative;
+            isolation: isolate;
+        }
+
+        /* درخشش طلایی به‌جای انیمیشن box-shadow (که هر فریم layout+paint می‌سازد)
+           روی یک لایهٔ مجزا با opacity/transform انیمیت می‌شود — فقط کامپوزیتور. */
+        .ai-glass-card::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            border: 1px solid rgba(245, 158, 11, 0.85);
+            box-shadow: 0 0 35px rgba(245, 158, 11, 0.45);
+            opacity: 0.35;
+            pointer-events: none;
+            z-index: -1;
             animation: pulseGlowGold 4s infinite ease-in-out;
+            will-change: opacity;
         }
 
         @keyframes pulseGlowGold {
-            0%, 100% { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
-            50% { border-color: rgba(245, 158, 11, 0.85); box-shadow: 0 0 35px rgba(245, 158, 11, 0.45); }
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.85; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .ai-glass-card::after { animation: none; opacity: 0.5; }
         }
 
         .ai-header {
@@ -4713,7 +4742,31 @@ ${dayBlocksHtml}
         renderMonthlyPdfList();
         fetchTabdealBalanceInBg();
 
-        setInterval(() => {
+        // بازسازی کامل کارت‌ها ~۲۲۰ms روی موبایل طول می‌کشد و اگر وسط اسکرول
+        // اجرا شود، «گیر» محسوس می‌دهد. پس فقط وقتی تب دیده می‌شود و فقط اگر
+        // دادهٔ localStorage واقعاً عوض شده باشد دوباره رندر می‌کنیم.
+        var monitorDataSignature = null;
+
+        function computeMonitorSignature() {
+            var parts = [];
+            try {
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    if (!k || k.indexOf('emarat_') === 0) continue;
+                    var v = localStorage.getItem(k) || '';
+                    parts.push(k + ':' + v.length);
+                }
+            } catch (e) {}
+            return parts.sort().join('|');
+        }
+
+        monitorDataSignature = computeMonitorSignature();
+
+        setInterval(function () {
+            if (document.visibilityState !== 'visible') return;
+            var sig = computeMonitorSignature();
+            if (sig === monitorDataSignature) return;
+            monitorDataSignature = sig;
             resetMonitorCache();
             renderMonitor();
         }, 30000);

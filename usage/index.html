@@ -14,7 +14,7 @@
 <style>
 :root{
   --bg:#0b1424; --bg2:#0e1c2e;
-  --card:rgba(22,36,56,.82); --card-solid:#16243a;
+  --card:rgba(22,36,56,.92); --card-solid:#16243a;
   --line:rgba(148,197,214,.16);
   --text:#eaf4ff; --muted:#9fb4cc;
   --gold:#ffd166; --gold2:#ff9a3c;
@@ -26,12 +26,21 @@
 html,body{min-height:100%}
 body{
   font-family:'Vazirmatn',Tahoma,'Segoe UI',sans-serif;
+  /* گرادیان پایه روی body؛ هاله‌های رنگی روی یک لایهٔ ثابت جداگانه هستند
+     تا background-attachment:fixed (که هر فریم کل ویوپورت را دوباره رنگ
+     می‌زند) حذف شود. */
+  background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 55%,#0a1220 100%);
+  color:var(--text); padding:14px 12px 96px; line-height:1.65;
+}
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
   background:
     radial-gradient(900px 420px at 85% -8%, rgba(94,234,212,.13), transparent 62%),
-    radial-gradient(760px 380px at 6% 0%, rgba(255,209,102,.10), transparent 60%),
-    linear-gradient(180deg,var(--bg) 0%,var(--bg2) 55%,#0a1220 100%);
-  background-attachment:fixed;
-  color:var(--text); padding:14px 12px 96px; line-height:1.65;
+    radial-gradient(760px 380px at 6% 0%, rgba(255,209,102,.10), transparent 60%);
 }
 .wrap{max-width:760px;margin:0 auto}
 
@@ -79,7 +88,7 @@ body{
 .stat{
   position:relative;overflow:hidden;
   background:var(--card);border:1px solid var(--line);border-radius:16px;
-  padding:12px 12px 11px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+  padding:12px 12px 11px;
   box-shadow:0 6px 18px rgba(0,0,0,.22);
 }
 .stat::before{
@@ -97,7 +106,7 @@ body{
 /* ---------- بخش‌ها ---------- */
 .card{
   background:var(--card);border:1px solid var(--line);border-radius:18px;
-  padding:14px;margin-bottom:13px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+  padding:14px;margin-bottom:13px;
   box-shadow:0 6px 20px rgba(0,0,0,.2);
 }
 .card-head{display:flex;align-items:center;gap:7px;margin-bottom:11px}
