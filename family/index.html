@@ -7,19 +7,149 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#2E7D32">
     <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="../vendor/vazirmatn/fonts.css">
     <title>شجره‌نامه عمارت</title>
     <style>
-        :root {
-            --bg-color: #FDFBF7;
+        /* ============================================================
+           چهار نمای رابط کاربری (Themes)
+           گلستان | شب زمرد | مینیمال | طومار
+           همهٔ رنگ‌ها متغیرند تا تعویض نما فقط با data-theme رخ دهد.
+           ============================================================ */
+
+        /* ۱) گلستان — باغ ایرانی پالایش‌شده (پیش‌فرض) */
+        :root,
+        html[data-theme="garden"] {
+            --bg-color: #FAF8F2;
+            --bg-accent: radial-gradient(circle at 15% 0%, rgba(76,175,80,0.10), transparent 45%),
+                         radial-gradient(circle at 85% 100%, rgba(212,175,55,0.10), transparent 40%);
             --card-bg: #FFFFFF;
+            --card-border: rgba(46,125,50,0.10);
+            --card-top-line: linear-gradient(90deg, #66BB6A, #D4AF37);
             --primary-green: #2E7D32;
-            --secondary-green: #388E3C;
+            --secondary-green: #43A047;
             --light-green: #E8F5E9;
-            --text-dark: #3E2723;
-            --text-muted: #795548;
-            --border-radius: 16px;
-            --box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            --transition-speed: 0.3s;
+            --accent-soft: #F1F8E9;
+            --text-dark: #2B2118;
+            --text-muted: #7A6A5C;
+            --border-radius: 18px;
+            --card-radius: 18px;
+            --box-shadow: 0 2px 10px rgba(46,125,50,0.07), 0 10px 30px -12px rgba(46,125,50,0.18);
+            --shadow-active: 0 6px 18px rgba(46,125,50,0.18), 0 18px 40px -18px rgba(46,125,50,0.35);
+            --overlay-bg: rgba(43,33,24,0.42);
+            --dialog-bg: #FFFFFF;
+            --chip-bg: #E8F5E9;
+            --font-ui: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+            --font-head: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+            --line-color: #66BB6A;
+            --line-alt: #D4AF37;
+            --btn-surface: rgba(255,255,255,0.92);
+            --btn-border: rgba(46,125,50,0.18);
+            --field-bg: #FFFFFF;
+            --field-border: #EDE7DC;
+            --theme-color: #2E7D32;
+            --on-primary: #FFFFFF;
+            --transition-speed: 0.28s;
+        }
+
+        /* ۲) شب زمرد — تیرهٔ لوکس با لهجهٔ طلایی */
+        html[data-theme="emerald"] {
+            --bg-color: #0B1A12;
+            --bg-accent: radial-gradient(circle at 12% 0%, rgba(0,200,140,0.16), transparent 48%),
+                         radial-gradient(circle at 88% 96%, rgba(212,175,55,0.14), transparent 46%);
+            --card-bg: #12271C;
+            --card-border: rgba(120,220,180,0.16);
+            --card-top-line: linear-gradient(90deg, #2FD3A0, #D4AF37);
+            --primary-green: #2FD3A0;
+            --secondary-green: #4FE0B4;
+            --light-green: #16342A;
+            --accent-soft: #10291F;
+            --text-dark: #EAF6EF;
+            --text-muted: #8FB3A2;
+            --border-radius: 18px;
+            --card-radius: 18px;
+            --box-shadow: 0 2px 10px rgba(0,0,0,0.35), 0 14px 34px -16px rgba(0,0,0,0.6);
+            --shadow-active: 0 8px 24px rgba(47,211,160,0.22), 0 20px 46px -18px rgba(0,0,0,0.7);
+            --overlay-bg: rgba(3,10,7,0.62);
+            --dialog-bg: #10231A;
+            --chip-bg: #16342A;
+            --font-ui: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+            --font-head: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+            --line-color: #2FD3A0;
+            --line-alt: #D4AF37;
+            --btn-surface: rgba(18,39,28,0.92);
+            --btn-border: rgba(120,220,180,0.22);
+            --field-bg: #0E2118;
+            --field-border: #1E3D2E;
+            --theme-color: #0B1A12;
+            --on-primary: #04170F;
+            --transition-speed: 0.28s;
+        }
+
+        /* ۳) مینیمال — روشن، تخت و بی‌سر‌و‌صدا */
+        html[data-theme="minimal"] {
+            --bg-color: #F7F7F5;
+            --bg-accent: none;
+            --card-bg: #FFFFFF;
+            --card-border: #E4E4E0;
+            --card-top-line: none;
+            --primary-green: #1F1F1D;
+            --secondary-green: #3F3F3B;
+            --light-green: #EFEFEC;
+            --accent-soft: #F2F2EF;
+            --text-dark: #1F1F1D;
+            --text-muted: #6B6B65;
+            --border-radius: 10px;
+            --card-radius: 12px;
+            --box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+            --shadow-active: 0 0 0 2px #1F1F1D;
+            --overlay-bg: rgba(20,20,18,0.35);
+            --dialog-bg: #FFFFFF;
+            --chip-bg: #EFEFEC;
+            --font-ui: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+            --font-head: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+            --line-color: #9C9C96;
+            --line-alt: #C9C9C3;
+            --btn-surface: #FFFFFF;
+            --btn-border: #E4E4E0;
+            --field-bg: #FFFFFF;
+            --field-border: #E4E4E0;
+            --theme-color: #F7F7F5;
+            --on-primary: #FFFFFF;
+            --transition-speed: 0.2s;
+        }
+
+        /* ۴) طومار — سند خانوادگی با حس کاغذ کهنه */
+        html[data-theme="scroll"] {
+            --bg-color: #F3E9D2;
+            --bg-accent: radial-gradient(ellipse at 50% 0%, rgba(139,90,43,0.10), transparent 60%),
+                         radial-gradient(ellipse at 50% 100%, rgba(139,90,43,0.10), transparent 60%);
+            --card-bg: #FBF3E2;
+            --card-border: rgba(139,90,43,0.28);
+            --card-top-line: linear-gradient(90deg, #8B5A2B, #C9A227);
+            --primary-green: #6B4423;
+            --secondary-green: #8B5A2B;
+            --light-green: #F0E3C8;
+            --accent-soft: #F5EAD4;
+            --text-dark: #3B2A18;
+            --text-muted: #7A6144;
+            --border-radius: 6px;
+            --card-radius: 8px;
+            --box-shadow: 0 1px 0 rgba(139,90,43,0.10), 0 8px 22px -14px rgba(107,68,35,0.5);
+            --shadow-active: 0 0 0 2px #C9A227, 0 12px 26px -14px rgba(107,68,35,0.55);
+            --overlay-bg: rgba(59,42,24,0.5);
+            --dialog-bg: #FBF3E2;
+            --chip-bg: #F0E3C8;
+            --font-ui: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+            --font-head: 'Naskh', 'Vazirmatn', serif;
+            --line-color: #8B5A2B;
+            --line-alt: #C9A227;
+            --btn-surface: rgba(251,243,226,0.94);
+            --btn-border: rgba(139,90,43,0.3);
+            --field-bg: #FDF8EC;
+            --field-border: #E3D3B4;
+            --theme-color: #F3E9D2;
+            --on-primary: #FBF3E2;
+            --transition-speed: 0.28s;
         }
 
         * {
@@ -35,7 +165,7 @@
             width: 100%;
             height: 100dvh;
             background-color: var(--bg-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: var(--font-ui);
             color: var(--text-dark);
             overflow: hidden;
             position: fixed;
@@ -43,6 +173,15 @@
             bottom: 0;
             left: 0;
             right: 0;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -3;
+            background-image: var(--bg-accent);
+            pointer-events: none;
         }
 
         /* Ambient subtle flower decorative pattern in background */
@@ -56,6 +195,40 @@
             opacity: 0.04;
             pointer-events: none;
             background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><path d='M50 20 C55 35, 65 35, 50 50 C35 35, 45 35, 50 20 Z M50 50 C65 50, 65 60, 50 80 C35 60, 35 50, 50 50 Z' fill='%232E7D32'/></svg>");
+        }
+
+        html[data-theme="emerald"] .ambient-bg,
+        html[data-theme="minimal"] .ambient-bg {
+            display: none;
+        }
+
+        /* SVG connectors are coloured through CSS so a theme switch needs no re-draw */
+        #connections-svg .vine,
+        #connections-svg .vine-branch {
+            stroke: var(--line-color);
+            stroke-width: 3.5;
+            fill: none;
+            stroke-linecap: round;
+        }
+
+        #connections-svg .marriage-line {
+            stroke: var(--line-alt);
+            stroke-width: 3;
+            stroke-dasharray: 6 4;
+            fill: none;
+        }
+
+        #connections-svg .leaf {
+            fill: var(--line-color);
+            opacity: 0.85;
+        }
+
+        #connections-svg .marriage-ring {
+            font-size: 14px;
+        }
+
+        html[data-theme="minimal"] #connections-svg .leaf {
+            display: none;
         }
 
         /* SVG Vine connections layer */
@@ -76,8 +249,12 @@
             height: 100%;
             overflow: hidden;
             touch-action: none;
+            contain: layout paint;
         }
 
+        /* No transition while panning: a transition on every pointermove makes
+           dragging feel rubbery and forces a paint per frame. `.smooth` is added
+           only for the animated "fit to view" jump. */
         .canvas {
             position: absolute;
             top: 0;
@@ -86,7 +263,15 @@
             height: 3200px;
             transform-origin: 0 0;
             cursor: grab;
-            transition: transform 0.08s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: none;
+        }
+
+        .canvas.smooth {
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .canvas.dragging {
+            will-change: transform;
         }
 
         .canvas:active {
@@ -105,20 +290,20 @@
 
         .ui-overlay button, .ui-overlay .btn-link {
             pointer-events: auto;
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(46, 125, 50, 0.2);
+            background: var(--btn-surface);
+            border: 1px solid var(--btn-border);
             color: var(--primary-green);
             padding: 12px 18px;
             font-size: 0.95rem;
             font-weight: 600;
             border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            box-shadow: 0 3px 12px rgba(0,0,0,0.07);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             cursor: pointer;
-            transition: all var(--transition-speed) ease;
+            transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease;
         }
 
         .ui-overlay button:active {
@@ -153,17 +338,17 @@
             padding: 14px;
             border-radius: var(--border-radius);
             font-size: 1rem;
-            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.15);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.10);
         }
 
         .btn-primary {
             background: var(--primary-green) !important;
-            color: #FFFFFF !important;
+            color: var(--on-primary) !important;
             border: none !important;
         }
 
         .btn-primary:active {
-            background: #1B5E20 !important;
+            filter: brightness(0.92);
         }
 
         /* Tree structure placement inside canvas with ample spacing */
@@ -223,9 +408,9 @@
 
         .member-card {
             background-color: var(--card-bg);
-            border-radius: var(--border-radius);
+            border-radius: var(--card-radius);
             box-shadow: var(--box-shadow);
-            border: 2px solid transparent;
+            border: 2px solid var(--card-border);
             width: 150px;
             padding: 12px;
             text-align: center;
@@ -233,24 +418,40 @@
             flex-direction: column;
             align-items: center;
             gap: 6px;
-            transition: all var(--transition-speed) ease;
+            transition: box-shadow var(--transition-speed) ease, transform var(--transition-speed) ease;
             cursor: pointer;
             position: relative;
             z-index: 5;
+            overflow: hidden;
+        }
+
+        /* Accent hairline on top of each card; `none` in the minimal theme. */
+        .member-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--card-top-line);
         }
 
         .member-card.active-focus {
-            border: 2px solid var(--primary-green);
+            border-color: var(--primary-green);
             transform: scale(1.08);
-            box-shadow: 0 8px 24px rgba(46, 125, 50, 0.15);
+            box-shadow: var(--shadow-active);
             z-index: 10;
         }
 
         .member-card.placeholder {
-            border: 2px dashed rgba(46, 125, 50, 0.3);
-            background-color: rgba(253, 251, 247, 0.6);
+            border: 2px dashed var(--card-border);
+            background-color: var(--accent-soft);
             color: var(--text-muted);
-            opacity: 0.85;
+            opacity: 0.9;
+        }
+
+        .member-card.placeholder::before {
+            display: none;
         }
 
         .member-card.placeholder:hover, .member-card.placeholder:active {
@@ -259,15 +460,32 @@
             opacity: 1;
         }
 
-        /* Pulsing/Glow visual hint for newly created chain-focus nodes */
-        @keyframes placeholder-pulse {
-            0%, 100% { box-shadow: 0 0 4px rgba(46, 125, 50, 0.2); transform: scale(1); }
-            50% { box-shadow: 0 0 16px rgba(46, 125, 50, 0.6); transform: scale(1.05); }
+        /* Pulsing hint for a freshly created node. Animated on `opacity` only:
+           animating box-shadow repaints every frame on the whole card. */
+        @keyframes attention-pulse {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
         }
 
         .member-card.chain-attention {
-            animation: placeholder-pulse 1.8s infinite ease-in-out;
             border-color: var(--secondary-green);
+            border-style: solid;
+        }
+
+        .member-card.chain-attention::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: inherit;
+            border: 2px solid var(--secondary-green);
+            animation: attention-pulse 1.8s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .member-card.chain-attention::after { animation: none; opacity: 1; }
+            .empty-icon { animation: none; }
+            .canvas, .canvas.smooth { transition: none; }
         }
 
         .member-avatar {
@@ -280,7 +498,6 @@
             justify-content: center;
             font-size: 1.8rem;
             overflow: hidden;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
             border: 2px solid var(--light-green);
         }
 
@@ -292,7 +509,8 @@
 
         .member-name {
             font-size: 0.95rem;
-            font-weight: bold;
+            font-weight: 700;
+            font-family: var(--font-head);
             color: var(--text-dark);
             white-space: nowrap;
             overflow: hidden;
@@ -302,7 +520,7 @@
 
         .member-relation {
             font-size: 0.75rem;
-            background: var(--light-green);
+            background: var(--chip-bg);
             color: var(--primary-green);
             padding: 2px 8px;
             border-radius: 10px;
@@ -316,8 +534,7 @@
 
         /* Dimming effect for non-focused cards */
         .dimmed {
-            opacity: 0.35 !important;
-            filter: blur(1.5px);
+            opacity: 0.4 !important;
         }
 
         /* Modal/Focus Mode Dialog overlay */
@@ -327,9 +544,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(62, 39, 35, 0.4);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: var(--overlay-bg);
             z-index: 1000;
             display: flex;
             align-items: center;
@@ -345,18 +560,19 @@
         }
 
         .focus-dialog {
-            background: #FFFFFF;
+            background: var(--dialog-bg);
+            color: var(--text-dark);
             width: 90%;
             max-width: 440px;
-            border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: var(--card-radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.18);
             max-height: 85vh;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             transform: translateY(40px);
             transition: transform var(--transition-speed) cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid rgba(46, 125, 50, 0.1);
+            border: 1px solid var(--card-border);
         }
 
         .focus-overlay.active .focus-dialog {
@@ -365,18 +581,19 @@
 
         .dialog-header {
             padding: 18px 20px;
-            border-bottom: 1px solid #F1ECE4;
+            border-bottom: 1px solid var(--field-border);
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
-            background: #FFFFFF;
+            background: var(--dialog-bg);
             z-index: 10;
         }
 
         .dialog-title {
-            font-weight: bold;
+            font-weight: 700;
+            font-family: var(--font-head);
             font-size: 1.15rem;
             color: var(--primary-green);
         }
@@ -410,7 +627,7 @@
             left: 0;
             right: 0;
             height: 2px;
-            background: #F1ECE4;
+            background: var(--field-border);
             z-index: 1;
             transform: translateY(-50%);
         }
@@ -419,8 +636,8 @@
             width: 28px;
             height: 28px;
             border-radius: 50%;
-            background: #FFFFFF;
-            border: 2px solid #F1ECE4;
+            background: var(--field-bg);
+            border: 2px solid var(--field-border);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -477,8 +694,9 @@
 
         .btn-toggle {
             flex: 1;
-            background: #FFFFFF;
-            border: 2px solid #F1ECE4;
+            background: var(--field-bg);
+            color: var(--text-dark);
+            border: 2px solid var(--field-border);
             padding: 12px;
             border-radius: var(--border-radius);
             font-weight: bold;
@@ -496,14 +714,14 @@
 
         .input-text {
             width: 100%;
-            border: 2px solid #F1ECE4;
+            border: 2px solid var(--field-border);
             padding: 12px;
             border-radius: var(--border-radius);
             font-size: 0.95rem;
             color: var(--text-dark);
             outline: none;
             transition: border-color var(--transition-speed);
-            background: #FFFFFF;
+            background: var(--field-bg);
         }
 
         .input-text:focus {
@@ -552,10 +770,11 @@
 
         .jalali-picker-container select {
             flex: 1;
-            border: 2px solid #F1ECE4;
+            border: 2px solid var(--field-border);
             padding: 10px;
             border-radius: 12px;
-            background: #FFFFFF;
+            background: var(--field-bg);
+            color: var(--text-dark);
             font-size: 0.9rem;
             outline: none;
             cursor: pointer;
@@ -569,12 +788,12 @@
         /* Dialog Footer Navigation */
         .dialog-footer {
             padding: 15px 20px;
-            border-top: 1px solid #F1ECE4;
+            border-top: 1px solid var(--field-border);
             display: flex;
             gap: 10px;
             position: sticky;
             bottom: 0;
-            background: #FFFFFF;
+            background: var(--dialog-bg);
         }
 
         .dialog-footer button {
@@ -589,19 +808,19 @@
         }
 
         .btn-secondary {
-            background: #F1ECE4;
+            background: var(--chip-bg);
             color: var(--text-dark);
         }
 
         .btn-secondary:active {
-            background: #E5DDD3;
+            filter: brightness(0.95);
         }
 
         /* Autocomplete Suggestions & Family Smart selection lists */
         .suggestions-box {
             position: absolute;
-            background: #FFFFFF;
-            border: 1px solid #F1ECE4;
+            background: var(--dialog-bg);
+            border: 1px solid var(--field-border);
             border-radius: 12px;
             width: 100%;
             max-height: 120px;
@@ -614,7 +833,7 @@
         .suggestion-item {
             padding: 10px 12px;
             cursor: pointer;
-            border-bottom: 1px solid #FAF7F2;
+            border-bottom: 1px solid var(--field-border);
             font-size: 0.85rem;
             transition: background var(--transition-speed);
             display: flex;
@@ -659,7 +878,8 @@
 
         .empty-text {
             font-size: 1.05rem;
-            font-weight: bold;
+            font-weight: 700;
+            font-family: var(--font-head);
             color: var(--primary-green);
             line-height: 1.6;
         }
@@ -692,7 +912,7 @@
 
         /* Zoom / fit controls (bottom-left) */
         .zoom-controls {
-            bottom: 20px;
+            bottom: 112px;
             left: 15px;
             flex-direction: column;
             align-items: center;
@@ -769,8 +989,8 @@
             gap: 10px;
             padding: 10px 12px;
             border-radius: 12px;
-            border: 1px solid rgba(46, 125, 50, 0.18);
-            background: #FCFBF8;
+            border: 1px solid var(--card-border);
+            background: var(--accent-soft);
             cursor: pointer;
             text-align: right;
             font-size: 0.86rem;
@@ -828,8 +1048,8 @@
             gap: 8px;
             padding: 9px 11px;
             border-radius: 11px;
-            border: 1.5px solid rgba(46, 125, 50, 0.2);
-            background: #FCFBF8;
+            border: 1.5px solid var(--card-border);
+            background: var(--accent-soft);
             cursor: pointer;
             font-size: 0.84rem;
             text-align: right;
@@ -846,6 +1066,98 @@
             color: var(--text-muted);
             margin-right: auto;
             white-space: nowrap;
+        }
+
+        /* ---------- Theme switcher ---------- */
+        .theme-fab {
+            position: fixed;
+            top: 64px;
+            left: 15px;
+            z-index: 130;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: 1px solid var(--btn-border);
+            background: var(--btn-surface);
+            color: var(--primary-green);
+            font-size: 1.15rem;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.10);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-panel {
+            position: fixed;
+            top: 118px;
+            left: 15px;
+            transform: translateY(-10px) scale(0.96);
+            transform-origin: top left;
+            z-index: 131;
+            background: var(--dialog-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--card-radius);
+            box-shadow: 0 14px 40px rgba(0,0,0,0.18);
+            padding: 12px;
+            width: min(330px, 90vw);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .theme-panel.open {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0) scale(1);
+        }
+
+        .theme-panel-title {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .theme-swatch {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            border: 1.5px solid var(--field-border);
+            background: var(--field-bg);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            text-align: right;
+            transition: border-color 0.18s ease, transform 0.18s ease;
+        }
+
+        .theme-swatch:active {
+            transform: scale(0.97);
+        }
+
+        .theme-swatch.active {
+            border-color: var(--primary-green);
+            box-shadow: inset 0 0 0 1px var(--primary-green);
+        }
+
+        .theme-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 1px solid rgba(0,0,0,0.12);
         }
 
         /* Mobile Optimization tweaks */
@@ -893,9 +1205,33 @@
 
     <div class="ambient-bg"></div>
 
+    <!-- Theme switcher -->
+    <button class="theme-fab" id="themeFab" onclick="toggleThemePanel()" aria-label="تغییر نمای برنامه" title="تغییر نما">🎨</button>
+    <div class="theme-panel" id="themePanel" role="dialog" aria-label="انتخاب نما">
+        <div class="theme-panel-title">نمای برنامه را انتخاب کنید</div>
+        <div class="theme-grid">
+            <button class="theme-swatch" data-theme="garden" onclick="applyTheme('garden'); closeThemePanel();">
+                <span class="theme-dot" style="background: linear-gradient(135deg,#66BB6A,#D4AF37);"></span>
+                <span>گلستان</span>
+            </button>
+            <button class="theme-swatch" data-theme="emerald" onclick="applyTheme('emerald'); closeThemePanel();">
+                <span class="theme-dot" style="background: linear-gradient(135deg,#0B1A12,#2FD3A0);"></span>
+                <span>شب زمرد</span>
+            </button>
+            <button class="theme-swatch" data-theme="minimal" onclick="applyTheme('minimal'); closeThemePanel();">
+                <span class="theme-dot" style="background: linear-gradient(135deg,#FFFFFF,#1F1F1D);"></span>
+                <span>مینیمال</span>
+            </button>
+            <button class="theme-swatch" data-theme="scroll" onclick="applyTheme('scroll'); closeThemePanel();">
+                <span class="theme-dot" style="background: linear-gradient(135deg,#F3E9D2,#8B5A2B);"></span>
+                <span>طومار</span>
+            </button>
+        </div>
+    </div>
+
     <!-- UI Overlay Controls -->
     <div class="ui-overlay top-right">
-        <button id="btn-add-member" onclick="openQuickAddDialog()" style="font-weight: 700; background: var(--primary-green); color: #fff; border-color: var(--primary-green);">
+        <button id="btn-add-member" onclick="openQuickAddDialog()" style="font-weight: 700; background: var(--primary-green); color: var(--on-primary); border-color: var(--primary-green);">
             ➕ افزودن فرد
         </button>
         <button id="btn-member-list" onclick="openMemberList()">
@@ -1259,10 +1595,48 @@
 
         // On document ready
         window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
             initAllDatePickers();
             loadFromLocalStorage();
             setupTouchEvents();
             renderTree();
+        });
+
+        // ---------- نمایش (Theme) ----------
+        const THEME_KEY = 'emarat_family_theme';
+        const THEMES = ['garden', 'emerald', 'minimal', 'scroll'];
+
+        function applyTheme(name) {
+            if (THEMES.indexOf(name) === -1) name = 'garden';
+            document.documentElement.setAttribute('data-theme', name);
+            localStorage.setItem(THEME_KEY, name);
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) {
+                meta.setAttribute('content', getComputedStyle(document.documentElement)
+                    .getPropertyValue('--theme-color').trim());
+            }
+            document.querySelectorAll('.theme-swatch').forEach(b => {
+                b.classList.toggle('active', b.dataset.theme === name);
+            });
+        }
+
+        function initTheme() {
+            applyTheme(localStorage.getItem(THEME_KEY) || 'garden');
+        }
+
+        function toggleThemePanel() {
+            document.getElementById('themePanel').classList.toggle('open');
+        }
+
+        function closeThemePanel() {
+            document.getElementById('themePanel').classList.remove('open');
+        }
+
+        document.addEventListener('click', (e) => {
+            const panel = document.getElementById('themePanel');
+            if (!panel || !panel.classList.contains('open')) return;
+            if (panel.contains(e.target) || e.target.closest('#themeFab')) return;
+            closeThemePanel();
         });
 
         // Touch Zoom & Pan logic (Pinch-to-zoom & Double tap & Drag)
@@ -1278,6 +1652,7 @@
                 isDragging = true;
                 startX = e.clientX - panX;
                 startY = e.clientY - panY;
+                canvas.classList.add('dragging');
                 canvas.style.cursor = 'grabbing';
             });
 
@@ -1289,8 +1664,12 @@
             });
 
             window.addEventListener('pointerup', () => {
-                if (isDragging) clampPan();
+                if (isDragging) {
+                    flushTransform();
+                    clampPan();
+                }
                 isDragging = false;
+                canvas.classList.remove('dragging');
                 canvas.style.cursor = 'grab';
             });
 
@@ -1337,9 +1716,25 @@
             });
         }
 
-        function updateTransform() {
+        // Transform writes are batched into one rAF: pointermove can fire far
+        // more often than the screen refreshes, and every write forces a paint
+        // of the whole 3200x3200 canvas layer.
+        let pendingTransform = false;
+
+        function applyTransformNow() {
+            pendingTransform = false;
             const canvas = document.getElementById('canvas');
-            canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+            canvas.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${scale})`;
+        }
+
+        function updateTransform() {
+            if (pendingTransform) return;
+            pendingTransform = true;
+            requestAnimationFrame(() => { if (pendingTransform) applyTransformNow(); });
+        }
+
+        function flushTransform() {
+            if (pendingTransform) applyTransformNow();
         }
 
         // Keep at least a slice of the tree on screen so dragging can never lose it
@@ -1349,6 +1744,7 @@
             if (!container || !canvas) return;
             const cards = Array.from(canvas.querySelectorAll('.member-card'));
             if (cards.length === 0) return;
+            flushTransform();
 
             const cRect = container.getBoundingClientRect();
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -1664,7 +2060,7 @@
                 status.style.color = 'var(--primary-green)';
             } else {
                 status.innerText = 'فوت شده';
-                status.style.color = '#777';
+                status.style.opacity = '0.75';
             }
 
             card.appendChild(avatar);
@@ -1789,6 +2185,7 @@
 
         // Standard Global Pedigree Chart SVG connector drawing logic
         function drawConnections() {
+            flushTransform();
             const svg = document.getElementById('connections-svg');
             svg.innerHTML = ''; // Clear SVG canvas
 
@@ -1970,17 +2367,14 @@
             const d = `M ${x1} ${y1} L ${x2} ${y2}`;
 
             path.setAttribute('d', d);
-            path.setAttribute('stroke', '#388E3C');
-            path.setAttribute('stroke-width', '3.5');
-            path.setAttribute('fill', 'none');
-            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('class', 'vine');
             svg.appendChild(path);
         }
 
         function addLeafDecoration(svg, x, y) {
             const leaf = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             leaf.setAttribute('d', 'M0,0 C5,-10 15,-10 15,-5 C15,5 5,10 0,0');
-            leaf.setAttribute('fill', '#4CAF50');
+            leaf.setAttribute('class', 'leaf');
             leaf.setAttribute('transform', `translate(${x}, ${y - 8}) scale(0.8)`);
             svg.appendChild(leaf);
         }
@@ -2015,10 +2409,7 @@
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('d', `M ${x1} ${y} L ${x2} ${y}`);
-            path.setAttribute('stroke', '#E91E63');
-            path.setAttribute('stroke-width', '3');
-            path.setAttribute('stroke-dasharray', '6 4');
-            path.setAttribute('fill', 'none');
+            path.setAttribute('class', 'marriage-line');
             svg.appendChild(path);
 
             const midX = (x1 + x2) / 2;
@@ -2026,7 +2417,7 @@
             ring.setAttribute('x', midX);
             ring.setAttribute('y', y + 5);
             ring.setAttribute('text-anchor', 'middle');
-            ring.setAttribute('font-size', '14');
+            ring.setAttribute('class', 'marriage-ring');
             ring.textContent = '💍';
             svg.appendChild(ring);
         }
@@ -2044,10 +2435,7 @@
             }
 
             path.setAttribute('d', d);
-            path.setAttribute('stroke', '#388E3C');
-            path.setAttribute('stroke-width', '3.5');
-            path.setAttribute('fill', 'none');
-            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('class', 'vine');
             svg.appendChild(path);
 
             // Add leafy decoration along path
@@ -2060,13 +2448,13 @@
 
             const leaf1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             leaf1.setAttribute('d', 'M0,0 C5,-10 15,-10 15,-5 C15,5 5,10 0,0');
-            leaf1.setAttribute('fill', '#81C784');
+            leaf1.setAttribute('class', 'leaf');
             leaf1.setAttribute('transform', `translate(${midX + 5}, ${midY - 10}) rotate(45) scale(0.8)`);
             svg.appendChild(leaf1);
 
             const leaf2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             leaf2.setAttribute('d', 'M0,0 C-5,-10 -15,-10 -15,-5 C-15,5 -5,10 0,0');
-            leaf2.setAttribute('fill', '#4CAF50');
+            leaf2.setAttribute('class', 'leaf');
             leaf2.setAttribute('transform', `translate(${midX - 5}, ${midY + 5}) rotate(-30) scale(0.7)`);
             svg.appendChild(leaf2);
         }
@@ -2199,6 +2587,7 @@
             if (!container || !canvas) return;
             const cards = Array.from(canvas.querySelectorAll('.member-card'));
             if (cards.length === 0) return;
+            flushTransform();
 
             const cRect = container.getBoundingClientRect();
             if (!cRect.width || !cRect.height) return;
@@ -2244,8 +2633,8 @@
             }
 
             if (animate) {
-                canvas.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
-                setTimeout(() => { canvas.style.transition = ''; }, 380);
+                canvas.classList.add('smooth');
+                setTimeout(() => canvas.classList.remove('smooth'), 380);
             }
             updateTransform();
         }
