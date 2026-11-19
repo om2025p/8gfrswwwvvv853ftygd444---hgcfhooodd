@@ -64,6 +64,8 @@
                         let changed = false;
 
                         Object.keys(cloudBackup.data).forEach(key => {
+                            // آمار استفاده هرگز از ابر بازیابی نمی‌شود (ممکن است نسخهٔ کهنه باشد)
+                            if (key.indexOf('emarat_usage_stats') === 0 || key.indexOf('emr_usage_') === 0) return;
                             const val = cloudBackup.data[key];
                             if (localStorage.getItem(key) !== val) {
                                 localStorage.setItem(key, val);
@@ -111,6 +113,10 @@
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key !== 'emarat_last_modified' && key !== 'emarat_sync_counter') {
+                // آمار استفاده در MantleDB بکاپ نمی‌شود: سریع رشد می‌کند و
+                // بازیابی ابری می‌تواند آمار تازه‌تر محلی را با نسخه کهنه بازنویسی کند.
+                // بکاپ این آمار از مسیر جداگانه (usage-tracker.js → گیت‌هاب) انجام می‌شود.
+                if (key.indexOf('emarat_usage_stats') === 0 || key.indexOf('emr_usage_') === 0) continue;
                 // چک کردن برای کلیدهای مهم برنامه (ورزش، طلا، درصدها، چیدمان پرتال و سود)
                 if (key.includes('workout') || key.includes('gold') || key.includes('portal') || key.includes('percent') || key.includes('trash') || key.includes('goal') || key.includes('kian_') || key.includes('percents') || key.includes('highlighted')) {
                     hasRealData = true;

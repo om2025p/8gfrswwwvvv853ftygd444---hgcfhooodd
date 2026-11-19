@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ردپای من · آمار استفاده</title>
+<meta name="theme-color" content="#0b1424" id="metaThemeColor">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ردپای من">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<style>
+:root{
+  --bg:#0b1424; --bg2:#0e1c2e;
+  --card:rgba(22,36,56,.82); --card-solid:#16243a;
+  --line:rgba(148,197,214,.16);
+  --text:#eaf4ff; --muted:#9fb4cc;
+  --gold:#ffd166; --gold2:#ff9a3c;
+  --teal:#5eead4; --teal-dim:#2dd4bf;
+  --green:#34d399; --red:#f87171; --violet:#a78bfa;
+  --shadow:0 10px 30px rgba(0,0,0,.38);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100%}
+body{
+  font-family:'Vazirmatn',Tahoma,'Segoe UI',sans-serif;
+  background:
+    radial-gradient(900px 420px at 85% -8%, rgba(94,234,212,.13), transparent 62%),
+    radial-gradient(760px 380px at 6% 0%, rgba(255,209,102,.10), transparent 60%),
+    linear-gradient(180deg,var(--bg) 0%,var(--bg2) 55%,#0a1220 100%);
+  background-attachment:fixed;
+  color:var(--text); padding:14px 12px 96px; line-height:1.65;
+}
+.wrap{max-width:760px;margin:0 auto}
+
+/* ---------- هدر ---------- */
+.hero{
+  position:relative;overflow:hidden;
+  background:linear-gradient(140deg,rgba(94,234,212,.13),rgba(255,209,102,.07) 58%,rgba(167,139,250,.10));
+  border:1px solid var(--line);border-radius:22px;padding:16px 16px 14px;
+  box-shadow:var(--shadow);margin-bottom:14px;
+}
+.hero::after{
+  content:'';position:absolute;inset:-40% -10% auto auto;width:210px;height:210px;border-radius:50%;
+  background:radial-gradient(circle,rgba(94,234,212,.22),transparent 70%);pointer-events:none;
+}
+.hero-top{display:flex;align-items:center;gap:11px}
+.hero-icon{width:44px;height:44px;border-radius:14px;flex:0 0 auto;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.hero h1{font-size:1.16rem;font-weight:800;letter-spacing:-.2px}
+.hero p{font-size:.72rem;color:var(--muted);margin-top:1px}
+.hero-actions{display:flex;gap:6px;margin-right:auto}
+.icon-btn{
+  width:36px;height:36px;border-radius:11px;border:1px solid var(--line);
+  background:rgba(255,255,255,.05);color:var(--text);font-size:1rem;cursor:pointer;
+  display:grid;place-items:center;transition:.18s;
+}
+.icon-btn:hover,.icon-btn:focus-visible{background:rgba(94,234,212,.16);border-color:rgba(94,234,212,.45);transform:translateY(-1px)}
+.icon-btn:active{transform:scale(.95)}
+
+/* ---------- فیلتر بازه ---------- */
+.range-bar{display:flex;gap:6px;margin-bottom:13px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.range-bar::-webkit-scrollbar{display:none}
+.range-btn{
+  flex:0 0 auto;padding:7px 13px;border-radius:999px;font-size:.73rem;font-weight:700;
+  border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);
+  cursor:pointer;transition:.18s;white-space:nowrap;
+}
+.range-btn:hover{color:var(--text);border-color:rgba(94,234,212,.4)}
+.range-btn.active{
+  background:linear-gradient(135deg,rgba(94,234,212,.28),rgba(94,234,212,.12));
+  border-color:rgba(94,234,212,.6);color:#d6fff8;
+  box-shadow:0 0 0 3px rgba(94,234,212,.10);
+}
+
+/* ---------- کارت‌های خلاصه ---------- */
+.summary{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:14px}
+.stat{
+  position:relative;overflow:hidden;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:12px 12px 11px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+  box-shadow:0 6px 18px rgba(0,0,0,.22);
+}
+.stat::before{
+  content:'';position:absolute;inset:0 auto 0 0;width:3px;border-radius:3px;
+  background:linear-gradient(180deg,var(--teal),transparent);
+}
+.stat.gold::before{background:linear-gradient(180deg,var(--gold),transparent)}
+.stat.violet::before{background:linear-gradient(180deg,var(--violet),transparent)}
+.stat.green::before{background:linear-gradient(180deg,var(--green),transparent)}
+.stat-lbl{font-size:.66rem;color:var(--muted);display:flex;align-items:center;gap:4px}
+.stat-val{font-size:1.34rem;font-weight:800;margin-top:3px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.stat-sub{font-size:.62rem;color:var(--muted);margin-top:1px;min-height:1em}
+.stat-val .unit{font-size:.66rem;font-weight:600;color:var(--muted);margin-right:3px}
+
+/* ---------- بخش‌ها ---------- */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:14px;margin-bottom:13px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+  box-shadow:0 6px 20px rgba(0,0,0,.2);
+}
+.card-head{display:flex;align-items:center;gap:7px;margin-bottom:11px}
+.card-head h2{font-size:.86rem;font-weight:800}
+.card-head .badge{
+  margin-right:auto;font-size:.62rem;color:var(--muted);
+  background:rgba(255,255,255,.05);border:1px solid var(--line);
+  padding:2px 8px;border-radius:999px;
+}
+
+/* ---------- نمودار ---------- */
+.chart-shell{position:relative;width:100%;height:186px}
+#chart{width:100%;height:186px;display:block}
+.chart-empty{
+  position:absolute;inset:0;display:none;place-items:center;text-align:center;
+  color:var(--muted);font-size:.75rem;padding:0 20px;
+}
+.chart-empty.show{display:grid}
+
+/* ---------- جدول اپ‌ها ---------- */
+.app-row{
+  display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
+  padding:10px 0;border-bottom:1px dashed rgba(148,197,214,.12);
+}
+.app-row:last-child{border-bottom:0}
+.app-main{min-width:0}
+.app-name{display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:700}
+.app-name .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.app-meta{font-size:.63rem;color:var(--muted);margin-top:2px;display:flex;gap:9px;flex-wrap:wrap}
+.app-meta b{color:#cfe3f5;font-weight:700}
+.app-bar{height:5px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:6px}
+.app-bar > i{display:block;height:100%;border-radius:99px;transition:width .5s cubic-bezier(.2,.8,.3,1)}
+.app-right{text-align:left;flex:0 0 auto}
+.app-time{font-size:.84rem;font-weight:800;font-variant-numeric:tabular-nums}
+.app-opens{font-size:.62rem;color:var(--muted)}
+
+.empty-state{text-align:center;padding:26px 14px;color:var(--muted)}
+.empty-state .big{font-size:2rem;margin-bottom:6px;opacity:.65}
+.empty-state p{font-size:.76rem}
+
+/* ---------- دکمه‌ها ---------- */
+.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 10px;border-radius:13px;font-size:.76rem;font-weight:700;
+  border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);
+  cursor:pointer;transition:.18s;font-family:inherit;
+}
+.btn:hover{background:rgba(94,234,212,.14);border-color:rgba(94,234,212,.42);transform:translateY(-1px)}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:linear-gradient(135deg,rgba(94,234,212,.3),rgba(45,212,191,.14));border-color:rgba(94,234,212,.55);color:#d6fff8}
+.btn.danger{color:#ffc9c9;border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.10)}
+.btn.danger:hover{background:rgba(248,113,113,.2);border-color:rgba(248,113,113,.6)}
+.btn.danger.armed{background:#b91c1c;border-color:#ef4444;color:#fff;animation:pulse .9s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 7px rgba(239,68,68,0)}}
+.btn.wide{grid-column:1/-1}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+/* ---------- مودال ---------- */
+.modal{
+  position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
+  background:rgba(4,10,20,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);padding:16px;
+}
+.modal.open{display:flex}
+.modal-box{
+  width:100%;max-width:430px;max-height:86vh;overflow-y:auto;
+  background:linear-gradient(160deg,#132238,#0d1a2b);
+  border:1px solid rgba(94,234,212,.25);border-radius:20px;padding:16px;
+  box-shadow:0 22px 60px rgba(0,0,0,.62);
+}
+.modal-box h3{font-size:.94rem;font-weight:800;margin-bottom:4px}
+.modal-box .hint{font-size:.66rem;color:var(--muted);margin-bottom:13px;line-height:1.75}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:.68rem;color:var(--muted);margin-bottom:4px;font-weight:600}
+.field input{
+  width:100%;padding:9px 11px;border-radius:11px;font-size:.76rem;font-family:inherit;
+  background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--text);
+  direction:ltr;text-align:left;
+}
+.field input:focus{outline:none;border-color:rgba(94,234,212,.6);box-shadow:0 0 0 3px rgba(94,234,212,.12)}
+.modal-foot{display:flex;gap:8px;margin-top:13px}
+.modal-foot .btn{flex:1}
+
+/* ---------- توست ---------- */
+.toast-wrap{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:7px;align-items:center;pointer-events:none}
+.toast{
+  background:rgba(20,34,54,.97);border:1px solid rgba(94,234,212,.35);
+  color:var(--text);font-size:.74rem;font-weight:600;padding:9px 15px;border-radius:999px;
+  box-shadow:0 10px 26px rgba(0,0,0,.5);opacity:0;transform:translateY(12px);
+  transition:.28s;max-width:88vw;text-align:center;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.err{border-color:rgba(248,113,113,.5);color:#ffd4d4}
+.toast.ok{border-color:rgba(52,211,153,.5);color:#c8ffe8}
+
+.note{
+  font-size:.63rem;color:var(--muted);text-align:center;margin-top:4px;line-height:1.8;
+}
+@media(min-width:620px){
+  .summary{grid-template-columns:repeat(4,1fr)}
+  .stat-val{font-size:1.2rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero-top">
+      <img class="hero-icon" src="icon-192.png" alt="ردپای من">
+      <div>
+        <h1>ردپای من</h1>
+        <p>زمان و تعداد باز شدن اپ‌های عمارت</p>
+      </div>
+      <div class="hero-actions">
+        <button class="icon-btn" id="btnSettings" title="تنظیمات بکاپ گیت‌هاب" aria-label="تنظیمات">⚙️</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="range-bar" id="rangeBar">
+    <button class="range-btn active" data-range="today">امروز</button>
+    <button class="range-btn" data-range="7">۷ روز</button>
+    <button class="range-btn" data-range="30">۳۰ روز</button>
+    <button class="range-btn" data-range="all">همه</button>
+  </div>
+
+  <section class="summary">
+    <div class="stat">
+      <div class="stat-lbl">⏱️ زمان در بازه</div>
+      <div class="stat-val" id="sTotalTime">—</div>
+      <div class="stat-sub" id="sTotalTimeSub"></div>
+    </div>
+    <div class="stat gold">
+      <div class="stat-lbl">🚪 تعداد باز شدن</div>
+      <div class="stat-val" id="sOpens">—</div>
+      <div class="stat-sub" id="sOpensSub"></div>
+    </div>
+    <div class="stat violet">
+      <div class="stat-lbl">🏆 پرکاربردترین</div>
+      <div class="stat-val" id="sTop" style="font-size:1rem">—</div>
+      <div class="stat-sub" id="sTopSub"></div>
+    </div>
+    <div class="stat green">
+      <div class="stat-lbl">📊 میانگین هر بار</div>
+      <div class="stat-val" id="sAvg">—</div>
+      <div class="stat-sub" id="sAvgSub"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <span>📈</span><h2>نمودار ۷ روز اخیر</h2>
+      <span class="badge" id="chartBadge">دقیقه</span>
+    </div>
+    <div class="chart-shell">
+      <canvas id="chart" role="img" aria-label="نمودار زمان استفاده در ۷ روز اخیر"></canvas>
+      <div class="chart-empty" id="chartEmpty">
+        <div>
+          <div style="font-size:1.7rem;opacity:.5">🌱</div>
+          <p>هنوز داده‌ای برای نمودار نیست</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <span>📱</span><h2>جزئیات اپ‌ها</h2>
+      <span class="badge" id="appCount">۰ اپ</span>
+    </div>
+    <div id="appList"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><span>🛠️</span><h2>مدیریت داده</h2></div>
+    <div class="actions">
+      <button class="btn primary wide" id="btnBackupNow">☁️ بکاپ فوری به گیت‌هاب</button>
+      <button class="btn" id="btnExport">📥 خروجی JSON</button>
+      <button class="btn" id="btnImport">📤 بازیابی از فایل</button>
+      <button class="btn danger wide" id="btnClear">🗑️ پاک کردن همهٔ آمار</button>
+    </div>
+    <p class="note" id="backupNote">وضعیت بکاپ: تنظیم نشده</p>
+  </section>
+
+  <p class="note">
+    🔒 همهٔ آمار فقط روی همین دستگاه ذخیره می‌شود. بین دستگاه‌ها مشترک نیست مگر با بکاپ گیت‌هاب.
+  </p>
+</div>
+
+<!-- مودال تنظیمات -->
+<div class="modal" id="settingsModal">
+  <div class="modal-box">
+    <h3>⚙️ تنظیمات بکاپ گیت‌هاب</h3>
+    <p class="hint">
+      توکن فقط در حافظهٔ همین مرورگر ذخیره می‌شود و هیچ‌جا آپلود نمی‌گردد.
+      فایل آمار در مسیر زیر در مخزن شما ساخته می‌شود.
+    </p>
+    <div class="field">
+      <label for="inpToken">توکن گیت‌هاب</label>
+      <input id="inpToken" type="password" placeholder="ghp_..." autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="inpRepo">مخزن (owner/repo)</label>
+      <input id="inpRepo" type="text" placeholder="user/repository" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="inpBranch">شاخه</label>
+      <input id="inpBranch" type="text" placeholder="main" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="inpPath">مسیر فایل</label>
+      <input id="inpPath" type="text" placeholder="usage/usage_backup.json" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="btnCloseSettings">بستن</button>
+      <button class="btn primary" id="btnSaveSettings">ذخیره</button>
+    </div>
+    <div class="modal-foot">
+      <button class="btn danger" id="btnClearSettings">🗑️ پاک کردن تنظیمات</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<input type="file" id="fileInput" accept="application/json,.json" style="display:none">
+
+<script src="../usage-tracker.js" data-app="usage"></script>
+<script>
+(function(){
+  'use strict';
+
+  var STORE_KEY = 'emarat_usage_stats';
+  var APP_LABELS = {
+    portal: 'پورتال',
+    usage: 'ردپای من',
+    gold: 'ثبت درصد 1', gold2: 'ثبت درصد 2', gold3: 'ثبت درصد 3',
+    gold4: 'ثبت درصد 4', gold5: 'ثبت درصد 5', gold6: 'ثبت درصد 6',
+    gold7: 'ثبت درصد 7', gold8: 'ثبت درصد 8', gold9: 'ثبت درصد 9',
+    monitor: 'دیدبان درصد ها', skincare: 'مراقبت پوستی',
+    'profit-calculator': 'محاسبه گر سود', 'ai-chat': 'چت هوشمند',
+    tabdeal: 'کیف پول تبدیل', detective: 'کارآگاه داده‌ها',
+    'simple-chat': 'چت فرمان‌بردار', vault: 'رمز راز',
+    restricted: 'سپر دانلود', family: 'شجره‌نامه',
+    'monthly-deposit': 'واریز ماهیانه', peace: 'ثبت آرامش',
+    yandex: 'جستجوگر عکس', 'html-viewer': 'نمایشگر کد',
+    funds: 'WWW.com', clipboard: 'کلیپ بورد',
+    'jules-agent': 'دستیار جولز', 'jules-bot': 'ربات جولز',
+    liquidity: 'محاسبه نقدشوندگی', 'image-enhancer': 'ارتقای عکس',
+    'daily-report': 'گزارش روز', sync: 'همگام‌ساز عمارت',
+    gym: 'Activity'
+  };
+  var PALETTE = ['#5eead4','#ffd166','#a78bfa','#34d399','#60a5fa','#f472b6','#fb923c','#38bdf8','#c084fc','#facc15'];
+
+  var $ = function(id){ return document.getElementById(id); };
+  var state = { range: 'today', stats: {} };
+
+  // ---------- ابزار ----------
+  function faDigits(n){
+    return String(n).replace(/\d/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'[+d]; });
+  }
+  function pad2(n){ return n < 10 ? '0' + n : String(n); }
+  function dayKey(d){ return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()); }
+  function parseKey(k){ var p = k.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function addDays(d, n){ var x = new Date(d); x.setDate(x.getDate()+n); return x; }
+
+  function fmtDuration(ms){
+    if (!ms) return '۰';
+    var s = Math.round(ms/1000);
+    var h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+    if (h > 0) return faDigits(h) + 'س ' + faDigits(m) + 'د';
+    if (m > 0) return faDigits(m) + 'د ' + faDigits(sec) + 'ث';
+    return faDigits(sec) + 'ث';
+  }
+  function fmtDurationParts(ms){
+    var s = Math.round((ms||0)/1000);
+    var h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+    if (h > 0) return { val: faDigits(h), unit: 'ساعت', sub: faDigits(m) + ' دقیقه' };
+    if (m > 0) return { val: faDigits(m), unit: 'دقیقه', sub: faDigits(s%60) + ' ثانیه' };
+    return { val: faDigits(s), unit: 'ثانیه', sub: '' };
+  }
+  function label(id){ return APP_LABELS[id] || id; }
+  function colorFor(id){
+    var h = 0;
+    for (var i = 0; i < id.length; i++) h = (h*31 + id.charCodeAt(i)) | 0;
+    return PALETTE[Math.abs(h) % PALETTE.length];
+  }
+
+  function readStats(){
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      var o = raw ? JSON.parse(raw) : {};
+      return o && typeof o === 'object' ? o : {};
+    } catch(e){ return {}; }
+  }
+
+  // ---------- بازه ----------
+  function rangeDays(){
+    if (state.range === 'today') return [dayKey(new Date())];
+    if (state.range === 'all') {
+      var keys = [];
+      Object.keys(state.stats).forEach(function(app){
+        Object.keys(state.stats[app]||{}).forEach(function(d){ if (keys.indexOf(d) === -1) keys.push(d); });
+      });
+      return keys.length ? keys.sort() : [dayKey(new Date())];
+    }
+    var n = parseInt(state.range, 10) || 7;
+    var out = [];
+    for (var i = n-1; i >= 0; i--) out.push(dayKey(addDays(new Date(), -i)));
+    return out;
+  }
+
+  function aggregate(){
+    var days = rangeDays();
+    var daySet = {};
+    days.forEach(function(d){ daySet[d] = true; });
+    var perApp = {}, totalMs = 0, totalOpens = 0, perDay = {};
+
+    days.forEach(function(d){ perDay[d] = 0; });
+
+    Object.keys(state.stats).forEach(function(app){
+      var rec = state.stats[app] || {};
+      var ms = 0, opens = 0;
+      Object.keys(rec).forEach(function(d){
+        if (!daySet[d]) return;
+        ms += rec[d].ms || 0;
+        opens += rec[d].opens || 0;
+        perDay[d] = (perDay[d] || 0) + (rec[d].ms || 0);
+      });
+      if (ms > 0 || opens > 0) perApp[app] = { ms: ms, opens: opens };
+      totalMs += ms; totalOpens += opens;
+    });
+
+    var sorted = Object.keys(perApp).sort(function(a,b){ return perApp[b].ms - perApp[a].ms || perApp[b].opens - perApp[a].opens; });
+    return { perApp: perApp, sorted: sorted, totalMs: totalMs, totalOpens: totalOpens, perDay: perDay, days: days };
+  }
+
+  // ---------- رندر ----------
+  function renderSummary(agg){
+    var parts = fmtDurationParts(agg.totalMs);
+    $('sTotalTime').innerHTML = parts.val + '<span class="unit">' + parts.unit + '</span>';
+    $('sTotalTimeSub').textContent = parts.sub;
+
+    $('sOpens').innerHTML = faDigits(agg.totalOpens);
+    var dayCount = agg.days.length;
+    $('sOpensSub').textContent = dayCount > 1 ? 'در ' + faDigits(dayCount) + ' روز' : '';
+
+    if (agg.sorted.length) {
+      var top = agg.sorted[0];
+      $('sTop').textContent = label(top);
+      $('sTopSub').textContent = fmtDuration(agg.perApp[top].ms);
+    } else {
+      $('sTop').textContent = '—';
+      $('sTopSub').textContent = '';
+    }
+
+    if (agg.totalOpens > 0 && agg.totalMs > 0) {
+      var avg = agg.totalMs / agg.totalOpens;
+      var ap = fmtDurationParts(avg);
+      $('sAvg').innerHTML = ap.val + '<span class="unit">' + ap.unit + '</span>';
+      $('sAvgSub').textContent = 'برای هر باز شدن';
+    } else {
+      $('sAvg').textContent = '—';
+      $('sAvgSub').textContent = '';
+    }
+  }
+
+  function renderList(agg){
+    var box = $('appList');
+    $('appCount').textContent = faDigits(agg.sorted.length) + ' اپ';
+
+    if (!agg.sorted.length) {
+      box.innerHTML = '<div class="empty-state"><div class="big">👣</div>' +
+        '<p>هنوز آمار استفاده‌ای در این بازه نیست.<br>کمی از اپ‌ها استفاده کن، بعد برگرد.</p></div>';
+      return;
+    }
+
+    var max = agg.perApp[agg.sorted[0]].ms || 1;
+    var html = '';
+    agg.sorted.forEach(function(app){
+      var d = agg.perApp[app];
+      var pct = Math.max(2, Math.round(d.ms / max * 100));
+      var c = colorFor(app);
+      var avg = d.opens > 0 ? d.ms / d.opens : 0;
+      html += '<div class="app-row">' +
+        '<div class="app-main">' +
+          '<div class="app-name"><span class="dot" style="background:' + c + '"></span>' + label(app) + '</div>' +
+          '<div class="app-meta">' +
+            '<span>🚪 <b>' + faDigits(d.opens) + '</b> بار</span>' +
+            (avg ? '<span>⏳ میانگین <b>' + fmtDuration(avg) + '</b></span>' : '') +
+          '</div>' +
+          '<div class="app-bar"><i style="width:' + pct + '%;background:linear-gradient(90deg,' + c + ',rgba(255,255,255,.18))"></i></div>' +
+        '</div>' +
+        '<div class="app-right">' +
+          '<div class="app-time">' + fmtDuration(d.ms) + '</div>' +
+          '<div class="app-opens">' + faDigits(pct) + '٪</div>' +
+        '</div>' +
+      '</div>';
+    });
+    box.innerHTML = html;
+  }
+
+  // ---------- نمودار ----------
+  function renderChart(){
+    var canvas = $('chart');
+    var shell = canvas.parentElement;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var cssW = shell.clientWidth || 320;
+    var cssH = 186;
+
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+
+    var days = [];
+    for (var i = 6; i >= 0; i--) days.push(dayKey(addDays(new Date(), -i)));
+
+    var vals = days.map(function(d){
+      var ms = 0;
+      Object.keys(state.stats).forEach(function(app){
+        var r = state.stats[app] && state.stats[app][d];
+        if (r) ms += r.ms || 0;
+      });
+      return ms;
+    });
+
+    var maxV = Math.max.apply(null, vals.concat([0]));
+    var empty = maxV === 0;
+    $('chartEmpty').classList.toggle('show', empty);
+
+    var padL = 6, padR = 6, padT = 14, padB = 26;
+    var plotW = cssW - padL - padR;
+    var plotH = cssH - padT - padB;
+
+    // خطوط راهنما
+    ctx.strokeStyle = 'rgba(148,197,214,.10)';
+    ctx.lineWidth = 1;
+    for (var g = 0; g <= 3; g++) {
+      var y = padT + plotH * (g / 3);
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(cssW - padR, y); ctx.stroke();
+    }
+
+    var slot = plotW / 7;
+    var barW = Math.min(30, slot * 0.52);
+
+    days.forEach(function(d, idx){
+      var v = vals[idx];
+      var ratio = maxV > 0 ? v / maxV : 0;
+      var h = Math.max(v > 0 ? 3 : 0, ratio * plotH);
+      var x = padL + slot * idx + (slot - barW) / 2;
+      var y = padT + plotH - h;
+
+      if (v > 0) {
+        var grd = ctx.createLinearGradient(0, y, 0, y + h);
+        grd.addColorStop(0, 'rgba(94,234,212,.95)');
+        grd.addColorStop(1, 'rgba(45,212,191,.30)');
+        ctx.fillStyle = grd;
+        var r = Math.min(7, barW / 2, h / 2);
+        ctx.beginPath();
+        if (ctx.roundRect) { ctx.roundRect(x, y, barW, h, [r, r, 0, 0]); }
+        else { ctx.rect(x, y, barW, h); }
+        ctx.fill();
+      }
+
+      // برچسب روز
+      var dt = parseKey(d);
+      var names = ['ی','د','س','چ','پ','ج','ش'];
+      var lbl = names[dt.getDay()];
+      ctx.fillStyle = d === dayKey(new Date()) ? '#5eead4' : 'rgba(159,180,204,.85)';
+      ctx.font = '600 10px Vazirmatn, Tahoma, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(lbl, x + barW / 2, cssH - 8);
+
+      // مقدار بالای ستون
+      if (v > 0) {
+        var mins = Math.max(1, Math.round(v / 60000));
+        ctx.fillStyle = 'rgba(234,244,255,.75)';
+        ctx.font = '600 9px Vazirmatn, Tahoma, sans-serif';
+        ctx.fillText(faDigits(mins), x + barW / 2, y - 4);
+      }
+    });
+  }
+
+  // ---------- بک‌آپ ----------
+  function ghCfg(){
+    return {
+      token: localStorage.getItem('github_backup_token') || '',
+      repo: localStorage.getItem('github_backup_repo') || '',
+      branch: localStorage.getItem('github_backup_branch') || 'main',
+      path: localStorage.getItem('github_backup_filepath') || 'usage/usage_backup.json'
+    };
+  }
+
+  function refreshBackupNote(){
+    var c = ghCfg();
+    var el = $('backupNote');
+    if (c.token && c.repo) {
+      el.textContent = '☁️ بکاپ خودکار فعال — ' + c.repo + ' @ ' + c.branch + ' · ' + c.path;
+      el.style.color = 'var(--teal)';
+    } else if (c.repo && !c.token) {
+      el.textContent = '⚠️ مخزن ذخیره شد ولی توکن خالی است — بکاپ کار نمی‌کند';
+      el.style.color = 'var(--gold)';
+    } else if (c.token && !c.repo) {
+      el.textContent = '⚠️ توکن ذخیره شد ولی نام مخزن خالی است';
+      el.style.color = 'var(--gold)';
+    } else {
+      el.textContent = 'وضعیت بکاپ: تنظیم نشده (برای فعال‌سازی ⚙️ را بزن)';
+      el.style.color = '';
+    }
+  }
+
+  function toast(msg, kind){
+    var wrap = $('toastWrap');
+    var t = document.createElement('div');
+    t.className = 'toast' + (kind ? ' ' + kind : '');
+    t.textContent = msg;
+    wrap.appendChild(t);
+    requestAnimationFrame(function(){ t.classList.add('show'); });
+    setTimeout(function(){
+      t.classList.remove('show');
+      setTimeout(function(){ t.remove(); }, 320);
+    }, 2600);
+  }
+
+  function doBackup(){
+    var c = ghCfg();
+    if (!c.token || !c.repo) { toast('اول تنظیمات گیت‌هاب را کامل کن ⚙️', 'err'); return; }
+    var btn = $('btnBackupNow');
+    btn.disabled = true;
+    btn.textContent = '⏳ در حال آپلود…';
+
+    var fn = (window.EmaratUsage && window.EmaratUsage.uploadToGitHub) ? window.EmaratUsage.uploadToGitHub : null;
+    var p = fn ? fn() : Promise.resolve({ success: false, message: 'ردیاب در دسترس نیست' });
+
+    p.then(function(res){
+      btn.disabled = false;
+      btn.textContent = '☁️ بکاپ فوری به گیت‌هاب';
+      if (res && res.success) toast('✅ آمار با موفقیت در گیت‌هاب ذخیره شد', 'ok');
+      else toast('❌ ' + ((res && res.message) || 'خطای ناشناخته'), 'err');
+    });
+  }
+
+  function exportJson(){
+    var data = {
+      app: 'usage',
+      exportedAt: new Date().toISOString(),
+      stats: state.stats
+    };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'emarat-usage-' + dayKey(new Date()) + '.json';
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+    toast('📥 فایل خروجی آماده شد', 'ok');
+  }
+
+  function mergeInto(a, b){
+    var out = {};
+    [a, b].forEach(function(src){
+      if (!src || typeof src !== 'object') return;
+      Object.keys(src).forEach(function(app){
+        if (!out[app]) out[app] = {};
+        Object.keys(src[app] || {}).forEach(function(d){
+          var cur = out[app][d] || { ms:0, opens:0 };
+          var inc = src[app][d] || {};
+          out[app][d] = { ms: Math.max(cur.ms||0, inc.ms||0), opens: Math.max(cur.opens||0, inc.opens||0) };
+        });
+      });
+    });
+    return out;
+  }
+
+  function importJson(file){
+    var fr = new FileReader();
+    fr.onload = function(){
+      try {
+        var parsed = JSON.parse(fr.result);
+        var incoming = parsed && parsed.stats ? parsed.stats : parsed;
+        if (!incoming || typeof incoming !== 'object') throw new Error('ساختار نامعتبر');
+        state.stats = mergeInto(state.stats, incoming);
+        localStorage.setItem(STORE_KEY, JSON.stringify(state.stats));
+        refresh();
+        toast('📤 آمار با موفقیت ادغام شد', 'ok');
+      } catch (e) {
+        toast('❌ فایل نامعتبر است', 'err');
+      }
+      $('fileInput').value = '';
+    };
+    fr.readAsText(file);
+  }
+
+  // ---------- پاک‌سازی دومرحله‌ای ----------
+  var clearArmed = false, clearTimer = null;
+  function onClear(){
+    var btn = $('btnClear');
+    if (!clearArmed) {
+      clearArmed = true;
+      btn.classList.add('armed');
+      btn.textContent = '⚠️ مطمئنی؟ دوباره بزن';
+      clearTimer = setTimeout(function(){
+        clearArmed = false;
+        btn.classList.remove('armed');
+        btn.textContent = '🗑️ پاک کردن همهٔ آمار';
+      }, 4000);
+      return;
+    }
+    clearTimeout(clearTimer);
+    clearArmed = false;
+    btn.classList.remove('armed');
+    btn.textContent = '🗑️ پاک کردن همهٔ آمار';
+    localStorage.removeItem(STORE_KEY);
+    state.stats = {};
+    refresh();
+    toast('🗑️ همهٔ آمار پاک شد', 'ok');
+  }
+
+  // ---------- تنظیمات ----------
+  function openSettings(){
+    var c = ghCfg();
+    $('inpToken').value = c.token;
+    $('inpRepo').value = c.repo;
+    $('inpBranch').value = c.branch;
+    $('inpPath').value = c.path;
+    $('settingsModal').classList.add('open');
+  }
+  function closeSettings(){ $('settingsModal').classList.remove('open'); }
+  function saveSettings(){
+    localStorage.setItem('github_backup_token', $('inpToken').value.trim());
+    localStorage.setItem('github_backup_repo', $('inpRepo').value.trim());
+    localStorage.setItem('github_backup_branch', $('inpBranch').value.trim() || 'main');
+    localStorage.setItem('github_backup_filepath', $('inpPath').value.trim() || 'usage/usage_backup.json');
+    refreshBackupNote();
+    closeSettings();
+    toast('✅ تنظیمات ذخیره شد', 'ok');
+  }
+  function clearSettings(){
+    ['github_backup_token','github_backup_repo','github_backup_branch','github_backup_filepath']
+      .forEach(function(k){ localStorage.removeItem(k); });
+    refreshBackupNote();
+    closeSettings();
+    toast('تنظیمات پاک شد');
+  }
+
+  // ---------- حلقهٔ اصلی ----------
+  function refresh(){
+    state.stats = readStats();
+    var agg = aggregate();
+    renderSummary(agg);
+    renderList(agg);
+    renderChart();
+  }
+
+  function bind(){
+    $('rangeBar').addEventListener('click', function(e){
+      var b = e.target.closest('.range-btn');
+      if (!b) return;
+      Array.prototype.forEach.call(this.querySelectorAll('.range-btn'), function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+      state.range = b.dataset.range;
+      refresh();
+    });
+
+    $('btnSettings').addEventListener('click', openSettings);
+    $('btnCloseSettings').addEventListener('click', closeSettings);
+    $('btnSaveSettings').addEventListener('click', saveSettings);
+    $('btnClearSettings').addEventListener('click', clearSettings);
+    $('settingsModal').addEventListener('click', function(e){
+      if (e.target === this) closeSettings();
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') closeSettings();
+    });
+
+    $('btnBackupNow').addEventListener('click', doBackup);
+    $('btnExport').addEventListener('click', exportJson);
+    $('btnImport').addEventListener('click', function(){ $('fileInput').click(); });
+    $('fileInput').addEventListener('change', function(e){
+      if (e.target.files && e.target.files[0]) importJson(e.target.files[0]);
+    });
+    $('btnClear').addEventListener('click', onClear);
+
+    var rt = null;
+    window.addEventListener('resize', function(){
+      clearTimeout(rt);
+      rt = setTimeout(renderChart, 160);
+    });
+    window.addEventListener('storage', function(e){
+      if (e.key === STORE_KEY) refresh();
+    });
+    document.addEventListener('visibilitychange', function(){
+      if (document.visibilityState === 'visible') refresh();
+    });
+  }
+
+  bind();
+  refreshBackupNote();
+  refresh();
+})();
+</script>
+<script src="../refresh-button.js"></script>
+</body>
+</html>
