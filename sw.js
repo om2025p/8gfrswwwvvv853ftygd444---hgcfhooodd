@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v92';
+const CACHE_NAME = 'emarat-portal-v93';
 const ASSETS = [
   './',
   './index.html',
@@ -261,6 +261,13 @@ const ASSETS = [
   './family/icon-512.png',
   './family/icon-192-maskable.png',
   './family/icon-512-maskable.png',
+  // Family app: local Persian fonts (Vazirmatn + Naskh), no CDN
+  './vendor/vazirmatn/fonts.css',
+  './vendor/vazirmatn/fonts/Vazirmatn-Regular.woff2',
+  './vendor/vazirmatn/fonts/Vazirmatn-Medium.woff2',
+  './vendor/vazirmatn/fonts/Vazirmatn-Bold.woff2',
+  './vendor/vazirmatn/fonts/NotoNaskhArabic-Regular.woff2',
+  './vendor/vazirmatn/fonts/NotoNaskhArabic-Bold.woff2',
   // Monthly Deposit App
   './monthly-deposit/index.html',
   './monthly-deposit/manifest.json',
