@@ -1,0 +1,121 @@
+<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مدل ۵ · خوشه‌های خانواده</title>
+<link rel="stylesheet" href="/vendor/vazirmatn/fonts.css">
+<style>
+:root{--bg:#080B0E;--sf:#12161B;--ln:#242B33;--tx:#EDF2F6;--tx2:#94A3B0;--tx3:#647381;
+--ac:#3DDC97;--p:#5FD3A6;--m:#E48FC0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--tx);font-family:Vazirmatn,system-ui,sans-serif;
+background-image:radial-gradient(700px 380px at 50% 0%,#0f2a2044,transparent)}
+.hd{padding:16px}
+.t{font-size:19px;font-weight:800}
+.s{font-size:11.5px;color:var(--tx3);margin-top:3px}
+.wrap{overflow-x:auto;padding:8px 0 18px}
+.wrap::-webkit-scrollbar{display:none}
+.cv{position:relative}
+svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+/* cluster = a rounded blob behind a family unit */
+.cluster{position:absolute;border-radius:26px;pointer-events:none;
+background:#0E1512;border:1px solid #1B2A22}
+.cluster.m{background:#150F14;border-color:#2A1B26}
+.clab{position:absolute;font-size:9.5px;font-weight:800;letter-spacing:.4px;white-space:nowrap}
+.nd{position:absolute;transform:translateX(-50%);cursor:pointer;z-index:2;text-align:center}
+.pill{background:var(--sf);border:1px solid var(--ln);border-radius:999px;
+padding:4px 9px 4px 5px;display:inline-flex;align-items:center;gap:5px;max-width:176px;
+box-shadow:0 3px 12px #0007;white-space:nowrap}
+.nd.p .pill{border-color:#274535}
+.nd.m .pill{border-color:#452A38}
+.nd.root .pill{background:linear-gradient(135deg,#173A2C,#0F2A20);border:2px solid var(--ac);
+box-shadow:0 0 0 5px #3DDC9718,0 8px 20px #0009}
+.av{width:25px;height:25px;border-radius:50%;flex:none;display:grid;place-items:center;
+font-weight:800;font-size:10.5px;background:#20302A;color:#8FE8C0;border:1.5px solid #2E4B3D}
+.av.f{background:#2B2129;color:#E48FC0;border-color:#4A3450}
+.av.d{opacity:.5;filter:grayscale(.75)}
+.nm{font-size:9.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:118px}
+.kin{font-size:8px;color:var(--ac);font-weight:700;margin-top:1px}
+.lg{display:flex;gap:12px;justify-content:center;padding:10px;font-size:9.5px;color:var(--tx3);flex-wrap:wrap}
+.lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-left:4px}
+</style></head><body>
+<div class="hd"><div class="t">مدل ۵ · خوشه‌های خانواده</div>
+<div class="s">هر خانواده یک جزیرهٔ رنگی · قرص‌های فشرده · مناسب صفحه‌های شلوغ</div></div>
+<div class="wrap"><div class="cv" id="cv"></div></div>
+<div class="lg"><span><i style="background:#5FD3A6"></i>خوشهٔ پدری</span>
+<span><i style="background:#E48FC0"></i>خوشهٔ مادری</span>
+<span><i style="background:#3DDC97"></i>ازدواج بین دو سمت</span></div>
+<script src="shared.js"></script>
+<script>
+const ROOT='m1', cv=document.getElementById('cv');
+const RW=186, RH=116, PADX=18;
+// rows: generation → paternal list + maternal list
+const rows={};
+ids.forEach(id=>{ if(id===ROOT)return; const g=depth[id]; (rows[g]=rows[g]||{p:[],m:[]})[sideOf(id,ROOT)].push(id); });
+const gs=Object.keys(rows).map(Number).sort((a,b)=>a-b);
+let maxP=1,maxM=1;
+gs.forEach(g=>{ maxP=Math.max(maxP,rows[g].p.length); maxM=Math.max(maxM,rows[g].m.length); });
+const W=Math.max(maxP*RW+maxM*RW+PADX*2+80,360);
+const H=gs.length*RH+130;
+cv.style.width=W+'px'; cv.style.height=H+'px';
+const pos={};
+gs.forEach((g,gi)=>{
+  const y=64+gi*RH;
+  const P=rows[g].p, Mm=rows[g].m;
+  // paternal cluster on the right half, maternal on the left half
+  const pCx = W - PADX - (P.length*RW)/2;
+  const mCx = PADX + (Mm.length*RW)/2;
+  if(P.length){
+    const cl=document.createElement('div'); cl.className='cluster';
+    cl.style.cssText=`right:${PADX-12}px;top:${y-42}px;width:${P.length*RW+24}px;height:${RH-22}px`;
+    cv.appendChild(cl);
+    const lab=document.createElement('div'); lab.className='clab'; lab.textContent='خانوادهٔ پدر';
+    lab.style.color='#5FD3A6'; lab.style.right=(PADX-4)+'px'; lab.style.top=(y-56)+'px';
+    cv.appendChild(lab);
+  }
+  if(Mm.length){
+    const cl=document.createElement('div'); cl.className='cluster m';
+    cl.style.cssText=`left:${PADX-12}px;top:${y-42}px;width:${Mm.length*RW+24}px;height:${RH-22}px`;
+    cv.appendChild(cl);
+    const lab=document.createElement('div'); lab.className='clab'; lab.textContent='خانوادهٔ مادر';
+    lab.style.color='#E48FC0'; lab.style.left=(PADX-4)+'px'; lab.style.top=(y-56)+'px';
+    cv.appendChild(lab);
+  }
+  P.forEach((id,i)=>{ pos[id]={x:pCx-(P.length-1)*RW/2+i*RW, y, side:'p'}; });
+  Mm.forEach((id,i)=>{ pos[id]={x:mCx-(Mm.length-1)*RW/2+i*RW, y, side:'m'}; });
+});
+const rootY=64+gs.indexOf(depth[ROOT])*RH+RH*0.55;
+pos[ROOT]={x:W/2,y:rootY,side:'root'};
+
+let svg='';
+Object.keys(pos).forEach(id=>{
+  (M[id].parents||[]).forEach(pid=>{
+    const a=pos[id],b=pos[pid]; if(!a||!b)return;
+    const col=a.side==='m'?'#E48FC0':'#5FD3A6';
+    const y1=b.y+16,y2=a.y-16,my=(y1+y2)/2;
+    svg+=`<path d="M${b.x},${y1} L${b.x},${my} L${a.x},${my} L${a.x},${y2}" fill="none"
+      stroke="${col}" stroke-opacity=".32" stroke-width="1.4"/>`;
+  });
+});
+const dr=new Set();
+Object.keys(pos).forEach(id=>{
+  (M[id].spouses||[]).forEach(sid=>{
+    const k=[id,sid].sort().join('|'); if(dr.has(k))return; dr.add(k);
+    const a=pos[id],b=pos[sid]; if(!a||!b)return;
+    const cross=(a.side!==b.side)&&a.side!=='root'&&b.side!=='root';
+    svg+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${cross?'#3DDC97':'#2C3A34'}"
+      stroke-opacity="${cross?'.95':'.35'}" stroke-width="${cross?2.4:1.1}" stroke-dasharray="5 4"/>`;
+  });
+});
+cv.insertAdjacentHTML('afterbegin',`<svg width="${W}" height="${H}">${svg}</svg>`);
+
+Object.keys(pos).forEach(id=>{
+  const m=M[id],q=pos[id],isRoot=id===ROOT;
+  const el=document.createElement('div');
+  el.className='nd '+(isRoot?'root':q.side);
+  el.style.left=q.x+'px'; el.style.top=(q.y-16)+'px';
+  el.innerHTML=`<div class="pill"><div class="av ${m.gender==='female'?'f':''} ${isDead(m)?'d':''}">${esc(initial(m.name))}</div>
+    <div><div class="nm">${esc(m.name)}</div><div class="kin">${isRoot?'خودِ شما':esc(kinshipOf(id,ROOT))}</div></div></div>`;
+  cv.appendChild(el);
+});
+</script><script src="../refresh-button.js"></script>
+<script src="../usage-tracker.js" data-app="m5"></script>
+</body></html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مدل ۶ · نقشهٔ عمودی</title>
+<link rel="stylesheet" href="/vendor/vazirmatn/fonts.css">
+<style>
+:root{--bg:#0A0C10;--sf:#141821;--ln:#252C38;--tx:#EDF1F7;--tx2:#95A2B3;--tx3:#65727F;
+--ac:#8B7CF6;--p:#5BC8AF;--m:#E98FB8;--g:#F0C04A}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--tx);font-family:Vazirmatn,system-ui,sans-serif;
+background-image:radial-gradient(800px 500px at 80% 0%,#2a1f4a55,transparent),
+radial-gradient(600px 400px at 10% 100%,#0f3a3055,transparent)}
+.hd{padding:16px}
+.t{font-size:19px;font-weight:800}
+.s{font-size:11.5px;color:var(--tx3);margin-top:3px}
+.wrap{overflow-x:auto;padding:8px 0 20px}
+.wrap::-webkit-scrollbar{display:none}
+.cv{position:relative}
+svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+/* vertical connector rails */
+.rail{position:absolute;width:2px;pointer-events:none}
+.nd{position:absolute;transform:translateX(-50%);cursor:pointer;z-index:2}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:7px 7px 6px;
+text-align:center;box-shadow:0 4px 14px #0008;position:relative}
+.nd.p .card{box-shadow:0 4px 14px #0008,inset 3px 0 0 #5BC8AF}
+.nd.m .card{box-shadow:0 4px 14px #0008,inset 3px 0 0 #E98FB8}
+.nd.root .card{background:linear-gradient(150deg,#241E48,#171430);border:2px solid var(--ac);
+box-shadow:0 0 0 5px #8B7CF620,0 10px 26px #0009}
+.av{width:33px;height:33px;border-radius:10px;margin:0 auto 4px;display:grid;place-items:center;
+font-weight:800;font-size:13px;background:#1F2632;color:#8FE8C0;border:1.5px solid #313B4A}
+.av.f{background:#2A2130;color:#E98FB8;border-color:#4A3450}
+.av.d{opacity:.5;filter:grayscale(.75)}
+.nm{font-size:10px;font-weight:700;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kin{font-size:8px;color:var(--ac);font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tier{position:absolute;font-size:8.5px;font-weight:800;color:var(--tx3);white-space:nowrap;
+letter-spacing:.5px;transform:translateY(-50%)}
+.lg{display:flex;gap:12px;justify-content:center;padding:10px;font-size:9.5px;color:var(--tx3);flex-wrap:wrap}
+.lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-left:4px}
+</style></head><body>
+<div class="hd"><div class="t">مدل ۶ · نقشهٔ عمودی</div>
+<div class="s">درخت از بالا به پایین · پدری یک طرف، مادری طرف دیگر · خطوط پررنگ</div></div>
+<div class="wrap"><div class="cv" id="cv"></div></div>
+<div class="lg"><span><i style="background:#5BC8AF"></i>پدری</span>
+<span><i style="background:#E98FB8"></i>مادری</span>
+<span><i style="background:#F0C04A"></i>ازدواج بین دو سمت</span></div>
+<script src="shared.js"></script>
+<script>
+const ROOT='m1', cv=document.getElementById('cv');
+const CW=104, RH=112, PADX=22, TIER_W=30;
+// rows: each generation; within a row, paternal block right / maternal block left
+const rows={};
+ids.forEach(id=>{ if(id===ROOT)return; const g=depth[id]; (rows[g]=rows[g]||{p:[],m:[]})[sideOf(id,ROOT)].push(id); });
+const gs=Object.keys(rows).map(Number).sort((a,b)=>a-b);
+let maxTotal=1;
+gs.forEach(g=>maxTotal=Math.max(maxTotal,rows[g].p.length+rows[g].m.length));
+const W=Math.max(maxTotal*CW+PADX*2+TIER_W,360);
+const H=(gs.length+1)*RH+70;
+cv.style.width=W+'px'; cv.style.height=H+'px';
+const pos={};
+gs.forEach((g,gi)=>{
+  const y=58+gi*RH;
+  const P=rows[g].p, Mm=rows[g].m;
+  const total=P.length+Mm.length;
+  const rowW=total*CW;
+  const x0=W/2-rowW/2+CW/2+TIER_W/2;
+  // paternal first (rightmost in RTL) then maternal
+  P.forEach((id,i)=>{ pos[id]={x:x0+i*CW,y,side:'p'}; });
+  Mm.forEach((id,i)=>{ pos[id]={x:x0+(P.length+i)*CW,y,side:'m'}; });
+  // tier label
+  const tl=document.createElement('div');
+  tl.className='tier'; tl.textContent='نسل '+(g+1);
+  tl.style.left='6px'; tl.style.top=y+'px';
+  cv.appendChild(tl);
+  // rail
+  const rail=document.createElement('div');
+  rail.className='rail'; rail.style.cssText=`left:${TIER_W-2}px;top:${y}px;height:${RH}px;
+    background:linear-gradient(180deg,#252C38,transparent)`;
+  cv.appendChild(rail);
+});
+const rootY=58+gs.length*RH;
+pos[ROOT]={x:W/2,y:rootY,side:'root'};
+
+let svg='';
+Object.keys(pos).forEach(id=>{
+  (M[id].parents||[]).forEach(pid=>{
+    const a=pos[id],b=pos[pid]; if(!a||!b)return;
+    const col=a.side==='m'?'#E98FB8':'#5BC8AF';
+    const y1=b.y+30,y2=a.y-30,my=(y1+y2)/2;
+    svg+=`<path d="M${b.x},${y1} L${b.x},${my} L${a.x},${my} L${a.x},${y2}" fill="none"
+      stroke="${col}" stroke-opacity=".45" stroke-width="1.8" stroke-linecap="round"/>`;
+  });
+});
+const dr=new Set();
+Object.keys(pos).forEach(id=>{
+  (M[id].spouses||[]).forEach(sid=>{
+    const k=[id,sid].sort().join('|'); if(dr.has(k))return; dr.add(k);
+    const a=pos[id],b=pos[sid]; if(!a||!b)return;
+    const cross=(a.side!==b.side)&&a.side!=='root'&&b.side!=='root';
+    svg+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${cross?'#F0C04A':'#39424F'}"
+      stroke-opacity="${cross?'.95':'.35'}" stroke-width="${cross?2.4:1.2}" stroke-dasharray="6 4"/>`;
+  });
+});
+cv.insertAdjacentHTML('afterbegin',`<svg width="${W}" height="${H}">${svg}</svg>`);
+
+Object.keys(pos).forEach(id=>{
+  const m=M[id],q=pos[id],isRoot=id===ROOT;
+  const el=document.createElement('div');
+  el.className='nd '+(isRoot?'root':q.side);
+  el.style.left=q.x+'px'; el.style.top=(q.y-36)+'px';
+  el.innerHTML=`<div class="card"><div class="av ${m.gender==='female'?'f':''} ${isDead(m)?'d':''}">${esc(initial(m.name))}</div>
+    <div class="nm">${esc(m.name)}</div>
+    <div class="kin">${isRoot?'خودِ شما':esc(kinshipOf(id,ROOT))}</div></div>`;
+  cv.appendChild(el);
+});
+</script><script src="../refresh-button.js"></script>
+<script src="../usage-tracker.js" data-app="m6"></script>
+</body></html>
