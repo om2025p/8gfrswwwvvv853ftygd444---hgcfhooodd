@@ -1381,7 +1381,8 @@
                 5: "sinergy_history",
                 6: "cement_history",
                 7: "ahang_kian_history",
-                8: "pharma_kian_history"
+                8: "pharma_kian_history",
+                9: "baharan_history"
             };
             const peakKeys = {
                 1: "gold_peakNumber",
@@ -1391,7 +1392,8 @@
                 5: "sinergy_peakNumber",
                 6: "cement_peakNumber",
                 7: "ahang_kian_peakNumber",
-                8: "pharma_kian_peakNumber"
+                8: "pharma_kian_peakNumber",
+                9: "baharan_peakNumber"
             };
             const historyKey = historyKeys[appId];
             let historyRaw = localStorage.getItem(historyKey);
@@ -1484,7 +1486,8 @@
             5: "sinergy_history",
             6: "cement_history",
             7: "ahang_kian_history",
-            8: "pharma_kian_history"
+            8: "pharma_kian_history",
+            9: "baharan_history"
         };
 
         function parseMonitorRawNumber(rawValue, fallbackStr) {
@@ -1512,7 +1515,7 @@
             let today = 0;
             const perApp = {};
 
-            for (let appId = 1; appId <= 8; appId++) {
+            for (let appId = 1; appId <= 9; appId++) {
                 let history = [];
                 try { history = JSON.parse(localStorage.getItem(MONITOR_HISTORY_KEYS[appId])) || []; } catch (e) {}
                 let appTotal = 0;
@@ -1586,7 +1589,8 @@
                 5: "sinergy_history",
                 6: "cement_history",
                 7: "ahang_kian_history",
-                8: "pharma_kian_history"
+                8: "pharma_kian_history",
+                9: "baharan_history"
             };
             const historyKey = historyKeys[appId];
             let historyRaw = localStorage.getItem(historyKey);
@@ -1651,7 +1655,8 @@
                 5: "sinergy_history",
                 6: "cement_history",
                 7: "ahang_kian_history",
-                8: "pharma_kian_history"
+                8: "pharma_kian_history",
+                9: "baharan_history"
             };
             const peakKeys = {
                 1: "gold_peakNumber",
@@ -1661,12 +1666,13 @@
                 5: "sinergy_peakNumber",
                 6: "cement_peakNumber",
                 7: "ahang_kian_peakNumber",
-                8: "pharma_kian_peakNumber"
+                8: "pharma_kian_peakNumber",
+                9: "baharan_peakNumber"
             };
 
             const processedAppsPerDay = {};
 
-            for (let appId = 1; appId <= 8; appId++) {
+            for (let appId = 1; appId <= 9; appId++) {
                 const historyKey = historyKeys[appId];
                 let historyRaw = localStorage.getItem(historyKey);
                 let history = [];
@@ -1970,6 +1976,16 @@
                 }
             } catch(e) {}
             result.push({ id: 8, title: "ثبت درصد 8", data: app8Data });
+
+            let app9Raw = localStorage.getItem("baharan_percents");
+            let app9Data = [];
+            try {
+                if (app9Raw) {
+                    let parsed = JSON.parse(app9Raw);
+                    app9Data = parsed.percents || [];
+                }
+            } catch(e) {}
+            result.push({ id: 9, title: "ثبت درصد 9", data: app9Data });
 
             cachedAppsPercentData = result;
             return result;
@@ -2970,7 +2986,7 @@
         // امضای داده: اگر هیچ رکورد جدیدی ثبت نشده باشد، تحلیل کش‌شده دوباره لود می‌شود.
         function buildMonitorAnalysisSignature(cum) {
             const parts = [];
-            for (let appId = 1; appId <= 8; appId++) {
+            for (let appId = 1; appId <= 9; appId++) {
                 let history = [];
                 try { history = JSON.parse(localStorage.getItem(MONITOR_HISTORY_KEYS[appId])) || []; } catch (e) {}
                 const last = getNewestPercentItem(history);
@@ -4353,7 +4369,8 @@ ${dayBlocksHtml}
                 { keys: ['energy_fund_synergy', 'sinergy_notes'], name: 'ثبت درصد ۵ (سینرژی)', isUnifiedObj: true },
                 { keys: ['cement_factory_percents', 'cement_notes'], name: 'ثبت درصد ۶ (سیمان)', isUnifiedObj: true },
                 { keys: ['ahang_kian_percents', 'ahang_kian_notes'], name: 'ثبت درصد ۷ (آهنگ کیان)', isUnifiedObj: true },
-                { keys: ['pharma_kian_percents', 'pharma_kian_notes'], name: 'ثبت درصد ۸', isUnifiedObj: true }
+                { keys: ['pharma_kian_percents', 'pharma_kian_notes'], name: 'ثبت درصد ۸', isUnifiedObj: true },
+                { keys: ['baharan_percents', 'baharan_notes'], name: 'ثبت درصد ۹ (سهم غبهار)', isUnifiedObj: true }
             ];
 
             appNoteSources.forEach(app => {

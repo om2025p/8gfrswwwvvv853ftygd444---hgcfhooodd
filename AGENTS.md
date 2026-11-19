@@ -277,6 +277,21 @@ gradle assembleRelease assembleDebug --no-daemon
 - اگر تب تنها تب موجود باشد، همان `alert` قبلی نمایش داده می‌شود و مودال باز نمی‌شود.
 - مودال با `display:flex` و `align-items/justify-content:center` **وسط صفحه** باز می‌شود (نه بالا)؛ `max-height:85vh` + `overflow-y:auto` برای صفحه‌های کوچک.
 
+### 🌾 اپ «ثبت درصد ۹» — سهم غبهار (gold9/)
+- **پوشه:** `gold9/` (کلون از `gold8`) | **عنوان دوتایی:** «سهم غبهار» + زیرعنوان «کشت وصنعت بهاران گلبهار خراسان».
+- **پالت:** زیتونی–گندمی (`#5b7c2d`, `#a3b544`, `#d4af37`؛ پس‌زمینه `#1b2410`، کارت `#24301a`).
+- **پیشوند کلیدهای ذخیره‌سازی: `baharan_`** — `baharan_percents` (شیء یکپارچه: `{percents, trash, goal, notes, periodTarget, achievedPeriods, highlightedStates}`)، `baharan_history`، `baharan_peakNumber`، `baharan_baseNumber`، `baharan_prices_v1`.
+- **پس‌زمینه:** `gold9/baharan_bg.webp` + فالبک `baharan_bg.jpg` با `background-size: cover` (هنوز جای تصویر کاربر، قابل تعویض).
+- **آیکون:** آسمان آبی + خورشید طلایی + چمن سبز (بدون متن).
+- **اتصالات اکوسیستم (همه انجام شد):**
+  - پورتال `index.html` → `DEFAULT_APPS` با `{ id: 'gold9', title: 'ثبت درصد 9' }` + `path.includes('/gold9/')` در لیست مسیرهای مجاز iframe.
+  - `sw.js` → `CACHE_NAME` = `emarat-portal-v84` + ۱۴ فایل gold9 در `ASSETS`.
+  - `monitor/index.html` → `MONITOR_HISTORY_KEYS[9] = "baharan_history"`، `peakKeys[9] = "baharan_peakNumber"`، `getAppPercentData()` id 9، و همهٔ حلقه‌های `appId <= 9`؛ کلیدهای بکاپ/یادداشت: `['baharan_percents','baharan_notes']`.
+  - `profit-calculator/calc2.html` و `total.html` → گزینهٔ `baharan_percents` در منبع دیدبان.
+  - `monthly-deposit/index.html` → `APP_PERCENT_LABELS[9]` + نام صندوق + حلقه‌های `appId <= 9`.
+- **⚠️ نکتهٔ `getAppPercentData`:** برای اپ‌های شیء‌محور (gold5..gold9) داده از `parsed.percents` خوانده می‌شود، نه از ریشه. اگر آرایهٔ خام در ریشه ذخیره شود، فهرست خالی می‌ماند.
+- **بعد از تغییر:** `CACHE_NAME` در `sw.js` بامپ شود (الان `emarat-portal-v84`).
+
 ### 📦 ارسال فایل بزرگ (تا ۲GB) به تلگرام بدون سشن کاربر — ترفند کلیدی
 - **مشکل ۱:** `sendDocument` روی HTTP API بات (`api.telegram.org`) سقفش **۵۰ مگابایت** است.
 - **مشکل ۲:** سشن کاربر ممکن است جای دیگر فعال باشد → خطای `AUTH_KEY_DUPLICATED` (همان چیزی که سرور Railway سپر دانلود باعثش می‌شود؛ چون `main.py` سرور، `userbot` را با همان `SESSION` بالا می‌آورد).
