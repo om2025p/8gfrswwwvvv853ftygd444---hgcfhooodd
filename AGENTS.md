@@ -278,7 +278,8 @@ gradle assembleRelease assembleDebug --no-daemon
 - مودال با `display:flex` و `align-items/justify-content:center` **وسط صفحه** باز می‌شود (نه بالا)؛ `max-height:85vh` + `overflow-y:auto` برای صفحه‌های کوچک.
 
 ### 🌾 اپ «ثبت درصد ۹» — سهم غبهار (gold9/)
-- **پوشه:** `gold9/` (کلون از `gold8`) | **عنوان دوتایی:** «سهم غبهار» + زیرعنوان «کشت وصنعت بهاران گلبهار خراسان».
+- **پوشه:** `gold9/` (کلون از `gold8`) | **نام آیکون/PWA:** «ثبت درصد 9» (لاتین، هم‌راستا با gold4..gold8) | **عنوان داخل اپ:** «سهم غبهار» + زیرعنوان «کشت وصنعت بهاران گلبهار خراسان».
+- **تفکیک مهم:** `manifest.name/short_name` و `<title>` = «ثبت درصد 9»، ولی `brand-title` داخل صفحه = «سهم غبهار». `apple-mobile-web-app-title` هم «ثبت درصد 9» است (نام هوم‌اسکرین iOS).
 - **پالت:** زیتونی–گندمی (`#5b7c2d`, `#a3b544`, `#d4af37`؛ پس‌زمینه `#1b2410`، کارت `#24301a`).
 - **پیشوند کلیدهای ذخیره‌سازی: `baharan_`** — `baharan_percents` (شیء یکپارچه: `{percents, trash, goal, notes, periodTarget, achievedPeriods, highlightedStates}`)، `baharan_history`، `baharan_peakNumber`، `baharan_baseNumber`، `baharan_prices_v1`.
 - **پس‌زمینه:** `gold9/baharan_bg.webp` + فالبک `baharan_bg.jpg` با `background-size: cover` (هنوز جای تصویر کاربر، قابل تعویض).
@@ -290,7 +291,7 @@ gradle assembleRelease assembleDebug --no-daemon
   - `profit-calculator/calc2.html` و `total.html` → گزینهٔ `baharan_percents` در منبع دیدبان.
   - `monthly-deposit/index.html` → `APP_PERCENT_LABELS[9]` + نام صندوق + حلقه‌های `appId <= 9`.
 - **⚠️ نکتهٔ `getAppPercentData`:** برای اپ‌های شیء‌محور (gold5..gold9) داده از `parsed.percents` خوانده می‌شود، نه از ریشه. اگر آرایهٔ خام در ریشه ذخیره شود، فهرست خالی می‌ماند.
-- **بعد از تغییر:** `CACHE_NAME` در `sw.js` بامپ شود (الان `emarat-portal-v84`).
+- **بعد از تغییر:** `CACHE_NAME` در `sw.js` بامپ شود (الان `emarat-portal-v85`).
 
 ### 📦 ارسال فایل بزرگ (تا ۲GB) به تلگرام بدون سشن کاربر — ترفند کلیدی
 - **مشکل ۱:** `sendDocument` روی HTTP API بات (`api.telegram.org`) سقفش **۵۰ مگابایت** است.
