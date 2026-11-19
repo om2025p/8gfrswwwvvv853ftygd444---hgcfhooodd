@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v93';
+const CACHE_NAME = 'emarat-portal-v94';
 const ASSETS = [
   './',
   './index.html',
@@ -256,6 +256,7 @@ const ASSETS = [
   './restricted/favicon.ico',
   // Family Tree App
   './family/index.html',
+  './family-lab/index.html',
   './family/manifest.json',
   './family/icon-192.png',
   './family/icon-512.png',
