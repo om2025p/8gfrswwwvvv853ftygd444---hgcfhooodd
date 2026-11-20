@@ -530,13 +530,19 @@
     /*  هوک سراسری: هر نوشتن در localStorage در IndexedDB آینه می‌شود      */
     /* ------------------------------------------------------------------ */
 
+    /**
+     * نوشتن روی Storage.prototype.setItem (نه روی خود localStorage) تا
+     * override به‌عنوان یک ویژگی ذخیره‌شده روی نمونهٔ localStorage ثبت نشود.
+     * نسخهٔ قبلی با localStorage.setItem = fn یک کلید آلودهٔ «setItem» می‌ساخت.
+     */
     function installWriteHook() {
         if (installWriteHook._done) return;
         installWriteHook._done = true;
         try {
-            localStorage.setItem = function (k, v) {
+            if (!nativeSetItem) return;
+            Storage.prototype.setItem = function (k, v) {
                 try {
-                    rawSet(k, v);
+                    nativeSetItem.call(this, k, v);
                     shadowPut(k, v);
                 } catch (err) {
                     shadowPut(k, v);
@@ -551,6 +557,16 @@
                 }
             };
         } catch (e) { /* بعضی مرورگرها اجازهٔ بازنویسی نمی‌دهند */ }
+    }
+
+    /**
+     * حذف کلید آلودهٔ «setItem» که نسخهٔ v104 روی دستگاه‌های کاربر ساخته بود.
+     * مقدار آن هرگز دادهٔ واقعی نبود، پس حذفش بی‌خطر است.
+     */
+    function cleanupPoisonKey() {
+        try {
+            if (rawGet('setItem') !== null) rawRemove('setItem');
+        } catch (e) { /* بی‌اثر */ }
     }
 
     /**
@@ -608,6 +624,7 @@
     };
 
     installWriteHook();
+    cleanupPoisonKey();
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
