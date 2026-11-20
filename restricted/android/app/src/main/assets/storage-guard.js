@@ -116,18 +116,30 @@
         }).catch(function () {});
     }
 
+    /**
+     * Promise برمی‌گرداند که پس از *کامل شدن* تراکنش resolve می‌شود.
+     * بدون آن، فراخوان نمی‌تواند بداند کپی واقعاً ثبت شده و ممکن است
+     * قبل از نوشتن، نسخهٔ اصلی را پاک کند.
+     */
     function shadowPutMany(map) {
-        openDB().then(function (db) {
-            if (!db) return;
-            try {
-                var tx = db.transaction(STORE, 'readwrite');
-                var os = tx.objectStore(STORE);
-                var now = Date.now();
-                Object.keys(map || {}).forEach(function (k) {
-                    os.put({ v: String(map[k]), t: now }, String(k));
-                });
-            } catch (e) { /* بی‌اثر */ }
-        }).catch(function () {});
+        var keys = Object.keys(map || {});
+        if (!keys.length) return Promise.resolve(0);
+        return openDB().then(function (db) {
+            if (!db) return 0;
+            return new Promise(function (resolve) {
+                try {
+                    var tx = db.transaction(STORE, 'readwrite');
+                    var os = tx.objectStore(STORE);
+                    var now = Date.now();
+                    keys.forEach(function (k) {
+                        os.put({ v: String(map[k]), t: now }, String(k));
+                    });
+                    tx.oncomplete = function () { resolve(keys.length); };
+                    tx.onerror = function () { resolve(0); };
+                    tx.onabort = function () { resolve(0); };
+                } catch (e) { resolve(0); }
+            });
+        }).catch(function () { return 0; });
     }
 
     function unwrapShadow(row) {
@@ -575,8 +587,10 @@
                 mirrored.push(k);
             }
 
-            if (mirrored.length) shadowPutMany(batch);
-            return { mirrored: mirrored.length, skipped: skipped, total: total, keys: mirrored };
+            // منتظر ثبت واقعی می‌مانیم تا فراخوان بتواند با اطمینان آزادسازی کند
+            return shadowPutMany(batch).then(function () {
+                return { mirrored: mirrored.length, skipped: skipped, total: total, keys: mirrored };
+            });
         }).catch(function (e) {
             return { mirrored: 0, skipped: 0, error: String(e && e.message || e) };
         });
@@ -768,8 +782,9 @@
 
         // بستن شکاف مهاجرت: کلیدهای قدیمی که هوک نوشتن ندیده‌اند.
         // پس از اطمینان از کپیِ یکسان، فضای کلیدهای یتیم آزاد می‌شود.
-        mirrorAll().then(function (m) {
-            if (!m || !m.mirrored) return null;
+        // آزادسازی به «چیزی برای آینه بودن» وابسته نیست: ممکن است آینه از
+        // قبل کامل باشد ولی کلیدهای یتیم هنوز در localStorage مانده باشند.
+        mirrorAll().then(function () {
             return freeVerifiedSpace();
         }).then(function (f) {
             if (!f || !f.freed || !f.freed.length) return;

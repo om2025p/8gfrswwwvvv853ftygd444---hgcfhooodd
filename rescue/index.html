@@ -560,9 +560,16 @@
   function fa1(n) {
     return String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
   }
+  /** حجم با واحد مناسب — فقط عدد (واحد جدا نمایش داده می‌شود) */
   function fmtMB(mb) {
     if (mb >= 1) return fa1(mb.toFixed(2));
     return fa1((mb * 1024).toFixed(0)) + ' کیلو';
+  }
+  /** حجم استفاده‌شده با واحد صحیح */
+  function usedText(mb) {
+    if (mb >= 1024) return fa1((mb / 1024).toFixed(2)) + ' گیگا';
+    if (mb >= 1) return fa1(mb.toFixed(2)) + ' مگا';
+    return fa1(Math.round(mb * 1024)) + ' کیلو';
   }
   /** حجم سهمیه با واحد مناسب (گیگابایت برای سهمیه‌های بزرگ) */
   function fmtQuota(mb) {
@@ -595,7 +602,7 @@
     }
     if (bar) { bar.style.width = safePct + '%'; bar.style.background = color; }
     if (pctEl) pctEl.innerHTML = fa1(Math.round(safePct)) + '<small>٪</small>';
-    if (bytesEl) bytesEl.textContent = fmtMB(bytesMB);
+    if (bytesEl) bytesEl.textContent = usedText(bytesMB);
     if (noteEl) {
       noteEl.textContent = note || '';
       noteEl.className = 'store-note' + (noteCls ? ' ' + noteCls : '');
