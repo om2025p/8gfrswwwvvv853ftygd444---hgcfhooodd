@@ -606,23 +606,63 @@
      * localStorage.getItem() همگام می‌خواند؛ IndexedDB ناهمگام است و
      * نمی‌تواند جای آن را بگیرد.
      */
-    var ORPHAN_KEYS = [
-        'symbolsCache',
-        'navAnalysisDatasets',
-        'navChartListDatasets',
-        'navAnalysisData',
-        'navAnalysisMeta',
-        'navAnalysisCurrentId',
-        'navChartListCurrentId',
-        'navAnalysisMigratedToIDB_v1',
-        'marjan_images_v1'
-    ];
+    /* کلیدهای قابل بازتولید. خالی است چون هر کلیدی که یک بار در این فهرست
+     * بود (دیتاست‌های آپلودی NAV، تصاویر، کش نمادها) دادهٔ واقعی کاربر بود،
+     * نه کش. اپی که آن‌ها را می‌نوشت از مخزن حذف شده؛ پس آزاد کردنشان یعنی
+     * نابودی دائمی داده. اگر روزی کش واقعیِ بازتولیدشدنی اضافه شد، فقط همان
+     * اینجا می‌آید و باید هم‌زمان در KEY_OWNERS نباشد. */
+    var ORPHAN_KEYS = [];
+
+    /* ثبت مالکیت: هر پیشوندی که اینجا باشد، دادهٔ یک اپ است و هرگز آزاد
+     * نمی‌شود — حتی اگر در ORPHAN_KEYS هم آمده باشد. */
+    var KEY_OWNERS = {
+        'html_viewer_': 'نمایشگر کد',
+        'gold_': 'ثبت درصد',
+        'gold_percents': 'ثبت درصد',
+        'kian_': 'ثبت درصد ۲',
+        'stock____________': 'ثبت درصد ۳',
+        'mofid_atie_': 'ثبت درصد ۴',
+        'energy_fund_': 'ثبت درصد ۵',
+        'cement_factory_': 'ثبت درصد ۶',
+        'ahang_kian_': 'ثبت درصد ۷',
+        'pharma_kian_': 'ثبت درصد ۸',
+        'baharan_': 'ثبت درصد ۹',
+        'emarat_family_': 'شجره‌نامه',
+        'emarat_usage_': 'ردپای من',
+        'fundManager': 'واریز ماهیانه',
+        'monitor_': 'دیدبان درصدها',
+        'emarat_gemini_': 'کلید هوش مصنوعی',
+        'custom_gemini_': 'کلید هوش مصنوعی'
+    };
+
+    function ownerOf(key) {
+        if (!key) return null;
+        if (KEY_OWNERS[key]) return KEY_OWNERS[key];
+        var best = null, bestLen = -1;
+        Object.keys(KEY_OWNERS).forEach(function (p) {
+            if (p.charAt(p.length - 1) === '_' && key.indexOf(p) === 0 && p.length > bestLen) {
+                best = KEY_OWNERS[p]; bestLen = p.length;
+            }
+        });
+        return best;
+    }
+
+    function registerOwner(prefix, appName) {
+        if (!prefix || !appName) return false;
+        KEY_OWNERS[prefix] = appName;
+        return true;
+    }
+
+    function isProtected(key) {
+        return !!ownerOf(key);
+    }
 
     function freeVerifiedSpace() {
         return shadowAll().then(function (all) {
             var freed = [], kept = [], bytes = 0;
 
             ORPHAN_KEYS.forEach(function (k) {
+                if (isProtected(k)) { kept.push(k); return; }
                 var local = null;
                 try { local = rawGet(k); } catch (e) { return; }
                 if (local === null) return;
@@ -821,6 +861,10 @@
         mirrorAll: mirrorAll,
         freeVerifiedSpace: freeVerifiedSpace,
         ORPHAN_KEYS: ORPHAN_KEYS,
+        KEY_OWNERS: KEY_OWNERS,
+        ownerOf: ownerOf,
+        registerOwner: registerOwner,
+        isProtected: isProtected,
         toast: toast,
         autoHealOnLoad: autoHealOnLoad
     };
