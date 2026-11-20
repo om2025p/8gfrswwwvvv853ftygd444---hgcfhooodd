@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="مغز دوم">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#121417" id="metaThemeColor">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" href="favicon.ico">
+  <title>مغز دوم</title>
+
+  <link rel="stylesheet" href="../vendor/vazirmatn/fonts.css">
+  <link rel="stylesheet" href="./vendor/katex/katex.min.css">
+  <link rel="stylesheet" href="./vendor/hljs/github-dark.min.css" id="hljsThemeLink">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+
+    <!-- ۱. نوار بسیار کوچک و کاربردی بالایی -->
+    <header class="topbar">
+      <div class="topbar-group">
+        <a href="../index.html" class="icon-btn" title="بازگشت به پورتال عمارت" aria-label="بازگشت">🏠</a>
+        <button type="button" class="icon-btn" id="btnOpenDrawer" title="گفت‌وگوها" aria-label="فهرست گفت‌وگوها">☰</button>
+        <button type="button" class="brand-pill" id="btnQuickModel" title="تغییر سریع مدل">
+          <img src="icon-192.png" alt="">
+          <span class="brand-meta">
+            <span class="brand-name">مغز دوم</span>
+            <span class="model-sub" id="activeModelLabel">در حال بارگذاری...</span>
+          </span>
+          <span class="conn-dot" id="connDot" title="وضعیت اتصال"></span>
+        </button>
+      </div>
+
+      <div class="topbar-group">
+        <button type="button" class="icon-btn" id="btnThemeToggle" title="تغییر تم تاریک و روشن" aria-label="تغییر تم">🌙</button>
+        <button type="button" class="icon-btn" id="btnOpenSystemPrompt" title="دستورالعمل پایه" aria-label="دستورالعمل پایه">🧭</button>
+        <button type="button" class="icon-btn" id="btnOpenSettings" title="تنظیمات" aria-label="تنظیمات">⚙️</button>
+      </div>
+    </header>
+
+    <!-- ۲. محیط اصلی نمایش مکالمه -->
+    <main class="chat-viewport" id="chatViewport">
+      <div class="chat-stream" id="chatStream"></div>
+    </main>
+
+    <!-- ۳. کادر ارسال پیام در پایین صفحه -->
+    <footer class="composer-dock" id="composerDock">
+      <div class="composer-inner">
+        <div class="composer-toolbar">
+          <div class="fmt-group" aria-label="ابزار قالب‌بندی متن">
+            <button type="button" class="fmt-btn" data-fmt="bold" title="ضخیم"><b>ب</b></button>
+            <button type="button" class="fmt-btn" data-fmt="italic" title="کج"><i>ک</i></button>
+            <button type="button" class="fmt-btn" data-fmt="underline" title="زیرخط‌دار کردن"><u>ز</u></button>
+            <button type="button" class="fmt-btn" data-fmt="strike" title="خط‌خورده"><s>خ</s></button>
+            <button type="button" class="fmt-btn" data-fmt="code" title="کد خطی">&lt;/&gt;</button>
+            <button type="button" class="fmt-btn" data-fmt="link" title="پیوند">🔗</button>
+            <button type="button" class="fmt-btn" data-fmt="list" title="فهرست">•</button>
+            <button type="button" class="fmt-btn" data-fmt="quote" title="نقل‌قول">❞</button>
+          </div>
+
+          <div class="composer-toggles">
+            <button type="button" class="web-toggle-btn" id="btnWebToggle" title="اجازه دسترسی مدل به جست‌وجوی اینترنت">
+              <span>🌐</span>
+              <span id="webToggleText">اینترنت: خاموش</span>
+            </button>
+            <button type="button" class="attach-btn" id="btnAttachFile" title="پیوست فایل متنی یا پی‌دی‌اف">
+              <span>📎</span>
+              <span>فایل</span>
+            </button>
+            <input type="file" id="fileUploadInput" accept=".txt,.md,.json,.csv,.pdf" multiple hidden>
+          </div>
+        </div>
+
+        <div class="pending-files" id="pendingFiles"></div>
+
+        <div class="composer-box">
+          <textarea
+            id="composerInput"
+            class="composer-textarea"
+            rows="1"
+            dir="auto"
+            placeholder="پیام خود را بنویسید... (ارسال با اینتر، خط جدید با شیفت+اینتر)"
+          ></textarea>
+          <button type="button" class="send-btn" id="btnSendMsg" title="ارسال پیام" aria-label="ارسال">➤</button>
+          <button type="button" class="stop-btn" id="btnStopMsg" title="توقف فوری تولید" aria-label="توقف" hidden>■</button>
+        </div>
+
+        <div class="composer-status-line">
+          <span id="composerStatusText">آماده</span>
+          <span id="composerCountText" class="tech-num">0 کاراکتر</span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- کشوی گفت‌وگوها (فقط هنگام نیاز باز می‌شود) -->
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <aside class="drawer" id="convDrawer" aria-label="فهرست گفت‌وگوها">
+    <div class="drawer-head">
+      <h3>گفت‌وگوهای مغز دوم</h3>
+      <button type="button" class="icon-btn" id="btnCloseDrawer" aria-label="بستن">✕</button>
+    </div>
+    <div class="drawer-actions-top">
+      <button type="button" class="primary-btn" style="flex:1" id="btnNewChat">＋ گفت‌وگوی جدید</button>
+      <button type="button" class="secondary-btn" id="btnClearCurrentChat" title="پاک کردن پیام‌های گفت‌وگوی جاری">🧹</button>
+    </div>
+    <div class="conv-list" id="convList"></div>
+    <div class="drawer-foot">
+      <button type="button" class="secondary-btn" style="flex:1" id="btnExportAllJson">⬇ خروجی پشتیبان</button>
+      <button type="button" class="secondary-btn" style="flex:1" id="btnImportAllJson">⬆ بازیابی پشتیبان</button>
+      <input type="file" id="importHistoryInput" accept=".json" hidden>
+    </div>
+  </aside>
+
+  <!-- پنجره انتخاب سریع مدل‌ها (با تمرکز بر مدل‌های رایگان) -->
+  <div class="modal-backdrop" id="quickModelModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>انتخاب مدل گفتگو</h3>
+        <button type="button" class="icon-btn" data-close-modal="quickModelModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="input-row">
+          <input type="text" class="input-ctrl" id="quickModelSearch" placeholder="جست‌وجوی نام یا شناسه مدل..." dir="auto">
+          <button type="button" class="secondary-btn" id="btnToggleFreeOnly">🆓 فقط رایگان</button>
+          <button type="button" class="secondary-btn" id="btnRefreshModelsQuick" title="به‌روزرسانی فهرست از سرور">↻</button>
+        </div>
+        <div class="field-hint" id="quickModelHint">مدل‌های رایگان بدون هزینه اعتبار هستند و بلافاصله برای گفتگو آماده می‌شوند.</div>
+        <div class="preset-list" id="quickModelList" style="max-height: 48vh; overflow-y: auto;"></div>
+        <div class="field-group">
+          <label for="quickManualModelId">ورود دستی شناسه مدل</label>
+          <div class="input-row">
+            <input type="text" class="input-ctrl" id="quickManualModelId" dir="ltr" placeholder="google/gemini-2.0-flash-exp:free">
+            <button type="button" class="primary-btn" id="btnApplyManualModel">اعمال</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- پنجره مدیریت دستورالعمل پایه (System Prompt) -->
+  <div class="modal-backdrop" id="systemPromptModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>دستورالعمل پایه سامانه</h3>
+        <button type="button" class="icon-btn" data-close-modal="systemPromptModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="switch-row">
+          <span>فعال‌سازی دستورالعمل پایه هنگام ارسال به مدل</span>
+          <input type="checkbox" id="spEnabledToggle">
+        </label>
+
+        <div class="field-group">
+          <label for="spScopeSelect">محدوده ویرایش</label>
+          <select class="select-ctrl" id="spScopeSelect">
+            <option value="global">دستورالعمل سراسری پیش‌فرض</option>
+            <option value="conversation">دستورالعمل اختصاصی همین گفت‌وگو</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label for="spTextarea">
+            <span>متن دستورالعمل</span>
+            <span class="tech-num" id="spCharCount">0 کاراکتر</span>
+          </label>
+          <textarea class="textarea-ctrl" id="spTextarea" rows="8" dir="auto"></textarea>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <button type="button" class="secondary-btn" id="btnSpCopy">📋 کپی کامل</button>
+          <button type="button" class="secondary-btn" id="btnSpResetDefault">↺ بازگردانی پیش‌فرض هوشمند</button>
+          <button type="button" class="secondary-btn" id="btnSpSavePreset">💾 ذخیره در نسخه‌ها</button>
+          <button type="button" class="secondary-btn" id="btnSpImportTxt">⬆ ورود فایل متنی</button>
+          <button type="button" class="secondary-btn" id="btnSpExportTxt">⬇ خروجی متنی</button>
+          <button type="button" class="secondary-btn" id="btnSpExportJson">⬇ خروجی جیسون</button>
+          <button type="button" class="danger-btn" id="btnSpClear">🗑 پاک‌سازی</button>
+          <input type="file" id="spImportFile" accept=".txt,.md,.json" hidden>
+        </div>
+
+        <div class="field-group">
+          <label>نسخه‌های ذخیره‌شده</label>
+          <div class="preset-list" id="spPresetsList"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="secondary-btn" data-close-modal="systemPromptModal">بستن</button>
+        <button type="button" class="primary-btn" id="btnSpSave">ذخیره تغییرات</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- پنجره تنظیمات پیشرفته -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>تنظیمات پیشرفته مغز دوم</h3>
+        <button type="button" class="icon-btn" data-close-modal="settingsModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label for="setApiKey">کلید دسترسی اوپن‌روتر (فقط ذخیره محلی در مرورگر شما)</label>
+          <div class="input-row">
+            <input type="password" class="input-ctrl" id="setApiKey" dir="ltr" autocomplete="off" placeholder="sk-or-v1-...">
+            <button type="button" class="secondary-btn" id="btnToggleKeyVis" title="نمایش یا مخفی کردن">👁</button>
+            <button type="button" class="danger-btn" id="btnRemoveApiKey" title="حذف کلید">حذف</button>
+          </div>
+          <div class="field-hint">کلید شما فقط در پایگاه داده محلی همین مرورگر نگهداری می‌شود و هرگز در کد یا خروجی‌ها ثبت نمی‌شود.</div>
+        </div>
+
+        <div class="field-group">
+          <label for="setBaseUrl">نشانی پایه سرویس</label>
+          <input type="url" class="input-ctrl" id="setBaseUrl" dir="ltr" placeholder="https://openrouter.ai/api/v1">
+        </div>
+
+        <div class="field-group">
+          <label for="setModelSelect">
+            <span>انتخاب مدل</span>
+            <button type="button" class="mini-btn" id="btnFetchModels">دریافت فهرست مدل‌ها</button>
+          </label>
+          <select class="select-ctrl" id="setModelSelect" dir="ltr"></select>
+        </div>
+
+        <div class="field-group">
+          <label for="setModelId">شناسه دقیق مدل (یا ورود دستی)</label>
+          <input type="text" class="input-ctrl" id="setModelId" dir="ltr" placeholder="google/gemini-2.0-flash-exp:free">
+        </div>
+
+        <div class="grid-2">
+          <div class="field-group">
+            <label for="setMaxTokens">بیشینه نشانه پاسخ</label>
+            <input type="number" class="input-ctrl tech-num" id="setMaxTokens" min="64" max="65536" step="64">
+          </div>
+          <div class="field-group">
+            <label for="setContextLimit">تعداد پیام‌های زمینه</label>
+            <input type="number" class="input-ctrl tech-num" id="setContextLimit" min="1" max="100">
+          </div>
+          <div class="field-group">
+            <label for="setTemperature">دما (خلاقیت: ۰ تا ۲)</label>
+            <input type="number" class="input-ctrl tech-num" id="setTemperature" min="0" max="2" step="0.05">
+          </div>
+          <div class="field-group">
+            <label for="setTopP">حد احتمال (۰ تا ۱)</label>
+            <input type="number" class="input-ctrl tech-num" id="setTopP" min="0" max="1" step="0.05">
+          </div>
+          <div class="field-group">
+            <label for="setFreqPenalty">جریمه تکرار (-۲ تا ۲)</label>
+            <input type="number" class="input-ctrl tech-num" id="setFreqPenalty" min="-2" max="2" step="0.1">
+          </div>
+          <div class="field-group">
+            <label for="setPresPenalty">جریمه حضور (-۲ تا ۲)</label>
+            <input type="number" class="input-ctrl tech-num" id="setPresPenalty" min="-2" max="2" step="0.1">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field-group">
+            <label for="setFontFamily">قلم متن</label>
+            <select class="select-ctrl" id="setFontFamily">
+              <option value="'Vazirmatn', system-ui, Tahoma, sans-serif">وزیرمتن (پیش‌فرض)</option>
+              <option value="Tahoma, 'Segoe UI', sans-serif">تاهوما</option>
+              <option value="system-ui, -apple-system, sans-serif">قلم سیستمی</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="setFontSize">اندازه متن (پیکسل)</label>
+            <input type="number" class="input-ctrl tech-num" id="setFontSize" min="12" max="22">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="setCodeTheme">ظاهر بلوک‌های کد</label>
+          <select class="select-ctrl" id="setCodeTheme">
+            <option value="auto">هماهنگ خودکار با تم صفحه</option>
+            <option value="dark">همیشه تیره</option>
+            <option value="light">همیشه روشن</option>
+          </select>
+        </div>
+
+        <label class="switch-row">
+          <span>نمایش زنده و تدریجی پاسخ</span>
+          <input type="checkbox" id="setStreaming">
+        </label>
+        <label class="switch-row">
+          <span>اجازه دسترسی مدل به اینترنت (جست‌وجوی وب)</span>
+          <input type="checkbox" id="setWebSearch">
+        </label>
+        <label class="switch-row">
+          <span>نمایش پیشرفته قالب‌بندی، جدول، کد و فرمول</span>
+          <input type="checkbox" id="setRichMarkdown">
+        </label>
+        <label class="switch-row">
+          <span>پشتیبانی از زیرخط‌دار کردن و جعبه‌های ویژه</span>
+          <input type="checkbox" id="setUnderlineAndCallouts">
+        </label>
+
+        <div class="field-group">
+          <label>مدیریت تاریخچه</label>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            <button type="button" class="secondary-btn" id="btnSetExportAll">⬇ خروجی همه گفت‌وگوها</button>
+            <button type="button" class="danger-btn" id="btnSetDeleteAll">🗑 حذف کل تاریخچه</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="secondary-btn" data-close-modal="settingsModal">انصراف</button>
+        <button type="button" class="primary-btn" id="btnSaveSettings">ذخیره تنظیمات</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- کتابخانه‌های کاملاً محلی و بدون وابستگی بیرونی -->
+  <script src="./vendor/dompurify/purify.min.js"></script>
+  <script src="./vendor/marked/marked.umd.js"></script>
+  <script src="./vendor/hljs/highlight.min.js"></script>
+  <script src="./vendor/hljs/kotlin.min.js"></script>
+  <script src="./vendor/katex/katex.min.js"></script>
+  <script src="./vendor/chartjs/chart.umd.min.js"></script>
+  <script src="./app.js"></script>
+  <script src="../refresh-button.js"></script>
+  <script src="../usage-tracker.js" data-app="second-brain"></script>
+</body>
+</html>
