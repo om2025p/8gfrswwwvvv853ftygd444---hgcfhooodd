@@ -2633,7 +2633,31 @@ python3 scripts/check-backup-structure.py
 می‌سنجد: وجود `backup-path.js`، تزریق اسکریپت، شناسهٔ اپ، `recordUpdate`، حضور در `ASSETS` فایل `sw.js`،
 و اینکه بکاپ‌ها در گیت ردیابی **نشوند**.
 
-### `CACHE_NAME` = `emarat-portal-v120`
+### دیدبان درصدها (`monitor/index.html`) — اتصال به مخزن خصوصی
+- **قبلاً هیچ اتصالی به گیت‌هاب نداشت** — بکاپ کاملش فقط به Cloudflare KV و دانلود محلی می‌رفت.
+- اکنون `uploadFullBackupToGitHub(jsonStr, fileName)` دارد و **قبل از** بخش کلودفلر صدا زده می‌شود.
+  کلودفلر دست‌نخورده می‌ماند؛ هر کدام مستقل کار می‌کند (اگر توکن کلودفلر نبود، گیت‌هاب تنها مسیر است).
+- مسیر: `EmaratBackupPath.build('monitor', new Date(), fileName)` → `monitor/1405/08/week-05/1405.08.29/emarat_full_backup_1405-08-29.json`
+  (fallback تخت `monitor/<file>` اگر `backup-path.js` لود نشود)
+- کلیدهای تنظیم: همان `github_backup_token` / `github_backup_repo` / `github_backup_branch`.
+- `recordUpdate('monitor', ...)` هم صدا زده می‌شود → `_updates.json` ساخته می‌شود.
+- پیام‌های `alert` سه بخش دارند: محلی / کلودفلر / گیت‌هاب — وضعیت هر سه صریح گزارش می‌شود.
+
+### 🚨 `BACKUP_SECRET_KEYS` — فیلتر توکن‌ها پیش از هر بکاپ
+بکاپ کامل دیدبان **همهٔ** `localStorage` را برمی‌دارد. اگر توکن‌ها فیلتر نشوند، آپلود یعنی ذخیرهٔ اعتبارنامه در مخزن.
+فهرست فعلی (در `collectFullBackup`):
+```js
+cf_backup_token, cf_backup_pass,
+github_backup_token, github_backup_repo, github_backup_branch,
+ai_enhancer_gh_token, restricted_gh_token, restricted_bot_srvToken,
+ai_tg_bot_token,
+custom_gemini_api_key, emarat_gemini_key, gemini_api_key,
+tabdeal_api_key, tabdeal_api_secret, tabdeal_cf_token
+```
+**قانون:** هر کلید حساس جدید باید به همین آرایه اضافه شود، وگرنه در بکاپ کامل و در گیت‌هاب نشت می‌کند.
+تست تأییدشده: ۶۹ کلید بکاپ‌شده، **صفر** نشت توکن.
+
+### `CACHE_NAME` = `emarat-portal-v121`
 
 ### تست واقعی (Puppeteer + Chromium)
 ۱۳ اپ تست شد؛ مسیر خروجی همه: `<app>/1405/08/week-05/1405.08.29/<app>_backup.json` ✅

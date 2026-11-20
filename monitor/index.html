@@ -4223,7 +4223,19 @@ ${dayBlocksHtml}
         /* ---------- جمع‌آوری کامل: localStorage + سایهٔ IndexedDB ---------- */
         /* رازها هرگز داخل بکاپ نمی‌روند — وگرنه توکن CF داخل همان فایلی
            * می‌نشیند که قرار بود محافظتش کند. */
-          const BACKUP_SECRET_KEYS = ['cf_backup_token', 'cf_backup_pass'];
+          /* کلیدهایی که هرگز در هیچ بکاپی (محلی/ابر/گیت‌هاب) نوشته نمی‌شوند.
+             بکاپ کامل همهٔ localStorage را برمی‌دارد؛ اگر توکن‌ها فیلتر نشوند،
+             آپلود به گیت‌هاب یعنی ذخیرهٔ اعتبارنامه در مخزن. */
+          const BACKUP_SECRET_KEYS = [
+              'cf_backup_token', 'cf_backup_pass',
+              'github_backup_token',
+              'ai_enhancer_gh_token', 'restricted_gh_token',
+              'restricted_bot_srvToken',
+              'ai_tg_bot_token',
+              'custom_gemini_api_key', 'emarat_gemini_key', 'gemini_api_key',
+              'tabdeal_api_key', 'tabdeal_api_secret', 'tabdeal_cf_token',
+              'github_backup_repo', 'github_backup_branch'
+          ];
 
           async function collectFullBackup() {
             const data = {};
@@ -4271,6 +4283,63 @@ ${dayBlocksHtml}
             };
         }
 
+        /* آپلود بکاپ کامل به مخزن خصوصی گیت‌هاب.
+           مسیر از EmaratBackupPath می‌آید (app/سال/ماه/week-NN/سال.ماه.روز).
+           اگر backup-path.js نبود، مسیر تخت قدیمی استفاده می‌شود. */
+        async function uploadFullBackupToGitHub(jsonStr, fileName) {
+            const token = (localStorage.getItem('github_backup_token') || '').trim();
+            const repo = (localStorage.getItem('github_backup_repo') || '').trim();
+            const branch = (localStorage.getItem('github_backup_branch') || 'main').trim();
+            if (!token || !repo) {
+                return { success: false, skipped: true, message: 'تنظیمات گیت‌هاب کامل نیست (توکن/مخزن).' };
+            }
+
+            const relPath = (window.EmaratBackupPath && window.EmaratBackupPath.build)
+                ? window.EmaratBackupPath.build('monitor', new Date(), fileName)
+                : `monitor/${fileName}`;
+
+            const url = `https://api.github.com/repos/${repo}/contents/${relPath}`;
+            const headers = {
+                Authorization: token.indexOf('github_pat_') === 0 ? `Bearer ${token}` : `token ${token}`,
+                Accept: 'application/vnd.github.v3+json'
+            };
+
+            try {
+                let sha = null;
+                const check = await fetch(`${url}?ref=${encodeURIComponent(branch)}`, { headers: headers });
+                if (check.status === 200) {
+                    sha = (await check.json()).sha;
+                } else if (check.status === 401) {
+                    return { success: false, message: 'توکن گیت‌هاب نامعتبر است (۴۰۱).' };
+                }
+
+                const body = {
+                    message: `بکاپ کامل دیدبان - ${new Date().toLocaleString('fa-IR')}`,
+                    content: btoa(unescape(encodeURIComponent(jsonStr))),
+                    branch: branch
+                };
+                if (sha) body.sha = sha;
+
+                const put = await fetch(url, {
+                    method: 'PUT',
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+                    body: JSON.stringify(body)
+                });
+
+                if (!put.ok) return { success: false, message: `خطای آپلود (کد ${put.status}).` };
+
+                try {
+                    if (window.EmaratBackupPath && window.EmaratBackupPath.recordUpdate) {
+                        window.EmaratBackupPath.recordUpdate('monitor', repo, token, branch, new Date());
+                    }
+                } catch (e) {}
+
+                return { success: true, path: relPath };
+            } catch (err) {
+                return { success: false, message: err.message };
+            }
+        }
+
         async function exportFullBackup() {
             try {
                 const bundle = await collectFullBackup();
@@ -4298,7 +4367,21 @@ ${dayBlocksHtml}
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                // 2. آپلود ابری — اگر رمز تنظیم شده باشد رمزگذاری می‌شود
+                // 2. آپلود به مخزن خصوصی گیت‌هاب (مستقل از کلودفلر)
+                let ghResult = { skipped: true };
+                try {
+                    ghResult = await uploadFullBackupToGitHub(jsonStr, fileName);
+                } catch (ghErr) {
+                    ghResult = { success: false, message: ghErr.message };
+                }
+
+                const ghLine = ghResult.success
+                    ? `۳. مخزن خصوصی گیت‌هاب ✅\n   ${ghResult.path}`
+                    : (ghResult.skipped
+                        ? '۳. مخزن خصوصی گیت‌هاب ⏭️ رد شد (توکن/مخزن تنظیم نشده)'
+                        : `۳. مخزن خصوصی گیت‌هاب ❌ ${ghResult.message || 'ناموفق'}`);
+
+                // 3. آپلود ابری کلودفلر — اگر رمز تنظیم شده باشد رمزگذاری می‌شود
                 try {
                     const pass = (localStorage.getItem('cf_backup_pass') || '').trim();
                     let cloudBody;
@@ -4309,7 +4392,7 @@ ${dayBlocksHtml}
                     }
 
                     if (!getCfBackupToken()) {
-                          alert(`✅ فایل پشتیبان محلی دانلود شد.\n\n⚠️ بکاپ ابری انجام نشد: توکن کلودفلر تنظیم نشده.\nاز ☰ → «🔑 توکن کلودفلر» آن را وارد کنید.`);
+                          alert(`✅ فایل پشتیبان محلی دانلود شد.\n\n⚠️ بکاپ ابری کلودفلر انجام نشد: توکن کلودفلر تنظیم نشده.\nاز ☰ → «🔑 توکن کلودفلر» آن را وارد کنید.\n\n${ghLine}`);
                           return;
                       }
                       const urlLatest = `https://api.cloudflare.com/client/v4/accounts/${CF_BACKUP_ACCOUNT_ID}/storage/kv/namespaces/${CF_BACKUP_NAMESPACE_ID}/values/latest_backup`;
@@ -4325,9 +4408,9 @@ ${dayBlocksHtml}
 
                     if (res1.ok) {
                         const lock = pass ? '🔐 رمزگذاری‌شده' : '🔓 بدون رمز';
-                        alert(`✅ پشتیبان‌گیری کامل انجام شد:\n\n۱. فایل محلی (${fileName})\n   ${bundle.meta.localStorageKeys} کلید localStorage + ${bundle.meta.shadowKeys} کلید IndexedDB\n۲. پشتیبان ابری کلودفلر (${lock}) ☁️⚡`);
+                        alert(`✅ پشتیبان‌گیری کامل انجام شد:\n\n۱. فایل محلی (${fileName})\n   ${bundle.meta.localStorageKeys} کلید localStorage + ${bundle.meta.shadowKeys} کلید IndexedDB\n۲. پشتیبان ابری کلودفلر (${lock}) ☁️⚡\n\n${ghLine}`);
                     } else {
-                        alert(`⚠️ فایل پشتیبان دانلود شد، اما در آپلود ابری کلودفلر خطایی رخ داد. (کد: ${res1.status})`);
+                        alert(`⚠️ فایل پشتیبان دانلود شد، اما در آپلود ابری کلودفلر خطایی رخ داد. (کد: ${res1.status})\n\n${ghLine}`);
                     }
                 } catch (cfErr) {
                     alert(`⚠️ فایل پشتیبان محلی دانلود شد، ولی اتصال به پشتیبان ابری کلودفلر برقرار نشد: ${cfErr.message}`);
@@ -5022,6 +5105,7 @@ ${dayBlocksHtml}
 
         setInterval(fetchTabdealBalanceInBg, 300000);
     </script>
+<script src="../backup-path.js"></script>
 <script src="../refresh-button.js"></script>
 <script src="../usage-tracker.js" data-app="monitor"></script>
 </body>
