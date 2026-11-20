@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v99';
+const CACHE_NAME = 'emarat-portal-v100';
 const ASSETS = [
   './tree-samples/m1.html',
   './tree-samples/m2.html',
@@ -435,7 +435,8 @@ const CRITICAL_ASSETS = [
   './index.html',
   './sw.js',
   './manifest.json',
-  './cloud-sync.js'
+  './cloud-sync.js',
+  './second-brain/icon-192.png'
 ];
 
 // نصب سرویس ورکر و کش کردن تمام منابع عمارت و زیرمجموعه‌ها
