@@ -75,7 +75,7 @@
             class="composer-textarea"
             rows="1"
             dir="auto"
-            placeholder="پیام خود را بنویسید... (ارسال با اینتر، خط جدید با شیفت+اینتر)"
+            placeholder="پیام خود را بنویسید... (خط بعد با کلید بازگشت کیبورد • ارسال با دکمه ➤)"
           ></textarea>
           <button type="button" class="send-btn" id="btnSendMsg" title="ارسال پیام" aria-label="ارسال">➤</button>
           <button type="button" class="stop-btn" id="btnStopMsg" title="توقف فوری تولید" aria-label="توقف" hidden>■</button>
@@ -277,6 +277,10 @@
         <label class="switch-row">
           <span>نمایش زنده و تدریجی پاسخ</span>
           <input type="checkbox" id="setStreaming">
+        </label>
+        <label class="switch-row">
+          <span>ارسال پیام با کلید Enter (در حالت خاموش به خط پایین می‌رود)</span>
+          <input type="checkbox" id="setEnterToSend">
         </label>
         <label class="switch-row">
           <span>اجازه دسترسی مدل به اینترنت (جست‌وجوی وب)</span>

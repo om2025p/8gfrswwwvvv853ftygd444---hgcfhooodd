@@ -333,6 +333,7 @@
         presencePenalty: 0,
         contextLimit: 20,
         streaming: true,
+        enterToSend: false,
         webSearchEnabled: false,
         theme: 'dark',
         fontFamily: "'Vazirmatn', system-ui, Tahoma, sans-serif",
@@ -366,7 +367,7 @@
     }
 
     async setApiKey(key) {
-      this.apiKey = String(key || '').trim();
+      this.apiKey = String(key || '').replace(/[\u200B-\u200F\uFEFF]/g, '').trim();
       if (this.apiKey) {
         await this.storage.put('secrets', { key: 'openrouter_api_key', value: this.apiKey });
       } else {
@@ -698,11 +699,22 @@
       return raw.replace(/\/+$/, '');
     }
 
+    sanitizeHeaderValue(val, fallback = '') {
+      const cleaned = String(val ?? '').replace(/[\r\n\u200B-\u200F\uFEFF]/g, '').trim();
+      if (!cleaned) return fallback;
+      // بررسی محدوده مجاز ISO-8859-1 برای سرآیندهای HTTP در fetch
+      if (/[^\x20-\x7E\xA0-\xFF]/.test(cleaned)) {
+        return fallback;
+      }
+      return cleaned;
+    }
+
     async fetchModels() {
       const url = `${this.getBaseUrl()}/models`;
       const headers = { Accept: 'application/json' };
-      if (this.settings.apiKey) {
-        headers.Authorization = `Bearer ${this.settings.apiKey}`;
+      const cleanKey = this.sanitizeHeaderValue(this.settings.apiKey, '');
+      if (cleanKey) {
+        headers.Authorization = `Bearer ${cleanKey}`;
       }
       const res = await fetch(url, { method: 'GET', headers });
       if (!res.ok) {
@@ -716,9 +728,13 @@
     }
 
     async createChatRequest(messages, abortSignal) {
-      const key = this.settings.apiKey;
-      if (!key) {
+      const rawKey = this.settings.apiKey;
+      if (!rawKey) {
         throw new Error('NO_API_KEY');
+      }
+      const key = this.sanitizeHeaderValue(rawKey, '');
+      if (!key) {
+        throw new Error('کلید دسترسی واردشده شامل حروف یا نشانه‌های غیرمجاز است. لطفاً کلید معتبر لاتین را بدون کاراکتر فارسی در تنظیمات ذخیره کنید.');
       }
 
       const d = this.settings.data;
@@ -742,13 +758,15 @@
         body.plugins = [{ id: 'web', max_results: 5 }];
       }
 
+      const safeReferer = this.sanitizeHeaderValue(window.location.origin, 'https://localhost');
+
       const res = await fetch(`${this.getBaseUrl()}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${key}`,
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'مغز دوم'
+          'HTTP-Referer': safeReferer,
+          'X-Title': 'Second Brain'
         },
         body: JSON.stringify(body),
         signal: abortSignal
@@ -1597,7 +1615,13 @@
     init() {
       this.textarea.addEventListener('input', () => this.autoResize());
       this.textarea.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        if (e.isComposing) return;
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          this.app.handleSend();
+          return;
+        }
+        if (e.key === 'Enter' && !e.shiftKey && this.app.settings.data.enterToSend) {
           e.preventDefault();
           this.app.handleSend();
         }
@@ -1999,6 +2023,13 @@
 
       const spBtn = $('btnOpenSystemPrompt');
       spBtn.classList.toggle('active-dot', Boolean(this.systemPrompt.state.enabled));
+
+      const ta = $('composerInput');
+      if (ta) {
+        ta.placeholder = this.settings.data.enterToSend
+          ? 'پیام خود را بنویسید... (ارسال با اینتر • خط جدید با شیفت+اینتر)'
+          : 'پیام خود را بنویسید... (خط بعد با کلید بازگشت کیبورد • ارسال با دکمه ➤)';
+      }
     }
 
     toggleDrawer(open) {
@@ -2145,6 +2176,7 @@
       $('setFontSize').value = d.fontSize;
       $('setCodeTheme').value = d.codeTheme;
       $('setStreaming').checked = Boolean(d.streaming);
+      if ($('setEnterToSend')) $('setEnterToSend').checked = Boolean(d.enterToSend);
       $('setWebSearch').checked = Boolean(d.webSearchEnabled);
       $('setRichMarkdown').checked = Boolean(d.richMarkdown);
       $('setUnderlineAndCallouts').checked = Boolean(d.underlineAndCallouts);
@@ -2182,6 +2214,7 @@
       d.fontSize = Math.min(22, Math.max(12, Number($('setFontSize').value) || 15));
       d.codeTheme = $('setCodeTheme').value;
       d.streaming = $('setStreaming').checked;
+      if ($('setEnterToSend')) d.enterToSend = $('setEnterToSend').checked;
       d.webSearchEnabled = $('setWebSearch').checked;
       d.richMarkdown = $('setRichMarkdown').checked;
       d.underlineAndCallouts = $('setUnderlineAndCallouts').checked;
