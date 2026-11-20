@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v102';
+const CACHE_NAME = 'emarat-portal-v103';
 const ASSETS = [
   './tree-samples/m1.html',
   './tree-samples/m2.html',
@@ -12,6 +12,7 @@ const ASSETS = [
   './index.html',
   './manifest.json',
   './cloud-sync.js',
+  './storage-guard.js',
   './refresh-button.js',
   './price-import.js',
   './usage-tracker.js',
@@ -445,6 +446,7 @@ const CRITICAL_ASSETS = [
   './sw.js',
   './manifest.json',
   './cloud-sync.js',
+  './storage-guard.js',
   './second-brain/icon-192.png'
 ];
 

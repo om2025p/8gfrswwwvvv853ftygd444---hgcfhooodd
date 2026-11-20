@@ -292,14 +292,38 @@
     </div>
 </div>
 
+<script src="../storage-guard.js"></script>
 <script>
     // ---------- داده‌ها ----------
-    let percents = JSON.parse(localStorage.getItem("percents")) || [];
-    let trash = JSON.parse(localStorage.getItem("trash")) || [];
-    let goal = JSON.parse(localStorage.getItem("goal")) || null;
-    let highlightedStates = JSON.parse(localStorage.getItem("highlightedStates")) || {};
-    let highlightedPointIndices = JSON.parse(localStorage.getItem("highlightedPointIndices")) || [];
-    let statsMenuOpen = localStorage.getItem("statsMenuOpen") === "true";
+    // کلیدهای این اپ پیش‌تر بی‌پسوند بودند ("percents"، "trash"، ...) و روی یک
+    // origin مشترک با اپ‌های دیگر تصادم می‌کردند. اکنون همه با پیشوند gold_ هستند.
+    const GOLD_KEY = {
+        percents: "gold_percents",
+        trash: "gold_trash",
+        goal: "gold_goal",
+        highlightedStates: "gold_highlightedStates",
+        highlightedPointIndices: "gold_highlightedPointIndices",
+        statsMenuOpen: "gold_statsMenuOpen"
+    };
+
+    // مهاجرت یک‌بارهٔ دادهٔ قدیمی؛ کلید تازه هرگز با مقدار قدیمی بازنویسی نمی‌شود.
+    if (window.EmaratStorage) {
+        EmaratStorage.migrateAll([
+            ["percents", GOLD_KEY.percents],
+            ["trash", GOLD_KEY.trash],
+            ["goal", GOLD_KEY.goal],
+            ["highlightedStates", GOLD_KEY.highlightedStates],
+            ["highlightedPointIndices", GOLD_KEY.highlightedPointIndices],
+            ["statsMenuOpen", GOLD_KEY.statsMenuOpen]
+        ]);
+    }
+
+    let percents = JSON.parse(localStorage.getItem(GOLD_KEY.percents)) || [];
+    let trash = JSON.parse(localStorage.getItem(GOLD_KEY.trash)) || [];
+    let goal = JSON.parse(localStorage.getItem(GOLD_KEY.goal)) || null;
+    let highlightedStates = JSON.parse(localStorage.getItem(GOLD_KEY.highlightedStates)) || {};
+    let highlightedPointIndices = JSON.parse(localStorage.getItem(GOLD_KEY.highlightedPointIndices)) || [];
+    let statsMenuOpen = localStorage.getItem(GOLD_KEY.statsMenuOpen) === "true";
 
     let zoomLevel = 1.0;
     let currentDataCache = null;
@@ -308,7 +332,7 @@
     // ---------- منوی کشویی ----------
     function toggleStatsMenu() {
         statsMenuOpen = !statsMenuOpen;
-        localStorage.setItem("statsMenuOpen", statsMenuOpen);
+        localStorage.setItem(GOLD_KEY.statsMenuOpen, statsMenuOpen);
         let content = document.getElementById('statsContent');
         let arrow = document.getElementById('statsArrow');
         if(statsMenuOpen) {
@@ -830,11 +854,17 @@
     }
 
     function saveData() {
-        localStorage.setItem("percents", JSON.stringify(percents));
-        localStorage.setItem("trash", JSON.stringify(trash));
-        localStorage.setItem("goal", JSON.stringify(goal));
-        localStorage.setItem("highlightedStates", JSON.stringify(highlightedStates));
-        localStorage.setItem("highlightedPointIndices", JSON.stringify(highlightedPointIndices));
+        var batch = {};
+        batch[GOLD_KEY.percents] = JSON.stringify(percents);
+        batch[GOLD_KEY.trash] = JSON.stringify(trash);
+        batch[GOLD_KEY.goal] = JSON.stringify(goal);
+        batch[GOLD_KEY.highlightedStates] = JSON.stringify(highlightedStates);
+        batch[GOLD_KEY.highlightedPointIndices] = JSON.stringify(highlightedPointIndices);
+        if (window.EmaratStorage) {
+            EmaratStorage.safeSetBatch(batch);
+        } else {
+            for (var k in batch) localStorage.setItem(k, batch[k]);
+        }
     }
 
     // ---------- رسم چارت ----------

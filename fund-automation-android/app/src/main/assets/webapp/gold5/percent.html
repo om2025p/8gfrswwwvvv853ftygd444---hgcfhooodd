@@ -526,6 +526,7 @@
     </div>
 </div>
 
+<script src="../storage-guard.js"></script>
 <script>
     (function(){
         const STORAGE_KEY = "energy_fund_synergy";
@@ -547,7 +548,7 @@
 
         window.toggleStatsMenu = function() {
             statsMenuOpen = !statsMenuOpen;
-            localStorage.setItem(STORAGE_KEY + "_statsOpen", statsMenuOpen);
+            EmaratStorage.safeSet(STORAGE_KEY + "_statsOpen", statsMenuOpen);
             let content = document.getElementById('statsContent');
             let arrow = document.getElementById('statsArrow');
             if(statsMenuOpen) {
@@ -655,8 +656,15 @@
 
         function saveData() {
             const toStore = { percents, trash, goal, highlightedStates, periodTarget, achievedPeriods, notes };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
-            localStorage.setItem(STORAGE_KEY + "_statsOpen", statsMenuOpen);
+            var batch = {
+                [STORAGE_KEY]: JSON.stringify(toStore),
+                [STORAGE_KEY + "_statsOpen"]: statsMenuOpen
+            };
+            if (window.EmaratStorage) {
+                EmaratStorage.safeSetBatch(batch);
+            } else {
+                for (var k in batch) localStorage.setItem(k, batch[k]);
+            }
             triggerAutoGithubSync();
 
             // Trigger immediate cloud sync push so MantleDB cloud backup receives deletions & additions instantly
@@ -1677,5 +1685,7 @@
             window.dispatchEvent(new Event('resize'));
         })();
 </script>
+<script src="../refresh-button.js"></script>
+<script src="../usage-tracker.js" data-app="gold5"></script>
 </body>
 </html>
