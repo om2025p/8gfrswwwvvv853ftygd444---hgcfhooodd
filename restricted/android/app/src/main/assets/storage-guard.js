@@ -278,8 +278,8 @@
         } catch (err) {
             shadowPut(key, value);
             if (isQuotaError(err)) {
-                if (!safeSet._warned) {
-                    safeSet._warned = true;
+                if (!quotaWarned()) {
+                    markQuotaWarned();
                     toast(quotaMessage(key), 'err');
                 }
                 return { ok: false, error: 'quota', key: key, inShadow: true, message: String(err.message || err) };
@@ -311,8 +311,8 @@
                 }
                 shadowPutMany(map);
                 if (isQuotaError(err)) {
-                    if (!safeSetBatch._warned) {
-                        safeSetBatch._warned = true;
+                    if (!quotaWarned()) {
+                        markQuotaWarned();
                         toast(quotaMessage(k), 'err');
                     }
                     return { ok: false, error: 'quota', key: k, rolledBack: written.length, inShadow: true, message: String(err.message || err) };
@@ -510,12 +510,37 @@
         };
     }
 
+    var QUOTA_FLAG = 'emarat_quota_warned_v1';
+
+    /**
+     * آیا قبلاً دربارهٔ پر بودن حافظه هشدار داده‌ایم؟ یک بار برای همیشه.
+     * اگر مصرف به زیر ۸۰٪ برگردد پرچم برداشته می‌شود تا در پر شدن بعدی
+     * یک هشدار تازه (و تنها یک هشدار) بدهیم.
+     */
+    function quotaWarned() {
+        try {
+            return rawGet(QUOTA_FLAG) === '1';
+        } catch (e) { return false; }
+    }
+
+    function markQuotaWarned() {
+        try { rawSet(QUOTA_FLAG, '1'); } catch (e) { /* بی‌اثر */ }
+    }
+
+    function rearmIfRecovered() {
+        try {
+            if (rawGet(QUOTA_FLAG) !== '1') return;
+            if (health().percent < 80) rawRemove(QUOTA_FLAG);
+        } catch (e) { /* بی‌اثر */ }
+    }
+
     function warnIfCritical() {
         try {
-            if (sessionStorage.getItem('emarat_storage_warned') === '1') return;
+            rearmIfRecovered();
+            if (quotaWarned()) return;
             var h = health();
             if (!h.critical) return;
-            sessionStorage.setItem('emarat_storage_warned', '1');
+            markQuotaWarned();
             toast(
                 '⚠️ <b>حافظهٔ معمولی تقریباً پر است</b><br>' +
                 'مصرف: <b>' + h.usedMB + ' از ' + h.quotaMB + ' مگابایت</b> (' + h.percent + '٪)<br>' +
@@ -547,8 +572,8 @@
                 } catch (err) {
                     shadowPut(k, v);
                     if (isQuotaError(err)) {
-                        if (!installWriteHook._warned) {
-                            installWriteHook._warned = true;
+                        if (!quotaWarned()) {
+                            markQuotaWarned();
                             toast(quotaMessage(k), 'err');
                         }
                         return; // داده در حافظهٔ قدرتمند محفوظ است
