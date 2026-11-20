@@ -1412,7 +1412,9 @@
             if (!basePath) basePath = "gold3";
 
             const jalaliFolder = getJalaliDateStr();
-            const fullFilePath = `${basePath}/${jalaliFolder}/${fileName}`;
+            const fullFilePath = (window.EmaratBackupPath)
+                      ? window.EmaratBackupPath.build("gold3", new Date(), fileName)
+                      : `${basePath}/${jalaliFolder}/${fileName}`;
 
             appendGithubLog(`📦 مخزن هدف: ${repo}`);
             appendGithubLog(`🌿 شاخه: ${branch}`);
@@ -1467,6 +1469,11 @@
 
                 if (putRes.ok) {
                     appendGithubLog("🎉 پشتیبان‌گیری با موفقیت کامل انجام شد!");
+                    try {
+                        if (window.EmaratBackupPath && window.EmaratBackupPath.recordUpdate) {
+                            window.EmaratBackupPath.recordUpdate("gold3", repo, token, branch, new Date());
+                        }
+                    } catch (e) {}
                     return { success: true };
                 } else if (putRes.status === 409) {
                     appendGithubLog("⚠️ خطای ۴۰۹ (تعارض فایل با پوشه): فایلی با نام این پوشه در مخزن وجود دارد. در حال تلاش با پوشه جایگزین...");
@@ -1718,5 +1725,6 @@
 </script>
 <script src="../refresh-button.js"></script>
 <script src="../usage-tracker.js" data-app="gold3"></script>
+<script src="../backup-path.js"></script>
 </body>
 </html>

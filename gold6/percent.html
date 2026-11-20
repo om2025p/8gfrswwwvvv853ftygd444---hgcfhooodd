@@ -1174,7 +1174,9 @@
             if (!basePath) basePath = "gold6";
 
             const jalaliFolder = getJalaliDateStr();
-            const fullFilePath = `${basePath}/${jalaliFolder}/${fileName}`;
+            const fullFilePath = (window.EmaratBackupPath)
+                      ? window.EmaratBackupPath.build("gold6", new Date(), fileName)
+                      : `${basePath}/${jalaliFolder}/${fileName}`;
 
             const authHeader = token.startsWith("github_pat_") || token.startsWith("Bearer ") ? (token.startsWith("Bearer ") ? token : `Bearer ${token}`) : `token ${token}`;
             const url = `https://api.github.com/repos/${repo}/contents/${fullFilePath}`;
@@ -1226,7 +1228,13 @@
 
                 if (putRes.ok) {
                     appendGithubLog("✅ پشتیبان‌گیری با موفقیت در گیت‌هاب ثبت شد!");
-                    return { success: true };
+
+                try {
+                    if (window.EmaratBackupPath && window.EmaratBackupPath.recordUpdate) {
+                        window.EmaratBackupPath.recordUpdate("gold6", repo, token, branch, new Date());
+                    }
+                } catch (e) {}
+                                    return { success: true };
                 } else if (putRes.status === 409) {
                     appendGithubLog("⚠️ خطای ۴۰۹ (تعارض فایل با پوشه): فایلی با نام این پوشه در مخزن وجود دارد. در حال تلاش با پوشه جایگزین...");
                     const fallbackBasePath = `${basePath}_dir`;
@@ -1426,5 +1434,6 @@
 </script>
 <script src="../refresh-button.js"></script>
 <script src="../usage-tracker.js" data-app="gold6"></script>
+<script src="../backup-path.js"></script>
 </body>
 </html>

@@ -2559,3 +2559,82 @@ git merge-base --is-ancestor <old-sha> main && echo "✅ سالم"
 | `Y-9` | `a5bcf44` | مستندات v117 |
 | `Y-10` | `b58883a` | v118 (تداخل کلید) + v119 (حذف توکن) |
 | `main` | `b58883a` | همهٔ موارد بالا ادغام‌شده |
+
+---
+
+## 📦 ساختار شمسی بکاپ‌ها + مخزن خصوصی (backup-path.js)
+
+### مشکل ریشه‌ای که حل شد
+بکاپ‌های اپ‌ها (`gold4_backup.json`، `gold5_backup.json`، `fund_backup.json`) **داخل مخزن عمومی سایت** ردیابی می‌شدند و روی
+`https://om2025p.github.io/...` قابل خواندن بودند (`baseNumber: 219,960,638`). ضمناً ساختار مسیرها تاریخ شمسی **تخت** بود
+(`gold4/1405.8.29/x.json`) و پوشه‌های `_dir` از خطای ۴۰۹ (تعارض فایل/پوشه) ساخته می‌شدند.
+
+### فایل مشترک: `backup-path.js`
+```javascript
+window.EmaratBackupPath.build('gold4', new Date(), 'gold4_backup')
+// → gold4/1405/08/week-05/1405.08.29/gold4_backup.json
+window.EmaratBackupPath.updatesPath('gold4', new Date())
+// → gold4/1405/08/week-05/1405.08.29/_updates.json
+```
+
+| تابع | کار |
+|---|---|
+| `jalali(d)` | تبدیل میلادی→شمسی. **اول `Intl` با تقویم persian و `timeZone: Asia/Tehran`**، اگر نبود الگوریتم |
+| `dayFolder(app,d)` | `app/YYYY/MM/week-NN/YYYY.MM.DD` |
+| `build(app,d,name)` | مسیر کامل فایل بکاپ |
+| `updatesPath(app,d)` | مسیر `_updates.json` |
+| `recordUpdate(app,repo,token,branch,d)` | یک ساعت به `_updates.json` اضافه می‌کند |
+| `summarize(paths)` | شمارش فایل در هر هفته |
+| `weekOfMonth(day)` | روز ۱-۷ → `week-01`، ۸-۱۴ → `week-02`، … |
+
+### 🚨 درس ۱ — `Intl` تنها راه دقیق است
+الگوریتم دستی (`gy-1600` + پایهٔ ۱۲۰۵۳روزه) در مرز سال کبیسه **ماه ۱۳** می‌سازد:
+`2025-03-20` → `1403/13/01` به‌جای `1403/12/30`.
+درمان: `Intl.DateTimeFormat('en-US-u-ca-persian', {timeZone:'Asia/Tehran'})` اول؛ الگوریتم فقط fallback.
+تست: ۶ تاریخ شناخته‌شده (نوروز ۱۴۰۳/۱۴۰۵/۱۴۰۶، آخر سال ۱۴۰۳، امروز) — همه پاس.
+
+### 🚨 درس ۲ — یک فایل در روز، نه یک فایل در هر ثانیه
+نام فایل با `HH-MM-SS` هر ذخیره یک فایل می‌سازد → صدها فایل در روز.
+**تصمیم:** نام فایل **ثابت** (`<app>_backup.json`) + شمارش به‌روزرسانی‌ها در `_updates.json`.
+پس «چند به‌روزرسانی امروز» = طول آرایهٔ `_updates.json`.
+
+### 🚨 درس ۳ — `git rm --cached` فایل را از دیسک هم حذف می‌کند
+`git rm --cached x` فایل را فقط از ایندکس برمی‌دارد، ولی در برخی شرایط فایل کاری هم پاک می‌شود.
+همیشه بعدش `git show HEAD:<path> > <path>` بزن و وجود فایل را با `ls` تأیید کن.
+
+### اپ‌های متصل (۱۳ + ۲ آینهٔ اندروید)
+`gold1`..`gold9` (در `gold/percent.html` شناسه `gold1` است) · `gym` · `ai-chat` · `skincare` · `usage` (در `usage-tracker.js`).
+
+### `autoSyncFromBackup` حذف شد
+۷ فایل (`gold4`, `gold5`, `gold7`, `gold8`, `gold9` + ۲ آینهٔ اندروید) تابعی داشتند که فایل بکاپ **عمومی** را
+`fetch` می‌کرد. چون فایل عمومی حذف شد، تابع هم حذف شد (به‌جای نگه‌داشتن کد مرده).
+
+### مخزن خصوصی: `om2025p/comp-bkp-`
+- **private: true** — بکاپ‌ها فقط اینجا می‌روند.
+- ساختار: `<app>/<سال>/<ماه>/week-<NN>/<سال.ماه.روز>/<app>_backup.json`
+- `archive-from-public/` = ۵ بکاپی که از مخزن عمومی حذف شدند (با نام `path__file.json`).
+- `README.md` ساختار را توضیح می‌دهد.
+- پوشه‌های آشغال (`gold21_backup*`، `comp-bkp-`) پاک شدند. پوشه‌های `*_dir` **عمداً** ماندند (۴ فایل یکتا داشتند).
+
+### `.gitignore`
+```
+*_backup.json
+fund_backup.json
+gold4_backup.json
+gold5_backup.json
+```
+فایل‌ها روی دیسک می‌مانند (اپ‌ها به آن‌ها نیاز دارند) ولی دیگر در مخزن عمومی کامیت نمی‌شوند.
+
+### بازرس
+```bash
+python3 scripts/check-backup-structure.py
+# ✅ ساختار بکاپ در همهٔ اپ‌ها مطابق قانون است.   (exit=0)
+```
+می‌سنجد: وجود `backup-path.js`، تزریق اسکریپت، شناسهٔ اپ، `recordUpdate`، حضور در `ASSETS` فایل `sw.js`،
+و اینکه بکاپ‌ها در گیت ردیابی **نشوند**.
+
+### `CACHE_NAME` = `emarat-portal-v120`
+
+### تست واقعی (Puppeteer + Chromium)
+۱۳ اپ تست شد؛ مسیر خروجی همه: `<app>/1405/08/week-05/1405.08.29/<app>_backup.json` ✅
+`gym` فایل ۲۰۸KB است و در محیط headless گاهی تایم‌اوت می‌دهد (نویز محیط، نه کد) — در ۲ اجرا از ۳ اجرا ۸۶-۹۲ms بود.

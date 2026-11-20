@@ -4111,7 +4111,9 @@ let filePath = localStorage.getItem(FILEPATH_KEY);
 
             if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست. لطفاً آن را در پورتال اصلی پیکربندی کنید." };
 
-            if (!filePath) {
+            if (window.EmaratBackupPath) {
+                filePath = window.EmaratBackupPath.build("ai-chat", new Date(), "ai_chat_backup");
+            } else if (!filePath) {
                 filePath = `backups/${fileName}`;
             } else if (filePath.endsWith("/")) {
                 filePath += fileName;
@@ -4213,5 +4215,6 @@ let filePath = localStorage.getItem(FILEPATH_KEY);
     </div>
 <script src="../refresh-button.js"></script>
 <script src="../usage-tracker.js" data-app="ai-chat"></script>
+<script src="../backup-path.js"></script>
 </body>
 </html>

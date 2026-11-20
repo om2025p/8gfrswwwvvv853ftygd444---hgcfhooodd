@@ -697,212 +697,6 @@
             } catch(e) { console.warn(e); }
         }
 
-        async function autoSyncFromBackup() {
-            try {
-                const response = await fetch("gold5_backup.json");
-                if (!response.ok) return;
-                const cloudData = await response.json();
-                if (!cloudData) return;
-
-                let hasChanges = false;
-
-                // --- 1. Resilient Two-Way Merge for Percents (Respecting local Trash) ---
-                if (cloudData.percents && Array.isArray(cloudData.percents)) {
-                    // Map existing local percents by timestamp to avoid duplicates
-                    const localMap = new Map();
-                    percents.forEach(p => localMap.set(p.timestamp, p.value));
-
-                    // Build a list of deleted timestamps in local trash so deleted items are NOT resurrected
-                    const localTrashTimestamps = new Set(trash.map(t => t.timestamp));
-
-                    let mergedCount = 0;
-                    cloudData.percents.forEach(cp => {
-                        // Check if item was deleted locally
-                        let wasDeletedLocally = false;
-                        for (let t of localTrashTimestamps) {
-                            if (Math.abs(t - cp.timestamp) < 2000) {
-                                wasDeletedLocally = true;
-                                break;
-                            }
-                        }
-                        if (wasDeletedLocally) return;
-
-                        // If this timestamp or close timestamp (within 2 seconds) doesn't exist, insert it!
-                        let exists = false;
-                        for (let t of localMap.keys()) {
-                            if (Math.abs(t - cp.timestamp) < 2000) {
-                                exists = true;
-                                break;
-                            }
-                        }
-                        if (!exists) {
-                            percents.push(cp);
-                            localMap.set(cp.timestamp, cp.value);
-                            mergedCount++;
-                        }
-                    });
-
-                    if (mergedCount > 0) {
-                        percents.sort((a, b) => a.timestamp - b.timestamp);
-                        hasChanges = true;
-                        console.log(`[i] Merged ${mergedCount} new percent record(s) from GitHub backup without losing local data or restoring deleted items.`);
-                    }
-                }
-
-                // --- 2. Resilient Two-Way Merge for Trash ---
-                if (cloudData.trash && Array.isArray(cloudData.trash)) {
-                    const localTrashTimes = new Set(trash.map(t => t.timestamp));
-                    cloudData.trash.forEach(ct => {
-                        if (!localTrashTimes.has(ct.timestamp)) {
-                            trash.push(ct);
-                            localTrashTimes.add(ct.timestamp);
-                            hasChanges = true;
-                        }
-                    });
-                }
-
-                // --- 3. Synchronize Goal, Highlights, Periods, Notes ---
-                if (cloudData.goal && !goal) {
-                    goal = cloudData.goal;
-                    hasChanges = true;
-                }
-
-                if (cloudData.highlightedStates) {
-                    highlightedStates = { ...cloudData.highlightedStates, ...highlightedStates };
-                }
-
-                if (cloudData.periodTarget && !periodTarget) {
-                    periodTarget = cloudData.periodTarget;
-                    hasChanges = true;
-                }
-
-                // --- 4. Synchronize Notes ---
-                if (cloudData.notes && Array.isArray(cloudData.notes)) {
-                    const localNoteIds = new Set(notes.map(n => n.id));
-                    cloudData.notes.forEach(cn => {
-                        if (cn && cn.id && !localNoteIds.has(cn.id)) {
-                            notes.push(cn);
-                            localNoteIds.add(cn.id);
-                            hasChanges = true;
-                        }
-                    });
-                }
-
-                // --- 5. Resilient Two-Way Merge for sinergy_history ---
-                let localHistory = [];
-                try {
-                    const rawLocalHistory = localStorage.getItem("sinergy_history");
-                    if (rawLocalHistory) {
-                        localHistory = JSON.parse(rawLocalHistory);
-                    }
-                } catch (e) {
-                    console.warn("Failed to parse local sinergy_history", e);
-                }
-
-                if (!Array.isArray(localHistory)) {
-                    localHistory = [];
-                }
-
-                let historyChanges = false;
-
-                if (cloudData.history && Array.isArray(cloudData.history)) {
-                    cloudData.history.forEach(ch => {
-                        let exists = false;
-                        for (let lh of localHistory) {
-                            if (lh.id === ch.id || Math.abs((lh.id || 0) - (ch.id || 0)) < 2000) {
-                                exists = true;
-                                break;
-                            }
-                            if (lh.timestamp && ch.timestamp) {
-                                let tLh = new Date(lh.timestamp).getTime();
-                                let tCh = new Date(ch.timestamp).getTime();
-                                if (Math.abs(tLh - tCh) < 2000) {
-                                    exists = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (!exists) {
-                            localHistory.push(ch);
-                            historyChanges = true;
-                        }
-                    });
-                }
-
-                if (historyChanges) {
-                    localHistory.sort((a, b) => {
-                        const tA = a.id || (a.timestamp ? new Date(a.timestamp).getTime() : 0);
-                        const tB = b.id || (b.timestamp ? new Date(b.timestamp).getTime() : 0);
-                        return tB - tA; // descending
-                    });
-                    localStorage.setItem("sinergy_history", JSON.stringify(localHistory));
-                    hasChanges = true;
-                    console.log("⚡ Resilient two-way merge for sinergy_history completed!");
-                }
-
-                // --- 6. Resilient Two-Way Merge for sinergy_baseNumber ---
-                let localBaseStr = localStorage.getItem("sinergy_baseNumber");
-                let localBaseNum = 0;
-                if (localBaseStr) {
-                    localBaseNum = parseFloat(localBaseStr.replace(/,/g, '')) || 0;
-                }
-
-                let finalBaseNum = localBaseNum;
-
-                if (localHistory.length > 0) {
-                    const newestRecord = localHistory[0];
-                    let newestRecordVal = 0;
-                    if (newestRecord.rawNew !== undefined && newestRecord.rawNew !== null) {
-                        newestRecordVal = parseFloat(newestRecord.rawNew) || 0;
-                    } else if (newestRecord.new) {
-                        newestRecordVal = parseFloat(newestRecord.new.replace(/,/g, '')) || 0;
-                    }
-
-                    let cloudBaseNum = 0;
-                    if (cloudData.baseNumber) {
-                        cloudBaseNum = parseFloat(String(cloudData.baseNumber).replace(/,/g, '')) || 0;
-                    }
-
-                    if (newestRecordVal > 0) {
-                        finalBaseNum = newestRecordVal;
-                    } else if (cloudBaseNum > 0 && cloudBaseNum > finalBaseNum) {
-                        finalBaseNum = cloudBaseNum;
-                    }
-                } else {
-                    let cloudBaseNum = 0;
-                    if (cloudData.baseNumber) {
-                        cloudBaseNum = parseFloat(String(cloudData.baseNumber).replace(/,/g, '')) || 0;
-                    }
-                    if (cloudBaseNum > 0 && cloudBaseNum > finalBaseNum) {
-                        finalBaseNum = cloudBaseNum;
-                    }
-                }
-
-                if (finalBaseNum > 0 && finalBaseNum !== localBaseNum) {
-                    localStorage.setItem("sinergy_baseNumber", Number(finalBaseNum).toLocaleString('en-US'));
-                    hasChanges = true;
-                    console.log(`⚡ Updated sinergy_baseNumber to ${finalBaseNum.toLocaleString('en-US')} based on two-way merge.`);
-                }
-
-                // If changes occurred, update UI, save PWA state, and push to cloud sync
-                if (hasChanges) {
-                    checkPeriodAchievement();
-                    updateUI();
-                    saveData();
-                    console.log("⚡ Resilient two-way auto-merge with gold5_backup.json completed successfully!");
-
-                    // Sync the merged result to MantleDB so that other devices receive the merged data
-                    if (window.parent && window.parent.EmaratCloudSync) {
-                        window.parent.EmaratCloudSync.push();
-                    } else if (window.EmaratCloudSync) {
-                        window.EmaratCloudSync.push();
-                    }
-                }
-            } catch (err) {
-                console.warn("Auto-sync from gold5_backup.json failed:", err);
-            }
-        }
 
         function updateUI() {
             renderPercentList();
@@ -1432,7 +1226,9 @@
             if (!basePath) basePath = "gold5";
 
             const jalaliFolder = getJalaliDateStr();
-            const fullFilePath = `${basePath}/${jalaliFolder}/${fileName}`;
+            const fullFilePath = (window.EmaratBackupPath)
+                      ? window.EmaratBackupPath.build("gold5", new Date(), fileName)
+                      : `${basePath}/${jalaliFolder}/${fileName}`;
 
             const authHeader = token.startsWith("github_pat_") || token.startsWith("Bearer ") ? (token.startsWith("Bearer ") ? token : `Bearer ${token}`) : `token ${token}`;
             const url = `https://api.github.com/repos/${repo}/contents/${fullFilePath}`;
@@ -1484,7 +1280,13 @@
 
                 if (putRes.ok) {
                     appendGithubLog("✅ پشتیبان‌گیری با موفقیت در گیت‌هاب ثبت شد!");
-                    return { success: true };
+
+                try {
+                    if (window.EmaratBackupPath && window.EmaratBackupPath.recordUpdate) {
+                        window.EmaratBackupPath.recordUpdate("gold5", repo, token, branch, new Date());
+                    }
+                } catch (e) {}
+                                    return { success: true };
                 } else if (putRes.status === 409) {
                     appendGithubLog("⚠️ خطای ۴۰۹ (تعارض فایل با پوشه): فایلی با نام این پوشه در مخزن وجود دارد. در حال تلاش با پوشه جایگزین...");
                     const fallbackBasePath = `${basePath}_dir`;
@@ -1651,7 +1453,6 @@
         saveData();
 
         // Trigger auto-sync asynchronously on page load
-        autoSyncFromBackup();
             // ===== به‌روزرسانی زندهٔ فهرست وقتی تب محاسبه درصد می‌نویسد =====
         window.__emaratAutoSync = function () {
             loadData();
@@ -1687,5 +1488,6 @@
 </script>
 <script src="../refresh-button.js"></script>
 <script src="../usage-tracker.js" data-app="gold5"></script>
+<script src="../backup-path.js"></script>
 </body>
 </html>

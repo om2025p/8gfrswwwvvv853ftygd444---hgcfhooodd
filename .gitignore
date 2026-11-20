@@ -55,3 +55,9 @@ _incoming/
 # Node modules (test tooling only)
 node_modules/
 package-lock.json
+
+# بکاپ‌ها هرگز در مخزن عمومی سایت نگه‌داری نمی‌شوند (به مخزن خصوصی می‌روند)
+*_backup.json
+fund_backup.json
+gold4_backup.json
+gold5_backup.json

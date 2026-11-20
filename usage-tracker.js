@@ -164,7 +164,11 @@
     if (!cfg.token || !cfg.repo) return Promise.resolve({ success: false, message: 'تنظیمات گیت‌هاب کامل نیست.' });
 
     var path = cfg.path;
-    if (path.endsWith('/')) path += 'usage_backup.json';
+    if (window.EmaratBackupPath) {
+      path = window.EmaratBackupPath.build('usage', new Date(), 'usage_backup');
+    } else if (path.endsWith('/')) {
+      path += 'usage_backup.json';
+    }
     var url = 'https://api.github.com/repos/' + cfg.repo + '/contents/' + path;
     var headers = { Authorization: 'token ' + cfg.token, Accept: 'application/vnd.github.v3+json' };
     var local = readStats();
