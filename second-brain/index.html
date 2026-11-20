@@ -54,20 +54,33 @@
         <div class="composer-toolbar">
           <span class="composer-plain-note">ارسال متن ساده • ابزارهای نمایشی در اختیار مدل هستند</span>
 
-          <div class="composer-toggles">
-            <button type="button" class="web-toggle-btn" id="btnWebToggle" title="اجازه دسترسی مدل به جست‌وجوی اینترنت">
-              <span>🌐</span>
-              <span id="webToggleText">اینترنت: خاموش</span>
-            </button>
-            <button type="button" class="attach-btn" id="btnAttachFile" title="پیوست فایل متنی یا پی‌دی‌اف">
-              <span>📎</span>
-              <span>فایل</span>
-            </button>
-            <button type="button" class="attach-btn" id="btnOpenDrafts" title="پیش‌نویس‌های ذخیره‌شده" aria-label="پیش‌نویس‌ها">
-              <span>📝</span>
-              <span>پیش‌نویس‌ها</span>
+          <div class="tools-menu-wrap" id="toolsMenuWrap">
+            <button type="button" class="tools-menu-btn" id="btnToolsMenu"
+                    title="ابزارها: اینترنت، فایل، پیش‌نویس‌ها" aria-label="ابزارها"
+                    aria-haspopup="true" aria-expanded="false" aria-controls="toolsMenu">
+              <span>⋯</span>
+              <span class="tools-dot" id="toolsWebDot" title="اینترنت خاموش"></span>
               <span class="draft-count-badge" id="draftCountBadge" hidden>0</span>
             </button>
+
+            <div class="tools-menu" id="toolsMenu" role="menu" hidden>
+              <button type="button" class="tools-menu-item" id="btnWebToggle" role="menuitemcheckbox" aria-checked="false">
+                <span class="tools-item-icon">🌐</span>
+                <span class="tools-item-label" id="webToggleText">اینترنت: خاموش</span>
+                <span class="tools-item-state" id="webToggleState">خاموش</span>
+              </button>
+              <button type="button" class="tools-menu-item" id="btnAttachFile" role="menuitem">
+                <span class="tools-item-icon">📎</span>
+                <span class="tools-item-label">انتخاب فایل</span>
+                <span class="tools-item-hint">متن، مارک‌داون، PDF</span>
+              </button>
+              <button type="button" class="tools-menu-item" id="btnOpenDrafts" role="menuitem">
+                <span class="tools-item-icon">📝</span>
+                <span class="tools-item-label">پیش‌نویس‌ها</span>
+                <span class="tools-item-hint" id="draftMenuItemCount"></span>
+              </button>
+            </div>
+
             <input type="file" id="fileUploadInput" accept=".txt,.md,.json,.csv,.pdf" multiple hidden>
           </div>
         </div>
@@ -83,7 +96,8 @@
             placeholder="پیام خود را بنویسید... (خط بعد با کلید بازگشت کیبورد • ارسال با دکمه ➤)"
           ></textarea>
           <button type="button" class="send-btn" id="btnSendMsg" title="ارسال پیام" aria-label="ارسال">➤</button>
-          <button type="button" class="stop-btn" id="btnStopMsg" title="توقف فوری تولید" aria-label="توقف" hidden>■</button>
+          <!-- دکمهٔ توقف جداگانه نمایش داده نمی‌شود؛ دکمهٔ ارسال در حین تولید به «توقف» تبدیل می‌شود -->
+          <button type="button" class="stop-btn" id="btnStopMsg" title="توقف فوری تولید" aria-label="توقف" hidden style="display:none">■</button>
         </div>
 
         <div class="composer-status-line">
@@ -152,6 +166,13 @@
         <div class="input-row">
           <input type="text" class="input-ctrl" id="draftSearch" placeholder="جست‌وجو در پیش‌نویس‌ها..." dir="auto">
           <button type="button" class="secondary-btn" id="btnToggleArchivedDrafts">📦 آرشیو</button>
+        </div>
+
+        <div class="draft-nav" role="group" aria-label="جابه‌جایی بین پیش‌نویس‌ها">
+          <button type="button" class="draft-nav-btn" id="btnDraftPrev" title="پیش‌نویس قبلی (کلید ↑)" aria-label="قبلی">▲</button>
+          <span class="draft-nav-counter tech-num" id="draftNavCounter">—</span>
+          <button type="button" class="draft-nav-btn" id="btnDraftNext" title="پیش‌نویس بعدی (کلید ↓)" aria-label="بعدی">▼</button>
+          <button type="button" class="primary-btn draft-nav-use" id="btnDraftUse" title="استفاده از پیش‌نویس انتخاب‌شده (Enter)">↩️ استفاده</button>
         </div>
         <div class="preset-list" id="draftList" style="max-height: 46vh; overflow-y: auto;"></div>
         <div class="field-hint" id="draftEmptyHint" hidden>هنوز پیش‌نویسی ذخیره نشده است.</div>

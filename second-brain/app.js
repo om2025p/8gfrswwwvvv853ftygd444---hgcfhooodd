@@ -2009,6 +2009,9 @@
         this.renderActiveChat();
       });
 
+      // منوی کشویی ابزارها
+      this.initToolsMenu();
+
       // پنل پیش‌نویس‌ها
       const btnOpenDrafts = $('btnOpenDrafts');
       if (btnOpenDrafts) btnOpenDrafts.addEventListener('click', () => this.openDraftsModal());
@@ -2018,9 +2021,31 @@
       if (btnToggleArchived) {
         btnToggleArchived.addEventListener('click', () => {
           this._showArchivedDrafts = !this._showArchivedDrafts;
+          this._draftFocusIndex = 0;
           this.renderDraftList();
         });
       }
+
+      const btnDraftPrev = $('btnDraftPrev');
+      if (btnDraftPrev) btnDraftPrev.addEventListener('click', () => this.moveDraftFocus(-1));
+      const btnDraftNext = $('btnDraftNext');
+      if (btnDraftNext) btnDraftNext.addEventListener('click', () => this.moveDraftFocus(1));
+      const btnDraftUse = $('btnDraftUse');
+      if (btnDraftUse) btnDraftUse.addEventListener('click', () => this.useFocusedDraft());
+
+      // کلیدهای جهت‌دار و Enter داخل مودال پیش‌نویس
+      document.addEventListener('keydown', (e) => {
+        const modal = $('draftsModal');
+        if (!modal || !modal.classList.contains('open')) return;
+        const typingInSearch = e.target && e.target.id === 'draftSearch';
+        if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !typingInSearch) {
+          e.preventDefault();
+          this.moveDraftFocus(e.key === 'ArrowDown' ? 1 : -1);
+        } else if (e.key === 'Enter' && !typingInSearch) {
+          e.preventDefault();
+          this.useFocusedDraft();
+        }
+      });
 
       // کلید دسترسی مدل به اینترنت
       $('btnWebToggle').addEventListener('click', () => {
@@ -2037,8 +2062,13 @@
       });
 
       // ارسال و توقف
-      $('btnSendMsg').addEventListener('click', () => this.handleSend());
-      $('btnStopMsg').addEventListener('click', () => this.stopGeneration());
+      $('btnSendMsg').addEventListener('click', () => {
+        if (this.isGenerating) {
+          this.stopGeneration();
+        } else {
+          this.handleSend();
+        }
+      });
 
       // کشوی گفت‌وگوها
       $('btnOpenDrawer').addEventListener('click', () => this.toggleDrawer(true));
@@ -2259,8 +2289,11 @@
 
       const webOn = Boolean(this.settings.data.webSearchEnabled);
       const webBtn = $('btnWebToggle');
-      webBtn.classList.toggle('active', webOn);
-      $('webToggleText').textContent = webOn ? 'اینترنت: روشن' : 'اینترنت: خاموش';
+      if (webBtn) webBtn.classList.toggle('active', webOn);
+      const webText = $('webToggleText');
+      if (webText) webText.textContent = webOn ? 'اینترنت: روشن' : 'اینترنت: خاموش';
+      this.syncToolsDot();
+      this.syncSendButtonMode();
 
       const spBtn = $('btnOpenSystemPrompt');
       spBtn.classList.toggle('active-dot', Boolean(this.systemPrompt.state.enabled));
@@ -2276,6 +2309,70 @@
     toggleDrawer(open) {
       $('convDrawer').classList.toggle('open', open);
       $('drawerBackdrop').classList.toggle('open', open);
+    }
+
+    /* ---------------- منوی کشویی ابزارها ---------------- */
+
+    initToolsMenu() {
+      const btn = $('btnToolsMenu');
+      const menu = $('toolsMenu');
+      if (!btn || !menu) return;
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleToolsMenu(menu.hidden);
+      });
+
+      // کلیک بیرون → بسته شود
+      document.addEventListener('click', (e) => {
+        if (menu.hidden) return;
+        if (!menu.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+          this.toggleToolsMenu(false);
+        }
+      });
+
+      // Esc → بسته شود
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !menu.hidden) {
+          this.toggleToolsMenu(false);
+          btn.focus();
+        }
+      });
+
+      // انتخاب هر گزینه → منو بسته شود (بعد از اجرای خودِ گزینه)
+      menu.querySelectorAll('.tools-menu-item').forEach((item) => {
+        item.addEventListener('click', () => {
+          if (item.id !== 'btnWebToggle') this.toggleToolsMenu(false);
+        });
+      });
+    }
+
+    toggleToolsMenu(open) {
+      const btn = $('btnToolsMenu');
+      const menu = $('toolsMenu');
+      if (!btn || !menu) return;
+      const shouldOpen = typeof open === 'boolean' ? open : menu.hidden;
+      menu.hidden = !shouldOpen;
+      btn.setAttribute('aria-expanded', String(shouldOpen));
+    }
+
+    /** نقطهٔ وضعیت اینترنت روی دکمهٔ ابزارها */
+    syncToolsDot() {
+      const dot = $('toolsWebDot');
+      const on = !!this.settings.data.webSearchEnabled;
+      if (dot) {
+        dot.classList.toggle('on', on);
+        dot.title = on ? 'اینترنت: روشن' : 'اینترنت: خاموش';
+      }
+      const state = $('webToggleState');
+      if (state) state.textContent = on ? 'روشن' : 'خاموش';
+      const btn = $('btnWebToggle');
+      if (btn) btn.setAttribute('aria-checked', String(on));
+      const countHint = $('draftMenuItemCount');
+      if (countHint) {
+        const n = this.drafts ? this.drafts.liveDrafts().length : 0;
+        countHint.textContent = n ? `${n.toLocaleString('fa-IR')} مورد` : '';
+      }
     }
 
     openModal(id) {
@@ -2672,6 +2769,16 @@
         card.appendChild(this.buildMessageActions(msg, bodyEl));
       }
 
+      // علامت (آواتار) کنار حباب پیام کاربر
+      if (msg.role === 'user') {
+        const avatar = document.createElement('span');
+        avatar.className = 'msg-avatar';
+        avatar.setAttribute('aria-hidden', 'true');
+        avatar.textContent = '👤';
+        row.appendChild(avatar);
+        row.classList.add('has-avatar');
+      }
+
       row.appendChild(card);
       return row;
     }
@@ -2894,10 +3001,73 @@
 
     openDraftsModal() {
       this._showArchivedDrafts = false;
+      this._draftFocusIndex = 0;
       const search = $('draftSearch');
       if (search) search.value = '';
       this.renderDraftList();
       this.openModal('draftsModal');
+    }
+
+    /** فهرست جاری پیش‌نویس‌ها (با اعمال جست‌وجو و آرشیو) */
+    currentDraftItems() {
+      const q = ($('draftSearch')?.value || '').trim().toLowerCase();
+      let items = this._showArchivedDrafts ? this.drafts.archivedDrafts() : this.drafts.liveDrafts();
+      if (q) items = items.filter((d) => (d.text || '').toLowerCase().includes(q));
+      return items;
+    }
+
+    /** جابه‌جایی بین پیش‌نویس‌ها با فلش */
+    moveDraftFocus(delta) {
+      const items = this.currentDraftItems();
+      if (items.length === 0) return;
+      const cur = Number.isInteger(this._draftFocusIndex) ? this._draftFocusIndex : 0;
+      const next = Math.min(items.length - 1, Math.max(0, cur + delta));
+      this._draftFocusIndex = next;
+      this.highlightDraftRow(items, next);
+    }
+
+    highlightDraftRow(items, index) {
+      const rows = [...document.querySelectorAll('#draftList .draft-item')];
+      rows.forEach((r, i) => r.classList.toggle('is-focused', i === index));
+      const row = rows[index];
+      if (row) {
+        row.scrollIntoView({ block: 'nearest' });
+        const preview = row.querySelector('.draft-preview');
+        if (preview) preview.setAttribute('title', preview.textContent);
+      }
+      const counter = $('draftNavCounter');
+      if (counter) {
+        counter.textContent = items.length
+          ? `${(index + 1).toLocaleString('fa-IR')} / ${items.length.toLocaleString('fa-IR')}`
+          : '—';
+      }
+      const prevBtn = $('btnDraftPrev');
+      const nextBtn = $('btnDraftNext');
+      const useBtn = $('btnDraftUse');
+      if (prevBtn) prevBtn.disabled = items.length === 0 || index <= 0;
+      if (nextBtn) nextBtn.disabled = items.length === 0 || index >= items.length - 1;
+      if (useBtn) useBtn.disabled = items.length === 0;
+    }
+
+    /** استفاده از پیش‌نویس انتخاب‌شده با فلش */
+    async useFocusedDraft() {
+      const items = this.currentDraftItems();
+      const d = items[this._draftFocusIndex || 0];
+      if (!d) return;
+      await this.applyDraftToComposer(d);
+    }
+
+    async applyDraftToComposer(d) {
+      const activeConv = this.conversations.getActive();
+      if (d.convId && (!activeConv || activeConv.id !== d.convId)) {
+        const target = this.conversations.conversations.find((c) => c.id === d.convId);
+        if (target) this.conversations.setActive(target.id);
+      }
+      this.composer.textarea.value = d.text || '';
+      this.composer.autoResize();
+      this.closeModal('draftsModal');
+      this.composer.textarea.focus();
+      ErrorManager.toast('پیش‌نویس در کادر تایپ قرار گرفت.', 'ok');
     }
 
     renderDraftList() {
@@ -2922,6 +3092,23 @@
       list.innerHTML = '';
       if (emptyHint) emptyHint.hidden = items.length > 0;
 
+      // همگام‌سازی نوار جابه‌جایی با فهرست
+      if (Number.isInteger(this._draftFocusIndex) && this._draftFocusIndex >= items.length) {
+        this._draftFocusIndex = Math.max(0, items.length - 1);
+      }
+      const navCounter = $('draftNavCounter');
+      if (navCounter) {
+        navCounter.textContent = items.length
+          ? `${((this._draftFocusIndex || 0) + 1).toLocaleString('fa-IR')} / ${items.length.toLocaleString('fa-IR')}`
+          : '—';
+      }
+      const prevBtn = $('btnDraftPrev');
+      const nextBtn = $('btnDraftNext');
+      const useBtn = $('btnDraftUse');
+      if (prevBtn) prevBtn.disabled = items.length === 0 || (this._draftFocusIndex || 0) <= 0;
+      if (nextBtn) nextBtn.disabled = items.length === 0 || (this._draftFocusIndex || 0) >= items.length - 1;
+      if (useBtn) useBtn.disabled = items.length === 0;
+
       if (items.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'field-hint';
@@ -2934,10 +3121,18 @@
       }
 
       const activeConv = this.conversations.getActive();
+      let rowIndex = 0;
       for (const d of items) {
         const row = document.createElement('div');
         row.className = 'preset-item draft-item';
         row.dataset.draftId = d.id;
+        row.tabIndex = 0;
+        const thisIndex = rowIndex++;
+        row.addEventListener('click', () => {
+          this._draftFocusIndex = thisIndex;
+          this.highlightDraftRow(items, thisIndex);
+        });
+        row.addEventListener('dblclick', () => this.applyDraftToComposer(d));
 
         const main = document.createElement('div');
         main.className = 'draft-item-main';
@@ -3119,8 +3314,7 @@
     async executeCompletion(conv) {
       this.isGenerating = true;
       this.abortController = new AbortController();
-      $('btnSendMsg').hidden = true;
-      $('btnStopMsg').hidden = false;
+      this.syncSendButtonMode();
       $('composerStatusText').textContent = this.settings.data.webSearchEnabled
         ? 'در حال جست‌وجو در وب و تولید پاسخ...'
         : 'در حال دریافت پاسخ از مدل...';
@@ -3202,11 +3396,27 @@
         if (window.EmaratAutoScroll) window.EmaratAutoScroll.endStream();
         this.isGenerating = false;
         this.abortController = null;
-        $('btnSendMsg').hidden = false;
-        $('btnStopMsg').hidden = true;
+        this.syncSendButtonMode();
         $('composerStatusText').textContent = 'آماده';
         this.syncHeaderAndToggles();
       }
+    }
+
+    /**
+     * دکمهٔ ارسال در حین تولید پاسخ به «توقف» تبدیل می‌شود.
+     * دکمهٔ توقف جداگانه‌ای نمایش داده نمی‌شود.
+     */
+    syncSendButtonMode() {
+      const btn = $('btnSendMsg');
+      if (!btn) return;
+      const generating = !!this.isGenerating;
+      btn.classList.toggle('is-stopping', generating);
+      btn.textContent = generating ? '■' : '➤';
+      btn.title = generating ? 'توقف فوری تولید' : 'ارسال پیام';
+      btn.setAttribute('aria-label', generating ? 'توقف' : 'ارسال');
+      btn.disabled = false;
+      const stopBtn = $('btnStopMsg');
+      if (stopBtn) stopBtn.hidden = true;
     }
 
     stopGeneration() {
