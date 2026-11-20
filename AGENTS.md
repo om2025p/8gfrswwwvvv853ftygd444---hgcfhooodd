@@ -2562,6 +2562,70 @@ git merge-base --is-ancestor <old-sha> main && echo "✅ سالم"
 
 ---
 
+## 🚨 قانون امنیت نشست — هرگز کوکی لاگین در گیت نباشد (The Session Security Rule)
+
+### حادثهٔ واقعی
+فایل `gold5/easytrader_session.json` در گیت **ردیابی** شده بود و روی سایت عمومی سرو می‌شد
+(`https://om2025p.github.io/.../gold5/easytrader_session.json` → **HTTP 200**).
+داخلش ۲۶ کوکی بود، از جمله `.AspNetCore.Identity.Application` (کوکی نشست مفید، بدون انقضا)
+و `idsrv.session` — یعنی **هر کسی می‌توانست نشست کارگزاری را بدزدد**.
+منبع آلودگی: `easytrader_automation.py` خط ۱۰۴۶ با `context.storage_state(path=...)` فایل را
+روی دیسک می‌نوشت و ورک‌فلوی `easytrader_sync.yml` آن را `git add` و کامیت می‌کرد.
+
+### درمان (سه‌لایه، هر سه لازم)
+۱. **`.gitignore`** — الگوهای `easytrader_session.json`، `*_session.json`، `*storage_state*.json`، `*cookies*.json`
+۲. **حذف از ایندکس** — `git rm --cached gold5/easytrader_session.json` (فایل روی دیسک می‌ماند، اتوماسیون محلی می‌تواند بخواند)
+۳. **ورک‌فلو** — `git add` نشست حذف شد و به‌جایش مرحلهٔ `Remove Session State` با `if: always()` گذاشته شد
+   که بعد از هر اجرا (حتی خطا) فایل را از دیسک رانر پاک می‌کند.
+
+> ⚠️ **محدودیت قطعی:** حذف از ایندکس، تاریخچهٔ گیت را پاک **نمی‌کند**. کوکی‌ها در کامیت‌های قدیمی می‌مانند.
+> برای پاک‌سازی کامل، بازنویسی تاریخچه (`git filter-repo`) لازم است — ولی چون **سایت** فقط HEAD را
+> سرو می‌کند، حذف از ایندکس کافی است تا دسترسی عمومی قطع شود.
+> **اما کوکی‌ها لو رفته‌اند → تغییر رمز مفید الزامی است.** نشست فعلی باید باطل شود.
+
+### ورک‌فلوی جدید: بکاپ به مخزن خصوصی (نه کامیت در عمومی)
+`*_backup.json` هم در `.gitignore` است، پس `git add gold5/gold5_backup.json` در ورک‌فلو **شکست می‌خورد**.
+به‌جای آن:
+```yaml
+      - name: Upload Backups to Private Repo
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          PRIVATE_REPO: ${{ secrets.PRIVATE_REPO }}
+        run: python scripts/upload_backups_private.py
+```
+`permissions: contents: read` شد — این مخزن عمومی **هیچ‌وقت** کامیت نمی‌گیرد.
+
+`scripts/upload_backups_private.py`:
+- همان ساختار شمسی `backup-path.js`: `<app>/<YYYY>/<MM>/week-<NN>/<YYYY.MM.DD>/<name>.json`
+- `gregorian_to_jalali` را **درون خودش** دارد (بدون import از `easytrader_automation.py` که playwright می‌کشد)
+- اگر `PRIVATE_REPO_TOKEN`/`PRIVATE_REPO` نبود → با کد **۰** خارج می‌شود (اتوماسیون نباید بشکند) و هشدار می‌دهد
+- فایل‌های `*_session.json` را **رد می‌کند** حتی اگر در فهرست `BACKUPS` باشند
+
+### Secrets لازم در گیت‌هاب
+| Secret | مقدار |
+|---|---|
+| `PRIVATE_REPO_TOKEN` | توکن با دسترسی `contents: write` روی مخزن خصوصی |
+| `PRIVATE_REPO` | `om2025p/comp-bkp-` |
+| `PRIVATE_REPO_BRANCH` | اختیاری، پیش‌فرض `main` |
+
+### بازرس — `scripts/check-session-secrets.py`
+```bash
+python3 scripts/check-session-secrets.py
+# ✅ هیچ فایل نشست/کوکی در گیت ردیابی نمی‌شود.
+# ✅ هیچ ورک‌فلویی فایل نشست را git add نمی‌کند.
+# ✅ همهٔ الگوهای محرمانه در .gitignore حاضرند.   (exit=0)
+```
+سه چیز را می‌سنجد و با کد **۱** شکست می‌خورد: (۱) فایل نشستِ ردیابی‌شده،
+(۲) `git add ... session` در هر ورک‌فلو، (۳) غیبت الگوهای محرمانه در `.gitignore`.
+**تست خود بازرس:** با `git add -f fake_session.json` و با تزریق `git add ...session` در ورک‌فلو،
+هر دو حالت درست تشخیص داده شد (exit=1). بازرسِ همیشه‌سبز، بازرس نیست.
+
+### ⚠️ پیامد عملی (تصمیم آگاهانهٔ کاربر)
+نشست دیگر بین اجراها منتقل نمی‌شود → GitHub Actions هر بار **از صفر لاگین می‌کند** →
+احتمال OTP بیشتر. کد OTP خودکار از تلگرام خوانده می‌شود (`wait_for_telegram_otp`، ۳ دقیقه).
+
+---
+
 ## 📦 ساختار شمسی بکاپ‌ها + مخزن خصوصی (backup-path.js)
 
 ### مشکل ریشه‌ای که حل شد

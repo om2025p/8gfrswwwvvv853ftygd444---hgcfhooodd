@@ -10,7 +10,7 @@ on:
   workflow_dispatch: # Allows 1-click manual trigger
 
 permissions:
-  contents: write # Allows committing back updated backup and session states
+  contents: read  # هیچ کامیتی به این مخزن نمی‌شود
 
 jobs:
   run-automation:
@@ -44,24 +44,14 @@ jobs:
         run: |
           python easytrader_automation.py
 
-      - name: Commit and Push Changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      # بکاپ‌ها مستقیم به مخزن خصوصی می‌روند (این مخزن عمومی است).
+      # فایل نشست عمداً آپلود نمی‌شود: شامل کوکی‌های زندهٔ Identity.Application است.
+      - name: Upload Backups to Private Repo
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          PRIVATE_REPO: ${{ secrets.PRIVATE_REPO }}
+        run: python scripts/upload_backups_private.py
 
-          # Stage backup files for both Fund 5 (Synergy) and Fund 4 (Atie)
-          git add gold5/gold5_backup.json
-          if [ -f "gold4/gold4_backup.json" ]; then
-            git add gold4/gold4_backup.json
-          fi
-          if [ -f "gold5/easytrader_session.json" ]; then
-            git add gold5/easytrader_session.json
-          fi
-
-          if git diff-index --quiet HEAD --; then
-            echo "No changes in files. Skipping commit."
-          else
-            git commit -m "chore(sync): automated update of daily percent, history and session cookies for funds 4 and 5"
-            git push origin HEAD
-            echo "Successfully pushed updated files to GitHub repository."
-          fi
+      - name: Remove Session State (never leave credentials on disk)
+        if: always()
+        run: rm -f gold5/easytrader_session.json

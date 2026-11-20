@@ -61,3 +61,12 @@ package-lock.json
 fund_backup.json
 gold4_backup.json
 gold5_backup.json
+
+# 🚨 نشست/کوکی لاگین — هرگز کامیت نشود.
+# این فایل شامل کوکی‌های زندهٔ Identity.Application و idsrv.session است؛
+# اگر کامیت شود، هر کسی با یک GET می‌تواند نشست کارگزاری را بدزدد.
+# اتوماسیون فقط روی دیسک موقت می‌نویسد (GitHub Actions بین اجراها آن را دور می‌ریزد).
+easytrader_session.json
+*_session.json
+*storage_state*.json
+*cookies*.json
