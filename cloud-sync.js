@@ -64,7 +64,9 @@
                     //
                     // حالا فقط کلیدهای «داده» شمرده می‌شوند، نه تنظیمات.
                     const DATA_KEY_PATTERN = /(_percents$|_history$|_baseNumber$|_peakNumber$|^percents$|^trash$|^gold_percents$|_prices_|_prices$|_percents_|fundManagerV10|emarat_family_tree|calculatorTab_)/;
-                    const IGNORED_KEYS = ['emarat_last_modified', 'emarat_sync_counter'];
+                    // رازها هرگز به ابر نمی‌روند: توکن/رمز کلودفلر و توکن بکاپ گیت‌هاب
+                    const IGNORED_KEYS = ['emarat_last_modified', 'emarat_sync_counter',
+                        'cf_backup_token', 'cf_backup_pass', 'github_backup_token'];
                     let localDataKeys = 0;
                     for (let i = 0; i < localStorage.length; i++) {
                         const k = localStorage.key(i);

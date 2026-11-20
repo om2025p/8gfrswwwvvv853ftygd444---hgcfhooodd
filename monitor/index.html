@@ -921,6 +921,10 @@
                     <span>🔐</span>
                     <span>رمز بکاپ ابری</span>
                 </button>
+                  <button class="menu-item-btn" onclick="openCfTokenModal(); closeHamburgerMenu();">
+                      <span>🔑</span>
+                      <span>توکن کلودفلر</span>
+                  </button>
                 <button class="menu-item-btn" onclick="toggleTheme(); closeHamburgerMenu();">
                     <span id="menuThemeIcon">🌙</span>
                     <span id="menuThemeText">تم تاریک</span>
@@ -4099,10 +4103,40 @@ ${dayBlocksHtml}
 
         const CF_BACKUP_ACCOUNT_ID = "c08aa8f701a8e7c6b83183a5f6c45944";
         const CF_BACKUP_NAMESPACE_ID = "dd850edf9e5f4bb892e4859183c0a6f8";
-        /* توکن پیش‌فرض حفظ شده تا اپ بدون تنظیم کار کند. اگر کاربر توکن
-         * تازه‌ای در localStorage بگذارد، همان اولویت دارد. */
-        const getCfBackupToken = () => (localStorage.getItem('cf_backup_token') || '').trim() ||
-            ["cfut_", "9OXqA1KGUJI4", "0xZv5YMzElxI", "IEiaMD1KzD0s", "Ip980b5170e4"].join("");
+        /* توکن فقط از localStorage خوانده می‌شود — هیچ توکنی در کد نیست.
+         * کاربر آن را یک‌بار از ☰ → «🔑 توکن کلودفلر» وارد می‌کند. */
+        const CF_TOKEN_KEY = 'cf_backup_token';
+        const getCfBackupToken = () => (localStorage.getItem(CF_TOKEN_KEY) || '').trim();
+
+        function requireCfToken() {
+            if (getCfBackupToken()) return true;
+            alert('⚠️ توکن کلودفلر تنظیم نشده است.\n\nاز منوی ☰ → «🔑 توکن کلودفلر» آن را وارد کنید.\n\n(بکاپ محلی و فایل JSON بدون توکن همیشه کار می‌کند.)');
+            return false;
+        }
+
+        function openCfTokenModal() {
+            const has = !!getCfBackupToken();
+            const val = prompt(
+                (has ? '🔑 توکن کلودفلر تنظیم شده است.\n\n' : '🔓 توکن کلودفلر تنظیم نشده — بکاپ ابری کار نمی‌کند.\n\n') +
+                'توکن را وارد کنید (خالی = حذف توکن):\n\n' +
+                'ساخت توکن: Cloudflare → My Profile → API Tokens → Create Token\n' +
+                'دسترسی لازم: Workers KV Storage → Edit\n' +
+                '⚠️ فقط به انبار emarat_backup_kv محدودش کنید.\n\n' +
+                '🔒 توکن فقط در همین مرورگر ذخیره می‌شود و در بکاپ‌ها نوشته نمی‌شود.',
+                ''
+            );
+            if (val === null) return;
+            const t = val.trim();
+            if (!t) {
+                localStorage.removeItem(CF_TOKEN_KEY);
+                alert('🗑️ توکن حذف شد. بکاپ ابری غیرفعال می‌شود.');
+            } else if (t.length < 20) {
+                alert('⚠️ این مقدار خیلی کوتاه است — توکن کلودفلر معمولاً بلندتر است.');
+            } else {
+                localStorage.setItem(CF_TOKEN_KEY, t);
+                alert('✅ توکن ذخیره شد. بکاپ ابری فعال است.');
+            }
+        }
 
         async function cfFetchWithProxy(targetUrl, options = {}) {
             const proxyBase = "https://emarat-proxy.qqqggggcc.workers.dev/?url=";
@@ -4187,10 +4221,15 @@ ${dayBlocksHtml}
         }
 
         /* ---------- جمع‌آوری کامل: localStorage + سایهٔ IndexedDB ---------- */
-        async function collectFullBackup() {
+        /* رازها هرگز داخل بکاپ نمی‌روند — وگرنه توکن CF داخل همان فایلی
+           * می‌نشیند که قرار بود محافظتش کند. */
+          const BACKUP_SECRET_KEYS = ['cf_backup_token', 'cf_backup_pass'];
+
+          async function collectFullBackup() {
             const data = {};
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
+                if (BACKUP_SECRET_KEYS.indexOf(key) !== -1) continue;
                 data[key] = localStorage.getItem(key);
             }
 
@@ -4269,7 +4308,11 @@ ${dayBlocksHtml}
                         cloudBody = JSON.stringify(data);
                     }
 
-                    const urlLatest = `https://api.cloudflare.com/client/v4/accounts/${CF_BACKUP_ACCOUNT_ID}/storage/kv/namespaces/${CF_BACKUP_NAMESPACE_ID}/values/latest_backup`;
+                    if (!getCfBackupToken()) {
+                          alert(`✅ فایل پشتیبان محلی دانلود شد.\n\n⚠️ بکاپ ابری انجام نشد: توکن کلودفلر تنظیم نشده.\nاز ☰ → «🔑 توکن کلودفلر» آن را وارد کنید.`);
+                          return;
+                      }
+                      const urlLatest = `https://api.cloudflare.com/client/v4/accounts/${CF_BACKUP_ACCOUNT_ID}/storage/kv/namespaces/${CF_BACKUP_NAMESPACE_ID}/values/latest_backup`;
                     const urlDated = `https://api.cloudflare.com/client/v4/accounts/${CF_BACKUP_ACCOUNT_ID}/storage/kv/namespaces/${CF_BACKUP_NAMESPACE_ID}/values/emarat_backup_${dateStr}`;
 
                     const headers = {
@@ -4319,7 +4362,8 @@ ${dayBlocksHtml}
         }
 
         async function importCloudflareBackup() {
-            if (!confirm("☁️ آیا از دریافت و بازیابی آخرین پشتیبان ابری کلودفلر اطمینان دارید؟\n\nتوجه: تمام داده‌های فعلی مرورگر با اطلاعات پشتیبان ابری جایگزین خواهد شد.")) {
+            if (!requireCfToken()) return;
+              if (!confirm("☁️ آیا از دریافت و بازیابی آخرین پشتیبان ابری کلودفلر اطمینان دارید؟\n\nتوجه: تمام داده‌های فعلی مرورگر با اطلاعات پشتیبان ابری جایگزین خواهد شد.")) {
                 return;
             }
 

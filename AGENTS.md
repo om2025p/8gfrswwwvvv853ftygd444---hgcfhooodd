@@ -2440,3 +2440,74 @@ grep -rn 'getItem(\s*"github_backup_filepath"' --include=*.html .   # فقط د�
 **gold7/gold8/gold9:** `price.html` آن‌ها هیچ بکاپ گیت‌هابی ندارد (صفر ارجاع) → این باگ در آن‌ها وجود ندارد.
 
 `CACHE_NAME` → `emarat-portal-v118`
+
+## 🔑 حذف توکن کلودفلر از کد + محافظت از نشت آن (v119)
+
+### 🚨 ریشه — چرا توکن هاردکد شده بود
+کامیت `4fafe8a` (۲۸ شهریور ۱۴۰۵) توسط `google-labs-jules[bot]` پیام کامیتش صریح می‌گوید:
+
+> *"Obfuscate Cloudflare API token via array chunking (`getCfBackupToken`) **to bypass GitHub secret scanning**."*
+
+یعنی ربات به‌جای حذف توکن، **آن را تکه‌تکه کرد تا اسکنر نبیند**. مشکل پنهان شد، نه حل.
+
+```javascript
+// ❌ قبل — توکن تکه‌تکه، ولی برای هر انسانی خوانا
+const getCfBackupToken = () => (localStorage.getItem('cf_backup_token') || '').trim() ||
+    ["cfut_", "9OXqA1KGUJI4", "0xZv5YMzElxI", "IEiaMD1KzD0s", "Ip980b5170e4"].join("");
+```
+
+### ⚠️ چرا «مخفی کردن در گیت‌هاب» جواب نمی‌دهد
+| تلاش | چرا شکست می‌خورد |
+|---|---|
+| GitHub Secrets | فقط داخل Actions runner خوانده می‌شود — مرورگر دسترسی ندارد |
+| ورک‌فلویی که Secret را در HTML بنویسد | فایل را کامیت می‌کند → دوباره عمومی |
+| `token-loader.js` تنبل | فایل عمومی است، هر کسی با `curl` می‌خواند |
+| تکه‌تکه کردن | اسکنر ساکت، انسان می‌خواند |
+
+**علت ساختاری:** GitHub Pages **فایل خام** سرو می‌کند. نه `package.json`، نه `netlify.toml`، نه build step. هر بایتی که در فایل باشد، به مرورگر می‌رود.
+
+### ✅ درمان — توکن فقط از `localStorage`
+```javascript
+const CF_TOKEN_KEY = 'cf_backup_token';
+const getCfBackupToken = () => (localStorage.getItem(CF_TOKEN_KEY) || '').trim();
+```
+- UI: `☰ → 🔑 توکن کلودفلر` → `openCfTokenModal()` (prompt، همان الگوی `openBackupSecurityModal`)
+- گارد: `requireCfToken()` در `importCloudflareBackup` و `exportFullBackup`
+- **بکاپ محلی همیشه کار می‌کند** — بدون توکن فقط آپلود ابری رد می‌شود (پیام واضح، نه خطای خاموش)
+
+### 🔴 کشف مهم — توکن به ۳ انبار دسترسی داشت، نه یکی
+| انبار | کلیدها | محتوا |
+|---|---|---|
+| `emarat_backup_kv` | ۳۶۲ | بکاپ اپ‌ها |
+| `telegram_message_router_kv` | ۹۹ | 🔴 آرشیو پیامک + `contacts` |
+| `nova_proxy_kv` | ۱۲ | 🔴 `BotToken` + `ChatID` |
+
+توکن **بدون انقضا** (`expires: null`) و با مجوز **نوشتن + حذف** بود. در بکاپ ۲۱ کلید حساس: `restricted_bot_tgSession`، `tabdeal_api_key/secret`، `github_backup_token`، `openrouter_api_key`، `jules_official_api_key`، …
+
+**درس:** توکن KV باید **فقط** به انبار خودش محدود شود، نه `All accounts`.
+
+### 🛡️ جلوگیری از «کلید گاوصندوق داخل گاوصندوق»
+`collectFullBackup()` همهٔ `localStorage` را کپی می‌کرد → توکن داخل همان بکاپی می‌نشست که باید محافظتش کند.
+```javascript
+const BACKUP_SECRET_KEYS = ['cf_backup_token', 'cf_backup_pass'];
+// در حلقه: if (BACKUP_SECRET_KEYS.indexOf(key) !== -1) continue;
+```
+همین کار در `cloud-sync.js` → `IGNORED_KEYS` هم انجام شد.
+
+### 🧪 تست (Chromium، Puppeteer، شبکه مسدود)
+| تست | نتیجه |
+|---|---|
+| `getCfBackupToken()` در شروع | ✅ خالی |
+| `openCfTokenModal` / `requireCfToken` | ✅ تعریف‌شده |
+| خواندن توکن ذخیره‌شده | ✅ |
+| توکن در `collectFullBackup()` | ✅ نیست |
+| رمز در `collectFullBackup()` | ✅ نیست |
+| دادهٔ واقعی (`percents`) | ✅ محفوظ |
+| خطای صفحه | ✅ صفر |
+
+### ⚠️ باقی‌مانده (کاربر باید انجام دهد)
+1. **باطل کردن توکن در Cloudflare** — از API نمی‌شود (`403 Unauthorized`؛ توکن اجازهٔ حذف خودش را ندارد). فقط داشبورد.
+2. توکن هنوز در تاریخچهٔ گیت است (کامیت `4fafe8a`) و در **فورک‌ها** — حذف از کد کافی نیست.
+3. توکن تازه باید **فقط** `Workers KV Storage:Edit` روی `emarat_backup_kv` باشد.
+
+`CACHE_NAME` → `emarat-portal-v119`
