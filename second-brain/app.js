@@ -441,15 +441,15 @@
      4. SystemPromptManager — مدیریت مستقل دستورالعمل پایه سامانه
      ========================================================================== */
   const SMART_DEFAULT_SYSTEM_PROMPT = `تو «مغز دوم» هستی؛ یک دستیار هوشمند، دقیق، ساختاریافته و فارسی‌زبان.
-در پاسخ‌هایت این اصول حرفه‌ای را رعایت کن:
+تمام ابزارهای قالب‌بندی و نمایش پیشرفته این سامانه در اختیار توست تا پاسخ‌هایت را بسیار خوانا، دقیق و کاربردی ارائه دهی:
 1. نگارش فارسی روان، صحیح و خوش‌خوان بنویس و جهت طبیعی متن فارسی و بخش‌های فنی انگلیسی را درست نگه دار.
-2. پاسخ‌های طولانی را با تیترهای روشن (Heading) و فهرست‌های منظم بخش‌بندی کن؛ از پاسخ‌های شلوغ و بی‌ساختار بپرهیز.
-3. برای نکات کلیدی از **ضخیم** و برای تأکیدهای ویژه از قالب زیرخط‌دار مثل ++این متن++ یا <u>این متن</u> استفاده کن (به‌اندازه، نه برای همه چیز).
+2. پاسخ‌های ساختاریافته را با تیترهای روشن (Heading) و فهرست‌های منظم، خط‌خورده (~~...~~)، نقل‌قول (>) و پیوندهای معتبر بخش‌بندی کن؛ از پاسخ‌های شلوغ و بی‌ساختار بپرهیز.
+3. برای نکات کلیدی از **ضخیم**، برای *تأکید ظریف* از کج، برای مهم‌ترین واژه‌ها از زیرخط ++این متن++ یا <u>این متن</u> و برای برجسته‌سازی از ==این متن== استفاده کن (به‌اندازه و متعادل).
 4. برای مقایسه‌ها از جدول مارک‌داون مرتب استفاده کن، اما برای سؤال‌های ساده جدول یا نمودار غیرضروری نساز.
-5. تمام کدهای برنامه‌نویسی را فقط در بلوک کد با نام دقیق زبان قرار بده و از نوشتن کد ناامن خودداری کن.
+5. تمام کدهای برنامه‌نویسی را فقط در بلوک کد با نام دقیق زبان قرار بده و داده‌های ساخت‌یافته را در بلوک \`\`\`json بنویس تا به شکل درخت تعاملی نمایش داده شوند.
 6. فرمول‌های ریاضی را با نگارش استاندارد لاتک ($...$ برای درون‌خطی و $$...$$ برای بلوکی) بنویس.
 7. هرگاه داده عددی مناسب نمودار بود، از بلوک \`\`\`chart با ساختار JSON شامل فیلدهای type و title و labels و datasets استفاده کن.
-8. در موارد لازم از بلوک‌های اطلاعاتی مثل :::tip یا :::warning یا :::summary یا :::steps استفاده کن.
+8. در موارد لازم از بلوک‌های اطلاعاتی ویژه پلتفرم استفاده کن: :::info، :::note، :::success، :::warning، :::error، :::important، :::tip، :::summary، :::steps، :::compare، :::progress، :::status، :::timeline و :::stats.
 9. متناسب با نیاز واقعی سؤال، بهترین و ساده‌ترین قالب پاسخ را برگزین.`;
 
   class SystemPromptManager {
@@ -1603,10 +1603,6 @@
         }
       });
 
-      document.querySelectorAll('.fmt-btn').forEach((btn) => {
-        btn.addEventListener('click', () => this.applyFormat(btn.dataset.fmt));
-      });
-
       $('btnAttachFile').addEventListener('click', () => $('fileUploadInput').click());
       $('fileUploadInput').addEventListener('change', (e) => this.handleFiles(e));
 
@@ -1629,53 +1625,6 @@
       ta.style.height = 'auto';
       ta.style.height = `${Math.min(170, Math.max(26, ta.scrollHeight))}px`;
       $('composerCountText').textContent = `${ta.value.length.toLocaleString('fa-IR')} کاراکتر`;
-    }
-
-    applyFormat(type) {
-      const ta = this.textarea;
-      const start = ta.selectionStart ?? ta.value.length;
-      const end = ta.selectionEnd ?? ta.value.length;
-      const selected = ta.value.slice(start, end);
-
-      let replacement = '';
-      let cursorOffsetStart = 0;
-      let cursorOffsetEnd = 0;
-
-      const wrapWith = (pre, post, placeholder) => {
-        const body = selected || placeholder;
-        replacement = `${pre}${body}${post}`;
-        cursorOffsetStart = pre.length;
-        cursorOffsetEnd = pre.length + body.length;
-      };
-
-      switch (type) {
-        case 'bold': wrapWith('**', '**', 'متن ضخیم'); break;
-        case 'italic': wrapWith('*', '*', 'متن کج'); break;
-        case 'underline': wrapWith('<u>', '</u>', 'متن زیرخط‌دار'); break;
-        case 'strike': wrapWith('~~', '~~', 'متن خط‌خورده'); break;
-        case 'code': wrapWith('`', '`', 'کد'); break;
-        case 'link': wrapWith('[', '](https://example.com)', 'عنوان پیوند'); break;
-        case 'list': {
-          const body = selected || 'مورد اول';
-          replacement = body.split('\n').map((l) => `- ${l}`).join('\n');
-          cursorOffsetStart = 0;
-          cursorOffsetEnd = replacement.length;
-          break;
-        }
-        case 'quote': {
-          const body = selected || 'متن نقل‌قول';
-          replacement = body.split('\n').map((l) => `> ${l}`).join('\n');
-          cursorOffsetStart = 0;
-          cursorOffsetEnd = replacement.length;
-          break;
-        }
-        default: return;
-      }
-
-      ta.value = ta.value.slice(0, start) + replacement + ta.value.slice(end);
-      ta.focus();
-      ta.setSelectionRange(start + cursorOffsetStart, start + cursorOffsetEnd);
-      this.autoResize();
     }
 
     async handleFiles(e) {
@@ -2328,7 +2277,7 @@
         const chips = document.createElement('div');
         chips.className = 'quick-chips';
         const starters = [
-          'یک جدول مقایسه و ++خلاصه مهم++ بساز',
+          'یک جدول مقایسه بساز و نکات مهم را با زیرخط و جعبه خلاصه مشخص کن',
           'یک نمودار میله‌ای نمونه با داده واقعی رسم کن',
           'تست فرمول انتگرال ریاضی و قطعه کد پایتون',
           'تنظیم کلید دسترسی اوپن‌روتر'
@@ -2399,7 +2348,15 @@
       const bodyEl = document.createElement('div');
       bodyEl.className = 'msg-body';
       bodyEl.setAttribute('dir', 'auto');
-      this.markdown.renderInto(bodyEl, msg.content, isStreaming);
+      if (msg.role === 'user') {
+        const plain = document.createElement('div');
+        plain.className = 'user-plain-body';
+        plain.setAttribute('dir', 'auto');
+        plain.textContent = msg.content || '';
+        bodyEl.appendChild(plain);
+      } else {
+        this.markdown.renderInto(bodyEl, msg.content, isStreaming);
+      }
       card.appendChild(bodyEl);
 
       if (Array.isArray(msg.citations) && msg.citations.length > 0) {

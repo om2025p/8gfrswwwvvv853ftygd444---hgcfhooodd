@@ -237,10 +237,50 @@
             z-index: 1000;
         }
 
-        /* کارت و پنجره بایگانی */
-        .archive-trigger {
-            border-style: dashed;
-            opacity: 0.88;
+        /* دکمه ثابت بایگانی در گوشه بالا سمت راست */
+        .archive-fixed-btn {
+            position: fixed;
+            top: calc(14px + env(safe-area-inset-top, 0px));
+            right: 14px;
+            z-index: 150;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            color: inherit;
+            font-family: inherit;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: transform 0.18s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .archive-fixed-btn:hover {
+            background: rgba(255, 255, 255, 0.24);
+            border-color: rgba(255, 255, 255, 0.48);
+        }
+
+        .archive-fixed-btn:active {
+            transform: scale(0.95);
+        }
+
+        body.day-theme .archive-fixed-btn {
+            background: rgba(255, 255, 255, 0.55);
+            border-color: rgba(255, 255, 255, 0.72);
+            color: #1e3a8a;
+        }
+
+        .archive-fixed-count {
+            font-size: 0.72rem;
+            padding: 1px 7px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.28);
         }
 
         .archive-modal-backdrop {
@@ -361,6 +401,12 @@
     <div class="sky-elements" id="skyElements">
         <div class="moon"></div>
     </div>
+
+    <button type="button" class="archive-fixed-btn" id="openArchiveBtn" aria-label="بایگانی برنامه‌ها">
+        <span>🗄️</span>
+        <span>بایگانی</span>
+        <span class="archive-fixed-count" id="archiveCountBadge">۱</span>
+    </button>
 
     <div class="container">
         <div class="app-grid" id="appGrid">
@@ -515,10 +561,18 @@
 
                 const iconDiv = document.createElement('div');
                 iconDiv.className = 'app-icon';
-                if (app.icon.endsWith('.png')) {
+                if (/\.png(\?|$)/i.test(app.icon)) {
                     const img = document.createElement('img');
                     img.src = app.icon;
                     img.alt = app.title;
+                    img.onerror = () => {
+                        if (!img.dataset.retried) {
+                            img.dataset.retried = '1';
+                            img.src = `${app.icon}?v=100`;
+                            return;
+                        }
+                        iconDiv.textContent = app.id === 'second-brain' ? '🧠' : '📱';
+                    };
                     iconDiv.appendChild(img);
                 } else {
                     iconDiv.innerText = app.icon;
@@ -539,32 +593,6 @@
 
                 grid.appendChild(card);
             });
-
-            // کارت بایگانی در انتهای ردیف
-            if (ARCHIVED_APPS.length > 0) {
-                const archCard = document.createElement('button');
-                archCard.type = 'button';
-                archCard.className = 'app-card archive-trigger fly-in';
-                archCard.style.animationDelay = `${apps.length * 0.05}s`;
-                archCard.addEventListener('animationend', () => {
-                    archCard.style.opacity = '0.88';
-                    archCard.classList.remove('fly-in');
-                }, { once: true });
-
-                const iconDiv = document.createElement('div');
-                iconDiv.className = 'app-icon';
-                iconDiv.innerText = '🗄️';
-
-                const titleDiv = document.createElement('div');
-                titleDiv.className = 'app-title';
-                titleDiv.innerText = 'بایگانی';
-
-                archCard.append(iconDiv, titleDiv);
-                archCard.onclick = () => {
-                    if (!isEditing) openArchiveModal();
-                };
-                grid.appendChild(archCard);
-            }
         }
 
         function renderArchiveModal() {
@@ -607,6 +635,19 @@
             if (modal) {
                 modal.classList.remove('open');
                 modal.setAttribute('aria-hidden', 'true');
+            }
+        }
+
+        const openArchiveBtn = document.getElementById('openArchiveBtn');
+        const archiveCountBadge = document.getElementById('archiveCountBadge');
+        if (archiveCountBadge) {
+            archiveCountBadge.textContent = ARCHIVED_APPS.length.toLocaleString('fa-IR');
+        }
+        if (openArchiveBtn) {
+            if (ARCHIVED_APPS.length === 0) {
+                openArchiveBtn.style.display = 'none';
+            } else {
+                openArchiveBtn.onclick = () => openArchiveModal();
             }
         }
 

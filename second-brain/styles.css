@@ -416,6 +416,13 @@ button, input, textarea, select {
   color: var(--text-main);
 }
 
+.user-plain-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  line-height: 1.72;
+}
+
 .msg-body > :first-child { margin-top: 0; }
 .msg-body > :last-child { margin-bottom: 0; }
 
@@ -1037,37 +1044,10 @@ html[data-theme="light"] .json-b { color: #6d28d9; }
   flex-wrap: wrap;
 }
 
-.fmt-group {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding: 1px 0;
-}
-
-.fmt-group::-webkit-scrollbar { display: none; }
-
-.fmt-btn {
-  min-width: 32px;
-  height: 30px;
-  padding: 0 7px;
-  border-radius: 7px;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-elevated);
-  color: var(--text-soft);
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-}
-
-.fmt-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-main);
+.composer-plain-note {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .composer-toggles {
