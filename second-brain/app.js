@@ -1636,7 +1636,10 @@
           const shell = $('appShell');
           if (!shell) return;
           shell.style.height = `${window.visualViewport.height}px`;
-          this.app.scrollToBottom();
+          // فقط اگر کاربر در کف صفحه بود؛ وگرنه خواندن متن را قطع نکن
+          if (window.EmaratAutoScroll ? window.EmaratAutoScroll.isNearBottom() : true) {
+            this.app.scrollToBottom();
+          }
         };
         window.visualViewport.addEventListener('resize', adjustViewport);
       }
@@ -2639,6 +2642,7 @@
       const liveNode = this.createMessageElement(assistantMsg, true);
       streamEl.appendChild(liveNode);
       const liveBody = liveNode.querySelector('.msg-body');
+      if (window.EmaratAutoScroll) window.EmaratAutoScroll.beginStream();
       this.scrollToBottom();
 
       let receivedAnyToken = false;
@@ -2695,6 +2699,7 @@
         ErrorManager.toast(friendly, 'err', 4500);
         return false;
       } finally {
+        if (window.EmaratAutoScroll) window.EmaratAutoScroll.endStream();
         this.isGenerating = false;
         this.abortController = null;
         $('btnSendMsg').hidden = false;
@@ -2710,9 +2715,17 @@
       }
     }
 
-    scrollToBottom() {
+    /**
+     * اسکرول به پایین گفتگو.
+     * @param {boolean} [force] اسکرول اجباری (مثلاً وقتی خود کاربر پیام فرستاد).
+     */
+    scrollToBottom(force) {
       const vp = $('chatViewport');
       if (!vp) return;
+      if (window.EmaratAutoScroll) {
+        window.EmaratAutoScroll.toBottom(force === true);
+        return;
+      }
       vp.scrollTop = vp.scrollHeight;
     }
   }
@@ -2720,6 +2733,9 @@
   document.addEventListener('DOMContentLoaded', () => {
     const app = new AppController();
     window.SecondBrainApp = app;
+    if (window.EmaratAutoScroll) {
+      window.EmaratAutoScroll.attach(document.getElementById('chatViewport'));
+    }
     app.bootstrap();
   });
 })();

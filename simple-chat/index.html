@@ -2,6 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
 <script src="../storage-guard.js"></script>
+<script src="../chat-autoscroll.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -428,6 +429,8 @@
         const chatInput = document.getElementById("chatInput");
         const sendBtn = document.getElementById("sendBtn");
 
+        if (window.EmaratAutoScroll) window.EmaratAutoScroll.attach(chatContainer);
+
         let chatHistory = [];
         let isGenerating = false;
 
@@ -438,7 +441,12 @@
             sendBtn.disabled = !chatInput.value.trim() || isGenerating;
         };
 
-        function scrollToBottom() {
+        // اسکرول محترم: اگر کاربر خودش بالا رفته، مزاحمش نشو
+        function scrollToBottom(force) {
+            if (window.EmaratAutoScroll) {
+                window.EmaratAutoScroll.toBottom(force === true);
+                return;
+            }
             setTimeout(() => {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }, 50);
@@ -523,7 +531,7 @@
             // نمایش پیام کاربر
             const userRow = createMessageElement("user", userText);
             chatContainer.appendChild(userRow);
-            scrollToBottom();
+            scrollToBottom(true);
 
             // ذخیره در تاریخچه گفتگو
             chatHistory.push({ role: "user", parts: [{ text: userText }] });

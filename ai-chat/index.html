@@ -2,6 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
 <script src="../storage-guard.js"></script>
+<script src="../chat-autoscroll.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1608,6 +1609,7 @@
         const chatContainer = document.getElementById("chatContainer");
         const chatInput = document.getElementById("chatInput");
         const sendBtn = document.getElementById("sendBtn");
+        if (window.EmaratAutoScroll) window.EmaratAutoScroll.attach(chatContainer);
         const themeToggleBtn = document.getElementById("themeToggleBtn");
         const webSearchToggleBtn = document.getElementById("webSearchToggleBtn");
         const settingsToggleBtn = document.getElementById("settingsToggleBtn");
@@ -1863,7 +1865,9 @@
                         document.body.style.bottom = "0px";
                         document.body.style.height = "100dvh";
                     }
-                    scrollToBottom();
+                    if (window.EmaratAutoScroll ? window.EmaratAutoScroll.isNearBottom() : true) {
+                        scrollToBottom();
+                    }
                 };
                 window.visualViewport.addEventListener("resize", handleViewportChange);
                 window.visualViewport.addEventListener("scroll", handleViewportChange);
@@ -2191,8 +2195,12 @@
 
         document.getElementById("cancelEditBtn").onclick = cancelEditMessage;
 
-        // اسکرول نرم به پایین
-        function scrollToBottom() {
+        // اسکرول محترم: اگر کاربر خودش بالا رفته، مزاحمش نشو
+        function scrollToBottom(force) {
+            if (window.EmaratAutoScroll) {
+                window.EmaratAutoScroll.toBottom(force === true);
+                return;
+            }
             setTimeout(() => {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }, 50);
@@ -3198,6 +3206,7 @@
             chatInput.style.height = "auto";
             sendBtn.disabled = true;
             isGenerating = true;
+            if (window.EmaratAutoScroll) window.EmaratAutoScroll.beginStream();
             localStorage.setItem("generating_session_" + currentSessionId, "true");
 
             // بررسی هوشمند برای رهگیری و پاسخ زنده و فوری به درخواست شمارش از ۱ تا ۵۰,۰۰۰
@@ -3224,7 +3233,7 @@
                 chatHistory.push(userMsg);
                 saveMessageToDB(userMsg);
                 appendSingleMessage(userMsg);
-                scrollToBottom();
+                scrollToBottom(true);
 
                 // افکت لودینگ کوتاه جهت طبیعی بودن تعامل
                 const typingRow = document.createElement("div");
@@ -3692,6 +3701,7 @@
                 scrollToBottom();
                 localStorage.removeItem("generating_session_" + currentSessionId);
             } finally {
+                if (window.EmaratAutoScroll) window.EmaratAutoScroll.endStream();
                 isGenerating = false;
                 sendBtn.disabled = !chatInput.value.trim() && attachedItems.length === 0;
             }
