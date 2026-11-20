@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v98';
+const CACHE_NAME = 'emarat-portal-v99';
 const ASSETS = [
   './tree-samples/m1.html',
   './tree-samples/m2.html',
@@ -384,7 +384,49 @@ const ASSETS = [
   './refresh-button.js',
   './vendor/inter/inter.css',
   './vendor/inter/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2',
-  './vendor/inter/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa25L7SUc.woff2'
+  './vendor/inter/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa25L7SUc.woff2',
+  // Second Brain App (مغز دوم)
+  './second-brain/index.html',
+  './second-brain/styles.css',
+  './second-brain/app.js',
+  './second-brain/manifest.json',
+  './second-brain/icon-192.png',
+  './second-brain/icon-512.png',
+  './second-brain/icon-192-maskable.png',
+  './second-brain/icon-512-maskable.png',
+  './second-brain/apple-touch-icon.png',
+  './second-brain/favicon.ico',
+  './second-brain/vendor/dompurify/purify.min.js',
+  './second-brain/vendor/marked/marked.umd.js',
+  './second-brain/vendor/hljs/highlight.min.js',
+  './second-brain/vendor/hljs/kotlin.min.js',
+  './second-brain/vendor/hljs/github-dark.min.css',
+  './second-brain/vendor/hljs/github.min.css',
+  './second-brain/vendor/chartjs/chart.umd.min.js',
+  './second-brain/vendor/katex/katex.min.js',
+  './second-brain/vendor/katex/katex.min.css',
+  './second-brain/vendor/katex/fonts/KaTeX_AMS-Regular.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Caligraphic-Bold.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Caligraphic-Regular.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Fraktur-Bold.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Fraktur-Regular.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Main-Bold.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Main-BoldItalic.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Main-Italic.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Main-Regular.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Math-BoldItalic.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Math-Italic.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_SansSerif-Bold.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_SansSerif-Italic.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_SansSerif-Regular.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Script-Regular.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Size1-Regular.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Size2-Regular.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Size3-Regular.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Size4-Regular.woff2',
+  './second-brain/vendor/katex/fonts/KaTeX_Typewriter-Regular.woff2',
+  './second-brain/vendor/pdfjs/pdf.min.mjs',
+  './second-brain/vendor/pdfjs/pdf.worker.min.mjs'
 ];
 
 // منابع حیاتی: نبودشان یعنی صفحه سفید. باید قبل از هر چیز و به‌صورت قطعی کش شوند.

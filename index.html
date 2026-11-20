@@ -236,6 +236,124 @@
         .dragging {
             z-index: 1000;
         }
+
+        /* کارت و پنجره بایگانی */
+        .archive-trigger {
+            border-style: dashed;
+            opacity: 0.88;
+        }
+
+        .archive-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.68);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+        }
+
+        .archive-modal-backdrop.open {
+            display: flex;
+        }
+
+        .archive-modal-box {
+            width: 100%;
+            max-width: 440px;
+            background: rgba(15, 23, 42, 0.92);
+            color: #f8fafc;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 18px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        body.day-theme .archive-modal-box {
+            background: rgba(248, 250, 252, 0.96);
+            color: #1e293b;
+            border-color: rgba(30, 58, 138, 0.18);
+        }
+
+        .archive-modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+        }
+
+        .archive-modal-head h2 {
+            margin: 0;
+            font-size: 1.02rem;
+        }
+
+        .archive-close-btn {
+            background: rgba(148, 163, 184, 0.2);
+            border: none;
+            color: inherit;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .archive-note {
+            font-size: 0.78rem;
+            opacity: 0.75;
+            margin: 0 0 14px;
+            line-height: 1.6;
+        }
+
+        .archive-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .archived-app-item {
+            width: 104px;
+            padding: 14px 8px;
+            border-radius: 20px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            background: rgba(148, 163, 184, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 7px;
+            pointer-events: none;
+            user-select: none;
+            cursor: default;
+            opacity: 0.65;
+        }
+
+        .archived-app-item img {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            object-fit: contain;
+            filter: grayscale(100%) contrast(0.95);
+            -webkit-filter: grayscale(100%) contrast(0.95);
+            background: rgba(255, 255, 255, 0.7);
+            padding: 2px;
+        }
+
+        .archived-app-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .archived-app-badge {
+            font-size: 0.68rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(100, 116, 139, 0.28);
+        }
     </style>
 </head>
 <body class="day-theme">
@@ -247,6 +365,17 @@
     <div class="container">
         <div class="app-grid" id="appGrid">
             <!-- آیتم‌ها توسط جاوا اسکریپت رندر می‌شوند -->
+        </div>
+    </div>
+
+    <div class="archive-modal-backdrop" id="archiveModal" aria-hidden="true">
+        <div class="archive-modal-box">
+            <div class="archive-modal-head">
+                <h2>🗄️ بایگانی برنامه‌ها</h2>
+                <button type="button" class="archive-close-btn" id="closeArchiveModal" aria-label="بستن">✕</button>
+            </div>
+            <p class="archive-note">برنامه‌های داخل بایگانی کاملاً غیرفعال هستند و تنها با تغییر کد از این حالت خارج می‌شوند.</p>
+            <div class="archive-grid" id="archiveGrid"></div>
         </div>
     </div>
 
@@ -291,6 +420,10 @@
         updateTheme();
         setInterval(updateTheme, 60000); // چک کردن هر دقیقه
 
+        const ARCHIVED_APPS = [
+            { id: 'ai-chat', title: 'چت هوشمند', icon: 'ai-chat/icon-192.png' }
+        ];
+
         const DEFAULT_APPS = [
             { id: 'gym', title: 'Activity', icon: 'gym/icon-192.png', url: 'gym/index.html' },
             { id: 'gold', title: 'ثبت درصد 1', icon: 'gold/icon-192.png', url: 'gold/index.html' },
@@ -305,7 +438,7 @@
             { id: 'monitor', title: 'دیدبان درصد ها', icon: 'monitor/icon-192.png', url: 'monitor/index.html' },
             { id: 'skincare', title: 'مراقبت پوستی', icon: 'skincare/icon-192.png', url: 'skincare/index.html' },
             { id: 'profit', title: 'محاسبه گر سود', icon: 'profit-calculator/icon-192.png', url: 'profit-calculator/index.html' },
-            { id: 'ai-chat', title: 'چت هوشمند', icon: 'ai-chat/icon-192.png', url: 'ai-chat/index.html' },
+            { id: 'second-brain', title: 'مغز دوم', icon: 'second-brain/icon-192.png', url: 'second-brain/index.html' },
             { id: 'tabdeal', title: 'کیف پول تبدیل', icon: 'tabdeal/icon-192.png', url: 'tabdeal/index.html' },
             { id: 'detective', title: 'کارآگاه داده‌ها', icon: 'detective/icon-192.png', url: 'detective/index.html' },
             { id: 'simple-chat', title: 'چت فرمان‌بردار', icon: 'simple-chat/icon-192.png', url: 'simple-chat/index.html' },
@@ -328,9 +461,12 @@
             { id: 'usage', title: 'ردپای من', icon: 'usage/icon-192.png', url: 'usage/index.html' }
         ];
 
+        const archivedIds = new Set(ARCHIVED_APPS.map(a => a.id));
         let savedApps = JSON.parse(localStorage.getItem('portal_app_order'));
-        // فیلتر کردن برای حذف آیتم‌های قدیمی "به زودی" اگر در استوریج مانده باشند
-        let apps = savedApps ? savedApps.filter(a => !a.comingSoon) : DEFAULT_APPS;
+        // فیلتر کردن آیتم‌های قدیمی «به زودی» و برنامه‌های منتقل‌شده به بایگانی
+        let apps = savedApps
+            ? savedApps.filter(a => !a.comingSoon && !archivedIds.has(a.id))
+            : DEFAULT_APPS;
 
         // همگام‌سازی و بروزرسانی نام‌ها و مطمئن شدن از اضافه شدن برنامه‌های جدید
         if (savedApps) {
@@ -403,7 +539,81 @@
 
                 grid.appendChild(card);
             });
+
+            // کارت بایگانی در انتهای ردیف
+            if (ARCHIVED_APPS.length > 0) {
+                const archCard = document.createElement('button');
+                archCard.type = 'button';
+                archCard.className = 'app-card archive-trigger fly-in';
+                archCard.style.animationDelay = `${apps.length * 0.05}s`;
+                archCard.addEventListener('animationend', () => {
+                    archCard.style.opacity = '0.88';
+                    archCard.classList.remove('fly-in');
+                }, { once: true });
+
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'app-icon';
+                iconDiv.innerText = '🗄️';
+
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'app-title';
+                titleDiv.innerText = 'بایگانی';
+
+                archCard.append(iconDiv, titleDiv);
+                archCard.onclick = () => {
+                    if (!isEditing) openArchiveModal();
+                };
+                grid.appendChild(archCard);
+            }
         }
+
+        function renderArchiveModal() {
+            const archiveGrid = document.getElementById('archiveGrid');
+            if (!archiveGrid) return;
+            archiveGrid.innerHTML = '';
+            ARCHIVED_APPS.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'archived-app-item';
+                el.setAttribute('aria-disabled', 'true');
+
+                const img = document.createElement('img');
+                img.src = item.icon;
+                img.alt = item.title;
+
+                const title = document.createElement('div');
+                title.className = 'archived-app-title';
+                title.textContent = item.title;
+
+                const badge = document.createElement('span');
+                badge.className = 'archived-app-badge';
+                badge.textContent = 'غیرفعال';
+
+                el.append(img, title, badge);
+                archiveGrid.appendChild(el);
+            });
+        }
+
+        function openArchiveModal() {
+            renderArchiveModal();
+            const modal = document.getElementById('archiveModal');
+            if (modal) {
+                modal.classList.add('open');
+                modal.setAttribute('aria-hidden', 'false');
+            }
+        }
+
+        function closeArchiveModalFn() {
+            const modal = document.getElementById('archiveModal');
+            if (modal) {
+                modal.classList.remove('open');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+        }
+
+        document.getElementById('closeArchiveModal').onclick = closeArchiveModalFn;
+        document.getElementById('archiveModal').onclick = (e) => {
+            if (e.target.id === 'archiveModal') closeArchiveModalFn();
+        };
 
         function handlePointerDown(e) {
             if (isEditing) {
