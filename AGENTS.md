@@ -1625,3 +1625,39 @@ navAnalysisData         0.14 MB
 
 **نکته:** تغییر در `assets` اندروید فقط با **بیلد و نصب مجدد APK** به گوشی می‌رسد.
 
+### 🪞 آینهٔ کامل + آزادسازی فضای یتیم (v107)
+
+**مسئله:** هوک `installWriteHook` فقط نوشتن‌های **بعد از نصب** را آینه می‌کرد. کلیدهایی که پیش از v104 نوشته شده بودند (مثل `baharan_percents`، `energy_fund_synergy`، `symbolsCache`) هیچ آینه‌ای در IndexedDB نداشتند — شکاف مهاجرت. تست با صفحهٔ خام (بدون محافظ) این شکاف را ثابت کرد.
+
+**راه‌حل — دو تابع جدید در `storage-guard.js`:**
+
+| تابع | کار |
+|---|---|
+| `mirrorAll(opts)` | هر کلید localStorage که در IndexedDB نیست را کپی می‌کند. **هرگز کلید موجود را بازنویسی نمی‌کند** (سایه ممکن است تازه‌تر باشد). یک بار در هر نشست (`sessionStorage.emarat_mirror_all_done`). |
+| `freeVerifiedSpace()` | فقط کلیدهای `ORPHAN_KEYS` را آزاد می‌کند، و **فقط اگر** کپیِ بایت‌به‌بایت یکسان در IndexedDB موجود باشد. |
+
+**فهرست سفید `ORPHAN_KEYS`** (۹ کلید، هیچ‌کدام در مخزن خوانده نمی‌شوند — با `grep` تأیید شد):
+`symbolsCache`, `navAnalysisDatasets`, `navChartListDatasets`, `navAnalysisData`, `navAnalysisMeta`, `navAnalysisCurrentId`, `navChartListCurrentId`, `navAnalysisMigratedToIDB_v1`, `marjan_images_v1`
+
+**⚠️ چرا کلیدهای اپ‌ها آزاد نمی‌شوند؟** ۶۴۷ جا در کد `localStorage.getItem()` **همگام** می‌خواند و هیچ‌کدام `await` ندارند. IndexedDB ناهمگام است و نمی‌تواند جای `getItem` را بگیرد. اگر localStorage خالی شود، اپ‌ها `null` می‌بینند → همان باگ «چهار ماه عقب» ولی دائمی. پس **LS اصل است، IDB کپی**.
+
+**جریان در `autoHealOnLoad`:**
+```
+shadowHeal() → اگر کلید غایبی بود، بازگردان + رفرش
+     ↓
+mirrorAll() → شکاف را ببند
+     ↓
+freeVerifiedSpace() → فقط یتیم‌های تأییدشده را آزاد کن
+```
+
+**نتایج تست:**
+- تست واقعی‌نما (۱.۵۷ MB، ۱۵ کلید): حافظه به **۰.۰۴ MB** رسید (۹۷٪ آزاد)، ۳۰۰۰ ردیف NAV + ۸۰۰ نماد + ۵ تصویر کامل منتقل شدند، ۴۴۳ رکورد gold سالم.
+- رگرسیون ۱۲/۱۲: مهاجرت ۱۲۵ رکورد، ۴ رفت‌وبرگشت، ۹ اپ بدون خطا، پاپ‌آپ یک‌باره.
+
+**تله‌ها:**
+1. `EmaratStorage.health()` **همگام** است، Promise نیست (`shadowAll` و `shadowCount` ناهمگام‌اند).
+2. `shadowAll()` ردیف خام `{v, t}` برمی‌گرداند، نه `{value, at}` — `unwrapShadow()` را برای تبدیل استفاده کن.
+3. `navAnalysisMigratedToIDB_v1 = 1` نشان می‌دهد آن اپ NAV خودش قبلاً مهاجرت کرده و کپی localStorage فقط باقی‌مانده بوده.
+
+**بامپ:** `CACHE_NAME` → `emarat-portal-v107`.
+

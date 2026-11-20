@@ -481,6 +481,96 @@
         });
     }
 
+    /* ------------------------------------------------------------------ */
+    /*  آینهٔ کامل: هر کلید localStorage که در IndexedDB نیست کپی می‌شود    */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * شکاف مهاجرت را می‌بندد. هوک نوشتن فقط نوشتن‌های *بعد* از نصب را
+     * آینه می‌کند؛ کلیدهایی که پیش‌تر نوشته شده‌اند بی‌آینه می‌مانند.
+     *
+     * هرگز کلید موجود را بازنویسی نمی‌کند، چون سایه ممکن است تازه‌تر
+     * از localStorage باشد (مثلاً بعد از یک rollback ناشی از پر بودن).
+     */
+    function mirrorAll(opts) {
+        opts = opts || {};
+        if (opts.once !== false) {
+            try {
+                if (sessionStorage.getItem('emarat_mirror_all_done') === '1') {
+                    return Promise.resolve({ mirrored: 0, skipped: 0, already: true });
+                }
+                sessionStorage.setItem('emarat_mirror_all_done', '1');
+            } catch (e) { /* بی‌اثر */ }
+        }
+
+        return shadowAll().then(function (existing) {
+            var batch = {}, mirrored = [], skipped = 0, total = 0;
+
+            for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                if (k === null) continue;
+                total++;
+                if (Object.prototype.hasOwnProperty.call(existing, k)) { skipped++; continue; }
+                var v = rawGet(k);
+                if (v === null) continue;
+                batch[k] = v;
+                mirrored.push(k);
+            }
+
+            if (mirrored.length) shadowPutMany(batch);
+            return { mirrored: mirrored.length, skipped: skipped, total: total, keys: mirrored };
+        }).catch(function (e) {
+            return { mirrored: 0, skipped: 0, error: String(e && e.message || e) };
+        });
+    }
+
+    /**
+     * فقط کلیدهایی را از localStorage آزاد می‌کند که:
+     *  ۱) در IndexedDB کپیِ *یکسان* دارند (بایت‌به‌بایت)
+     *  ۲) هیچ صفحه‌ای در مخزن آن‌ها را نمی‌خواند (فهرست ORPHAN_KEYS)
+     *  ۳) داخل فهرست سفید صریح باشند — نه حدس
+     *
+     * چرا کلیدهای اپ‌ها آزاد نمی‌شوند؟ چون ۶۴۷ جا در کد
+     * localStorage.getItem() همگام می‌خواند؛ IndexedDB ناهمگام است و
+     * نمی‌تواند جای آن را بگیرد.
+     */
+    var ORPHAN_KEYS = [
+        'symbolsCache',
+        'navAnalysisDatasets',
+        'navChartListDatasets',
+        'navAnalysisData',
+        'navAnalysisMeta',
+        'navAnalysisCurrentId',
+        'navChartListCurrentId',
+        'navAnalysisMigratedToIDB_v1',
+        'marjan_images_v1'
+    ];
+
+    function freeVerifiedSpace() {
+        return shadowAll().then(function (all) {
+            var freed = [], kept = [], bytes = 0;
+
+            ORPHAN_KEYS.forEach(function (k) {
+                var local = null;
+                try { local = rawGet(k); } catch (e) { return; }
+                if (local === null) return;
+
+                var row = all[k];
+                var shadowVal = row ? String(row.v) : null;
+                // فقط وقتی آزاد می‌کنیم که کپیِ دقیقاً یکسان در سایه باشد
+                if (shadowVal === null || shadowVal !== local) { kept.push(k); return; }
+
+                bytes += local.length;
+                try { rawRemove(k); } catch (e) { kept.push(k); return; }
+                freed.push(k);
+            });
+
+            return { freed: freed, kept: kept, freedKB: Math.round(bytes / 1024) };
+        }).catch(function (e) {
+            return { freed: [], kept: [], freedKB: 0, error: String(e && e.message || e) };
+        });
+    }
+
     function power() {
         return shadowCount().then(function (n) {
             return {
@@ -617,6 +707,16 @@
             );
             setTimeout(function () { try { location.reload(); } catch (e) {} }, 2000);
         }).catch(function () {});
+
+        // بستن شکاف مهاجرت: کلیدهای قدیمی که هوک نوشتن ندیده‌اند.
+        // پس از اطمینان از کپیِ یکسان، فضای کلیدهای یتیم آزاد می‌شود.
+        mirrorAll().then(function (m) {
+            if (!m || !m.mirrored) return null;
+            return freeVerifiedSpace();
+        }).then(function (f) {
+            if (!f || !f.freed || !f.freed.length) return;
+            console.log('[EmaratStorage] فضای آزادشده: ' + f.freedKB + ' KB (' + f.freed.join(', ') + ')');
+        }).catch(function () {});
     }
 
     window.EmaratStorage = {
@@ -644,6 +744,9 @@
         isQuotaError: isQuotaError,
         isEmptyish: isEmptyish,
         warnIfCritical: warnIfCritical,
+        mirrorAll: mirrorAll,
+        freeVerifiedSpace: freeVerifiedSpace,
+        ORPHAN_KEYS: ORPHAN_KEYS,
         toast: toast,
         autoHealOnLoad: autoHealOnLoad
     };
