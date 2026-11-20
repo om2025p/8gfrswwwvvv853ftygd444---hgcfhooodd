@@ -426,6 +426,73 @@ button, input, textarea, select {
 .msg-body > :first-child { margin-top: 0; }
 .msg-body > :last-child { margin-bottom: 0; }
 
+/* ---------- محافظ سرریز: هیچ محتوایی از قاب پیام بیرون نزند ----------
+   chatViewport دارای overflow-x:hidden است؛ پس هر عنصری که پهن‌تر از قاب
+   شود بی‌رحمانه بریده می‌شود. این قواعد تضمین می‌کنند محتوا همیشه در دسترس
+   بماند: با شکستن کلمه، یا با اسکرول افقی داخلی — هرگز با ناپدید شدن. */
+.msg-row,
+.msg-card,
+.msg-body {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* بلوک کد خام (کد با تورفتگی ۴ فاصله) که CodeRenderer نمی‌گیردش */
+.msg-body pre {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg-code);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0.85em 0;
+  direction: ltr;
+  text-align: left;
+}
+
+.msg-body pre code {
+  display: block;
+  white-space: pre;
+  overflow-wrap: normal;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.83rem;
+  line-height: 1.55;
+}
+
+/* کد خطی بلند نباید قاب را بشکند */
+.msg-body code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* کارت‌های تخصصی و جدول‌ها هرگز از قاب پهن‌تر نشوند */
+.code-card,
+.table-card,
+.chart-card,
+.math-block-scroll,
+.json-tree-wrap,
+.sb-callout,
+.sb-stats-grid {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.code-lines {
+  max-width: 100%;
+}
+
+/* حداقل عرض جدول نباید روی صفحه‌های باریک سرریز بسازد */
+.table-scroll table {
+  min-width: min(320px, 100%);
+}
+
+/* تصویر هرگز از قاب بیرون نزند */
+.msg-body img {
+  max-width: 100%;
+  height: auto;
+}
+
 .msg-body p {
   margin: 0.55em 0;
 }

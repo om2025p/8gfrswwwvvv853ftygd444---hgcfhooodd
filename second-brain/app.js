@@ -1466,6 +1466,9 @@
       // ارتقای جدول‌ها با اسکرول موبایل و دکمه‌های کپی/خروجی واقعی
       this.enhanceTables(container);
 
+      // بلوک‌های کد خام (کد با تورفتگی ۴ فاصله) هم کارت حرفه‌ای بگیرند
+      this.enhanceRawCodeBlocks(container);
+
       // تنظیم جهت خودکار پاراگراف‌ها برای فارسی و انگلیسی هم‌زمان
       container.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, blockquote').forEach((el) => {
         if (!el.getAttribute('dir')) el.setAttribute('dir', 'auto');
@@ -1530,6 +1533,23 @@
         }
         textNode.parentNode.replaceChild(frag, textNode);
       }
+    }
+
+    /**
+     * کدی که مدل با تورفتگی ۴ فاصله می‌فرستد به‌صورت <pre> خام رندر می‌شد و
+     * هیچ قاب اسکرولی نداشت؛ روی صفحهٔ باریک از عرض پیام بیرون می‌زد و
+     * چون chatViewport دارای overflow-x:hidden است، بی‌صدا بریده می‌شد.
+     */
+    enhanceRawCodeBlocks(root) {
+      root.querySelectorAll('pre').forEach((pre) => {
+        if (pre.closest('.code-card')) return;
+        const codeEl = pre.querySelector('code');
+        const raw = (codeEl || pre).textContent.replace(/\n$/, '');
+        if (!raw.trim()) return;
+        const langMatch = (codeEl?.className || '').match(/language-([a-z0-9_+#-]+)/i);
+        const card = CodeRenderer.renderCodeCard(raw, langMatch ? langMatch[1] : '');
+        pre.replaceWith(card);
+      });
     }
 
     enhanceTables(root) {
