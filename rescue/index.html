@@ -73,6 +73,40 @@
   .empty{text-align:center; color:var(--muted); padding:26px 10px; font-size:.83rem}
   .footnote{font-size:.7rem; color:var(--muted); margin-top:8px; line-height:1.6}
   .bigcount{font-size:1.6rem; font-weight:800; color:var(--ok); text-align:center; padding:6px 0}
+
+  /* ---------- گیج دو محل ذخیره‌سازی ---------- */
+  .store-grid{display:grid; grid-template-columns:1fr 1fr; gap:9px}
+  .store{background:var(--card2); border:1px solid var(--border); border-radius:14px;
+         padding:11px 7px 9px; text-align:center; position:relative; overflow:hidden; min-width:0}
+  .store::before{content:''; position:absolute; inset:0 0 auto 0; height:3px;
+                 background:linear-gradient(90deg, transparent, var(--ring), transparent); opacity:.75}
+  .gauge{position:relative; width:100px; height:100px; margin:0 auto 8px}
+  @media (min-width:560px){ .gauge{width:132px; height:132px} .gauge .pct{font-size:1.45rem} .store-name{font-size:.88rem} .store-bytes{font-size:.74rem} }
+  .gauge svg{transform:rotate(-90deg); display:block}
+  .gauge circle{fill:none; stroke-linecap:round}
+  .gauge .track{stroke:rgba(148,163,184,.16); stroke-width:9}
+  .gauge .fill{stroke-width:9; transition:stroke-dashoffset .9s cubic-bezier(.22,.9,.3,1), stroke .5s}
+  .gauge .mid{position:absolute; inset:0; display:flex; flex-direction:column;
+              align-items:center; justify-content:center; gap:1px}
+  .gauge .pct{font-size:1.15rem; font-weight:800; line-height:1; letter-spacing:-.5px; font-variant-numeric:tabular-nums}
+  .gauge .pct small{font-size:.62rem; font-weight:600; opacity:.7; margin-inline-start:1px}
+  .gauge .cap{font-size:.64rem; color:var(--muted); letter-spacing:.2px}
+  .store-name{font-size:.76rem; font-weight:700; margin-bottom:2px; white-space:nowrap}
+  .store-tech{font-size:.66rem; color:var(--muted); direction:ltr; font-family:ui-monospace,monospace;
+              margin-bottom:8px; opacity:.85}
+  .store-bytes{font-size:.66rem; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap}
+  .store-bytes b{color:var(--text); font-size:.74rem}
+  .store-bar{height:5px; background:rgba(148,163,184,.14); border-radius:99px; margin-top:9px; overflow:hidden}
+  .store-bar i{display:block; height:100%; border-radius:99px; width:0;
+               transition:width .9s cubic-bezier(.22,.9,.3,1), background .5s}
+  .store-note{font-size:.65rem; margin-top:6px; color:var(--muted); min-height:1.1em; line-height:1.4}
+  .store-note.good{color:#6ee7b7} .store-note.mid{color:#fcd34d} .store-note.bad{color:#fca5a5}
+  .mirror-row{display:flex; gap:8px; margin-top:11px; flex-wrap:wrap}
+  .mirror-chip{flex:1; min-width:84px; background:var(--card2); border:1px solid var(--border);
+               border-radius:11px; padding:8px 9px; text-align:center}
+  .mirror-chip b{display:block; font-size:.9rem; color:var(--accent); font-variant-numeric:tabular-nums}
+  .mirror-chip span{font-size:.65rem; color:var(--muted)}
+  .mirror-chip.ok b{color:var(--ok)} .mirror-chip.warn b{color:var(--warn)}
 </style>
 </head>
 <body>
@@ -88,6 +122,59 @@
 
 <!-- ============ EXPORT ============ -->
 <section class="pane active" id="pane-export">
+  <div class="card">
+    <h2>💾 وضعیت حافظه — دو محل ذخیره‌سازی</h2>
+    <div class="store-grid">
+      <div class="store" id="storeLS" style="--ring:#38bdf8">
+        <div class="gauge">
+          <svg width="100" height="100" viewBox="0 0 112 112">
+            <circle class="track" cx="56" cy="56" r="48"></circle>
+            <circle class="fill" id="gaugeLS" cx="56" cy="56" r="48"
+                    stroke="#38bdf8" stroke-dasharray="301.59" stroke-dashoffset="301.59"></circle>
+          </svg>
+          <div class="mid">
+            <div class="pct" id="pctLS">—<small>٪</small></div>
+            <div class="cap">پرشده</div>
+          </div>
+        </div>
+        <div class="store-name">حافظهٔ معمولی</div>
+        <div class="store-tech">localStorage</div>
+        <div class="store-bytes"><b id="bytesLS">—</b> از <span id="quotaLS">—</span> <span id="unitLS">مگابایت</span></div>
+        <div class="store-bar"><i id="barLS"></i></div>
+        <div class="store-note" id="noteLS">در حال اندازه‌گیری…</div>
+      </div>
+
+      <div class="store" id="storeIDB" style="--ring:#a78bfa">
+        <div class="gauge">
+          <svg width="100" height="100" viewBox="0 0 112 112">
+            <circle class="track" cx="56" cy="56" r="48"></circle>
+            <circle class="fill" id="gaugeIDB" cx="56" cy="56" r="48"
+                    stroke="#a78bfa" stroke-dasharray="301.59" stroke-dashoffset="301.59"></circle>
+          </svg>
+          <div class="mid">
+            <div class="pct" id="pctIDB">—<small>٪</small></div>
+            <div class="cap">پرشده</div>
+          </div>
+        </div>
+        <div class="store-name">حافظهٔ قدرتمند</div>
+        <div class="store-tech">IndexedDB</div>
+        <div class="store-bytes"><b id="bytesIDB">—</b> از <span id="quotaIDB">—</span> <span id="unitIDB">مگابایت</span></div>
+        <div class="store-bar"><i id="barIDB"></i></div>
+        <div class="store-note" id="noteIDB">در حال اندازه‌گیری…</div>
+      </div>
+    </div>
+
+    <div class="mirror-row">
+      <div class="mirror-chip" id="chipKeys"><b id="nLS">—</b><span>کلید در localStorage</span></div>
+      <div class="mirror-chip" id="chipShadow"><b id="nIDB">—</b><span>کلید در IndexedDB</span></div>
+      <div class="mirror-chip" id="chipGap"><b id="nGap">—</b><span>بدون آینه</span></div>
+    </div>
+    <div class="footnote" style="margin-top:9px">
+      🛡️ داده‌ها <b>همیشه</b> در حافظهٔ معمولی نوشته می‌شوند و همان لحظه در حافظهٔ قدرتمند کپی می‌شوند.
+      اگر یکی پاک شود، دیگری برمی‌گرداند.
+    </div>
+  </div>
+
   <div class="card">
     <h2>📊 خلاصهٔ داده‌های این دستگاه</h2>
     <div class="grid">
@@ -467,9 +554,158 @@
     });
   });
 
+  /* ---------- گیج دو محل ذخیره‌سازی ---------- */
+  const RING_LEN = 2 * Math.PI * 48; // 301.59
+
+  function fa1(n) {
+    return String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+  }
+  function fmtMB(mb) {
+    if (mb >= 1) return fa1(mb.toFixed(2));
+    return fa1((mb * 1024).toFixed(0)) + ' کیلو';
+  }
+  /** حجم سهمیه با واحد مناسب (گیگابایت برای سهمیه‌های بزرگ) */
+  function fmtQuota(mb) {
+    if (mb >= 1024) return fa1((mb / 1024).toFixed(mb >= 10240 ? 0 : 1));
+    if (mb >= 1) return fa1(mb.toFixed(2));
+    return fa1((mb * 1024).toFixed(0));
+  }
+  function quotaUnit(mb) { return mb >= 1024 ? 'گیگابایت' : 'مگابایت'; }
+
+  /** رنگ بر اساس درصد پرشدگی */
+  function ringColor(pct) {
+    if (pct >= 90) return '#f87171';
+    if (pct >= 75) return '#fbbf24';
+    return '#34d399';
+  }
+
+  /** به‌روزرسانی یک گیج */
+  function paintGauge(id, pct, bytesMB, quotaMB, note, noteCls) {
+    const safePct = Math.max(0, Math.min(100, pct));
+    const ring = document.getElementById('gauge' + id);
+    const bar  = document.getElementById('bar' + id);
+    const pctEl = document.getElementById('pct' + id);
+    const bytesEl = document.getElementById('bytes' + id);
+    const noteEl = document.getElementById('note' + id);
+    const color = ringColor(safePct);
+
+    if (ring) {
+      ring.style.stroke = color;
+      ring.style.strokeDashoffset = String(RING_LEN * (1 - safePct / 100));
+    }
+    if (bar) { bar.style.width = safePct + '%'; bar.style.background = color; }
+    if (pctEl) pctEl.innerHTML = fa1(Math.round(safePct)) + '<small>٪</small>';
+    if (bytesEl) bytesEl.textContent = fmtMB(bytesMB);
+    if (noteEl) {
+      noteEl.textContent = note || '';
+      noteEl.className = 'store-note' + (noteCls ? ' ' + noteCls : '');
+    }
+  }
+
+  /** اندازه‌گیری localStorage (حجم واقعی رشته‌ها) */
+  function measureLocalStorage() {
+    let bytes = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      bytes += k.length + (localStorage.getItem(k) || '').length;
+    }
+    return { bytes: bytes, mb: bytes / 1048576, keys: localStorage.length };
+  }
+
+  /** اندازه‌گیری IndexedDB (خواندن واقعی همهٔ رکوردها) */
+  async function measureIndexedDB() {
+    if (!window.EmaratStorage || typeof EmaratStorage.shadowAll !== 'function') {
+      return { mb: 0, keys: 0, available: false };
+    }
+    try {
+      const all = await EmaratStorage.shadowAll();
+      let bytes = 0, n = 0;
+      Object.keys(all).forEach(k => {
+        const row = all[k];
+        const v = row && typeof row === 'object' && 'v' in row ? String(row.v) : String(row);
+        bytes += k.length + v.length;
+        n++;
+      });
+      return { mb: bytes / 1048576, keys: n, available: true };
+    } catch (e) {
+      return { mb: 0, keys: 0, available: false, error: e.message };
+    }
+  }
+
+  /** سهمیهٔ واقعی مرورگر (اگر پشتیبانی شود) */
+  async function browserQuota() {
+    try {
+      if (navigator.storage && navigator.storage.estimate) {
+        const est = await navigator.storage.estimate();
+        return { quotaMB: (est.quota || 0) / 1048576, usageMB: (est.usage || 0) / 1048576 };
+      }
+    } catch (e) { /* بی‌اثر */ }
+    return null;
+  }
+
+  async function renderStorageGauges() {
+    const ls = measureLocalStorage();
+    const idb = await measureIndexedDB();
+    const est = await browserQuota();
+
+    /* ---- حافظهٔ معمولی: سهمیهٔ واقعی اندازه‌گیری می‌شود ---- */
+    let lsQuota = 5;
+    if (window.EmaratStorage && EmaratStorage.probeQuota) {
+      try {
+        const q = await EmaratStorage.probeQuota();
+        if (q && q.quotaMB > 0) lsQuota = q.quotaMB;
+      } catch (e) { /* بی‌اثر */ }
+    }
+    const lsPct = lsQuota > 0 ? (ls.mb / lsQuota) * 100 : 0;
+    let lsNote = 'فضای کافی', lsCls = 'good';
+    if (lsPct >= 90) { lsNote = 'تقریباً پر — بکاپ بگیرید'; lsCls = 'bad'; }
+    else if (lsPct >= 75) { lsNote = 'در حال پر شدن'; lsCls = 'mid'; }
+    paintGauge('LS', lsPct, ls.mb, lsQuota, lsNote, lsCls);
+    const qEl = document.getElementById('quotaLS');
+    if (qEl) qEl.textContent = fmtQuota(lsQuota);
+    const uEl = document.getElementById('unitLS');
+    if (uEl) uEl.textContent = quotaUnit(lsQuota);
+
+    /* ---- حافظهٔ قدرتمند: سهمیه از API مرورگر ---- */
+    // navigator.storage.estimate().quota سهمیهٔ کل مبدأ است و IndexedDB
+    // تنها مصرف‌کنندهٔ واقعی آن. usageDetails.indexedDB عدد دقیق را می‌دهد.
+    let idbQuota = est && est.quotaMB > 0 ? est.quotaMB : 0;
+    const idbPct = idbQuota > 0 ? (idb.mb / idbQuota) * 100 : 0;
+    let idbNote = 'فضای فراوان', idbCls = 'good';
+    if (!idb.available) { idbNote = 'در دسترس نیست'; idbCls = 'bad'; }
+    else if (idbPct >= 90) { idbNote = 'نزدیک به سقف'; idbCls = 'bad'; }
+    else if (idbPct >= 75) { idbNote = 'در حال پر شدن'; idbCls = 'mid'; }
+    paintGauge('IDB', idbPct, idb.mb, idbQuota, idbNote, idbCls);
+    const q2 = document.getElementById('quotaIDB');
+    if (q2) q2.textContent = idbQuota > 0 ? fmtQuota(idbQuota) : '—';
+    const u2 = document.getElementById('unitIDB');
+    if (u2) u2.textContent = idbQuota > 0 ? quotaUnit(idbQuota) : 'مگابایت';
+
+    /* ---- چیپ‌های آینه ---- */
+    const lsKeys = new Set();
+    for (let i = 0; i < localStorage.length; i++) lsKeys.add(localStorage.key(i));
+    let gap = 0;
+    try {
+      const all = await EmaratStorage.shadowAll();
+      const idbSet = new Set(Object.keys(all));
+      lsKeys.forEach(k => { if (!idbSet.has(k)) gap++; });
+    } catch (e) { gap = -1; }
+
+    const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = fa1(v); };
+    setTxt('nLS', lsKeys.size);
+    setTxt('nIDB', idb.keys);
+    setTxt('nGap', gap < 0 ? '—' : gap);
+
+    const chipGap = document.getElementById('chipGap');
+    if (chipGap) chipGap.className = 'mirror-chip ' + (gap === 0 ? 'ok' : 'warn');
+    const chipShadow = document.getElementById('chipShadow');
+    if (chipShadow) chipShadow.className = 'mirror-chip ' + (idb.keys >= lsKeys.size ? 'ok' : 'warn');
+  }
+
   renderSummary();
   renderTable();
   renderDiagnostics();
+  renderStorageGauges();
 })();
 </script>
 <script src="../refresh-button.js"></script>

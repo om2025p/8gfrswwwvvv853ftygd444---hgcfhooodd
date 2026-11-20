@@ -482,6 +482,64 @@
     }
 
     /* ------------------------------------------------------------------ */
+    /*  اندازه‌گیری سهمیهٔ واقعی localStorage                              */
+    /* ------------------------------------------------------------------ */
+
+    var _quotaProbe = null;
+
+    /**
+     * سهمیهٔ واقعی localStorage را با نوشتن موقت اندازه می‌گیرد.
+     * عدد ثابت (۹.۹۲) در مرورگرهای مختلف غلط است: دسکتاپ ۵ یا ۱۰،
+     * موبایل ۵، بعضی ۲.۵. اندازه‌گیری واقعی تنها راه قابل‌اعتماد است.
+     *
+     * از rawSet استفاده می‌کند تا هوک آینه‌سازی اجرا نشود و IndexedDB
+     * بی‌دلیل پر نشود.
+     */
+    function probeQuota(force) {
+        if (_quotaProbe && !force) return Promise.resolve(_quotaProbe);
+
+        try {
+            var used = 0;
+            for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                used += k.length + (rawGet(k) || '').length;
+            }
+
+            var TEST = '__emr_quota_probe__';
+            try { rawRemove(TEST); } catch (e) {}
+
+            var CHUNK = new Array(524289).join('x'); // 512 KB
+            var parts = [];
+            var free = 0;
+            try {
+                for (var j = 0; j < 40; j++) {
+                    parts.push(CHUNK);
+                    var payload = parts.join('');
+                    try {
+                        rawSet(TEST, payload);
+                        free = payload.length;
+                    } catch (e) {
+                        parts.pop();
+                        break;
+                    }
+                }
+            } finally {
+                try { rawRemove(TEST); } catch (e) {}
+            }
+
+            _quotaProbe = {
+                usedMB: used / 1048576,
+                freeMB: free / 1048576,
+                quotaMB: (used + free) / 1048576,
+                probed: true
+            };
+        } catch (e) {
+            _quotaProbe = { usedMB: 0, freeMB: 0, quotaMB: 0, probed: false };
+        }
+        return Promise.resolve(_quotaProbe);
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  آینهٔ کامل: هر کلید localStorage که در IndexedDB نیست کپی می‌شود    */
     /* ------------------------------------------------------------------ */
 
@@ -744,6 +802,7 @@
         isQuotaError: isQuotaError,
         isEmptyish: isEmptyish,
         warnIfCritical: warnIfCritical,
+        probeQuota: probeQuota,
         mirrorAll: mirrorAll,
         freeVerifiedSpace: freeVerifiedSpace,
         ORPHAN_KEYS: ORPHAN_KEYS,
