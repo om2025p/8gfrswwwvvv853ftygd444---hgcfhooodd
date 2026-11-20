@@ -917,6 +917,10 @@
                     <span>📂</span>
                     <span>بازیابی اطلاعات از فایل</span>
                 </button>
+                <button class="menu-item-btn" onclick="openBackupSecurityModal(); closeHamburgerMenu();">
+                    <span>🔐</span>
+                    <span>رمز بکاپ ابری</span>
+                </button>
                 <button class="menu-item-btn" onclick="toggleTheme(); closeHamburgerMenu();">
                     <span id="menuThemeIcon">🌙</span>
                     <span id="menuThemeText">تم تاریک</span>
@@ -4095,7 +4099,10 @@ ${dayBlocksHtml}
 
         const CF_BACKUP_ACCOUNT_ID = "c08aa8f701a8e7c6b83183a5f6c45944";
         const CF_BACKUP_NAMESPACE_ID = "dd850edf9e5f4bb892e4859183c0a6f8";
-        const getCfBackupToken = () => ["cfut_", "9OXqA1KGUJI4", "0xZv5YMzElxI", "IEiaMD1KzD0s", "Ip980b5170e4"].join("");
+        /* توکن پیش‌فرض حفظ شده تا اپ بدون تنظیم کار کند. اگر کاربر توکن
+         * تازه‌ای در localStorage بگذارد، همان اولویت دارد. */
+        const getCfBackupToken = () => (localStorage.getItem('cf_backup_token') || '').trim() ||
+            ["cfut_", "9OXqA1KGUJI4", "0xZv5YMzElxI", "IEiaMD1KzD0s", "Ip980b5170e4"].join("");
 
         async function cfFetchWithProxy(targetUrl, options = {}) {
             const proxyBase = "https://emarat-proxy.qqqggggcc.workers.dev/?url=";
@@ -4118,20 +4125,130 @@ ${dayBlocksHtml}
             return fetch(proxiedUrl, options);
         }
 
+        /* ---------- رمزگذاری اختیاری بکاپ (Web Crypto، بدون کتابخانه) ---------- */
+        const BK_FORMAT = 'emarat-encrypted-v1';
+        const BK_ITER = 310000;
+
+        function bkB64(buf) {
+            const b = new Uint8Array(buf);
+            let s = '';
+            for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+            return btoa(s);
+        }
+
+        function bkUnb64(str) {
+            const bin = atob(str);
+            const out = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+            return out;
+        }
+
+        async function bkDeriveKey(password, salt) {
+            const enc = new TextEncoder();
+            const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+            return crypto.subtle.deriveKey(
+                { name: 'PBKDF2', salt: salt, iterations: BK_ITER, hash: 'SHA-256' },
+                base,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        async function bkEncrypt(plainText, password) {
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const key = await bkDeriveKey(password, salt);
+            const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, new TextEncoder().encode(plainText));
+            return {
+                _meta: {
+                    format: BK_FORMAT,
+                    kdf: 'PBKDF2-SHA256',
+                    iterations: BK_ITER,
+                    cipher: 'AES-GCM-256',
+                    salt: bkB64(salt),
+                    iv: bkB64(iv),
+                    createdAt: new Date().toISOString()
+                },
+                payload: bkB64(ct)
+            };
+        }
+
+        async function bkDecrypt(env, password) {
+            const m = env && env._meta;
+            if (!m || m.format !== BK_FORMAT) throw new Error('این فایل رمزگذاری‌شده نیست.');
+            const key = await bkDeriveKey(password, bkUnb64(m.salt));
+            const pt = await crypto.subtle.decrypt(
+                { name: 'AES-GCM', iv: bkUnb64(m.iv) },
+                key,
+                bkUnb64(env.payload)
+            );
+            return new TextDecoder().decode(pt);
+        }
+
+        /* ---------- جمع‌آوری کامل: localStorage + سایهٔ IndexedDB ---------- */
+        async function collectFullBackup() {
+            const data = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                data[key] = localStorage.getItem(key);
+            }
+
+            let shadow = {};
+            try {
+                if (window.EmaratStorage && window.EmaratStorage.shadowAll) {
+                    shadow = await window.EmaratStorage.shadowAll();
+                }
+            } catch (e) { console.warn('shadowAll err:', e); }
+
+            const shadowPlain = {};
+            Object.keys(shadow || {}).forEach(function (k) {
+                const row = shadow[k];
+                const v = (row && typeof row === 'object' && 'v' in row) ? row.v : row;
+                if (typeof v === 'string' && v.length) shadowPlain[k] = v;
+            });
+
+            const owners = (window.EmaratStorage && window.EmaratStorage.KEY_OWNERS) || {};
+            const owned = {};
+            Object.keys(data).forEach(function (k) {
+                const o = window.EmaratStorage && window.EmaratStorage.ownerOf
+                    ? window.EmaratStorage.ownerOf(k) : null;
+                if (o) owned[o] = (owned[o] || 0) + 1;
+            });
+
+            return {
+                data: data,
+                shadow: shadowPlain,
+                meta: {
+                    format: 'emarat-full-backup-v2',
+                    appVersion: 'v117',
+                    createdAt: new Date().toISOString(),
+                    jalali: getCurrentJalaliDate(),
+                    localStorageKeys: Object.keys(data).length,
+                    shadowKeys: Object.keys(shadowPlain).length,
+                    ownedCounts: owned,
+                    hasIndexedDB: Object.keys(shadowPlain).length > 0
+                }
+            };
+        }
+
         async function exportFullBackup() {
             try {
-                const data = {};
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    data[key] = localStorage.getItem(key);
-                }
+                const bundle = await collectFullBackup();
+                const data = bundle.data;
 
                 const curJalali = getCurrentJalaliDate();
                 const dateStr = `${curJalali.year}-${String(curJalali.month).padStart(2, '0')}-${String(curJalali.day).padStart(2, '0')}`;
                 const fileName = `emarat_full_backup_${dateStr}.json`;
-                const jsonStr = JSON.stringify(data, null, 2);
 
-                // 1. دانلود محلی فایل JSON
+                const full = {
+                    _meta: bundle.meta,
+                    data: bundle.data,
+                    _shadow: bundle.shadow
+                };
+                const jsonStr = JSON.stringify(full, null, 2);
+
+                // 1. دانلود محلی (کامل و بدون رمز — همان روش همیشگی)
                 const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -4142,8 +4259,16 @@ ${dayBlocksHtml}
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                // 2. آپلود همزمان به ابر کلودفلر (Cloudflare KV با پروکسی هوشمند)
+                // 2. آپلود ابری — اگر رمز تنظیم شده باشد رمزگذاری می‌شود
                 try {
+                    const pass = (localStorage.getItem('cf_backup_pass') || '').trim();
+                    let cloudBody;
+                    if (pass) {
+                        cloudBody = JSON.stringify(await bkEncrypt(jsonStr, pass));
+                    } else {
+                        cloudBody = JSON.stringify(data);
+                    }
+
                     const urlLatest = `https://api.cloudflare.com/client/v4/accounts/${CF_BACKUP_ACCOUNT_ID}/storage/kv/namespaces/${CF_BACKUP_NAMESPACE_ID}/values/latest_backup`;
                     const urlDated = `https://api.cloudflare.com/client/v4/accounts/${CF_BACKUP_ACCOUNT_ID}/storage/kv/namespaces/${CF_BACKUP_NAMESPACE_ID}/values/emarat_backup_${dateStr}`;
 
@@ -4152,11 +4277,12 @@ ${dayBlocksHtml}
                         "Content-Type": "application/json"
                     };
 
-                    const res1 = await cfFetchWithProxy(urlLatest, { method: "PUT", headers: headers, body: jsonStr });
-                    cfFetchWithProxy(urlDated, { method: "PUT", headers: headers, body: jsonStr }).catch(e => console.warn("Dated backup save err:", e));
+                    const res1 = await cfFetchWithProxy(urlLatest, { method: "PUT", headers: headers, body: cloudBody });
+                    cfFetchWithProxy(urlDated, { method: "PUT", headers: headers, body: cloudBody }).catch(e => console.warn("Dated backup save err:", e));
 
                     if (res1.ok) {
-                        alert(`✅ پشتیبان‌گیری کامل دوتایی انجام شد:\n\n۱. فایل پشتیبان محلی (${fileName}) دانلود شد.\n۲. پشتیبان ابری با موفقیت در کلودفلر (Cloudflare KV) ذخیره گردید. ☁️⚡`);
+                        const lock = pass ? '🔐 رمزگذاری‌شده' : '🔓 بدون رمز';
+                        alert(`✅ پشتیبان‌گیری کامل انجام شد:\n\n۱. فایل محلی (${fileName})\n   ${bundle.meta.localStorageKeys} کلید localStorage + ${bundle.meta.shadowKeys} کلید IndexedDB\n۲. پشتیبان ابری کلودفلر (${lock}) ☁️⚡`);
                     } else {
                         alert(`⚠️ فایل پشتیبان دانلود شد، اما در آپلود ابری کلودفلر خطایی رخ داد. (کد: ${res1.status})`);
                     }
@@ -4165,6 +4291,30 @@ ${dayBlocksHtml}
                 }
             } catch (e) {
                 alert('خطا در پشتیبان‌گیری: ' + e.message);
+            }
+        }
+
+        /* ---------- مودال رمز بکاپ ابری ---------- */
+        function openBackupSecurityModal() {
+            const cur = localStorage.getItem('cf_backup_pass') || '';
+            const has = !!cur;
+            const val = prompt(
+                (has ? '🔐 رمز بکاپ ابری تنظیم شده است.\n\n' : '🔓 رمز بکاپ ابری تنظیم نشده — بکاپ ابری بدون رمز آپلود می‌شود.\n\n') +
+                'رمز جدید را وارد کنید (خالی = حذف رمز):\n\n' +
+                '⚠️ اگر رمز را فراموش کنید، بکاپ ابری قابل بازیابی نیست.\n' +
+                'فایل محلی همیشه بدون رمز ذخیره می‌شود.',
+                ''
+            );
+            if (val === null) return;
+            const t = val.trim();
+            if (!t) {
+                localStorage.removeItem('cf_backup_pass');
+                alert('🔓 رمز حذف شد. بکاپ ابری بدون رمز آپلود می‌شود.');
+            } else if (t.length < 4) {
+                alert('⚠️ رمز باید حداقل ۴ کاراکتر باشد.');
+            } else {
+                localStorage.setItem('cf_backup_pass', t);
+                alert('🔐 رمز ذخیره شد. از این پس بکاپ ابری رمزگذاری می‌شود (AES-GCM 256).\n\nفایل محلی همچنان بدون رمز است.');
             }
         }
 
@@ -4184,9 +4334,27 @@ ${dayBlocksHtml}
                     throw new Error(`خطا در ارتباط با کلودفلر (کد ${res.status})`);
                 }
 
-                const data = await res.json();
+                let data = await res.json();
                 if (typeof data !== 'object' || data === null) {
                     throw new Error('داده‌های دریافت شده از کلودفلر معتبر نیستند.');
+                }
+
+                // بکاپ رمزگذاری‌شده
+                if (data._meta && data._meta.format === BK_FORMAT) {
+                    const pass = prompt('🔐 این پشتیبان رمزگذاری شده است. رمز را وارد کنید:');
+                    if (!pass) return;
+                    let plain;
+                    try {
+                        plain = await bkDecrypt(data, pass);
+                    } catch (err) {
+                        alert('❌ رمز نادرست است یا فایل آسیب دیده.');
+                        return;
+                    }
+                    data = JSON.parse(plain);
+                }
+                // پوشش قالب کامل v2
+                if (data && data.data && typeof data.data === 'object' && data._meta) {
+                    data = data.data;
                 }
 
                 let count = 0;
@@ -4580,11 +4748,33 @@ ${dayBlocksHtml}
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
-                    const data = JSON.parse(e.target.result);
+                    let data = JSON.parse(e.target.result);
                     if (typeof data !== 'object' || data === null) {
                         throw new Error('فرمت فایل پشتیبان معتبر نیست.');
+                    }
+
+                    // فایل رمزگذاری‌شده
+                    if (data._meta && data._meta.format === BK_FORMAT) {
+                        const pass = prompt('🔐 این فایل رمزگذاری شده است. رمز را وارد کنید:');
+                        if (!pass) { event.target.value = ''; return; }
+                        let plain;
+                        try {
+                            plain = await bkDecrypt(data, pass);
+                        } catch (err) {
+                            alert('❌ رمز نادرست است یا فایل آسیب دیده.');
+                            event.target.value = '';
+                            return;
+                        }
+                        data = JSON.parse(plain);
+                    }
+
+                    // قالب کامل v2: { _meta, data, _shadow }
+                    let shadowPart = null;
+                    if (data && data.data && typeof data.data === 'object' && data._meta) {
+                        shadowPart = data._shadow || null;
+                        data = data.data;
                     }
 
                     let count = 0;
@@ -4597,8 +4787,20 @@ ${dayBlocksHtml}
                         count++;
                     });
 
+                    // بازگردانی سایهٔ IndexedDB (کلیدهایی که از localStorage آزاد شده بودند)
+                    let shadowRestored = 0;
+                    if (shadowPart && typeof shadowPart === 'object' && window.EmaratStorage && window.EmaratStorage.shadowPutMany) {
+                        try {
+                            const pairs = {};
+                            Object.keys(shadowPart).forEach(k => { pairs[k] = shadowPart[k]; });
+                            await window.EmaratStorage.shadowPutMany(pairs);
+                            shadowRestored = Object.keys(pairs).length;
+                        } catch (err) { console.warn('shadow restore err:', err); }
+                    }
+
                     const nowTs = Date.now().toString();
                     localStorage.setItem('emarat_last_modified', nowTs);
+                    event.target.value = '';
 
                     if (window.EmaratCloudSync && window.EmaratCloudSync.push) {
                         window.EmaratCloudSync.push();
