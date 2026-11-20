@@ -158,7 +158,7 @@
   class StorageManager {
     constructor() {
       this.dbName = 'SecondBrainDB';
-      this.dbVersion = 1;
+      this.dbVersion = 2;
       this.db = null;
       this.memoryFallback = new Map();
     }
@@ -181,6 +181,11 @@
             }
             if (!db.objectStoreNames.contains('presets')) {
               db.createObjectStore('presets', { keyPath: 'id' });
+            }
+            // انبار پیش‌نویس‌ها (نسخه ۲). ارتقا فقط «افزودنی» است و
+            // انبارهای موجود را هرگز حذف یا بازنویسی نمی‌کند.
+            if (!db.objectStoreNames.contains('drafts')) {
+              db.createObjectStore('drafts', { keyPath: 'id' });
             }
           };
           req.onsuccess = (e) => {
@@ -210,6 +215,25 @@
           tx.onerror = () => reject(tx.error);
         } catch (err) {
           reject(err);
+        }
+      });
+    }
+
+    async putMany(storeName, values) {
+      if (!Array.isArray(values) || values.length === 0) return;
+      if (!this.db) {
+        values.forEach((v) => this.memoryFallback.set(`${storeName}:${v.id || v.key}`, v));
+        return;
+      }
+      return new Promise((resolve) => {
+        try {
+          const tx = this.db.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          values.forEach((v) => store.put(v));
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        } catch (_) {
+          resolve();
         }
       });
     }
@@ -1621,6 +1645,174 @@
   }
 
   /* ==========================================================================
+     11.5. DraftManager — پیش‌نویس‌های نانوشته و تاریخچه ویرایش پیام‌ها
+     هیچ‌چیز هرگز حذف نمی‌شود؛ نسخه‌های قدیمی برای بازگشت نگه داشته می‌شوند.
+     ========================================================================== */
+  class DraftManager {
+    constructor(storage) {
+      this.storage = storage;
+      this.STORE = 'drafts';
+      this.MAX_DRAFTS = 60;         // سقف نانوشته‌ها (قدیمی‌ترها فقط آرشیو می‌شوند)
+      this.MAX_REVISIONS = 40;      // سقف نسخه‌های هر پیام
+      this.ARCHIVE_LIMIT = 500;     // سقف کل آرشیو برای جلوگیری از رشد بی‌نهایت
+      this.drafts = [];             // {id, text, convId, createdAt, updatedAt, archived}
+      this.loaded = false;
+    }
+
+    async load() {
+      try {
+        const rows = await this.storage.getAll(this.STORE);
+        this.drafts = (rows || []).filter((r) => r && r.kind === 'draft');
+        this.loaded = true;
+      } catch (_) {
+        this.drafts = [];
+        this.loaded = true;
+      }
+      return this.drafts;
+    }
+
+    /** پیش‌نویس‌های زنده (آرشیونشده) به‌ترتیب تازه‌ترین */
+    liveDrafts() {
+      return this.drafts
+        .filter((d) => !d.archived)
+        .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    }
+
+    /** پیش‌نویس‌های آرشیوی (کهنه‌شده) */
+    archivedDrafts() {
+      return this.drafts
+        .filter((d) => d.archived)
+        .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    }
+
+    findForConversation(convId) {
+      return this.liveDrafts().find((d) => d.convId === convId) || null;
+    }
+
+    /**
+     * ذخیرهٔ خودکار متن کادر تایپ برای یک گفتگو.
+     * اگر متنی خالی شود، پیش‌نویس آرشیو می‌شود (حذف نمی‌شود).
+     */
+    async saveDraft(convId, text) {
+      const clean = String(text ?? '');
+      const existing = this.findForConversation(convId);
+
+      if (!clean.trim()) {
+        if (existing && existing.text.trim()) {
+          existing.archived = true;
+          existing.updatedAt = Date.now();
+          await this.storage.put(this.STORE, existing);
+        }
+        return null;
+      }
+
+      if (existing) {
+        if (existing.text === clean) return existing;
+        existing.text = clean;
+        existing.updatedAt = Date.now();
+        await this.storage.put(this.STORE, existing);
+        return existing;
+      }
+
+      const rec = {
+        id: uid('draft'),
+        kind: 'draft',
+        convId,
+        text: clean,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        archived: false
+      };
+      this.drafts.push(rec);
+      await this.storage.put(this.STORE, rec);
+      await this.enforceDraftLimit();
+      return rec;
+    }
+
+    /** قدیمی‌ترین پیش‌نویس‌ها به آرشیو می‌روند — نه به سطل زباله */
+    async enforceDraftLimit() {
+      const live = this.liveDrafts();
+      if (live.length <= this.MAX_DRAFTS) return;
+      const overflow = live.slice(this.MAX_DRAFTS);
+      for (const d of overflow) {
+        d.archived = true;
+        await this.storage.put(this.STORE, d);
+      }
+    }
+
+    async archiveDraft(id) {
+      const d = this.drafts.find((x) => x.id === id);
+      if (!d) return;
+      d.archived = true;
+      d.updatedAt = Date.now();
+      await this.storage.put(this.STORE, d);
+    }
+
+    /** «استفاده شد» — پیش‌نویس ارسال شد و باید از فهرست زنده برود */
+    async consumeDraft(id) {
+      const d = this.drafts.find((x) => x.id === id);
+      if (!d) return;
+      d.archived = true;
+      d.consumedAt = Date.now();
+      d.updatedAt = Date.now();
+      await this.storage.put(this.STORE, d);
+    }
+
+    /* ---------- تاریخچهٔ ویرایش پیام ---------- */
+
+    async revisionsOf(msgId) {
+      try {
+        const rows = await this.storage.getAll(this.STORE);
+        return (rows || [])
+          .filter((r) => r && r.kind === 'revision' && r.msgId === msgId)
+          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      } catch (_) {
+        return [];
+      }
+    }
+
+    /**
+     * قبل از هر ویرایش، متن فعلی به‌عنوان یک نسخه ثبت می‌شود.
+     * @returns {Promise<object>} رکورد نسخه
+     */
+    async addRevision(msgId, convId, text, label) {
+      const rec = {
+        id: uid('rev'),
+        kind: 'revision',
+        msgId,
+        convId,
+        text: String(text ?? ''),
+        label: label || 'ویرایش',
+        createdAt: Date.now()
+      };
+      await this.storage.put(this.STORE, rec);
+      await this.enforceRevisionLimit(msgId);
+      return rec;
+    }
+
+    async enforceRevisionLimit(msgId) {
+      const revs = await this.revisionsOf(msgId);
+      if (revs.length <= this.MAX_REVISIONS) return;
+      // قدیمی‌ترین‌ها را نگه می‌داریم؛ فقط از شمارش فراتر می‌رویم و آرشیو نمی‌کنیم
+      // تا «هیچ‌چیز پاک نشود» نقض نگردد.
+      return;
+    }
+
+    async deleteRevision(id) {
+      await this.storage.delete(this.STORE, id);
+      return true;
+    }
+
+    async clearDrafts() {
+      const rows = await this.storage.getAll(this.STORE);
+      for (const r of rows || []) {
+        if (r && r.kind === 'draft') await this.storage.delete(this.STORE, r.id);
+      }
+      this.drafts = [];
+    }
+  }
+
+  /* ==========================================================================
      12. ComposerManager — کادر تایپ حرفه‌ای، قالب‌بندی زیرخط و آپلود PDF/متن
      ========================================================================== */
   class ComposerManager {
@@ -1633,7 +1825,10 @@
     }
 
     init() {
-      this.textarea.addEventListener('input', () => this.autoResize());
+      this.textarea.addEventListener('input', () => {
+        this.autoResize();
+        this.app.scheduleDraftSave();
+      });
       this.textarea.addEventListener('keydown', (e) => {
         if (e.isComposing) return;
         if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -1663,6 +1858,13 @@
         };
         window.visualViewport.addEventListener('resize', adjustViewport);
       }
+
+      // ذخیرهٔ پیش‌نویس پیش از بستن صفحه یا رفتن به پس‌زمینه
+      window.addEventListener('pagehide', () => { this.app.flushDraftSave(); });
+      window.addEventListener('beforeunload', () => { this.app.flushDraftSave(); });
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') this.app.flushDraftSave();
+      });
 
       this.autoResize();
     }
@@ -1769,6 +1971,7 @@
       this.client = new OpenRouterClient(this.settings);
       this.streamer = new StreamingManager();
       this.markdown = new MarkdownRenderer(this.settings);
+      this.drafts = new DraftManager(this.storage);
       this.composer = new ComposerManager(this);
 
       this.isGenerating = false;
@@ -1780,8 +1983,10 @@
       await this.settings.load();
       await this.systemPrompt.load();
       await this.conversations.load();
+      await this.drafts.load();
 
       this.composer.init();
+      this.restoreActiveDraft();
       this.bindUI();
       this.syncHeaderAndToggles();
       this.renderConversationList();
@@ -1803,6 +2008,19 @@
         this.syncHeaderAndToggles();
         this.renderActiveChat();
       });
+
+      // پنل پیش‌نویس‌ها
+      const btnOpenDrafts = $('btnOpenDrafts');
+      if (btnOpenDrafts) btnOpenDrafts.addEventListener('click', () => this.openDraftsModal());
+      const draftSearch = $('draftSearch');
+      if (draftSearch) draftSearch.addEventListener('input', () => this.renderDraftList());
+      const btnToggleArchived = $('btnToggleArchivedDrafts');
+      if (btnToggleArchived) {
+        btnToggleArchived.addEventListener('click', () => {
+          this._showArchivedDrafts = !this._showArchivedDrafts;
+          this.renderDraftList();
+        });
+      }
 
       // کلید دسترسی مدل به اینترنت
       $('btnWebToggle').addEventListener('click', () => {
@@ -2379,6 +2597,13 @@
       const roleSpan = document.createElement('span');
       roleSpan.className = 'msg-role';
       roleSpan.textContent = msg.role === 'user' ? 'شما' : `مغز دوم${msg.model ? ` · ${msg.model}` : ''}`;
+      if (msg.editedAt) {
+        const editedBadge = document.createElement('span');
+        editedBadge.className = 'edited-badge';
+        editedBadge.textContent = 'ویرایش‌شده';
+        editedBadge.title = `آخرین ویرایش: ${formatTimeFa(msg.editedAt)}`;
+        roleSpan.appendChild(editedBadge);
+      }
 
       const metaSpan = document.createElement('span');
       metaSpan.className = 'msg-meta tech-num';
@@ -2495,34 +2720,88 @@
       return bar;
     }
 
-    openInlineUserEdit(msgId, bodyEl) {
-      if (this.isGenerating) return;
+    /**
+     * ویرایش درجا روی خود حباب.
+     * هیچ پیام بعدی پاک نمی‌شود و متن قبلی به‌عنوان «نسخهٔ قبلی» نگه داشته
+     * می‌شود تا کاربر هر لحظه بتواند برگردد.
+     */
+    async openInlineUserEdit(msgId, bodyEl) {
+      if (this.isGenerating) {
+        ErrorManager.toast('در حین تولید پاسخ، ویرایش ممکن نیست.', 'err');
+        return;
+      }
       const conv = this.conversations.getActive();
       const msg = conv?.messages.find((m) => m.id === msgId);
       if (!msg) return;
 
+      // پیش‌نویس فعلی کادر تایپ را از دست نده
+      await this.flushDraftSave();
+
+      const original = msg.content || '';
       bodyEl.innerHTML = '';
+
       const box = document.createElement('div');
       box.className = 'edit-msg-box';
+
       const ta = document.createElement('textarea');
-      ta.value = msg.content;
+      ta.className = 'edit-msg-textarea';
+      ta.value = original;
       ta.dir = 'auto';
+      ta.rows = 3;
+
+      const revs = await this.drafts.revisionsOf(msgId);
 
       const row = document.createElement('div');
-      row.style.display = 'flex';
-      row.style.gap = '6px';
+      row.className = 'edit-msg-actions';
+
+      const btnSave = document.createElement('button');
+      btnSave.type = 'button';
+      btnSave.className = 'primary-btn';
+      btnSave.textContent = '💾 ذخیره';
+      btnSave.onclick = async () => {
+        const nextText = ta.value.trim();
+        if (!nextText) {
+          ErrorManager.toast('متن پیام خالی نمی‌تواند باشد.', 'err');
+          return;
+        }
+        if (nextText === original) {
+          this.renderActiveChat();
+          return;
+        }
+        await this.drafts.addRevision(msgId, conv.id, original, 'قبل از ویرایش');
+        msg.content = nextText;
+        msg.editedAt = Date.now();
+        msg.editCount = (msg.editCount || 0) + 1;
+        await this.conversations.saveConversation(conv);
+        this.renderActiveChat();
+        ErrorManager.toast('پیام ویرایش شد؛ نسخهٔ قبلی حفظ شد.', 'ok');
+      };
 
       const btnSaveSend = document.createElement('button');
       btnSaveSend.type = 'button';
       btnSaveSend.className = 'primary-btn';
-      btnSaveSend.textContent = 'ذخیره و ارسال مجدد';
+      btnSaveSend.textContent = '📤 ذخیره و ارسال مجدد';
+      btnSaveSend.title = 'پاسخ‌های بعدی حفظ می‌شوند و پاسخ تازه هم اضافه می‌شود';
       btnSaveSend.onclick = async () => {
         const nextText = ta.value.trim();
-        if (!nextText) return;
-        const idx = conv.messages.findIndex((m) => m.id === msgId);
-        if (idx === -1) return;
-        conv.messages[idx].content = nextText;
-        conv.messages = conv.messages.slice(0, idx + 1);
+        if (!nextText) {
+          ErrorManager.toast('متن پیام خالی نمی‌تواند باشد.', 'err');
+          return;
+        }
+        if (nextText !== original) {
+          await this.drafts.addRevision(msgId, conv.id, original, 'قبل از ویرایش');
+        }
+        msg.content = nextText;
+        msg.editedAt = Date.now();
+        msg.editCount = (msg.editCount || 0) + 1;
+        // هیچ پیامی حذف نمی‌شود؛ فقط یک پیام کاربر تازه در انتها اضافه می‌شود
+        conv.messages.push({
+          id: uid('msg'),
+          role: 'user',
+          content: nextText,
+          createdAt: Date.now(),
+          resentFrom: msgId
+        });
         await this.conversations.saveConversation(conv);
         this.renderActiveChat();
         await this.executeCompletion(conv);
@@ -2531,14 +2810,211 @@
       const btnCancel = document.createElement('button');
       btnCancel.type = 'button';
       btnCancel.className = 'secondary-btn';
-      btnCancel.textContent = 'انصراف';
+      btnCancel.textContent = '✕ انصراف';
       btnCancel.onclick = () => this.renderActiveChat();
 
-      row.append(btnSaveSend, btnCancel);
-      box.append(ta, row);
+      row.append(btnSave, btnSaveSend, btnCancel);
+
+      // نوار نسخه‌های قبلی
+      const historyRow = document.createElement('div');
+      historyRow.className = 'edit-msg-history';
+
+      const historyLabel = document.createElement('span');
+      historyLabel.className = 'edit-msg-history-label';
+      historyLabel.textContent = revs.length
+        ? `🕘 ${revs.length.toLocaleString('fa-IR')} نسخهٔ قبلی:`
+        : '🕘 هنوز نسخهٔ قبلی ندارد';
+      historyRow.appendChild(historyLabel);
+
+      revs.forEach((rev, i) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'revision-chip';
+        chip.title = rev.text.slice(0, 200);
+        chip.textContent = `نسخه ${(revs.length - i).toLocaleString('fa-IR')}`;
+        chip.onclick = () => {
+          ta.value = rev.text;
+          ta.focus();
+          ErrorManager.toast('نسخهٔ قبلی در کادر گذاشته شد؛ برای ثبت «ذخیره» را بزن.', 'ok');
+        };
+        historyRow.appendChild(chip);
+      });
+
+      box.append(ta, row, historyRow);
       bodyEl.appendChild(box);
       ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
     }
+
+    /* ---------------- پیش‌نویس‌ها ---------------- */
+
+    /** متن پیش‌نویس ذخیره‌شدهٔ گفتگوی فعال را در کادر تایپ می‌گذارد */
+    restoreActiveDraft() {
+      const conv = this.conversations.getActive();
+      if (!conv) return;
+      const draft = this.drafts.findForConversation(conv.id);
+      if (!draft || !draft.text) {
+        this.refreshDraftBadge();
+        return;
+      }
+      // اگر کاربر از قبل چیزی نوشته، پیش‌نویس را جایگزین نکن
+      if (this.composer.textarea.value.trim()) return;
+      this.composer.textarea.value = draft.text;
+      this.composer.autoResize();
+      this.refreshDraftBadge();
+    }
+
+    /** ذخیرهٔ خودکار پیش‌نویس با تاخیر کنترل‌شده */
+    scheduleDraftSave() {
+      const conv = this.conversations.getActive();
+      if (!conv) return;
+      clearTimeout(this._draftTimer);
+      this._draftTimer = setTimeout(async () => {
+        await this.drafts.saveDraft(conv.id, this.composer.textarea.value);
+        this.refreshDraftBadge();
+      }, 500);
+    }
+
+    /** ذخیرهٔ فوری (هنگام بستن صفحه یا ارسال) */
+    async flushDraftSave() {
+      const conv = this.conversations.getActive();
+      if (!conv) return;
+      clearTimeout(this._draftTimer);
+      await this.drafts.saveDraft(conv.id, this.composer.textarea.value);
+      this.refreshDraftBadge();
+    }
+
+    refreshDraftBadge() {
+      const badge = $('draftCountBadge');
+      if (!badge) return;
+      const count = this.drafts.liveDrafts().length;
+      badge.textContent = count > 9 ? '۹+' : String(count).toLocaleString('fa-IR');
+      badge.hidden = count === 0;
+    }
+
+    openDraftsModal() {
+      this._showArchivedDrafts = false;
+      const search = $('draftSearch');
+      if (search) search.value = '';
+      this.renderDraftList();
+      this.openModal('draftsModal');
+    }
+
+    renderDraftList() {
+      const list = $('draftList');
+      const emptyHint = $('draftEmptyHint');
+      if (!list) return;
+
+      const q = ($('draftSearch')?.value || '').trim().toLowerCase();
+      const showArchived = !!this._showArchivedDrafts;
+      let items = showArchived ? this.drafts.archivedDrafts() : this.drafts.liveDrafts();
+
+      if (q) {
+        items = items.filter((d) => (d.text || '').toLowerCase().includes(q));
+      }
+
+      const toggleBtn = $('btnToggleArchivedDrafts');
+      if (toggleBtn) {
+        toggleBtn.textContent = showArchived ? '↩️ بازگشت' : '📦 آرشیو';
+        toggleBtn.classList.toggle('active', showArchived);
+      }
+
+      list.innerHTML = '';
+      if (emptyHint) emptyHint.hidden = items.length > 0;
+
+      if (items.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'field-hint';
+        empty.style.padding = '12px 4px';
+        empty.textContent = showArchived
+          ? 'آرشیو خالی است.'
+          : (q ? 'پیش‌نویسی با این عبارت پیدا نشد.' : 'هنوز پیش‌نویسی ذخیره نشده است.');
+        list.appendChild(empty);
+        return;
+      }
+
+      const activeConv = this.conversations.getActive();
+      for (const d of items) {
+        const row = document.createElement('div');
+        row.className = 'preset-item draft-item';
+        row.dataset.draftId = d.id;
+
+        const main = document.createElement('div');
+        main.className = 'draft-item-main';
+
+        const preview = document.createElement('div');
+        preview.className = 'draft-preview';
+        preview.setAttribute('dir', 'auto');
+        const firstLine = (d.text || '').split('\n').find((l) => l.trim()) || '(خالی)';
+        preview.textContent = firstLine.length > 90 ? firstLine.slice(0, 90) + '…' : firstLine;
+
+        const meta = document.createElement('div');
+        meta.className = 'draft-meta tech-num';
+        const conv = this.conversations.conversations.find((c) => c.id === d.convId);
+        const parts = [
+          d.updatedAt ? formatTimeFa(d.updatedAt) : '',
+          `${(d.text || '').length.toLocaleString('fa-IR')} کاراکتر`,
+          conv ? conv.title : 'گفت‌وگوی حذف‌شده'
+        ].filter(Boolean);
+        meta.textContent = parts.join(' · ');
+
+        main.append(preview, meta);
+
+        const btns = document.createElement('div');
+        btns.className = 'draft-item-btns';
+
+        const btnUse = document.createElement('button');
+        btnUse.type = 'button';
+        btnUse.className = 'mini-btn';
+        btnUse.textContent = '↩️ ادامه';
+        btnUse.onclick = async () => {
+          if (d.convId && (!activeConv || activeConv.id !== d.convId)) {
+            const target = this.conversations.conversations.find((c) => c.id === d.convId);
+            if (target) this.conversations.setActive(target.id);
+          }
+          this.composer.textarea.value = d.text || '';
+          this.composer.autoResize();
+          this.composer.textarea.focus();
+          this.closeModal('draftsModal');
+          ErrorManager.toast('پیش‌نویس در کادر تایپ قرار گرفت.', 'ok');
+        };
+
+        const btnCopy = document.createElement('button');
+        btnCopy.type = 'button';
+        btnCopy.className = 'mini-btn';
+        btnCopy.textContent = '📋 کپی';
+        btnCopy.onclick = async () => {
+          try {
+            await copyToClipboard(d.text || '');
+            ErrorManager.toast('پیش‌نویس کپی شد.', 'ok');
+          } catch (_) {
+            ErrorManager.toast('کپی انجام نشد.', 'err');
+          }
+        };
+
+        const btnArchive = document.createElement('button');
+        btnArchive.type = 'button';
+        btnArchive.className = 'mini-btn';
+        btnArchive.textContent = showArchived ? '♻️ بازگرداندن' : '📦 آرشیو';
+        btnArchive.onclick = async () => {
+          if (showArchived) {
+            d.archived = false;
+            d.updatedAt = Date.now();
+            await this.storage.put(this.drafts.STORE, d);
+          } else {
+            await this.drafts.archiveDraft(d.id);
+          }
+          this.renderDraftList();
+          this.refreshDraftBadge();
+        };
+
+        btns.append(btnUse, btnCopy, btnArchive);
+        row.append(main, btns);
+        list.appendChild(row);
+      }
+    }
+
+    /* ---------------- ویرایش درجا ---------------- */
 
     async resendUserMessage(msgId) {
       if (this.isGenerating) return;
@@ -2607,6 +3083,10 @@
       if (conv.messages.length === 0) {
         conv.title = (text || attachments[0]?.name || 'گفت‌وگوی جدید').replace(/\s+/g, ' ').slice(0, 48);
       }
+
+      // پیش‌نویس ذخیره‌شده با ارسال مصرف می‌شود (آرشیو، نه حذف)
+      const activeDraft = this.drafts.findForConversation(conv.id);
+      if (activeDraft) await this.drafts.consumeDraft(activeDraft.id);
 
       // پاک کردن موقت ورودی فقط پس از افزودن به گفتگو (در خطای API بازگردانده می‌شود)
       const draftBackup = this.composer.textarea.value;

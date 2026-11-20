@@ -63,6 +63,11 @@
               <span>📎</span>
               <span>فایل</span>
             </button>
+            <button type="button" class="attach-btn" id="btnOpenDrafts" title="پیش‌نویس‌های ذخیره‌شده" aria-label="پیش‌نویس‌ها">
+              <span>📝</span>
+              <span>پیش‌نویس‌ها</span>
+              <span class="draft-count-badge" id="draftCountBadge" hidden>0</span>
+            </button>
             <input type="file" id="fileUploadInput" accept=".txt,.md,.json,.csv,.pdf" multiple hidden>
           </div>
         </div>
@@ -131,6 +136,25 @@
             <button type="button" class="primary-btn" id="btnApplyManualModel">اعمال</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- پنجره پیش‌نویس‌های ذخیره‌شده -->
+  <div class="modal-backdrop" id="draftsModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>📝 پیش‌نویس‌ها</h3>
+        <button type="button" class="icon-btn" data-close-modal="draftsModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-hint">هر متنی که در کادر تایپ می‌نویسی خودکار ذخیره می‌شود؛ حتی اگر صفحه رفرش شود یا مرورگر بسته شود.</div>
+        <div class="input-row">
+          <input type="text" class="input-ctrl" id="draftSearch" placeholder="جست‌وجو در پیش‌نویس‌ها..." dir="auto">
+          <button type="button" class="secondary-btn" id="btnToggleArchivedDrafts">📦 آرشیو</button>
+        </div>
+        <div class="preset-list" id="draftList" style="max-height: 46vh; overflow-y: auto;"></div>
+        <div class="field-hint" id="draftEmptyHint" hidden>هنوز پیش‌نویسی ذخیره نشده است.</div>
       </div>
     </div>
   </div>
