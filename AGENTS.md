@@ -2220,3 +2220,79 @@ if (firstSystemIdx === -1) {
 
 `CACHE_NAME` → `emarat-portal-v116` · شاخه `Y-7` → `main`
 
+## 📤 ارسال گزارش تصویری باکیفیت به تلگرام (دستورالعمل تکرارپذیر)
+
+### 🚨 چرا Pillow کافی نیست
+Pillow فونت فارسی را **شکل‌دهی (shaping)** نمی‌کند — حروف جدا از هم می‌آیند («س ل ا م» به‌جای «سلام») و اتصالات خراب می‌شود. برای فارسی همیشه **Chromium** رندر کن.
+
+### 🚨 دام بزرگ: سقف ابعاد تلگرام
+`sendPhoto` تصویر را به **حداکثر ۲۵۶۰px در ضلع بزرگ‌تر** فشرده می‌کند. اگر تصویر بزرگ‌تر باشد، تلگرام آن را مچاله می‌کند و **متن تار می‌شود** — دقیقاً همان چیزی که نباید اتفاق بیفتد.
+
+| رویکرد | ابعاد | نتیجه |
+|---|---|---|
+| تک‌ستونی، `deviceScaleFactor: 3` | ۳۵۴۰×۵۴۹۳ | ❌ تلگرام فشرده می‌کند → تار |
+| **دو‌ستونی، `deviceScaleFactor: 2`** | **۲۴۸۰×۱۶۶۶** | ✅ زیر سقف، متن تیز |
+
+**قانون:** قبل از ارسال، `max(width, height) <= 2560` را بررسی کن. اگر بیشتر بود، **چیدمان را فشرده کن** (دو‌ستونی/سه‌ستونی) نه اینکه scale را کم کنی.
+
+### 🎯 دستور پخت رندر تیز
+
+```javascript
+const b = await puppeteer.launch({
+  executablePath: '/usr/bin/chromium',
+  args: ['--no-sandbox', '--allow-file-access-from-files',
+         '--font-render-hinting=none',   // جلوگیری از hinting ناهموار
+         '--disable-lcd-text',           // بدون subpixel (برای PNG بهتر)
+         '--force-color-profile=srgb'],
+  headless: true
+});
+await pg.setViewport({ width: 1240, height: 1000, deviceScaleFactor: 2 });
+await pg.goto('file:///tmp/docimg/report.html', { waitUntil: 'networkidle0' });
+await pg.evaluate(() => document.fonts.ready);   // ← حیاتی: بدون این فونت لود نشده رندر می‌شود
+await new Promise(r => setTimeout(r, 1000));
+const h = await pg.evaluate(() => document.body.scrollHeight);
+await pg.setViewport({ width: 1240, height: h, deviceScaleFactor: 2 });
+await (await pg.$('body')).screenshot({ path: 'final.png', type: 'png' });
+```
+
+**نکته:** `element.screenshot()` روی `body` بهتر از `fullPage: true` است — دقیقاً به اندازهٔ محتوا عکس می‌گیرد و حاشیهٔ اضافی نمی‌گذارد.
+
+### 🔤 فونت آفلاین
+`vendor/vazirmatn/fonts/Vazirmatn-{Regular,Bold}.woff2` با `@font-face` و مسیر **مطلق** (`/workspace/project/.../fonts/...`) در `file://` کار می‌کند.
+بعد از `goto`، **`document.fonts.ready`** را `await` کن؛ وگرنه متن با فونت پیش‌فرض رندر می‌شود.
+
+### 📏 سنجش کیفیت (بدون OCR)
+Tesseract در این محیط نیست. جایگزین: **واریانس لاپلاسی**.
+
+```python
+from PIL import Image, ImageFilter
+import statistics
+im = Image.open('final.png').convert('L')
+crop = im.crop((60, int(h*0.30), w-60, int(h*0.75)))   # ناحیهٔ متن
+lap = crop.filter(ImageFilter.Kernel((3,3), [-1,-1,-1,-1,8,-1,-1,-1,-1], scale=1, offset=128))
+var = statistics.pvariance(list(lap.get_flattened_data()))
+# بالای ۲۰۰ = تیز · زیر ۵۰ = تار
+```
+اندازه‌گیری واقعی این گزارش: **۱۱۷۳** (خیلی تیز) ✅
+
+### 📨 ارسال
+```bash
+curl -s -F "chat_id=-1002617482597" \
+     -F "photo=@/tmp/docimg/final.png" \
+     -F "caption=<caption.txt" \
+     "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendPhoto"
+```
+- `caption=<file` (نه `caption="$VAR"`) — برای متن چندخطی فارسی امن‌تر است.
+- **سقف کپشن `sendPhoto` = ۱۰۲۴ کاراکتر.** بیشتر → `Bad Request: message caption is too long`.
+- برای فایل بزرگ‌تر/بدون فشرده‌سازی: `sendDocument` (تا ۵۰MB).
+
+### 📍 کانال
+`TELEGRAM_CHAT_ID` در محیط نیست. با `getChat` از بین شناسه‌های موجود در مخزن انتخاب شد:
+
+| شناسه | نتیجه |
+|---|---|
+| `-1003757877147` | ❌ chat not found |
+| **`-1002617482597`** | ✅ channel «دنیا های قشنگ» |
+
+اگر `getUpdates` خالی بود (هیچ آپدیت تازه‌ای نبود)، `getChat` روی شناسه‌های کاندید را امتحان کن.
+
