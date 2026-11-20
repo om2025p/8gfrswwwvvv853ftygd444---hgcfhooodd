@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v101';
+const CACHE_NAME = 'emarat-portal-v102';
 const ASSETS = [
   './tree-samples/m1.html',
   './tree-samples/m2.html',
@@ -24,6 +24,15 @@ const ASSETS = [
   './usage/icon-512-maskable.png',
   './usage/apple-touch-icon.png',
   './usage/favicon.ico',
+  // Rescue App (full backup tool)
+  './rescue/index.html',
+  './rescue/manifest.json',
+  './rescue/icon-192.png',
+  './rescue/icon-512.png',
+  './rescue/icon-192-maskable.png',
+  './rescue/icon-512-maskable.png',
+  './rescue/apple-touch-icon.png',
+  './rescue/favicon.ico',
   './icon-192.png',
   './icon-512.png',
   './icon-192-maskable.png',

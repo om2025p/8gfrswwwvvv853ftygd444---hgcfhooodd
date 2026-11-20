@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>جعبهٔ نجات · پشتیبان کامل</title>
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="../favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="جعبهٔ نجات">
+<link rel="stylesheet" href="../vendor/vazirmatn/fonts.css">
+<style>
+  :root{
+    --bg:#0f172a; --card:#1a2437; --card2:#212e45; --border:#2f3f5c;
+    --text:#f1f5f9; --muted:#94a3b8; --accent:#38bdf8; --accent-fg:#052435;
+    --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --chip:#243149;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0}
+  body{
+    font-family:'Vazirmatn','Segoe UI',Tahoma,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.75;
+    padding:16px 14px calc(110px + env(safe-area-inset-bottom));
+    min-height:100vh;
+  }
+  h1{font-size:1.25rem; margin:0 0 4px; letter-spacing:-.3px}
+  .sub{color:var(--muted); font-size:.82rem; margin-bottom:16px}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px; margin-bottom:14px}
+  .card h2{font-size:.95rem; margin:0 0 10px; display:flex; align-items:center; gap:7px}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(104px,1fr)); gap:9px}
+  .stat{background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:10px 11px; text-align:center}
+  .stat b{display:block; font-size:1.22rem; color:var(--accent); line-height:1.35}
+  .stat span{font-size:.7rem; color:var(--muted)}
+  .tabs{display:flex; gap:6px; margin-bottom:14px; background:var(--card); padding:5px; border-radius:14px; border:1px solid var(--border)}
+  .tab{flex:1; padding:10px 6px; border:0; border-radius:10px; background:transparent; color:var(--muted);
+       font-family:inherit; font-size:.82rem; font-weight:600; cursor:pointer; transition:.18s; min-height:44px}
+  .tab.active{background:var(--accent); color:var(--accent-fg)}
+  .pane{display:none} .pane.active{display:block}
+  table{width:100%; border-collapse:collapse; font-size:.76rem}
+  th,td{padding:7px 6px; text-align:right; border-bottom:1px solid var(--border); vertical-align:top}
+  th{color:var(--muted); font-weight:600; font-size:.7rem; position:sticky; top:0; background:var(--card)}
+  td.k{font-family:ui-monospace,monospace; font-size:.68rem; word-break:break-all; color:#7dd3fc}
+  .wrap{max-height:340px; overflow:auto; border-radius:10px}
+  .app-chip{display:inline-block; background:var(--chip); color:var(--muted); border-radius:6px;
+            padding:1px 6px; font-size:.66rem; font-family:ui-monospace,monospace; direction:ltr}
+  button.act{
+    width:100%; padding:14px; border:0; border-radius:13px; font-family:inherit;
+    font-size:.95rem; font-weight:700; cursor:pointer; min-height:52px; transition:.16s;
+  }
+  .primary{background:var(--accent); color:var(--accent-fg)}
+  .primary:active{transform:scale(.985)}
+  .ghost{background:var(--card2); color:var(--text); border:1px solid var(--border)}
+  .danger{background:#b91c1c; color:#fff}
+  button:disabled{opacity:.45; cursor:not-allowed}
+  .row{display:flex; gap:9px; margin-top:10px; flex-wrap:wrap}
+  .row>*{flex:1; min-width:130px}
+  textarea{width:100%; min-height:150px; background:var(--card2); color:var(--text); border:1px solid var(--border);
+           border-radius:11px; padding:11px; font-family:ui-monospace,monospace; font-size:.7rem; direction:ltr; resize:vertical}
+  .msg{padding:11px 13px; border-radius:11px; font-size:.82rem; margin-top:11px; display:none}
+  .msg.show{display:block}
+  .msg.ok{background:rgba(52,211,153,.13); border:1px solid rgba(52,211,153,.45); color:#6ee7b7}
+  .msg.bad{background:rgba(248,113,113,.13); border:1px solid rgba(248,113,113,.45); color:#fca5a5}
+  .msg.warn{background:rgba(251,191,36,.13); border:1px solid rgba(251,191,36,.45); color:#fcd34d}
+  .msg.info{background:rgba(56,189,248,.13); border:1px solid rgba(56,189,248,.45); color:#7dd3fc}
+  .diag{font-size:.79rem; padding:9px 11px; border-radius:10px; margin-bottom:7px; display:flex; gap:8px; align-items:flex-start}
+  .diag.bad{background:rgba(248,113,113,.11); border-right:3px solid var(--bad)}
+  .diag.ok{background:rgba(52,211,153,.09); border-right:3px solid var(--ok)}
+  .diag.warn{background:rgba(251,191,36,.11); border-right:3px solid var(--warn)}
+  .diag code{font-family:ui-monospace,monospace; font-size:.7rem; direction:ltr; color:#7dd3fc; word-break:break-all}
+  .empty{text-align:center; color:var(--muted); padding:26px 10px; font-size:.83rem}
+  .footnote{font-size:.7rem; color:var(--muted); margin-top:8px; line-height:1.6}
+  .bigcount{font-size:1.6rem; font-weight:800; color:var(--ok); text-align:center; padding:6px 0}
+</style>
+</head>
+<body>
+
+<h1>🧰 جعبهٔ نجات</h1>
+<div class="sub">پشتیبان <b>کامل</b> از همهٔ داده‌های این مرورگر — بدون حذف هیچ چیزی</div>
+
+<div class="tabs">
+  <button class="tab active" data-pane="export">📤 گرفتن بکاپ</button>
+  <button class="tab" data-pane="inspect">🔍 بازرسی</button>
+  <button class="tab" data-pane="restore">📥 بازیابی</button>
+</div>
+
+<!-- ============ EXPORT ============ -->
+<section class="pane active" id="pane-export">
+  <div class="card">
+    <h2>📊 خلاصهٔ داده‌های این دستگاه</h2>
+    <div class="grid">
+      <div class="stat"><b id="s-keys">—</b><span>کلید</span></div>
+      <div class="stat"><b id="s-apps">—</b><span>اپ دارای داده</span></div>
+      <div class="stat"><b id="s-records">—</b><span>مجموع رکورد</span></div>
+      <div class="stat"><b id="s-size">—</b><span>حجم</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⬇️ ساختن فایل بکاپ</h2>
+    <div class="bigcount" id="willInclude">—</div>
+    <div class="footnote" style="text-align:center; margin-bottom:12px">
+      همهٔ کلیدها در فایل می‌روند. <b>هیچ چیزی حذف نمی‌شود</b> — نه توکن، نه رمز، نه تنظیمات.
+    </div>
+    <button class="act primary" id="btnDownload">📥 دانلود فایل بکاپ کامل</button>
+    <div class="msg" id="msgDownload"></div>
+    <div class="msg warn show" style="margin-top:11px">
+      🔒 این فایل شامل توکن گیت‌هاب شماست. آن را فقط در چت خصوصی بفرستید و در گیت کامیت نکنید.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🩺 عیب‌یابی خودکار تداخل کلیدها</h2>
+    <div id="diagnostics"><div class="empty">در حال بررسی…</div></div>
+  </div>
+
+  <div class="card">
+    <h2>📋 فهرست کلیدها</h2>
+    <div class="wrap">
+      <table>
+        <thead><tr><th>کلید</th><th>اپ</th><th>رکورد</th><th>حجم</th></tr></thead>
+        <tbody id="keyTable"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INSPECT ============ -->
+<section class="pane" id="pane-inspect">
+  <div class="card">
+    <h2>🔍 جست‌وجو در کلیدها</h2>
+    <textarea id="searchBox" style="min-height:44px; direction:rtl; font-family:inherit" placeholder="بخشی از نام کلید…"></textarea>
+    <div id="inspectList" style="margin-top:12px"></div>
+  </div>
+</section>
+
+<!-- ============ RESTORE ============ -->
+<section class="pane" id="pane-restore">
+  <div class="card">
+    <h2>📥 بازیابی از فایل بکاپ</h2>
+    <input type="file" id="fileInput" accept=".json,application/json"
+           style="width:100%; padding:12px; background:var(--card2); border:1px solid var(--border); border-radius:11px; color:var(--text); font-family:inherit; margin-bottom:11px">
+    <textarea id="pasteBox" placeholder="…یا محتوای JSON را اینجا بچسبانید"></textarea>
+    <button class="act ghost" id="btnPreview" style="margin-top:11px">👁️ پیش‌نمایش (بدون تغییر)</button>
+    <div class="msg" id="msgPreview"></div>
+    <div id="previewBox"></div>
+  </div>
+
+  <div class="card" id="confirmCard" style="display:none">
+    <h2>⚠️ تأیید نهایی</h2>
+    <div class="msg warn show" style="margin-top:0">
+      قبل از نوشتن، یک عکس فوری از وضعیت فعلی گرفته می‌شود تا در صورت اشتباه بتوانید برگردید.
+      کلیدهایی که در فایل نیستند <b>پاک نمی‌شوند</b>.
+    </div>
+    <button class="act danger" id="btnRestore">🔴 بله، بازیابی کن</button>
+    <button class="act ghost" id="btnCancel" style="margin-top:9px">انصراف</button>
+    <div class="msg" id="msgRestore"></div>
+  </div>
+</section>
+
+<script src="../usage-tracker.js" data-app="rescue"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- نقشهٔ مالکیت کلیدها ---------- */
+  const APP_PATTERNS = [
+    ['gold',      [/^percents$/, /^trash$/, /^goal$/, /^highlightedStates$/, /^highlightedPointIndices$/, /^statsMenuOpen$/, /^gold_/, /^gold1_/, /^github_backup_filepath_gold1$/]],
+    ['gold2',     [/^kian_percents$/, /^fixedIncome_/, /^theme_gold2$/]],
+    ['gold3',     [/^stock____________tas9yl/, /^kian_baseNumber$/, /^kian_peakNumber$/, /^kian_history$/, /^theme_gold3$/, /^daily_nav_leveraged_kiyan/]],
+    ['gold4',     [/^mofid_atie_/, /^pension_/, /^theme$/, /^theme_gold4$/, /^github_backup_filepath_gold4$/]],
+    ['gold5',     [/^energy_fund_synergy/, /^sinergy_/, /^theme_gold5$/, /^daily_asset_prices_v2$/, /^github_backup_filepath_gold5$/]],
+    ['gold6',     [/^cement_/, /^theme_gold6$/, /^github_backup_filepath_gold6$/]],
+    ['gold7',     [/^ahang_kian_/, /^theme_gold7$/]],
+    ['gold8',     [/^pharma_kian_/, /^theme_gold8$/, /^gold8_growth_theme$/]],
+    ['gold9',     [/^baharan_/, /^theme_gold9$/, /^gold9_growth_theme$/]],
+    ['monitor',   [/^monitor_/, /^MONITOR_/]],
+    ['monthly',   [/^fundManagerV10$/, /^monthly_deposit_/, /^monthly_deposit_sync$/]],
+    ['usage',     [/^emarat_usage_stats/, /^emr_usage_/]],
+    ['family',    [/^emarat_family_/, /^family_/]],
+    ['portal',    [/^portal_/, /^ARCHIVED/, /^emarat_portal/]],
+    ['github',    [/^github_backup_/]],
+    ['global',    [/^emarat_/, /^custom_gemini_api_key$/, /^ai_tg_/, /^workout_/]]
+  ];
+
+  const SECRET_RE = /token|secret|password|passwd|api_key|apikey|session|cookie|auth|credential/i;
+
+  function ownerOf(key) {
+    for (const [app, pats] of APP_PATTERNS) {
+      for (const p of pats) if (p.test(key)) return app;
+    }
+    return '—';
+  }
+
+  function recordCount(raw) {
+    if (raw == null) return 0;
+    let v;
+    try { v = JSON.parse(raw); } catch (e) { return 1; }
+    if (Array.isArray(v)) return v.length;
+    if (v && typeof v === 'object') {
+      if (Array.isArray(v.percents)) return v.percents.length;
+      if (Array.isArray(v.history)) return v.history.length;
+      return Object.keys(v).length;
+    }
+    return 1;
+  }
+
+  function bytes(str) { return new Blob([str || '']).size; }
+  function fmtSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(2) + ' MB';
+  }
+  const faNum = n => String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  /* ---------- اسکن ---------- */
+  function scan() {
+    const rows = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k === 'emarat_last_modified' || k === 'emarat_sync_counter') continue;
+      const v = localStorage.getItem(k);
+      rows.push({ key: k, val: v, app: ownerOf(k), records: recordCount(v), size: bytes(v) });
+    }
+    rows.sort((a, b) => (a.app === b.app ? a.key.localeCompare(b.key) : a.app.localeCompare(b.app)));
+    return rows;
+  }
+
+  let ROWS = scan();
+
+  function renderSummary() {
+    const apps = new Set(ROWS.map(r => r.app).filter(a => a !== '—' && a !== 'github' && a !== 'global' && a !== 'portal'));
+    document.getElementById('s-keys').textContent = faNum(ROWS.length);
+    document.getElementById('s-apps').textContent = faNum(apps.size);
+    document.getElementById('s-records').textContent = faNum(ROWS.reduce((s, r) => s + r.records, 0));
+    document.getElementById('s-size').textContent = fmtSize(ROWS.reduce((s, r) => s + r.size, 0));
+    document.getElementById('willInclude').textContent = faNum(ROWS.length) + ' کلید در فایل می‌رود';
+  }
+
+  function renderTable() {
+    const tb = document.getElementById('keyTable');
+    if (!ROWS.length) { tb.innerHTML = '<tr><td colspan="4"><div class="empty">هیچ کلیدی یافت نشد</div></td></tr>'; return; }
+    tb.innerHTML = ROWS.map(r =>
+      `<tr>
+        <td class="k">${esc(r.key)}</td>
+        <td><span class="app-chip">${esc(r.app)}</span></td>
+        <td>${r.records ? faNum(r.records) : '—'}</td>
+        <td>${fmtSize(r.size)}</td>
+      </tr>`).join('');
+  }
+
+  function renderDiagnostics() {
+    const box = document.getElementById('diagnostics');
+    const keys = new Set(ROWS.map(r => r.key));
+    const out = [];
+
+    if (keys.has('github_backup_filepath')) {
+      out.push(['bad', '🔴 <b>کلید مشترک مسیر بکاپ</b> — <code>github_backup_filepath</code> وجود دارد. ' +
+        'این کلید بین <code>gold3</code>، <code>gold5</code> و <code>gold6</code> مشترک است و می‌تواند بکاپ قیمت یک صندوق را روی فایل صندوق دیگر بنویسد.']);
+    } else {
+      out.push(['ok', '✅ کلید مشترک <code>github_backup_filepath</code> وجود ندارد.']);
+    }
+
+    const bare = ['percents', 'trash', 'goal'].filter(k => keys.has(k));
+    if (bare.length) {
+      out.push(['bad', '🔴 <b>کلید عمومی داده</b> — ' + bare.map(k => '<code>' + k + '</code>').join(' ، ') +
+        ' بدون پیشوند اپ ذخیره شده‌اند (اپ «ثبت درصد ۱»). این‌ها با دیدبان و هر اپ دیگری در یک قلمرو مشترک‌اند.']);
+    } else {
+      out.push(['ok', '✅ هیچ کلید دادهٔ بی‌پسوندی (<code>percents</code> / <code>trash</code> / <code>goal</code>) یافت نشد.']);
+    }
+
+    if (keys.has('theme')) {
+      out.push(['warn', '🟡 کلید عمومی <code>theme</code> وجود دارد (gold4 و liquidity از آن استفاده می‌کنند) — تداخل تم، کم‌خطر.']);
+    }
+
+    const perApp = {};
+    ROWS.forEach(r => { if (r.app.startsWith('gold')) perApp[r.app] = (perApp[r.app] || 0) + r.records; });
+    const active = Object.keys(perApp).filter(a => perApp[a] > 0);
+    if (active.length) {
+      out.push(['ok', '📦 رکوردهای هر اپ: ' + active.sort().map(a =>
+        `<code>${a}</code>=${faNum(perApp[a])}`).join(' · ')]);
+    } else {
+      out.push(['warn', '⚠️ هیچ رکورد درصدی در این مرورگر پیدا نشد. مطمئن شوید از همان دامنه‌ای باز کرده‌اید که اپ‌ها را استفاده می‌کنید.']);
+    }
+
+    if (keys.has('github_backup_token')) {
+      out.push(['ok', '🔑 توکن گیت‌هاب موجود است و <b>در فایل بکاپ می‌رود</b> (طبق درخواست شما).']);
+    }
+
+    box.innerHTML = out.map(([cls, html]) => `<div class="diag ${cls}"><div>${html}</div></div>`).join('');
+  }
+
+  function buildPayload() {
+    const data = {};
+    ROWS.forEach(r => { data[r.key] = r.val; });
+    const perApp = {};
+    ROWS.forEach(r => { if (r.app.startsWith('gold')) perApp[r.app] = (perApp[r.app] || 0) + r.records; });
+    return {
+      _meta: {
+        tool: 'جعبهٔ نجات',
+        generatedAt: new Date().toISOString(),
+        origin: location.origin,
+        keyCount: Object.keys(data).length,
+        appRecords: perApp
+      },
+      data: data
+    };
+  }
+
+  function showMsg(id, cls, html) {
+    const el = document.getElementById(id);
+    el.className = 'msg show ' + cls;
+    el.innerHTML = html;
+  }
+
+  document.getElementById('btnDownload').addEventListener('click', () => {
+    const payload = buildPayload();
+    const str = JSON.stringify(payload, null, 2);
+    const d = new Date();
+    const stamp = d.toISOString().slice(0, 16).replace(/[:T]/g, '-');
+    const name = `full_backup_${stamp}.json`;
+    const blob = new Blob([str], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    showMsg('msgDownload', 'ok',
+      `✅ فایل <b>${esc(name)}</b> ساخته شد — ${faNum(payload._meta.keyCount)} کلید، ${fmtSize(bytes(str))}.<br>` +
+      `هیچ کلیدی حذف نشد. اگر دانلود شروع نشد، تب «بازرسی» را ببینید و از دکمهٔ کپی استفاده کنید.`);
+  });
+
+  function renderInspect() {
+    const q = (document.getElementById('searchBox').value || '').trim().toLowerCase();
+    const list = ROWS.filter(r => !q || r.key.toLowerCase().includes(q) || r.app.includes(q));
+    const box = document.getElementById('inspectList');
+    if (!list.length) { box.innerHTML = '<div class="empty">نتیجه‌ای نبود</div>'; return; }
+    box.innerHTML = list.map(r => {
+      const preview = (r.val || '').length > 160 ? (r.val || '').slice(0, 160) + '…' : (r.val || '');
+      const masked = SECRET_RE.test(r.key) ? '🔐 مقدار پنهان (کلید حساس) — ولی در فایل بکاپ کامل هست' : esc(preview);
+      return `<div class="card" style="margin-bottom:9px; padding:11px">
+        <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap">
+          <span class="k">${esc(r.key)}</span>
+          <span class="app-chip">${esc(r.app)}</span>
+        </div>
+        <div style="font-size:.72rem; color:var(--muted); margin-top:5px">
+          ${r.records ? faNum(r.records) + ' رکورد · ' : ''}${fmtSize(r.size)}
+        </div>
+        <div style="font-family:ui-monospace,monospace; font-size:.66rem; direction:ltr; margin-top:6px;
+                    color:#94a3b8; word-break:break-all; max-height:80px; overflow:auto">${masked}</div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('searchBox').addEventListener('input', renderInspect);
+
+  let pendingPayload = null;
+
+  function parseInput() {
+    const raw = document.getElementById('pasteBox').value.trim();
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (e) { return { __err: e.message }; }
+  }
+
+  document.getElementById('fileInput').addEventListener('change', ev => {
+    const f = ev.target.files[0];
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      document.getElementById('pasteBox').value = rd.result;
+      document.getElementById('btnPreview').click();
+      ev.target.value = '';
+    };
+    rd.readAsText(f);
+  });
+
+  document.getElementById('btnPreview').addEventListener('click', () => {
+    const p = parseInput();
+    if (!p) { showMsg('msgPreview', 'bad', '❌ چیزی وارد نشده.'); return; }
+    if (p.__err) { showMsg('msgPreview', 'bad', '❌ JSON نامعتبر: ' + esc(p.__err)); return; }
+
+    const data = p.data && typeof p.data === 'object' ? p.data : p;
+    const keys = Object.keys(data);
+    if (!keys.length) { showMsg('msgPreview', 'bad', '❌ هیچ کلیدی در فایل نیست.'); return; }
+
+    pendingPayload = data;
+
+    const before = {}; ROWS.forEach(r => { before[r.key] = r.records; });
+    let rowsHtml = '';
+    let increased = 0, decreased = 0, fresh = 0;
+    keys.forEach(k => {
+      const after = recordCount(data[k]);
+      const b = before[k];
+      let badge;
+      if (b === undefined) { badge = '<span style="color:#7dd3fc">جدید</span>'; fresh++; }
+      else if (after > b) { badge = `<span style="color:#34d399">${faNum(b)} → ${faNum(after)}</span>`; increased++; }
+      else if (after < b) { badge = `<span style="color:#f87171">${faNum(b)} → ${faNum(after)}</span>`; decreased++; }
+      else { badge = `<span style="color:#94a3b8">${faNum(after)} (بی‌تغییر)</span>`; }
+      rowsHtml += `<tr><td class="k">${esc(k)}</td><td><span class="app-chip">${esc(ownerOf(k))}</span></td><td>${badge}</td></tr>`;
+    });
+
+    document.getElementById('previewBox').innerHTML =
+      `<div class="wrap" style="max-height:280px; margin-top:12px"><table>
+        <thead><tr><th>کلید</th><th>اپ</th><th>رکورد (قبل → بعد)</th></tr></thead>
+        <tbody>${rowsHtml}</tbody></table></div>`;
+
+    const warn = decreased > 0
+      ? `<br>🔴 <b>${faNum(decreased)} کلید رکورد کمتری دارد!</b> اگر عمدی نیست، بازیابی نکنید.`
+      : '';
+    showMsg('msgPreview', decreased ? 'warn' : 'ok',
+      `✅ ${faNum(keys.length)} کلید آماده است — ${faNum(increased)} افزایش، ${faNum(fresh)} جدید، ${faNum(decreased)} کاهش.${warn}`);
+    document.getElementById('confirmCard').style.display = 'block';
+  });
+
+  document.getElementById('btnCancel').addEventListener('click', () => {
+    pendingPayload = null;
+    document.getElementById('confirmCard').style.display = 'none';
+    showMsg('msgPreview', 'info', 'لغو شد. هیچ تغییری اعمال نشد.');
+  });
+
+  document.getElementById('btnRestore').addEventListener('click', () => {
+    if (!pendingPayload) return;
+
+    try {
+      const snap = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        snap[k] = localStorage.getItem(k);
+      }
+      localStorage.setItem('emarat_pre_restore_snapshot', JSON.stringify({
+        at: Date.now(), keys: Object.keys(snap).length, data: snap
+      }));
+    } catch (e) {
+      showMsg('msgRestore', 'bad', '❌ عکس فوری ایمنی ساخته نشد (' + esc(e.message) + ') — بازیابی متوقف شد.');
+      return;
+    }
+
+    let written = 0, failed = 0;
+    Object.keys(pendingPayload).forEach(k => {
+      try { localStorage.setItem(k, pendingPayload[k]); written++; }
+      catch (e) { failed++; }
+    });
+
+    showMsg('msgRestore', failed ? 'warn' : 'ok',
+      `✅ ${faNum(written)} کلید نوشته شد` +
+      (failed ? ` — ${faNum(failed)} ناموفق (حافظه پر است؟)` : '') +
+      `<br>🛟 عکس فوری قبلی در <code>emarat_pre_restore_snapshot</code> ذخیره شد.` +
+      `<br><br><button class="act primary" onclick="location.reload()">🔄 بارگذاری مجدد صفحه</button>`);
+
+    document.getElementById('confirmCard').style.display = 'none';
+    pendingPayload = null;
+  });
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('pane-' + t.dataset.pane).classList.add('active');
+      if (t.dataset.pane === 'inspect') renderInspect();
+    });
+  });
+
+  renderSummary();
+  renderTable();
+  renderDiagnostics();
+})();
+</script>
+<script src="../refresh-button.js"></script>
+</body>
+</html>

@@ -48,3 +48,10 @@ fund-automation-android/local.properties
 
 # Full conversation transcript: working artifact (sent to Telegram), not a project file
 docs/CONVERSATION-full-transcript.md
+
+# Secure drop folder for user data exports — NEVER commit (repo is PUBLIC)
+_incoming/
+
+# Node modules (test tooling only)
+node_modules/
+package-lock.json
