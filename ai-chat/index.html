@@ -4092,7 +4092,22 @@ ${recentMessagesStr.substring(0, 400000)}`; // جهت جلوگیری از تجا
             const token = localStorage.getItem("github_backup_token");
             const repo = localStorage.getItem("github_backup_repo");
             const branch = localStorage.getItem("github_backup_branch") || "main";
-            let filePath = localStorage.getItem("github_backup_filepath");
+            /* مسیر بکاپ اختصاصی این اپ — جلوگیری از بازنویسی متقابل کلید مشترک
+   (باعث بازگشت تاریخچه به چند ماه قبل می‌شد) */
+const FILEPATH_KEY = "github_backup_filepath_ai_chat";
+const DEFAULT_FILEPATH = "backups/ai_chat_backup.json";
+
+(function migrateLegacyFilepath() {
+    try {
+        if (localStorage.getItem(FILEPATH_KEY)) return;
+        const legacy = localStorage.getItem(FILEPATH_KEY);
+        if (legacy && legacy.indexOf("ai_chat") !== -1) {
+            localStorage.setItem(FILEPATH_KEY, legacy);
+        }
+    } catch (_) {}
+})();
+
+let filePath = localStorage.getItem(FILEPATH_KEY);
 
             if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست. لطفاً آن را در پورتال اصلی پیکربندی کنید." };
 

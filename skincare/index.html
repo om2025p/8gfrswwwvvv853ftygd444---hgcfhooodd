@@ -952,7 +952,7 @@
         document.getElementById("gh_token").value = localStorage.getItem("github_backup_token") || "";
         document.getElementById("gh_repo").value = localStorage.getItem("github_backup_repo") || "";
         document.getElementById("gh_branch").value = localStorage.getItem("github_backup_branch") || "";
-        document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "backups/skincare_backup.json";
+        document.getElementById("gh_filepath").value = localStorage.getItem(FILEPATH_KEY) || "backups/skincare_backup.json";
     }
 
     function closeGithubSettings() {
@@ -968,7 +968,7 @@
         localStorage.setItem("github_backup_token", token);
         localStorage.setItem("github_backup_repo", repo);
         localStorage.setItem("github_backup_branch", branch || "main");
-        localStorage.setItem("github_backup_filepath", filepath || "backups/skincare_backup.json");
+        localStorage.setItem(FILEPATH_KEY, filepath || "backups/skincare_backup.json");
 
         alert("✅ تنظیمات گیت‌هاب با موفقیت ذخیره شد!");
         closeGithubSettings();
@@ -979,7 +979,22 @@
         const token = localStorage.getItem("github_backup_token");
         const repo = localStorage.getItem("github_backup_repo");
         const branch = localStorage.getItem("github_backup_branch") || "main";
-        let filePath = localStorage.getItem("github_backup_filepath");
+        /* مسیر بکاپ اختصاصی این اپ — جلوگیری از بازنویسی متقابل کلید مشترک
+   (باعث بازگشت تاریخچه به چند ماه قبل می‌شد) */
+const FILEPATH_KEY = "github_backup_filepath_skincare";
+const DEFAULT_FILEPATH = "backups/skincare_backup.json";
+
+(function migrateLegacyFilepath() {
+    try {
+        if (localStorage.getItem(FILEPATH_KEY)) return;
+        const legacy = localStorage.getItem(FILEPATH_KEY);
+        if (legacy && legacy.indexOf("skincare") !== -1) {
+            localStorage.setItem(FILEPATH_KEY, legacy);
+        }
+    } catch (_) {}
+})();
+
+let filePath = localStorage.getItem(FILEPATH_KEY);
 
         if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست." };
 

@@ -2296,3 +2296,147 @@ curl -s -F "chat_id=-1002617482597" \
 
 اگر `getUpdates` خالی بود (هیچ آپدیت تازه‌ای نبود)، `getChat` روی شناسه‌های کاندید را امتحان کن.
 
+
+---
+
+## 🛡️ قانون مالکیت کلیدهای ذخیره‌سازی (Key Ownership Constitution)
+
+> 🚨 **این قانون از یک باگ واقعیِ نابودکنندهٔ داده زاده شد. قبل از هر تغییر در `storage-guard.js` بخوانید.**
+
+### ریشهٔ باگ (v103 → v107)
+`storage-guard.js` در `autoHealOnLoad()` — که **هر بار با لود شدن هر صفحه** اجرا می‌شود — تابع `freeVerifiedSpace()` را صدا می‌زد. آن تابع ۹ کلید را «یتیم» می‌شمرد و **از `localStorage` حذف می‌کرد**:
+
+```
+symbolsCache · navAnalysisDatasets · navChartListDatasets · navAnalysisData
+navAnalysisMeta · navAnalysisCurrentId · navChartListCurrentId
+navAnalysisMigratedToIDB_v1 · marjan_images_v1
+```
+
+محتوای واقعی‌شان (از بکاپ ۵٫۶MB کاربر) **دادهٔ آپلودی** بود، نه کش:
+
+| کلید | محتوا |
+|---|---|
+| `symbolsCache` | ۸ نماد بورسی — عیار ۱٬۹۹۷ روز (۱۳۹۷/۰۳/۱۲..۱۴۰۵/۰۷/۰۴)، آبادا ۱٬۴۹۷ روز |
+| `navChartListDatasets` | دیتاست ۳٬۸۷۵ روزه (۱۳۹۴/۱۱/۱۷ تا ۱۴۰۵/۰۶/۲۴) |
+| `navAnalysisDatasets` | ۳ دیتاست: ۳٬۸۷۵ + ۵۰۶ + ۱۱۴ روز |
+| `navAnalysisData` | ۵۰۶ روز NAV |
+| `marjan_images_v1` | ۵ تصویر base64 (WebP + JPEG) |
+
+### 🎯 درس کلیدی
+**«یتیم» یعنی «هیچ صفحه‌ای در مخزن فعلی نمی‌خواند» — نه «بی‌ارزش» و نه «کش».**
+اپی که این کلیدها را می‌نوشت از مخزن حذف شده بود. شرط «کپی یکسان در IndexedDB» هم نجات نمی‌داد، چون فقط یعنی «جای دیگری هست»، نه «کاربر نمی‌خواهد».
+
+### ✅ قوانین الزامی
+۱. **`ORPHAN_KEYS` فقط برای کش واقعیِ بازتولیدشدنی.** هر کلیدی که کاربر یا اپ ساخته (آپلود، تاریخچه، تصویر، توکن) هرگز در این فهرست نمی‌آید.
+۲. **هر کلید داده‌ای باید مالک داشته باشد** در `KEY_OWNERS` (ثبت‌شده در `storage-guard.js`). `freeVerifiedSpace` قبل از هر حذف `isProtected(k)` را می‌سنجد — گارد دوم، حتی اگر کلید به `ORPHAN_KEYS` برگردد.
+۳. **اپ جدید** باید در اولین لود خود ثبت مالکیت کند:
+   ```html
+   <script src="../storage-guard.js"></script>
+   <script>
+   if (window.EmaratStorage) window.EmaratStorage.registerOwner('myapp_', 'نام اپ');
+   </script>
+   ```
+۴. **پیشوند کلید باید یکتا باشد** و با نام اپ هم‌خوان. `html_viewer_` = نمایشگر کد (۱۳ کلید).
+۵. **قبل از هر تغییر در `freeVerifiedSpace`** با Chromium تست کن: کلید داده‌ای seed کن → `mirrorAll()` + `freeVerifiedSpace()` → بررسی `alive` و `freed.length === 0`.
+
+### 📤 API عمومی
+```javascript
+EmaratStorage.KEY_OWNERS          // نقشهٔ پیشوند → نام اپ
+EmaratStorage.ownerOf(key)        // نام مالک یا null
+EmaratStorage.registerOwner(p,a)  // ثبت مالکیت در زمان اجرا
+EmaratStorage.isProtected(key)    // true اگر مالک داشته باشد
+```
+
+---
+
+## 💾 بکاپ کامل رمزگذاری‌شده (monitor/index.html)
+
+### دو خروجی، دو هدف
+| خروجی | محتوا | رمز |
+|---|---|---|
+| **فایل محلی** (دانلود) | `_meta` + `data` (همهٔ localStorage) + `_shadow` (سایهٔ IndexedDB) | 🔓 همیشه بدون رمز |
+| **ابر کلودفلر** | اگر `cf_backup_pass` تنظیم شده باشد → پوشش رمزگذاری‌شده؛ وگرنه فقط `data` | 🔐 اختیاری |
+
+### قالب فایل محلی (v2)
+```json
+{ "_meta": { "format":"emarat-full-backup-v2", "localStorageKeys":362,
+             "shadowKeys":0, "ownedCounts":{"نمایشگر کد":13}, "hasIndexedDB":true },
+  "data": { "key":"value", ... },
+  "_shadow": { "key":"value", ... } }
+```
+
+### پوشش رمزگذاری‌شده
+```json
+{ "_meta": { "format":"emarat-encrypted-v1", "kdf":"PBKDF2-SHA256",
+             "iterations":310000, "cipher":"AES-GCM-256", "salt":"…", "iv":"…" },
+  "payload": "base64(ciphertext)" }
+```
+پیاده‌سازی: `crypto.subtle` بومی مرورگر — **بدون کتابخانهٔ خارجی** (قانون آفلاین). توابع: `bkEncrypt` / `bkDecrypt` / `collectFullBackup`.
+
+### ⚠️ ریسک‌ها
+- **رمز فراموش‌شده = بکاپ ابری از دست رفته.** هیچ راه بازیابی وجود ندارد (کلید از رمز مشتق می‌شود). فایل محلی نجات‌دهنده است.
+- PBKDF2 با ۳۱۰٬۰۰۰ دور روی گوشی قدیمی ۱–۲ ثانیه طول می‌کشد — عمدی است.
+- `cf_backup_pass` فقط در `localStorage` همان مرورگر است؛ بین دستگاه‌ها منتقل نمی‌شود.
+
+### بازیابی — سه قالب پذیرفته می‌شود
+۱. **مسطح قدیمی** (`{gold_history:"…"}`) → سازگاری کامل با بکاپ‌های قبل از v117
+۲. **v2** (`{_meta, data, _shadow}`) → سایهٔ IndexedDB هم بازگردانده می‌شود
+۳. **رمزگذاری‌شده** → رمز پرسیده می‌شود؛ رمز غلط پیام تمیز می‌دهد، داده را خراب نمی‌کند
+
+---
+
+## 🔐 وضعیت رازها (بررسی‌شده با git history)
+
+| راز | در گیت فعلی | در تاریخچهٔ گیت | در بکاپ ابری |
+|---|---|---|---|
+| سشن تلگرام (`BAGUY…`) | ✅ **نه** | ✅ **نه** (۰ کامیت) | ⚠️ بله |
+| توکن CF (`cfut_…`) | ⚠️ در `monitor/index.html` (تکه‌تکه) | 🔴 بله (`4fafe8a`) | — |
+| کلید Gemini (`AQ.Ab8…`) | ⚠️ در `gym/index.html` (atob) | 🔴 بله (`0cb2e2b`) | — |
+
+**تصمیم کاربر:** توکن‌ها **حفظ شدند** تا اپ‌ها نیاز به وارد کردن دستی نداشته باشند. `getCfBackupToken()` اکنون توکن `localStorage` را در اولویت می‌گذارد تا امکان چرخش بدون تغییر کد باشد.
+
+**⚠️ برای امنیت کامل:** توکن CF و کلید Gemini را در کنسول ارائه‌دهنده **باطل** کنید — حذف از کد کافی نیست چون در تاریخچه باقی می‌مانند.
+
+### `_incoming/` — هرگز کامیت نمی‌شود
+بکاپ‌های محلی حاوی ۲۸ راز هستند (شامل `restricted_bot_tgSession`). در `.gitignore:53` هستند و روی ریموت وجود ندارند (تأیید با API: HTTP 404).
+
+### 🔴 ادامهٔ باگ — چهار فایل باقی‌مانده (v118)
+
+رفع v115 فقط `price.html` های gold3/gold5/gold6 را درست کرد. **چهار فایل دیگر هنوز کلید مشترک را می‌نوشتند** و همان بازگشت چند ماهه را می‌ساختند:
+
+| فایل | کلید تازه |
+|---|---|
+| `gym/index.html` | `github_backup_filepath_gym` |
+| `skincare/index.html` | `github_backup_filepath_skincare` |
+| `ai-chat/index.html` | `github_backup_filepath_ai_chat` |
+| `fund-automation-android/.../webapp/gold5/price.html` | `github_backup_filepath_gold5` |
+
+**نکته:** آینهٔ اندروید از رفع v115 جا مانده بود — همان دام «همگام‌سازی آینه» که در بخش‌های دیگر هم تکرار شده.
+
+**الگوی درست (سه بخش، هر سه لازم):**
+```javascript
+const FILEPATH_KEY = "github_backup_filepath_<app>";
+const DEFAULT_FILEPATH = "backups/<app>_backup.json";
+(function migrateLegacyFilepath() {           // مهاجرت یک‌باره
+    try {
+        if (localStorage.getItem(FILEPATH_KEY)) return;
+        const legacy = localStorage.getItem("github_backup_filepath");
+        if (legacy && legacy.indexOf("<app>") !== -1) {   // ← فیلتر اجباری
+            localStorage.setItem(FILEPATH_KEY, legacy);
+        }
+    } catch (_) {}
+})();
+// همهٔ خواندن/نوشتن‌ها با FILEPATH_KEY — نه رشتهٔ ثابت
+```
+**فیلتر `indexOf(app)` حیاتی است:** بدون آن، مسیر gold5 به gold3 منتقل می‌شود و باگ فقط جابه‌جا می‌شود.
+
+**بررسی خودکار:**
+```bash
+grep -rn 'setItem(\s*"github_backup_filepath"' --include=*.html .   # باید صفر باشد
+grep -rn 'getItem(\s*"github_backup_filepath"' --include=*.html .   # فقط داخل migrateLegacyFilepath
+```
+**تست (Chromium، شبکه مسدود):** سه صفحه را پشت‌سرهم باز کن، مسیر هرکدام را جدا ذخیره کن، سپس بررسی کن که هر کلید مقدار خودش را دارد و `github_backup_filepath` خالی مانده.
+
+**gold7/gold8/gold9:** `price.html` آن‌ها هیچ بکاپ گیت‌هابی ندارد (صفر ارجاع) → این باگ در آن‌ها وجود ندارد.
+
+`CACHE_NAME` → `emarat-portal-v118`
