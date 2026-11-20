@@ -54,12 +54,30 @@
             if (res.status === 200) {
                 const cloudBackup = await res.json();
                 if (cloudBackup && cloudBackup.timestamp && cloudBackup.data) {
-                    // اگر حافظه محلی خالی باشد، از ابر پر می‌شود
-                    const isLocalEmpty = localStorage.length <= 2; // فقط emarat_last_modified / emarat_sync_counter
+                    // 🚨 گارد بحرانی: ابر فقط وقتی «پرکنندهٔ جای خالی» است که
+                    // روی گوشی هیچ کلید دادهٔ واقعی‌ای نباشد.
+                    //
+                    // نسخهٔ قبلی `localStorage.length <= 2` را می‌سنجید؛ این شمارش
+                    // شامل کلیدهای تنظیمات/تم/گیت‌هاب هم می‌شد. با یک کلید تنظیمات
+                    // (مثلاً sb_settings_v1)، شرط برقرار می‌شد و نسخهٔ کهنهٔ ابری
+                    // روی تاریخچهٔ تازهٔ گوشی می‌نشست → بازگشت چند ماه به عقب.
+                    //
+                    // حالا فقط کلیدهای «داده» شمرده می‌شوند، نه تنظیمات.
+                    const DATA_KEY_PATTERN = /(_percents$|_history$|_baseNumber$|_peakNumber$|^percents$|^trash$|^gold_percents$|_prices_|_prices$|_percents_|fundManagerV10|emarat_family_tree|calculatorTab_)/;
+                    const IGNORED_KEYS = ['emarat_last_modified', 'emarat_sync_counter'];
+                    let localDataKeys = 0;
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const k = localStorage.key(i);
+                        if (IGNORED_KEYS.indexOf(k) !== -1) continue;
+                        if (k.indexOf('emarat_usage_stats') === 0 || k.indexOf('emr_usage_') === 0) continue;
+                        if (DATA_KEY_PATTERN.test(k)) localDataKeys++;
+                    }
 
-                    // اگر هر داده‌ای روی گوشی هست، ابر فقط «پرکنندهٔ جای خالی» است، نه جایگزین.
-                    // بدون این گارد، نبودِ emarat_last_modified باعث می‌شد نسخهٔ کهنهٔ ابری
-                    // روی دادهٔ تازهٔ گوشی بنشیند و تاریخچه چند ماه عقب برود.
+                    // اگر حداقل یک کلید دادهٔ واقعی روی گوشی هست، ابر دست نمی‌زند.
+                    // بدون این گارد، نبودِ emarat_last_modified باعث می‌شد نسخهٔ کهنهٔ
+                    // ابری روی دادهٔ تازهٔ گوشی بنشیند و تاریخچه چند ماه عقب برود.
+                    const isLocalEmpty = localDataKeys === 0;
+
                     if (isLocalEmpty) {
                         console.log("Local storage is empty. Restoring from cloud...");
                         let changed = false;

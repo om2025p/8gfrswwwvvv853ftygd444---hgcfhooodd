@@ -828,11 +828,32 @@
         priceInput.focus();
     }
 
+    /* ------------------------------------------------------------------
+       کلید اختصاصی مسیر بکاپ این اپ.
+       قبلاً همهٔ اپ‌ها از کلید مشترک «github_backup_filepath» استفاده می‌کردند؛
+       باز کردن یک اپ، مسیر بکاپ اپ دیگر را بازنویسی می‌کرد و تاریخچه روی
+       فایل اشتباه می‌نشست (بازگشت چند ماه به عقب).
+       ------------------------------------------------------------------ */
+    const FILEPATH_KEY = "github_backup_filepath_gold6";
+    const DEFAULT_FILEPATH = "backups/gold6_price_backup.json";
+
+    // مهاجرت یک‌باره هنگام بارگذاری صفحه: مقدار قدیمی مشترک (اگر مربوط به همین
+    // اپ باشد) به کلید اختصاصی منتقل می‌شود تا تنظیم کاربر گم نشود.
+    (function migrateLegacyFilepath() {
+        try {
+            if (localStorage.getItem(FILEPATH_KEY)) return;
+            const legacy = localStorage.getItem("github_backup_filepath");
+            if (legacy && legacy.indexOf("gold6") !== -1) {
+                localStorage.setItem(FILEPATH_KEY, legacy);
+            }
+        } catch (_) { /* دسترسی به localStorage ممکن است مسدود باشد */ }
+    })();
+
     async function uploadToGitHub(contentString, fileName) {
         const token = localStorage.getItem("github_backup_token");
         const repo = localStorage.getItem("github_backup_repo");
         const branch = localStorage.getItem("github_backup_branch") || "main";
-        let filePath = localStorage.getItem("github_backup_filepath");
+        let filePath = localStorage.getItem(FILEPATH_KEY);
 
         if (!token || !repo) return { success: false, message: "تنظیمات گیت‌هاب کامل نیست." };
 
@@ -883,7 +904,7 @@
         document.getElementById("gh_token").value = localStorage.getItem("github_backup_token") || "";
         document.getElementById("gh_repo").value = localStorage.getItem("github_backup_repo") || "";
         document.getElementById("gh_branch").value = localStorage.getItem("github_backup_branch") || "";
-        document.getElementById("gh_filepath").value = localStorage.getItem("github_backup_filepath") || "backups/cement_price_backup.json";
+        document.getElementById("gh_filepath").value = localStorage.getItem(FILEPATH_KEY) || "backups/cement_price_backup.json";
     }
 
     function closeGithubSettings() {
@@ -899,7 +920,7 @@
         localStorage.setItem("github_backup_token", token);
         localStorage.setItem("github_backup_repo", repo);
         localStorage.setItem("github_backup_branch", branch || "main");
-        localStorage.setItem("github_backup_filepath", filepath || "backups/cement_price_backup.json");
+        localStorage.setItem(FILEPATH_KEY, filepath || "backups/cement_price_backup.json");
 
         showMessage("✅ تنظیمات گیت‌هاب ذخیره شد");
         closeGithubSettings();

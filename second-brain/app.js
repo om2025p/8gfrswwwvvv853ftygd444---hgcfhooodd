@@ -350,7 +350,11 @@
       this.defaults = {
         baseUrl: 'https://openrouter.ai/api/v1',
         modelId: 'google/gemini-2.0-flash-exp:free',
-        maxTokens: 4096,
+        maxTokens: 2048,
+        // سطح طول پاسخ: short | medium | long | max
+        responseLength: 'medium',
+        // محافظه‌کاری پاسخ: ۰ (آزادتر) تا ۱۰۰ (سخت‌گیرتر) — جدا از دستورالعمل پایه
+        ethicsLevel: 50,
         temperature: 0.7,
         topP: 1.0,
         frequencyPenalty: 0,
@@ -767,11 +771,27 @@
         throw new Error('شناسه مدل انتخاب نشده است.');
       }
 
+      // دستورالعمل محافظه‌کاری جدا از دستورالعمل پایه تزریق می‌شود
+      const ethicsDirective = buildEthicsDirective(d.ethicsLevel);
+      const outMessages = Array.isArray(messages) ? messages.slice() : [];
+      if (ethicsDirective) {
+        const firstSystemIdx = outMessages.findIndex((m) => m && m.role === 'system');
+        if (firstSystemIdx === -1) {
+          outMessages.unshift({ role: 'system', content: ethicsDirective });
+        } else {
+          // دستورالعمل پایه دست‌نخورده می‌ماند؛ محافظه‌کاری پیوست می‌شود
+          outMessages[firstSystemIdx] = {
+            ...outMessages[firstSystemIdx],
+            content: `${outMessages[firstSystemIdx].content}\n\n${ethicsDirective}`
+          };
+        }
+      }
+
       const body = {
         model: modelId,
-        messages,
+        messages: outMessages,
         stream: Boolean(d.streaming),
-        max_tokens: Number(d.maxTokens) || 4096,
+        max_tokens: RESPONSE_LENGTHS[d.responseLength]?.tokens || Number(d.maxTokens) || 2048,
         temperature: Number(d.temperature ?? 0.7),
         top_p: Number(d.topP ?? 1),
         frequency_penalty: Number(d.frequencyPenalty ?? 0),
@@ -1966,6 +1986,36 @@
   /* ==========================================================================
      13. AppController — کنترل‌گر اصلی برنامه و هماهنگ‌کننده کل بخش‌ها
      ========================================================================== */
+  /* سطوح طول پاسخ → سقف توکن خروجی */
+  const RESPONSE_LENGTHS = {
+    short:  { tokens: 512,   label: 'کوتاه',   help: 'کوتاه: پاسخ فشرده و بدون حاشیه.' },
+    medium: { tokens: 2048,  label: 'متوسط',  help: 'متوسط: پاسخ متعادل با توضیح کافی.' },
+    long:   { tokens: 8192,  label: 'بلند',   help: 'بلند: توضیح مفصل با مثال و جزئیات.' },
+    max:    { tokens: 32768, label: 'حداکثر', help: 'حداکثر: تا جای ممکن — تا سقف مدل. هزینه و زمان بیشتر می‌شود.' }
+  };
+
+  /**
+   * متن دستورالعمل «محافظه‌کاری» بر اساس مقدار ۰..۱۰۰.
+   * این یک system message جداگانه است و دستورالعمل پایهٔ کاربر را تغییر نمی‌دهد.
+   * توجه: فیلترهای ایمنی سرویس‌دهنده مدل همیشه فعال‌اند و این‌جا خاموش نمی‌شوند.
+   */
+  function buildEthicsDirective(level) {
+    const n = Math.min(100, Math.max(0, Number(level) || 0));
+    if (n <= 15) {
+      return 'پاسخ‌ها را مستقیم و بدون مقدمه‌چینی بده. از عبارات احتیاطی و هشدارهای اضافی پرهیز کن. اگر چیزی را نمی‌دانی، کوتاه بگو که نمی‌دانی.';
+    }
+    if (n <= 40) {
+      return 'لحن طبیعی و بی‌طرف داشته باش. فقط جایی که واقعاً لازم است احتیاط نشان بده.';
+    }
+    if (n <= 65) {
+      return 'متعادل باش: صریح اما محتاط. در موضوع‌های حساس، محدودیت‌ها و عدم‌قطعیت را کوتاه ذکر کن.';
+    }
+    if (n <= 85) {
+      return 'محافظه‌کار باش: پیش از هر توصیه، فرض‌ها و ریسک‌ها را روشن کن. در موضوع‌های حساس، به منابع معتبر ارجاع بده و از قطعیت بی‌جا پرهیز کن.';
+    }
+    return 'سخت‌گیرترین حالت: هر ادعا را با احتیاط بیان کن، محدودیت‌های دانش خود را صریح بگو، در موضوع‌های حساس هشدار بده و در نبود شواهد کافی از پاسخ قطعی خودداری کن.';
+  }
+
   class AppController {
     constructor() {
       this.storage = new StorageManager();
@@ -2012,6 +2062,17 @@
         this.syncHeaderAndToggles();
         this.renderActiveChat();
       });
+
+      // چهار سطح طول پاسخ
+      document.querySelectorAll('#lengthPresets .length-btn').forEach((btn) => {
+        btn.addEventListener('click', () => this.applyLengthLevel(btn.dataset.level));
+      });
+
+      // اسلایدر محافظه‌کاری
+      const ethicsEl = $('setEthics');
+      if (ethicsEl) {
+        ethicsEl.addEventListener('input', () => this.updateEthicsHint(ethicsEl.value));
+      }
 
       // منوی کشویی ابزارها
       this.initToolsMenu();
@@ -2501,6 +2562,35 @@
       }
     }
 
+    /** فعال‌کردن یکی از چهار سطح طول پاسخ */
+    applyLengthLevel(level) {
+      const key = RESPONSE_LENGTHS[level] ? level : 'medium';
+      this._lengthLevel = key;
+      document.querySelectorAll('#lengthPresets .length-btn').forEach((btn) => {
+        const on = btn.dataset.level === key;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-checked', String(on));
+      });
+      const help = $('lengthHelp');
+      if (help) help.textContent = RESPONSE_LENGTHS[key].help;
+      const tokens = $('setMaxTokens');
+      if (tokens) tokens.value = RESPONSE_LENGTHS[key].tokens;
+    }
+
+    /** توضیح پویا زیر اسلایدر محافظه‌کاری */
+    updateEthicsHint(level) {
+      const n = Math.min(100, Math.max(0, Number(level) || 0));
+      const valueEl = $('ethicsValue');
+      if (valueEl) valueEl.textContent = n.toLocaleString('fa-IR');
+      const help = $('ethicsHelp');
+      if (!help) return;
+      if (n <= 15) help.textContent = 'آزادتر: پاسخ مستقیم، بدون مقدمه و بدون هشدار اضافی.';
+      else if (n <= 40) help.textContent = 'کمی آزادتر: لحن طبیعی، احتیاط فقط جایی که لازم است.';
+      else if (n <= 65) help.textContent = 'متعادل: لحن طبیعی و بی‌طرف.';
+      else if (n <= 85) help.textContent = 'محافظه‌کار: فرض‌ها و ریسک‌ها روشن می‌شوند.';
+      else help.textContent = 'سخت‌گیرتر: احتیاط حداکثری و ذکر صریح محدودیت‌ها.';
+    }
+
     openSettingsModal() {
       const d = this.settings.data;
       $('setApiKey').value = this.settings.apiKey || '';
@@ -2509,6 +2599,12 @@
       this.populateSettingsModelSelect();
       $('setModelId').value = d.modelId || '';
       $('setMaxTokens').value = d.maxTokens;
+      this.applyLengthLevel(d.responseLength || 'medium');
+      const ethicsEl = $('setEthics');
+      if (ethicsEl) {
+        ethicsEl.value = String(d.ethicsLevel ?? 50);
+        this.updateEthicsHint(d.ethicsLevel ?? 50);
+      }
       $('setContextLimit').value = d.contextLimit;
       $('setTemperature').value = d.temperature;
       $('setTopP').value = d.topP;
@@ -2546,7 +2642,9 @@
       const d = this.settings.data;
       d.baseUrl = $('setBaseUrl').value.trim() || 'https://openrouter.ai/api/v1';
       d.modelId = this.settings.normalizeModelId($('setModelId').value) || d.modelId;
-      d.maxTokens = Math.max(64, Number($('setMaxTokens').value) || 4096);
+      d.maxTokens = Math.max(64, Number($('setMaxTokens').value) || 2048);
+      d.responseLength = this._lengthLevel || 'medium';
+      d.ethicsLevel = Math.min(100, Math.max(0, Number($('setEthics')?.value ?? 50)));
       d.contextLimit = Math.max(1, Number($('setContextLimit').value) || 20);
       d.temperature = Math.min(2, Math.max(0, Number($('setTemperature').value)));
       d.topP = Math.min(1, Math.max(0, Number($('setTopP').value)));

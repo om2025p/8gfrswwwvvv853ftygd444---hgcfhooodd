@@ -2078,3 +2078,117 @@ this._lastRevisionAt = createdAt;
 ### اتصال
 `CACHE_NAME` → `emarat-portal-v114` · شاخه `Y-9` → `main`
 
+## 🚨 رفع تداخل کلید ذخیره‌سازی (بازگشت چهار ماهه) + تنظیم طول پاسخ و محافظه‌کاری (v115)
+
+### 🔴 باگ بحرانی ۱ — کلید مشترک `github_backup_filepath`
+**نشانهٔ کاربر:** «وقتی آپدیت یا وب‌اپ جدید می‌آید، بعضی مواقع کلیدها قدیمی جایگزین می‌شوند و محاسبات چهار ماه به عقب برمی‌گردند.»
+
+**ریشه (اثبات‌شده با تست):** `gold3/price.html`، `gold5/price.html` و `gold6/price.html` همه از **یک کلید مشترک** استفاده می‌کردند:
+
+```
+۱. gold3/price.html → setItem('github_backup_filepath', 'backups/gold3_price_backup.json')
+۲. gold5/price.html → setItem('github_backup_filepath', 'backups/synergy_price_backup.json')  ← بازنویسی!
+۳. بازگشت به gold3 → مسیر حالا به فایل بکاپ gold5 اشاره می‌کند
+۴. gold5 قیمت‌های چهار ماه پیش دارد → روی gold3 می‌نشیند
+```
+
+**نکتهٔ مهم:** `percent.html` ها از قبل کلید اختصاصی داشتند (`github_backup_filepath_gold3`)، ولی `price.html` ها نه. همین ناهمگونی، منبع این باگ بود.
+
+**درمان — سه بخش:**
+```javascript
+const FILEPATH_KEY = "github_backup_filepath_gold3";
+const DEFAULT_FILEPATH = "backups/gold3_price_backup.json";
+
+// مهاجرت یک‌باره هنگام بارگذاری صفحه (نه هنگام آپلود — نسخهٔ اول تنبل بود
+// و فرم تنظیمات مقدار قدیمی را نشان نمی‌داد)
+(function migrateLegacyFilepath() {
+    try {
+        if (localStorage.getItem(FILEPATH_KEY)) return;
+        const legacy = localStorage.getItem("github_backup_filepath");
+        if (legacy && legacy.indexOf("gold3") !== -1) {
+            localStorage.setItem(FILEPATH_KEY, legacy);
+        }
+    } catch (_) {}
+})();
+```
+- **فیلتر `indexOf(key)`:** مقدار قدیمی فقط اگر مربوط به همین اپ باشد مهاجرت می‌کند؛ وگرنه مقدار gold5 به gold3 منتقل می‌شد.
+- **اجرای سطح‌ماژول:** تضمین می‌کند `openGithubSettings()` هم مقدار درست را ببیند.
+- **درس:** هر کلید `localStorage` که در بیش از یک اپ خوانده/نوشته می‌شود، **ذاتاً** باگ است. یک origin مشترک = یک فضای نام مشترک.
+
+### 🔴 باگ بحرانی ۲ — گارد `cloud-sync` نسخهٔ کهنه را روی دادهٔ تازه می‌نشاند
+**ریشه:**
+```javascript
+const isLocalEmpty = localStorage.length <= 2;  // ❌
+```
+این شمارش **همهٔ** کلیدها را می‌شمرد: تم، تنظیمات، توکن گیت‌هاب. با یک کلید تنظیمات (`sb_settings_v1`)، `length = 1 ≤ 2` می‌شد و کل بکاپ ابری روی گوشی می‌نشست.
+
+**درمان — شمارش داده‌محور:**
+```javascript
+const DATA_KEY_PATTERN = /(_percents$|_history$|_baseNumber$|_peakNumber$|^percents$|^trash$|^gold_percents$|_prices_|_prices$|_percents_|fundManagerV10|emarat_family_tree|calculatorTab_)/;
+let localDataKeys = 0;
+for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (IGNORED_KEYS.indexOf(k) !== -1) continue;
+    if (k.indexOf('emarat_usage_stats') === 0 || k.indexOf('emr_usage_') === 0) continue;
+    if (DATA_KEY_PATTERN.test(k)) localDataKeys++;
+}
+const isLocalEmpty = localDataKeys === 0;
+```
+**درس:** «آیا داده دارم؟» با «آیا کلید دارم؟» یکی نیست. تنظیمات، تم و توکن **داده** نیستند.
+
+### ✨ قابلیت ۱ — چهار سطح طول پاسخ
+`RESPONSE_LENGTHS` در `second-brain/app.js`:
+
+| سطح | `max_tokens` | توضیح |
+|---|---|---|
+| `short` | ۵۱۲ | پاسخ فشرده و بدون حاشیه |
+| `medium` | ۲٬۰۴۸ | متعادل (پیش‌فرض) |
+| `long` | ۸٬۱۹۲ | مفصل با مثال |
+| `max` | ۳۲٬۷۶۸ | تا جای ممکن — تا سقف مدل |
+
+- UI: `#lengthPresets` چهار دکمهٔ رادیویی با آیکون ارتفاع (`▁▄▆█`)، اندازهٔ لمس ۷۹×۶۲px.
+- `applyLengthLevel(level)` کلاس `.active` را جابه‌جا می‌کند و `#setMaxTokens` را همگام می‌کند (فیلد عددی دستی حفظ شده).
+- `max_tokens: RESPONSE_LENGTHS[d.responseLength]?.tokens || Number(d.maxTokens) || 2048`
+- **هزینه:** سطح «حداکثر» گران‌تر و کندتر است — در `#lengthHelp` صریح گفته می‌شود.
+
+### ✨ قابلیت ۲ — اسلایدر «محافظه‌کاری پاسخ» (۰..۱۰۰)
+`buildEthicsDirective(level)` یک **system message جداگانه** می‌سازد؛ دستورالعمل پایهٔ کاربر دست‌نخورده می‌ماند:
+
+```javascript
+const ethicsDirective = buildEthicsDirective(d.ethicsLevel);
+const outMessages = messages.slice();
+const firstSystemIdx = outMessages.findIndex((m) => m.role === 'system');
+if (firstSystemIdx === -1) {
+    outMessages.unshift({ role: 'system', content: ethicsDirective });
+} else {
+    outMessages[firstSystemIdx] = {
+        ...outMessages[firstSystemIdx],
+        content: `${outMessages[firstSystemIdx].content}\n\n${ethicsDirective}`
+    };
+}
+```
+
+پنج باند: `≤۱۵` آزادتر · `≤۴۰` کمی آزادتر · `≤۶۵` متعادل · `≤۸۵` محافظه‌کار · `>۸۵` سخت‌گیرتر.
+
+**⚠️ محدودیت صادقانه (در UI هم نوشته شده):** این تنظیم فقط **لحن و میزان احتیاط** را تغییر می‌دهد. فیلترهای ایمنی خودِ سرویس‌دهندهٔ مدل همیشه فعال‌اند و از سمت کلاینت قابل خاموش‌شدن نیستند.
+
+### ✅ تست‌ها (۱۷۰ تست، ۰ شکست)
+| فایل | تعداد | پوشش |
+|---|---|---|
+| `t4.js` | ۲۵ | چهار سطح، اسلایدر، ذخیره/بازگشایی، تزریق `max_tokens`، حفظ دستورالعمل پایه |
+| `t6.js` | ۷ | مهاجرت خودکار، رد مقدار اپ دیگر، فرم تنظیمات، پیش‌فرض، استقلال gold3/gold5 |
+| `t3.js` | ۳۲ | رگرسیون v114 |
+| `t2.js` | ۳۵ | رگرسیون v113 |
+| `t.js` | ۳۰ | رگرسیون v112 |
+| `flow.js` | ۹ | رگرسیون پیش‌نویس |
+| `reg.js` | ۸ | رگرسیون اتصال |
+| `verify.js` | ۲۴ | رگرسیون سرریز |
+
+### 🧪 روش تشخیص
+1. **اسکن برنامه‌ای همهٔ کلیدها** در ۹ اپ و مقایسهٔ جفتی → کلیدهای تکراری پیدا شدند.
+2. **شبیه‌سازی سناریوی کاربر** (gold3 → gold5 → gold3) در Node → فاجعه اثبات شد.
+3. **تست مرورگر واقعی** با seed کردن مقدار قدیمی و `reload` → مهاجرت تأیید شد.
+
+### اتصال
+`CACHE_NAME` → `emarat-portal-v115` · شاخه `Y-7` → `main`
+

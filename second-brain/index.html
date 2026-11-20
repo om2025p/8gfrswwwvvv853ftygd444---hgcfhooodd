@@ -277,6 +277,37 @@
             <label for="setContextLimit">تعداد پیام‌های زمینه</label>
             <input type="number" class="input-ctrl tech-num" id="setContextLimit" min="1" max="100">
           </div>
+          <div class="field-group field-full">
+            <label>طول پاسخ <span class="field-note">— چقدر مدل توضیح بدهد</span></label>
+            <div class="length-presets" id="lengthPresets" role="radiogroup" aria-label="طول پاسخ">
+              <button type="button" class="length-btn" data-level="short" role="radio" aria-checked="false">
+                <span class="length-ico">▁</span><span>کوتاه</span><span class="length-sub">۵۱۲</span>
+              </button>
+              <button type="button" class="length-btn" data-level="medium" role="radio" aria-checked="true">
+                <span class="length-ico">▄</span><span>متوسط</span><span class="length-sub">۲٬۰۴۸</span>
+              </button>
+              <button type="button" class="length-btn" data-level="long" role="radio" aria-checked="false">
+                <span class="length-ico">▆</span><span>بلند</span><span class="length-sub">۸٬۱۹۲</span>
+              </button>
+              <button type="button" class="length-btn" data-level="max" role="radio" aria-checked="false">
+                <span class="length-ico">█</span><span>حداکثر</span><span class="length-sub">۳۲٬۷۶۸</span>
+              </button>
+            </div>
+            <p class="field-help" id="lengthHelp">متوسط: پاسخ متعادل با توضیح کافی.</p>
+          </div>
+
+          <div class="field-group field-full">
+            <label for="setEthics">محافظه‌کاری پاسخ <span class="field-note">— جدا از دستورالعمل پایه</span></label>
+            <div class="slider-row">
+              <span class="slider-edge">آزادتر</span>
+              <input type="range" class="range-ctrl" id="setEthics" min="0" max="100" step="5" value="50">
+              <span class="slider-edge">سخت‌گیرتر</span>
+              <span class="slider-value tech-num" id="ethicsValue">۵۰</span>
+            </div>
+            <p class="field-help" id="ethicsHelp">متعادل: لحن طبیعی و بی‌طرف.</p>
+            <p class="field-warn">این تنظیم فقط لحن و میزان احتیاط را تغییر می‌دهد؛ فیلترهای ایمنی خودِ سرویس‌دهنده مدل همیشه فعال‌اند و از این‌جا قابل خاموش‌شدن نیستند.</p>
+          </div>
+
           <div class="field-group">
             <label for="setTemperature">دما (خلاقیت: ۰ تا ۲)</label>
             <input type="number" class="input-ctrl tech-num" id="setTemperature" min="0" max="2" step="0.05">
