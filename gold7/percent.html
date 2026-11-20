@@ -537,6 +537,7 @@
     </div>
 </div>
 
+<script src="../storage-guard.js"></script>
 <script>
     (function(){
         const STORAGE_KEY = "ahang_kian_percents";
@@ -558,7 +559,7 @@
 
         window.toggleStatsMenu = function() {
             statsMenuOpen = !statsMenuOpen;
-            localStorage.setItem(STORAGE_KEY + "_statsOpen", statsMenuOpen);
+            EmaratStorage.safeSet(STORAGE_KEY + "_statsOpen", statsMenuOpen);
             let content = document.getElementById('statsContent');
             let arrow = document.getElementById('statsArrow');
             if(statsMenuOpen) {
@@ -666,8 +667,15 @@
 
         function saveData() {
             const toStore = { percents, trash, goal, highlightedStates, periodTarget, achievedPeriods, notes };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
-            localStorage.setItem(STORAGE_KEY + "_statsOpen", statsMenuOpen);
+            var batch = {
+                [STORAGE_KEY]: JSON.stringify(toStore),
+                [STORAGE_KEY + "_statsOpen"]: statsMenuOpen
+            };
+            if (window.EmaratStorage) {
+                EmaratStorage.safeSetBatch(batch);
+            } else {
+                for (var k in batch) localStorage.setItem(k, batch[k]);
+            }
             triggerAutoGithubSync();
 
             if (window.parent && window.parent.EmaratCloudSync) {

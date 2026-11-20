@@ -54,13 +54,14 @@
             if (res.status === 200) {
                 const cloudBackup = await res.json();
                 if (cloudBackup && cloudBackup.timestamp && cloudBackup.data) {
-                    const localTimestamp = parseInt(localStorage.getItem('emarat_last_modified')) || 0;
+                    // اگر حافظه محلی خالی باشد، از ابر پر می‌شود
+                    const isLocalEmpty = localStorage.length <= 2; // فقط emarat_last_modified / emarat_sync_counter
 
-                    // اگر حافظه محلی کاملاً خالی است یا بکاپ ابری جدیدتر است
-                    const isLocalEmpty = localStorage.length <= 2; // فقط کلید emarat_last_modified یا emarat_sync_counter باشد یا کلا خالی
-
-                    if (isLocalEmpty || cloudBackup.timestamp > localTimestamp) {
-                        console.log("Newer backup found! Restoring data...");
+                    // اگر هر داده‌ای روی گوشی هست، ابر فقط «پرکنندهٔ جای خالی» است، نه جایگزین.
+                    // بدون این گارد، نبودِ emarat_last_modified باعث می‌شد نسخهٔ کهنهٔ ابری
+                    // روی دادهٔ تازهٔ گوشی بنشیند و تاریخچه چند ماه عقب برود.
+                    if (isLocalEmpty) {
+                        console.log("Local storage is empty. Restoring from cloud...");
                         let changed = false;
 
                         Object.keys(cloudBackup.data).forEach(key => {

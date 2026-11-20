@@ -449,7 +449,8 @@
         </div>
     </div>
 
-    <script>
+    <script src="../storage-guard.js"></script>
+<script>
         const STORAGE_PREFIX = "mofid_atie_";
 
         function migrateNote(note) {
@@ -1072,14 +1073,20 @@
 
         // ===== ذخیره و بازیابی =====
         function saveData() {
-            localStorage.setItem(STORAGE_PREFIX + "percents", JSON.stringify(percents));
-            localStorage.setItem(STORAGE_PREFIX + "trash", JSON.stringify(trash));
-            localStorage.setItem(STORAGE_PREFIX + "goal", JSON.stringify(goal));
-            localStorage.setItem(STORAGE_PREFIX + "highlightedStates", JSON.stringify(highlightedStates));
-            localStorage.setItem(STORAGE_PREFIX + "periodTarget", JSON.stringify(periodTarget));
-            localStorage.setItem(STORAGE_PREFIX + "achievedPeriods", JSON.stringify(achievedPeriods));
-            localStorage.setItem(STORAGE_PREFIX + "notes", JSON.stringify(notes));
-            localStorage.setItem(STORAGE_PREFIX + "statsMenuOpen", statsMenuOpen);
+            var batch = {};
+            batch[STORAGE_PREFIX + "percents"] = JSON.stringify(percents);
+            batch[STORAGE_PREFIX + "trash"] = JSON.stringify(trash);
+            batch[STORAGE_PREFIX + "goal"] = JSON.stringify(goal);
+            batch[STORAGE_PREFIX + "highlightedStates"] = JSON.stringify(highlightedStates);
+            batch[STORAGE_PREFIX + "periodTarget"] = JSON.stringify(periodTarget);
+            batch[STORAGE_PREFIX + "achievedPeriods"] = JSON.stringify(achievedPeriods);
+            batch[STORAGE_PREFIX + "notes"] = JSON.stringify(notes);
+            batch[STORAGE_PREFIX + "statsMenuOpen"] = statsMenuOpen;
+            if (window.EmaratStorage) {
+                EmaratStorage.safeSetBatch(batch);
+            } else {
+                for (var k in batch) localStorage.setItem(k, batch[k]);
+            }
         }
 
         let githubBackupLogs = [];
@@ -1572,5 +1579,7 @@
         });
         window.addEventListener('beforeunload', saveData);
     </script>
+<script src="../refresh-button.js"></script>
+<script src="../usage-tracker.js" data-app="gold4"></script>
 </body>
 </html>

@@ -574,7 +574,8 @@
         </div>
     </div>
 
-    <script>
+    <script src="../storage-guard.js"></script>
+<script>
         // ✅ درست شد - از همون کلید قبلی استفاده می‌کنه تا داده‌های ذخیره شده رو ببینه
         const STORAGE_PREFIX = "kian_";
 
@@ -1211,13 +1212,19 @@
         }
 
         function saveData() {
-            localStorage.setItem(STORAGE_PREFIX + "percents", JSON.stringify(percents));
-            localStorage.setItem(STORAGE_PREFIX + "trash", JSON.stringify(trash));
-            localStorage.setItem(STORAGE_PREFIX + "goal", JSON.stringify(goal));
-            localStorage.setItem(STORAGE_PREFIX + "highlightedStates", JSON.stringify(highlightedStates));
-            localStorage.setItem(STORAGE_PREFIX + "highlightedPointIndices", JSON.stringify(highlightedPointIndices));
-            localStorage.setItem(STORAGE_PREFIX + "investmentValue", JSON.stringify(investmentValue));
-            localStorage.setItem(STORAGE_PREFIX + "notes", JSON.stringify(notes));
+            var batch = {};
+            batch[STORAGE_PREFIX + "percents"] = JSON.stringify(percents);
+            batch[STORAGE_PREFIX + "trash"] = JSON.stringify(trash);
+            batch[STORAGE_PREFIX + "goal"] = JSON.stringify(goal);
+            batch[STORAGE_PREFIX + "highlightedStates"] = JSON.stringify(highlightedStates);
+            batch[STORAGE_PREFIX + "highlightedPointIndices"] = JSON.stringify(highlightedPointIndices);
+            batch[STORAGE_PREFIX + "investmentValue"] = JSON.stringify(investmentValue);
+            batch[STORAGE_PREFIX + "notes"] = JSON.stringify(notes);
+            if (window.EmaratStorage) {
+                EmaratStorage.safeSetBatch(batch);
+            } else {
+                for (var k in batch) localStorage.setItem(k, batch[k]);
+            }
         }
 
         function updateInvestment(percentChange) {

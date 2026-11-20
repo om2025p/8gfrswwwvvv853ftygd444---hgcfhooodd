@@ -529,6 +529,7 @@
     </div>
 </div>
 
+<script src="../storage-guard.js"></script>
 <script>
     (function(){
         // ==================== استفاده از کلید ذخیره‌سازی فایل اول ====================
@@ -718,7 +719,11 @@
                 initialCapital: initialCapital,
                 version: "2.0"
             };
-            localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(unifiedData));
+            if (window.EmaratStorage) {
+                EmaratStorage.safeSet(NEW_STORAGE_KEY, JSON.stringify(unifiedData));
+            } else {
+                localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(unifiedData));
+            }
         }
 
         // ==================== بارگذاری از ساختار جدید ====================
