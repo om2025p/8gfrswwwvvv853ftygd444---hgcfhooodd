@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
+<script src="../storage-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>سیستم مدیریت پیشرفت سودهی طلا - با منوی آمار</title>
@@ -292,7 +293,6 @@
     </div>
 </div>
 
-<script src="../storage-guard.js"></script>
 <script>
     // ---------- داده‌ها ----------
     // کلیدهای این اپ پیش‌تر بی‌پسوند بودند ("percents"، "trash"، ...) و روی یک
@@ -316,7 +316,39 @@
             ["highlightedPointIndices", GOLD_KEY.highlightedPointIndices],
             ["statsMenuOpen", GOLD_KEY.statsMenuOpen]
         ]);
+
+        // کلیدهای بی‌پسوند هنوز خواننده دارند (دیدبان، کارآگاه، ماشین‌حساب،
+        // جمع کل). با آینه‌کردن، هر نوشتن روی کلید gold_ کلید قدیمی را هم
+        // به‌روز می‌کند تا هیچ‌کدام از آن‌ها کور نشوند.
+        EmaratStorage.registerMirror(GOLD_KEY.percents, "percents");
+        EmaratStorage.registerMirror(GOLD_KEY.trash, "trash");
+        EmaratStorage.registerMirror(GOLD_KEY.goal, "goal");
+        EmaratStorage.registerMirror(GOLD_KEY.highlightedStates, "highlightedStates");
+        EmaratStorage.registerMirror(GOLD_KEY.highlightedPointIndices, "highlightedPointIndices");
+
+        // اگر آینه خالی شد (مهاجرت کلید قدیم را برداشت)، آن را از کلید اصلی
+        // پر می‌کنیم؛ جهت همیشه master → mirror است، نه برعکس.
+        var mirrorPairs = [
+            [GOLD_KEY.percents, "percents"],
+            [GOLD_KEY.trash, "trash"],
+            [GOLD_KEY.goal, "goal"],
+            [GOLD_KEY.highlightedStates, "highlightedStates"],
+            [GOLD_KEY.highlightedPointIndices, "highlightedPointIndices"]
+        ];
+        mirrorPairs.forEach(function (pair) {
+            var master = localStorage.getItem(pair[0]);
+            var mirror = localStorage.getItem(pair[1]);
+            if (master !== null && EmaratStorage.isEmptyish(mirror)) {
+                EmaratStorage.safeSet(pair[1], master);
+            } else if (mirror !== null && EmaratStorage.isEmptyish(master)) {
+                EmaratStorage.safeSet(pair[0], mirror);
+            }
+        });
     }
+
+    // اگر حافظه هرگز بارگذاری نشده باشد، نوشتن روی localStorage دادهٔ
+    // موجود را با آرایهٔ خالی نابود می‌کند (باگ «چهار ماه عقب»).
+    var stateLoaded = false;
 
     let percents = JSON.parse(localStorage.getItem(GOLD_KEY.percents)) || [];
     let trash = JSON.parse(localStorage.getItem(GOLD_KEY.trash)) || [];
@@ -324,6 +356,8 @@
     let highlightedStates = JSON.parse(localStorage.getItem(GOLD_KEY.highlightedStates)) || {};
     let highlightedPointIndices = JSON.parse(localStorage.getItem(GOLD_KEY.highlightedPointIndices)) || [];
     let statsMenuOpen = localStorage.getItem(GOLD_KEY.statsMenuOpen) === "true";
+    // حافظه از این نقطه معتبر است؛ پیش از آن saveData اجازهٔ نوشتن ندارد.
+    stateLoaded = true;
 
     let zoomLevel = 1.0;
     let currentDataCache = null;
@@ -854,14 +888,42 @@
     }
 
     function saveData() {
+        if (!stateLoaded) return;
+
+        // ادغام محافظتی: هیچ رکوردی که در حافظه نیست نباید از localStorage
+        // حذف شود. رکوردهای حذف‌شده فقط از طریق فهرست trash کنار می‌روند.
+        var storedRaw = localStorage.getItem(GOLD_KEY.percents);
+        var mergedPercents = percents;
+        try {
+            var stored = storedRaw ? JSON.parse(storedRaw) : [];
+            if (Array.isArray(stored) && stored.length) {
+                var known = {};
+                percents.forEach(function (p) { known[p.timestamp] = true; });
+                var trashed = {};
+                trash.forEach(function (t) { trashed[t.timestamp] = true; });
+                var rescued = 0;
+                stored.forEach(function (sp) {
+                    if (!known[sp.timestamp] && !trashed[sp.timestamp]) {
+                        percents.push(sp);
+                        known[sp.timestamp] = true;
+                        rescued++;
+                    }
+                });
+                if (rescued) {
+                    percents.sort(function (a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
+                    mergedPercents = percents;
+                }
+            }
+        } catch (e) { /* اگر مقدار خراب بود، همان حافظه نوشته می‌شود */ }
+
         var batch = {};
-        batch[GOLD_KEY.percents] = JSON.stringify(percents);
+        batch[GOLD_KEY.percents] = JSON.stringify(mergedPercents);
         batch[GOLD_KEY.trash] = JSON.stringify(trash);
         batch[GOLD_KEY.goal] = JSON.stringify(goal);
         batch[GOLD_KEY.highlightedStates] = JSON.stringify(highlightedStates);
         batch[GOLD_KEY.highlightedPointIndices] = JSON.stringify(highlightedPointIndices);
         if (window.EmaratStorage) {
-            EmaratStorage.safeSetBatch(batch);
+            EmaratStorage.batchWithMirrors(batch);
         } else {
             for (var k in batch) localStorage.setItem(k, batch[k]);
         }
@@ -1066,17 +1128,25 @@
     updateUI();
 
     // ===== به‌روزرسانی زندهٔ فهرست وقتی تب محاسبه درصد می‌نویسد =====
+    // ماشین‌حساب هنوز روی کلید بی‌پسوند می‌نویسد؛ پس هر دو نام خوانده می‌شود
+    // و نتیجه در کلید اصلی نوشته می‌شود تا آینه هم هم‌گام بماند.
+    function readAnyKey(primary, legacy) {
+        var a = localStorage.getItem(primary);
+        if (a !== null && !(window.EmaratStorage && EmaratStorage.isEmptyish(a))) return a;
+        return localStorage.getItem(legacy);
+    }
+
     window.__emaratAutoSync = function () {
-        percents = JSON.parse(localStorage.getItem('percents')) || [];
-        trash = JSON.parse(localStorage.getItem('trash')) || [];
-        goal = JSON.parse(localStorage.getItem('goal')) || null;
-        highlightedStates = JSON.parse(localStorage.getItem('highlightedStates')) || {};
-        highlightedPointIndices = JSON.parse(localStorage.getItem('highlightedPointIndices')) || [];
+        percents = JSON.parse(readAnyKey(GOLD_KEY.percents, 'percents')) || [];
+        trash = JSON.parse(readAnyKey(GOLD_KEY.trash, 'trash')) || [];
+        goal = JSON.parse(readAnyKey(GOLD_KEY.goal, 'goal')) || null;
+        highlightedStates = JSON.parse(readAnyKey(GOLD_KEY.highlightedStates, 'highlightedStates')) || {};
+        highlightedPointIndices = JSON.parse(readAnyKey(GOLD_KEY.highlightedPointIndices, 'highlightedPointIndices')) || [];
         percents.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
         updateUI();
     };
     window.addEventListener('storage', function (e) {
-        if (!e.key || e.key === 'percents' || e.key === 'emarat_last_modified') window.__emaratAutoSync();
+        if (!e.key || e.key === 'percents' || e.key === GOLD_KEY.percents || e.key === 'emarat_last_modified') window.__emaratAutoSync();
     });
 
         /* ===== کنترل تم شب/روز (افزوده‌شده) ===== */

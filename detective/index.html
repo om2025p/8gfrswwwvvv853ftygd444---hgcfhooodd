@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
+<script src="../storage-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -644,10 +645,10 @@
                 id: 'gold',
                 title: 'ثبت درصد 1 (طلا و ارز)',
                 icon: '🥇',
-                keys: ['percents', 'trash', 'goal', 'highlightedStates', 'highlightedPointIndices', 'statsMenuOpen'],
+                keys: ['gold_percents', 'gold_trash', 'gold_goal', 'gold_highlightedStates', 'gold_highlightedPointIndices', 'gold_statsMenuOpen', 'percents', 'trash', 'goal', 'highlightedStates', 'highlightedPointIndices', 'statsMenuOpen'],
                 getLastUpdate: () => {
                     try {
-                        const data = JSON.parse(localStorage.getItem('percents'));
+                        const data = JSON.parse(localStorage.getItem('gold_percents') || localStorage.getItem('percents'));
                         if (data && data.length > 0) {
                             const last = data[data.length - 1];
                             return last.timestamp || null;
@@ -712,6 +713,70 @@
                 getLastUpdate: () => {
                     try {
                         const data = JSON.parse(localStorage.getItem('energy_fund_synergy'));
+                        if (data && data.percents && data.percents.length > 0) {
+                            const last = data.percents[data.percents.length - 1];
+                            return last.timestamp || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'gold6',
+                title: 'ثبت درصد 6 (سیمان)',
+                icon: '🏭',
+                keys: ['cement_factory_percents', 'cement_factory_percents_statsOpen'],
+                getLastUpdate: () => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('cement_factory_percents'));
+                        if (data && data.percents && data.percents.length > 0) {
+                            const last = data.percents[data.percents.length - 1];
+                            return last.timestamp || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'gold7',
+                title: 'ثبت درصد 7 (آهنگ سهام کیان)',
+                icon: '🔩',
+                keys: ['ahang_kian_percents', 'ahang_kian_percents_statsOpen', 'ahang_kian_history', 'ahang_kian_baseNumber', 'ahang_kian_peakNumber'],
+                getLastUpdate: () => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('ahang_kian_percents'));
+                        if (data && data.percents && data.percents.length > 0) {
+                            const last = data.percents[data.percents.length - 1];
+                            return last.timestamp || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'gold8',
+                title: 'ثبت درصد 8 (دارو کیان)',
+                icon: '💊',
+                keys: ['pharma_kian_percents', 'pharma_kian_percents_statsOpen', 'pharma_kian_history', 'pharma_kian_baseNumber', 'pharma_kian_peakNumber'],
+                getLastUpdate: () => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('pharma_kian_percents'));
+                        if (data && data.percents && data.percents.length > 0) {
+                            const last = data.percents[data.percents.length - 1];
+                            return last.timestamp || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
+                id: 'gold9',
+                title: 'ثبت درصد 9 (سهم غبهار)',
+                icon: '🌾',
+                keys: ['baharan_percents', 'baharan_percents_statsOpen', 'baharan_history', 'baharan_baseNumber', 'baharan_peakNumber', 'baharan_prices_v1'],
+                getLastUpdate: () => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('baharan_percents'));
                         if (data && data.percents && data.percents.length > 0) {
                             const last = data.percents[data.percents.length - 1];
                             return last.timestamp || null;
@@ -1062,14 +1127,36 @@
             reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    const confirmRestore = confirm('آیا مطمئن هستید؟ با این کار کل داده‌های فعلی مرورگر پاک شده و داده‌های فایل بارگذاری جایگزین خواهند شد.');
+                    const confirmRestore = confirm('بازیابی کامل بکاپ: کلیدهای موجود در فایل روی مقادیر فعلی نوشته می‌شوند. دادهٔ اپ‌هایی که در فایل نیستند دست‌نخورده می‌ماند. ادامه می‌دهید؟');
                     if (confirmRestore) {
-                        localStorage.clear();
-                        Object.keys(imported).forEach(key => {
-                            localStorage.setItem(key, imported[key]);
+                        // هرگز localStorage.clear() نزن: این origin مشترک است و
+                        // کلیدهای اپ‌های دیگر (و کلیدهای بیگانه) را هم نابود می‌کند.
+                        // فقط کلیدهایی پاک می‌شوند که خودِ فایل بکاپ دارد.
+                        const incomingKeys = Object.keys(imported || {});
+                        if (!incomingKeys.length) {
+                            alert('فایل بکاپ خالی است؛ هیچ تغییری اعمال نشد.');
+                            return;
+                        }
+                        let written = 0, failed = 0;
+                        incomingKeys.forEach(key => {
+                            try {
+                                localStorage.setItem(key, imported[key]);
+                                written++;
+                            } catch (err) {
+                                failed++;
+                            }
                         });
-                        alert('کل بکاپ با موفقیت جایگزین شد! مرورگر ریلود می‌شود.');
-                        location.reload();
+                        if (window.EmaratStorage && EmaratStorage.toast) {
+                            EmaratStorage.toast(
+                                '✅ <b>بازیابی انجام شد</b><br>' +
+                                written + ' کلید نوشته شد' +
+                                (failed ? '<br>⚠️ ' + failed + ' کلید ذخیره نشد (حافظه پر است) — از حافظهٔ قدرتمند بازیابی می‌شود' : ''),
+                                failed ? 'err' : 'ok'
+                            );
+                        } else {
+                            alert('کل بکاپ با موفقیت جایگزین شد! مرورگر ریلود می‌شود.');
+                        }
+                        setTimeout(function () { location.reload(); }, 1200);
                     }
                 } catch(err) {
                     alert('بارگذاری با خطا مواجه شد. فرمت فایل صحیح نیست.');

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
+<script src="../storage-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>📊 محاسبه سود صندوق آتیه مفید بازنشستگی</title>
@@ -449,8 +450,7 @@
         </div>
     </div>
 
-    <script src="../storage-guard.js"></script>
-<script>
+    <script>
         const STORAGE_PREFIX = "mofid_atie_";
 
         function migrateNote(note) {
@@ -471,6 +471,7 @@
         }
 
         let percents = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "percents")) || [];
+        window.__stateLoaded = true; // حافظه معتبر شد؛ saveData از این پس اجازهٔ نوشتن دارد.
         let trash = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "trash")) || [];
         let goal = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "goal")) || null;
         let highlightedStates = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "highlightedStates")) || {};
@@ -1073,6 +1074,10 @@
 
         // ===== ذخیره و بازیابی =====
         function saveData() {
+        // نوشتن فقط پس از بارگذاری معتبر؛ وگرنه آرایهٔ خالی روی دادهٔ
+        // موجود می‌نشیند و تاریخچه نابود می‌شود (باگ «چهار ماه عقب»).
+        if (!window.__stateLoaded) return;
+
             var batch = {};
             batch[STORAGE_PREFIX + "percents"] = JSON.stringify(percents);
             batch[STORAGE_PREFIX + "trash"] = JSON.stringify(trash);
