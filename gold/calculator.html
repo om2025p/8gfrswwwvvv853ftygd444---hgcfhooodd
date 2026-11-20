@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
+<script src="../storage-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>ماشین حساب تغییرات درصد طلا | حرفه‌ای آفلاین</title>
@@ -315,7 +316,6 @@
 
 <div id="toastMsg" class="toast-msg">✅ کپی شد!</div>
 
-<script src="../storage-guard.js"></script>
 <script>
     // کلیدهای ذخیره‌سازی (با پیشوند gold برای تفکیک از فایل قبلی)
     const STORAGE_BASE = 'gold_baseNumber';
@@ -572,32 +572,47 @@
 
     // ========== محاسبه اصلی ==========
     // ===== ثبت خودکار درصد در «فهرست تب ثبت درصد» =====
-    const PERCENT_LIST_KEY = "percents";
+    // کلید اصلی فهرست درصد؛ کلید بی‌پسوند «percents» فقط آینهٔ سازگاری است
+    // و از طریق storage-guard هم‌گام می‌شود.
+    const PERCENT_LIST_KEY = "gold_percents";
+    const PERCENT_LIST_LEGACY = "percents";
 
     function percentListJalaliDay(ts) {
         return new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ts));
     }
 
     function readPercentList() {
-        try {
-            const raw = localStorage.getItem(PERCENT_LIST_KEY);
-            if (!raw) return { list: [], unified: null };
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) return { list: parsed, unified: null };
-            if (parsed && typeof parsed === 'object') return { list: parsed.percents || [], unified: parsed };
-        } catch (e) {}
+        const sources = [PERCENT_LIST_KEY, PERCENT_LIST_LEGACY];
+        for (let i = 0; i < sources.length; i++) {
+            try {
+                const raw = localStorage.getItem(sources[i]);
+                if (!raw) continue;
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    if (parsed.length === 0) continue;
+                    return { list: parsed, unified: null };
+                }
+                if (parsed && typeof parsed === 'object') {
+                    const inner = parsed.percents || [];
+                    if (inner.length === 0 && !Object.keys(parsed).length) continue;
+                    return { list: inner, unified: parsed };
+                }
+            } catch (e) {}
+        }
         return { list: [], unified: null };
     }
 
     function writePercentList(list, unified) {
-        try {
-            if (unified) {
-                unified.percents = list;
-                localStorage.setItem(PERCENT_LIST_KEY, JSON.stringify(unified));
-            } else {
-                localStorage.setItem(PERCENT_LIST_KEY, JSON.stringify(list));
-            }
-        } catch (e) {}
+        const payload = unified
+            ? JSON.stringify(Object.assign({}, unified, { percents: list }))
+            : JSON.stringify(list);
+        if (window.EmaratStorage) {
+            EmaratStorage.setWithMirrors(PERCENT_LIST_KEY, payload);
+            EmaratStorage.safeSet(PERCENT_LIST_LEGACY, payload);
+        } else {
+            try { localStorage.setItem(PERCENT_LIST_KEY, payload); } catch (e) {}
+            try { localStorage.setItem(PERCENT_LIST_LEGACY, payload); } catch (e) {}
+        }
     }
 
     function syncPercentToList(percentStr, timestamp) {

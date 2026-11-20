@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
+<script src="../storage-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1938,7 +1939,9 @@
 
             const result = [];
 
-            let app1Raw = localStorage.getItem("percents");
+            // کلید اصلی gold_percents است؛ «percents» فقط آینهٔ سازگاری.
+            let app1Raw = localStorage.getItem("gold_percents");
+            if (!app1Raw) app1Raw = localStorage.getItem("percents");
             let app1Data = [];
             try { app1Data = JSON.parse(app1Raw) || []; } catch(e) {}
             result.push({ id: 1, title: "ثبت درصد 1", data: app1Data });

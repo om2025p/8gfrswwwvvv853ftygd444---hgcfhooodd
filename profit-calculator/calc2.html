@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
+<script src="../storage-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📈 ماشین حساب سود مرکب</title>
@@ -828,6 +829,8 @@
             let percentsList = [];
             try {
                 let raw = localStorage.getItem(watchKey);
+                // سازگاری: کلید اصلی gold_percents است؛ اگر آینه خالی بود از آن بخوان
+                if (!raw && watchKey === 'percents') raw = localStorage.getItem('gold_percents');
                 if (raw) {
                     let parsed = JSON.parse(raw);
                     if (Array.isArray(parsed)) {
