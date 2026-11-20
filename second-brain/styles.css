@@ -858,6 +858,59 @@ button, input, textarea, select {
   outline-offset: 1px;
 }
 
+/* ---------- نوار نسخه‌های همان پیام، کنار حباب ---------- */
+.revision-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-inline-start: 4px;
+  padding: 1px 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+}
+
+.revision-nav-btn {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 0.62rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.revision-nav-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.revision-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.revision-nav-counter {
+  min-width: 26px;
+  text-align: center;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.revision-nav.is-current .revision-nav-counter {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.revision-nav.is-empty {
+  opacity: 0.55;
+}
+
 .msg-error-box {
   margin-top: 8px;
   padding: 10px 12px;
@@ -1319,15 +1372,25 @@ html[data-theme="light"] .json-b { color: #6d28d9; }
 .composer-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* در RTL محور اصلی از راست شروع می‌شود: flex-start = سمت راست */
+  justify-content: flex-start;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-height: 32px;
 }
 
-.composer-plain-note {
+.composer-toolbar-hint {
   font-size: 0.72rem;
   color: var(--text-muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  margin-inline-end: auto;
+}
+
+.composer-plain-note {
+  display: none;
 }
 
 .composer-toggles {
@@ -1375,6 +1438,13 @@ html[data-theme="light"] .json-b { color: #6d28d9; }
 
 .attach-btn:hover {
   background: var(--bg-hover);
+}
+
+/* 🚨 [hidden] باید بر هر display دیگری غالب باشد.
+   بدون !important، قاعدهٔ .draft-count-badge { display: inline-flex }
+   ویژگی hidden را خنثی می‌کرد و نشان «۰» همیشه دیده می‌شد. */
+[hidden] {
+  display: none !important;
 }
 
 /* ---------- منوی کشویی ابزارها (اینترنت / فایل / پیش‌نویس‌ها) ---------- */
@@ -1434,7 +1504,9 @@ html[data-theme="light"] .json-b { color: #6d28d9; }
 .tools-menu {
   position: absolute;
   bottom: calc(100% + 8px);
-  inset-inline-end: 0;
+  /* در RTL، inset-inline-start همان «راست» است. با inline-end منو به چپ
+     کشیده می‌شد و از لبهٔ صفحه بیرون می‌زد (اندازه‌گیری: left 333 → right 565). */
+  inset-inline-start: 0;
   z-index: 60;
   min-width: 232px;
   max-width: min(84vw, 300px);

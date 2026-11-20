@@ -1776,6 +1776,10 @@
      * @returns {Promise<object>} رکورد نسخه
      */
     async addRevision(msgId, convId, text, label) {
+      // زمان باید اکیداً صعودی باشد؛ چند ویرایش در یک میلی‌ثانیه
+      // مرتب‌سازی revisionsOf را بی‌ثبات می‌کرد و ترتیب نسخه‌ها می‌پرید.
+      const createdAt = Math.max(Date.now(), (this._lastRevisionAt || 0) + 1);
+      this._lastRevisionAt = createdAt;
       const rec = {
         id: uid('rev'),
         kind: 'revision',
@@ -1783,7 +1787,7 @@
         convId,
         text: String(text ?? ''),
         label: label || 'ویرایش',
-        createdAt: Date.now()
+        createdAt
       };
       await this.storage.put(this.STORE, rec);
       await this.enforceRevisionLimit(msgId);
@@ -2822,9 +2826,104 @@
             ErrorManager.toast('پیام کپی شد.', 'ok');
           } catch (_) {}
         });
+        addBtn('📝 پیش‌نویس', () => this.sendMessageToDrafts(msg));
+        bar.appendChild(this.buildRevisionNav(msg, bodyEl));
       }
 
       return bar;
+    }
+
+    /**
+     * نوار جابه‌جایی بین نسخه‌های یک پیام، کنار خود حباب.
+     * با ◀ ▶ بین نسخه‌های قبلی می‌چرخیم و متن حباب همان‌جا عوض می‌شود.
+     */
+    buildRevisionNav(msg, bodyEl) {
+      const wrap = document.createElement('span');
+      wrap.className = 'revision-nav';
+      wrap.dataset.msgId = msg.id;
+
+      const prevBtn = document.createElement('button');
+      prevBtn.type = 'button';
+      prevBtn.className = 'revision-nav-btn';
+      prevBtn.textContent = '◀';
+      prevBtn.title = 'نسخهٔ قبلی';
+
+      const counter = document.createElement('span');
+      counter.className = 'revision-nav-counter tech-num';
+      counter.textContent = '—';
+
+      const nextBtn = document.createElement('button');
+      nextBtn.type = 'button';
+      nextBtn.className = 'revision-nav-btn';
+      nextBtn.textContent = '▶';
+      nextBtn.title = 'نسخهٔ بعدی';
+
+      // نسخه‌ها: قدیمی‌ترین ← جدیدترین (متن فعلی پیام آخرین نسخه است)
+      const loadVersions = async () => {
+        const revs = await this.drafts.revisionsOf(msg.id);
+        const ordered = revs.slice().reverse();          // قدیمی → جدید
+        const versions = ordered.map((r, i) => ({
+          text: r.text,
+          label: `نسخه ${(i + 1).toLocaleString('fa-IR')}`,
+          at: r.createdAt
+        }));
+        versions.push({ text: msg.content || '', label: 'نسخهٔ فعلی', at: msg.editedAt || msg.createdAt, current: true });
+        return versions;
+      };
+
+      let versions = [];
+      let idx = 0;
+
+      const paint = () => {
+        const v = versions[idx];
+        const plain = bodyEl.querySelector('.user-plain-body') || bodyEl;
+        plain.textContent = v.text;
+        counter.textContent = `${(idx + 1).toLocaleString('fa-IR')}/${versions.length.toLocaleString('fa-IR')}`;
+        prevBtn.disabled = idx <= 0;
+        nextBtn.disabled = idx >= versions.length - 1;
+        wrap.classList.toggle('is-current', !!v.current);
+        counter.title = v.current ? 'نسخهٔ فعلی پیام' : `${v.label} · ${formatTimeFa(v.at)}`;
+      };
+
+      prevBtn.onclick = () => {
+        if (idx > 0) { idx--; paint(); }
+      };
+      nextBtn.onclick = () => {
+        if (idx < versions.length - 1) { idx++; paint(); }
+      };
+
+      wrap.append(prevBtn, counter, nextBtn);
+
+      loadVersions().then((list) => {
+        versions = list;
+        idx = list.length - 1;                       // شروع از نسخهٔ فعلی
+        if (list.length <= 1) {
+          wrap.classList.add('is-empty');
+          counter.textContent = '۱/۱';
+          prevBtn.disabled = true;
+          nextBtn.disabled = true;
+          counter.title = 'این پیام هنوز نسخهٔ قبلی ندارد';
+        } else {
+          paint();
+        }
+      }).catch(() => {
+        counter.textContent = '—';
+      });
+
+      return wrap;
+    }
+
+    /** متن پیام را به پیش‌نویس‌ها می‌فرستد (بدون حذف پیام) */
+    async sendMessageToDrafts(msg) {
+      const conv = this.conversations.getActive();
+      if (!conv) return;
+      const rec = await this.drafts.saveDraft(conv.id, msg.content || '');
+      this.refreshDraftBadge();
+      this.syncToolsDot();
+      ErrorManager.toast(
+        rec ? '📝 متن پیام در پیش‌نویس‌ها ذخیره شد.' : 'این پیام متنی برای ذخیره ندارد.',
+        rec ? 'ok' : 'err'
+      );
     }
 
     /**
@@ -2995,7 +3094,7 @@
       const badge = $('draftCountBadge');
       if (!badge) return;
       const count = this.drafts.liveDrafts().length;
-      badge.textContent = count > 9 ? '۹+' : String(count).toLocaleString('fa-IR');
+      badge.textContent = count === 0 ? '' : (count > 9 ? '۹+' : count.toLocaleString('fa-IR'));
       badge.hidden = count === 0;
     }
 
