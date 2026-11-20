@@ -1479,8 +1479,8 @@ html[data-theme="light"] .json-b { color: #6d28d9; }
 .composer-toolbar {
   display: flex;
   align-items: center;
-  /* در RTL محور اصلی از راست شروع می‌شود: flex-start = سمت راست */
-  justify-content: flex-start;
+  /* در RTL محور اصلی از راست شروع می‌شود: flex-end = سمت چپ */
+  justify-content: flex-end;
   gap: 6px;
   flex-wrap: nowrap;
   min-height: 32px;
@@ -1611,9 +1611,10 @@ html[data-theme="light"] .json-b { color: #6d28d9; }
 .tools-menu {
   position: absolute;
   bottom: calc(100% + 8px);
-  /* در RTL، inset-inline-start همان «راست» است. با inline-end منو به چپ
-     کشیده می‌شد و از لبهٔ صفحه بیرون می‌زد (اندازه‌گیری: left 333 → right 565). */
-  inset-inline-start: 0;
+  /* دکمه در سمت چپ است، پس منو باید به سمت راست باز شود (به داخل صفحه).
+     در RTL، inset-inline-end همان «چپ» است؛ با inline-start منو به راستِ دکمه
+     می‌رفت و از لبهٔ صفحه بیرون می‌زد. */
+  inset-inline-end: 0;
   z-index: 60;
   min-width: 232px;
   max-width: min(84vw, 300px);
