@@ -486,7 +486,7 @@
         .emr-mr-foot .neg { color: var(--mr-neg); }
         .emr-mr-foot .zero { color: var(--mr-zero); }
         .emr-mr-verdict {
-            margin-top: 8px; padding: 6px 10px;
+            margin: 8px 10px 10px; padding: 6px 10px;
             border-radius: 10px; background: var(--mr-zero-bg);
             font-size: .8rem; font-weight: 700;
         }
@@ -1864,11 +1864,11 @@
                 if (d.count > 1) html += '<span class="emr-mr-dcnt">' + faNum(d.count) + ' ثبت</span>';
                 html += '</div>';
             }
-            var vd = verdictOf(mo);
-            if (vd) html += '<div class="emr-mr-verdict ' + vd.cls + '">' + vd.txt + '</div>';
             html += '<div class="emr-mr-foot"><span>مجموع ماه</span>';
             html += '<span class="' + signClass(mo.total) + '">' + fmtPct(mo.total) + '</span></div>';
             html += '</div>';
+            var vd = verdictOf(mo);
+            if (vd) html += '<div class="emr-mr-verdict ' + vd.cls + '">' + vd.txt + '</div>';
             html += '</div>';
         }
         bodyEl.innerHTML = html;
