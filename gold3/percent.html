@@ -474,6 +474,14 @@
         .emr-mr-foot .pos { color: var(--mr-pos); }
         .emr-mr-foot .neg { color: var(--mr-neg); }
         .emr-mr-foot .zero { color: var(--mr-zero); }
+        .emr-mr-verdict {
+            margin-top: 8px; padding: 6px 10px;
+            border-radius: 10px; background: var(--mr-zero-bg);
+            font-size: .8rem; font-weight: 700;
+        }
+        .emr-mr-verdict.pos { color: var(--mr-pos); }
+        .emr-mr-verdict.neg { color: var(--mr-neg); }
+        .emr-mr-verdict.zero { color: var(--mr-zero); }
 </style>
 </head>
 <body>
@@ -1986,17 +1994,19 @@
                 if (Object.prototype.hasOwnProperty.call(m.days, dk)) days.push(m.days[dk]);
             }
             days.sort(function (a, b) { return a.d - b.d; });
-            var pos = 0, neg = 0, zero = 0, total = 0;
+            var pos = 0, neg = 0, zero = 0, total = 0, posSum = 0, negSum = 0;
             for (var q = 0; q < days.length; q++) {
                 var v = days[q].value;
                 total += v;
-                if (v > 0) pos += 1;
-                else if (v < 0) neg += 1;
+                if (v > 0) { pos += 1; posSum += v; }
+                else if (v < 0) { neg += 1; negSum += v; }
                 else zero += 1;
             }
             list.push({
                 key: Number(k), y: m.y, m: m.m, greg: m.greg,
                 days: days, pos: pos, neg: neg, zero: zero,
+                posSum: Math.round(posSum * 100) / 100,
+                negSum: Math.round(negSum * 100) / 100,
                 total: Math.round(total * 100) / 100
             });
         }
@@ -2014,6 +2024,31 @@
 
     function signClass(v) {
         return v > 0 ? "pos" : (v < 0 ? "neg" : "zero");
+    }
+
+    function verdictOf(mo) {
+        var p = mo.posSum > 0 ? mo.posSum : 0;
+        var n = mo.negSum < 0 ? -mo.negSum : 0;
+        if (p <= 0 && n <= 0) return null;
+        if (n <= 0) return { cls: "pos", txt: "\u{1F53A} همهٔ روزها مثبت بودند" };
+        if (p <= 0) return { cls: "neg", txt: "\u{1F53B} همهٔ روزها منفی بودند" };
+        if (Math.abs(p - n) < 0.01) return { cls: "zero", txt: "\u2696\uFE0F دو طرف تقریباً برابرند" };
+        if (p > n) {
+            var r = p / n;
+            return {
+                cls: "pos",
+                txt: r > 9.9
+                    ? "\u{1F53A} مثبت‌ها بسیار سنگین‌ترند"
+                    : "\u{1F53A} مثبت‌ها " + faNum(Math.round(r * 10) / 10, 1) + " برابر منفی‌ها سنگین‌ترند"
+            };
+        }
+        var r2 = n / p;
+        return {
+            cls: "neg",
+            txt: r2 > 9.9
+                ? "\u{1F53B} منفی‌ها بسیار سنگین‌ترند"
+                : "\u{1F53B} منفی‌ها " + faNum(Math.round(r2 * 10) / 10, 1) + " برابر مثبت‌ها سنگین‌ترند"
+        };
     }
 
     function onMonthHeadClick() {
@@ -2036,9 +2071,11 @@
             var name = mo.greg
                 ? (faNum(mo.y, 0, true) + "/" + faNum(mo.m, 0, true))
                 : (MONTHS[mo.m - 1] + " " + faNum(mo.y, 0, true));
-            var pn = mo.pos + mo.neg;
-            var posW = pn > 0 ? Math.round((mo.pos / pn) * 1000) / 10 : 0;
-            var negW = pn > 0 ? Math.round((mo.neg / pn) * 1000) / 10 : 0;
+            var pw = mo.posSum > 0 ? mo.posSum : 0;
+            var nw = mo.negSum < 0 ? -mo.negSum : 0;
+            var wsum = pw + nw;
+            var posW = wsum > 0 ? Math.round((pw / wsum) * 1000) / 10 : 0;
+            var negW = wsum > 0 ? Math.round((100 - posW) * 10) / 10 : 0;
             var mid = "emrMrDays" + mo.key;
             html += '<div class="emr-mr-month">';
             html += '<button type="button" class="emr-mr-mhead" aria-expanded="' + (open ? "true" : "false") + '" aria-controls="' + mid + '">';
@@ -2051,7 +2088,7 @@
             html += '<span class="emr-mr-chev" aria-hidden="true">▾</span>';
             html += '</button>';
             html += '<div class="emr-mr-ratio" aria-hidden="true">';
-            if (pn > 0) {
+            if (wsum > 0) {
                 html += '<span class="pos" style="width:' + posW + '%"></span>';
                 html += '<span class="neg" style="width:' + negW + '%"></span>';
             }
@@ -2065,6 +2102,8 @@
                 if (d.count > 1) html += '<span class="emr-mr-dcnt">' + faNum(d.count) + ' ثبت</span>';
                 html += '</div>';
             }
+            var vd = verdictOf(mo);
+            if (vd) html += '<div class="emr-mr-verdict ' + vd.cls + '">' + vd.txt + '</div>';
             html += '<div class="emr-mr-foot"><span>مجموع ماه</span>';
             html += '<span class="' + signClass(mo.total) + '">' + fmtPct(mo.total) + '</span></div>';
             html += '</div>';
@@ -2146,7 +2185,7 @@
     window.emrMonthly = {
         toggle: function () { setOpen(panel.hidden, true); },
         render: render,
-        _debug: { buildMonths: buildMonths, normalizeTs: normalizeTs, toNum: toNum, jalali: jalali, readRecords: readRecords }
+        _debug: { buildMonths: buildMonths, normalizeTs: normalizeTs, toNum: toNum, jalali: jalali, readRecords: readRecords, verdictOf: verdictOf }
     };
 })();
 </script>
