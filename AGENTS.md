@@ -2731,6 +2731,12 @@ tabdeal_api_key, tabdeal_api_secret, tabdeal_cf_token
 
 ## 📅 گزارش ماهانهٔ درصدها در اپ‌های ثبت درصد ۱ تا ۹ (`gold` … `gold9`)
 
+> ⛔ **حذف‌شده — v129 (شاخهٔ `Y-18`)**: این قابلیت به درخواست صریح کاربر **کامل برداشته شد**
+> (چیپ «📅 ماهانه»، پنل، CSS و JS از هر ۹ فایل). بخش زیر فقط **مستند تاریخی/درس‌ها** است.
+>
+> **بازگردانی:** `git checkout 56ab10d -- gold/percent.html gold2/percent.html gold3/percent.html gold4/percent.html gold5/percent.html gold6/percent.html gold7/percent.html gold8/percent.html gold9/percent.html`
+> (یا `git revert c39eaf9`). پس از بازگردانی، `CACHE_NAME` را بامپ کن.
+
 ### هدف
 یک دکمهٔ **کم‌رنگ و سر به زیر** کنار بخش آمار که با لمس، گزارش ماه‌به‌ماه باز می‌کند:
 درصد **هر روز** ماه، تعداد روزهای مثبت/منفی، و **مجموع درصد همان ماه** در کف حباب آن ماه.
