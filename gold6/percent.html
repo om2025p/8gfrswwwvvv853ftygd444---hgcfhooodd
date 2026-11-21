@@ -491,6 +491,10 @@
         .emr-mr-verdict.pos { color: var(--mr-pos); }
         .emr-mr-verdict.neg { color: var(--mr-neg); }
         .emr-mr-verdict.zero { color: var(--mr-zero); }
+        .emr-mr-ver {
+            font-size: .68rem; font-weight: 600;
+            margin-inline-start: 4px; opacity: .8;
+        }
 </style>
 </head>
 <body>
@@ -537,7 +541,7 @@
             </div>
             <div class="emr-mr-panel" id="emrMrPanel" hidden>
                 <div class="emr-mr-head">
-                    <span>📅 گزارش ماه‌به‌ماه</span>
+                    <span>📅 گزارش ماه‌به‌ماه <b class="emr-mr-ver">v126</b></span>
                     <button type="button" class="emr-mr-close" id="emrMrClose" aria-label="بستن گزارش ماهانه">✕</button>
                 </div>
                 <div class="emr-mr-body" id="emrMrBody"></div>
@@ -1748,7 +1752,7 @@
     function verdictOf(mo) {
         var p = mo.posSum > 0 ? mo.posSum : 0;
         var n = mo.negSum < 0 ? -mo.negSum : 0;
-        if (p <= 0 && n <= 0) return null;
+        if (p <= 0 && n <= 0) return { cls: "zero", txt: "\u2796 همهٔ روزها خنثی بودند" };
         if (n <= 0) return { cls: "pos", txt: "\u{1F53A} همهٔ روزها مثبت بودند" };
         if (p <= 0) return { cls: "neg", txt: "\u{1F53B} همهٔ روزها منفی بودند" };
         if (Math.abs(p - n) < 0.01) return { cls: "zero", txt: "\u2696\uFE0F دو طرف تقریباً برابرند" };
