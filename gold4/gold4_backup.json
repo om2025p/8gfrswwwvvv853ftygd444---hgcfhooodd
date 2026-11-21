@@ -1,0 +1,31 @@
+{
+  "baseNumber": 396129993,
+  "percents": [
+    {
+      "value": -0.373696,
+      "timestamp": 1795258703346,
+      "source": "automation",
+      "auto": true
+    }
+  ],
+  "history": [
+    {
+      "id": 1795258703346,
+      "base": "۳۹۷٬۶۱۵٬۸۶۹",
+      "new": "۳۹۶٬۱۲۹٬۹۹۳",
+      "percent": "-0.37",
+      "rawPercent": -0.373696,
+      "rawBase": 397615869,
+      "rawNew": 396129993,
+      "timestamp": 1795258703346,
+      "source": "automation",
+      "auto": true
+    }
+  ],
+  "trash": [],
+  "goal": null,
+  "highlightedStates": {},
+  "periodTarget": null,
+  "achievedPeriods": [],
+  "notes": []
+}
