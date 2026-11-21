@@ -139,6 +139,121 @@
             border-radius: 12px; background: transparent; color: inherit; font-weight: bold; cursor: pointer;
             font-size: 0.9rem; font-family: inherit; }
         #themeToggle:hover { opacity: 0.85; }
+
+        /* ===== گزارش ماهانه (emr monthly report) ===== */
+        .emr-mr {
+            --mr-line: rgba(0,0,0,.18);
+            --mr-surface: rgba(0,0,0,.035);
+            --mr-muted: #5f6368;
+            --mr-pos: #146c34;
+            --mr-neg: #b3261e;
+            --mr-zero: #4f5256;
+            --mr-pos-bg: rgba(20,108,52,.12);
+            --mr-neg-bg: rgba(179,38,30,.12);
+            --mr-zero-bg: rgba(79,82,86,.12);
+            margin: 4px 0 12px;
+        }
+        .emr-mr.emr-mr-dark {
+            --mr-line: rgba(255,255,255,.22);
+            --mr-surface: rgba(255,255,255,.06);
+            --mr-muted: #c6ccd3;
+            --mr-pos: #7fe0a6;
+            --mr-neg: #ffa8a8;
+            --mr-zero: #d6d6d6;
+            --mr-pos-bg: rgba(127,224,166,.15);
+            --mr-neg-bg: rgba(255,168,168,.15);
+            --mr-zero-bg: rgba(214,214,214,.13);
+        }
+        .emr-mr-chip-row { display: flex; justify-content: flex-start; }
+        .emr-mr-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            min-height: 44px; padding: 0 16px;
+            border: 1px dashed var(--mr-line);
+            border-radius: 999px;
+            background: transparent;
+            color: var(--mr-muted);
+            font-family: inherit; font-size: .82rem; font-weight: 600;
+            cursor: pointer;
+            transition: color .18s ease, border-color .18s ease;
+        }
+        .emr-mr-chip:hover, .emr-mr-chip:focus-visible { color: inherit; border-color: currentColor; outline: none; }
+        .emr-mr-chip[aria-expanded="true"] { color: inherit; border-style: solid; }
+        .emr-mr-panel {
+            margin-top: 10px;
+            border: 1px solid var(--mr-line);
+            border-radius: 16px;
+            background: var(--mr-surface);
+            overflow: hidden;
+        }
+        .emr-mr-panel[hidden] { display: none !important; }
+        .emr-mr-head {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            padding: 4px 6px 4px 14px;
+            border-bottom: 1px solid var(--mr-line);
+            font-size: .9rem; font-weight: 700;
+        }
+        .emr-mr-close {
+            min-width: 44px; min-height: 44px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border: 0; border-radius: 12px; background: transparent;
+            color: var(--mr-muted); font-size: 1rem; cursor: pointer;
+        }
+        .emr-mr-close:hover, .emr-mr-close:focus-visible { color: inherit; outline: none; }
+        .emr-mr-body { padding: 8px; max-height: 62vh; overflow-y: auto; overscroll-behavior: contain; }
+        .emr-mr-empty { padding: 18px 10px; text-align: center; color: var(--mr-muted); font-size: .84rem; }
+        .emr-mr-month { border: 1px solid var(--mr-line); border-radius: 14px; margin-bottom: 8px; overflow: hidden; }
+        .emr-mr-month:last-child { margin-bottom: 0; }
+        .emr-mr-mhead {
+            display: flex; align-items: center; gap: 8px; width: 100%;
+            min-height: 46px; padding: 6px 10px;
+            border: 0; background: transparent; color: inherit;
+            font-family: inherit; font-size: .88rem; font-weight: 700;
+            cursor: pointer; text-align: start;
+        }
+        .emr-mr-mhead:focus-visible { outline: 2px solid var(--mr-pos); outline-offset: -2px; }
+        .emr-mr-mname { flex: 0 0 auto; }
+        .emr-mr-mcounts { display: flex; flex-wrap: wrap; gap: 4px; margin-inline-start: auto; }
+        .emr-mr-tag {
+            font-size: .72rem; font-weight: 700; line-height: 1.7;
+            padding: 1px 7px; border-radius: 999px; white-space: nowrap;
+        }
+        .emr-mr-tag.pos { color: var(--mr-pos); background: var(--mr-pos-bg); }
+        .emr-mr-tag.neg { color: var(--mr-neg); background: var(--mr-neg-bg); }
+        .emr-mr-tag.zero { color: var(--mr-zero); background: var(--mr-zero-bg); }
+        .emr-mr-chev { flex: 0 0 auto; color: var(--mr-muted); font-size: .8rem; transition: transform .18s ease; }
+        .emr-mr-mhead[aria-expanded="true"] .emr-mr-chev { transform: rotate(180deg); }
+        .emr-mr-ratio { display: flex; height: 5px; background: var(--mr-zero-bg); }
+        .emr-mr-ratio .pos { background: var(--mr-pos); }
+        .emr-mr-ratio .neg { background: var(--mr-neg); }
+        .emr-mr-days { padding: 4px 10px 8px; }
+        .emr-mr-days[hidden] { display: none !important; }
+        .emr-mr-day {
+            display: flex; align-items: center; gap: 8px;
+            padding: 5px 0; border-bottom: 1px dashed var(--mr-line);
+            font-size: .84rem;
+        }
+        .emr-mr-day:last-of-type { border-bottom: 0; }
+        .emr-mr-dnum {
+            flex: 0 0 auto; min-width: 30px; height: 26px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 8px; background: var(--mr-zero-bg);
+            color: var(--mr-zero); font-size: .76rem; font-weight: 700;
+        }
+        .emr-mr-dval { font-weight: 700; direction: ltr; unicode-bidi: isolate; }
+        .emr-mr-foot > span:last-child { direction: ltr; unicode-bidi: isolate; }
+        .emr-mr-dval.pos { color: var(--mr-pos); }
+        .emr-mr-dval.neg { color: var(--mr-neg); }
+        .emr-mr-dval.zero { color: var(--mr-zero); }
+        .emr-mr-dcnt { margin-inline-start: auto; color: var(--mr-muted); font-size: .72rem; }
+        .emr-mr-foot {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            margin-top: 8px; padding: 8px 10px;
+            border-radius: 10px; background: var(--mr-zero-bg);
+            font-size: .84rem; font-weight: 700;
+        }
+        .emr-mr-foot .pos { color: var(--mr-pos); }
+        .emr-mr-foot .neg { color: var(--mr-neg); }
+        .emr-mr-foot .zero { color: var(--mr-zero); }
 </style>
 </head>
 <body>
@@ -190,6 +305,22 @@
                 </div>
             </div>
         </div>
+        <!-- ===== گزارش ماهانه: دکمه کم‌رنگ + پنل کشویی (فقط خواندن) ===== -->
+        <div class="emr-mr" id="emrMrRoot">
+            <div class="emr-mr-chip-row">
+                <button type="button" class="emr-mr-chip" id="emrMrChip"
+                        aria-expanded="false" aria-controls="emrMrPanel"
+                        title="گزارش ماه‌به‌ماه: تعداد روزهای مثبت و منفی و مجموع هر ماه">📅 ماهانه</button>
+            </div>
+            <div class="emr-mr-panel" id="emrMrPanel" hidden>
+                <div class="emr-mr-head">
+                    <span>📅 گزارش ماه‌به‌ماه</span>
+                    <button type="button" class="emr-mr-close" id="emrMrClose" aria-label="بستن گزارش ماهانه">✕</button>
+                </div>
+                <div class="emr-mr-body" id="emrMrBody"></div>
+            </div>
+        </div>
+
 
         <div class="goal-section">
             <div class="nav-buttons">
@@ -1182,5 +1313,298 @@
 <script src="../refresh-button.js"></script>
 <script src="../usage-tracker.js" data-app="gold"></script>
 <script src="../backup-path.js"></script>
+
+<script>
+/* ===== گزارش ماهانه (emr monthly report) — فقط خواندن، بدون هیچ تغییری در داده ===== */
+(function () {
+    "use strict";
+    var CFG = { app: "gold", openKey: "monthly_panel_open_gold", keys: ["gold_percents"] };
+    var MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+    var root = document.getElementById("emrMrRoot");
+    var chip = document.getElementById("emrMrChip");
+    var panel = document.getElementById("emrMrPanel");
+    var bodyEl = document.getElementById("emrMrBody");
+    var closeBtn = document.getElementById("emrMrClose");
+    if (!root || !chip || !panel || !bodyEl) return;
+
+    var FA = /[\u06F0-\u06F9]/g, AR = /[\u0660-\u0669]/g;
+
+    function latin(s) {
+        return String(s)
+            .replace(FA, function (d) { return String(d.charCodeAt(0) - 0x06F0); })
+            .replace(AR, function (d) { return String(d.charCodeAt(0) - 0x0660); });
+    }
+
+    function faNum(n, frac, noGroup) {
+        var o = { maximumFractionDigits: frac == null ? 0 : frac };
+        if (noGroup) o.useGrouping = false;
+        try { return Number(n).toLocaleString("fa-IR", o); } catch (e) { return String(n); }
+    }
+
+    function toNum(raw) {
+        if (typeof raw === "number") return isFinite(raw) ? raw : null;
+        if (typeof raw !== "string") return null;
+        var s = latin(raw)
+            .replace(/[\u066C\u060C,\s\u200c\u200e\u200f\u00a0]/g, "")
+            .replace(/[\u2212\u2013\u2014]/g, "-")
+            .replace(/\u066B/g, ".");
+        if (s === "") return null;
+        var n = parseFloat(s);
+        return isFinite(n) ? n : null;
+    }
+
+    function normalizeTs(raw) {
+        if (raw === null || raw === undefined || raw === "") return null;
+        var v = raw;
+        if (typeof v === "string") {
+            var s = latin(v).trim();
+            if (s === "") return null;
+            v = /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : Date.parse(s);
+        }
+        if (typeof v !== "number" || !isFinite(v)) return null;
+        if (v > 0 && v < 1e11) v = v * 1000;
+        var y = new Date(v).getUTCFullYear();
+        if (y < 2000 || y > 2100) return null;
+        return v;
+    }
+
+    var dtf = null;
+    function getDtf() {
+        if (dtf) return dtf;
+        var o = { timeZone: "Asia/Tehran", year: "numeric", month: "numeric", day: "numeric" };
+        try { dtf = new Intl.DateTimeFormat("en-US-u-ca-persian", o); }
+        catch (e) { dtf = new Intl.DateTimeFormat("fa-IR", o); }
+        return dtf;
+    }
+
+    function jalali(ts) {
+        var out = { y: 0, m: 0, d: 0 };
+        try {
+            var parts = getDtf().formatToParts(new Date(ts));
+            for (var i = 0; i < parts.length; i++) {
+                var t = parts[i].type, v = latin(parts[i].value);
+                if (t === "year") out.y = parseInt(v, 10);
+                else if (t === "month") out.m = parseInt(v, 10);
+                else if (t === "day") out.d = parseInt(v, 10);
+            }
+        } catch (e) { out = { y: 0, m: 0, d: 0 }; }
+        if (!out.y || !out.m || !out.d) {
+            var g = new Date(ts);
+            out = { y: g.getFullYear(), m: g.getMonth() + 1, d: g.getDate(), greg: true };
+        }
+        return out;
+    }
+
+    function fromStorage() {
+        for (var i = 0; i < CFG.keys.length; i++) {
+            var raw = null;
+            try { raw = localStorage.getItem(CFG.keys[i]); } catch (e) { continue; }
+            if (!raw) continue;
+            var parsed = null;
+            try { parsed = JSON.parse(raw); } catch (e) { continue; }
+            var arr = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.percents) ? parsed.percents : null);
+            if (arr && arr.length) return arr;
+        }
+        return null;
+    }
+
+    function readRecords() {
+        var recs = null;
+        try {
+            if (typeof percents !== "undefined" && percents && percents.length) recs = percents;
+        } catch (e) { recs = null; }
+        if (!recs || !recs.length) recs = fromStorage();
+        return recs || [];
+    }
+
+    function buildMonths() {
+        var recs = readRecords();
+        var map = {};
+        for (var i = 0; i < recs.length; i++) {
+            var r = recs[i] || {};
+            var ts = normalizeTs(r.timestamp);
+            var val = toNum(r.value);
+            if (ts === null || val === null) continue;
+            var j = jalali(ts);
+            var mk = j.y * 12 + (j.m - 1);
+            var mo = map[mk];
+            if (!mo) mo = map[mk] = { y: j.y, m: j.m, greg: !!j.greg, days: {} };
+            var day = mo.days[j.d];
+            if (!day) day = mo.days[j.d] = { d: j.d, lastTs: -1, value: 0, count: 0 };
+            day.count += 1;
+            if (ts >= day.lastTs) { day.lastTs = ts; day.value = val; }
+        }
+        var list = [];
+        for (var k in map) {
+            if (!Object.prototype.hasOwnProperty.call(map, k)) continue;
+            var m = map[k], days = [];
+            for (var dk in m.days) {
+                if (Object.prototype.hasOwnProperty.call(m.days, dk)) days.push(m.days[dk]);
+            }
+            days.sort(function (a, b) { return a.d - b.d; });
+            var pos = 0, neg = 0, zero = 0, total = 0;
+            for (var q = 0; q < days.length; q++) {
+                var v = days[q].value;
+                total += v;
+                if (v > 0) pos += 1;
+                else if (v < 0) neg += 1;
+                else zero += 1;
+            }
+            list.push({
+                key: Number(k), y: m.y, m: m.m, greg: m.greg,
+                days: days, pos: pos, neg: neg, zero: zero,
+                total: Math.round(total * 100) / 100
+            });
+        }
+        list.sort(function (a, b) { return b.key - a.key; });
+        return list;
+    }
+
+    function fmtPct(v) {
+        var n = Math.round(v * 100) / 100;
+        var a = faNum(Math.abs(n), 2);
+        if (n > 0) return "+" + a + "%";
+        if (n < 0) return "−" + a + "%";
+        return a + "%";
+    }
+
+    function signClass(v) {
+        return v > 0 ? "pos" : (v < 0 ? "neg" : "zero");
+    }
+
+    function onMonthHeadClick() {
+        var expanded = this.getAttribute("aria-expanded") === "true";
+        this.setAttribute("aria-expanded", expanded ? "false" : "true");
+        var target = document.getElementById(this.getAttribute("aria-controls"));
+        if (target) target.hidden = expanded;
+    }
+
+    function render() {
+        var months = buildMonths();
+        if (!months.length) {
+            bodyEl.innerHTML = '<div class="emr-mr-empty">هنوز درصدی برای گزارش ماهانه ثبت نشده است.</div>';
+            return;
+        }
+        var html = "";
+        for (var i = 0; i < months.length; i++) {
+            var mo = months[i];
+            var open = i === 0;
+            var name = mo.greg
+                ? (faNum(mo.y, 0, true) + "/" + faNum(mo.m, 0, true))
+                : (MONTHS[mo.m - 1] + " " + faNum(mo.y, 0, true));
+            var pn = mo.pos + mo.neg;
+            var posW = pn > 0 ? Math.round((mo.pos / pn) * 1000) / 10 : 0;
+            var negW = pn > 0 ? Math.round((mo.neg / pn) * 1000) / 10 : 0;
+            var mid = "emrMrDays" + mo.key;
+            html += '<div class="emr-mr-month">';
+            html += '<button type="button" class="emr-mr-mhead" aria-expanded="' + (open ? "true" : "false") + '" aria-controls="' + mid + '">';
+            html += '<span class="emr-mr-mname">' + name + '</span>';
+            html += '<span class="emr-mr-mcounts">';
+            html += '<span class="emr-mr-tag pos">' + faNum(mo.pos) + ' مثبت</span>';
+            html += '<span class="emr-mr-tag neg">' + faNum(mo.neg) + ' منفی</span>';
+            if (mo.zero > 0) html += '<span class="emr-mr-tag zero">' + faNum(mo.zero) + ' خنثی</span>';
+            html += '</span>';
+            html += '<span class="emr-mr-chev" aria-hidden="true">▾</span>';
+            html += '</button>';
+            html += '<div class="emr-mr-ratio" aria-hidden="true">';
+            if (pn > 0) {
+                html += '<span class="pos" style="width:' + posW + '%"></span>';
+                html += '<span class="neg" style="width:' + negW + '%"></span>';
+            }
+            html += '</div>';
+            html += '<div class="emr-mr-days" id="' + mid + '"' + (open ? "" : " hidden") + '>';
+            for (var q = 0; q < mo.days.length; q++) {
+                var d = mo.days[q];
+                html += '<div class="emr-mr-day">';
+                html += '<span class="emr-mr-dnum">' + faNum(d.d) + '</span>';
+                html += '<span class="emr-mr-dval ' + signClass(d.value) + '">' + fmtPct(d.value) + '</span>';
+                if (d.count > 1) html += '<span class="emr-mr-dcnt">' + faNum(d.count) + ' ثبت</span>';
+                html += '</div>';
+            }
+            html += '<div class="emr-mr-foot"><span>مجموع ماه</span>';
+            html += '<span class="' + signClass(mo.total) + '">' + fmtPct(mo.total) + '</span></div>';
+            html += '</div>';
+            html += '</div>';
+        }
+        bodyEl.innerHTML = html;
+        var heads = bodyEl.querySelectorAll(".emr-mr-mhead");
+        for (var h = 0; h < heads.length; h++) heads[h].addEventListener("click", onMonthHeadClick);
+    }
+
+    function isDark() {
+        var c = document.body.classList;
+        if (c.contains("light-mode")) return false;
+        if (c.contains("dark-mode")) return true;
+        try {
+            var col = getComputedStyle(document.body).color || "";
+            var m = col.match(/rgba?\(([^)]+)\)/);
+            if (m) {
+                var p = m[1].split(",");
+                var lum = 0.2126 * parseFloat(p[0]) + 0.7152 * parseFloat(p[1]) + 0.0722 * parseFloat(p[2]);
+                return lum > 150;
+            }
+        } catch (e) {}
+        return false;
+    }
+
+    function syncTheme() {
+        var dark = isDark();
+        root.classList.toggle("emr-mr-dark", dark);
+        root.classList.toggle("emr-mr-light", !dark);
+    }
+
+    function setOpen(open, persist) {
+        panel.hidden = !open;
+        chip.setAttribute("aria-expanded", open ? "true" : "false");
+        if (open) render();
+        if (persist) {
+            try { localStorage.setItem(CFG.openKey, open ? "1" : "0"); } catch (e) {}
+        }
+    }
+
+    chip.addEventListener("click", function () { setOpen(panel.hidden, true); });
+    if (closeBtn) {
+        closeBtn.addEventListener("click", function () {
+            setOpen(false, true);
+            chip.focus();
+        });
+    }
+
+    function watch() {
+        if (typeof MutationObserver === "undefined") return;
+        var list = document.getElementById("percentList");
+        if (list) {
+            var pending = false;
+            var raf = window.requestAnimationFrame || function (f) { return setTimeout(f, 16); };
+            new MutationObserver(function () {
+                if (panel.hidden || pending) return;
+                pending = true;
+                raf(function () {
+                    pending = false;
+                    if (!panel.hidden) render();
+                });
+            }).observe(list, { childList: true, subtree: true, characterData: true });
+        }
+        new MutationObserver(syncTheme).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    }
+
+    function init() {
+        syncTheme();
+        watch();
+        var saved = "0";
+        try { saved = localStorage.getItem(CFG.openKey) || "0"; } catch (e) {}
+        if (saved === "1") setOpen(true, false);
+    }
+
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+    else init();
+
+    window.emrMonthly = {
+        toggle: function () { setOpen(panel.hidden, true); },
+        render: render,
+        _debug: { buildMonths: buildMonths, normalizeTs: normalizeTs, toNum: toNum, jalali: jalali, readRecords: readRecords }
+    };
+})();
+</script>
 </body>
 </html>
