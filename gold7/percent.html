@@ -458,6 +458,12 @@
         .emr-mr-ratio .neg { background: var(--mr-neg); }
         .emr-mr-days { padding: 4px 10px 8px; }
         .emr-mr-days[hidden] { display: none !important; }
+        .emr-mr-dlist {
+            max-height: 38vh; overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            margin: 0 -4px; padding: 0 4px;
+        }
         .emr-mr-day {
             display: flex; align-items: center; gap: 8px;
             padding: 5px 0; border-bottom: 1px dashed var(--mr-line);
@@ -1866,6 +1872,7 @@
             }
             html += '</div>';
             html += '<div class="emr-mr-days" id="' + mid + '"' + (open ? "" : " hidden") + '>';
+            html += '<div class="emr-mr-dlist">';
             for (var q = 0; q < mo.days.length; q++) {
                 var d = mo.days[q];
                 html += '<div class="emr-mr-day">';
@@ -1874,6 +1881,7 @@
                 if (d.count > 1) html += '<span class="emr-mr-dcnt">' + faNum(d.count) + ' ثبت</span>';
                 html += '</div>';
             }
+            html += '</div>';
             html += '<div class="emr-mr-foot"><span>مجموع ماه</span>';
             html += '<span class="' + signClass(mo.total) + '">' + fmtPct(mo.total) + '</span></div>';
             html += '<div class="emr-mr-tally">تعداد کل: ';
