@@ -1041,6 +1041,7 @@
     const tabGrowth = document.getElementById('tab-growth');
     const growthFrame = document.getElementById('growthFrame');
     let growthLoaded = false;
+    let growthDrawerOpen = false;
     const mockParam = new URLSearchParams(location.search).get('mock') === '1' ? '?mock=1' : '';
 
     function postThemeToFrame() {
@@ -1130,6 +1131,7 @@
     let growthResizeObserver = null;
 
     function syncGrowthFrameHeight() {
+        if (growthDrawerOpen) return;
         try {
             const doc = growthFrame.contentDocument;
             if (!doc) return;
@@ -1142,6 +1144,16 @@
                 growthFrame.style.height = height + 'px';
             }
         } catch (e) {}
+    }
+
+    function setGrowthFrameVisibleHeight() {
+        if (!growthDrawerOpen) return;
+        const vv = window.visualViewport;
+        const viewportTop = vv ? vv.offsetTop : 0;
+        const viewportHeight = vv ? vv.height : window.innerHeight;
+        const top = Math.max(0, Math.round(growthFrame.getBoundingClientRect().top - viewportTop));
+        const height = Math.max(320, Math.round(viewportHeight - top));
+        growthFrame.style.height = height + 'px';
     }
 
     function scheduleGrowthHeightSync() {
@@ -1165,11 +1177,30 @@
     }
 
     growthFrame.addEventListener('load', function() {
+        growthDrawerOpen = false;
         postThemeToFrame();
         observeGrowthFrame();
         syncGrowthFrameHeight();
     });
-    window.addEventListener('resize', scheduleGrowthHeightSync);
+
+    window.addEventListener('resize', function() {
+        if (growthDrawerOpen) setGrowthFrameVisibleHeight();
+        else scheduleGrowthHeightSync();
+    });
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', function() {
+            if (growthDrawerOpen) setGrowthFrameVisibleHeight();
+        });
+    }
+    window.addEventListener('scroll', function() {
+        if (growthDrawerOpen) setGrowthFrameVisibleHeight();
+    }, { passive: true });
+    window.addEventListener('message', function(e) {
+        if (!e.data || e.data.type !== 'emarat-growth-drawer') return;
+        growthDrawerOpen = !!e.data.open;
+        if (growthDrawerOpen) setGrowthFrameVisibleHeight();
+        else scheduleGrowthHeightSync();
+    });
 
     // ============================================================
     // تبدیل عدد به حروف
