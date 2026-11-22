@@ -636,12 +636,20 @@
     body.drawer-closed .fav-drawer { display: none; }
     .content { min-width: 0; }
     .content .card { margin: 0 auto; }
+    .content > .search-section {
+        max-width: 520px; margin: 0 auto 12px;
+        background: var(--bg-card); border: 1px solid var(--border-color);
+        border-radius: 16px; padding: 12px; box-shadow: var(--shadow);
+    }
+    .content > .search-section .search-results {
+        position: static; max-height: 280px; margin-top: 8px; box-shadow: var(--shadow);
+    }
     .fav-drawer { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); max-height: calc(100dvh - 110px); overflow-y: auto; }
     .drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
     .drawer-title { font-size: 13px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
+    .drawer-head-actions { display: flex; align-items: center; gap: 6px; }
+    .drawer-close { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--bg-amount); color: var(--text-primary); font-size: 14px; cursor: pointer; flex-shrink: 0; }
     .count-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: linear-gradient(135deg, #2563eb, #1e40af); color: #fff; font-size: 11px; }
-    .fav-drawer .search-section { margin-bottom: 8px; }
-    .fav-drawer .search-results { position: static; max-height: 230px; margin-top: 8px; }
     .fav-drawer .saved-list { display: flex; flex-direction: column; gap: 8px; max-height: 40vh; overflow-y: auto; }
     .saved-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 12px; background: var(--bg-amount); cursor: pointer; min-height: 44px; transition: all .2s; }
     .saved-row:hover { border-color: #2563eb; }
@@ -696,7 +704,7 @@
 
     @media (max-width: 820px) {
         .layout { display: block; }
-        .fav-drawer { position: fixed; top: 0; left: 0; bottom: 0; width: min(86vw, 320px); z-index: 1000; transform: translateX(-105%); transition: transform .3s ease; border-radius: 0 18px 18px 0; padding: 16px; max-height: 100dvh; }
+        .fav-drawer { position: fixed; top: 0; left: 0; bottom: 0; width: min(86vw, 320px); z-index: 1002; transform: translateX(-105%); transition: transform .3s ease; border-radius: 0 18px 18px 0; padding: 16px; max-height: 100dvh; }
         body.drawer-open .fav-drawer { transform: translateX(0); }
         body.drawer-open .drawer-overlay { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 999; }
         .app-topbar { position: sticky; top: 0; z-index: 1001; background: var(--bg-body); padding: 8px 0; }
@@ -717,6 +725,14 @@
 
     <div class="layout" id="layout">
         <main class="content">
+            <div class="search-section">
+                <div class="search-input-wrap">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="جستجوی نماد... (مثلاً: گوهر، دوایکس، خودرو)" autocomplete="off" />
+                    <button class="clear-btn" id="clearBtn" title="پاک کردن">✕</button>
+                </div>
+                <div class="search-results" id="searchResults"></div>
+            </div>
             <div class="card" id="mainCard">
                 <div style="text-align: center;">
                     <div class="token-badge" id="tokenBadge">
@@ -743,18 +759,13 @@
         <aside class="fav-drawer" id="favDrawer" aria-label="علاقه‌مندی‌ها">
             <div class="drawer-head">
                 <div class="drawer-title">⭐ علاقه‌مندی‌ها <span class="count-badge" id="savedCount">۰</span></div>
-                <button class="saved-clear" id="savedClear">پاک کردن همه</button>
-            </div>
-            <div class="search-section">
-                <div class="search-input-wrap">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="searchInput" placeholder="جستجوی نماد... (مثلاً: گوهر، دوایکس، خودرو)" autocomplete="off" />
-                    <button class="clear-btn" id="clearBtn" title="پاک کردن">✕</button>
+                <div class="drawer-head-actions">
+                    <button class="saved-clear" id="savedClear">پاک کردن همه</button>
+                    <button class="drawer-close" id="drawerClose" title="بستن" aria-label="بستن">✕</button>
                 </div>
-                <div class="search-results" id="searchResults"></div>
             </div>
             <div class="saved-list" id="savedList"></div>
-            <div class="drawer-hint" id="drawerHint">برای افزودن: جستجو کن و ⭐ بزن · برای حذف: ✕ و تأیید.</div>
+            <div class="drawer-hint" id="drawerHint">برای افزودن، از کادر جستجوی بالای صفحه استفاده کن · برای حذف: ✕ و تأیید.</div>
         </aside>
     </div>
 </div>
@@ -834,6 +845,7 @@
     const savedHint = document.getElementById('drawerHint');
     const drawerToggle = document.getElementById('drawerToggle');
     const drawerOverlay = document.getElementById('drawerOverlay');
+    const drawerClose = document.getElementById('drawerClose');
     const deleteOverlay = document.getElementById('deleteOverlay');
     const deleteSymbolName = document.getElementById('deleteSymbolName');
     const deleteCancelBtn = document.getElementById('deleteCancelBtn');
@@ -1696,6 +1708,7 @@
     drawerToggle.addEventListener('click', function() {
         setDrawer(!document.body.classList.contains('drawer-open'));
     });
+    if (drawerClose) drawerClose.addEventListener('click', function() { setDrawer(false); });
     drawerOverlay.addEventListener('click', function() { setDrawer(false); });
     if (deleteCancelBtn) deleteCancelBtn.addEventListener('click', closeDeleteModal);
     if (deleteConfirmBtn) deleteConfirmBtn.addEventListener('click', confirmDeleteSymbol);
