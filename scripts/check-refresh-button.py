@@ -11,7 +11,7 @@ import sys
 
 SKIP_DIRS = {
     'vendor', 'node_modules', '.git', '.github', '.agents', '.agent_tmp',
-    'fund-automation-android', 'restricted',
+    'fund-automation-android', 'restricted', '_incoming',
 }
 TAG = 'refresh-button.js'
 
