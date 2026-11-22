@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
+<script src="../storage-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>📊 محاسبه سود صندوق آتیه مفید بازنشستگی</title>
@@ -449,8 +450,7 @@
         </div>
     </div>
 
-    <script src="../storage-guard.js"></script>
-<script>
+    <script>
         const STORAGE_PREFIX = "mofid_atie_";
 
         function migrateNote(note) {
@@ -471,6 +471,7 @@
         }
 
         let percents = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "percents")) || [];
+        window.__stateLoaded = true; // حافظه معتبر شد؛ saveData از این پس اجازهٔ نوشتن دارد.
         let trash = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "trash")) || [];
         let goal = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "goal")) || null;
         let highlightedStates = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "highlightedStates")) || {};
@@ -1073,6 +1074,10 @@
 
         // ===== ذخیره و بازیابی =====
         function saveData() {
+        // نوشتن فقط پس از بارگذاری معتبر؛ وگرنه آرایهٔ خالی روی دادهٔ
+        // موجود می‌نشیند و تاریخچه نابود می‌شود (باگ «چهار ماه عقب»).
+        if (!window.__stateLoaded) return;
+
             var batch = {};
             batch[STORAGE_PREFIX + "percents"] = JSON.stringify(percents);
             batch[STORAGE_PREFIX + "trash"] = JSON.stringify(trash);
@@ -1239,6 +1244,11 @@
 
                 if (putRes.ok) {
                     appendGithubLog("🎉 پشتیبان‌گیری با موفقیت کامل انجام شد!");
+                    try {
+                        if (window.EmaratBackupPath && window.EmaratBackupPath.recordUpdate) {
+                            window.EmaratBackupPath.recordUpdate("gold4", repo, token, branch, new Date());
+                        }
+                    } catch (e) {}
                     return { success: true };
                 } else if (putRes.status === 409) {
                     appendGithubLog("⚠️ خطای ۴۰۹ (تعارض فایل با پوشه): فایلی با نام این پوشه در مخزن وجود دارد. در حال تلاش با پوشه جایگزین...");
@@ -1417,7 +1427,145 @@
          *
          * منطق: رکوردهای تازهٔ بکاپ (که در حافظهٔ محلی نیستند) اضافه می‌شوند،
          * اما هیچ رکورد محلی حذف نمی‌شود و رکوردهای پاک‌شده (در trash) برنمی‌گردند.
+         *
+         * مسیرها به ترتیب امتحان می‌شوند: مسیر شمسی (backup-path) و سپس مسیر ریشه،
+         * چون اپ اندروید به ریشه آپلود می‌کند و وب‌اپ به مسیر شمسی.
          */
+        async function autoSyncFromBackup() {
+            const candidates = [];
+            if (window.EmaratBackupPath) {
+                try {
+                    candidates.push(window.EmaratBackupPath.build("gold4", new Date(), "gold4_backup.json"));
+                } catch (e) {}
+            }
+            candidates.push("gold4_backup.json");
+
+            let cloudData = null;
+            for (const path of candidates) {
+                try {
+                    const res = await fetch(path, { cache: "no-store" });
+                    if (!res.ok) continue;
+                    const parsed = await res.json();
+                    if (parsed && typeof parsed === "object") { cloudData = parsed; break; }
+                } catch (e) {}
+            }
+            if (!cloudData) return;
+
+            let hasChanges = false;
+
+            if (Array.isArray(cloudData.percents)) {
+                const localTs = percents.map(p => p.timestamp);
+                const trashTs = trash.map(t => t.timestamp);
+                let merged = 0;
+                cloudData.percents.forEach(cp => {
+                    if (!cp || typeof cp.timestamp !== "number") return;
+                    if (trashTs.some(t => Math.abs(t - cp.timestamp) < 2000)) return;
+                    if (localTs.some(t => Math.abs(t - cp.timestamp) < 2000)) return;
+                    percents.push(cp);
+                    localTs.push(cp.timestamp);
+                    merged++;
+                });
+                if (merged > 0) {
+                    percents.sort((a, b) => a.timestamp - b.timestamp);
+                    hasChanges = true;
+                }
+            }
+
+            if (Array.isArray(cloudData.trash)) {
+                const trashTs = trash.map(t => t.timestamp);
+                cloudData.trash.forEach(ct => {
+                    if (!ct || typeof ct.timestamp !== "number") return;
+                    if (!trashTs.some(t => Math.abs(t - ct.timestamp) < 2000)) {
+                        trash.push(ct);
+                        trashTs.push(ct.timestamp);
+                        hasChanges = true;
+                    }
+                });
+            }
+
+            if (cloudData.goal && !goal) { goal = cloudData.goal; hasChanges = true; }
+
+            if (cloudData.highlightedStates && typeof cloudData.highlightedStates === "object") {
+                highlightedStates = Object.assign({}, cloudData.highlightedStates, highlightedStates);
+            }
+
+            if (cloudData.periodTarget && !periodTarget) {
+                periodTarget = cloudData.periodTarget;
+                hasChanges = true;
+            }
+
+            if (Array.isArray(cloudData.notes)) {
+                const ids = new Set(notes.map(n => n && n.id));
+                cloudData.notes.forEach(cn => {
+                    if (cn && cn.id && !ids.has(cn.id)) {
+                        notes.push(migrateNote(cn));
+                        ids.add(cn.id);
+                        hasChanges = true;
+                    }
+                });
+            }
+
+            let localHistory = [];
+            try {
+                localHistory = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "history")) || [];
+            } catch (e) { localHistory = []; }
+            if (!Array.isArray(localHistory)) localHistory = [];
+
+            let historyChanged = false;
+            if (Array.isArray(cloudData.history)) {
+                cloudData.history.forEach(ch => {
+                    if (!ch) return;
+                    const cid = ch.id || ch.timestamp || 0;
+                    const exists = localHistory.some(lh => {
+                        const lid = lh.id || lh.timestamp || 0;
+                        return lid === cid || (cid && lid && Math.abs(lid - cid) < 2000);
+                    });
+                    if (!exists) { localHistory.push(ch); historyChanged = true; }
+                });
+            }
+            if (historyChanged) {
+                localHistory.sort((a, b) => (b.id || b.timestamp || 0) - (a.id || a.timestamp || 0));
+                localStorage.setItem(STORAGE_PREFIX + "history", JSON.stringify(localHistory));
+                hasChanges = true;
+            }
+
+            const localBaseStr = localStorage.getItem(STORAGE_PREFIX + "baseNumber");
+            const localBaseNum = localBaseStr ? (parseFloat(String(localBaseStr).replace(/,/g, "")) || 0) : 0;
+            let finalBaseNum = localBaseNum;
+            const cloudBaseNum = cloudData.baseNumber
+                ? (parseFloat(String(cloudData.baseNumber).replace(/,/g, "")) || 0) : 0;
+
+            if (localHistory.length > 0) {
+                const newest = localHistory[0];
+                let newestVal = 0;
+                if (newest.rawNew !== undefined && newest.rawNew !== null) {
+                    newestVal = parseFloat(newest.rawNew) || 0;
+                } else if (newest.new) {
+                    newestVal = parseFloat(String(newest.new).replace(/,/g, "")) || 0;
+                }
+                if (newestVal > 0) finalBaseNum = newestVal;
+                else if (cloudBaseNum > finalBaseNum) finalBaseNum = cloudBaseNum;
+            } else if (cloudBaseNum > finalBaseNum) {
+                finalBaseNum = cloudBaseNum;
+            }
+
+            if (finalBaseNum > 0 && finalBaseNum !== localBaseNum) {
+                localStorage.setItem(STORAGE_PREFIX + "baseNumber", String(finalBaseNum));
+                hasChanges = true;
+            }
+
+            if (hasChanges) {
+                checkPeriodAchievement();
+                saveData();
+                reloadLocalData();
+                updateUI();
+                if (window.parent && window.parent.EmaratCloudSync) {
+                    window.parent.EmaratCloudSync.push();
+                } else if (window.EmaratCloudSync) {
+                    window.EmaratCloudSync.push();
+                }
+            }
+        }
 
         function reloadLocalData() {
             percents = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "percents")) || [];
@@ -1447,6 +1595,7 @@
             checkPeriodAchievement();
             initStatsMenu();
             updateUI();
+            autoSyncFromBackup();
         });
         window.addEventListener('beforeunload', saveData);
     </script>

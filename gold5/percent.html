@@ -1462,6 +1462,152 @@
             if (!e.key || e.key === 'energy_fund_synergy' || e.key === 'emarat_last_modified') window.__emaratAutoSync();
         });
 
+        /**
+         * همگام‌سازی خودکار با فایل gold5_backup.json (ادغام دوطرفه).
+         * مسیر شمسی (backup-path) اول امتحان می‌شود، سپس مسیر ریشه — چون اپ اندروید
+         * به ریشه آپلود می‌کند و وب‌اپ به مسیر شمسی.
+         */
+        async function autoSyncFromBackup() {
+            var candidates = [];
+            if (window.EmaratBackupPath) {
+                try {
+                    candidates.push(window.EmaratBackupPath.build("gold5", new Date(), "gold5_backup.json"));
+                } catch (e) {}
+            }
+            candidates.push("gold5_backup.json");
+
+            var cloudData = null;
+            for (var i = 0; i < candidates.length; i++) {
+                try {
+                    var res = await fetch(candidates[i], { cache: "no-store" });
+                    if (!res.ok) continue;
+                    var parsed = await res.json();
+                    if (parsed && typeof parsed === "object") { cloudData = parsed; break; }
+                } catch (e) {}
+            }
+            if (!cloudData) return;
+
+            var hasChanges = false;
+
+            if (Array.isArray(cloudData.percents)) {
+                var localTs = percents.map(function (p) { return p.timestamp; });
+                var trashTs = trash.map(function (t) { return t.timestamp; });
+                var merged = 0;
+                cloudData.percents.forEach(function (cp) {
+                    if (!cp || typeof cp.timestamp !== "number") return;
+                    if (trashTs.some(function (t) { return Math.abs(t - cp.timestamp) < 2000; })) return;
+                    if (localTs.some(function (t) { return Math.abs(t - cp.timestamp) < 2000; })) return;
+                    percents.push(cp);
+                    localTs.push(cp.timestamp);
+                    merged++;
+                });
+                if (merged > 0) {
+                    percents.sort(function (a, b) { return a.timestamp - b.timestamp; });
+                    hasChanges = true;
+                }
+            }
+
+            if (Array.isArray(cloudData.trash)) {
+                var tts = trash.map(function (t) { return t.timestamp; });
+                cloudData.trash.forEach(function (ct) {
+                    if (!ct || typeof ct.timestamp !== "number") return;
+                    if (!tts.some(function (t) { return Math.abs(t - ct.timestamp) < 2000; })) {
+                        trash.push(ct);
+                        tts.push(ct.timestamp);
+                        hasChanges = true;
+                    }
+                });
+            }
+
+            if (cloudData.goal && !goal) { goal = cloudData.goal; hasChanges = true; }
+
+            if (cloudData.highlightedStates && typeof cloudData.highlightedStates === "object") {
+                highlightedStates = Object.assign({}, cloudData.highlightedStates, highlightedStates);
+            }
+
+            if (cloudData.periodTarget && !periodTarget) {
+                periodTarget = cloudData.periodTarget;
+                hasChanges = true;
+            }
+
+            if (Array.isArray(cloudData.notes)) {
+                var nids = {};
+                notes.forEach(function (n) { if (n && n.id) nids[n.id] = 1; });
+                cloudData.notes.forEach(function (cn) {
+                    if (cn && cn.id && !nids[cn.id]) {
+                        notes.push(cn);
+                        nids[cn.id] = 1;
+                        hasChanges = true;
+                    }
+                });
+            }
+
+            var localHistory = [];
+            try {
+                localHistory = JSON.parse(localStorage.getItem("sinergy_history")) || [];
+            } catch (e) { localHistory = []; }
+            if (!Array.isArray(localHistory)) localHistory = [];
+
+            var historyChanged = false;
+            if (Array.isArray(cloudData.history)) {
+                cloudData.history.forEach(function (ch) {
+                    if (!ch) return;
+                    var cid = ch.id || ch.timestamp || 0;
+                    var exists = localHistory.some(function (lh) {
+                        var lid = lh.id || lh.timestamp || 0;
+                        return lid === cid || (cid && lid && Math.abs(lid - cid) < 2000);
+                    });
+                    if (!exists) { localHistory.push(ch); historyChanged = true; }
+                });
+            }
+            if (historyChanged) {
+                localHistory.sort(function (a, b) {
+                    return (b.id || b.timestamp || 0) - (a.id || a.timestamp || 0);
+                });
+                localStorage.setItem("sinergy_history", JSON.stringify(localHistory));
+                hasChanges = true;
+            }
+
+            var localBaseStr = localStorage.getItem("sinergy_baseNumber");
+            var localBaseNum = localBaseStr ? (parseFloat(String(localBaseStr).replace(/,/g, "")) || 0) : 0;
+            var finalBaseNum = localBaseNum;
+            var cloudBaseNum = cloudData.baseNumber
+                ? (parseFloat(String(cloudData.baseNumber).replace(/,/g, "")) || 0) : 0;
+
+            if (localHistory.length > 0) {
+                var newest = localHistory[0];
+                var newestVal = 0;
+                if (newest.rawNew !== undefined && newest.rawNew !== null) {
+                    newestVal = parseFloat(newest.rawNew) || 0;
+                } else if (newest.new) {
+                    newestVal = parseFloat(String(newest.new).replace(/,/g, "")) || 0;
+                }
+                if (newestVal > 0) finalBaseNum = newestVal;
+                else if (cloudBaseNum > finalBaseNum) finalBaseNum = cloudBaseNum;
+            } else if (cloudBaseNum > finalBaseNum) {
+                finalBaseNum = cloudBaseNum;
+            }
+
+            if (finalBaseNum > 0 && finalBaseNum !== localBaseNum) {
+                localStorage.setItem("sinergy_baseNumber", String(finalBaseNum));
+                hasChanges = true;
+            }
+
+            if (hasChanges) {
+                saveData();
+                loadData();
+                checkPeriodAchievement();
+                updateUI();
+                if (window.parent && window.parent.EmaratCloudSync) {
+                    window.parent.EmaratCloudSync.push();
+                } else if (window.EmaratCloudSync) {
+                    window.EmaratCloudSync.push();
+                }
+            }
+        }
+
+        autoSyncFromBackup();
+
 })();
 
         /* ===== کنترل تم شب/روز (افزوده‌شده) ===== */
