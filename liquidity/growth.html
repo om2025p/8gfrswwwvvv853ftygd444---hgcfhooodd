@@ -809,6 +809,8 @@
     const LEGACY_LAST_KEY = 'lastSymbol';
     const LEGACY_TOKEN_KEY = 'activeTokenIndex';
     const LEGACY_THEME_KEY = 'growthTheme';
+    const DEFAULTS_SEEDED_KEY = 'liquidity_growth_defaults_v1';
+    const DEFAULT_SYMBOLS = ['مادیرا', 'زکشت', 'سبزوا', 'آبادا', 'کمرجان', 'تکپاد', 'مهرمام', 'شغدیر', 'نوری', 'سخوز'];
 
     // ============================================================
     // STATE
@@ -1064,8 +1066,31 @@
 
     function saveSavedSymbols() {
         const json = JSON.stringify(savedSymbols);
-        try { localStorage.setItem(STORAGE_KEY, json); } catch (e) {}
-        try { localStorage.setItem(LEGACY_STORAGE_KEY, json); } catch (e) {}
+        try {
+            localStorage.setItem(STORAGE_KEY, json);
+            localStorage.setItem(LEGACY_STORAGE_KEY, json);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function seedDefaultSymbols() {
+        try {
+            if (localStorage.getItem(DEFAULTS_SEEDED_KEY) === '1') return;
+            const merged = savedSymbols.slice();
+            DEFAULT_SYMBOLS.forEach(function (sym) {
+                if (merged.indexOf(sym) === -1) merged.push(sym);
+            });
+            if (merged.length === savedSymbols.length) {
+                localStorage.setItem(DEFAULTS_SEEDED_KEY, '1');
+                return;
+            }
+            savedSymbols = merged;
+            if (saveSavedSymbols()) {
+                localStorage.setItem(DEFAULTS_SEEDED_KEY, '1');
+            }
+        } catch (e) {}
     }
 
     function isSymbolSaved(symbol) {
@@ -1733,6 +1758,7 @@
 
     loadCache();          // ⭐ کش رو لود کن
     loadSavedSymbols();
+    seedDefaultSymbols();
     renderSavedSymbols();
     fetchSymbolsList();
 </script>
