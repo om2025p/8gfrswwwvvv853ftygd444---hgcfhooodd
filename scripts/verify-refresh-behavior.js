@@ -16,7 +16,7 @@ function loadPuppeteer() {
 const puppeteer = loadPuppeteer();
 
 const BASE = process.argv[2] || 'http://127.0.0.1:12099';
-const PAGES = ['index.html', 'monitor/index.html', 'gold9/index.html'];
+const PAGES = ['index.html', 'monitor/index.html', 'gold9/index.html', 'gold10/index.html'];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function state(page) {

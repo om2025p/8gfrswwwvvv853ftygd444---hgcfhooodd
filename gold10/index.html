@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ثبت درصد 10">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1d6fd0">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <script src="../cloud-sync.js"></script>
+    <title>ثبت درصد 10 · آبادا</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: Tahoma, 'Segoe UI', Geneva, Verdana, sans-serif;
+            background-color: #0a1220;
+        }
+        .app-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+        .brand-header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 8px 12px 7px;
+            background: linear-gradient(160deg, #111d30 0%, #0a1220 100%);
+            border-bottom: 1px solid #233b5c;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.45);
+            position: relative;
+            z-index: 101;
+            flex-shrink: 0;
+        }
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 0 1px rgba(63,169,245,0.35);
+        }
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1px;
+            min-width: 0;
+        }
+        /* ---------- آیکون‌های تصویری اختصاصی (assets/aNN.png) ---------- */
+        .ico {
+            width: 1.15em;
+            height: 1.15em;
+            display: inline-block;
+            vertical-align: -0.22em;
+            object-fit: contain;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+        .ico-lg { width: 1.6em; height: 1.6em; vertical-align: -0.35em; }
+        .ico-sm { width: 0.95em; height: 0.95em; vertical-align: -0.14em; }
+        .ico-tab {
+            width: 1.1em;
+            height: 1.1em;
+            vertical-align: -0.2em;
+            margin-inline-end: 3px;
+            object-fit: contain;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+        .brand-title {
+            font-size: 1.05rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #ffd60a, #3fa9f5, #8fd6ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1.35;
+        }
+        .brand-subtitle {
+            font-size: 0.66rem;
+            color: #9fc2e8;
+            opacity: 0.9;
+            letter-spacing: 0.2px;
+            line-height: 1.3;
+        }
+        .tabs {
+            display: flex;
+            background: linear-gradient(135deg, #0f3f7a 0%, #1d6fd0 55%, #123a6b 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            position: relative;
+            z-index: 100;
+            transition: background 0.3s;
+        }
+        .tab {
+            flex: 1;
+            padding: 14px 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            font-size: 0.82rem;
+            border-bottom: 3px solid transparent;
+            opacity: 0.85;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            white-space: nowrap;
+        }
+        .tab.active {
+            opacity: 1;
+            background: rgba(255,255,255,0.22);
+            border-bottom: 3px solid #ffffff;
+        }
+        .tab-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        .tab-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            border: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-wrapper">
+        <div class="brand-header">
+            <img src="icon-192.png" alt="" class="brand-mark" width="34" height="34">
+            <div class="brand-text">
+                <div class="brand-title">آبادا</div>
+                <div class="brand-subtitle">تولید نیروی برق آبادان</div>
+            </div>
+        </div>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab(0)"><img src="assets/a01.png" alt="" class="ico-tab">ثبت درصد</div>
+            <div class="tab" onclick="switchTab(1)"><img src="assets/a02.png" alt="" class="ico-tab">محاسبه تغییرات</div>
+            <div class="tab" onclick="switchTab(2)"><img src="assets/a03.png" alt="" class="ico-tab">ثبت ابطال</div>
+            <div class="tab" onclick="switchTab(3)"><img src="assets/a04.png" alt="" class="ico-tab">مدیریت رشد</div>
+        </div>
+        <div class="tab-container">
+            <div id="content0" class="tab-content active">
+                <iframe src="percent.html"></iframe>
+            </div>
+            <div id="content1" class="tab-content">
+                <iframe src="calculator.html"></iframe>
+            </div>
+            <div id="content2" class="tab-content">
+                <iframe src="price.html"></iframe>
+            </div>
+            <div id="content3" class="tab-content">
+                <iframe src="growth.html"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="../storage-guard.js"></script>
+<script>
+        function switchTab(index) {
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                t.classList.toggle('active', i === index);
+            });
+            document.querySelectorAll('.tab-content').forEach((c, i) => {
+                c.classList.toggle('active', i === index);
+            });
+
+            const themeColor = document.querySelector('meta[name="theme-color"]');
+            const tabsHeader = document.querySelector('.tabs');
+
+            if (index === 0) {
+                themeColor.setAttribute('content', '#1d6fd0');
+                tabsHeader.style.background = 'linear-gradient(135deg, #123a6b, #7b5cff, #1b5fb8, #5b8def, #2a7fd4)';
+            } else if (index === 1) {
+                themeColor.setAttribute('content', '#8b5cf6');
+                tabsHeader.style.background = 'linear-gradient(135deg, #7b5cff, #5b8def, #123a6b, #1b5fb8, #2a7fd4)';
+            } else if (index === 2) {
+                themeColor.setAttribute('content', '#2f9e6e');
+                tabsHeader.style.background = 'linear-gradient(135deg, #1b5fb8, #2a7fd4, #123a6b, #7b5cff, #5b8def)';
+            } else if (index === 3) {
+                themeColor.setAttribute('content', '#ffd60a');
+                tabsHeader.style.background = 'linear-gradient(135deg, #5b8def, #123a6b, #1b5fb8, #2a7fd4, #7b5cff)';
+            }
+        }
+    </script>
+<script src="../refresh-button.js"></script>
+<script src="../usage-tracker.js" data-app="gold10"></script>
+</body>
+</html>

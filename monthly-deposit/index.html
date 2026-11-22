@@ -829,7 +829,8 @@
       6: 'ثبت درصد 6 (سیمان کیان)',
       7: 'ثبت درصد 7 (آهنگ کیان)',
       8: 'ثبت درصد 8 (فارما کیان)',
-      9: 'ثبت درصد 9 (سهم غبهار)'
+      9: 'ثبت درصد 9 (سهم غبهار)',
+      10: 'ثبت درصد 10 (آبادا)'
     };
 
     const DEFAULT_FUND_MAPPING = {
@@ -841,7 +842,8 @@
       6: 'صندوق  ارزش سیمان',
       7: 'صندوق آهنگ سهام کیان',
       8: 'صندوق فارما کیان',
-      9: 'کشت وصنعت بهاران گلبهار'
+      9: 'کشت وصنعت بهاران گلبهار',
+      10: 'تولید نیروی برق آبادان'
     };
 
     function normalizePayments(payments){
@@ -896,7 +898,7 @@
         const mapping = getFundMapping();
         const syncData = {};
 
-        for (let appId = 1; appId <= 9; appId++) {
+        for (let appId = 1; appId <= 10; appId++) {
           const targetFundName = mapping[appId];
           let fi = fundNames.findIndex(f => f && f.trim() === (targetFundName || '').trim());
           if (fi === -1 && targetFundName) {
@@ -958,7 +960,7 @@
         container.innerHTML = '';
         const currentMapping = getFundMapping();
 
-        for (let appId = 1; appId <= 9; appId++) {
+        for (let appId = 1; appId <= 10; appId++) {
           const row = document.createElement('div');
           row.className = 'settings-row';
 

@@ -627,6 +627,7 @@
         'ahang_kian_': 'ثبت درصد ۷',
         'pharma_kian_': 'ثبت درصد ۸',
         'baharan_': 'ثبت درصد ۹',
+        'abadan_': 'ثبت درصد ۱۰',
         'emarat_family_': 'شجره‌نامه',
         'emarat_usage_': 'ردپای من',
         'fundManager': 'واریز ماهیانه',

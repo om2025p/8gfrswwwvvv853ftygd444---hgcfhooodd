@@ -3113,3 +3113,46 @@ grep -rnE '<(link|script)[^>]*(href|src)="https?://(cdnjs|fonts\.googleapis|font
 - **درمان:** صفحهٔ رشد با `postMessage({type:'emarat-growth-drawer', open})` باز/بسته شدن کشو را به والد خبر می‌دهد. والد `growthDrawerOpen` را ست می‌کند، `syncGrowthFrameHeight()` را در حالت باز رد می‌کند و ارتفاع iframe را روی **ارتفاع دید** قفل می‌کند (`setGrowthFrameVisibleHeight`). با `resize`/`visualViewport.resize`/`scroll` هم به‌روز می‌شود.
 - **نتیجه:** کشو و لیست تا کف صفحه کشیده می‌شوند و اسکرول مستقل پایدار می‌ماند (بدون پرش بعد از ۲ ثانیه).
 - `CACHE_NAME` → `emarat-portal-v143`.
+
+
+## ⚡ اپ «ثبت درصد ۱۰» — آبادا (gold10/) — v144
+
+### هویت
+- **پوشه:** `gold10/` (کلون از `gold9`) | **کلیدها با پیشوند `abadan_`**
+- **`<title>`:** `ثبت درصد 10 · آبادا` | **داخل اپ:** «آبادا» + زیرنویس «تولید نیروی برق آبادان»
+- **`manifest.name/short_name`:** `ثبت درصد 10` (بدون کلمهٔ حساس)
+- **تم:** رعد و برق — آبی طوفانی `#1d6fd0`، زرد الکتریکی `#ffd60a`، پس‌زمینه `#0a1220`، کارت `#111d30`
+- **۴ تب:** ثبت درصد / محاسبه تغییرات / ثبت ابطال / مدیریت رشد
+
+### کلیدهای ذخیره‌سازی
+`abadan_percents` (شیء: percents/trash/goal/notes/…) · `abadan_history` · `abadan_baseNumber` · `abadan_peakNumber` · `abadan_prices_v1` · `theme_gold10` · `github_backup_filepath_gold10` · `GrowthDB_gold10`
+
+### دارایی تصویری (۳۳ فایل، تولیدشده با Pillow + supersampling)
+- `assets/a01..a12.png` + `@2x` (آیکون تب‌ها/کارت‌ها) · `assets/b01..b09.webp` (بنر) · `abadan_bg.jpg/webp` (پس‌زمینهٔ طوفان)
+- آیکون اپ: صاعقهٔ زرد روی گرادیان آبی/بنفش (بدون متن) + همهٔ چگالی‌ها و maskable
+- **دام `.gitignore`:** الگوی `*.png` باید استثنای `!gold10/assets/*.png` داشته باشد — بررسی با `git add -An gold10`
+
+### اتصالات اکوسیستم
+| مسیر | تغییر |
+|---|---|
+| `index.html` (پورتال) | کارت `{id:'gold10', title:'ثبت درصد 10'}` + `/gold10/` در مسیرهای مجاز iframe |
+| `sw.js` | ۴۷ فایل gold10 در `ASSETS` · `CACHE_NAME` → `emarat-portal-v144` |
+| `monitor/index.html` | `MONITOR_HISTORY_KEYS[10]`/`peakKeys[10]` در ۶ نقشه · حلقه‌ها `<= 10` · `getAllAppsPercentData` · `appNoteSources` |
+| `monthly-deposit/index.html` | `APP_PERCENT_LABELS[10]` · `DEFAULT_FUND_MAPPING[10]` · حلقه‌ها `<= 10` |
+| `profit-calculator/calc2.html` + `total.html` | گزینهٔ `abadan_percents` + عنوان |
+| `detective/index.html` | کارت پشتیبان/بازیابی با کلیدهای `abadan_*` |
+| `rescue/index.html` | الگوهای `^abadan_` / `^theme_gold10$` |
+| `usage/index.html` | `gold10: 'ثبت درصد 10'` |
+| `storage-guard.js` (+ ۲ آینهٔ اندروید) | `'abadan_': 'ثبت درصد ۱۰'` در `KEY_OWNERS` |
+
+### کارایی
+- `background-attachment: fixed` از `percent.html` حذف شد (طبق قانون کارایی اسکرول).
+- رنگ کارت و حاشیه‌ها از rgba زیتونی به rgba آبی تبدیل شد (`rgba(17,29,48,0.92)` / `rgba(63,169,245,…)`).
+
+### تست (۳۹ سنجه، همه پاس)
+- ۲۸ سنجهٔ مرورگری: عنوان/برند/۴ تب/آیکون‌ها، جریان محاسبه (۱۰٪ → `abadan_history` + `abadan_percents`)، درصد/ابطال/رشد بدون خطا و بدون تصویر شکسته، کارت پورتال.
+- ۱۱ سنجهٔ اکوسیستم: دیدبان (۴ نقشهٔ تاریخچه + ۲ قله + ۳ حلقه + DOM)، واریز ماهیانه، ماشین‌حساب، کنتراست (کمینه **۵٫۴۷**).
+- `check-refresh-button.py` ✅ · `check-session-secrets.py` ✅ · وابستگی خارجی **صفر**.
+
+### شاخه
+`P-1` → merge در `main`.

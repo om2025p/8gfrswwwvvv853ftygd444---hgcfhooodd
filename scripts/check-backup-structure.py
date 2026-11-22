@@ -11,7 +11,8 @@ APPS = {
     'gold3/percent.html': 'gold3', 'gold4/percent.html': 'gold4',
     'gold5/percent.html': 'gold5', 'gold6/percent.html': 'gold6',
     'gold7/percent.html': 'gold7', 'gold8/percent.html': 'gold8',
-    'gold9/percent.html': 'gold9', 'gym/index.html': 'gym',
+    'gold9/percent.html': 'gold9', 'gold10/percent.html': 'gold10',
+    'gym/index.html': 'gym',
     'ai-chat/index.html': 'ai-chat', 'skincare/index.html': 'skincare',
 }
 
@@ -35,7 +36,8 @@ def main():
             errors.append(f'{rel}: شناسهٔ اپ «{app}» در EmaratBackupPath نیست')
 
     for rel, app in (('gold/percent.html', 'gold1'), ('gold4/percent.html', 'gold4'),
-                     ('gold5/percent.html', 'gold5'), ('gold9/percent.html', 'gold9')):
+                     ('gold5/percent.html', 'gold5'), ('gold9/percent.html', 'gold9'),
+                     ('gold10/percent.html', 'gold10')):
         p = ROOT / rel
         if p.exists() and 'recordUpdate(' not in p.read_text(encoding='utf-8'):
             errors.append(f'{rel}: recordUpdate صدا زده نمی‌شود')
