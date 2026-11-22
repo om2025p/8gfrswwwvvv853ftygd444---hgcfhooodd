@@ -563,6 +563,28 @@
       margin-top: 10px;
     }
 
+    /* ===== برنامهٔ ماه‌های دو واریزی ===== */
+    .plan-wrap { display:flex; flex-direction:column; gap:4px; width:100%; }
+    .plan-label { font-size:0.68rem; color:var(--text-muted); font-weight:700; }
+    .plan-chips { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:4px; }
+    .plan-chip { min-height:44px; border-radius:8px; border:1px solid var(--border-4); background:var(--card-bg); color:var(--text-muted); font-family:inherit; font-size:0.72rem; font-weight:700; cursor:pointer; padding:4px 0; }
+    .plan-chip.on { background:var(--accent-soft); color:var(--text-head); border-color:var(--accent-soft-border); font-weight:800; }
+    .active-year-badge { text-align:center; font-size:0.85rem; font-weight:800; color:var(--text-head); background:var(--accent-soft); border:1px solid var(--accent-soft-border); border-radius:12px; padding:8px; margin-bottom:10px; }
+    /* ===== آرشیو سال‌های گذشته ===== */
+    #yearsArchive { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+    .archive-title { font-size:0.82rem; font-weight:800; color:var(--text-head); text-align:center; opacity:0.9; }
+    .year-card { background:var(--card-bg); border:1px solid var(--border-4); border-radius:14px; overflow:hidden; }
+    .year-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px; cursor:pointer; font-weight:800; font-size:0.9rem; color:var(--text-head); }
+    .year-head .year-total { font-size:0.72rem; font-weight:700; color:var(--text-muted); }
+    .year-chevron { transition:transform .2s; display:inline-block; }
+    .year-card.open .year-chevron { transform:rotate(180deg); }
+    .year-body { padding:0 12px 12px; display:none; }
+    .year-card.open .year-body { display:block; }
+    .past-month { border-top:1px dashed var(--border-4); padding:8px 0; }
+    .past-month-head { display:flex; justify-content:space-between; font-size:0.78rem; font-weight:800; color:var(--text-head); }
+    .past-funds { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
+    .past-fund { font-size:0.72rem; padding:5px 8px; border-radius:8px; background:var(--soft-bg-4); border:1px solid var(--border-4); color:var(--text-head); cursor:pointer; }
+    .past-fund.paid { color:var(--text-head); border-color:var(--accent-soft-border); background:var(--accent-soft); font-weight:800; }
 </style>
 </head>
 <body>
@@ -589,6 +611,11 @@
       <button id="themeToggleBtn" type="button" style="display:flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:800; padding:6px 14px; border-radius:20px; border:1px solid var(--accent-soft-border); background:var(--accent-soft); color:var(--accent); cursor:pointer;">🌙 تم تاریک</button>
     </div>
     <hr style="margin: 16px 0; border: none; border-top: 1px dashed var(--border-4);">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--soft-bg-4); border:1px solid var(--border-4); border-radius:10px; padding:8px 10px; margin-bottom:12px;">
+      <span style="font-size:0.82rem; font-weight:700; color:var(--text-head);">📅 سال جاری: <b id="activeYearLabel">—</b></span>
+      <button id="newYearBtn" type="button" style="font-size:0.78rem; font-weight:800; padding:8px 12px; border-radius:10px; border:1px solid var(--accent-soft-border); background:var(--accent-soft); color:var(--accent); cursor:pointer;">➕ شروع سال جدید</button>
+    </div>
+    <hr style="margin: 16px 0; border: none; border-top: 1px dashed var(--border-4);">
     <div style="font-size:0.85rem; font-weight:700; color:var(--text-head); margin-bottom:6px;">🛠️ مدیریت صندوق‌ها (ویرایش و حذف با ۲ تأیید):</div>
     <div id="settingsFundManageRows" style="display:flex; flex-direction:column; gap:8px; max-height: 260px; overflow-y: auto; padding-left:2px;"></div>
   </div>
@@ -605,6 +632,8 @@
     <input type="file" id="restoreFileInput" accept=".json" style="display:none;">
   </div>
 
+  <div class="active-year-badge" id="activeYearBadge"></div>
+  <div id="yearsArchive"></div>
   <div class="months-list" id="monthsList"></div>
 
   <div class="footer-meta"><div>📅 مدیریت هوشمند</div><div>🕒 نسخه پیشرفته</div></div>
@@ -770,7 +799,10 @@
     // ======================== داده‌های اصلی ========================
     let monthlyAmounts = [];     // [month][fund]
     let paymentState = [];       // [fund][month] تعداد واریز (0..N)
-    let depositCounts = [];      // [fund] تعداد واریز در ماه (پیش‌فرض ۱)
+    let depositCounts = [];      // [fund] سقف پیش‌فرض هر ماه (۱ یا ۲)
+    let depositPlan = [];        // [fund][month] سقف همان ماه (۱ یا ۲)
+    let years = {};              // { "1405": {fundNames, monthlyAmounts, payments, history, depositCounts, depositPlan} }
+    let activeYear = null;       // سال فعال مثل "1405"
     let historyData = [];        // [month][fund] array of timestamps
     let fundNames = [];
 
@@ -791,11 +823,13 @@
           fundNames = DEFAULT_FUND_NAMES.slice(0, oldFundCount);
           paymentState = normalizePayments(oldPayments);
           depositCounts = normalizeDepositCounts([], fundNames.length);
+          depositPlan = planFromCounts(depositCounts, fundNames.length);
           historyData = [];
           for(let mi=0; mi<12; mi++){
             historyData[mi] = [];
             for(let fi=0; fi<fundNames.length; fi++) historyData[mi][fi] = [];
           }
+          bootstrapYearsFromGlobals();
           saveToStorage();
           localStorage.removeItem('fundManagerV9');
           return true;
@@ -816,6 +850,8 @@
       }
       paymentState = fundNames.map(() => new Array(12).fill(0));
       depositCounts = normalizeDepositCounts([], fundNames.length);
+      depositPlan = planFromCounts(depositCounts, fundNames.length);
+      bootstrapYearsFromGlobals();
     }
 
 
@@ -862,6 +898,40 @@
     function getFundDepositCount(fi){
       const c = depositCounts[fi];
       return (isFinite(c) && c >= 1) ? Math.floor(c) : 1;
+    }
+
+    function deepCopy(v){ return JSON.parse(JSON.stringify(v)); }
+
+    function planFromCounts(counts, n){
+      const out = [];
+      for(let fi=0; fi<n; fi++){
+        const c = (counts && counts[fi] >= 2) ? 2 : 1;
+        out.push(new Array(12).fill(c));
+      }
+      return out;
+    }
+
+    function normalizeDepositPlan(arr, n, counts){
+      const out = [];
+      for(let fi=0; fi<n; fi++){
+        const fallback = (counts && counts[fi] >= 2) ? 2 : 1;
+        const row = (arr && arr[fi]) ? arr[fi] : [];
+        const r = [];
+        for(let mi=0; mi<12; mi++){
+          let c = Number(row[mi]);
+          if(!isFinite(c) || c < 1) c = fallback;
+          r.push(c >= 2 ? 2 : 1);
+        }
+        out.push(r);
+      }
+      return out;
+    }
+
+    function getFundMonthCap(fi, mi){
+      const row = depositPlan && depositPlan[fi];
+      const v = row ? Number(row[mi]) : NaN;
+      if(isFinite(v) && v >= 1) return v >= 2 ? 2 : 1;
+      return getFundDepositCount(fi) >= 2 ? 2 : 1;
     }
 
     const THEME_KEY = 'monthly_deposit_theme';
@@ -955,6 +1025,8 @@
 
     // مدیریت منوی تنظیمات
     function renderSettingsUI() {
+      const yearLabel = document.getElementById('activeYearLabel');
+      if(yearLabel) yearLabel.textContent = activeYear || '—';
       const container = document.getElementById('settingsRows');
       if (container) {
         container.innerHTML = '';
@@ -1023,21 +1095,49 @@
             countSelect.appendChild(o);
           });
           countSelect.onchange = () => {
-            depositCounts[fi] = parseInt(countSelect.value, 10) === 2 ? 2 : 1;
-            // اگر تعداد کم شد، واریزهای اضافه حذف شوند
-            for(let mi=0; mi<12; mi++){
-              const cap = getFundDepositCount(fi);
-              if(paymentState[fi] && paymentState[fi][mi] > cap){
-                paymentState[fi][mi] = cap;
-                const hist = (historyData[mi] && historyData[mi][fi]) ? historyData[mi][fi] : null;
-                if(hist && hist.length > cap) hist.length = cap;
-              }
+            const n = parseInt(countSelect.value, 10) === 2 ? 2 : 1;
+            depositCounts[fi] = n;
+            if(!depositPlan[fi]) depositPlan[fi] = new Array(12).fill(n);
+            for(let mi=0; mi<12; mi++) depositPlan[fi][mi] = n;
+            if(planChips){
+              planChips.querySelectorAll('.plan-chip').forEach((c, mi) => {
+                c.classList.toggle('on', n >= 2);
+                c.title = `${MONTH_NAMES[mi]} — ${n >= 2 ? 'دو واریزی' : 'یک واریزی'}`;
+              });
             }
             saveToStorage();
             renderAll();
           };
           countWrap.appendChild(countLabel);
           countWrap.appendChild(countSelect);
+
+          const planWrap = document.createElement('div');
+          planWrap.className = 'plan-wrap';
+          const planLabel = document.createElement('span');
+          planLabel.className = 'plan-label';
+          planLabel.textContent = 'ماه‌های دو واریزی:';
+          const planChips = document.createElement('div');
+          planChips.className = 'plan-chips';
+          const SHORT_MONTHS = ['فرو','ارد','خرد','تیر','مرد','شهر','مهر','آبا','آذر','دی','بهم','اسف'];
+          for(let mi=0; mi<12; mi++){
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'plan-chip' + (getFundMonthCap(fi, mi) >= 2 ? ' on' : '');
+            chip.textContent = SHORT_MONTHS[mi];
+            chip.title = `${MONTH_NAMES[mi]} — ${getFundMonthCap(fi, mi) >= 2 ? 'دو واریزی' : 'یک واریزی'}`;
+            chip.onclick = () => {
+              if(!depositPlan[fi]) depositPlan[fi] = new Array(12).fill(1);
+              depositPlan[fi][mi] = depositPlan[fi][mi] >= 2 ? 1 : 2;
+              const on = depositPlan[fi][mi] >= 2;
+              chip.classList.toggle('on', on);
+              chip.title = `${MONTH_NAMES[mi]} — ${on ? 'دو واریزی' : 'یک واریزی'}`;
+              saveToStorage();
+              renderAll();
+            };
+            planChips.appendChild(chip);
+          }
+          planWrap.appendChild(planLabel);
+          planWrap.appendChild(planChips);
 
           const actionsDiv = document.createElement('div');
           actionsDiv.style.cssText = 'display:flex; gap:6px;';
@@ -1091,6 +1191,7 @@
           controlsRow.appendChild(actionsDiv);
 
           row.appendChild(fnSpan);
+          row.appendChild(planWrap);
           row.appendChild(controlsRow);
           fundManageContainer.appendChild(row);
         });
@@ -1122,9 +1223,25 @@
     }
 
 
+    function snapshotActiveYear(){
+      if(!activeYear) return;
+      years[activeYear] = {
+        fundNames: fundNames.slice(),
+        monthlyAmounts: deepCopy(monthlyAmounts),
+        payments: paymentState.map(row => row.map(v => v || 0)),
+        history: deepCopy(historyData),
+        depositCounts: depositCounts.slice(),
+        depositPlan: depositPlan.map(row => row.slice())
+      };
+    }
+
     function saveToStorage(){
+      snapshotActiveYear();
       const toStore = {
-        version: 3,
+        version: 5,
+        activeYear: activeYear,
+        years: years,
+        // آینهٔ سازگاری برای نسخه‌های قدیمی‌تر
         fundNames: fundNames,
         monthlyAmounts: monthlyAmounts,
         payments: paymentState.map(row => row.map(v => v || 0)),
@@ -1622,6 +1739,7 @@
           monthlyAmounts = data.monthlyAmounts;
           paymentState = normalizePayments(data.payments);
           depositCounts = normalizeDepositCounts(data.depositCounts, fundNames.length);
+          depositPlan = planFromCounts(depositCounts, fundNames.length);
           historyData = data.history;
           for(let mi=0; mi<12; mi++){
             if(!monthlyAmounts[mi]) monthlyAmounts[mi]=[];
@@ -1631,10 +1749,140 @@
               if(!historyData[mi][fi]) historyData[mi][fi]=[];
             }
           }
+          bootstrapYearsFromGlobals();
           saveToStorage();
           return true;
         }
       } catch(e) { console.error('Error loading embedded backup:', e); }
+      return false;
+    }
+
+    function currentJalaliYear(){
+      const now = new Date();
+      return gregorianToJalali(now.getFullYear(), now.getMonth()+1, now.getDate()).year;
+    }
+
+    function yearFromHistory(hist){
+      let best = 0;
+      (hist || []).forEach(month => (month || []).forEach(list => (list || []).forEach(ts => {
+        const m = String(ts || '').match(/^(\d{4})\//);
+        if(m){ const y = Number(m[1]); if(y > best) best = y; }
+      })));
+      return best || 0;
+    }
+
+    function normalizeYearData(yd){
+      yd = yd || {};
+      const names = Array.isArray(yd.fundNames) ? yd.fundNames.slice() : [];
+      const n = names.length;
+      const amounts = Array.isArray(yd.monthlyAmounts) ? deepCopy(yd.monthlyAmounts) : [];
+      for(let mi=0; mi<12; mi++){
+        if(!amounts[mi]) amounts[mi] = [];
+        for(let fi=0; fi<n; fi++) if(amounts[mi][fi] === undefined) amounts[mi][fi] = 0;
+      }
+      const hist = Array.isArray(yd.history) ? deepCopy(yd.history) : [];
+      for(let mi=0; mi<12; mi++){
+        if(!hist[mi]) hist[mi] = [];
+        for(let fi=0; fi<n; fi++) if(!hist[mi][fi]) hist[mi][fi] = [];
+      }
+      const pay = normalizePayments(yd.payments);
+      const payments = [];
+      for(let fi=0; fi<n; fi++){
+        const row = (pay[fi] || []).slice(0,12);
+        while(row.length < 12) row.push(0);
+        payments.push(row);
+      }
+      const counts = normalizeDepositCounts(yd.depositCounts, n);
+      return {
+        fundNames: names,
+        monthlyAmounts: amounts,
+        payments: payments,
+        history: hist,
+        depositCounts: counts,
+        depositPlan: normalizeDepositPlan(yd.depositPlan, n, counts)
+      };
+    }
+
+    function loadYearIntoGlobals(yearKey){
+      const yd = years[yearKey];
+      if(!yd) return false;
+      const norm = normalizeYearData(yd);
+      years[yearKey] = norm;
+      fundNames = norm.fundNames;
+      monthlyAmounts = norm.monthlyAmounts;
+      paymentState = norm.payments;
+      historyData = norm.history;
+      depositCounts = norm.depositCounts;
+      depositPlan = norm.depositPlan;
+      activeYear = String(yearKey);
+      collapsedState = null;
+      return true;
+    }
+
+    function bootstrapYearsFromGlobals(yearKey){
+      const y = String(yearKey || yearFromHistory(historyData) || currentJalaliYear());
+      years = {};
+      years[y] = normalizeYearData({
+        fundNames: fundNames,
+        monthlyAmounts: monthlyAmounts,
+        payments: paymentState,
+        history: historyData,
+        depositCounts: depositCounts,
+        depositPlan: planFromCounts(depositCounts, fundNames.length)
+      });
+      activeYear = y;
+      loadYearIntoGlobals(y);
+    }
+
+    function createYear(newKey, copyFromKey){
+      newKey = String(newKey);
+      if(years[newKey]) return false;
+      const src = normalizeYearData(years[copyFromKey] || {});
+      const n = src.fundNames.length;
+      const payments = [];
+      for(let fi=0; fi<n; fi++) payments.push(new Array(12).fill(0));
+      const hist = [];
+      for(let mi=0; mi<12; mi++){
+        const row = [];
+        for(let fi=0; fi<n; fi++) row.push([]);
+        hist.push(row);
+      }
+      years[newKey] = normalizeYearData({
+        fundNames: src.fundNames,
+        monthlyAmounts: src.monthlyAmounts,
+        payments: payments,
+        history: hist,
+        depositCounts: src.depositCounts,
+        depositPlan: src.depositPlan
+      });
+      return true;
+    }
+
+    function switchYear(yearKey){
+      yearKey = String(yearKey);
+      if(!years[yearKey]) return false;
+      snapshotActiveYear();
+      loadYearIntoGlobals(yearKey);
+      saveToStorage();
+      renderAll();
+      renderSettingsUI();
+      return true;
+    }
+
+    function rolloverIfNeeded(){
+      const cur = String(currentJalaliYear());
+      if(!activeYear) return false;
+      if(Number(cur) > Number(activeYear)){
+        snapshotActiveYear();
+        if(!years[cur]) createYear(cur, activeYear);
+        loadYearIntoGlobals(cur);
+        saveToStorage();
+        setTimeout(() => showDatePopup(`🎉 سال ${cur} آغاز شد`), 300);
+        return true;
+      }
+      if(Number(cur) < Number(activeYear)){
+        setTimeout(() => showDatePopup('⚠️ تاریخ دستگاه عقب است'), 400);
+      }
       return false;
     }
 
@@ -1643,13 +1891,22 @@
       if(saved){
         try{
           const data = JSON.parse(saved);
+          if(data && data.version >= 5 && data.years && typeof data.years === 'object'){
+            years = {};
+            Object.keys(data.years).forEach(k => { years[k] = normalizeYearData(data.years[k]); });
+            const keys = Object.keys(years).sort((a,b)=>Number(a)-Number(b));
+            if(keys.length){
+              activeYear = (data.activeYear && years[data.activeYear]) ? String(data.activeYear) : keys[keys.length-1];
+              loadYearIntoGlobals(activeYear);
+              return true;
+            }
+          }
           if(data.fundNames && data.monthlyAmounts && data.payments && data.history){
             fundNames = data.fundNames;
             monthlyAmounts = data.monthlyAmounts;
             paymentState = normalizePayments(data.payments);
             depositCounts = normalizeDepositCounts(data.depositCounts, fundNames.length);
             historyData = data.history;
-            // همسان‌سازی ابعاد
             for(let mi=0; mi<12; mi++){
               if(!monthlyAmounts[mi]) monthlyAmounts[mi]=[];
               for(let fi=0; fi<fundNames.length; fi++){
@@ -1658,6 +1915,8 @@
                 if(!historyData[mi][fi]) historyData[mi][fi]=[];
               }
             }
+            bootstrapYearsFromGlobals();
+            saveToStorage();
             return true;
           }
         }catch(e){}
@@ -1674,7 +1933,7 @@
 
     function getFundMonthCount(fi, mi){
       const raw = (paymentState[fi] && paymentState[fi][mi]) ? Number(paymentState[fi][mi]) : 0;
-      const cap = getFundDepositCount(fi);
+      const cap = getFundMonthCap(fi, mi);
       return Math.max(0, Math.min(isFinite(raw) ? raw : 0, cap));
     }
 
@@ -1725,6 +1984,7 @@
       }
       paymentState.push(new Array(12).fill(0));
       depositCounts.push(1);
+      depositPlan.push(new Array(12).fill(1));
       saveToStorage();
       renderAll(); // برای اضافه شدن صندوق نیاز به رندر کامل داریم
     }
@@ -1738,6 +1998,7 @@
       }
       paymentState.splice(fundIndex,1);
       depositCounts.splice(fundIndex,1);
+      depositPlan.splice(fundIndex,1);
       saveToStorage();
       renderAll();
       return true;
@@ -1753,7 +2014,7 @@
     // تابع تیک زدن
     // slotIndex: ۰ = واریز اول (دایره بزرگ) ، ۱ = واریز دوم (دایره کوچک)
     function toggleDeposit(fundIndex, monthIndex, slotIndex){
-      const cap = getFundDepositCount(fundIndex);
+      const cap = getFundMonthCap(fundIndex, monthIndex);
       if(slotIndex < 0 || slotIndex >= cap) return;
       const current = getFundMonthCount(fundIndex, monthIndex);
       if(!historyData[monthIndex]) historyData[monthIndex]=[];
@@ -1773,9 +2034,85 @@
       renderAll();
     }
 
+    // ======================== آرشیو سال‌های گذشته (فقط مشاهده) ========================
+    function capForYear(yd, fi, mi){
+      const row = yd.depositPlan && yd.depositPlan[fi];
+      const v = row ? Number(row[mi]) : NaN;
+      if(isFinite(v) && v >= 1) return v >= 2 ? 2 : 1;
+      const c = yd.depositCounts && yd.depositCounts[fi];
+      return (c >= 2) ? 2 : 1;
+    }
+    function countForYear(yd, fi, mi){
+      const raw = (yd.payments[fi] && yd.payments[fi][mi]) ? Number(yd.payments[fi][mi]) : 0;
+      const cap = capForYear(yd, fi, mi);
+      return Math.max(0, Math.min(isFinite(raw) ? raw : 0, cap));
+    }
+    function monthTotalForYear(yd, mi){
+      let sum = 0;
+      for(let fi=0; fi<yd.fundNames.length; fi++){
+        const cnt = countForYear(yd, fi, mi);
+        if(cnt > 0) sum += (yd.monthlyAmounts[mi][fi] || 0) * cnt;
+      }
+      return sum;
+    }
+    function totalForYear(yd){
+      let t = 0;
+      for(let mi=0; mi<12; mi++) t += monthTotalForYear(yd, mi);
+      return t;
+    }
+
+    function renderYearsArchive(){
+      const box = document.getElementById('yearsArchive');
+      if(!box) return;
+      box.innerHTML = '';
+      const past = Object.keys(years).filter(y => y !== activeYear).sort((a,b)=>Number(b)-Number(a));
+      if(!past.length) return;
+      const title = document.createElement('div');
+      title.className = 'archive-title';
+      title.textContent = '🗂 سال‌های گذشته (فقط مشاهده)';
+      box.appendChild(title);
+      past.forEach(y => {
+        const yd = normalizeYearData(years[y]);
+        const card = document.createElement('div');
+        card.className = 'year-card';
+        const head = document.createElement('div');
+        head.className = 'year-head';
+        head.innerHTML = `<span>📁 سال ${y}</span><span class="year-total ltr">${formatToman(totalForYear(yd))} تومان</span><span class="year-chevron">🔽</span>`;
+        head.onclick = () => card.classList.toggle('open');
+        card.appendChild(head);
+        const body = document.createElement('div');
+        body.className = 'year-body';
+        for(let mi=0; mi<12; mi++){
+          const mDiv = document.createElement('div');
+          mDiv.className = 'past-month';
+          const mHead = document.createElement('div');
+          mHead.className = 'past-month-head';
+          mHead.innerHTML = `<span>${MONTH_NAMES[mi]}</span><span class="ltr">${formatToman(monthTotalForYear(yd, mi))}</span>`;
+          mDiv.appendChild(mHead);
+          const fWrap = document.createElement('div');
+          fWrap.className = 'past-funds';
+          for(let fi=0; fi<yd.fundNames.length; fi++){
+            const cnt = countForYear(yd, fi, mi);
+            const chip = document.createElement('span');
+            chip.className = 'past-fund' + (cnt > 0 ? ' paid' : '');
+            chip.textContent = `${yd.fundNames[fi]} ${cnt > 0 ? (cnt >= 2 ? '✔✔' : '✔') : '—'}`;
+            const hist = (yd.history[mi] && yd.history[mi][fi]) ? yd.history[mi][fi] : [];
+            if(hist.length) chip.onclick = () => showHistoryPopup(hist);
+            fWrap.appendChild(chip);
+          }
+          mDiv.appendChild(fWrap);
+          body.appendChild(mDiv);
+        }
+        card.appendChild(body);
+        box.appendChild(card);
+      });
+    }
+
     // ======================== رندر اولیه ========================
     function renderAll(){
       initCollapsedState();
+      const badge = document.getElementById('activeYearBadge');
+      if(badge) badge.textContent = '📅 سال ' + (activeYear || currentJalaliYear());
       const container = document.getElementById('monthsList');
       container.innerHTML = '';
       for(let mi=0; mi<12; mi++){
@@ -1832,7 +2169,7 @@
             elapsedBadge.textContent = elapsedInfo[mi].text;
           }
 
-          const cap = getFundDepositCount(fi);
+          const cap = getFundMonthCap(fi, mi);
           const doneCount = getFundMonthCount(fi, mi);
 
           const depositCol = document.createElement('div');
@@ -1900,15 +2237,25 @@
         container.appendChild(card);
       }
       updateTotalDisplay();
+      renderYearsArchive();
     }
 
     // پشتیبان و بازیابی (بدون تغییر)
     function exportBackup(){
-      const backup = { version:3, fundNames, monthlyAmounts, payments: paymentState.map(row=>row.map(v=>v||0)), depositCounts: depositCounts, history:historyData };
+      snapshotActiveYear();
+      const backup = {
+        version: 5,
+        activeYear: activeYear,
+        years: years,
+        fundNames, monthlyAmounts,
+        payments: paymentState.map(row=>row.map(v=>v||0)),
+        depositCounts: depositCounts,
+        history: historyData
+      };
       const blob = new Blob([JSON.stringify(backup,null,2)], {type:'application/json'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `fund_backup_${new Date().toISOString().slice(0,10)}.json`;
+      a.download = `fund_backup_${activeYear || ''}_${new Date().toISOString().slice(0,10)}.json`;
       a.click();
     }
     function importBackup(file){
@@ -1916,15 +2263,39 @@
       reader.onload = e => {
         try{
           const data = JSON.parse(e.target.result);
+          if(data && data.version >= 5 && data.years && typeof data.years === 'object'){
+            const next = {};
+            Object.keys(data.years).forEach(k => { next[k] = normalizeYearData(data.years[k]); });
+            const keys = Object.keys(next).sort((a,b)=>Number(a)-Number(b));
+            if(!keys.length) throw new Error('empty years');
+            years = next;
+            activeYear = (data.activeYear && years[data.activeYear]) ? String(data.activeYear) : keys[keys.length-1];
+            loadYearIntoGlobals(activeYear);
+            saveToStorage();
+            renderAll();
+            renderSettingsUI();
+            alert(`بازیابی شد (نسخهٔ ۵ · ${keys.length} سال)`);
+            return;
+          }
           if(data.fundNames && data.monthlyAmounts && data.payments && data.history){
             fundNames = data.fundNames;
             monthlyAmounts = data.monthlyAmounts;
             paymentState = normalizePayments(data.payments);
             depositCounts = normalizeDepositCounts(data.depositCounts, fundNames.length);
             historyData = data.history;
+            for(let mi=0; mi<12; mi++){
+              if(!monthlyAmounts[mi]) monthlyAmounts[mi]=[];
+              for(let fi=0; fi<fundNames.length; fi++){
+                if(monthlyAmounts[mi][fi]===undefined) monthlyAmounts[mi][fi]=0;
+                if(!historyData[mi]) historyData[mi]=[];
+                if(!historyData[mi][fi]) historyData[mi][fi]=[];
+              }
+            }
+            bootstrapYearsFromGlobals();
             saveToStorage();
             renderAll();
-            alert("بازیابی شد");
+            renderSettingsUI();
+            alert(`بازیابی شد (نسخهٔ قدیمی → سال ${activeYear})`);
           } else alert("فرمت نامعتبر");
         }catch(ex){ alert("خطا"); }
         document.getElementById('restoreFileInput').value = '';
@@ -1932,9 +2303,30 @@
       reader.readAsText(file);
     }
 
+    function startNewYearManually(){
+      if(!activeYear) return;
+      const cur = currentJalaliYear();
+      const target = String(Math.max(Number(activeYear) + 1, cur));
+      if(years[target]){
+        const c = confirm(`سال ${target} از قبل وجود دارد.\nبه آن سوئیچ شود؟ (سال ${activeYear} آرشیو می‌شود)`);
+        if(c) switchYear(target);
+        return;
+      }
+      const c1 = confirm(`گام ۱ از ۲:\nسال جدید «${target}» ساخته شود؟\nسال «${activeYear}» آرشیو و در کشو جمع می‌شود؛ داده‌ها پاک نمی‌شوند.`);
+      if(!c1) return;
+      const c2 = confirm(`گام ۲ از ۲ (تأیید نهایی):\nنام صندوق‌ها، مبلغ ماهانه‌ها و برنامهٔ ماه‌های دو واریزی از سال ${activeYear} کپی می‌شود؛ تیک‌ها خالی خواهند بود.\nادامه می‌دهید؟`);
+      if(!c2) return;
+      snapshotActiveYear();
+      createYear(target, activeYear);
+      switchYear(target);
+      closeSettings();
+      showDatePopup(`🎉 سال ${target} آغاز شد`);
+    }
+
     // راه‌اندازی
     initTheme();
     loadFromStorage();
+    rolloverIfNeeded();
     renderAll();
     const themeBtnEl = document.getElementById('themeToggleBtn');
     if(themeBtnEl) themeBtnEl.onclick = toggleTheme;
@@ -1944,6 +2336,8 @@
     document.getElementById('closeSettingsBtn').onclick = closeSettings;
     document.getElementById('settingsOverlay').onclick = closeSettings;
     document.getElementById('saveSettingsBtn').onclick = saveSettings;
+    const newYearBtnEl = document.getElementById('newYearBtn');
+    if(newYearBtnEl) newYearBtnEl.onclick = startNewYearManually;
 
     document.getElementById('backupBtn').onclick = exportBackup;
     document.getElementById('restoreBtn').onclick = () => document.getElementById('restoreFileInput').click();
