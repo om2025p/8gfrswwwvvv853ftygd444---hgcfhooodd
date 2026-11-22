@@ -49,6 +49,16 @@ label.tick{display:flex;align-items:center;gap:6px;cursor:pointer}
 label.tick input{width:auto;padding:0}
 a.open{margin-inline-start:auto;text-decoration:none;color:var(--acc);border:1px solid var(--line);border-radius:9px;padding:5px 10px;font-size:12.5px}
 a.open:hover{border-color:var(--acc);background:#16202c}
+.tabs{display:flex;gap:6px}
+.tab{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;color:var(--mut)}
+.tab.on{background:var(--acc);color:#04150a;border-color:var(--acc);font-weight:700}
+.tab b{font-weight:700}
+.card .head{display:flex;gap:8px;align-items:flex-start}
+.card .head .name{flex:1}
+.star{background:none;border:none;padding:0 2px;font-size:18px;line-height:1.1;cursor:pointer;color:#3b4756}
+.star.on{color:#f0b429}
+.star:hover{color:#f0b429}
+.empty{grid-column:1/-1;text-align:center;color:var(--mut);padding:46px 16px;font-size:14px;line-height:2.1}
 #sentinel{grid-column:1/-1;text-align:center;color:var(--mut);padding:18px;font-size:13px}
 .toast{position:fixed;inset-inline:0;bottom:22px;margin:auto;width:max-content;background:var(--ok);color:#04150a;padding:9px 16px;border-radius:10px;font-size:13px;opacity:0;transition:.25s;pointer-events:none}
 .toast.on{opacity:1}
@@ -60,6 +70,10 @@ a.open:hover{border-color:var(--acc);background:#16202c}
     <button id="toggle" title="باز و بستن پنل مدیریت">☰ پنل مدیریت <span class="n">0</span> <span id="caret">▸</span></button>
     <span class="chip" id="mcount">5,346 کانال</span>
     <span class="chip" id="mfilter">—</span>
+    <span class="tabs">
+      <button class="tab on" id="tab-all">📚 همه</button>
+      <button class="tab" id="tab-fav">⭐ مورد علاقه <b id="favn">0</b></button>
+    </span>
   </div>
   <div id="top">
   <h1>🎯 کانال‌های پیدا شده <small>5,346 کانال — خروجی کرالر خودمان</small></h1>
@@ -145,6 +159,12 @@ const onlyF = {photo: chk('f-photo'), video: chk('f-video'), empty: chk('f-empty
 const sentinel = document.getElementById('sentinel');
 const toastEl = document.getElementById('toast');
 let view = DATA.slice(), shown = 0, STEP = 60, io = null;
+const FAVKEY = 'kanalyab_favs';
+let favs = new Set(JSON.parse(localStorage.getItem(FAVKEY) || '[]'));
+let favOnly = false;
+const favKey = c => c.i || c.h || c.n;
+function saveFavs(){ localStorage.setItem(FAVKEY, JSON.stringify([...favs])); }
+function paintFavTabs(){ document.getElementById('favn').textContent = fmt(favs.size); }
 
 function toast(t){ toastEl.textContent = t; toastEl.classList.add('on'); setTimeout(()=>toastEl.classList.remove('on'), 1400); }
 function esc(s){ return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -167,9 +187,12 @@ function countChips(c){
 function card(c){
   const d = document.createElement('div');
   d.className = 'card';
+  const fk = favKey(c);
   d.innerHTML =
+    '<div class="head"><button class="star' + (favs.has(fk) ? ' on' : '') + '" data-k="' + esc(fk) +
+      '" title="افزودن یا حذف از مورد علاقه">★</button>' +
     '<div class="name">' + (c.a === NEWDAY ? '<span class="badge-new">🆕 جدید</span>' : '') +
-      esc(c.n || 'بدون نام') + '</div>' +
+      esc(c.n || 'بدون نام') + '</div></div>' +
     '<div class="row">' +
       (c.h ? '<span class="mono">' + esc(c.h) + '</span>' : '<span>بدون یوزرنیم</span>') +
       '<span class="id mono" data-id="' + esc(c.i) + '" title="کلیک = کپی آیدی عددی">' + esc(c.i) + '</span>' +
@@ -177,6 +200,13 @@ function card(c){
     '<div class="row"><span class="mem">' + fmt(c.m) + ' عضو</span>' + countChips(c) +
       (c.u ? '<a class="open" href="' + esc(c.u) + '" target="_blank" rel="noopener">باز کردن ↗</a>' : '') +
     '</div>';
+  d.querySelector('.star').addEventListener('click', e => {
+    const btn = e.currentTarget, k = btn.dataset.k;
+    if (favs.has(k)) { favs.delete(k); btn.classList.remove('on'); toast('از مورد علاقه حذف شد'); }
+    else { favs.add(k); btn.classList.add('on'); toast('⭐ به مورد علاقه اضافه شد'); }
+    saveFavs(); paintFavTabs();
+    if (favOnly) reset();
+  });
   d.querySelector('.id').addEventListener('click', e => {
     navigator.clipboard.writeText(e.target.dataset.id).then(()=>toast('آیدی کپی شد: ' + e.target.dataset.id));
   });
@@ -210,6 +240,7 @@ function reset(){
     (c.h||'').toLowerCase().includes(term) ||
     (c.i||'').includes(term));
   if (mn) view = view.filter(c => (c.m||0) >= mn);
+  if (favOnly) view = view.filter(c => favs.has(favKey(c)));
   const s = sort.value;
   if (s === 'members') view.sort((a,b)=> (b.m||0)-(a.m||0));
   if (s === 'posts') view.sort((a,b)=> (b.p||0)-(a.p||0));
@@ -217,6 +248,10 @@ function reset(){
   else if (s === 'name') view.sort((a,b)=> (a.n||'').localeCompare(b.n||'', 'fa'));
   else view.sort((a,b)=> (b.t||0)-(a.t||0));
   grid.innerHTML = ''; shown = 0;
+  if (!view.length && favOnly) {
+    grid.innerHTML = '<div class="empty">⭐ هنوز کانالی ستاره نکردی.<br>' +
+      'روی ستاره کنار نام هر کانال بزن تا اینجا جمع شود.</div>';
+  }
   document.getElementById('shown').textContent = 'نمایش: ' + fmt(view.length);
   document.getElementById('withid').textContent = 'با آیدی عددی: ' + fmt(view.filter(c=>c.i).length);
   document.getElementById('nouser').textContent = 'بدون یوزرنیم: ' + fmt(view.filter(c=>!c.h).length);
@@ -236,6 +271,7 @@ function reset(){
   if (uname.value === 'none') bits.push('بدون یوزرنیم');
   if (when.value === 'new') bits.push('جدیدها');
   if (min.value) bits.push('≥ ' + min.value);
+  if (favOnly) bits.unshift('⭐ مورد علاقه');
   document.getElementById('mfilter').textContent = bits.length ? bits.join(' · ') : 'همه کانال‌ها';
   renderMore();
 }
@@ -263,6 +299,23 @@ document.addEventListener('keydown', e => {
   if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); setOpen(true); q.focus(); }
 });
 setOpen(localStorage.getItem('manage') === '1');
+
+const tabAll = document.getElementById('tab-all'), tabFav = document.getElementById('tab-fav');
+function setTab(fav) {
+  favOnly = fav;
+  tabAll.classList.toggle('on', !fav);
+  tabFav.classList.toggle('on', fav);
+  localStorage.setItem('kanalyab_tab', fav ? 'fav' : 'all');
+  reset();
+}
+tabAll.addEventListener('click', () => setTab(false));
+tabFav.addEventListener('click', () => setTab(true));
+paintFavTabs();
+if (localStorage.getItem('kanalyab_tab') === 'fav') {
+  favOnly = true;
+  tabAll.classList.remove('on');
+  tabFav.classList.add('on');
+}
 
 function activeFilters() {
   let n = 0;
