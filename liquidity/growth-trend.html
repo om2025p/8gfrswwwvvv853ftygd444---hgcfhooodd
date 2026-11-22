@@ -121,7 +121,14 @@
         @media (max-width: 360px) {
             .period-grid { grid-template-columns: 1fr 1fr; }
         }
-    </style>
+
+    /* سایهٔ دکمهٔ به‌روزرسانی در حالت مخفی حذف شود (تب دوم) */
+    .emr-rb:not(.open) .emr-rb-btn {
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+</style>
 </head>
 <body>
 <div class="wrap">

@@ -719,6 +719,13 @@
         body.drawer-open .drawer-overlay { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 999; }
         .app-topbar { position: sticky; top: 0; z-index: 1001; background: var(--bg-body); padding: 8px 0; }
     }
+
+    /* سایهٔ دکمهٔ به‌روزرسانی در حالت مخفی حذف شود (تب دوم) */
+    .emr-rb:not(.open) .emr-rb-btn {
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
 </style>
 </head>
 <body>

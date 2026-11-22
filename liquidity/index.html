@@ -778,7 +778,14 @@
             width: 100%; height: calc(100dvh - 150px);
             border: 0; border-radius: 18px; background: transparent; display: block;
         }
-    </style>
+
+    /* حذف سایهٔ دکمهٔ به‌روزرسانی فقط در تب دوم */
+    body.growth-tab-active .emr-rb:not(.open) .emr-rb-btn {
+        box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+</style>
 </head>
 <body>
 
@@ -1115,6 +1122,7 @@
         });
         tabLiquidity.classList.toggle('active', name === 'liquidity');
         tabGrowth.classList.toggle('active', name === 'growth');
+        document.body.classList.toggle('growth-tab-active', name === 'growth');
         if (name === 'growth') {
             if (!growthLoaded) {
                 growthFrame.src = 'growth.html' + mockParam;
