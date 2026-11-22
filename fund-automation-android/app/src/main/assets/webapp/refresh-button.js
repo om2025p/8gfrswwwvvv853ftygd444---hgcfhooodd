@@ -38,7 +38,8 @@
     'font-family:Tahoma,"Segoe UI",sans-serif;transition:opacity .18s,background .18s,transform .18s}',
     '.emr-rb-btn:hover,.emr-rb-btn:focus-visible{opacity:1;background:rgba(26,34,52,.98);transform:translateY(-1px)}',
     '.emr-rb-btn.busy{cursor:progress;color:#ffe9a8;border-color:rgba(255,214,102,.55)}',
-    '.emr-rb-btn.confirm{color:#ffd9a8;border-color:rgba(255,178,122,.7);background:rgba(74,44,12,.95)}'
+    '.emr-rb-btn.confirm{color:#ffd9a8;border-color:rgba(255,178,122,.7);background:rgba(74,44,12,.95)}',
+    '.emr-rb:not(.open) .emr-rb-btn{box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}'
   ].join('');
 
   function el(tag, cls) {
