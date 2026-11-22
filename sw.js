@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v135';
+const CACHE_NAME = 'emarat-portal-v136';
 const ASSETS = [
   './tree-samples/m1.html',
   './tree-samples/m2.html',
@@ -357,6 +357,8 @@ const ASSETS = [
   // Liquidity App (محاسبه نقدشوندگی)
   './liquidity/index.html',
   './liquidity/growth.html',
+  './liquidity/growth-stats.js',
+  './liquidity/growth-trend.html',
   './liquidity/manifest.json',
   './liquidity/icon-192.png',
   './liquidity/icon-512.png',
