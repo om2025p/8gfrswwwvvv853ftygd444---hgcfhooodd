@@ -72,7 +72,7 @@ a.open:hover{border-color:var(--acc);background:#16202c}
     <span class="chip" id="mfilter">—</span>
     <span class="tabs">
       <button class="tab on" id="tab-all">📚 همه</button>
-      <button class="tab" id="tab-fav">⭐ مورد علاقه <b id="favn">0</b></button>
+      <button class="tab" id="tab-fav">★ مورد علاقه <b id="favn">0</b></button>
     </span>
   </div>
   <div id="top">
@@ -203,7 +203,7 @@ function card(c){
   d.querySelector('.star').addEventListener('click', e => {
     const btn = e.currentTarget, k = btn.dataset.k;
     if (favs.has(k)) { favs.delete(k); btn.classList.remove('on'); toast('از مورد علاقه حذف شد'); }
-    else { favs.add(k); btn.classList.add('on'); toast('⭐ به مورد علاقه اضافه شد'); }
+    else { favs.add(k); btn.classList.add('on'); toast('★ به مورد علاقه اضافه شد'); }
     saveFavs(); paintFavTabs();
     if (favOnly) reset();
   });
@@ -249,7 +249,7 @@ function reset(){
   else view.sort((a,b)=> (b.t||0)-(a.t||0));
   grid.innerHTML = ''; shown = 0;
   if (!view.length && favOnly) {
-    grid.innerHTML = '<div class="empty">⭐ هنوز کانالی ستاره نکردی.<br>' +
+    grid.innerHTML = '<div class="empty">★ هنوز کانالی ستاره نکردی.<br>' +
       'روی ستاره کنار نام هر کانال بزن تا اینجا جمع شود.</div>';
   }
   document.getElementById('shown').textContent = 'نمایش: ' + fmt(view.length);
@@ -271,7 +271,7 @@ function reset(){
   if (uname.value === 'none') bits.push('بدون یوزرنیم');
   if (when.value === 'new') bits.push('جدیدها');
   if (min.value) bits.push('≥ ' + min.value);
-  if (favOnly) bits.unshift('⭐ مورد علاقه');
+  if (favOnly) bits.unshift('★ مورد علاقه');
   document.getElementById('mfilter').textContent = bits.length ? bits.join(' · ') : 'همه کانال‌ها';
   renderMore();
 }
