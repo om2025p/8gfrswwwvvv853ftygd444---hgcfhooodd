@@ -1078,16 +1078,16 @@ assets وب‌اپ اندروید (`fund-automation-android/app/src/main/assets/
 سلکتور کنترل‌ها: `textarea, input, button, select, [contenteditable="true"]` — عناصر کوچک‌تر از ۲۴×۱۶ و نامرئی نادیده گرفته می‌شوند.
 زمان‌بندی بررسی: ۶۰ms، ۹۰۰ms، ۲۴۰۰ms بعد از mount + روی `resize`/`orientationchange`/`transitionend` (با debounce ۱۲۰ms).
 
-### 🐛 سایهٔ دکمهٔ مخفی در کف صفحه — فقط تب دوم (v138)
+### 🐛 سایهٔ دکمهٔ مخفی در کف صفحه — فقط تب دوم (v139)
 
 - **نشانه:** نوار تیرهٔ ~۲۰px در کف صفحه، همان‌جا که دکمهٔ به‌روزرسانی بیرون می‌آید.
 - **ریشه:** `.emr-rb` با `translate3d(0,110%,0)` پایین می‌رود، ولی `box-shadow: 0 6px 20px rgba(0,0,0,.4)` دکمه ۲۰px به بالا سایه می‌اندازد و از لبهٔ viewport بیرون می‌زند.
 - **تصمیم:** قاعدهٔ سراسری در `refresh-button.js` برگردانده شد تا تب اول دست‌نخورده بماند.
-- **درمان محدود:** در `liquidity/index.html`، `setTab` کلاس `growth-tab-active` را روی `body` می‌گذارد و فقط در تب دوم:
-  `body.growth-tab-active .emr-rb:not(.open) .emr-rb-btn { box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }`
+- **درمان محدود:** در `liquidity/index.html`، `setTab` کلاس `growth-tab-active` را روی `body` می‌گذارد و در تب دوم سایه **کاملاً** (باز و بسته) حذف می‌شود:
+  `body.growth-tab-active .emr-rb .emr-rb-btn { box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }`
   همین قاعده در `growth.html` و `growth-trend.html` هم برای بازدید مستقیم گذاشته شد.
-- **تست:** تب اول → سایهٔ اصلی؛ تب دوم → `boxShadow:none`؛ بازگشت به تب اول → سایه برمی‌گردد؛ باز → سایه داخل viewport.
-- `CACHE_NAME` → `emarat-portal-v138`.
+- **تست:** تب اول → سایهٔ اصلی؛ تب دوم (باز و بسته) → `boxShadow:none` و `backdrop:none`؛ بازگشت به تب اول → سایه برمی‌گردد.
+- `CACHE_NAME` → `emarat-portal-v139`.
 
 ### نصب در هر صفحه
 یک خط قبل از `</body>`:
@@ -2894,7 +2894,7 @@ tallyTop: 857 | bodyBottom: 827 → inView: false   (در هر ۹ اپ)
 - **پیش‌فرض‌های تب دوم:** ۱۰ نماد «مادیرا، زکشت، سبزوا، آبادا، کمرجان، تکپاد، مهرمام، شغدیر، نوری، سخوز» فقط یک‌بار و فقط در تب دوم (`growth.html`) به لیست اضافه می‌شوند؛ نمادهای تکراری نادیده گرفته می‌شوند و پرچم `liquidity_growth_defaults_v1` از افزودن دوباره جلوگیری می‌کند. تب اول (`liquidity/index.html`) دست‌نخورده است.
 - **لیست یک‌ستونه:** `.fav-drawer .saved-list` حالا `flex-wrap: nowrap` دارد تا با ۱۰ آیتم به دو ستون نشکند؛ ارتفاع حداکثر `calc(100dvh - 190px)` و اسکرول عمودی.
 - **دکمهٔ صفحهٔ روند:** «📈 روند میانگین روزانه» به `growth-trend.html` می‌رود؛ منطق مشترک در `liquidity/growth-stats.js` است.
-- `CACHE_NAME` → `emarat-portal-v138`.
+- `CACHE_NAME` → `emarat-portal-v139`.
 
 ---
 
@@ -2908,7 +2908,7 @@ tallyTop: 857 | bodyBottom: 827 → inView: false   (در هر ۹ اپ)
 - **منطق مشترک:** `liquidity/growth-stats.js` (یک منبع حقیقت برای `calcAvgGrowth`/`buildTrendSeries`).
 - **دانلود:** «📸 دانلود تصویر» کارت بازه‌ها + نمودار را با html2canvas ذخیره می‌کند.
 - **تم:** از `liquidity_growth_theme_v1` و پیام `emarat-theme` والد پیروی می‌کند؛ نمودار با تغییر تم دوباره رسم می‌شود.
-- `CACHE_NAME` → `emarat-portal-v138`.
+- `CACHE_NAME` → `emarat-portal-v139`.
 
 ---
 
