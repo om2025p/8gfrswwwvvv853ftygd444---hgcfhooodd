@@ -2868,3 +2868,182 @@ tallyTop: 857 | bodyBottom: 827 → inView: false   (در هر ۹ اپ)
 **درس:** «عنصر در DOM هست» با «کاربر می‌بیند» یکی نیست. هر خلاصه‌ای که باید دیده شود، نباید ته یک ناحیهٔ اسکرول‌شونده بیفتد — یا بالای فهرست برود یا فهرست خودش اسکرول شود.
 
 ### `CACHE_NAME` = `emarat-portal-v128` · شاخهٔ `Y-17` → `main`
+
+---
+
+## 🔗 زنجیرهٔ «اتوماسیون اندروید → وب‌اپ» — بازگردانی `autoSyncFromBackup` (کش v130 · شاخهٔ `Y-19`)
+
+### 🚨 حادثه: حذف بی‌صدای مسیر بازگردانی
+کامیت `0673165` («ساختار شمسی سلسله‌مراتبی بکاپ‌ها») تابع `autoSyncFromBackup()` را از **۴ فایل** حذف کرد:
+`gold4/percent.html` · `gold5/percent.html` · و کپی‌هایشان در `fund-automation-android/.../assets/webapp/`.
+
+جایگزین فقط **آپلود** بود (`EmaratBackupPath.build()` + `recordUpdate()` + `<script src="../backup-path.js">`). **مسیر خواندن/ادغام هیچ جانشینی نگرفت** ❌
+
+**نتیجهٔ عملی:** اپ اندروید درصد را حساب می‌کرد، در `localStorage` وب‌اپ می‌نوشت ✅، در گیت‌هاب آپلود می‌کرد ✅ — ولی وب‌اپ **هرگز نمی‌خواند**. کاربر فکر می‌کرد اتوماسیون کار نکرده.
+
+**نشانهٔ خرابی در کد:** یک بلوک `/** ... */` (کامنت یتیم) بالای `reloadLocalData()` مانده بود که تابعش رفته بود. هر کامنت یتیمِ این‌شکلی = تابع حذف‌شده.
+
+### 🩺 چطور تشخیص بدهیم
+```bash
+# باید ۲ باشد در هر دو فایل؛ اگر ۰ بود، بازگردانی شکسته است
+grep -c "autoSyncFromBackup" gold4/percent.html gold5/percent.html
+```
+
+### ✅ درمان: تابع با پشتیبانی **دو مسیر**
+اپ اندروید به **ریشه** آپلود می‌کند (`gold5/gold5_backup.json`) ولی وب‌اپ به **مسیر شمسی** (`gold5/1405/08/week-05/1405.08.30/`). پس تابع هر دو را به ترتیب امتحان می‌کند:
+
+```javascript
+const candidates = [];
+if (window.EmaratBackupPath) candidates.push(window.EmaratBackupPath.build("gold5", new Date(), "gold5_backup.json"));
+candidates.push("gold5_backup.json");        // fallback: مسیر ریشه
+```
+
+**قانون:** هر تابع بازگردانی که هم اپ بومی و هم وب‌اپ در آن می‌نویسند، **باید** چند مسیر را امتحان کند. یک مسیر ثابت = شکستن زنجیره با هر تغییر ساختار.
+
+### 🎯 قالب داده در هر اپ (تلهٔ کلاسیک)
+
+| اپ | کلید فهرست | قالب | کلید تاریخچه | کلید پایه |
+|---|---|---|---|---|
+| gold4 | `mofid_atie_percents` | **آرایه** | `mofid_atie_history` | `mofid_atie_baseNumber` |
+| gold5 | `energy_fund_synergy` | **شیء** (`{percents, trash, goal, …}`) | `sinergy_history` | `sinergy_baseNumber` |
+
+**قانون:** تابع بازگردانی gold5 **باید داخل IIFE** باشد (خط ۵۳۱–۱۴۶۵) و از `loadData()`/`saveData()` خودِ اپ استفاده کند؛ نه `reloadLocalData()` (که فقط gold4 دارد).
+
+### ⚠️ تلهٔ ترتیب در gold4: `saveData` قبل از `reloadLocalData`
+```javascript
+// غلط — reloadLocalData آرایهٔ درون‌حافظه را از localStorage بازنویسی می‌کند
+reloadLocalData(); saveData();   // ❌ رکوردهای ادغام‌شده پاک می‌شوند
+
+// درست — اول ذخیره، بعد بازخوانی
+saveData(); reloadLocalData(); updateUI();   // ✅
+```
+**درس:** هر تابعی که state را از `localStorage` بازسازی می‌کند، باید **بعد از** نوشتن صدا زده شود، نه قبل.
+
+### 🛡️ گاردهای ضد نابودی داده
+- `gold4` → `saveData()` با `if (!window.__stateLoaded) return;` محافظت می‌شود.
+- تلورانس **۲۰۰۰ms** روی `timestamp` از ثبت تکراری جلوگیری می‌کند (هم در `percents` و هم در `history`).
+- رکوردهای داخل `trash` **هرگز** برنمی‌گردند (احترام به حذف کاربر).
+- `baseNumber` از **جدیدترین رکورد تاریخچه** گرفته می‌شود، نه از فایل ابری.
+- ادغام `goal`/`periodTarget` فقط وقتی محلی خالی است؛ `highlightedStates` با `Object.assign` و اولویت محلی.
+
+### 🧪 تست‌های واقعی (Puppeteer + Chromium)
+| تست | انتظار | نتیجه |
+|---|---|---|
+| بازگردانی از بکاپ با `localStorage` خالی | رکوردها بیایند | ✅ gold4 1/1 · gold5 1/1 |
+| ۵ رکورد محلی + ۱ ابری | ۶ رکورد (نه ۱) | ✅ |
+| رفرش دوم | همان ۶ (بدون تکرار) | ✅ |
+| دادهٔ جانبی (`goal`) | حفظ شود | ✅ |
+| آفلاین (abort روی `_backup.json`) | صفحه نشکند، صفر خطا | ✅ |
+
+**تلهٔ تست:** اگر با `page.evaluate` بعد از `goto` seed کنید، اسکریپت صفحه **قبل از** seed اجرا شده و `localStorage` را بازنویسی می‌کند. باید از `page.evaluateOnNewDocument` استفاده شود.
+
+### 📌 خلاصهٔ عملی
+```
+۱. grep -c autoSyncFromBackup <file>   → باید ۲ باشد
+۲. کامنت یتیم بالای reloadLocalData  → نشانهٔ حذف تابع
+۳. هر دو مسیر (شمسی + ریشه) امتحان شود
+۴. در gold4: saveData() قبل از reloadLocalData()
+۵. CACHE_NAME بامپ شود
+```
+`CACHE_NAME` = `emarat-portal-v130` · شاخهٔ `Y-19` → `main`
+
+---
+
+## 🔗 هماهنگی اپ اندروید «اتوماسیون ثبت درصد» با وب‌اپلیکیشن‌های مربوطه
+
+> **وضعیت کلی: ✅ هماهنگ** — اپ اندروید و وب‌اپ‌های `gold4`/`gold5` روی یک قرارداد داده کار می‌کنند.
+> این بخش قرارداد را ثبت می‌کند تا هیچ تغییر آینده‌ای بی‌صدا آن را نشکند.
+
+### 📐 قرارداد داده (تنها منبع حقیقت)
+
+| مورد | gold4 (آتیه مفید) | gold5 (سینرژی) |
+|---|---|---|
+| کلید فهرست درصد | `mofid_atie_percents` (**آرایه**) | `energy_fund_synergy` (**شیء**) |
+| کلید تاریخچه | `mofid_atie_history` | `sinergy_history` |
+| کلید مقدار پایه | `mofid_atie_baseNumber` | `sinergy_baseNumber` |
+| کلید قله | `mofid_atie_peakNumber` | `sinergy_peakNumber` |
+| صفحهٔ ورود اپ | `assets/webapp/gold4/index.html` | `assets/webapp/gold5/index.html` |
+| صفحهٔ ثبت | `gold4/percent.html` | `gold5/percent.html` |
+| موتور محاسبه | `gold4/calculator.html` | `gold5/calculator.html` |
+| فایل بکاپ | `gold4/gold4_backup.json` | `gold5/gold5_backup.json` |
+
+**⚠️ تفاوت قالب:** gold4 آرایهٔ خام ذخیره می‌کند، gold5 شیء `{percents, trash, goal, highlightedStates, periodTarget, achievedPeriods, notes}`. هر کد مشترکی باید **هر دو قالب** را بخواند.
+
+### 🔄 مسیر کامل داده (چهار حلقه)
+
+```
+۱. استخراج    AutomationEngine.kt  →  WebView واقعی، ۴ لایه (network/text/dom/ai)
+۲. محاسبه     WebAppCalculator.kt  →  موتور خود calculator.html + دقت ۶ رقم از اپ
+۳. نوشتن      WebAppWriter.kt      →  localStorage وب‌اپ در WebView جداگانه (origin متفاوت)
+۴. آپلود      BackupManager.kt     →  GitHub API با BackupMerger (ادغام دوطرفه)
+   بازخوانی   percent.html         →  autoSyncFromBackup() دو مسیر را امتحان می‌کند
+```
+
+**نکتهٔ حیاتی:** `localStorage` به origin گره خورده است. اتوماسیون روی `m.easytrader.ir` است ولی وب‌اپ روی `file://`. پس نوشتن **باید** در WebView جداگانه انجام شود — نه در WebView اتوماسیون.
+
+### ✅ وضعیت تأییدشدهٔ فایل‌های assets (هش SHA-256)
+
+| فایل | وضعیت |
+|---|---|
+| `gold4/percent.html` | ✅ یکسان با وب‌اپ |
+| `gold4/index.html` | ✅ یکسان |
+| `gold5/percent.html` | ✅ یکسان |
+| `gold5/index.html` | ✅ یکسان |
+| `gold5/growth.html` | ✅ یکسان |
+| `refresh-button.js` | ✅ یکسان |
+| `price-import.js` | ✅ یکسان |
+| `backup-path.js` | ✅ یکسان |
+
+### ⚠️ چهار فایل که assets **عقب‌تر** است (باید همگام شوند)
+
+| فایل | تفاوت | خطر |
+|---|---|---|
+| `cloud-sync.js` | assets گارد قدیمی `localStorage.length <= 2` دارد؛ وب `DATA_KEY_PATTERN` | 🔴 **بحرانی** — همان باگ «چند ماه به عقب» |
+| `usage-tracker.js` | assets مسیر شمسی `EmaratBackupPath.build` را ندارد | 🟡 کم — فقط مسیر بکاپ |
+| `gold5/price.html` | assets بلوک «کلید اختصاصی مسیر بکاپ» را ندارد | 🟡 کم |
+| `gold4|gold5/calculator.html` | جای `<script src="../storage-guard.js">` متفاوت (بالا vs پایین) | 🟢 ناچیز |
+
+**چرا `cloud-sync.js` بحرانی است:** گارد قدیمی `localStorage.length` کلیدهای تنظیمات/تم/گیت‌هاب را هم می‌شمارد. با یک کلید تنظیمات، شرط «گوشی خالی است» برقرار می‌شود و **نسخهٔ کهنهٔ ابری روی تاریخچهٔ تازه می‌نشیند** → بازگشت چند ماه به عقب. نسخهٔ وب فقط **کلیدهای داده** را می‌شمارد.
+
+### 🛡️ قانون همگام‌سازی assets
+
+```bash
+A="fund-automation-android/app/src/main/assets/webapp"
+for f in gold4/percent.html gold4/calculator.html gold4/index.html \
+         gold5/percent.html gold5/calculator.html gold5/index.html \
+         gold5/price.html gold5/growth.html; do
+    cp "$f" "$A/$f"
+done
+for f in cloud-sync.js usage-tracker.js refresh-button.js price-import.js backup-path.js; do
+    cp "$f" "$A/$f"
+done
+```
+
+**قانون:** هر تغییر در `gold4/`، `gold5/` یا فایل‌های مشترک ریشه **باید** در `assets/webapp/` آینه شود. وگرنه کاربر APK رفتار قدیمی می‌بیند در حالی که سایت رفتار جدید دارد.
+
+### 🧪 اعتبارسنجی سریع
+
+```bash
+# ۱) هش همهٔ فایل‌های مشترک باید یکسان باشد
+A="fund-automation-android/app/src/main/assets/webapp"
+for f in gold4/percent.html gold5/percent.html cloud-sync.js usage-tracker.js; do
+    [ "$(sha256sum $f|cut -c1-12)" = "$(sha256sum $A/$f|cut -c1-12)" ] && echo "✅ $f" || echo "❌ $f"
+done
+
+# ۲) بازگردانی در هر دو فایل باید ۲ بار باشد
+grep -c "autoSyncFromBackup" gold4/percent.html gold5/percent.html
+
+# ۳) هیچ وابستگی خارجی نباشد
+grep -rnE '<(link|script)[^>]*(href|src)="https?://(cdnjs|fonts\.googleapis|fonts\.gstatic|unpkg|jsdelivr)' --include=*.html . | wc -l
+```
+
+### 🚫 جلوگیری از ثبت تکراری (رفتار تأییدشده)
+`WebAppReader.manualEntries()` فقط رکوردهای `manual` را می‌شمارد. اگر کاربر امروز **دستی** ثبت کرده باشد، اتوماسیون آن صندوق را دست‌نخورده رها می‌کند. رکوردهای `source: "automation"` نادیده گرفته می‌شوند تا اجرای دوباره در همان روز مسدود نشود.
+
+### 📌 نسخه‌ها
+```
+اپ اندروید : versionName 1.10.1 / versionCode 12 / ir.omarat.fundautomation
+وب‌اپ      : CACHE_NAME = emarat-portal-v130
+تست کاتلین : ۶ کلاس (BackupMerger, BackupMergerRealData, FundTextScanner,
+             FundWindowResilience, ManualEntryFilter, PercentPrecision)
+```
