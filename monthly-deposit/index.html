@@ -564,11 +564,19 @@
     }
 
     /* ===== برنامهٔ ماه‌های دو واریزی ===== */
-    .plan-wrap { display:flex; flex-direction:column; gap:4px; width:100%; }
-    .plan-label { font-size:0.68rem; color:var(--text-muted); font-weight:700; }
-    .plan-chips { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:4px; }
-    .plan-chip { min-height:44px; border-radius:8px; border:1px solid var(--border-4); background:var(--card-bg); color:var(--text-muted); font-family:inherit; font-size:0.72rem; font-weight:700; cursor:pointer; padding:4px 0; }
-    .plan-chip.on { background:var(--accent-soft); color:var(--text-head); border-color:var(--accent-soft-border); font-weight:800; }
+    .plan-wrap { display:flex; flex-direction:column; gap:6px; width:100%; }
+    .plan-toggle { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:44px; padding:8px 10px; border-radius:10px; border:1px dashed var(--border-4); background:var(--card-bg); color:var(--text-head); font-family:inherit; font-size:0.78rem; font-weight:700; cursor:pointer; text-align:right; }
+    .plan-toggle .plan-chev { transition:transform .2s; font-size:0.8rem; }
+    .plan-wrap.open .plan-toggle .plan-chev { transform:rotate(180deg); }
+    .plan-wrap.open .plan-toggle { border-style:solid; border-color:var(--accent-soft-border); background:var(--accent-soft); }
+    .plan-panel { display:none; flex-direction:column; gap:2px; }
+    .plan-wrap.open .plan-panel { display:flex; }
+    .plan-row { display:flex; align-items:center; gap:8px; min-height:44px; padding:4px 8px; border-radius:8px; cursor:pointer; font-size:0.8rem; color:var(--text-head); }
+    .plan-row:hover { background:var(--soft-bg-4); }
+    .plan-row.on { background:var(--accent-soft); }
+    .plan-check { width:22px; height:22px; accent-color:var(--accent); flex:0 0 auto; cursor:pointer; }
+    .plan-num { min-width:24px; font-weight:800; color:var(--text-muted); }
+    .plan-mname { flex:1; }
     .active-year-badge { text-align:center; font-size:0.85rem; font-weight:800; color:var(--text-head); background:var(--accent-soft); border:1px solid var(--accent-soft-border); border-radius:12px; padding:8px; margin-bottom:10px; }
     /* ===== آرشیو سال‌های گذشته ===== */
     #yearsArchive { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
@@ -617,7 +625,7 @@
     </div>
     <hr style="margin: 16px 0; border: none; border-top: 1px dashed var(--border-4);">
     <div style="font-size:0.85rem; font-weight:700; color:var(--text-head); margin-bottom:6px;">🛠️ مدیریت صندوق‌ها (ویرایش و حذف با ۲ تأیید):</div>
-    <div id="settingsFundManageRows" style="display:flex; flex-direction:column; gap:8px; max-height: 260px; overflow-y: auto; padding-left:2px;"></div>
+    <div id="settingsFundManageRows" style="display:flex; flex-direction:column; gap:8px; padding-left:2px;"></div>
   </div>
 
   <div class="balance-box">
@@ -1099,45 +1107,67 @@
             depositCounts[fi] = n;
             if(!depositPlan[fi]) depositPlan[fi] = new Array(12).fill(n);
             for(let mi=0; mi<12; mi++) depositPlan[fi][mi] = n;
-            if(planChips){
-              planChips.querySelectorAll('.plan-chip').forEach((c, mi) => {
-                c.classList.toggle('on', n >= 2);
-                c.title = `${MONTH_NAMES[mi]} — ${n >= 2 ? 'دو واریزی' : 'یک واریزی'}`;
-              });
-            }
             saveToStorage();
             renderAll();
+            syncPlanSummary();
           };
           countWrap.appendChild(countLabel);
           countWrap.appendChild(countSelect);
 
           const planWrap = document.createElement('div');
           planWrap.className = 'plan-wrap';
-          const planLabel = document.createElement('span');
-          planLabel.className = 'plan-label';
-          planLabel.textContent = 'ماه‌های دو واریزی:';
-          const planChips = document.createElement('div');
-          planChips.className = 'plan-chips';
-          const SHORT_MONTHS = ['فرو','ارد','خرد','تیر','مرد','شهر','مهر','آبا','آذر','دی','بهم','اسف'];
+          const planPanel = document.createElement('div');
+          planPanel.className = 'plan-panel';
+          planPanel.id = `planPanel_${fi}`;
+          const planToggle = document.createElement('button');
+          planToggle.type = 'button';
+          planToggle.className = 'plan-toggle';
+          planToggle.setAttribute('aria-controls', planPanel.id);
+          planToggle.setAttribute('aria-expanded', 'false');
+          const FA_MONTH_NUM = ['۱','۲','۳','۴','۵','۶','۷','۸','۹','۱۰','۱۱','۱۲'];
+          const planChecks = [];
+          const syncPlanSummary = () => {
+            let onCount = 0;
+            planChecks.forEach((cb, mi) => {
+              cb.checked = getFundMonthCap(fi, mi) >= 2;
+              if(cb.checked) onCount++;
+              cb.closest('.plan-row').classList.toggle('on', cb.checked);
+            });
+            planToggle.innerHTML = `<span>📅 ماه‌های دو واریزی · ${onCount ? onCount + ' ماه' : 'هیچ ماهی'}</span><span class="plan-chev">▾</span>`;
+          };
           for(let mi=0; mi<12; mi++){
-            const chip = document.createElement('button');
-            chip.type = 'button';
-            chip.className = 'plan-chip' + (getFundMonthCap(fi, mi) >= 2 ? ' on' : '');
-            chip.textContent = SHORT_MONTHS[mi];
-            chip.title = `${MONTH_NAMES[mi]} — ${getFundMonthCap(fi, mi) >= 2 ? 'دو واریزی' : 'یک واریزی'}`;
-            chip.onclick = () => {
+            const row = document.createElement('label');
+            row.className = 'plan-row';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'plan-check';
+            cb.setAttribute('aria-label', `${MONTH_NAMES[mi]} — دو واریزی`);
+            const num = document.createElement('span');
+            num.className = 'plan-num';
+            num.textContent = FA_MONTH_NUM[mi];
+            const name = document.createElement('span');
+            name.className = 'plan-mname';
+            name.textContent = MONTH_NAMES[mi];
+            cb.onchange = () => {
               if(!depositPlan[fi]) depositPlan[fi] = new Array(12).fill(1);
-              depositPlan[fi][mi] = depositPlan[fi][mi] >= 2 ? 1 : 2;
-              const on = depositPlan[fi][mi] >= 2;
-              chip.classList.toggle('on', on);
-              chip.title = `${MONTH_NAMES[mi]} — ${on ? 'دو واریزی' : 'یک واریزی'}`;
+              depositPlan[fi][mi] = cb.checked ? 2 : 1;
               saveToStorage();
               renderAll();
+              syncPlanSummary();
             };
-            planChips.appendChild(chip);
+            row.appendChild(cb);
+            row.appendChild(num);
+            row.appendChild(name);
+            planPanel.appendChild(row);
+            planChecks.push(cb);
           }
-          planWrap.appendChild(planLabel);
-          planWrap.appendChild(planChips);
+          planToggle.onclick = () => {
+            const open = planWrap.classList.toggle('open');
+            planToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+          };
+          planWrap.appendChild(planToggle);
+          planWrap.appendChild(planPanel);
+          syncPlanSummary();
 
           const actionsDiv = document.createElement('div');
           actionsDiv.style.cssText = 'display:flex; gap:6px;';
