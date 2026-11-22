@@ -655,6 +655,45 @@
     .star-toggle.on { color: #f59e0b; border-color: #f59e0b; background: rgba(245,158,11,.12); }
     .drawer-hint { font-size: 11px; color: var(--text-muted); line-height: 1.8; margin-top: 10px; }
     .drawer-overlay { display: none; }
+
+    /* Compact vertical lists inside the drawer */
+    .fav-drawer .saved-list { gap: 5px; }
+    .fav-drawer .saved-row { padding: 4px 8px; min-height: 44px; gap: 6px; border-radius: 10px; }
+    .fav-drawer .saved-row .saved-symbol { font-size: 12px; }
+    .fav-drawer .saved-row .saved-name { font-size: 9px; margin-top: 0; }
+    .fav-drawer .saved-row .remove { width: 36px; height: 36px; font-size: 11px; position: relative; }
+    .fav-drawer .saved-row .remove::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; }
+    .fav-drawer .result-item { padding: 6px 8px; gap: 6px; }
+    .fav-drawer .result-item .result-symbol { font-size: 12px; margin-bottom: 0; }
+    .fav-drawer .result-item .result-name { font-size: 9px; }
+    .fav-drawer .result-item .result-type { font-size: 8px; padding: 2px 6px; }
+    .fav-drawer .star-toggle { width: 36px; height: 36px; font-size: 14px; position: relative; }
+    .fav-drawer .star-toggle::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; }
+
+    /* Delete confirmation modal */
+    .confirm-overlay {
+        position: fixed; inset: 0; z-index: 2000;
+        background: rgba(0,0,0,.55);
+        display: flex; align-items: center; justify-content: center;
+        padding: 16px;
+    }
+    .confirm-modal {
+        width: 100%; max-width: 360px;
+        background: var(--bg-card); color: var(--text-primary);
+        border: 1px solid var(--border-color); border-radius: 18px;
+        padding: 20px 18px; box-shadow: 0 20px 60px rgba(0,0,0,.35);
+        text-align: center;
+    }
+    .confirm-icon { font-size: 32px; margin-bottom: 6px; }
+    .confirm-modal h3 { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
+    .confirm-modal p { font-size: 12px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 16px; }
+    .confirm-modal p b { color: var(--text-primary); }
+    .confirm-actions { display: flex; gap: 8px; }
+    .confirm-actions button { flex: 1; min-height: 44px; border-radius: 12px; font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; border: 1px solid var(--border-color); }
+    .confirm-cancel { background: var(--bg-amount); color: var(--text-primary); }
+    .confirm-danger { background: #c53030; color: #fff; border-color: #c53030; }
+    .confirm-danger:hover { background: #9b1c1c; }
+
     @media (max-width: 820px) {
         .layout { display: block; }
         .fav-drawer { position: fixed; top: 0; left: 0; bottom: 0; width: min(86vw, 320px); z-index: 1000; transform: translateX(-105%); transition: transform .3s ease; border-radius: 0 18px 18px 0; padding: 16px; max-height: 100dvh; }
@@ -715,11 +754,23 @@
                 <div class="search-results" id="searchResults"></div>
             </div>
             <div class="saved-list" id="savedList"></div>
-            <div class="drawer-hint" id="drawerHint">برای افزودن نماد، جستجو کن و روی ⭐ بزن.</div>
+            <div class="drawer-hint" id="drawerHint">برای افزودن: جستجو کن و ⭐ بزن · برای حذف: ✕ و تأیید.</div>
         </aside>
     </div>
 </div>
 <div class="drawer-overlay" id="drawerOverlay"></div>
+
+<div class="confirm-overlay" id="deleteOverlay" hidden>
+    <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+        <div class="confirm-icon">🗑️</div>
+        <h3 id="deleteTitle">حذف از علاقه‌مندی‌ها</h3>
+        <p>نماد <b id="deleteSymbolName">—</b> از لیست ستاره‌ها حذف شود؟</p>
+        <div class="confirm-actions">
+            <button class="confirm-cancel" id="deleteCancelBtn">انصراف</button>
+            <button class="confirm-danger" id="deleteConfirmBtn">🗑️ بله، پاک کن</button>
+        </div>
+    </div>
+</div>
 
 <div class="toast" id="toast">
     <span id="toastIcon">✓</span>
@@ -783,6 +834,11 @@
     const savedHint = document.getElementById('drawerHint');
     const drawerToggle = document.getElementById('drawerToggle');
     const drawerOverlay = document.getElementById('drawerOverlay');
+    const deleteOverlay = document.getElementById('deleteOverlay');
+    const deleteSymbolName = document.getElementById('deleteSymbolName');
+    const deleteCancelBtn = document.getElementById('deleteCancelBtn');
+    const deleteConfirmBtn = document.getElementById('deleteConfirmBtn');
+    let pendingDeleteSymbol = null;
 
     // ============================================================
     // THEME
@@ -1021,6 +1077,28 @@
             renderSavedSymbols();
             showToast(`${symbol} حذف شد`, '🗑️', true);
         }
+    }
+
+    function openDeleteModal(symbol) {
+        pendingDeleteSymbol = symbol;
+        if (deleteSymbolName) deleteSymbolName.textContent = symbol;
+        if (deleteOverlay) {
+            deleteOverlay.hidden = false;
+            document.body.style.overflow = 'hidden';
+            if (deleteCancelBtn) deleteCancelBtn.focus();
+        }
+    }
+
+    function closeDeleteModal() {
+        pendingDeleteSymbol = null;
+        if (deleteOverlay) deleteOverlay.hidden = true;
+        document.body.style.overflow = '';
+    }
+
+    function confirmDeleteSymbol() {
+        const symbol = pendingDeleteSymbol;
+        closeDeleteModal();
+        if (symbol) removeSymbol(symbol);
     }
 
     function clearAllSaved() {
@@ -1559,7 +1637,7 @@
         const removeBtn = e.target.closest('.remove');
         if (removeBtn) {
             e.stopPropagation();
-            removeSymbol(removeBtn.dataset.remove);
+            openDeleteModal(removeBtn.dataset.remove);
             return;
         }
         const row = e.target.closest('.saved-row');
@@ -1619,8 +1697,15 @@
         setDrawer(!document.body.classList.contains('drawer-open'));
     });
     drawerOverlay.addEventListener('click', function() { setDrawer(false); });
+    if (deleteCancelBtn) deleteCancelBtn.addEventListener('click', closeDeleteModal);
+    if (deleteConfirmBtn) deleteConfirmBtn.addEventListener('click', confirmDeleteSymbol);
+    if (deleteOverlay) deleteOverlay.addEventListener('click', function(e) {
+        if (e.target === deleteOverlay) closeDeleteModal();
+    });
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && isMobileView()) setDrawer(false);
+        if (e.key !== 'Escape') return;
+        if (deleteOverlay && !deleteOverlay.hidden) { closeDeleteModal(); return; }
+        if (isMobileView()) setDrawer(false);
     });
     window.addEventListener('message', function(e) {
         if (e.data && e.data.type === 'emarat-theme') {
