@@ -1,0 +1,21 @@
+{
+  "name": "کانال‌یاب — جست‌وجوی کانال‌های تلگرام",
+  "short_name": "کانال‌یاب",
+  "description": "جست‌وجوی کانال‌های عمومی تلگرام بر اساس نام، یوزرنیم، زبان و تعداد اعضا",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#2AABEE",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
