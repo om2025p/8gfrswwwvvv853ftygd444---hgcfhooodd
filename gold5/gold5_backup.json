@@ -1,5 +1,5 @@
 {
-  "baseNumber": 209809456,
+  "baseNumber": 209446377,
   "percents": [
     {
       "value": -3.447052,
@@ -10,6 +10,12 @@
     {
       "value": -0.650944,
       "timestamp": 1795330337371,
+      "source": "automation",
+      "auto": true
+    },
+    {
+      "value": -0.173052,
+      "timestamp": 1795343487387,
       "source": "automation",
       "auto": true
     }
@@ -36,6 +42,18 @@
       "rawBase": 211184147,
       "rawNew": 209809456,
       "timestamp": 1795330337371,
+      "source": "automation",
+      "auto": true
+    },
+    {
+      "id": 1795343487387,
+      "base": "۲۰۹٬۸۰۹٬۴۵۶",
+      "new": "۲۰۹٬۴۴۶٬۳۷۷",
+      "percent": "-0.17",
+      "rawPercent": -0.173052,
+      "rawBase": 209809456,
+      "rawNew": 209446377,
+      "timestamp": 1795343487387,
       "source": "automation",
       "auto": true
     }
