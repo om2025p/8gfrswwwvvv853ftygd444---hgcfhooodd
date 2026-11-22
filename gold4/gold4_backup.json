@@ -6,6 +6,12 @@
       "timestamp": 1795258703346,
       "source": "automation",
       "auto": true
+    },
+    {
+      "value": 0,
+      "timestamp": 1795330337371,
+      "source": "automation",
+      "auto": true
     }
   ],
   "history": [
@@ -18,6 +24,18 @@
       "rawBase": 397615869,
       "rawNew": 396129993,
       "timestamp": 1795258703346,
+      "source": "automation",
+      "auto": true
+    },
+    {
+      "id": 1795330337371,
+      "base": "۳۹۶٬۱۲۹٬۹۹۳",
+      "new": "۳۹۶٬۱۲۹٬۹۹۳",
+      "percent": "0.00",
+      "rawPercent": 0,
+      "rawBase": 396129993,
+      "rawNew": 396129993,
+      "timestamp": 1795330337371,
       "source": "automation",
       "auto": true
     }
