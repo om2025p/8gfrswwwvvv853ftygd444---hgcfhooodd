@@ -654,13 +654,13 @@
     .content > .search-section .search-results {
         position: static; max-height: 280px; margin-top: 8px; box-shadow: var(--shadow);
     }
-    .fav-drawer { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); max-height: calc(100dvh - 110px); overflow-y: auto; }
-    .drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+    .fav-drawer { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); max-height: calc(100dvh - 110px); display: flex; flex-direction: column; overflow: hidden; }
+    .drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex: 0 0 auto; }
     .drawer-title { font-size: 13px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
     .drawer-head-actions { display: flex; align-items: center; gap: 6px; }
     .drawer-close { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--bg-amount); color: var(--text-primary); font-size: 14px; cursor: pointer; flex-shrink: 0; }
     .count-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: linear-gradient(135deg, #2563eb, #1e40af); color: #fff; font-size: 11px; }
-    .fav-drawer .saved-list { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 8px; max-height: calc(100dvh - 245px); overflow-y: auto; }
+    .fav-drawer .saved-list { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 8px; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
     .saved-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 12px; background: var(--bg-amount); cursor: pointer; min-height: 44px; transition: all .2s; }
     .saved-row:hover { border-color: #2563eb; }
     .saved-row.active { border-color: #2563eb; background: linear-gradient(135deg, rgba(37,99,235,.1), rgba(37,99,235,.18)); }
@@ -671,8 +671,8 @@
     .result-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .star-toggle { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-muted); font-size: 16px; cursor: pointer; }
     .star-toggle.on { color: #f59e0b; border-color: #f59e0b; background: rgba(245,158,11,.12); }
-    .drawer-hint { font-size: 11px; color: var(--text-muted); line-height: 1.8; margin-top: 10px; }
-    .saved-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+    .drawer-hint { font-size: 11px; color: var(--text-muted); line-height: 1.8; margin-top: 10px; flex: 0 0 auto; }
+    .saved-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; flex: 0 0 auto; }
     .saved-tab { min-height: 44px; border: 1.5px solid var(--border-color); border-radius: 10px; background: var(--bg-amount); color: var(--text-primary); font-family: inherit; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; padding: 4px 6px; }
     .saved-tab.active { border-color: #2563eb; background: linear-gradient(135deg, #2563eb, #1e40af); color: #fff; }
     .saved-tab .tab-count { min-width: 18px; padding: 1px 6px; border-radius: 999px; background: rgba(0,0,0,.12); font-size: 10px; line-height: 1.4; }
@@ -848,6 +848,7 @@
     let filteredResults = [];
     let savedSymbols = [];
     let savedListTab = 'stocks';
+    const savedScroll = { stocks: 0, funds: 0 };
     try {
         const _savedTab = localStorage.getItem(LIST_TAB_KEY);
         if (_savedTab === 'stocks' || _savedTab === 'funds') savedListTab = _savedTab;
@@ -1203,7 +1204,10 @@
         } catch (e) { return null; }
     }
 
-    function renderSavedSymbols() {
+    function renderSavedSymbols(options) {
+        const keepScroll = options && typeof options.scroll === 'number'
+            ? options.scroll
+            : (savedList ? savedList.scrollTop : 0);
         const count = savedSymbols.length;
         if (savedCount) {
             savedCount.textContent = count.toLocaleString('fa-IR');
@@ -1226,12 +1230,14 @@
 
         if (count === 0) {
             savedList.innerHTML = '';
+            if (savedList) savedList.scrollTop = 0;
             return;
         }
 
         const items = savedListTab === 'funds' ? funds : stocks;
         if (items.length === 0) {
             savedList.innerHTML = '<div class="saved-empty">در این دسته نمادی نیست</div>';
+            if (savedList) savedList.scrollTop = 0;
             return;
         }
         savedList.innerHTML = items.map(sym => {
@@ -1247,6 +1253,15 @@
                 </div>
             `;
         }).join('');
+        if (savedList) savedList.scrollTop = keepScroll;
+    }
+
+    function switchSavedTab(next) {
+        if (next !== 'stocks' && next !== 'funds') return;
+        if (savedList) savedScroll[savedListTab] = savedList.scrollTop;
+        savedListTab = next;
+        try { localStorage.setItem(LIST_TAB_KEY, savedListTab); } catch (e) {}
+        renderSavedSymbols({ scroll: savedScroll[savedListTab] || 0 });
     }
 
     // ============================================================
@@ -1690,9 +1705,7 @@
     [savedTabStocks, savedTabFunds].forEach(function(btn) {
         if (!btn) return;
         btn.addEventListener('click', function() {
-            savedListTab = btn.dataset.listTab === 'funds' ? 'funds' : 'stocks';
-            try { localStorage.setItem(LIST_TAB_KEY, savedListTab); } catch (e) {}
-            renderSavedSymbols();
+            switchSavedTab(btn.dataset.listTab === 'funds' ? 'funds' : 'stocks');
         });
     });
 

@@ -3095,3 +3095,12 @@ grep -rnE '<(link|script)[^>]*(href|src)="https?://(cdnjs|fonts\.googleapis|font
 - **دسترسی:** `role=tablist/tab`، `aria-selected`، حداقل ارتفاع ۴۴px.
 - **تست:** ۵ نماد نمونه (۲ سهام + ۳ صندوق) → تب سهام ۲، تب صندوق ۳؛ حذف/پاک‌سازی و حفظ تب پس از رفرش.
 - `CACHE_NAME` → `emarat-portal-v141`.
+
+
+## 📜 اسکرول مستقل لیست علاقه‌مندی‌ها (v142)
+
+- **درخواست:** در کشوی «⭐ علاقه‌مندی‌ها»، فقط خود لیست اسکرول شود؛ هدر، دو تب و راهنمای پایین ثابت بمانند.
+- **درمان:** `.fav-drawer` → `display:flex; flex-direction:column; overflow:hidden`؛ `.saved-list` → `flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain` و حذف `max-height` ثابت. هدر/تب‌ها/راهنما `flex:0 0 auto`.
+- **حفظ اسکرول هر تب:** `savedScroll = { stocks:0, funds:0 }` + `switchSavedTab()`؛ با تغییر تب، موقعیت اسکرول همان تب بازگردانده می‌شود و موقعیت تب قبلی ذخیره می‌شود.
+- **تست:** ۳۰ نماد → لیست سهام اسکرول مستقل، هدر/تب‌ها ثابت، بدون اسکرول کل کشو؛ جابه‌جایی بین تب‌ها موقعیت هر لیست را حفظ می‌کند.
+- `CACHE_NAME` → `emarat-portal-v142`.
