@@ -775,16 +775,9 @@
         .tab-panel.active { display: block; }
         .tab-panel .card { margin: 0 auto; }
         #growthFrame {
-            width: 100%; height: calc(100dvh - 150px);
+            width: 100%; height: auto; min-height: calc(100dvh - 150px);
             border: 0; border-radius: 18px; background: transparent; display: block;
         }
-
-    /* حذف سایهٔ دکمهٔ به‌روزرسانی فقط در تب دوم */
-    body.growth-tab-active .emr-rb .emr-rb-btn {
-        box-shadow: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-    }
 </style>
 </head>
 <body>
@@ -1122,7 +1115,6 @@
         });
         tabLiquidity.classList.toggle('active', name === 'liquidity');
         tabGrowth.classList.toggle('active', name === 'growth');
-        document.body.classList.toggle('growth-tab-active', name === 'growth');
         if (name === 'growth') {
             if (!growthLoaded) {
                 growthFrame.src = 'growth.html' + mockParam;
@@ -1134,7 +1126,50 @@
     appTabs.querySelectorAll('.app-tab').forEach(function(t) {
         t.addEventListener('click', function() { setTab(t.dataset.tab); });
     });
-    growthFrame.addEventListener('load', postThemeToFrame);
+    let growthHeightRaf = 0;
+    let growthResizeObserver = null;
+
+    function syncGrowthFrameHeight() {
+        try {
+            const doc = growthFrame.contentDocument;
+            if (!doc) return;
+            const body = doc.body;
+            const height = Math.max(
+                doc.documentElement.scrollHeight,
+                body ? body.scrollHeight : 0
+            );
+            if (height > 0 && Math.abs(growthFrame.getBoundingClientRect().height - height) > 1) {
+                growthFrame.style.height = height + 'px';
+            }
+        } catch (e) {}
+    }
+
+    function scheduleGrowthHeightSync() {
+        if (growthHeightRaf) return;
+        growthHeightRaf = requestAnimationFrame(function() {
+            growthHeightRaf = 0;
+            syncGrowthFrameHeight();
+        });
+    }
+
+    function observeGrowthFrame() {
+        try {
+            const doc = growthFrame.contentDocument;
+            if (!doc || !window.ResizeObserver) return;
+            if (growthResizeObserver) growthResizeObserver.disconnect();
+            growthResizeObserver = new ResizeObserver(scheduleGrowthHeightSync);
+            growthResizeObserver.observe(doc.documentElement);
+            if (doc.body) growthResizeObserver.observe(doc.body);
+            syncGrowthFrameHeight();
+        } catch (e) {}
+    }
+
+    growthFrame.addEventListener('load', function() {
+        postThemeToFrame();
+        observeGrowthFrame();
+        syncGrowthFrameHeight();
+    });
+    window.addEventListener('resize', scheduleGrowthHeightSync);
 
     // ============================================================
     // تبدیل عدد به حروف
