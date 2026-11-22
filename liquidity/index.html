@@ -755,11 +755,40 @@
             .order-book-grid { grid-template-columns: 1fr; }
             .order-book-best { grid-template-columns: 1fr; }
         }
+
+        /* ===== App shell + tabs ===== */
+        body { display: block; }
+        .app-shell { max-width: 980px; width: 100%; margin: 0 auto; }
+        .app-tabs {
+            display: flex; gap: 8px; background: var(--bg-card);
+            border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 6px; margin-bottom: 14px; box-shadow: var(--shadow);
+        }
+        .app-tab {
+            flex: 1; border: none; background: transparent; color: var(--text-secondary);
+            font-family: inherit; font-weight: 800; font-size: 13px;
+            padding: 12px 14px; border-radius: 12px; cursor: pointer;
+            min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .app-tab.active { background: linear-gradient(135deg, #2563eb, #1e40af); color: #fff; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .tab-panel .card { margin: 0 auto; }
+        #growthFrame {
+            width: 100%; height: calc(100dvh - 150px);
+            border: 0; border-radius: 18px; background: transparent; display: block;
+        }
     </style>
 </head>
 <body>
 
-<div class="card" id="app">
+<div class="app-shell">
+    <div class="app-tabs" id="appTabs">
+        <button class="app-tab active" data-tab="liquidity">💧 نقدشوندگی</button>
+        <button class="app-tab" data-tab="growth">📈 محاسبه رشد</button>
+    </div>
+    <div class="tab-panel active" id="tab-liquidity">
+        <div class="card" id="app">
     <div class="top-bar">
         <div class="theme-toggle">
             <button id="themeToggleBtn">
@@ -936,6 +965,12 @@
         </span>
         <span id="updateTime">--</span>
     </div>
+        </div>
+    </div>
+
+    <div class="tab-panel" id="tab-growth">
+        <iframe id="growthFrame" title="ماشین‌حساب رشد نمادها"></iframe>
+    </div>
 </div>
 
 <link rel="stylesheet" href="../vendor/fontawesome/css/all.min.css">
@@ -1001,6 +1036,20 @@
     const customSymbolWrap = document.getElementById('customSymbolWrap');
     const customSymbolInput = document.getElementById('customSymbolInput');
     const customSymbolBtn = document.getElementById('customSymbolBtn');
+    const appTabs = document.getElementById('appTabs');
+    const tabLiquidity = document.getElementById('tab-liquidity');
+    const tabGrowth = document.getElementById('tab-growth');
+    const growthFrame = document.getElementById('growthFrame');
+    let growthLoaded = false;
+    const mockParam = new URLSearchParams(location.search).get('mock') === '1' ? '?mock=1' : '';
+
+    function postThemeToFrame() {
+        try {
+            if (growthFrame && growthFrame.contentWindow) {
+                growthFrame.contentWindow.postMessage({ type: 'emarat-theme', theme: currentTheme }, '*');
+            }
+        } catch (e) {}
+    }
 
     // ============================================================
     // متغیرها
@@ -1040,6 +1089,7 @@
             themeLabel.textContent = 'تم تاریک';
         }
         localStorage.setItem('theme', currentTheme);
+        postThemeToFrame();
     }
 
     function loadTheme() {
@@ -1050,10 +1100,33 @@
             themeIcon.textContent = '☀️';
             themeLabel.textContent = 'تم روشن';
         }
+        postThemeToFrame();
     }
 
     themeToggleBtn.addEventListener('click', toggleTheme);
     loadTheme();
+
+    // ============================================================
+    // تب‌ها
+    // ============================================================
+    function setTab(name) {
+        appTabs.querySelectorAll('.app-tab').forEach(function(t) {
+            t.classList.toggle('active', t.dataset.tab === name);
+        });
+        tabLiquidity.classList.toggle('active', name === 'liquidity');
+        tabGrowth.classList.toggle('active', name === 'growth');
+        if (name === 'growth') {
+            if (!growthLoaded) {
+                growthFrame.src = 'growth.html' + mockParam;
+                growthLoaded = true;
+            }
+            postThemeToFrame();
+        }
+    }
+    appTabs.querySelectorAll('.app-tab').forEach(function(t) {
+        t.addEventListener('click', function() { setTab(t.dataset.tab); });
+    });
+    growthFrame.addEventListener('load', postThemeToFrame);
 
     // ============================================================
     // تبدیل عدد به حروف

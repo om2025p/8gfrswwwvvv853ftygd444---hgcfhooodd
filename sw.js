@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v130';
+const CACHE_NAME = 'emarat-portal-v131';
 const ASSETS = [
   './tree-samples/m1.html',
   './tree-samples/m2.html',
@@ -356,6 +356,7 @@ const ASSETS = [
   './jules-bot/icon-512.png',
   // Liquidity App (محاسبه نقدشوندگی)
   './liquidity/index.html',
+  './liquidity/growth.html',
   './liquidity/manifest.json',
   './liquidity/icon-192.png',
   './liquidity/icon-512.png',
@@ -392,6 +393,7 @@ const ASSETS = [
   './vendor/fontawesome/webfonts/fa-solid-900.woff2',
   './vendor/fontawesome/webfonts/fa-v4compatibility.woff2',
   './vendor/jszip/jszip.min.js',
+  './vendor/html2canvas/html2canvas.min.js',
   './price-import.js',
   './refresh-button.js',
   './vendor/inter/inter.css',

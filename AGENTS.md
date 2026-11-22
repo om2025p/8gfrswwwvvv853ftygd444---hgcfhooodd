@@ -2868,3 +2868,13 @@ tallyTop: 857 | bodyBottom: 827 → inView: false   (در هر ۹ اپ)
 **درس:** «عنصر در DOM هست» با «کاربر می‌بیند» یکی نیست. هر خلاصه‌ای که باید دیده شود، نباید ته یک ناحیهٔ اسکرول‌شونده بیفتد — یا بالای فهرست برود یا فهرست خودش اسکرول شود.
 
 ### `CACHE_NAME` = `emarat-portal-v128` · شاخهٔ `Y-17` → `main`
+
+## 📈 تب «محاسبه رشد» در اپ نقدشوندگی (`liquidity/growth.html`) — v131
+
+- `liquidity/growth.html` از اپ مستقل «ماشین‌حساب رشد نمادها» ساخته شد و به‌عنوان **تب دوم** `liquidity/index.html` با iframe اضافه شد (تب‌بار بالا: «💧 نقدشوندگی» | «📈 محاسبه رشد»).
+- **محدودیت ۱۰تایی ستاره‌ها حذف شد** (کد `savedSymbols.length > 10` حذف شد)؛ لیست از چیپ‌های افقی به **ستون چپ کشویی** منتقل شد (دسکتاپ ثابت/جمع‌شو، موبایل کشویی از چپ با overlay).
+- کلیدهای جدید با پیشوند یکتا + مهاجرت: `liquidity_growth_saved_v1` / `liquidity_growth_last_v1` / `liquidity_growth_token_v1` / `liquidity_growth_theme_v1`؛ کلید قدیمی `symbolsCache` عمداً حفظ شد (همان کلید یتیمِ ارزشمند).
+- وابستگی‌های خارجی حذف شدند: `vendor/inter/inter.css` + `vendor/html2canvas/html2canvas.min.js` (بدون Google Fonts/cdnjs).
+- تم مشترک: دکمهٔ تم بالای اپ؛ تب رشد با `postMessage` از آن پیروی می‌کند و دکمهٔ تم داخلی‌اش پنهان می‌شود.
+- `?mock=1` روی `growth.html` برای تست آفلاین با دادهٔ نمونه (بدون نیاز به BrsApi).
+- `CACHE_NAME` → `emarat-portal-v131`.
