@@ -547,6 +547,16 @@
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
     }
+    .action-btn.trend {
+        grid-column: 1 / -1;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .action-btn.trend:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+    }
     .action-btn:disabled {
         opacity: 0.6;
         cursor: not-allowed;
@@ -788,6 +798,7 @@
     <span id="toastText">ذخیره شد</span>
 </div>
 
+<script src="growth-stats.js"></script>
 <script>
     // ============================================================
     // CONFIG — دو توکن
@@ -1344,56 +1355,7 @@
     // ============================================================
     // 4) محاسبه میانگین رشد
     // ============================================================
-    function calcAvgGrowth(data) {
-        if (data.length < 2) return null;
-
-        const sorted = [...data].sort((a, b) => {
-            const da = String(a.date || a.d || '');
-            const db = String(b.date || b.d || '');
-            return da.localeCompare(db);
-        });
-
-        const growthPercents = [];
-        let positiveCount = 0;
-        let negativeCount = 0;
-
-        for (let i = 1; i < sorted.length; i++) {
-            const prevPrice = Number(sorted[i - 1].pc) || 0;
-            const currPrice = Number(sorted[i].pc) || 0;
-            if (prevPrice > 0 && currPrice > 0) {
-                const growth = ((currPrice - prevPrice) / prevPrice) * 100;
-                growthPercents.push(growth);
-                if (growth > 0) positiveCount++;
-                else if (growth < 0) negativeCount++;
-            }
-        }
-
-        if (growthPercents.length === 0) return null;
-
-        const avgSimple = growthPercents.reduce((s, g) => s + g, 0) / growthPercents.length;
-        const firstPrice = Number(sorted[0].pc) || 0;
-        const lastPrice = Number(sorted[sorted.length - 1].pc) || 0;
-
-        return {
-            avgSimple,
-            totalGrowth: firstPrice > 0 ? ((lastPrice - firstPrice) / firstPrice) * 100 : 0,
-            positiveCount,
-            negativeCount,
-            totalDays: growthPercents.length,
-            firstPrice,
-            lastPrice
-        };
-    }
-
-    function calcAvgGrowthLastN(data, n) {
-        const sorted = [...data].sort((a, b) => {
-            const da = String(a.date || a.d || '');
-            const db = String(b.date || b.d || '');
-            return da.localeCompare(db);
-        });
-        const recent = sorted.slice(-n - 1);
-        return calcAvgGrowth(recent);
-    }
+    const calcAvgGrowth = window.GrowthStats.calcAvgGrowth;
 
     // ============================================================
     // ⭐ 5) رندر نتیجه (جدا شده برای استفاده از کش هم)
@@ -1405,17 +1367,6 @@
         const avgVal = allTime.avgSimple;
         const sign = avgVal >= 0 ? '+' : '';
         const cls = avgVal >= 0 ? '' : ' negative';
-
-        const m1 = calcAvgGrowthLastN(data, 22);
-        const m3 = calcAvgGrowthLastN(data, 66);
-        const y1 = calcAvgGrowthLastN(data, 250);
-
-        function periodHTML(result) {
-            if (!result) return `<div class="period-val">—</div>`;
-            const v = result.avgSimple;
-            const color = v >= 0 ? 'green' : 'red';
-            return `<div class="period-val ${color}">${v >= 0 ? '+' : ''}${v.toFixed(3)}%</div>`;
-        }
 
         const symbolInfo = allSymbolsList.find(x => x.symbol === currentSymbol);
 
@@ -1451,27 +1402,11 @@
                 </div>
             </div>
 
-            <div class="periods-title">📊 میانگین درصد رشد روزانه در بازه‌های زمانی</div>
-            <div class="periods-grid">
-                <div class="period-box">
-                    <div class="period-lbl">۱ ماه اخیر</div>
-                    ${periodHTML(m1)}
-                    <div class="period-sub">روزانه</div>
-                </div>
-                <div class="period-box">
-                    <div class="period-lbl">۳ ماه اخیر</div>
-                    ${periodHTML(m3)}
-                    <div class="period-sub">روزانه</div>
-                </div>
-                <div class="period-box">
-                    <div class="period-lbl">۱ سال اخیر</div>
-                    ${periodHTML(y1)}
-                    <div class="period-sub">روزانه</div>
-                </div>
-            </div>
-
             <!-- دکمه‌های عملیات -->
             <div class="action-buttons">
+                <button class="action-btn trend" id="trendBtn">
+                    📈 روند میانگین روزانه
+                </button>
                 <button class="action-btn download" id="downloadBtn">
                     📸 دانلود تصویر
                 </button>
@@ -1495,6 +1430,21 @@
         document.getElementById('refreshSymbolBtn').addEventListener('click', function() {
             clearCache(currentSymbol);
             fetchHistory(currentSymbol, true);
+        });
+
+        // Event برای صفحهٔ روند میانگین روزانه
+        document.getElementById('trendBtn').addEventListener('click', function() {
+            try {
+                localStorage.setItem('liquidity_growth_trend_symbol_v1', currentSymbol);
+                const info = allSymbolsList.find(x => x.symbol === currentSymbol);
+                localStorage.setItem('liquidity_growth_trend_meta_v1', JSON.stringify({
+                    symbol: currentSymbol,
+                    name: info ? info.name : '',
+                    cs: info ? info.cs : '',
+                    lastUpdate: lastUpdate.textContent
+                }));
+            } catch (e) {}
+            window.location.href = 'growth-trend.html?symbol=' + encodeURIComponent(currentSymbol);
         });
     }
 
