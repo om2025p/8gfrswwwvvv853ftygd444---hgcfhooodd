@@ -660,7 +660,7 @@
     .drawer-head-actions { display: flex; align-items: center; gap: 6px; }
     .drawer-close { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--bg-amount); color: var(--text-primary); font-size: 14px; cursor: pointer; flex-shrink: 0; }
     .count-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: linear-gradient(135deg, #2563eb, #1e40af); color: #fff; font-size: 11px; }
-    .fav-drawer .saved-list { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 8px; max-height: calc(100dvh - 190px); overflow-y: auto; }
+    .fav-drawer .saved-list { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 8px; max-height: calc(100dvh - 245px); overflow-y: auto; }
     .saved-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border: 1.5px solid var(--border-color); border-radius: 12px; background: var(--bg-amount); cursor: pointer; min-height: 44px; transition: all .2s; }
     .saved-row:hover { border-color: #2563eb; }
     .saved-row.active { border-color: #2563eb; background: linear-gradient(135deg, rgba(37,99,235,.1), rgba(37,99,235,.18)); }
@@ -672,6 +672,12 @@
     .star-toggle { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-muted); font-size: 16px; cursor: pointer; }
     .star-toggle.on { color: #f59e0b; border-color: #f59e0b; background: rgba(245,158,11,.12); }
     .drawer-hint { font-size: 11px; color: var(--text-muted); line-height: 1.8; margin-top: 10px; }
+    .saved-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+    .saved-tab { min-height: 44px; border: 1.5px solid var(--border-color); border-radius: 10px; background: var(--bg-amount); color: var(--text-primary); font-family: inherit; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; padding: 4px 6px; }
+    .saved-tab.active { border-color: #2563eb; background: linear-gradient(135deg, #2563eb, #1e40af); color: #fff; }
+    .saved-tab .tab-count { min-width: 18px; padding: 1px 6px; border-radius: 999px; background: rgba(0,0,0,.12); font-size: 10px; line-height: 1.4; }
+    .saved-tab.active .tab-count { background: rgba(255,255,255,.22); }
+    .saved-empty { padding: 18px 8px; text-align: center; color: var(--text-muted); font-size: 11px; line-height: 1.8; }
     .drawer-overlay { display: none; }
 
     /* Compact vertical lists inside the drawer */
@@ -774,6 +780,14 @@
                     <button class="drawer-close" id="drawerClose" title="بستن" aria-label="بستن">✕</button>
                 </div>
             </div>
+            <div class="saved-tabs" role="tablist" aria-label="دسته‌بندی نمادها">
+                <button type="button" class="saved-tab active" id="savedTabStocks" data-list-tab="stocks" role="tab" aria-selected="true" aria-controls="savedList">
+                    📈 تک سهم‌ها <span class="tab-count" id="stocksCount">۰</span>
+                </button>
+                <button type="button" class="saved-tab" id="savedTabFunds" data-list-tab="funds" role="tab" aria-selected="false" aria-controls="savedList">
+                    🏦 صندوق‌ها <span class="tab-count" id="fundsCount">۰</span>
+                </button>
+            </div>
             <div class="saved-list" id="savedList"></div>
             <div class="drawer-hint" id="drawerHint">برای افزودن، از کادر جستجوی بالای صفحه استفاده کن · برای حذف: ✕ و تأیید.</div>
         </aside>
@@ -821,6 +835,7 @@
     const LEGACY_TOKEN_KEY = 'activeTokenIndex';
     const LEGACY_THEME_KEY = 'growthTheme';
     const DEFAULTS_SEEDED_KEY = 'liquidity_growth_defaults_v1';
+    const LIST_TAB_KEY = 'liquidity_growth_list_tab_v1';
     const DEFAULT_SYMBOLS = ['مادیرا', 'زکشت', 'سبزوا', 'آبادا', 'کمرجان', 'تکپاد', 'مهرمام', 'شغدیر', 'نوری', 'سخوز'];
 
     // ============================================================
@@ -832,6 +847,11 @@
     let selectedIndex = -1;
     let filteredResults = [];
     let savedSymbols = [];
+    let savedListTab = 'stocks';
+    try {
+        const _savedTab = localStorage.getItem(LIST_TAB_KEY);
+        if (_savedTab === 'stocks' || _savedTab === 'funds') savedListTab = _savedTab;
+    } catch (e) {}
     let currentTokenIndex = 0;
     let symbolsCache = {};  // ⭐ کش برای هر نماد
 
@@ -848,6 +868,10 @@
     const resultArea = document.getElementById('resultArea');
     const lastUpdate = document.getElementById('lastUpdate');
     const savedList = document.getElementById('savedList');
+    const savedTabStocks = document.getElementById('savedTabStocks');
+    const savedTabFunds = document.getElementById('savedTabFunds');
+    const stocksCount = document.getElementById('stocksCount');
+    const fundsCount = document.getElementById('fundsCount');
     const savedClear = document.getElementById('savedClear');
     const toast = document.getElementById('toast');
     const toastIcon = document.getElementById('toastIcon');
@@ -932,6 +956,13 @@
         if (cs.includes('اهرمی')) return { label: 'اهرمی', cls: 'ahrami' };
         if (cs.includes('صندوق')) return { label: 'صندوق', cls: 'sandogh' };
         return { label: 'سهام', cls: '' };
+    }
+
+    function isFundSymbol(sym) {
+        const info = allSymbolsList.find(x => x.symbol === sym);
+        if (!info) return false;
+        const type = getSymbolType(info.cs);
+        return type.label === 'صندوق' || type.label === 'اهرمی';
     }
 
     function updateTokenBadge(idx) {
@@ -1179,11 +1210,31 @@
             savedCount.hidden = count === 0;
         }
         if (savedHint) savedHint.style.display = count === 0 ? 'block' : 'none';
+
+        const stocks = savedSymbols.filter(sym => !isFundSymbol(sym));
+        const funds = savedSymbols.filter(sym => isFundSymbol(sym));
+        if (stocksCount) stocksCount.textContent = stocks.length.toLocaleString('fa-IR');
+        if (fundsCount) fundsCount.textContent = funds.length.toLocaleString('fa-IR');
+        if (savedTabStocks) {
+            savedTabStocks.classList.toggle('active', savedListTab === 'stocks');
+            savedTabStocks.setAttribute('aria-selected', String(savedListTab === 'stocks'));
+        }
+        if (savedTabFunds) {
+            savedTabFunds.classList.toggle('active', savedListTab === 'funds');
+            savedTabFunds.setAttribute('aria-selected', String(savedListTab === 'funds'));
+        }
+
         if (count === 0) {
             savedList.innerHTML = '';
             return;
         }
-        savedList.innerHTML = savedSymbols.map(sym => {
+
+        const items = savedListTab === 'funds' ? funds : stocks;
+        if (items.length === 0) {
+            savedList.innerHTML = '<div class="saved-empty">در این دسته نمادی نیست</div>';
+            return;
+        }
+        savedList.innerHTML = items.map(sym => {
             const info = allSymbolsList.find(x => x.symbol === sym);
             const active = sym === currentSymbol ? 'active' : '';
             return `
@@ -1221,6 +1272,7 @@
                 .sort((a, b) => a.symbol.localeCompare(b.symbol, 'fa'));
 
             showStatus('success', `✅ ${allSymbolsList.length} نماد آماده`);
+            renderSavedSymbols();
 
             const last = getLastSymbol();
             if (last && allSymbolsList.find(x => x.symbol === last)) {
@@ -1634,6 +1686,15 @@
     });
 
     savedClear.addEventListener('click', clearAllSaved);
+
+    [savedTabStocks, savedTabFunds].forEach(function(btn) {
+        if (!btn) return;
+        btn.addEventListener('click', function() {
+            savedListTab = btn.dataset.listTab === 'funds' ? 'funds' : 'stocks';
+            try { localStorage.setItem(LIST_TAB_KEY, savedListTab); } catch (e) {}
+            renderSavedSymbols();
+        });
+    });
 
     // ⭐ دکمه رفرش کلی — کش رو پاک می‌کنه
     refreshBtn.addEventListener('click', function() {

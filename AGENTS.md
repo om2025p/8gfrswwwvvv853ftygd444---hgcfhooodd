@@ -2883,7 +2883,7 @@ tallyTop: 857 | bodyBottom: 827 → inView: false   (در هر ۹ اپ)
 - **پیش‌فرض‌های تب دوم:** ۱۰ نماد «مادیرا، زکشت، سبزوا، آبادا، کمرجان، تکپاد، مهرمام، شغدیر، نوری، سخوز» فقط یک‌بار و فقط در تب دوم (`growth.html`) به لیست اضافه می‌شوند؛ نمادهای تکراری نادیده گرفته می‌شوند و پرچم `liquidity_growth_defaults_v1` از افزودن دوباره جلوگیری می‌کند. تب اول (`liquidity/index.html`) دست‌نخورده است.
 - **لیست یک‌ستونه:** `.fav-drawer .saved-list` حالا `flex-wrap: nowrap` دارد تا با ۱۰ آیتم به دو ستون نشکند؛ ارتفاع حداکثر `calc(100dvh - 190px)` و اسکرول عمودی.
 - **دکمهٔ صفحهٔ روند:** «📈 روند میانگین روزانه» به `growth-trend.html` می‌رود؛ منطق مشترک در `liquidity/growth-stats.js` است.
-- `CACHE_NAME` → `emarat-portal-v140`.
+- `CACHE_NAME` → `emarat-portal-v141`.
 
 ---
 
@@ -2897,7 +2897,7 @@ tallyTop: 857 | bodyBottom: 827 → inView: false   (در هر ۹ اپ)
 - **منطق مشترک:** `liquidity/growth-stats.js` (یک منبع حقیقت برای `calcAvgGrowth`/`buildTrendSeries`).
 - **دانلود:** «📸 دانلود تصویر» کارت بازه‌ها + نمودار را با html2canvas ذخیره می‌کند.
 - **تم:** از `liquidity_growth_theme_v1` و پیام `emarat-theme` والد پیروی می‌کند؛ نمودار با تغییر تم دوباره رسم می‌شود.
-- `CACHE_NAME` → `emarat-portal-v140`.
+- `CACHE_NAME` → `emarat-portal-v141`.
 
 ---
 
@@ -3085,4 +3085,13 @@ grep -rnE '<(link|script)[^>]*(href|src)="https?://(cdnjs|fonts\.googleapis|font
 - **ریشه:** `#growthFrame` ارتفاع ثابت `calc(100dvh - 150px)` داشت؛ محتوای رشد داخل iframe اسکرول می‌شد و صفحهٔ والد فقط ~۶۴px فضای خالی زیر iframe نشان می‌داد.
 - **درمان:** `height:auto; min-height:calc(100dvh - 150px)` + `syncGrowthFrameHeight()` که ارتفاع iframe را از `contentDocument.documentElement.scrollHeight` می‌گیرد؛ `ResizeObserver` روی `documentElement`/`body` + رویدادهای `load`/`resize`. حالا کل تب دوم با اسکرول صفحهٔ والد دیده می‌شود، مثل تب اول.
 - **برگشت:** تغییرات سایهٔ دکمه (v138/v139) که اشتباه بود حذف شد؛ `refresh-button.js` سراسری دست‌نخورده است.
-- `CACHE_NAME` → `emarat-portal-v140`.
+- `CACHE_NAME` → `emarat-portal-v141`.
+
+
+## 🗂️ تب‌های لیست نمادها: تک سهم‌ها / صندوق‌ها (v141)
+
+- **درخواست:** در لیست (کشوی «☰ لیست») نمادها به دو دستهٔ «تک سهم‌ها» و «صندوق‌ها» جدا شوند.
+- **پیاده‌سازی:** `savedListTab` + دو دکمهٔ تب در `favDrawer`؛ فیلتر بر اساس `getSymbolType(info.cs)` — «صندوق» و «اهرمی» در تب صندوق‌ها، بقیه در تک سهم‌ها. شمارندهٔ هر تب + ذخیرهٔ تب فعال در `liquidity_growth_list_tab_v1`.
+- **دسترسی:** `role=tablist/tab`، `aria-selected`، حداقل ارتفاع ۴۴px.
+- **تست:** ۵ نماد نمونه (۲ سهام + ۳ صندوق) → تب سهام ۲، تب صندوق ۳؛ حذف/پاک‌سازی و حفظ تب پس از رفرش.
+- `CACHE_NAME` → `emarat-portal-v141`.
