@@ -3245,3 +3245,37 @@ grep -rnE '<(link|script)[^>]*(href|src)="https?://(cdnjs|fonts\.googleapis|font
 > 🔐 یادآوری پایان کار: کلیدهای قدیمی (Gemini/تلگرام/گیت‌هاب) را باطل کن و کلید تازه را فقط در `localStorage` بگذار.
 
 **ممنوع:** تکرار این هشدار در **ابتدای** کار یا در پیام‌های میانی. اگر هر پیام تکرار شود، کاربر خسته می‌شود و اثرش را از دست می‌دهد.
+
+---
+
+## 📤 پنل آپلود (`upload/index.html`) — انتقال فایل بدون واسطه
+
+### چرا ساخته شد
+ارسال تصویر با Quick Share ناکام می‌ماند (`uploadCompleted: false`, `0 B / 1.0 MB`) و واسطه‌ها سهمیه/واترمارک دارند. این پنل فایل را مستقیم در **مخزن خود کاربر** می‌گذارد و **لینک خام** می‌دهد.
+
+### مسیر
+`upload/index.html` → کارت «پنل آپلود» در پورتال (`index.html`، مسیر مجاز iframe) · `sw.js` (۳ فایل، کش `emarat-portal-v149`) · `refresh-button.js` · `usage-tracker.js` (`data-app="upload"`) · `storage-guard.js`.
+
+### کلیدهای ذخیره‌سازی (اختصاصی — طبق قانون مالکیت کلید)
+`upload_panel_token` · `upload_panel_repo` · `upload_panel_branch` · `upload_panel_path`
+پیشفرض مسیر: `uploads` · پیشفرض مخزن: `om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd`
+
+### 🔑 قاعدهٔ طلایی
+توکن **هرگز** در کد نیست. در ⚙️ تنظیمات گرفته و فقط در `localStorage` مرورگر کاربر ذخیره می‌شود (با `EmaratStorage.safeSet`). اگر `upload_panel_*` خالی باشد، از کلیدهای بکاپ (`github_backup_token/repo/branch`) خوانده می‌شود — ولی نوشتن همیشه در کلید اختصاصی انجام میشود.
+
+### جریان آپلود
+```
+GET  /repos/{repo}/contents/{path}?ref={branch}   → اگر ۲۰۰ بود، sha برای بازنویسی
+PUT  /repos/{repo}/contents/{path}                → base64 از FileReader
+لینک: https://raw.githubusercontent.com/{repo}/{branch}/{path}
+```
+
+### نکات پیاده‌سازی
+- **CORS:** درخواست با هدر `Authorization` پیشپرواز (OPTIONS) میزند؛ `api.github.com` با `Access-Control-Allow-Origin: *` پاسخ میدهد. روی `file://` (آینهٔ اندروید) هم `Origin: null` پذیرفته میشود، ولی تست محلی باید روی `http://127.0.0.1` انجام شود.
+- **حد حجم:** ۸ مگابایت برای هر فایل (پیام فارسی و رد فایل بزرگتر).
+- **تایمر پیام:** `msgTimer` با هر `showMsg` پاک میشود؛ وگرنه تایمر «تنظیمات ذخیره شد» پیام خطای بعدی را محو میکرد (باگ واقعی که تست گرفت).
+- **مخزن عمومی است** ⇒ فایل آپلودشده برای همه دیده میشود. در UI هشدار داده شده.
+
+### تست (Puppeteer + API تقلبی)
+✅ ذخیرهٔ تنظیمات · ✅ افزودن فایل به فهرست · ✅ آپلود و تولید لینک خام · ✅ دکمهٔ غیرفعال بدون فایل · ✅ صفر خطای کنسول · ✅ بدون سرریز افقی در ۳۹۰px.
+⚠️ اگر `storage-guard` در اولین بازدید رفرش کند، فهرست انتخابشده پاک میشود (رفتار مستند `autoHealOnLoad`).

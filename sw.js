@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v148';
+const CACHE_NAME = 'emarat-portal-v149';
 const ASSETS = [
   './tree-samples/m1.html',
   './tree-samples/m2.html',
@@ -295,6 +295,9 @@ const ASSETS = [
   './gold11/assets/b09.webp',
   './gold11/calculator.html',
   './gold11/favicon.ico',
+  './upload/index.html',
+  './upload/icon-192.png',
+  './upload/icon-512.png',
   './gold11/ghasalem_bg.jpg',
   './gold11/ghasalem_bg.webp',
   './gold11/growth.html',

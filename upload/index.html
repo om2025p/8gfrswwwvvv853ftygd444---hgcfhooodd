@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17110C">
+<title>پنل آپلود · عمارت</title>
+<script src="../storage-guard.js"></script>
+<link rel="icon" href="icon-192.png">
+<style>
+    :root {
+        --bg: #17110c;
+        --card: #241a12;
+        --card-2: #2b1e14;
+        --border: #4a382a;
+        --text: #f9f2e8;
+        --muted: #c9b8a3;
+        --accent: #e08b1f;
+        --ok: #34d399;
+        --err: #f87171;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+        margin: 0;
+        padding: 16px 14px 90px;
+        font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+        background: radial-gradient(120% 80% at 50% 0%, #3a2413 0%, var(--bg) 60%);
+        color: var(--text);
+        min-height: 100vh;
+    }
+    h1 { font-size: 1.15rem; margin: 0 0 4px; text-align: center; }
+    .sub { text-align: center; color: var(--muted); font-size: .78rem; margin-bottom: 14px; }
+    .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 14px;
+        margin-bottom: 12px;
+    }
+    .row { display: flex; gap: 8px; align-items: center; }
+    label.fld { display: block; font-size: .78rem; color: var(--muted); margin: 8px 0 4px; }
+    input[type=text], input[type=password] {
+        width: 100%; padding: 10px 12px; border-radius: 10px;
+        border: 1px solid var(--border); background: #1d150f; color: var(--text);
+        font-size: .9rem; direction: ltr; text-align: left;
+    }
+    input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    button {
+        border: 0; border-radius: 12px; padding: 11px 16px; font-size: .9rem;
+        font-family: inherit; cursor: pointer; color: #1b1208; font-weight: 700;
+        background: linear-gradient(135deg, #fbbf24, var(--accent));
+        min-height: 44px;
+    }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.ghost {
+        background: transparent; color: var(--text); border: 1px solid var(--border);
+        font-weight: 500;
+    }
+    #drop {
+        border: 2px dashed var(--border); border-radius: 16px; padding: 26px 14px;
+        text-align: center; color: var(--muted); transition: border-color .18s, background .18s;
+        cursor: pointer;
+    }
+    #drop.over { border-color: var(--accent); background: rgba(224,139,31,.08); }
+    #drop .big { font-size: 2rem; display: block; margin-bottom: 6px; }
+    .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; margin-top: 12px; }
+    .thumb {
+        position: relative; background: var(--card-2); border: 1px solid var(--border);
+        border-radius: 10px; overflow: hidden; font-size: .62rem;
+    }
+    .thumb img { width: 100%; height: 78px; object-fit: cover; display: block; background: #120c08; }
+    .thumb .nm { padding: 4px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: ltr; text-align: left; }
+    .thumb .st { padding: 0 5px 5px; font-size: .6rem; }
+    .thumb .st.ok { color: var(--ok); }
+    .thumb .st.err { color: var(--err); }
+    .thumb .rm {
+        position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; min-height: 0;
+        padding: 0; border-radius: 50%; background: rgba(0,0,0,.65); color: #fff;
+        font-size: .8rem; line-height: 22px; text-align: center;
+    }
+    .links { margin-top: 10px; }
+    .link {
+        display: flex; gap: 6px; align-items: center; background: #1d150f;
+        border: 1px solid var(--border); border-radius: 10px; padding: 7px 9px; margin-bottom: 6px;
+    }
+    .link input { border: 0; background: transparent; padding: 0; font-size: .68rem; }
+    .link button { padding: 6px 10px; min-height: 34px; font-size: .7rem; }
+    .hint { font-size: .72rem; color: var(--muted); line-height: 1.7; }
+    .hint b { color: var(--accent); }
+    details summary { cursor: pointer; font-size: .85rem; padding: 4px 0; }
+    .msg { border-radius: 10px; padding: 9px 11px; font-size: .8rem; margin-top: 10px; display: none; }
+    .msg.show { display: block; }
+    .msg.ok { background: rgba(52,211,153,.12); color: var(--ok); border: 1px solid rgba(52,211,153,.4); }
+    .msg.err { background: rgba(248,113,113,.12); color: var(--err); border: 1px solid rgba(248,113,113,.4); }
+</style>
+</head>
+<body>
+
+<h1>📤 پنل آپلود</h1>
+<div class="sub">فایل را بکشید اینجا، در مخزن خودتان ذخیره می‌شود و لینک مستقیم می‌گیرید</div>
+
+<div class="card">
+    <details id="settingsBox">
+        <summary>⚙️ تنظیمات گیت‌هاب</summary>
+        <div style="margin-top:10px">
+            <label class="fld">توکن (فقط در مرورگر شما ذخیره می‌شود)</label>
+            <input type="password" id="token" placeholder="ghp_… یا github_pat_…" autocomplete="off">
+            <label class="fld">مخزن</label>
+            <input type="text" id="repo" placeholder="owner/repo">
+            <label class="fld">شاخه</label>
+            <input type="text" id="branch" placeholder="main">
+            <label class="fld">مسیر داخل مخزن</label>
+            <input type="text" id="path" placeholder="uploads">
+            <div class="row" style="margin-top:12px">
+                <button id="saveBtn" style="flex:1">💾 ذخیرهٔ تنظیمات</button>
+                <button id="clearBtn" class="ghost">🧹 پاک کردن</button>
+            </div>
+            <p class="hint" style="margin-top:10px">
+                دسترسی لازم: <b>Contents: Read and write</b> روی همین مخزن.<br>
+                ⚠️ مخزن عمومی است ⇒ فایل آپلودشده برای همه قابل دیدن است. برای دادهٔ خصوصی استفاده نکنید.
+            </p>
+        </div>
+    </details>
+</div>
+
+<div class="card">
+    <div id="drop">
+        <span class="big">🖼️</span>
+        فایل‌ها را اینجا رها کنید یا لمس کنید
+        <div class="hint" style="margin-top:6px">تا ۸ مگابایت برای هر فایل</div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*,video/*,.svg,.zip,.json" multiple hidden>
+    <div class="thumbs" id="thumbs"></div>
+    <div class="row" style="margin-top:12px">
+        <button id="uploadBtn" style="flex:1" disabled>☁️ آپلود همه</button>
+        <button id="clearAllBtn" class="ghost">✖ پاک کردن فهرست</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="links" id="links"></div>
+</div>
+
+<div class="card">
+    <p class="hint">
+        ۱) توکن را در ⚙️ تنظیمات بگذارید و ذخیره کنید.<br>
+        ۲) عکس‌ها را انتخاب کنید، دکمهٔ <b>آپلود همه</b> را بزنید.<br>
+        ۳) لینک‌های تولیدشده را کپی کنید و برایم بفرستید.
+    </p>
+</div>
+
+<script src="../usage-tracker.js" data-app="upload"></script>
+<script>
+(function () {
+    "use strict";
+
+    var KEYS = {
+        token: 'upload_panel_token',
+        repo: 'upload_panel_repo',
+        branch: 'upload_panel_branch',
+        path: 'upload_panel_path'
+    };
+    var FALLBACK = {
+        token: 'github_backup_token',
+        repo: 'github_backup_repo',
+        branch: 'github_backup_branch'
+    };
+    var MAX_BYTES = 8 * 1024 * 1024;
+
+    var $ = function (id) { return document.getElementById(id); };
+    var tokenEl = $('token'), repoEl = $('repo'), branchEl = $('branch'), pathEl = $('path');
+    var drop = $('drop'), fileInput = $('fileInput'), thumbs = $('thumbs');
+    var uploadBtn = $('uploadBtn'), clearAllBtn = $('clearAllBtn'), msg = $('msg'), links = $('links');
+
+    var queue = [];
+    var msgTimer = null;
+
+    function lsGet(k, fb) {
+        try { return localStorage.getItem(k) || (fb ? localStorage.getItem(fb) || '' : ''); }
+        catch (e) { return ''; }
+    }
+    function lsSet(k, v) {
+        try {
+            if (window.EmaratStorage) window.EmaratStorage.safeSet(k, v);
+            else localStorage.setItem(k, v);
+        } catch (e) {}
+    }
+
+    function loadSettings() {
+        tokenEl.value = lsGet(KEYS.token, FALLBACK.token);
+        repoEl.value = lsGet(KEYS.repo, FALLBACK.repo) || 'om2025p/8gfrswwwvvv853ftygd444---hgcfhooodd';
+        branchEl.value = lsGet(KEYS.branch, FALLBACK.branch) || 'main';
+        pathEl.value = lsGet(KEYS.path) || 'uploads';
+    }
+
+    function showMsg(text, kind) {
+        if (msgTimer) { clearTimeout(msgTimer); msgTimer = null; }
+        msg.textContent = text;
+        msg.className = 'msg show ' + (kind || 'ok');
+    }
+    function hideMsg() { msg.className = 'msg'; }
+
+    $('saveBtn').addEventListener('click', function () {
+        lsSet(KEYS.token, tokenEl.value.trim());
+        lsSet(KEYS.repo, repoEl.value.trim());
+        lsSet(KEYS.branch, branchEl.value.trim() || 'main');
+        lsSet(KEYS.path, pathEl.value.trim().replace(/^\/+|\/+$/g, '') || 'uploads');
+        showMsg('✅ تنظیمات ذخیره شد', 'ok');
+        msgTimer = setTimeout(hideMsg, 2200);
+    });
+
+    $('clearBtn').addEventListener('click', function () {
+        Object.keys(KEYS).forEach(function (k) { try { localStorage.removeItem(KEYS[k]); } catch (e) {} });
+        tokenEl.value = ''; repoEl.value = ''; branchEl.value = ''; pathEl.value = '';
+        showMsg('🧹 تنظیمات پاک شد', 'ok');
+        msgTimer = setTimeout(hideMsg, 2200);
+    });
+
+    function human(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(0) + ' KB';
+        return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function addFiles(list) {
+        var added = 0;
+        Array.prototype.forEach.call(list, function (f) {
+            if (f.size > MAX_BYTES) {
+                showMsg('⚠️ «' + f.name + '» بزرگ‌تر از ۸ مگابایت است و اضافه نشد', 'err');
+                return;
+            }
+            if (queue.some(function (q) { return q.file.name === f.name && q.file.size === f.size; })) return;
+            queue.push({ file: f, status: '', url: '' });
+            added++;
+        });
+        render();
+        if (added) hideMsg();
+    }
+
+    function render() {
+        thumbs.innerHTML = '';
+        queue.forEach(function (item, i) {
+            var d = document.createElement('div');
+            d.className = 'thumb';
+            var isImg = /^image\//.test(item.file.type);
+            d.innerHTML =
+                (isImg ? '<img alt="">' : '<div style="height:78px;display:flex;align-items:center;justify-content:center;font-size:1.6rem">📄</div>') +
+                '<div class="nm">' + item.file.name + '</div>' +
+                '<div class="st">' + human(item.file.size) +
+                (item.status ? ' · <span class="' + (item.status === 'ok' ? 'ok' : 'err') + '">' + (item.status === 'ok' ? '✔' : '✖') + '</span>' : '') +
+                '</div>';
+            if (isImg) {
+                var img = d.querySelector('img');
+                var reader = new FileReader();
+                reader.onload = function (e) { img.src = e.target.result; };
+                reader.readAsDataURL(item.file);
+            }
+            var rm = document.createElement('button');
+            rm.className = 'rm'; rm.textContent = '✕'; rm.title = 'حذف از فهرست';
+            rm.addEventListener('click', function (e) {
+                e.stopPropagation();
+                queue.splice(i, 1); render();
+            });
+            d.appendChild(rm);
+            thumbs.appendChild(d);
+        });
+        uploadBtn.disabled = queue.length === 0;
+        uploadBtn.textContent = queue.length ? '☁️ آپلود ' + queue.length + ' فایل' : '☁️ آپلود همه';
+    }
+
+    function safeName(name) {
+        return String(name).replace(/[^\w.\-]+/g, '_').replace(/_{2,}/g, '_').slice(-120);
+    }
+
+    function fileToBase64(file) {
+        return new Promise(function (resolve, reject) {
+            var r = new FileReader();
+            r.onload = function () { resolve(String(r.result).split(',')[1] || ''); };
+            r.onerror = function () { reject(new Error('خواندن فایل ناموفق بود')); };
+            r.readAsDataURL(file);
+        });
+    }
+
+    function apiPath(basePath, name) {
+        return (basePath ? basePath + '/' : '') + safeName(name);
+    }
+
+    function encPath(p) {
+        return p.split('/').map(encodeURIComponent).join('/');
+    }
+
+    async function uploadOne(item, cfg) {
+        var path = apiPath(cfg.path, item.file.name);
+        var url = 'https://api.github.com/repos/' + cfg.repo + '/contents/' + encPath(path);
+        var headers = {
+            'Authorization': 'token ' + cfg.token,
+            'Accept': 'application/vnd.github+json'
+        };
+        var body = { message: '📤 آپلود ' + safeName(item.file.name) + ' — پنل آپلود', branch: cfg.branch };
+        var sha = null;
+        var chk = await fetch(url + '?ref=' + encodeURIComponent(cfg.branch), { headers: headers });
+        if (chk.status === 401) throw new Error('توکن نامعتبر است (۴۰۱)');
+        if (chk.status === 200) {
+            var info = await chk.json();
+            sha = info.sha || null;
+        }
+        body.content = await fileToBase64(item.file);
+        if (sha) body.sha = sha;
+
+        var put = await fetch(url, {
+            method: 'PUT',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+            body: JSON.stringify(body)
+        });
+        if (!put.ok) {
+            var err = {};
+            try { err = await put.json(); } catch (e2) {}
+            var m = err.message || '';
+            if (put.status === 401) m = 'توکن نامعتبر یا منقضی است (۴۰۱)';
+            else if (put.status === 403) m = 'دسترسی نوشتن ندارید (۴۰۳)';
+            else if (put.status === 404) m = 'مخزن یا شاخه پیدا نشد (۴۰۴)';
+            else if (put.status === 422) m = 'فایل بزرگ‌تر از حد مجاز است (۴۲۲)';
+            throw new Error(m || ('خطای سرور: ' + put.status));
+        }
+        var out = await put.json();
+        var raw = 'https://raw.githubusercontent.com/' + cfg.repo + '/' + cfg.branch + '/' + encPath(path);
+        return { raw: raw, html: out.content && out.content.html_url };
+    }
+
+    async function startUpload() {
+        var cfg = {
+            token: tokenEl.value.trim(),
+            repo: repoEl.value.trim(),
+            branch: branchEl.value.trim() || 'main',
+            path: (pathEl.value.trim() || 'uploads').replace(/^\/+|\/+$/g, '')
+        };
+        if (!cfg.token || !cfg.repo) {
+            $('settingsBox').open = true;
+            showMsg('⚠️ اول توکن و مخزن را در ⚙️ تنظیمات وارد کنید', 'err');
+            return;
+        }
+        uploadBtn.disabled = true;
+        links.innerHTML = '';
+        var okCount = 0, failCount = 0;
+        for (var i = 0; i < queue.length; i++) {
+            var item = queue[i];
+            uploadBtn.textContent = '⏳ ' + (i + 1) + ' / ' + queue.length;
+            try {
+                var res = await uploadOne(item, cfg);
+                item.status = 'ok';
+                item.url = res.raw;
+                okCount++;
+                addLink(res.raw);
+            } catch (e) {
+                item.status = 'err';
+                failCount++;
+                showMsg('❌ ' + item.file.name + ': ' + e.message, 'err');
+            }
+            render();
+        }
+        if (okCount && !failCount) showMsg('✅ ' + okCount + ' فایل آپلود شد — لینک‌ها پایین است', 'ok');
+        else if (okCount) showMsg('⚠️ ' + okCount + ' موفق، ' + failCount + ' ناموفق', 'err');
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = '☁️ آپلود همه';
+    }
+
+    function addLink(url) {
+        var wrap = document.createElement('div');
+        wrap.className = 'link';
+        var inp = document.createElement('input');
+        inp.type = 'text'; inp.readOnly = true; inp.value = url;
+        inp.addEventListener('focus', function () { inp.select(); });
+        var btn = document.createElement('button');
+        btn.textContent = '📋';
+        btn.title = 'کپی';
+        btn.addEventListener('click', function () {
+            inp.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            if (navigator.clipboard) navigator.clipboard.writeText(url).catch(function () {});
+            btn.textContent = '✔';
+            setTimeout(function () { btn.textContent = '📋'; }, 1400);
+        });
+        wrap.appendChild(inp); wrap.appendChild(btn);
+        links.appendChild(wrap);
+        var all = links.querySelector('.copyall');
+        if (!all) {
+            all = document.createElement('button');
+            all.className = 'ghost copyall';
+            all.style.marginTop = '4px';
+            all.textContent = '📋 کپی همهٔ لینک‌ها';
+            all.addEventListener('click', function () {
+                var text = Array.prototype.map.call(links.querySelectorAll('.link input'), function (i) { return i.value; }).join('\n');
+                if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function () {});
+                all.textContent = '✔ کپی شد';
+                setTimeout(function () { all.textContent = '📋 کپی همهٔ لینک‌ها'; }, 1600);
+            });
+            links.appendChild(all);
+        }
+    }
+
+    drop.addEventListener('click', function () { fileInput.click(); });
+    fileInput.addEventListener('change', function () { addFiles(fileInput.files); fileInput.value = ''; });
+    ['dragenter', 'dragover'].forEach(function (ev) {
+        drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+        drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+    });
+    drop.addEventListener('drop', function (e) {
+        if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+    });
+    uploadBtn.addEventListener('click', startUpload);
+    clearAllBtn.addEventListener('click', function () {
+        queue = []; links.innerHTML = ''; hideMsg(); render();
+    });
+
+    loadSettings();
+    render();
+})();
+</script>
+<script src="../refresh-button.js"></script>
+</body>
+</html>
