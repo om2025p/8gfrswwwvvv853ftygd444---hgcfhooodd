@@ -628,6 +628,7 @@
         'pharma_kian_': 'ثبت درصد ۸',
         'baharan_': 'ثبت درصد ۹',
         'abadan_': 'ثبت درصد ۱۰',
+        'ghasalem_': 'ثبت درصد ۱۱',
         'emarat_family_': 'شجره‌نامه',
         'emarat_usage_': 'ردپای من',
         'fundManager': 'واریز ماهیانه',

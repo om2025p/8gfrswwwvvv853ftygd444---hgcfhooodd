@@ -24,6 +24,7 @@ restricted/android/app/build/
 !restricted/android/app/src/main/res/mipmap-*/ic_launcher*.png
 !gold9/assets/*.png
 !gold10/assets/*.png
+!gold11/assets/*.png
 # تصویر مدرک گزارش‌های پایان کار (مستندات، نه اسکرین‌شات دیباگ)
 !docs/reports/*.png
 *.log

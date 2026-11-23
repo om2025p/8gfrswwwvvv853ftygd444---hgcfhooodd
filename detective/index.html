@@ -802,6 +802,22 @@
                 }
             },
             {
+                id: 'gold11',
+                title: 'ثبت درصد 11 (غسالم)',
+                icon: '🍰',
+                keys: ['ghasalem_percents', 'ghasalem_percents_statsOpen', 'ghasalem_history', 'ghasalem_baseNumber', 'ghasalem_peakNumber', 'ghasalem_prices_v1'],
+                getLastUpdate: () => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem('ghasalem_percents'));
+                        if (data && data.percents && data.percents.length > 0) {
+                            const last = data.percents[data.percents.length - 1];
+                            return last.timestamp || null;
+                        }
+                    } catch(e) {}
+                    return null;
+                }
+            },
+            {
                 id: 'monitor',
                 title: 'دیدبان درصدها',
                 icon: '📊',

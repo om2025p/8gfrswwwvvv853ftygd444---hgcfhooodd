@@ -3183,6 +3183,54 @@ grep -rnE '<(link|script)[^>]*(href|src)="https?://(cdnjs|fonts\.googleapis|font
 ### شاخه
 `P-1` → merge در `main`.
 
+---
+
+## 🍰 اپ «ثبت درصد ۱۱» — غسالم (gold11/) — v148
+
+### هویت
+- **پوشه:** `gold11/` (کلون از `gold10`) | **کلیدها با پیشوند `ghasalem_`**
+- **`<title>`:** `ثبت درصد 11 · غسالم` | **داخل اپ:** «غسالم» + زیرنویس «شرکت صنایع غذایی سالم · تولیدکنندهٔ کیک تیتاب»
+- **`manifest.name/short_name`:** `ثبت درصد 11` (بدون کلمهٔ حساس)
+- **تم:** شکلاتی–کارامل — `#b45309` (کارامل)، `#9d174d` (شاتوتی/بری)، `#fbbf24` (طلایی)، پس‌زمینه `#17110c`، کارت `#2b1e14`
+- **۴ تب:** ثبت درصد / محاسبه تغییرات / ثبت ابطال / مدیریت رشد
+
+### کلیدهای ذخیره‌سازی
+`ghasalem_percents` (شیء: percents/trash/goal/notes/…) · `ghasalem_history` · `ghasalem_baseNumber` · `ghasalem_peakNumber` · `ghasalem_prices_v1` · `theme_gold11` · `github_backup_filepath_gold11` · `GrowthDB_gold11`
+
+### دارایی تصویری (۴۷ فایل)
+- `assets/a01..a12.png` + `@2x` · `assets/b01..b09.webp` (از gold10 — آیکون‌های عمومی، نه مخصوص شرکت)
+- `ghasalem_bg.jpg/webp` — گرادیان شکلاتی با بوکهٔ نرم (Pillow، ۱۰۸۰×۱۹۲۰)
+- آیکون: **کیک سه‌طبقه با گیلاس** روی گرادیان کارامل (بدون متن) + همهٔ چگالی‌ها و maskable
+- **دام `.gitignore`:** استثنای `!gold11/assets/*.png` اضافه شد — بدون آن ۲۴ فایل از ۳۳ فایل assets نادیده گرفته می‌شد (`git add -An gold11` = ۴۷ فایل).
+
+### اتصالات اکوسیستم
+| مسیر | تغییر |
+|---|---|
+| `index.html` (پورتال) | کارت `{id:'gold11', title:'ثبت درصد 11'}` + `/gold11/` در مسیرهای مجاز iframe |
+| `sw.js` | ۴۷ فایل gold11 در `ASSETS` · `CACHE_NAME` → `emarat-portal-v148` |
+| `monitor/index.html` | `11: ghasalem_history`/`ghasalem_peakNumber` در ۶ نقشه · ۳ حلقه `<= 11` · بلوک `getAllAppsPercentData` · `appNoteSources` |
+| `monthly-deposit/index.html` | `APP_PERCENT_LABELS[11]` · `DEFAULT_FUND_MAPPING[11]` · ۲ حلقه `<= 11` |
+| `profit-calculator/calc2.html` + `total.html` | گزینهٔ `ghasalem_percents` + عنوان |
+| `detective/index.html` | کارت «ثبت درصد 11 (غسالم)» با کلیدهای `ghasalem_*` |
+| `rescue/index.html` | الگوهای `^ghasalem_` / `^theme_gold11$` / `^gold11_growth_theme$` |
+| `usage/index.html` | `gold11: 'ثبت درصد 11'` |
+| `storage-guard.js` (+ ۲ آینهٔ اندروید) | `'ghasalem_': 'ثبت درصد ۱۱'` در `KEY_OWNERS` |
+
+### 🚨 درس — کلون کردن پالت آبی، «رنگ‌های پنهان» را جا می‌گذارد
+جایگزینی هگزهای اصلی کافی نبود: `rgba(63,169,245,…)`، `rgba(17,29,48,…)`، `rgba(99,102,241,…)`، `#1c4b7a`، `#9fc2e8`، `#123a6b`، `#d6e4f7`، `#bcd8f5`، `#7b5cff`، `#5b8def`، `#46552a`، و **گرادیان‌های تب‌بار در `index.html`** (`#1b5fb8`، `#2a7fd4`، `#0f3f7a`) همه باقی ماندند و نوار تب آبی شد.
+**قاعده:** پس از تغییر برند، `grep -ohE "rgba?\([0-9]{1,3}, ?[0-9]{1,3}, ?[0-9]{1,3}"` و `grep -ohE "#[0-9a-fA-F]{6}" | sort | uniq -c` بزن و **چشمی** باقی‌مانده‌ها را ببین؛ سپس اسکرین‌شات بگیر.
+
+### تست (همه پاس)
+- ۵ صفحه: صفر خطای کنسول، صفر تصویر شکسته، صفر درخواست ناموفق.
+- جریان محاسبه: ۱٬۰۰۰٬۰۰۰ → ۱٬۰۱۵٬۰۰۰ ⇒ `ghasalem_percents` با `value:1.5` و `source:'manual'` + همهٔ کلیدهای شیء.
+- کنتراست سراسری (WCAG با ترکیب آلفا و گرادیان): درصد/ماشین‌حساب/قیمت/رشد ✅ (موارد گزارش‌شده فقط متن‌های گرادیانی و دکمه‌های ایموجی بودند).
+- اکوسیستم: پورتال ✅ · دیدبان (`app-badge` «ثبت درصد 11») ✅ · واریز ماهیانه (برچسب ۱۱) ✅ · ماشین‌حساب (گزینهٔ منبع) ✅ · کارآگاه («ثبت درصد 11 (غسالم)») ✅ · جعبهٔ نجات ✅
+- `check-refresh-button.py`: هر ۵ صفحهٔ gold11 دقیقاً ۱ دکمه ✅ · وابستگی خارجی **صفر** ✅
+- (موارد از قبل موجود روی `main`، بی‌ربط به این کار: `kanalyab/index.html` بدون دکمهٔ به‌روزرسانی، و `gold4|gold5/*_backup.json` هنوز ردیابی‌شده.)
+
+### شاخه
+`P-3` → merge در `main` (کش `v148`).
+
 ## 🔔 قانون یادآوری امنیتی پایان پروژه (The End-of-Project Security Reminder)
 
 **زمان اجرا:** فقط **در پایان هر پروژه/تحویل** — یعنی آخرین پیام گزارش نهایی.
