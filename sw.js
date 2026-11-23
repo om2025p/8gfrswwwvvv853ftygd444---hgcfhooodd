@@ -1,4 +1,4 @@
-const CACHE_NAME = 'emarat-portal-v149';
+const CACHE_NAME = 'emarat-portal-v150';
 const ASSETS = [
   './tree-samples/m1.html',
   './tree-samples/m2.html',
@@ -261,38 +261,25 @@ const ASSETS = [
   './gold10/assets/b09.webp',
   './gold11/apple-touch-icon.png',
   './gold11/assets/a01.png',
-  './gold11/assets/a01@2x.png',
   './gold11/assets/a02.png',
-  './gold11/assets/a02@2x.png',
   './gold11/assets/a03.png',
-  './gold11/assets/a03@2x.png',
   './gold11/assets/a04.png',
-  './gold11/assets/a04@2x.png',
   './gold11/assets/a05.png',
-  './gold11/assets/a05@2x.png',
   './gold11/assets/a06.png',
-  './gold11/assets/a06@2x.png',
   './gold11/assets/a07.png',
-  './gold11/assets/a07@2x.png',
   './gold11/assets/a08.png',
-  './gold11/assets/a08@2x.png',
   './gold11/assets/a09.png',
-  './gold11/assets/a09@2x.png',
   './gold11/assets/a10.png',
-  './gold11/assets/a10@2x.png',
   './gold11/assets/a11.png',
-  './gold11/assets/a11@2x.png',
   './gold11/assets/a12.png',
-  './gold11/assets/a12@2x.png',
   './gold11/assets/b01.webp',
   './gold11/assets/b02.webp',
   './gold11/assets/b03.webp',
   './gold11/assets/b04.webp',
-  './gold11/assets/b05.webp',
-  './gold11/assets/b06.webp',
-  './gold11/assets/b07.webp',
-  './gold11/assets/b08.webp',
-  './gold11/assets/b09.webp',
+
+
+
+
   './gold11/calculator.html',
   './gold11/favicon.ico',
   './upload/index.html',
