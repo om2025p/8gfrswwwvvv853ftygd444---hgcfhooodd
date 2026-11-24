@@ -4266,14 +4266,35 @@ ${dayBlocksHtml}
               'ai_tg_bot_token',
               'custom_gemini_api_key', 'emarat_gemini_key', 'gemini_api_key',
               'tabdeal_api_key', 'tabdeal_api_secret', 'tabdeal_cf_token',
-              'github_backup_repo', 'github_backup_branch'
+              'github_backup_repo', 'github_backup_branch',
+              'kanalyab_gh'
           ];
+
+          /* کش‌ها در بکاپ نمی‌روند: از منبع دوباره ساخته می‌شوند و فقط فایل را
+             چند برابر می‌کنند (نمونهٔ بزرگ: symbolsCache از اپ نقدینگی). */
+          const BACKUP_CACHE_KEYS = ['symbolsCache', 'sb_models_cache_v1'];
+          const BACKUP_CACHE_PATTERNS = [/(^|_)cache(_|$)/i, /cache$/i];
+
+          function backupSkipReason(key) {
+              if (BACKUP_SECRET_KEYS.indexOf(key) !== -1) return 'secret';
+              if (BACKUP_CACHE_KEYS.indexOf(key) !== -1) return 'cache';
+              for (let i = 0; i < BACKUP_CACHE_PATTERNS.length; i++) {
+                  if (BACKUP_CACHE_PATTERNS[i].test(key)) return 'cache';
+              }
+              return '';
+          }
 
           async function collectFullBackup() {
             const data = {};
+            const skippedCache = [];
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (BACKUP_SECRET_KEYS.indexOf(key) !== -1) continue;
+                const skip = backupSkipReason(key);
+                if (skip === 'secret') continue;
+                if (skip === 'cache') {
+                    skippedCache.push([key, (localStorage.getItem(key) || '').length]);
+                    continue;
+                }
                 data[key] = localStorage.getItem(key);
             }
 
@@ -4285,10 +4306,14 @@ ${dayBlocksHtml}
             } catch (e) { console.warn('shadowAll err:', e); }
 
             const shadowPlain = {};
+            let shadowDeduped = 0;
             Object.keys(shadow || {}).forEach(function (k) {
+                if (backupSkipReason(k)) return;
                 const row = shadow[k];
                 const v = (row && typeof row === 'object' && 'v' in row) ? row.v : row;
-                if (typeof v === 'string' && v.length) shadowPlain[k] = v;
+                if (typeof v !== 'string' || !v.length) return;
+                if (data[k] === v) { shadowDeduped++; return; }
+                shadowPlain[k] = v;
             });
 
             const owners = (window.EmaratStorage && window.EmaratStorage.KEY_OWNERS) || {};
@@ -4309,6 +4334,9 @@ ${dayBlocksHtml}
                     jalali: getCurrentJalaliDate(),
                     localStorageKeys: Object.keys(data).length,
                     shadowKeys: Object.keys(shadowPlain).length,
+                    shadowDedupedKeys: shadowDeduped,
+                    skippedCacheKeys: skippedCache.map(function (x) { return x[0]; }),
+                    skippedCacheBytes: skippedCache.reduce(function (a, x) { return a + x[1]; }, 0),
                     ownedCounts: owned,
                     hasIndexedDB: Object.keys(shadowPlain).length > 0
                 }
