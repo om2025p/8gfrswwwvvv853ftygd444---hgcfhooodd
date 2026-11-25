@@ -4269,7 +4269,88 @@ ${dayBlocksHtml}
               'github_backup_repo', 'github_backup_branch'
           ];
 
-          async function collectFullBackup() {
+          /* ===== بکاپ جداول «مدیریت رشد» (IndexedDB) ===== */
+        const GROWTH_APPS = ['gold1','gold3','gold5','gold6','gold8','gold9','gold10','gold11'];
+
+        async function existingGrowthDbs() {
+            if (!indexedDB.databases) return GROWTH_APPS.map(function (a) { return 'GrowthDB_' + a; });
+            try {
+                const list = await indexedDB.databases();
+                return (list || []).map(function (d) { return d.name; })
+                    .filter(function (n) { return n && n.indexOf('GrowthDB_') === 0; });
+            } catch (e) { return []; }
+        }
+
+        function readGrowthDb(name) {
+            return new Promise(function (resolve) {
+                let req;
+                try { req = indexedDB.open(name); } catch (e) { return resolve(null); }
+                req.onsuccess = function (e) {
+                    const d = e.target.result;
+                    if (!d.objectStoreNames.contains('rows')) { d.close(); return resolve(null); }
+                    const out = { app: name.replace('GrowthDB_', ''), rows: [], capital: '' };
+                    const g = d.transaction(['rows'], 'readonly').objectStore('rows').getAll();
+                    g.onsuccess = function () {
+                        out.rows = g.result || [];
+                        if (!d.objectStoreNames.contains('settings')) { d.close(); return resolve(out); }
+                        try {
+                            const c = d.transaction(['settings'], 'readonly').objectStore('settings').get('capital');
+                            c.onsuccess = function () { out.capital = (c.result && c.result.value) || ''; d.close(); resolve(out); };
+                            c.onerror = function () { d.close(); resolve(out); };
+                        } catch (e2) { d.close(); resolve(out); }
+                    };
+                    g.onerror = function () { d.close(); resolve(out); };
+                };
+                req.onerror = function () { resolve(null); };
+                req.onblocked = function () { resolve(null); };
+            });
+        }
+
+        async function collectGrowthDatabases() {
+            const names = await existingGrowthDbs();
+            const out = {};
+            for (const n of names) {
+                const g = await readGrowthDb(n);
+                if (g && g.rows.length) out[g.app] = { rows: g.rows, capital: g.capital };
+            }
+            return out;
+        }
+
+        async function restoreGrowthDatabases(growth) {
+            if (!growth || typeof growth !== 'object') return 0;
+            let total = 0;
+            for (const app of Object.keys(growth)) {
+                const payload = growth[app] || {};
+                const rows = Array.isArray(payload.rows) ? payload.rows : [];
+                if (!rows.length) continue;
+                await new Promise(function (resolve) {
+                    let req;
+                    try { req = indexedDB.open('GrowthDB_' + app, 1); } catch (e) { return resolve(); }
+                    req.onupgradeneeded = function (e) {
+                        const d = e.target.result;
+                        if (!d.objectStoreNames.contains('rows')) d.createObjectStore('rows', { keyPath: 'id', autoIncrement: true });
+                        if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' });
+                    };
+                    req.onsuccess = function (e) {
+                        const d = e.target.result;
+                        try {
+                            const tx = d.transaction(['rows', 'settings'], 'readwrite');
+                            const st = tx.objectStore('rows');
+                            st.clear();
+                            rows.forEach(function (r) { try { st.put(r); } catch (e2) {} });
+                            if (payload.capital) tx.objectStore('settings').put({ key: 'capital', value: payload.capital });
+                            tx.oncomplete = function () { d.close(); total += rows.length; resolve(); };
+                            tx.onerror = function () { d.close(); resolve(); };
+                        } catch (e3) { d.close(); resolve(); }
+                    };
+                    req.onerror = function () { resolve(); };
+                    req.onblocked = function () { resolve(); };
+                });
+            }
+            return total;
+        }
+
+        async function collectFullBackup() {
             const data = {};
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
@@ -4299,9 +4380,13 @@ ${dayBlocksHtml}
                 if (o) owned[o] = (owned[o] || 0) + 1;
             });
 
+            let growth = {};
+            try { growth = await collectGrowthDatabases(); } catch (e) { console.warn('growth collect err:', e); }
+
             return {
                 data: data,
                 shadow: shadowPlain,
+                growth: growth,
                 meta: {
                     format: 'emarat-full-backup-v2',
                     appVersion: 'v117',
@@ -4309,6 +4394,8 @@ ${dayBlocksHtml}
                     jalali: getCurrentJalaliDate(),
                     localStorageKeys: Object.keys(data).length,
                     shadowKeys: Object.keys(shadowPlain).length,
+                    growthApps: Object.keys(growth).length,
+                    growthRows: Object.keys(growth).reduce(function (n, k) { return n + ((growth[k].rows || []).length); }, 0),
                     ownedCounts: owned,
                     hasIndexedDB: Object.keys(shadowPlain).length > 0
                 }
@@ -4384,7 +4471,8 @@ ${dayBlocksHtml}
                 const full = {
                     _meta: bundle.meta,
                     data: bundle.data,
-                    _shadow: bundle.shadow
+                    _shadow: bundle.shadow,
+                    _growth: bundle.growth || {}
                 };
                 const jsonStr = JSON.stringify(full, null, 2);
 
@@ -4933,8 +5021,10 @@ ${dayBlocksHtml}
 
                     // قالب کامل v2: { _meta, data, _shadow }
                     let shadowPart = null;
+                    let growthPart = null;
                     if (data && data.data && typeof data.data === 'object' && data._meta) {
                         shadowPart = data._shadow || null;
+                        growthPart = data._growth || null;
                         data = data.data;
                     }
 
@@ -4957,6 +5047,13 @@ ${dayBlocksHtml}
                             await window.EmaratStorage.shadowPutMany(pairs);
                             shadowRestored = Object.keys(pairs).length;
                         } catch (err) { console.warn('shadow restore err:', err); }
+                    }
+
+                    // بازگردانی جداول «مدیریت رشد» (IndexedDB)
+                    let growthRestored = 0;
+                    if (growthPart) {
+                        try { growthRestored = await restoreGrowthDatabases(growthPart); }
+                        catch (err) { console.warn('growth restore err:', err); }
                     }
 
                     const nowTs = Date.now().toString();
@@ -4985,7 +5082,9 @@ ${dayBlocksHtml}
                     renderMonitor();
                     renderMonthlyPdfList();
 
-                    alert(`✅ بازیابی کامل اطلاعات با موفقیت انجام شد! (${count} آیتم اطلاعاتی بازگردانی شد)\nتاریخ همگام‌سازی ابری به روز رسانی گردید.`);
+                    alert(`✅ بازیابی کامل اطلاعات با موفقیت انجام شد! (${count} آیتم اطلاعاتی بازگردانی شد)` +
+                        (growthRestored ? `\n📈 ${growthRestored} ردیف «مدیریت رشد» هم بازگردانده شد.` : '') +
+                        `\nتاریخ همگام‌سازی ابری به روز رسانی گردید.`);
                     setTimeout(() => location.reload(), 500);
                 } catch (err) {
                     alert('❌ خطا در بازگردانی پشتیبان: ' + err.message);
