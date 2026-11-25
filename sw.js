@@ -444,6 +444,7 @@ const ASSETS = [
   './liquidity/growth.html',
   './liquidity/growth-stats.js',
   './liquidity/growth-trend.html',
+  './liquidity/cache-clear.js',
   './liquidity/manifest.json',
   './liquidity/icon-192.png',
   './liquidity/icon-512.png',
