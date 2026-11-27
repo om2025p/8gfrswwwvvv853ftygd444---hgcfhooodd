@@ -820,7 +820,7 @@
 
                 <div style="display: flex; gap: 10px;">
                     <button class="action-btn secondary" id="btnResetChannelStats" style="font-size: 0.88rem; padding: 14px; font-weight: 700; color: #ef4444; border-color: #fca5a5;">
-                        🗑️ صفر کردن آمار
+                        ♻️ صفر کردن آمار و وضعیت
                     </button>
                 </div>
             </div>
@@ -3283,9 +3283,33 @@
 
         const btnResetChannelStats = document.getElementById('btnResetChannelStats');
         if (btnResetChannelStats) {
-            btnResetChannelStats.onclick = () => {
+            btnResetChannelStats.onclick = async () => {
+                const token = getServerToken();
+                const url = getServerUrl();
+                const link = document.getElementById('channelUrlInput') ? sanitizeString(document.getElementById('channelUrlInput').value) : '';
+                if (token && url) {
+                    try {
+                        const res = await fetch(`${url}/api/channel/reset`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', ...serverHeaders() },
+                            body: JSON.stringify({ link })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            logChannelDebug(`♻️ وضعیت سرور پاک شد (${data.cleared || 0} مورد) — اجرای بعدی از نو دانلود می‌کند.`);
+                            showToast("♻️ وضعیت سرور پاک شد؛ اجرای بعدی از نو دانلود می‌کند.");
+                        } else {
+                            logChannelDebug(`⚠️ پاک‌سازی وضعیت سرور: HTTP ${res.status}`);
+                            showToast("⚠️ آمار صفر شد، ولی پاک‌سازی سرور انجام نشد.");
+                        }
+                    } catch (err) {
+                        logChannelDebug(`⚠️ خطای پاک‌سازی وضعیت: ${err.message}`);
+                        showToast("⚠️ آمار صفر شد، ولی پاک‌سازی سرور انجام نشد.");
+                    }
+                } else {
+                    showToast("⚠️ توکن/آدرس سرور تنظیم نیست؛ فقط آمار صفر شد.");
+                }
                 setChannelStatsUI(0, 0, 0, 0);
-                showToast("🗑️ آمار دانلود کانال صفر شد.");
             };
         }
 

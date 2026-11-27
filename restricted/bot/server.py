@@ -24,7 +24,7 @@ os.chdir(BASE_DIR)
 SERVER_TOKEN = os.environ.get("SERVER_TOKEN", "").strip()
 PORT = int(os.environ.get("PORT", "8080"))
 
-SERVER_BUILD = "2026-11-27-zip"
+SERVER_BUILD = "2026-11-27-zip2"
 SERVER_FEATURES = {"channel_dump", "channel_zip", "gallery", "zip_upload"}
 
 app = FastAPI(title="Download Shield Server")
@@ -144,6 +144,15 @@ async def api_zip(payload: dict, x_auth_token: str = Header(default="")):
 async def api_channel(payload: dict, x_auth_token: str = Header(default="")):
     _check(x_auth_token)
     return _start_job("channel", payload)
+
+
+@app.post("/api/channel/reset")
+async def api_channel_reset(payload: dict = None, x_auth_token: str = Header(default="")):
+    _check(x_auth_token)
+    import download_single
+
+    cleared = download_single.reset_channel_state((payload or {}).get("link") or None)
+    return {"ok": True, "cleared": cleared}
 
 
 @app.post("/api/cancel")

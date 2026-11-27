@@ -862,6 +862,20 @@ def _save_channel_state(state):
             print(f"DEBUG: channel state save failed ({p}): {e}")
 
 
+def reset_channel_state(link=None):
+    """Forget the saved progress of one channel (or all channels when link is None)."""
+    all_state = _load_channel_state()
+    if link:
+        key = _channel_state_key(link)
+        existed = 1 if all_state.pop(key, None) is not None else 0
+    else:
+        existed = len(all_state)
+        all_state = {}
+    _save_channel_state(all_state)
+    print(f"[کانال] ♻️ وضعیت پاک شد ({existed} مورد) — اجرای بعدی از نو شروع می‌کند.")
+    return existed
+
+
 def _channel_state_key(link):
     return str(link or "").strip().rstrip("/").lower()
 
@@ -1038,11 +1052,51 @@ def _message_link(msg, chat):
     return f"https://t.me/c/{internal}/{msg.id}"
 
 
-async def _send_zip_parts(userbot, folder, file_paths, links_text, dest, part_limit_bytes, title):
-    """Pack downloaded files into one or more ZIPs (above the part limit) and send them."""
-    import zipfile
+def _caption_safe(text):
+    """Strip markdown characters so a dynamic channel title cannot break Telegram's parser."""
+    return re.sub(r"[*_`\[\]{}<>#]", " ", str(text or "")).strip() or "کانال"
+
+
+async def _deliver_file(path, caption, dest, owner_id):
+    """Upload one file trying userbot→channel, userbot→DM, Bot→channel, Bot→DM."""
+    from main import userbot
 
     from pyrogram.errors import FloodWait
+
+    errors = []
+    targets = [(userbot, dest, "کانال مقصد")]
+    if owner_id is not None and str(owner_id) != str(dest):
+        targets.append((userbot, owner_id, "پیوی تو"))
+    try:
+        from main import Bot
+
+        targets.append((Bot, dest, "ربات → کانال"))
+        if owner_id is not None and str(owner_id) != str(dest):
+            targets.append((Bot, owner_id, "ربات → پیوی"))
+    except Exception:
+        pass
+
+    for client, chat, label in targets:
+        for _attempt in range(2):
+            try:
+                await client.send_document(chat, path, caption=caption)
+                return True, label, errors
+            except FloodWait as fw:
+                wait_s = int(getattr(fw, "value", 5)) + 2
+                print(f"[کانال] ⏳ محدودیت تلگرام ({label}): {wait_s} ثانیه")
+                await asyncio.sleep(wait_s)
+            except Exception as e:
+                msg = f"{label}: {e}"
+                print(f"[کانال] ❌ ارسال به «{label}» نشد → {e}")
+                if msg not in errors:
+                    errors.append(msg)
+                break
+    return False, None, errors
+
+
+async def _send_zip_parts(userbot, folder, file_paths, links_text, dest, part_limit_bytes, title, owner_id=None):
+    """Pack downloaded files into one or more ZIPs (above the part limit) and deliver them."""
+    import zipfile
 
     links_path = os.path.join(folder, "links.txt")
     try:
@@ -1087,30 +1141,25 @@ async def _send_zip_parts(userbot, folder, file_paths, links_text, dest, part_li
 
     total_parts = len(parts)
     sent = 0
+    errors = []
     for i, p in enumerate(parts, 1):
         try:
             size_mb = os.path.getsize(p) / (1024 * 1024)
         except OSError:
             size_mb = 0
         caption = (
-            f"📦 {title}\n"
+            f"📦 {_caption_safe(title)}\n"
             f"بخش {i} از {total_parts} · {len(file_paths)} فایل · {size_mb:.0f}MB\n"
             f"🔗 لینک همهٔ پیام‌ها داخل links.txt"
         )
-        for _attempt in range(3):
-            try:
-                await userbot.send_document(dest, p, caption=caption)
-                sent += 1
-                print(f"[کانال] 📤 زیپ بخش {i}/{total_parts} ارسال شد ({size_mb:.0f}MB)")
-                break
-            except FloodWait as fw:
-                wait_s = int(getattr(fw, "value", 5)) + 2
-                print(f"[کانال] ⏳ محدودیت تلگرام هنگام ارسال زیپ: {wait_s} ثانیه")
-                await asyncio.sleep(wait_s)
-            except Exception as e:
-                print(f"[کانال] ❌ ارسال زیپ بخش {i} ناموفق: {e}")
-                break
-    return sent, total_parts
+        ok, where, errs = await _deliver_file(p, caption, dest, owner_id)
+        if ok:
+            sent += 1
+            print(f"[کانال] 📤 زیپ بخش {i}/{total_parts} ارسال شد → {where} ({size_mb:.0f}MB)")
+        else:
+            errors.extend(e for e in errs if e not in errors)
+            print(f"[کانال] ❌ زیپ بخش {i}/{total_parts} به هیچ مقصدی نرسید.")
+    return sent, total_parts, errors
 
 
 async def process_channel_dump(
@@ -1165,6 +1214,8 @@ async def process_channel_dump(
     joined_now = False
     zip_files = []
     zip_bytes = 0
+    run_uids = []
+    run_start_offset = next_offset
     links_lines = []
     zip_dir = None
 
@@ -1200,10 +1251,15 @@ async def process_channel_dump(
 
         # Warm the peer cache of the destination so a numeric id is not "invalid".
         try:
-            await userbot.send_message(dest, f"🔔 شروع ارسال رسانه‌های «{title}» ...")
+            await userbot.send_message(dest, f"🔔 شروع ارسال رسانه‌های «{_caption_safe(title)}» ...")
             await asyncio.sleep(2)
         except Exception as e:
-            print(f"[کانال] ⚠️ گرم‌کردن مقصد ناموفق (ادامه می‌دهیم): {e}")
+            print(f"[کانال] ⚠️ گرم‌کردن مقصد ناموفق: {e}")
+            await safe_send_message(
+                owner_id,
+                f"⚠️ *نوشتن در مقصد ممکن نشد:*\n`{e}`\n"
+                "ادامه می‌دهیم؛ اگر ارسال نهایی نشد، فایل به پیوی خودت می‌آید.",
+            )
 
         if next_offset:
             print(f"[کانال] ⏩ ادامه از پیام {next_offset} (اجرای قبلی نیمه‌کاره ماند)")
@@ -1300,6 +1356,7 @@ async def process_channel_dump(
                 sent += 1
                 if uid:
                     done_ids.add(uid)
+                    run_uids.append(uid)
             else:
                 failed += 1
 
@@ -1330,9 +1387,24 @@ async def process_channel_dump(
         if zip_mode:
             if zip_files:
                 print(f"[کانال] 🗜️ ساخت زیپ از {len(zip_files)} فایل ({zip_bytes / 1048576:.0f}MB)...")
-                zip_sent, zip_parts = await _send_zip_parts(
-                    userbot, zip_dir, zip_files, "\n".join(links_lines) + "\n", dest, part_limit_bytes, title
+                zip_sent, zip_parts, zip_errors = await _send_zip_parts(
+                    userbot,
+                    zip_dir,
+                    zip_files,
+                    "\n".join(links_lines) + "\n",
+                    dest,
+                    part_limit_bytes,
+                    title,
+                    owner_id=owner_id,
                 )
+                if zip_sent < zip_parts:
+                    # Nothing was delivered: forget these uids so a re-run downloads them again.
+                    for u in run_uids:
+                        done_ids.discard(u)
+                    all_state[state_key]["offset_id"] = run_start_offset
+                    all_state[state_key]["done"] = sorted(done_ids)[-CHANNEL_MAX_DONE_IDS:]
+                    _save_channel_state(all_state)
+                    print("[کانال] ↩️ ارسال نشد → وضعیت برگشت داده شد تا اجرای بعدی دوباره دانلود کند.")
             else:
                 print("[کانال] ⚠️ هیچ فایلی دانلود نشد؛ زیپی ساخته نشد.")
                 await safe_send_message(
@@ -1343,17 +1415,24 @@ async def process_channel_dump(
 
         elapsed = int(time.time() - started)
         if zip_mode:
-            summary = (
-                f"🏁 *دانلود کامل کانال (ZIP) تمام شد*\n"
-                f"📥 دانلود‌شده: *{len(zip_files)}*\n"
-                f"🚫 قفل/ناموفق: *{blocked}*\n"
-                f"🟡 تکراری: *{skipped}*\n"
-                f"📦 زیپ ارسال‌شده: *{zip_sent}* از *{zip_parts}* بخش\n"
-                f"💾 حجم کل: *{zip_bytes / 1048576:.0f}MB*\n"
-                f"🔍 پیام اسکن‌شده: *{scanned}*\n"
-                f"⏱️ زمان: *{elapsed}* ثانیه\n"
-                f"🎯 مقصد: `{dest}`"
-            )
+            lines = [
+                "🏁 *دانلود کامل کانال (ZIP) تمام شد*",
+                f"📥 دانلود‌شده: *{len(zip_files)}*",
+                f"🚫 قفل/ناموفق: *{blocked}*",
+                f"🟡 تکراری: *{skipped}*",
+                f"📦 زیپ ارسال‌شده: *{zip_sent}* از *{zip_parts}* بخش",
+            ]
+            if zip_sent < zip_parts:
+                lines.append("⚠️ ارسال نشد — اجرای بعدی دوباره دانلود می‌کند")
+                if zip_errors:
+                    lines.append("`" + _caption_safe(zip_errors[0])[:180] + "`")
+            lines += [
+                f"💾 حجم کل: *{zip_bytes / 1048576:.0f}MB*",
+                f"🔍 پیام اسکن‌شده: *{scanned}*",
+                f"⏱️ زمان: *{elapsed}* ثانیه",
+                f"🎯 مقصد: `{dest}`",
+            ]
+            summary = "\n".join(lines)
         else:
             summary = (
                 f"🏁 *دانلود کامل کانال تمام شد*\n"
