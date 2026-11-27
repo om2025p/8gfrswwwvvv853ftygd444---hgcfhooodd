@@ -135,6 +135,12 @@ async def api_zip(payload: dict, x_auth_token: str = Header(default="")):
     return _start_job("zip", payload)
 
 
+@app.post("/api/channel")
+async def api_channel(payload: dict, x_auth_token: str = Header(default="")):
+    _check(x_auth_token)
+    return _start_job("channel", payload)
+
+
 @app.post("/api/cancel")
 async def api_cancel(x_auth_token: str = Header(default="")):
     _check(x_auth_token)
@@ -169,6 +175,9 @@ _JOB_ENV_KEYS = (
     "SORT_MODE",
     "CUSTOM_DB_BASE",
     "IS_DISCOVERY_MODE",
+    "CHANNEL_DUMP_MODE",
+    "CHANNEL_LIMIT",
+    "CHANNEL_LEAVE",
 )
 
 
@@ -223,6 +232,20 @@ async def _run_job(job, payload):
                 import zip_extractor
 
                 await zip_extractor.main()
+            elif job == "channel":
+                url = str(payload.get("url", ""))
+                os.environ["TELEGRAM_LINK"] = url
+                os.environ["CHANNEL_DUMP_MODE"] = "true"
+                os.environ["CHANNEL_LIMIT"] = str(payload.get("limit") or "1000")
+                os.environ["CHANNEL_LEAVE"] = (
+                    "false" if payload.get("keepMembership") else "true"
+                )
+                os.environ["TARGET_CHANNEL"] = str(
+                    payload.get("targetChannel") or "-1003757877147"
+                )
+                import download_single
+
+                await download_single.main_download()
             else:
                 raise ValueError("unknown job: " + str(job))
 

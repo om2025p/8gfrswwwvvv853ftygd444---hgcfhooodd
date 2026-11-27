@@ -101,11 +101,18 @@
         .tab-nav {
             width: 100%;
             max-width: 600px;
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             padding: 0 20px;
             box-sizing: border-box;
             margin-bottom: 16px;
-            gap: 10px;
+            gap: 8px;
+        }
+
+        @media (min-width: 560px) {
+            .tab-nav {
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+            }
         }
 
         .tab-btn {
@@ -479,6 +486,9 @@
         <button class="tab-btn" id="tabBtn4" onclick="switchTab(4)">
             📦 فایل فشرده
         </button>
+        <button class="tab-btn" id="tabBtn5" onclick="switchTab(5)">
+            📥 دانلود کانال
+        </button>
         <button class="tab-btn" id="tabBtn2" onclick="switchTab(2)">
             ⚙️ تنظیمات
         </button>
@@ -685,6 +695,133 @@
                             📋 کپی کامل لاگ‌های سرور
                         </button>
                         <button class="action-btn secondary" id="btnClearZipDebug" style="font-size: 0.88rem; padding: 12px; font-weight: 700; color: #ef4444; border-color: #fca5a5;">
+                            🗑️ پاک کردن لاگ‌ها
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== تب ۵: دانلود کامل رسانه‌های یک کانال ==================== -->
+        <div class="tab-content" id="tabContent5">
+            <div class="android-native-card" style="background: linear-gradient(145deg, #ffffff, #eef2ff); border-color: #c7d2fe;">
+                <div class="card-title" style="color: #4338ca; border-color: #c7d2fe;">
+                    📥 دانلود کامل رسانه‌های یک کانال
+                </div>
+                <p style="font-size: 0.85rem; line-height: 1.6; color: #334155; margin-top: -6px; margin-bottom: 18px;">
+                    لینک کانال را وارد کنید (عمومی مثل <code>@channel</code> یا خصوصی مثل <code>https://t.me/+hash</code>) تا سرور همهٔ عکس‌ها، ویدیوها، گیف‌ها، فایل‌ها، صوتی‌ها، ویس‌ها و استیکرها را به کانال مقصد شما منتقل کند.
+                </p>
+
+                <!-- وضعیت زنده موتور دانلود کانال -->
+                <div class="status-panel" style="border-radius: 20px; background: #ffffff; border: 1px solid #c7d2fe; margin-bottom: 18px;">
+                    <span style="font-size: 0.85rem; color: #3730a3; font-weight: 700;">🟢 وضعیت موتور دانلود کانال:</span>
+                    <div class="status-badge" id="channelEngineStatus">
+                        <span class="status-dot idle"></span>
+                        <span id="channelStatusText">آماده به‌کار 💎</span>
+                    </div>
+                </div>
+
+                <!-- اینپوت لینک کانال -->
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label" style="font-size: 0.92rem; color: #0f172a; font-weight: 800; margin-bottom: 4px;">
+                        🔗 لینک کانال مبدأ (عمومی یا لینک دعوت خصوصی):
+                    </label>
+                    <div style="display: flex; gap: 10px; width: 100%; align-items: center;">
+                        <input type="text" id="channelUrlInput" class="input-field" placeholder="https://t.me/+dNHoiiHSSnhmZGI0" style="direction: ltr; font-size: 0.95rem; padding: 16px 18px; border-radius: 20px; flex: 1; border: 2px solid #c7d2fe; background: #ffffff;">
+                        <button class="action-btn secondary" id="btnPasteChannelUrl" style="width: auto; padding: 0 18px; height: 54px; font-size: 0.92rem; font-weight: 800; border-radius: 20px; white-space: nowrap; flex-shrink: 0; background: #eef2ff; color: #4338ca; border: 1.5px solid #c7d2fe;">
+                            📋 چسباندن
+                        </button>
+                    </div>
+                </div>
+
+                <!-- اینپوت کانال مقصد -->
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
+                        🎯 شناسه یا آیدی کانال مقصد (پیش‌فرض: -1003757877147):
+                    </label>
+                    <input type="text" id="channelTargetInput" class="input-field" placeholder="-1003757877147" value="-1003757877147" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
+                </div>
+
+                <!-- اینپوت سقف تعداد -->
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="input-label" style="font-size: 0.88rem; color: #334155; font-weight: 700; margin-bottom: 4px;">
+                        🔢 سقف تعداد فایل در این اجرا (پیش‌فرض ۱۰۰۰):
+                    </label>
+                    <input type="number" id="channelLimitInput" class="input-field" placeholder="1000" value="1000" min="1" max="100000" style="direction: ltr; font-size: 0.9rem; padding: 14px 16px; border-radius: 16px; border: 1.5px solid #cbd5e1; background: #ffffff;">
+                </div>
+
+                <!-- گزینهٔ عضویت -->
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px 14px;">
+                    <input type="checkbox" id="channelKeepMembership" style="width: 24px; height: 24px; flex-shrink: 0;">
+                    <label for="channelKeepMembership" style="font-size: 0.85rem; color: #334155; font-weight: 700; line-height: 1.5;">
+                        بعد از پایان کار، عضو کانال بمان (پیش‌فرض: خروج خودکار)
+                    </label>
+                </div>
+
+                <!-- دکمه‌های عملیاتی -->
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="android-btn-green" id="btnStartChannelDump" style="background: linear-gradient(135deg, #4f46e5, #4338ca); box-shadow: 0 8px 20px -4px rgba(79, 70, 229, 0.4);">
+                        🚀 شروع دانلود کامل رسانه‌های کانال
+                    </button>
+                    <button class="android-btn-green" id="btnStopChannelDump" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 8px 20px -4px rgba(239, 68, 68, 0.3); font-size: 0.95rem; padding: 14px;">
+                        🛑 توقف فوری دانلود کانال
+                    </button>
+                </div>
+
+                <p style="font-size: 0.78rem; line-height: 1.6; color: #64748b; margin-top: 14px; margin-bottom: 0;">
+                    ⚠️ این ابزار فقط با سشن اکانت شخصی کار می‌کند. کانال‌هایی که «قفل ذخیره‌سازی محتوا» دارند قابل دانلود نیستند.
+                </p>
+            </div>
+
+            <!-- کارت آمار زنده دانلود کانال -->
+            <div class="white-card">
+                <h2 class="card-title" style="color: #4338ca; border-color: #c7d2fe;">
+                    📊 آمار زنده دانلود کانال
+                </h2>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 18px; padding: 14px; text-align: center;">
+                        <span style="font-size: 0.78rem; color: #3730a3; font-weight: 700; display: block; margin-bottom: 6px;">📤 ارسال‌شده:</span>
+                        <span id="channelStatSent" style="font-size: 1.4rem; font-weight: 800; color: #4338ca;">۰</span>
+                    </div>
+                    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 18px; padding: 14px; text-align: center;">
+                        <span style="font-size: 0.78rem; color: #92400e; font-weight: 700; display: block; margin-bottom: 6px;">🟡 تکراری:</span>
+                        <span id="channelStatSkipped" style="font-size: 1.4rem; font-weight: 800; color: #b45309;">۰</span>
+                    </div>
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 18px; padding: 14px; text-align: center;">
+                        <span style="font-size: 0.78rem; color: #991b1b; font-weight: 700; display: block; margin-bottom: 6px;">❌ ناموفق:</span>
+                        <span id="channelStatFailed" style="font-size: 1.4rem; font-weight: 800; color: #b91c1c;">۰</span>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 18px; padding: 14px; text-align: center;">
+                        <span style="font-size: 0.78rem; color: #475569; font-weight: 700; display: block; margin-bottom: 6px;">🔍 پیام اسکن‌شده:</span>
+                        <span id="channelStatScanned" style="font-size: 1.4rem; font-weight: 800; color: #334155;">۰</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="action-btn secondary" id="btnResetChannelStats" style="font-size: 0.88rem; padding: 14px; font-weight: 700; color: #ef4444; border-color: #fca5a5;">
+                        🗑️ صفر کردن آمار
+                    </button>
+                </div>
+            </div>
+
+            <!-- کارت کنسول زنده -->
+            <div class="white-card" style="margin-top: 16px;">
+                <div id="channelDebugHeader" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none;">
+                    <h2 class="card-title" style="margin: 0; border: none; padding: 0; color: #4338ca;">🖥️ کنسول زندهٔ دانلود کانال</h2>
+                    <span id="channelDebugToggleIcon" style="font-size: 1.1rem; transition: transform 0.3s; color: #4338ca;">🔽</span>
+                </div>
+
+                <div id="channelDebugContent" style="max-height: 500px; overflow: hidden; transition: max-height 0.3s ease-out; margin-top: 12px;">
+                    <p style="font-size: 0.82rem; color: #64748b; margin-top: 4px; margin-bottom: 12px; line-height: 1.5;">
+                        هر فایل کپی/دانلود‌شده، محدودیت‌های تلگرام (FLOOD_WAIT)، پیام‌های رد‌شده و خطاها به‌صورت زنده اینجا نمایش داده می‌شوند.
+                    </p>
+                    <textarea id="channelDebugConsole" readonly class="input-field" style="height: 220px; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; color: #a5b4fc; background: #0f172a; line-height: 1.4; resize: none; border-color: #1e293b; direction: ltr; text-align: left; border-radius: 16px; padding: 14px; width: 100%; box-sizing: border-box;"></textarea>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+                        <button class="action-btn secondary" id="btnCopyChannelDebug" style="font-size: 0.88rem; padding: 12px; font-weight: 700; background: #eef2ff; color: #4338ca; border-color: #c7d2fe;">
+                            📋 کپی کامل لاگ‌ها
+                        </button>
+                        <button class="action-btn secondary" id="btnClearChannelDebug" style="font-size: 0.88rem; padding: 12px; font-weight: 700; color: #ef4444; border-color: #fca5a5;">
                             🗑️ پاک کردن لاگ‌ها
                         </button>
                     </div>
@@ -1269,6 +1406,47 @@
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
 
+        // لاگین دیباگ اختصاصی دانلود کامل کانال (تب ۵)
+        function logChannelDebug(message, type = 'info') {
+            const consoleEl = document.getElementById('channelDebugConsole');
+            if (!consoleEl) return;
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+            const prefix = type === 'error' ? '❌' : (type === 'success' ? '✅' : '📥');
+
+            consoleEl.value += `[${timeStr}] ${prefix} ${message}\n`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        // استخراج آمار زنده از خط پیشرفت سرور (📊 پیشرفت: ارسال X · تکراری Y · خطا Z · اسکن N)
+        function parseChannelProgressLine(text) {
+            const m = text.match(/پیشرفت:\s*ارسال\s*(\d+)\s*·\s*تکراری\s*(\d+)\s*·\s*خطا\s*(\d+)\s*·\s*اسکن\s*(\d+)/);
+            if (!m) return null;
+            return { sent: +m[1], skipped: +m[2], failed: +m[3], scanned: +m[4] };
+        }
+
+        function setChannelStatsUI(sent, skipped, failed, scanned) {
+            const toFa = (n) => Number(n || 0).toLocaleString('fa-IR');
+            const s = document.getElementById('channelStatSent');
+            const k = document.getElementById('channelStatSkipped');
+            const f = document.getElementById('channelStatFailed');
+            const c = document.getElementById('channelStatScanned');
+            if (s) s.innerText = toFa(sent);
+            if (k) k.innerText = toFa(skipped);
+            if (f) f.innerText = toFa(failed);
+            if (c) c.innerText = toFa(scanned);
+        }
+
+        function setChannelStatusUI(dotClass, text) {
+            const badge = document.getElementById('channelEngineStatus');
+            const txt = document.getElementById('channelStatusText');
+            if (badge) {
+                const dot = badge.querySelector('.status-dot');
+                if (dot) dot.className = 'status-dot ' + dotClass;
+            }
+            if (txt) txt.innerText = text;
+        }
+
         // همگام‌سازی خودکار از تنظیمات نیتیو اندروید
         function syncNativeAndroidConfig() {
             try {
@@ -1771,6 +1949,12 @@
                             if (typeof text === 'string' && (text.includes('گالری') || text.includes('gallery') || text.includes('kir2kos'))) {
                                 logGalleryDebug(text);
                             }
+                            if (typeof text === 'string' && (text.includes('[کانال]') || text.includes('دانلود کامل کانال'))) {
+                                logChannelDebug(text.replace('[کانال]', '').trim(), text.includes('❌') ? 'error' : (text.includes('✅') || text.includes('🏁') ? 'success' : 'info'));
+                                const progress = parseChannelProgressLine(text);
+                                if (progress) setChannelStatsUI(progress.sent, progress.skipped, progress.failed, progress.scanned);
+                                if (text.includes('شناسایی شد')) setChannelStatusUI('running', 'در حال دانلود رسانه‌ها ⚡');
+                            }
                         });
                         if (typeof data.next === 'number') serverLogNext = data.next;
                     }
@@ -1841,6 +2025,11 @@
                 payload.sortMode = document.getElementById('gallerySortModeSelect') ? sanitizeString(document.getElementById('gallerySortModeSelect').value) : 'newest';
                 payload.customDb = document.getElementById('galleryCustomDbInput') ? sanitizeString(document.getElementById('galleryCustomDbInput').value) : '';
                 payload.discovery = !!isDiscoveryMode;
+            } else if (customWorkflow === 'channel_dump.yml') {
+                endpoint = '/api/channel';
+                payload.targetChannel = document.getElementById('channelTargetInput') ? sanitizeString(document.getElementById('channelTargetInput').value) : '-1003757877147';
+                payload.limit = document.getElementById('channelLimitInput') ? sanitizeString(document.getElementById('channelLimitInput').value) : '1000';
+                payload.keepMembership = document.getElementById('channelKeepMembership') ? !!document.getElementById('channelKeepMembership').checked : false;
             } else {
                 payload.targetChannel = '-1003757877147';
             }
@@ -2999,6 +3188,119 @@
                     btnStop.click();
                 } else {
                     showToast("🛑 دستور توقف سرور صادر شد.");
+                }
+            };
+        }
+
+        // ==================== تب ۵: دانلود کامل رسانه‌های کانال ====================
+        const btnPasteChannelUrl = document.getElementById('btnPasteChannelUrl');
+        if (btnPasteChannelUrl) {
+            btnPasteChannelUrl.onclick = async () => {
+                try {
+                    const txt = await navigator.clipboard.readText();
+                    if (txt) {
+                        document.getElementById('channelUrlInput').value = sanitizeString(txt);
+                        showToast("📋 لینک از کلیپ‌بورد چسبانده شد.");
+                    } else {
+                        showToast("⚠️ کلیپ‌بورد خالی است.");
+                    }
+                } catch (e) {
+                    showToast("⚠️ دسترسی به کلیپ‌بورد ممکن نشد؛ دستی بچسبانید.");
+                }
+            };
+        }
+
+        const btnStartChannelDump = document.getElementById('btnStartChannelDump');
+        if (btnStartChannelDump) {
+            btnStartChannelDump.onclick = async () => {
+                const chUrl = sanitizeString(document.getElementById('channelUrlInput').value);
+                const targetChannel = sanitizeString(document.getElementById('channelTargetInput').value) || '-1003757877147';
+                const limitNum = Math.max(1, parseInt(sanitizeString(document.getElementById('channelLimitInput').value), 10) || 1000);
+
+                if (!chUrl) {
+                    showToast("⚠️ لطفاً لینک کانال را وارد کنید!");
+                    return;
+                }
+
+                showToast("🚀 در حال ارسال درخواست دانلود کامل کانال به سرور...");
+                logChannelDebug(`🚀 شروع: ${chUrl} → ${targetChannel} (سقف ${limitNum})`);
+                setChannelStatusUI('running', 'در حال ارسال درخواست به سرور...');
+                setChannelStatsUI(0, 0, 0, 0);
+
+                const historyId = addDownloadHistoryItem("📥 دانلود کامل کانال: " + chUrl, true);
+                const dispatchResult = await triggerWorkflow(chUrl, historyId, 'channel_dump.yml');
+                const isSuccess = dispatchResult === true || (dispatchResult && dispatchResult.success === true);
+
+                if (isSuccess) {
+                    showToast("✅ درخواست ثبت شد! پیشرفت را در کنسول تب ۵ ببینید.");
+                    setChannelStatusUI('running', 'در حال اجرا در سرور ⚡');
+                } else {
+                    const errDetail = (dispatchResult && dispatchResult.errorMessage) ? dispatchResult.errorMessage : 'خطا در ارسال درخواست.';
+                    showToast("❌ " + errDetail);
+                    logChannelDebug(errDetail, 'error');
+                    setChannelStatusUI('failed', 'خطا در اتصال ❌');
+                }
+            };
+        }
+
+        const btnStopChannelDump = document.getElementById('btnStopChannelDump');
+        if (btnStopChannelDump) {
+            btnStopChannelDump.onclick = () => {
+                const btnStop = document.getElementById('btnStopServer');
+                if (btnStop) {
+                    btnStop.click();
+                } else {
+                    showToast("🛑 دستور توقف صادر شد.");
+                }
+                logChannelDebug('🛑 دستور توقف دانلود کانال صادر شد.', 'error');
+                setChannelStatusUI('idle', 'در حال توقف...');
+            };
+        }
+
+        const btnResetChannelStats = document.getElementById('btnResetChannelStats');
+        if (btnResetChannelStats) {
+            btnResetChannelStats.onclick = () => {
+                setChannelStatsUI(0, 0, 0, 0);
+                showToast("🗑️ آمار دانلود کانال صفر شد.");
+            };
+        }
+
+        const btnCopyChannelDebug = document.getElementById('btnCopyChannelDebug');
+        if (btnCopyChannelDebug) {
+            btnCopyChannelDebug.onclick = () => {
+                const el = document.getElementById('channelDebugConsole');
+                if (!el || !el.value) {
+                    showToast("⚠️ هیچ لاگی در کنسول دانلود کانال نیست!");
+                    return;
+                }
+                navigator.clipboard.writeText(el.value).then(() => {
+                    showToast("📋 لاگ‌های دانلود کانال کپی شد!");
+                }).catch(() => showToast("⚠️ کپی ناموفق بود."));
+            };
+        }
+
+        const btnClearChannelDebug = document.getElementById('btnClearChannelDebug');
+        if (btnClearChannelDebug) {
+            btnClearChannelDebug.onclick = () => {
+                const el = document.getElementById('channelDebugConsole');
+                if (el) el.value = '';
+                showToast("🗑️ لاگ‌های دانلود کانال پاک شد.");
+            };
+        }
+
+        // تاشو کردن کنسول اختصاصی دانلود کانال (تب ۵)
+        const channelDebugHeader = document.getElementById('channelDebugHeader');
+        const channelDebugContent = document.getElementById('channelDebugContent');
+        const channelDebugToggleIcon = document.getElementById('channelDebugToggleIcon');
+        if (channelDebugHeader && channelDebugContent) {
+            channelDebugHeader.onclick = () => {
+                if (channelDebugContent.style.maxHeight === '0px' || !channelDebugContent.style.maxHeight) {
+                    channelDebugContent.style.maxHeight = '500px';
+                    if (channelDebugToggleIcon) channelDebugToggleIcon.style.transform = 'rotate(180deg)';
+                    logChannelDebug("کنسول اختصاصی تب ۵ (دانلود کامل کانال) باز شد.");
+                } else {
+                    channelDebugContent.style.maxHeight = '0px';
+                    if (channelDebugToggleIcon) channelDebugToggleIcon.style.transform = 'rotate(0deg)';
                 }
             };
         }
