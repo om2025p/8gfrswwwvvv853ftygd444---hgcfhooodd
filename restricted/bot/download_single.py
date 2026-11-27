@@ -817,6 +817,351 @@ async def fetch_page_html_async(url, headers):
         return ""
     return await asyncio.to_thread(_do_fetch)
 
+
+# --- Full channel dump ----------------------------------------------------
+CHANNEL_STATE_FILE = "restricted_channel_state.json"
+CHANNEL_MAX_DONE_IDS = 5000
+
+MEDIA_LABELS = {
+    "photo": "🖼️ عکس",
+    "video": "🎬 ویدیو",
+    "animation": "🎞️ گیف",
+    "document": "📄 فایل",
+    "audio": "🎵 صوتی",
+    "voice": "🎙️ ویس",
+    "video_note": "⭕ ویدیوپیام",
+    "sticker": "🏷️ استیکر",
+}
+
+
+def _load_channel_state():
+    for p in get_db_paths(CHANNEL_STATE_FILE):
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, dict):
+                    print(f"DEBUG: Loaded channel dump state from {p}")
+                    return data
+            except Exception as e:
+                print(f"DEBUG: channel state load failed ({p}): {e}")
+    return {}
+
+
+def _save_channel_state(state):
+    for p in get_db_paths(CHANNEL_STATE_FILE):
+        try:
+            parent = os.path.dirname(p)
+            if parent:
+                os.makedirs(parent, exist_ok=True)
+            with open(p, "w", encoding="utf-8") as f:
+                json.dump(state, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"DEBUG: channel state save failed ({p}): {e}")
+
+
+def _channel_state_key(link):
+    return str(link or "").strip().rstrip("/").lower()
+
+
+def _media_kind(msg):
+    from pyrogram.enums import MessageMediaType
+
+    if not msg.media or msg.media == MessageMediaType.WEB_PAGE:
+        return None
+    if getattr(msg, "photo", None):
+        return "photo"
+    if getattr(msg, "video", None):
+        return "video"
+    if getattr(msg, "animation", None):
+        return "animation"
+    if getattr(msg, "voice", None):
+        return "voice"
+    if getattr(msg, "video_note", None):
+        return "video_note"
+    if getattr(msg, "sticker", None):
+        return "sticker"
+    if getattr(msg, "audio", None):
+        return "audio"
+    if getattr(msg, "document", None):
+        return "document"
+    return None
+
+
+def _media_unique_id(msg):
+    for attr in ("photo", "video", "animation", "document", "audio", "voice", "video_note", "sticker"):
+        uid = getattr(getattr(msg, attr, None), "file_unique_id", None)
+        if uid:
+            return uid
+    return None
+
+
+async def _resolve_channel_entity(userbot, link):
+    """Resolve a channel link to a chat. Returns (chat, joined_now)."""
+    from pyrogram.errors import (
+        InviteHashExpired,
+        InviteHashInvalid,
+        UserAlreadyParticipant,
+        UsernameInvalid,
+        UsernameNotOccupied,
+    )
+
+    raw = str(link or "").strip()
+    low = raw.lower()
+
+    if "t.me/+" in low or "joinchat" in low:
+        try:
+            chat = await userbot.join_chat(raw)
+            print(f"[کانال] 🔑 با لینک دعوت عضو شدیم: {getattr(chat, 'title', chat.id)}")
+            return chat, True
+        except UserAlreadyParticipant:
+            print("[کانال] ℹ️ از قبل عضو این کانال بودیم.")
+        except (InviteHashExpired, InviteHashInvalid) as e:
+            raise RuntimeError(f"لینک دعوت منقضی یا نامعتبر است ({e})")
+        try:
+            return await userbot.get_chat(raw), False
+        except Exception as e:
+            raise RuntimeError(f"کانال پیدا نشد؛ لینک دعوت را بررسی کنید ({e})")
+
+    target = raw
+    for prefix in ("https://", "http://"):
+        if target.lower().startswith(prefix):
+            target = target[len(prefix):]
+            break
+    if target.lower().startswith("t.me/"):
+        target = target[5:]
+    elif target.lower().startswith("telegram.me/"):
+        target = target[12:]
+    target = target.split("?")[0].strip().strip("/")
+    if target.startswith("@"):
+        target = target[1:]
+
+    try:
+        return await userbot.get_chat(int(target)), False
+    except (ValueError, TypeError):
+        pass
+    except Exception as e:
+        print(f"[کانال] DEBUG: numeric resolve failed ({e})")
+
+    try:
+        return await userbot.get_chat(target), False
+    except (UsernameInvalid, UsernameNotOccupied) as e:
+        raise RuntimeError(f"کانال عمومی «{target}» پیدا نشد ({e})")
+    except Exception as e:
+        raise RuntimeError(f"کانال «{target}» قابل دسترسی نیست ({e})")
+
+
+async def _download_and_send_media(userbot, msg, kind, dest):
+    """Fallback path when a direct copy is refused: download once, upload once."""
+    tmpdir = tempfile.mkdtemp(prefix="emarat_chan_")
+    path = None
+    try:
+        path = await userbot.download_media(msg, file_name=tmpdir)
+        if not path or not os.path.exists(path):
+            print("[کانال] ❌ دانلود فایل نتیجه‌ای نداشت.")
+            return False
+        caption = getattr(msg, "caption", None) or None
+        if kind == "photo":
+            await userbot.send_photo(dest, path, caption=caption)
+        elif kind == "video":
+            await userbot.send_video(dest, path, caption=caption)
+        elif kind == "animation":
+            await userbot.send_animation(dest, path, caption=caption)
+        elif kind == "audio":
+            await userbot.send_audio(dest, path, caption=caption)
+        elif kind == "voice":
+            await userbot.send_voice(dest, path, caption=caption)
+        elif kind == "video_note":
+            await userbot.send_video_note(dest, path)
+        elif kind == "sticker":
+            await userbot.send_sticker(dest, path)
+        else:
+            await userbot.send_document(dest, path, caption=caption)
+        return True
+    except Exception as e:
+        print(f"[کانال] ❌ دانلود/آپلود دستی شکست خورد: {e}")
+        return False
+    finally:
+        try:
+            if path and os.path.exists(path):
+                os.remove(path)
+        except Exception:
+            pass
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+async def process_channel_dump(link, owner_id, limit=1000, target_channel=None, keep_membership=False):
+    """Download every media item of a channel (public, private-invite or id) to a destination chat."""
+    from main import userbot
+    from pyrogram.errors import FloodWait
+
+    try:
+        limit = int(str(limit).strip())
+    except Exception:
+        limit = 1000
+    if limit <= 0:
+        limit = 1000
+
+    dest = target_channel or os.environ.get("TARGET_CHANNEL") or "-1003757877147"
+    try:
+        dest = int(str(dest).strip())
+    except Exception:
+        dest = str(dest).strip()
+
+    state_key = _channel_state_key(link)
+    all_state = _load_channel_state()
+    entry = all_state.get(state_key) if isinstance(all_state.get(state_key), dict) else {}
+    next_offset = int(entry.get("offset_id") or 0)
+    done_ids = set(entry.get("done") or [])
+    chat_id = entry.get("chat_id")
+
+    sent = skipped = failed = scanned = 0
+    started = time.time()
+    joined_now = False
+
+    print(f"[کانال] 📥 شروع دانلود کامل کانال: {link} → {dest} (سقف {limit})")
+    await safe_send_message(
+        owner_id,
+        f"📥 *شروع دانلود کامل کانال*\n`{link}`\n🎯 مقصد: `{dest}`\n🔢 سقف: *{limit}* فایل\n🕒 لطفا صبور باشید...",
+    )
+
+    try:
+        chat, joined_now = await _resolve_channel_entity(userbot, link)
+        chat_id = chat.id
+        title = getattr(chat, "title", None) or str(chat_id)
+        print(f"[کانال] ✅ کانال شناسایی شد: {title} | chat_id={chat_id} | عضو جدید: {joined_now}")
+
+        if getattr(chat, "has_protected_content", False):
+            blocked = (
+                "🚫 این کانال «قفل ذخیره‌سازی محتوا» دارد.\n"
+                "تلگرام اجازهٔ دانلود یا کپی فایل‌های این کانال را به هیچ‌کس نمی‌دهد؛ کاری از دست ابزار برنمی‌آید."
+            )
+            print(f"[کانال] {blocked}")
+            await safe_send_message(owner_id, blocked)
+            return
+
+        # Warm the peer cache of the destination so a numeric id is not "invalid".
+        try:
+            await userbot.send_message(dest, f"🔔 شروع ارسال رسانه‌های «{title}» ...")
+            await asyncio.sleep(2)
+        except Exception as e:
+            print(f"[کانال] ⚠️ گرم‌کردن مقصد ناموفق (ادامه می‌دهیم): {e}")
+
+        if next_offset:
+            print(f"[کانال] ⏩ ادامه از پیام {next_offset} (اجرای قبلی نیمه‌کاره ماند)")
+            await safe_send_message(owner_id, f"⏩ *ادامه از همان‌جا* — از پیام {next_offset} به بعد.")
+        else:
+            print("[کانال] 🆕 شروع از جدیدترین پیام‌ها")
+
+        max_scan = max(limit * 12, 3000)
+        print(f"[کانال] 🔍 سقف اسکن پیام: {max_scan}")
+
+        async for msg in userbot.get_chat_history(chat_id, limit=0, offset_id=next_offset):
+            scanned += 1
+            if scanned > max_scan:
+                print(f"[کانال] ⚠️ سقف اسکن پیام ({max_scan}) پر شد؛ متوقف شدیم.")
+                break
+
+            if getattr(msg, "has_protected_content", False):
+                print(f"[کانال] 🚫 پیام {msg.id} قفل ذخیره‌سازی دارد؛ رد شد.")
+                continue
+
+            kind = _media_kind(msg)
+            if not kind:
+                continue
+
+            if sent + skipped >= limit:
+                print(f"[کانال] 🏁 به سقف {limit} فایل رسیدیم.")
+                break
+
+            uid = _media_unique_id(msg)
+            if uid and uid in done_ids:
+                skipped += 1
+                continue
+
+            idx = sent + skipped + failed + 1
+            label = MEDIA_LABELS.get(kind, "📦 رسانه")
+            ok = False
+
+            try:
+                await msg.copy(dest)
+                ok = True
+                print(f"[کانال] {idx}/{limit} · {label} · پیام {msg.id} → کپی سریع ✅")
+            except FloodWait as fw:
+                wait_s = int(getattr(fw, "value", 5)) + 2
+                print(f"[کانال] ⏳ محدودیت تلگرام: {wait_s} ثانیه صبر می‌کنیم...")
+                await asyncio.sleep(wait_s)
+                try:
+                    await msg.copy(dest)
+                    ok = True
+                    print(f"[کانال] {idx}/{limit} · {label} → کپی بعد از انتظار ✅")
+                except Exception as e2:
+                    print(f"[کانال] ❌ کپی دوم هم نشد: {e2}")
+            except Exception as copy_err:
+                print(f"[کانال] 🔁 کپی مستقیم نشد ({copy_err}) → دانلود و آپلود دستی")
+                ok = await _download_and_send_media(userbot, msg, kind, dest)
+                if ok:
+                    print(f"[کانال] {idx}/{limit} · {label} → دانلود و آپلود ✅")
+
+            if ok:
+                sent += 1
+                if uid:
+                    done_ids.add(uid)
+            else:
+                failed += 1
+
+            all_state[state_key] = {
+                "chat_id": chat_id,
+                "title": title,
+                "offset_id": msg.id,
+                "done": sorted(done_ids)[-CHANNEL_MAX_DONE_IDS:],
+                "sent": sent,
+                "skipped": skipped,
+                "failed": failed,
+                "updated_at": time.time(),
+            }
+
+            if idx % 10 == 0 or not ok:
+                _save_channel_state(all_state)
+                elapsed = int(time.time() - started)
+                print(
+                    f"[کانال] 📊 پیشرفت: ارسال {sent} · تکراری {skipped} · خطا {failed} "
+                    f"· اسکن {scanned} · زمان {elapsed}s"
+                )
+
+        _save_channel_state(all_state)
+        elapsed = int(time.time() - started)
+        summary = (
+            f"🏁 *دانلود کامل کانال تمام شد*\n"
+            f"📤 ارسال‌شده: *{sent}*\n"
+            f"🟡 تکراری (قبلاً فرستاده شده): *{skipped}*\n"
+            f"❌ ناموفق: *{failed}*\n"
+            f"🔍 پیام‌های اسکن‌شده: *{scanned}*\n"
+            f"⏱️ زمان: *{elapsed}* ثانیه\n"
+            f"🎯 مقصد: `{dest}`"
+        )
+        print(f"[کانال] {summary.replace(chr(10), ' | ')}")
+        await safe_send_message(owner_id, summary)
+
+    except Exception as e:
+        print(f"[کانال] ❌ خطای کلی: {e}")
+        try:
+            await safe_send_message(owner_id, f"❌ *خطا در دانلود کامل کانال:*\n`{str(e)}`")
+        except Exception:
+            pass
+    finally:
+        try:
+            _save_channel_state(all_state)
+        except Exception:
+            pass
+        if joined_now and not keep_membership and chat_id is not None:
+            try:
+                await userbot.leave_chat(chat_id)
+                print(f"[کانال] 🚪 از کانال {chat_id} خارج شدیم (طبق تنظیم).")
+            except Exception as e:
+                print(f"[کانال] ⚠️ خروج از کانال ناموفق: {e}")
+
+
 async def process_gallery_extraction(link, owner_id, msg_obj=None, custom_dest_id=None):
     import json, zipfile, requests, time, os, shutil, tempfile
     from datetime import datetime
@@ -2281,6 +2626,22 @@ async def main_download():
 
             try:
                 queue_status_text = f"\n📊 *وضعیت صف سفارش:* ویدیو *{link_idx}* از *{len(extracted_links)}* (⏳ *{len(extracted_links) - link_idx}* ویدیو باقی‌مانده)" if len(extracted_links) > 1 else ""
+
+                if os.environ.get("CHANNEL_DUMP_MODE", "false").lower() == "true":
+                    print("DEBUG ROUTING: Channel dump mode → process_channel_dump")
+                    try:
+                        limit_val = int(str(os.environ.get("CHANNEL_LIMIT") or "1000").strip())
+                    except Exception:
+                        limit_val = 1000
+                    keep_membership = os.environ.get("CHANNEL_LEAVE", "true").lower() == "false"
+                    await process_channel_dump(
+                        target_link_str,
+                        owner_id,
+                        limit=limit_val,
+                        target_channel=os.environ.get("TARGET_CHANNEL"),
+                        keep_membership=keep_membership,
+                    )
+                    continue
 
                 if is_gallery_link:
                     print("DEBUG ROUTING: Routing to process_gallery_extraction...")
