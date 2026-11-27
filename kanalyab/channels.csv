@@ -188,6 +188,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,topor,ТОПОР - Горячие новости,1355514,https://t.me/topor,ru,2026-11-23,dataset,0
 ,username,Telegram Usernames,1350000,https://t.me/username,un,2026-11-23,live,0
 1066197625,,Telegram Usernames,1348503,,un,2026-11-27T11:12:01,dataset,0
+,ryanrun,Бегущий по рынку,1339019,https://t.me/ryanrun,ru,2026-11-27T20:00:35,dataset,0
 3159150753,Linkdoniimm,لینکدونی گروهکده تهران گپ دونی چت 🔱,1329382,https://t.me/Linkdoniimm,fa,2026-11-23,live,0
 ,moscowmi,Моя Москва,1328499,https://t.me/moscowmi,ru,2026-11-23,dataset,0
 2153647281,Jarian_com,جریان,1327183,https://t.me/Jarian_com,fa,2026-11-27T10:40:02,dataset,0
@@ -224,7 +225,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,nnknn,- أبيات عبارات فصحىَ,1207380,https://t.me/nnknn,fa,2026-11-23,dataset,0
 1978277959,,Москва+,1206433,,ru,2026-11-23,live,0
 ,Wylsared,ВИЛСАКОМ РЕД / WYLSACOM RED,1193569,https://t.me/Wylsared,ru,2026-11-23,dataset,0
-,ryanrun,Бегущий по рынку,1193074,https://t.me/ryanrun,ru,2026-11-27T20:00:35,dataset,0
 1114753034,irZagrosNews,خبر فوری جنگ ایران,1184610,https://t.me/irZagrosNews,fa,2026-11-23,dataset,0
 2152319525,boopupdates,boop announcements,1180210,https://t.me/boopupdates,un,2026-11-23,live,0
 ,kunuzofficial,Kun.uz | Расмий канал,1177105,https://t.me/kunuzofficial,ru,2026-11-23,dataset,0
@@ -643,6 +643,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1656684731,aesk58,شوگرمامی مامی ددی دوستیابی,423093,https://t.me/aesk58,fa,2026-11-23,dataset,1
 1047166746,stalin_gulag,Сталингулаг,422374,https://t.me/stalin_gulag,ru,2026-11-24,dataset,0
 1310984791,intelslava,Intel Slava Z,420842,https://t.me/intelslava,un,2026-11-24,dataset,0
+,twitt_ota,твиттота,420809,https://t.me/twitt_ota,ru,2026-11-27T20:02:10,dataset,0
 ,plohoypacan,PLOHOY PAREN,420724,https://t.me/plohoypacan,un,2026-11-25T12:23:19,dataset,0
 1252435719,,ربات چت و گروه ، گپ دوستیابی,418446,,fa,2026-11-22,live,0
 ,v2ray_33,کانال پروکسی فیلترشکن رایگان,418132,https://t.me/v2ray_33,fa,2026-11-23,dataset,0
@@ -4746,7 +4747,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2492871878,y8_f6,ماساژور دوستیابی همسریابی تهران مشهد,44831,https://t.me/y8_f6,fa,2026-11-27T19:42:08,live,1
 ,usmanovfck1,Usmanovfck,44789,https://t.me/usmanovfck1,un,2026-11-23,dataset,0
 ,prozru,Проектирование зданий,44775,https://t.me/prozru,ru,2026-11-24,dataset,0
-,RandomGod,RandomGodBot⚡️[Новости],44769,https://t.me/RandomGod,ru,2026-11-23,live,0
+,RandomGod,RandomGodBot⚡️[Новости],44774,https://t.me/RandomGod,ru,2026-11-23,live,0
 ,dubininvaofficial,Дубынин о мозге 🧠,44751,https://t.me/dubininvaofficial,ru,2026-11-23,dataset,0
 ,akhbarefouri_iran,🇮🇷اخبار فوری ایران و جهان🇮🇷,44733,https://t.me/akhbarefouri_iran,fa,2026-11-24,live,0
 1537025594,persianpeterson,جردن پیترسون فارسی,44725,https://t.me/persianpeterson,fa,2026-11-23,live,0
@@ -4857,6 +4858,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,se4soned,SEASONED,43246,https://t.me/se4soned,un,2026-11-23,dataset,0
 1247868509,tadwingaran,Tadwingaran |تدوینگران|,43244,https://t.me/tadwingaran,fa,2026-11-24T20:46:44,live,0
 1205855221,oliv_e,Салаты и закуски,43226,https://t.me/oliv_e,ru,2026-11-24T20:54:34,dataset,0
+,jun_hi_vacancies,Вакансии для дизайнеров,43223,https://t.me/jun_hi_vacancies,ru,2026-11-27T20:00:51,dataset,0
 2073355801,pypackeges,چنل آرشیو پای پکیج,43222,https://t.me/pypackeges,fa,2026-11-23,live,0
 ,Dobromil_yourfit,Александр Добромиль your fit,43212,https://t.me/Dobromil_yourfit,ru,2026-11-27T15:28:04,dataset,0
 ,spadreamru,SPADREAM,43200,https://t.me/spadreamru,un,2026-11-23,dataset,0
@@ -5033,6 +5035,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Znanie_Russia,Российское общество «Знание»,41101,https://t.me/Znanie_Russia,ru,2026-11-23,dataset,0
 ,tasamayatasenka,ТАИСУШКА🙉,41044,https://t.me/tasamayatasenka,ru,2026-11-23,live,0
 ,vampishetchadina,Мария Чадина,41039,https://t.me/vampishetchadina,ru,2026-11-24,live,0
+1483016364,rf_history,История.РФ,41022,https://t.me/rf_history,ru,2026-11-27T20:00:51,dataset,0
 ,platformauzb,platforma.uz,41011,https://t.me/platformauzb,un,2026-11-24,dataset,0
 4357275098,Arshivepak,هایپر مارکت پک +۱۸,41009,https://t.me/Arshivepak,fa,2026-11-27T11:00:40,live,0
 ,geltek_cosmetics,Geltek за стеклом,41000,https://t.me/geltek_cosmetics,ru,2026-11-23,dataset,0
@@ -7374,6 +7377,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,rentv_channel,РЕН ТВ | Телеканал,23454,https://t.me/rentv_channel,ru,2026-11-23,dataset,0
 ,PocophoneGlobalUpdates,Pocophone F1 | UPDATES,23454,https://t.me/PocophoneGlobalUpdates,un,2026-11-23,live,0
 1226047742,,آموزش تلگرام | تلگرامی 💙,23454,,fa,2026-11-24,live,0
+,jun_hi,"Дизайнер, привет",23453,https://t.me/jun_hi,ru,2026-11-25T18:59:47,dataset,0
 ,asianfant_eksmo,Китайский квартал | ЭКСМО,23450,https://t.me/asianfant_eksmo,ru,2026-11-23,dataset,0
 ,GB_TECH,ıllıllı ɢʙ ᴛᴇᴄʜ ıllıllı,23439,https://t.me/GB_TECH,un,2026-11-23,dataset,0
 1192193228,redicetv,Red Ice TV (Censored),23419,https://t.me/redicetv,en,2026-11-26T20:34:51,dataset,0
@@ -7852,6 +7856,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,ikosmetolog,Я КОСМЕТОЛОГ,21504,https://t.me/ikosmetolog,ru,2026-11-23,dataset,0
 ,mikewashere,ЗДЕСЬ БЫЛ МАЙК,21500,https://t.me/mikewashere,ru,2026-11-23,dataset,0
 1653410528,mama_kisonka,Досуг и точка. Зовём с нами 🐾,21500,https://t.me/mama_kisonka,ru,2026-11-23,dataset,0
+,cardinparis,cardinparis,21500,https://t.me/cardinparis,un,2026-11-27T20:00:17,dataset,0
 ,heystore,HEY.STORE КРОССОВКИ И ОДЕЖДА НОВОСИБИРСК,21497,https://t.me/heystore,ru,2026-11-23,dataset,0
 ,noorussk,ноо — русский язык егэ,21495,https://t.me/noorussk,ru,2026-11-24T20:44:52,dataset,0
 ,loccitane_ru,Л’Окситан Россия,21488,https://t.me/loccitane_ru,ru,2026-11-23,dataset,0
@@ -8125,7 +8130,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,sekretikauxi,Секрети Каюшки,20488,https://t.me/sekretikauxi,ru,2026-11-24,live,0
 ,Medicallanguage,زبان پزشکی دکتر سیادت (گروه آموزشی دکتر یزدان دوست),20484,https://t.me/Medicallanguage,fa,2026-11-23,live,0
 ,BlenderStorage,Blender: Storage,20479,https://t.me/BlenderStorage,un,2026-11-23,live,0
-1115493372,plnpskov,Псковская Лента Новостей,20473,https://t.me/plnpskov,ru,2026-11-27T10:42:01,dataset,0
+1115493372,plnpskov,Псковская Лента Новостей,20474,https://t.me/plnpskov,ru,2026-11-27T10:42:01,dataset,0
 ,sodanails,Soda | Сеть салонов красоты,20470,https://t.me/sodanails,ru,2026-11-24,live,0
 ,djaaa,😎|狗推DJ|最新歌曲|摇摆旋律😎,20469,https://t.me/djaaa,un,2026-11-23,dataset,0
 ,Helikontexrus,Helikon-Tex® Russia,20469,https://t.me/Helikontexrus,un,2026-11-24,dataset,0
@@ -9079,6 +9084,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,fkdacha,fkdacha,17200,https://t.me/fkdacha,un,2026-11-25T12:25:25,dataset,0
 ,xipsi,ооо «творческий кризис»,17200,https://t.me/xipsi,ru,2026-11-24,dataset,0
 ,musthavetobacco,MUSTHAVE Tobacco,17196,https://t.me/musthavetobacco,un,2026-11-24,live,0
+,resf_ru,Федерация компьютерного спорта России,17193,https://t.me/resf_ru,ru,2026-11-27T20:00:51,dataset,0
 ,strategic_move,"Strategic move: стратегия, продукт и AI",17184,https://t.me/strategic_move,ru,2026-11-23,dataset,0
 3233169562,starvpn_Config,پرنده آزاد 🕊 ( فیلترشکن ),17181,https://t.me/starvpn_Config,fa,2026-11-23,live,0
 ,rabkor1917,Рабкор,17176,https://t.me/rabkor1917,ru,2026-11-23,live,0
@@ -9892,6 +9898,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,dreamcoin_community,Dreamcoin | Community,14968,https://t.me/dreamcoin_community,un,2026-11-24,dataset,0
 ,NoticerNews,Noticer News,14967,https://t.me/NoticerNews,en,2026-11-24,dataset,0
 ,obzornikmasha,ОБЗОРНИК МАША 📚,14966,https://t.me/obzornikmasha,ru,2026-11-25T19:12:20,dataset,0
+,instrao,Институт содержания и методов обучения,14955,https://t.me/instrao,ru,2026-11-27T20:00:51,dataset,0
 ,MuaMarisha,muamarisha / бьютиблог,14954,https://t.me/MuaMarisha,ru,2026-11-24T21:08:44,dataset,0
 ,hanumka_official,Hanumka👑,14953,https://t.me/hanumka_official,un,2026-11-23,live,0
 ,skwlkrphonk,SKWLKR,14952,https://t.me/skwlkrphonk,un,2026-11-24,dataset,0
@@ -11164,6 +11171,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,cpartisans_by,Киберпартизаны BY,12361,https://t.me/cpartisans_by,ru,2026-11-24,dataset,0
 1144259676,didimusico,"ریمیکس،ارکستی,آهنگ عروسی (DIDIMUSICO)",12357,https://t.me/didimusico,fa,2026-11-21,live,1
 2187598616,fl_gn,استخاره و فالگیری روزانه، قهوه ، تاروت,12355,https://t.me/fl_gn,fa,2026-11-24T20:53:11,live,0
+,oqmobile,OQ mobile,12354,https://t.me/oqmobile,un,2026-11-25T18:58:25,dataset,0
 1327097335,Khanehamburg,خانه هامبورگ Khane Hamburg,12354,https://t.me/Khanehamburg,fa,2026-11-27T10:45:27,live,0
 ,jivojum,"Канал Антония Ульданова ""Живой ум"". Погружения в предмет",12353,https://t.me/jivojum,ru,2026-11-23,dataset,0
 ,miyaki_asmr,miyaki ASMR [channel],12353,https://t.me/miyaki_asmr,en,2026-11-24,live,0
@@ -11184,7 +11192,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,dtrade_news,DTrade — Новости,12328,https://t.me/dtrade_news,ru,2026-11-24T20:47:56,live,0
 ,leninka_ru,Российская государственная библиотека (Ленинка),12327,https://t.me/leninka_ru,ru,2026-11-23,dataset,0
 1903617582,titlimahiw,Mahi,12325,https://t.me/titlimahiw,un,2026-11-23,live,0
-,oqmobile,OQ mobile,12320,https://t.me/oqmobile,un,2026-11-25T18:58:25,dataset,0
 ,bgoonline,Богородский онлайн,12320,https://t.me/bgoonline,ru,2026-11-23,dataset,0
 ,dxxx49,dexy🥩,12319,https://t.me/dxxx49,un,2026-11-27T19:39:11,live,0
 ,israelpolice_ru,Пресс служба Полиции Израиля,12316,https://t.me/israelpolice_ru,ru,2026-11-24,live,0
@@ -12486,6 +12493,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,ocpochmac,Картиночный,10407,https://t.me/ocpochmac,ru,2026-11-24,dataset,0
 ,SamsungUzbekistan,Samsung Uzbekistan,10407,https://t.me/SamsungUzbekistan,un,2026-11-23,dataset,0
 ,so2_exe,Standoff2.exe,10407,https://t.me/so2_exe,un,2026-11-24T20:43:44,live,0
+,demidovshow,ЦИРК ДЕМИДОВЫХ,10400,https://t.me/demidovshow,ru,2026-11-27T20:01:30,dataset,0
 ,bondareva_blog,Mrs Bondareva,10400,https://t.me/bondareva_blog,un,2026-11-23,dataset,0
 ,patch_and_go,Patch and Go,10400,https://t.me/patch_and_go,un,2026-11-23,dataset,0
 ,sumochka_bye_bye,"Сумочка, мы уходим!",10400,https://t.me/sumochka_bye_bye,ru,2026-11-23,dataset,0
@@ -12646,6 +12654,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2258168802,js_6a,داستان رمان سکسی شهوتی شهوانی چت,10158,https://t.me/js_6a,fa,2026-11-23,live,1
 1776405849,praetorian_cohort,Praetorian Cohort ⚔️ | Античная военная история,10156,https://t.me/praetorian_cohort,ru,2026-11-26T08:43:09,dataset,0
 ,kontorabaraxlo,KONTORA_RESALE,10156,https://t.me/kontorabaraxlo,un,2026-11-23,dataset,0
+,trueosint,True OSINT,10154,https://t.me/trueosint,un,2026-11-27T20:00:29,dataset,0
 ,arteemoov,Artemov,10152,https://t.me/arteemoov,un,2026-11-24,dataset,0
 ,gkNPS,Не Просто Стройка,10149,https://t.me/gkNPS,ru,2026-11-24,dataset,0
 ,BSATradeIn,BSA Trade-In,10147,https://t.me/BSATradeIn,en,2026-11-23,dataset,0
@@ -13043,6 +13052,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,knyzkove_zhyttya,Книжкове буття,9653,https://t.me/knyzkove_zhyttya,ru,2026-11-24T21:05:16,dataset,0
 ,Wuque_Studio,Wuque CIS,9653,https://t.me/Wuque_Studio,un,2026-11-24,live,0
 ,Filmora9,Filmora 9 ™,9651,https://t.me/Filmora9,un,2026-11-23,live,0
+,refs_hi,"Рефы, привет",9648,https://t.me/refs_hi,ru,2026-11-27T20:00:51,dataset,0
 ,makeeva99999,МАКЕЕВА,9648,https://t.me/makeeva99999,ru,2026-11-24,live,0
 ,workshop_coaches,МАСТЕРСКАЯ ТРЕНЕРОВ | VELOGERA,9648,https://t.me/workshop_coaches,ru,2026-11-26T19:55:25,live,0
 1287401651,ines_sainz,Inés Sainz,9646,https://t.me/ines_sainz,un,2026-11-24,dataset,0
@@ -13106,7 +13116,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,mashruuums,мэшрумс и ее husbands[+18],9569,https://t.me/mashruuums,ru,2026-11-25T12:59:57,live,0
 ,litnetknigi,Литнет. Книги онлайн,9568,https://t.me/litnetknigi,ru,2026-11-24,dataset,0
 1269896261,AsilbekYusupov,Asilbek Yusupov | IELTS 9.0 | W 8.5,9568,https://t.me/AsilbekYusupov,un,2026-11-26T08:33:41,dataset,0
-,trueosint,True OSINT,9567,https://t.me/trueosint,un,2026-11-27T20:00:29,dataset,0
 ,segodnia_ru,Сегодня.ру,9566,https://t.me/segodnia_ru,ru,2026-11-24,live,0
 ,fondinsan,Фонд «Инсан»,9564,https://t.me/fondinsan,ru,2026-11-25T11:50:16,dataset,0
 ,weyowang,etozheweyo,9564,https://t.me/weyowang,fl,2026-11-25T10:20:41,live,0
@@ -15483,6 +15492,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,masamedia,masa.media,7033,https://t.me/masamedia,un,2026-11-24,dataset,0
 ,ahahaitsrazy,ahaha its razy,7031,https://t.me/ahahaitsrazy,un,2026-11-24,live,0
 ,SVOYASY,СВОЯСИ,7030,https://t.me/SVOYASY,ru,2026-11-23,dataset,0
+,uye_channel,Главная Героиня,7030,https://t.me/uye_channel,ru,2026-11-27T20:00:51,dataset,0
 ,ilovesupersport,I Love Supersport Москва,7030,https://t.me/ilovesupersport,ru,2026-11-27T19:15:41,dataset,0
 ,natti_jun_front,Наташа пишет про IT,7030,https://t.me/natti_jun_front,ru,2026-11-23,dataset,0
 ,Mcat_uworld,Uworld | MCAT 2026,7030,https://t.me/Mcat_uworld,un,2026-11-23,live,0
@@ -16031,6 +16041,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,artpokaz_channel,#ARTPOKAZ,6556,https://t.me/artpokaz_channel,un,2026-11-23,dataset,0
 ,eblansupport,ESUPP,6556,https://t.me/eblansupport,un,2026-11-25T10:23:26,live,0
 1477520398,amuzeshe_zanashue,آموزش زناشویی,6556,https://t.me/amuzeshe_zanashue,fa,2026-11-27T16:55:18,live,1
+,klukvarock,Клюква рекордс 🌺,6554,https://t.me/klukvarock,ru,2026-11-27T11:22:48,dataset,0
 ,sontageveryday,сонтаг пишет каждый день,6553,https://t.me/sontageveryday,ru,2026-11-27T19:45:43,live,0
 2156519796,aynaz_zahedani,آهنگ و کلیپ بلوچی🖤🌚,6552,https://t.me/aynaz_zahedani,fa,2026-11-22,live,1
 ,vsksrscor,ВСКС,6550,https://t.me/vsksrscor,ru,2026-11-23,dataset,0
@@ -16630,6 +16641,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,museumGorki,Музей-заповедник Горки Ленинские,6108,https://t.me/museumGorki,ru,2026-11-23,live,0
 ,kisgazetaofficial,Кисловодская газета | Новости Кисловодска,6107,https://t.me/kisgazetaofficial,ru,2026-11-23,dataset,0
 ,scrumtrek_official,ScrumTrek,6107,https://t.me/scrumtrek_official,un,2026-11-27T19:43:53,dataset,0
+,secmedia,Cyber Media,6107,https://t.me/secmedia,un,2026-11-27T20:00:29,dataset,0
 ,IAKIMANKA,IAKIMANKA,6104,https://t.me/IAKIMANKA,un,2026-11-24,dataset,0
 ,ceriertone,Ceriertone,6103,https://t.me/ceriertone,un,2026-11-23,live,0
 ,kusuv,💰賺疯了 赢麻了,6103,https://t.me/kusuv,other,2026-11-23,live,0
@@ -16639,7 +16651,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,satyrclub,SATYR HOUSE,6100,https://t.me/satyrclub,un,2026-11-25T12:15:37,live,0
 ,paratype_fonts,Паратайп,6099,https://t.me/paratype_fonts,ru,2026-11-23,dataset,0
 ,dubasikopt,dubasik_opt,6099,https://t.me/dubasikopt,un,2026-11-23,dataset,0
-,secmedia,Cyber Media,6099,https://t.me/secmedia,un,2026-11-27T20:00:29,dataset,0
 1393236392,byakavasyaka,из сердца тьмы,6098,https://t.me/byakavasyaka,ru,2026-11-26T08:38:46,dataset,0
 ,aliakbaryaghitabar,Aliakbar Yaghitabar,6098,https://t.me/aliakbaryaghitabar,fl,2026-11-24,live,0
 ,ENIGMA54,ENIGMA,6097,https://t.me/ENIGMA54,un,2026-11-25T10:19:53,dataset,0
@@ -17405,6 +17416,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,only_lovegirls,Love Girls 🦋🧸,5568,https://t.me/only_lovegirls,en,2026-11-23,live,0
 1596249976,Dr_mrdi,شیمی محمد مرادی کلاسینو,5568,https://t.me/Dr_mrdi,fa,2026-11-24T20:58:23,live,0
 ,AMIINEZEA,𝐀𝐌𝐈𝐍𝐄𝐙𝐄𝐀,5567,https://t.me/AMIINEZEA,other,2026-11-23,dataset,0
+,a100comfort,А-100 Комфорт,5567,https://t.me/a100comfort,ru,2026-11-27T20:01:30,dataset,0
 ,firstlinehelp,Первая линия,5566,https://t.me/firstlinehelp,ru,2026-11-23,dataset,0
 1145328572,obuhovpro,Обухов.PRO,5566,https://t.me/obuhovpro,ru,2026-11-24,dataset,0
 ,YourDoll_Shop,YourDoll - Monster High dolls shop,5565,https://t.me/YourDoll_Shop,en,2026-11-23,live,0
@@ -17632,6 +17644,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2111445563,Zabann_Ghoreishii,زبان میلاد قریشی,5437,https://t.me/Zabann_Ghoreishii,fa,2026-11-24T20:58:48,live,0
 ,thelawyersays,Арсен Магомедов 🇵🇸,5437,https://t.me/thelawyersays,ru,2026-11-25T10:26:20,live,0
 3396851090,Bad18Film,فیلم شب ● فیلم +18 ● فیلم بزرگسالان,5436,https://t.me/Bad18Film,fa,2026-11-23,live,0
+,partners1x_ru,1XPARTNERS,5436,https://t.me/partners1x_ru,un,2026-11-27T11:22:48,live,0
 ,plohoyrusski,Плохой Русский @plohoyrusski,5435,https://t.me/plohoyrusski,ru,2026-11-23,dataset,0
 ,pressamod72,Мособлдума,5435,https://t.me/pressamod72,ru,2026-11-23,dataset,0
 2372919458,film_ahmad,خانم خانوم والده,5434,https://t.me/film_ahmad,fa,2026-11-23,live,0
@@ -17694,7 +17707,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,billybookmedia,БИЛЛИ •,5400,https://t.me/billybookmedia,ru,2026-11-24,live,0
 ,group_1032,1032,5399,https://t.me/group_1032,other,2026-11-26T20:18:51,live,0
 ,expkart,Экспедиционные картинки,5397,https://t.me/expkart,ru,2026-11-25T19:14:16,dataset,0
-,cardinparis,cardinparis,5396,https://t.me/cardinparis,un,2026-11-27T20:00:17,dataset,0
 2132629080,PhemexDOGEAirdrop,DOGE Airdrop by Phemex Exchange,5396,https://t.me/PhemexDOGEAirdrop,un,2026-11-27T10:32:22,live,0
 ,wooden_blog,Wooden blog,5395,https://t.me/wooden_blog,en,2026-11-23,dataset,0
 ,garmond,Гармонд,5395,https://t.me/garmond,ru,2026-11-24,dataset,0
@@ -18010,6 +18022,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1817536795,music_rock22,کانال دستورات موزیک,5206,https://t.me/music_rock22,fa,2026-11-24T20:50:57,live,0
 1246584212,stellarsquad,Stellar Squad,5205,https://t.me/stellarsquad,un,2026-11-27T10:37:23,dataset,0
 ,okey_okky_official,Черная пятница O-key AI | Okky - official channel,5204,https://t.me/okey_okky_official,ru,2026-11-24,live,0
+,painhunterxx,painhunter,5203,https://t.me/painhunterxx,un,2026-11-25T19:10:22,live,0
 3921287183,femmess_videos,chacripxte / Celia ricci 🎥,5202,https://t.me/femmess_videos,un,2026-11-22,live,0
 ,cultureofattention,Культура внимания | Culture of Attention,5202,https://t.me/cultureofattention,ru,2026-11-23,live,0
 ,cheshirforever,Cheshir,5202,https://t.me/cheshirforever,un,2026-11-25T10:32:05,live,0
@@ -18028,7 +18041,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,cbt_info,Центр Когнитивной Терапии,5195,https://t.me/cbt_info,ru,2026-11-23,dataset,0
 ,obsessiiia,Обсессия,5195,https://t.me/obsessiiia,ru,2026-11-23,live,0
 ,whiterex_original,White Rex Original,5195,https://t.me/whiterex_original,un,2026-11-24,live,0
-,painhunterxx,painhunter,5194,https://t.me/painhunterxx,un,2026-11-25T19:10:22,live,0
 ,zilart_museum,Музей «ЗИЛАРТ»,5192,https://t.me/zilart_museum,ru,2026-11-24,live,0
 ,buzoniru,BUZONI OFFICIAL,5190,https://t.me/buzoniru,en,2026-11-23,dataset,0
 ,logachevacosmetics,Vanskin в мире сывороток,5190,https://t.me/logachevacosmetics,ru,2026-11-24,dataset,0
@@ -18046,6 +18058,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,dostoevskybookstore,Книжный Dостоевский,5182,https://t.me/dostoevskybookstore,ru,2026-11-24,dataset,0
 ,mycakehome,Cake Home,5182,https://t.me/mycakehome,un,2026-11-23,dataset,0
 ,MSyrnikov,Максим Сырников,5181,https://t.me/MSyrnikov,ru,2026-11-24,dataset,0
+,stereo_tochka,Стерео Точка,5181,https://t.me/stereo_tochka,ru,2026-11-27T20:00:29,dataset,0
 ,GUMRedSquare,GUM RedSquare,5180,https://t.me/GUMRedSquare,un,2026-11-23,dataset,0
 ,russianbarbercommunity,Russian Barber Community,5180,https://t.me/russianbarbercommunity,un,2026-11-27T19:04:11,dataset,0
 ,na_begu,На бегу,5180,https://t.me/na_begu,ru,2026-11-24,dataset,0
@@ -18608,6 +18621,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,blato_crew,BLATOSPHERA,4860,https://t.me/blato_crew,un,2026-11-27T15:31:09,live,0
 ,rescom_ua,Комітет Спротиву /// Resistance Committee,4859,https://t.me/rescom_ua,ru,2026-11-25T19:19:43,dataset,0
 ,mil_zone,Militant Zone World Wide,4858,https://t.me/mil_zone,en,2026-11-24,live,0
+,ufasobakaru,Уфа.Собака.ru,4857,https://t.me/ufasobakaru,ru,2026-11-27T20:01:30,dataset,0
 ,excitante2025,EXCITANTE=стилист для вас,4857,https://t.me/excitante2025,ru,2026-11-23,live,0
 ,xronikibar,Хроники текущих распитий,4855,https://t.me/xronikibar,ru,2026-11-23,dataset,0
 ,Nano_News,NaNo News,4855,https://t.me/Nano_News,en,2026-11-25T12:43:22,dataset,0
@@ -18727,6 +18741,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,svobodnoe_kino,Киношкола «Свободное кино»,4794,https://t.me/svobodnoe_kino,ru,2026-11-23,dataset,0
 ,carpenterstore,carpenter,4794,https://t.me/carpenterstore,un,2026-11-23,live,0
 ,MaryPeroUniverse,Вселенная пяти миров Мари Перо,4794,https://t.me/MaryPeroUniverse,ru,2026-11-25T19:13:43,live,0
+,suwusheey,ꪆ୧ amaryllis | perfect storm,4793,https://t.me/suwusheey,un,2026-11-26T08:58:17,dataset,0
 ,pixel_map,PixelMap,4793,https://t.me/pixel_map,un,2026-11-23,dataset,0
 ,orta_guruh,O&#39;rta guruh tarbiyachisi,4793,https://t.me/orta_guruh,un,2026-11-23,live,0
 ,semmyx2010,semmyx,4793,https://t.me/semmyx2010,un,2026-11-26T19:51:37,live,0
@@ -18734,7 +18749,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1682494681,chadormalu_sc,باشگاه ورزشی چادرملو اردکان,4792,https://t.me/chadormalu_sc,fa,2026-11-23,live,0
 ,pochitushki_valushkina,Почитушки от Елены Валюшкиной,4792,https://t.me/pochitushki_valushkina,ru,2026-11-24,live,0
 ,bakaidov,Bakaidov.ru. Лицо с инвалидностью (Гребаный паралитик).,4791,https://t.me/bakaidov,ru,2026-11-23,dataset,0
-,suwusheey,ꪆ୧ amaryllis | perfect storm,4791,https://t.me/suwusheey,un,2026-11-26T08:58:17,dataset,0
 ,somsomsom_io,Журнал «‎Сом»,4791,https://t.me/somsomsom_io,ru,2026-11-23,dataset,0
 ,FootballFamilyShop,Football Family Shop,4790,https://t.me/FootballFamilyShop,en,2026-11-25T10:41:50,dataset,1
 ,Aleshkovski,Алексей Алешковский. Дневник реакционера,4790,https://t.me/Aleshkovski,ru,2026-11-23,dataset,0
@@ -18829,6 +18843,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,fasonlar,@MODALAR,4733,https://t.me/fasonlar,un,2026-11-23,dataset,0
 1882720529,dermjournal,"DERMATOLOGY JOURNAL | ДЕРМАТОСКОПИЯ, ДЕРМАТОЛОГИЯ",4733,https://t.me/dermjournal,ru,2026-11-26T08:28:22,dataset,0
 ,Search_firm,[Blog] Поиск Организаций,4732,https://t.me/Search_firm,ru,2026-11-24,dataset,0
+,jugomeme,Югославская Мемная Республика | ЮМР,4732,https://t.me/jugomeme,ru,2026-11-27T20:00:26,dataset,0
 ,AcWiki,Ac-Wiki | 真·青年大学习,4731,https://t.me/AcWiki,un,2026-11-23,live,0
 ,stretfordsdiary,Stretford’s diary,4730,https://t.me/stretfordsdiary,un,2026-11-23,dataset,0
 ,manroshpak,Роман на работе,4730,https://t.me/manroshpak,ru,2026-11-27T19:18:18,dataset,0
@@ -19287,6 +19302,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1200034284,sintemlah,sintem lah,4498,https://t.me/sintemlah,un,2026-11-26T08:29:37,dataset,0
 ,infolgtu,Липецкий Политех (ЛГТУ),4496,https://t.me/infolgtu,ru,2026-11-27T19:24:24,dataset,0
 ,arkadybazarish,Аркадий Романов,4496,https://t.me/arkadybazarish,ru,2026-11-24,dataset,0
+,nyannews,НЯН - Агрегатор новостей,4496,https://t.me/nyannews,ru,2026-11-27T20:01:19,dataset,0
 ,VWAGENCYOFC,𝐁𝐔𝐁𝐀𝐑 || 𝐕𝐎𝐋𝐊𝐒𝐖𝐀𝐍 𝐀𝐆𝐄𝐍𝐂𝐘,4496,https://t.me/VWAGENCYOFC,other,2026-11-24,dataset,0
 ,horoschool,Хорошкола,4495,https://t.me/horoschool,ru,2026-11-23,dataset,0
 ,hrenologia,𒄩𒊑𒂗𒉡𒌋𒁳𒄀𒄿𒀸,4495,https://t.me/hrenologia,other,2026-11-24T20:47:44,dataset,0
@@ -19536,6 +19552,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,V2RAYNG_GALAXY,Galaxy | V2rayNG,4374,https://t.me/V2RAYNG_GALAXY,un,2026-11-23,dataset,0
 ,BahasaFess,Bahasa.,4374,https://t.me/BahasaFess,un,2026-11-24,live,0
 ,pressaff,PressAff.com | Арбитраж трафика,4373,https://t.me/pressaff,ru,2026-11-24,dataset,0
+,neurodiverpics,нейроотличные картинки,4372,https://t.me/neurodiverpics,ru,2026-11-27T20:02:20,dataset,0
 ,pokolenia_novyh,Поколения Новых,4372,https://t.me/pokolenia_novyh,ru,2026-11-23,live,0
 ,arculture,Artefact. Гид по музеям России,4371,https://t.me/arculture,ru,2026-11-25T18:30:54,dataset,0
 ,owaaxqq,owaaxq.(евик),4371,https://t.me/owaaxqq,ru,2026-11-23,live,0
@@ -19882,7 +19899,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1795874308,chemelovadesign,Chemelova.design,4219,https://t.me/chemelovadesign,en,2026-11-27T10:46:19,dataset,1
 ,boxonline7,عروض اقل الاسعار 🎁,4219,https://t.me/boxonline7,fa,2026-11-23,live,0
 ,yourbestv2,Aнна Вольт | Нутрициолог,4219,https://t.me/yourbestv2,ru,2026-11-24,live,0
-,scorigoatgang,Scori,4219,https://t.me/scorigoatgang,un,2026-11-27T19:51:24,live,0
 ,CHVVAKUSH_I,ЧВВАКУШ ✈️,4218,https://t.me/CHVVAKUSH_I,ru,2026-11-24,dataset,0
 1325838930,mihailaksel,Михаил Аксель,4218,https://t.me/mihailaksel,ru,2026-11-24,dataset,0
 ,optimismequation,Уравнение оптимизма,4218,https://t.me/optimismequation,ru,2026-11-23,live,0
@@ -20163,6 +20179,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,theFNFproduction,The FNF Production✨️,4096,https://t.me/theFNFproduction,un,2026-11-24,live,0
 ,ROD_Slavic,СЛАВЯНЕ,4095,https://t.me/ROD_Slavic,ru,2026-11-24,live,0
 ,alyonmediacom,ALYONMEDIA | QARAQALPAQ SHOW BIZNES A&#39;LEMI,4095,https://t.me/alyonmediacom,un,2026-11-25T12:24:31,live,0
+,Stutt_Grad,Штутт-Град,4093,https://t.me/Stutt_Grad,ru,2026-11-27T20:01:44,dataset,0
 ,ZvezdyRyadomLokteva,Топовые новости // Звезды рядом,4093,https://t.me/ZvezdyRyadomLokteva,ru,2026-11-24,live,0
 1205068355,worldkardo,KARDOWORLD,4093,https://t.me/worldkardo,un,2026-11-27T10:34:57,live,0
 ,Poluchitsya_Mir,Получится — поддерживающее медиа,4092,https://t.me/Poluchitsya_Mir,ru,2026-11-27T19:24:43,dataset,0
@@ -20326,6 +20343,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,sannapsd,sannaapsd,4017,https://t.me/sannapsd,un,2026-11-23,live,0
 ,journal_nasledie,NAΣLEΔIE. Археологический журнал,4016,https://t.me/journal_nasledie,ru,2026-11-23,dataset,0
 1661909731,irsmem,Мемочки от Ирочки,4016,https://t.me/irsmem,ru,2026-11-26T08:37:06,dataset,0
+,yooprivet,ПРИВЕТ | YO.PRIVET,4016,https://t.me/yooprivet,ru,2026-11-27T20:00:35,dataset,0
 1499474001,bnsjjehd,کانال،بیوه،صیغه،چنل،کوس،دخترخاله،عمه،گی،سکسی،گروه،گپ،کون،کس،کص،فول،کلیپ،فیلم،ربات،گیف،عکس،هاپ،پورن،افغانی،کیرشماره،ایرانی،های،دا,4016,https://t.me/bnsjjehd,fa,2026-11-21,live,1
 ,prof_razvitie,Конкурс «Профессиональное развитие»,4015,https://t.me/prof_razvitie,ru,2026-11-23,dataset,0
 ,testing_and_life,Тестирование и жизнь • про работу для живых людей,4014,https://t.me/testing_and_life,ru,2026-11-24,live,0
@@ -20685,6 +20703,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Tokocheat,Tokocheat,3861,https://t.me/Tokocheat,un,2026-11-23,dataset,0
 1394949184,mardom_org,صدای مردم,3861,https://t.me/mardom_org,fa,2026-11-27T10:48:07,live,0
 1285131217,akkasi_modeling,Modeling & photography,3861,https://t.me/akkasi_modeling,un,2026-11-27T11:01:00,live,0
+,spheratheatre,Театр «Сфера»,3860,https://t.me/spheratheatre,ru,2026-11-27T20:02:10,dataset,0
 ,ninatipafolk,"Нино, наверное про фольклор",3860,https://t.me/ninatipafolk,ru,2026-11-24,dataset,0
 ,adskafiha,تبلیغات کاف,3859,https://t.me/adskafiha,fa,2026-11-23,live,0
 ,fivesinners,5 Грешников | Genshin Impact,3859,https://t.me/fivesinners,ru,2026-11-24T20:47:33,live,0
@@ -20940,6 +20959,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,soundswavee,Sound’s Wave,3758,https://t.me/soundswavee,un,2026-11-24T21:08:03,dataset,0
 ,introchpict,PICT INTRO LANDSCAPE,3758,https://t.me/introchpict,un,2026-11-24,live,0
 ,dataviz_jobs,Dataviz jobs,3757,https://t.me/dataviz_jobs,en,2026-11-24,dataset,0
+,pineriver,Pine River Hotel,3757,https://t.me/pineriver,en,2026-11-27T20:02:19,dataset,0
 1238996596,vyvorot,Александр Анучкин/ Z,3757,https://t.me/vyvorot,ru,2026-11-24,dataset,0
 ,enteernal,enteernal,3757,https://t.me/enteernal,un,2026-11-24,live,0
 1055705462,varzesh_tehrann,ورزش تهران,3757,https://t.me/varzesh_tehrann,fa,2026-11-27T19:29:47,live,0
@@ -21163,6 +21183,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,hiskincosmetics,HISKIN | Корейская косметика,3674,https://t.me/hiskincosmetics,ru,2026-11-23,dataset,0
 ,light_almetyevsk,Светлый | Альметьевск,3674,https://t.me/light_almetyevsk,ru,2026-11-24,dataset,0
 ,Shopping_Side,Shopping Side 🌸 Находки с Wildberries,3673,https://t.me/Shopping_Side,ru,2026-11-23,dataset,0
+,cryptopro_news,Новости КриптоПро,3673,https://t.me/cryptopro_news,ru,2026-11-27T20:00:29,dataset,0
 3564887758,kmplvidtante,KUMPULAN VIDEO TANTE,3673,https://t.me/kmplvidtante,en,2026-11-22,live,0
 ,kanzlerberghain,Канцлер и Бергхайн,3673,https://t.me/kanzlerberghain,ru,2026-11-24,live,0
 ,NOVAUNIONPGG,NOVA UNION|PGG,3673,https://t.me/NOVAUNIONPGG,un,2026-11-24,live,0
@@ -21958,6 +21979,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,beautibanki,Бьюти Банки,3369,https://t.me/beautibanki,ru,2026-11-23,live,0
 ,decaypulse,decaypulse,3369,https://t.me/decaypulse,un,2026-11-24,live,0
 ,bedroomsuitee,АНТон всегда активити🩷,3369,https://t.me/bedroomsuitee,ru,2026-11-24T21:01:38,live,0
+,milkopechenegi,Печенеги с молоком,3368,https://t.me/milkopechenegi,ru,2026-11-27T20:02:20,dataset,0
 ,SyrianAndroidStore,Syrian Android Store,3368,https://t.me/SyrianAndroidStore,en,2026-11-23,live,0
 ,Boardsnbeyond,Boards &amp; Beyond,3368,https://t.me/Boardsnbeyond,un,2026-11-23,live,0
 ,naturel_studio,NATUREL STUDIO,3367,https://t.me/naturel_studio,un,2026-11-24,dataset,0
@@ -22334,7 +22356,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,diehockey,Умри Хоккеем,3240,https://t.me/diehockey,ru,2026-11-24,dataset,0
 3941748356,asheghaneh_manoto0,عاشقانه های ܩܔ تۅ,3240,https://t.me/asheghaneh_manoto0,fa,2026-11-22,live,1
 ,bastion_f22,bastión,3240,https://t.me/bastion_f22,un,2026-11-24,live,0
-,stereo_tochka,Стерео Точка,3239,https://t.me/stereo_tochka,ru,2026-11-27T20:00:29,dataset,0
 ,chomga_AD,чомга | chomgaAD 18+,3239,https://t.me/chomga_AD,ru,2026-11-23,live,1
 ,doc_isabekov,Офтальмолог| Исабеков Руслан | Синдром сухого глаза,3239,https://t.me/doc_isabekov,ru,2026-11-23,live,0
 ,tired_organizer,Усталый ивентор,3238,https://t.me/tired_organizer,ru,2026-11-25T12:15:55,dataset,0
@@ -23413,6 +23434,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,best_ITjob,Каналы IT Вакансий,2900,https://t.me/best_ITjob,ru,2026-11-23,dataset,0
 ,magazineoftheatre,Петербургский театральный журнал,2900,https://t.me/magazineoftheatre,ru,2026-11-23,dataset,0
 ,elenakLermontov,Елена Кобзева Лермонтов 🇷🇺,2900,https://t.me/elenakLermontov,ru,2026-11-24T21:02:11,dataset,0
+,temaluvu,LUVU ASTHMA,2900,https://t.me/temaluvu,un,2026-11-27T20:00:17,dataset,0
 1630164204,gorohi1,لینکدونی زنجان کرجی گپ گروه,2900,https://t.me/gorohi1,fa,2026-11-23,live,1
 ,dronmotors,ООО “ДронМоторс”,2900,https://t.me/dronmotors,ru,2026-11-24,live,0
 ,beloezoloto_brand,BELOE ZOLOTO BRAND,2899,https://t.me/beloezoloto_brand,un,2026-11-23,live,0
@@ -23533,6 +23555,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,vladimirnimchenko,Антропология Жизни,2869,https://t.me/vladimirnimchenko,ru,2026-11-23,live,0
 ,whiteshirts_turkestan,Белые рубашки. Русский Туркестан,2869,https://t.me/whiteshirts_turkestan,ru,2026-11-24,live,0
 ,Curios_Cat,Любопытный Кот,2869,https://t.me/Curios_Cat,ru,2026-11-25T11:53:59,live,0
+,ehogroma,Эхо Грома,2868,https://t.me/ehogroma,ru,2026-11-27T20:00:50,dataset,0
 1012355680,andamejazab,🌱🌱اندام جذاب🌱🌱,2868,https://t.me/andamejazab,fa,2026-11-27T11:29:45,dataset,1
 ,hospissec,хоспис,2868,https://t.me/hospissec,ru,2026-11-23,live,0
 ,winchestersau,winchester’s au,2868,https://t.me/winchestersau,un,2026-11-24,live,0
@@ -23711,7 +23734,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,oremineme,OreMine,2817,https://t.me/oremineme,un,2026-11-26T19:48:57,live,0
 ,xodacevich,Ходасевич,2817,https://t.me/xodacevich,ru,2026-11-27T19:26:18,live,0
 ,mnogoruchka_on_air,верховная многоручка,2816,https://t.me/mnogoruchka_on_air,ru,2026-11-23,dataset,0
-,jugomeme,Югославская Мемная Республика | ЮМР,2816,https://t.me/jugomeme,ru,2026-11-27T20:00:26,dataset,0
 ,ksusikrevivus,KSUSIK revivus,2816,https://t.me/ksusikrevivus,un,2026-11-24,live,0
 ,ANIMESQVAD,ANIME SQUAD| Art| Cosplay| Mems|,2815,https://t.me/ANIMESQVAD,en,2026-11-27T19:15:09,dataset,0
 ,orenshal1939,Оренбургский пуховый платок ORENSHAL,2815,https://t.me/orenshal1939,ru,2026-11-23,live,0
@@ -23882,6 +23904,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Vmeste_RF,Вместе-РФ,2768,https://t.me/Vmeste_RF,ru,2026-11-24,dataset,0
 ,blwmhdq,blòwmyhëad clo,2768,https://t.me/blwmhdq,un,2026-11-23,live,0
 ,Rodnoy_TG,РОДНИЧКИ,2768,https://t.me/Rodnoy_TG,ru,2026-11-24,live,0
+,MOXCKERY,МОКЕРИ,2767,https://t.me/MOXCKERY,ru,2026-11-27T20:01:41,dataset,0
 ,dmhdev,Уголок одного программиста...,2767,https://t.me/dmhdev,ru,2026-11-24,dataset,0
 ,slova_vne_sebja,Слова вне себя | Slova vne sebya,2766,https://t.me/slova_vne_sebja,ru,2026-11-24,dataset,0
 ,valentaineart,Valentaine,2766,https://t.me/valentaineart,un,2026-11-24,live,0
@@ -23950,6 +23973,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1882085159,kazesbeeposting,Kaze's Beeposting 🐝,2745,https://t.me/kazesbeeposting,un,2026-11-27T10:41:40,live,0
 ,melonixxs,Melonixxs🍓,2744,https://t.me/melonixxs,un,2026-11-25T13:04:22,dataset,0
 ,repressiisverdlovsk,Репрессии в Свердловске,2744,https://t.me/repressiisverdlovsk,ru,2026-11-27T19:02:04,dataset,0
+,thesisEleven,Тезис 11,2744,https://t.me/thesisEleven,ru,2026-11-27T20:00:26,dataset,0
 ,dripcollective,DRIP COLLECTIVE,2744,https://t.me/dripcollective,un,2026-11-23,live,0
 1720076322,arctidaio,Arctida | Исследования российской Арктики,2742,https://t.me/arctidaio,ru,2026-11-27T10:33:29,dataset,0
 2609372274,v_hsz,سریال دوست دخترم یه مرده,2742,https://t.me/v_hsz,fa,2026-11-22,live,1
@@ -24097,6 +24121,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,start_in_IT,Наташа Косинова. Варю айти СУП,2707,https://t.me/start_in_IT,ru,2026-11-23,dataset,0
 ,SudomPoShemam,🕵️‍♂️ СУДОМ ПО СХЕМАХ,2707,https://t.me/SudomPoShemam,ru,2026-11-24,live,0
 ,yyulkarip,Юлка в ямке,2707,https://t.me/yyulkarip,ru,2026-11-24,live,0
+,taylorswiftuanews,Тейлор Свіфт | Taylor Swift 🇺🇦,2706,https://t.me/taylorswiftuanews,ru,2026-11-27T20:02:19,dataset,0
 ,vikings_shoes_woman,ВИКИНГ_Женская_Обувь,2706,https://t.me/vikings_shoes_woman,ru,2026-11-23,live,0
 ,provocative_nails,Канал Анны Гарайхановой,2705,https://t.me/provocative_nails,ru,2026-11-23,dataset,0
 ,Nullexia,Nullexia For Programming,2705,https://t.me/Nullexia,un,2026-11-24,dataset,0
@@ -24687,7 +24712,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,asjune,asjune,2548,https://t.me/asjune,un,2026-11-24,dataset,0
 ,viriksia,VIRIKSIA,2548,https://t.me/viriksia,un,2026-11-23,live,0
 ,shalunishkiviks,𝚣 ᶻ шалунишки викии🎃 ८ ⑅⸝⸝⸝ ა,2547,https://t.me/shalunishkiviks,ru,2026-11-23,dataset,0
-,cryptopro_news,Новости КриптоПро,2547,https://t.me/cryptopro_news,ru,2026-11-27T20:00:29,dataset,0
 ,itwasforvarya,Остатки с Вариного стола | Funny Valentine,2546,https://t.me/itwasforvarya,ru,2026-11-23,dataset,0
 ,rosstudent,РОССТУДЕНТ,2546,https://t.me/rosstudent,ru,2026-11-24T20:42:34,dataset,0
 1074939259,carlotti_iran_telegram,Carlotti,2546,https://t.me/carlotti_iran_telegram,un,2026-11-22,live,0
@@ -24843,6 +24867,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2200043162,Gs_Ye,دعای مهرومحبت علاقه و طلسم محبت,2510,https://t.me/Gs_Ye,fa,2026-11-26T08:48:48,live,0
 3800874769,mom_son_desi_links,INDIAN MOM SON,2509,https://t.me/mom_son_desi_links,en,2026-11-22,live,1
 ,HajiApi,𝗛𝗔𝗝𝗜 𝗔𝗣𝗜 | حاجی وب‌سرویس,2508,https://t.me/HajiApi,fa,2026-11-23,dataset,0
+,klevakinklevakin,КЛЕВАКИН КЛЕВАКИН,2508,https://t.me/klevakinklevakin,ru,2026-11-27T20:00:26,dataset,0
 ,bemanrv,Роман Винилов | Мужской взгляд на отношения,2508,https://t.me/bemanrv,ru,2026-11-24,dataset,0
 ,iiigorpankov,Игорь Паньков,2508,https://t.me/iiigorpankov,ru,2026-11-23,live,0
 ,hsrstickersz,стикеры хср || honkai: star rail “hsr,2508,https://t.me/hsrstickersz,ru,2026-11-24,live,0
@@ -26706,6 +26731,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,supremepharmatech2024,👩🏻‍⚕👨🏻‍⚕Supreme Pharmatech Липосомальные нутрицевтики💊,2080,https://t.me/supremepharmatech2024,ru,2026-11-23,live,0
 ,SkibidiNotificationn,Skibidi Notification,2080,https://t.me/SkibidiNotificationn,un,2026-11-24,live,0
 ,tthu99,Thu9,2080,https://t.me/tthu99,un,2026-11-24T21:13:35,live,0
+,delapovazhnee,Дела поважнее,2079,https://t.me/delapovazhnee,ru,2026-11-27T20:00:35,dataset,0
 ,FurryValleyMusk,Furry Valley Musk,2079,https://t.me/FurryValleyMusk,un,2026-11-23,live,0
 ,muashop,MUA,2079,https://t.me/muashop,un,2026-11-23,live,0
 ,abcofstyle,Victoria Barazzoni | Коды моды и искусства для стилистов и творцов,2079,https://t.me/abcofstyle,ru,2026-11-23,live,0
@@ -27307,7 +27333,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,beerpanda,BeerPanda. Органично недоразвитый DevOps,1963,https://t.me/beerpanda,ru,2026-11-23,live,0
 ,panchbob26,ПАНЧБОБ,1963,https://t.me/panchbob26,ru,2026-11-24,live,0
 ,mylane2k,my&#33;lane,1963,https://t.me/mylane2k,un,2026-11-24,live,0
-,temaluvu,LUVU ASTHMA,1962,https://t.me/temaluvu,un,2026-11-27T20:00:17,dataset,0
 ,EscrowMixroot,Escrow Official,1962,https://t.me/EscrowMixroot,en,2026-11-23,live,0
 ,GLOREN_BRAND,𝑮𝒍𝒐𝒓𝒆𝒏 𝑷𝒓𝒆𝒎𝒊𝒖𝒎 ✨,1962,https://t.me/GLOREN_BRAND,other,2026-11-23,live,0
 ,denbezopasnost,Den Bezopasnost / Media Sports 🔞,1962,https://t.me/denbezopasnost,en,2026-11-24T21:11:36,live,0
@@ -27355,6 +27380,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1470877709,khabaribaghershahr0,کانال خبری باقرشهر,1954,https://t.me/khabaribaghershahr0,fa,2026-11-23,live,0
 ,uzmtrk_official,MTRK | Rasmiy kanal,1954,https://t.me/uzmtrk_official,un,2026-11-24,live,0
 ,mymindpuzzle,Пазлы разума,1953,https://t.me/mymindpuzzle,ru,2026-11-23,dataset,0
+,bboyapp,Bboysoul的博客,1953,https://t.me/bboyapp,un,2026-11-27T20:00:35,dataset,0
 ,sadbysadly,kasugawa w ᢉ𐭩,1953,https://t.me/sadbysadly,un,2026-11-24,live,0
 ,kenwnyan,кенвинян,1953,https://t.me/kenwnyan,ru,2026-11-24,live,0
 ,marina_mui_fans,TOP SLIV 🍒,1953,https://t.me/marina_mui_fans,en,2026-11-25T12:37:40,live,0
@@ -27668,6 +27694,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,TXT_Awards,TXT Awards,1891,https://t.me/TXT_Awards,un,2026-11-24,live,0
 3075454546,ow_ep,زن مطلقه بیوه میلف مشهد,1891,https://t.me/ow_ep,fa,2026-11-24,live,1
 ,theialif,𝑻𝒉𝒆𝒊𝒂,1891,https://t.me/theialif,other,2026-11-26T20:40:23,live,0
+,sweet_dreams_shop,𝚂𝚠𝚎𝚎𝚝 𝚍𝚛𝚎𝚊𝚖𝚜 𝚜𝚑𝚘𝚙💋,1890,https://t.me/sweet_dreams_shop,other,2026-11-27T20:00:50,dataset,0
 ,forlocals_store,𝐟𝐨𝐫𝐥𝐨𝐜𝐚𝐥𝐬 | одежда вне времени для неё и для него,1890,https://t.me/forlocals_store,ru,2026-11-23,dataset,0
 ,masterpeace_masterpeace,Masterpeace,1890,https://t.me/masterpeace_masterpeace,un,2026-11-23,dataset,0
 ,phitogen_russia,Фитоджен Россия Филлеры,1890,https://t.me/phitogen_russia,ru,2026-11-23,dataset,0
@@ -28445,7 +28472,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,first_medical_battalion,Перший окремий медичний батальйон,1756,https://t.me/first_medical_battalion,ru,2026-11-25T10:43:57,live,0
 ,pknau,Вступник КАІ 2025,1755,https://t.me/pknau,ru,2026-11-24,dataset,0
 ,wbuzbekistan,World Bank Uzbekistan,1755,https://t.me/wbuzbekistan,en,2026-11-23,dataset,0
-,thesisEleven,Тезис 11,1755,https://t.me/thesisEleven,ru,2026-11-27T20:00:26,dataset,0
 2733497394,fj_g5,فیلم سوپر سکسی روسیه ترکیه,1755,https://t.me/fj_g5,fa,2026-11-22,live,1
 ,iwfrussia,НФР: Независимая Федерация Реслинга,1755,https://t.me/iwfrussia,ru,2026-11-24,live,0
 ,edomoconcept,ēdomo,1755,https://t.me/edomoconcept,un,2026-11-26T20:40:55,live,0
@@ -28466,6 +28492,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2017802335,Iranian_ComSoc,𝐈𝐫𝐚𝐧𝐢𝐚𝐧 𝐂𝐨𝐦𝐒𝐨𝐜 𝐂𝐡𝐚𝐧𝐧𝐞𝐥,1751,https://t.me/Iranian_ComSoc,other,2026-11-22,live,0
 ,anlukazwer,anluka,1751,https://t.me/anlukazwer,un,2026-11-24,live,0
 ,GUKnMosreg,Мособлнаследие,1750,https://t.me/GUKnMosreg,ru,2026-11-23,dataset,0
+,missdanger_shop,👑 Miss Danger | Блог бренда 👑,1750,https://t.me/missdanger_shop,ru,2026-11-27T20:01:59,dataset,0
 ,shagabutdinov_r,Ренат Шагабутдинов из МИФа,1750,https://t.me/shagabutdinov_r,ru,2026-11-23,dataset,0
 ,walter_1302,Вальтер. История. Реконструкция.,1750,https://t.me/walter_1302,ru,2026-11-26T20:15:35,dataset,0
 ,feeneyonfirrre,финей старается быть социальной,1750,https://t.me/feeneyonfirrre,ru,2026-11-24,dataset,0
@@ -28720,6 +28747,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,chestniybuyerlux,Честный байер LUX 🪩,1705,https://t.me/chestniybuyerlux,ru,2026-11-23,dataset,0
 1542436282,okey_decor,"OK, DECOR",1705,https://t.me/okey_decor,un,2026-11-23,dataset,0
 ,mprdag2020,Минприроды РД,1705,https://t.me/mprdag2020,ru,2026-11-27T19:03:28,dataset,0
+,mood_student_iss,MOOD: ИОН,1705,https://t.me/mood_student_iss,ru,2026-11-27T20:00:51,dataset,0
 ,vgikfestival,Международный студенческий фестиваль ВГИК,1705,https://t.me/vgikfestival,ru,2026-11-23,live,0
 ,forumomsknew,Новый Омский форум - Новости Омска от омича,1705,https://t.me/forumomsknew,ru,2026-11-25T10:38:26,live,0
 ,tovarischi_vecher,Товарищество &quot;Вечерняя Москва&quot;,1705,https://t.me/tovarischi_vecher,ru,2026-11-25T11:51:41,live,0
@@ -29160,7 +29188,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,kommersantevents,Коммерсантъ Конференции,1638,https://t.me/kommersantevents,ru,2026-11-23,dataset,0
 ,tanksport,"Tanksport🖤❤️ Boxing, Football, Tennis, MMA, Other Sports",1637,https://t.me/tanksport,en,2026-11-27T19:32:31,dataset,0
 ,avera_austria,🇦🇹 ЭМИГРАЦИЯ И АДАПТАЦИЯ В АВСТРИИ 🇦🇹 ВНЖ/ПМЖ/ГРАЖДАНСТВО,1637,https://t.me/avera_austria,ru,2026-11-23,dataset,0
-,bboyapp,Bboysoul的博客,1637,https://t.me/bboyapp,un,2026-11-27T20:00:35,dataset,0
 1122950054,,Кавайные картинки и незамысловатые комментарии,1637,,ru,2026-11-24,dataset,0
 ,byalki,бәлки 🍉,1637,https://t.me/byalki,ru,2026-11-23,live,0
 ,netoxicofficial,NETOXIC 🧚‍♀️,1637,https://t.me/netoxicofficial,un,2026-11-24,live,0
@@ -29652,6 +29679,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,grndonk,ОХОТА на КИДАЛ - ГРАНД МОБАЙЛ,1559,https://t.me/grndonk,ru,2026-11-24,live,0
 ,wenmemeszn,WenAltseason CIS,1559,https://t.me/wenmemeszn,un,2026-11-24,live,0
 ,dvr_chri,Департамент Военной Разведки,1559,https://t.me/dvr_chri,ru,2026-11-27T19:08:45,live,0
+,ashmurnov,Александр Шмурнов,1558,https://t.me/ashmurnov,ru,2026-11-27T20:01:44,dataset,0
 ,Maminsadik,Мамин Садик в Саду «Эрмитаж»,1558,https://t.me/Maminsadik,ru,2026-11-23,dataset,0
 3208221392,Hozooriia,عکس کد ها - حضوری مشهد بدون پیش,1558,https://t.me/Hozooriia,fa,2026-11-22,live,1
 2305087812,dv_1f,برنامه ماساژور دختر کیس ساری,1558,https://t.me/dv_1f,fa,2026-11-23,live,1
@@ -30058,6 +30086,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,mymolodyspb,МЫ МОЛОДЫ | ГАСТРОБАР,1499,https://t.me/mymolodyspb,ru,2026-11-24,live,0
 ,deilasbeat,deilas,1499,https://t.me/deilasbeat,un,2026-11-24,live,0
 ,spiral_team_translations,Spiral Team 🏳️‍🌈 Переклади українською,1498,https://t.me/spiral_team_translations,ru,2026-11-23,dataset,0
+,arabic_burhan,Arabic_Burhan,1498,https://t.me/arabic_burhan,un,2026-11-27T20:02:02,dataset,0
 ,news_today72,Тюменская область сегодня,1498,https://t.me/news_today72,ru,2026-11-23,dataset,0
 ,Devushki_o_svoem,Девчата о своём 💞,1498,https://t.me/Devushki_o_svoem,ru,2026-11-24,live,0
 1860163835,kopylbel,Копыль | Новости,1498,https://t.me/kopylbel,ru,2026-11-24T20:46:23,live,0
@@ -30092,6 +30121,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1360805636,ketabkhaneh_mohabat,مشارکت هفتگی,1494,https://t.me/ketabkhaneh_mohabat,fa,2026-11-24T21:04:32,live,0
 ,TDVADBCDAM,Газу69🔥🤍🔥,1493,https://t.me/TDVADBCDAM,ru,2026-11-24,dataset,0
 ,dimaromanenko,👀 Дима Романенко,1493,https://t.me/dimaromanenko,ru,2026-11-24,dataset,0
+,durtmk,Памяти кого? посвящается,1493,https://t.me/durtmk,ru,2026-11-27T20:02:20,dataset,0
 1217810324,axramsheh,آلبوم‌ عکس رامشه,1493,https://t.me/axramsheh,fa,2026-11-22,live,1
 ,artssquare,Arts Square Gallery,1493,https://t.me/artssquare,en,2026-11-25T13:03:07,live,0
 2582046579,Hui_gumm_yaadein,Hui Gumm Yaadein Jagadhatri Vasudha ®️,1493,https://t.me/Hui_gumm_yaadein,un,2026-11-26T09:01:30,live,0
@@ -31218,6 +31248,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,m946kc,Черная фурия🖤,1346,https://t.me/m946kc,ru,2026-11-24,live,0
 ,studclubkemsu,студклуб.,1345,https://t.me/studclubkemsu,ru,2026-11-23,dataset,0
 ,aleksanderdvoinykh,Двойных Александр. Официально,1345,https://t.me/aleksanderdvoinykh,ru,2026-11-27T19:51:41,dataset,0
+,Shamsuddin_Sadruddin,Shamsuddin Sadruddin,1345,https://t.me/Shamsuddin_Sadruddin,un,2026-11-27T20:02:02,dataset,0
 ,taigaart,Тайга,1345,https://t.me/taigaart,ru,2026-11-23,live,0
 ,vn_predvestnik,Предвестники | Визуальная новелла,1345,https://t.me/vn_predvestnik,ru,2026-11-23,live,0
 ,loveshurts,Хроники Влюбленных Сердец 💕,1345,https://t.me/loveshurts,ru,2026-11-24,live,0
@@ -31261,6 +31292,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,cdra_ru,Центральный Дом Российской Армии имени М.В Фрунзе,1340,https://t.me/cdra_ru,ru,2026-11-25T10:37:21,dataset,0
 ,olga_rindina_farfallastyle,FARFALLA - твой любимый магазин,1340,https://t.me/olga_rindina_farfallastyle,ru,2026-11-24,dataset,0
 ,estemarco,Эстемарко,1340,https://t.me/estemarco,ru,2026-11-23,dataset,0
+,pavel_fahrtdinov,ПаФа,1340,https://t.me/pavel_fahrtdinov,ru,2026-11-27T20:01:44,dataset,0
 ,beregmoscow,Парк-ресторан «Берег»,1340,https://t.me/beregmoscow,ru,2026-11-24,dataset,0
 ,fishka_shop_warhammer,Fishka Shop. Warhammer. ✙🐆,1340,https://t.me/fishka_shop_warhammer,en,2026-11-27T10:54:33,dataset,0
 1171419490,igropractika_elita,Сообщество игропрактиков,1340,https://t.me/igropractika_elita,ru,2026-11-24,dataset,0
@@ -31932,6 +31964,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1091817569,AhangayeGolchin,♪آهنگای✌گلچین♪دانلود،آهنگ،های،جدید،بیس دار،شاد،سیستمی،پاپ،رپ،ریمیکس،موزیک،خاص،بهترین،عربی،قدیمی،رقص،پارتی،باشگاه،مهمونی،عروسی,1251,https://t.me/AhangayeGolchin,fa,2026-11-23,live,1
 ,keembuistanbul,KEEMBU | НАЛИЧИЕ,1251,https://t.me/keembuistanbul,ru,2026-11-24,live,0
 ,matushkina_psy,Психология привязанности,1250,https://t.me/matushkina_psy,ru,2026-11-23,dataset,0
+,ufnadev,"dot(ufna, dev)",1250,https://t.me/ufnadev,un,2026-11-27T20:02:20,dataset,0
 ,vyvod_sdelal,Глеб Федосеев | Маркетинг для предпринимателей,1250,https://t.me/vyvod_sdelal,ru,2026-11-24,dataset,0
 ,skliffm,СклифФМ,1250,https://t.me/skliffm,ru,2026-11-24T21:14:28,dataset,0
 ,spqr_code,SPQR-код,1250,https://t.me/spqr_code,ru,2026-11-23,dataset,0
@@ -32019,7 +32052,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,ninfomana_de_libros,♡ 𝔑𝔦𝔫𝔣ó𝔪𝔞𝔫𝔞 𝔡𝔢 𝔩𝔦𝔟𝔯𝔬𝔰 | Книжная нимфоманка ♡,1241,https://t.me/ninfomana_de_libros,ru,2026-11-24T20:45:28,dataset,0
 ,maxprod_design,Maxprod,1241,https://t.me/maxprod_design,un,2026-11-25T12:28:07,dataset,0
 ,damdintsurunov,Вячеслав Дамдинцурунов,1241,https://t.me/damdintsurunov,ru,2026-11-24,dataset,0
-,klevakinklevakin,КЛЕВАКИН КЛЕВАКИН,1241,https://t.me/klevakinklevakin,ru,2026-11-27T20:00:26,dataset,0
 ,O_de_gallery,ᴏʜ sᴇᴜɴɢ ᴍɪɴ • 오승민 ᵍᵃᶫᶫᵉʳʸ,1241,https://t.me/O_de_gallery,un,2026-11-24,dataset,0
 ,dtid_luch,ДТиД &quot;Луч&quot;,1241,https://t.me/dtid_luch,ru,2026-11-23,live,0
 ,zhnsk_kvdrt,Женский квадрат,1241,https://t.me/zhnsk_kvdrt,ru,2026-11-23,live,0
@@ -32129,7 +32161,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,spmbrand,SPM,1229,https://t.me/spmbrand,un,2026-11-24,dataset,0
 ,coaching_from_vesta,Карьерная мастерская Весты Шевцовой,1229,https://t.me/coaching_from_vesta,ru,2026-11-27T10:59:09,dataset,0
 ,soroban,Didsoroban,1229,https://t.me/soroban,un,2026-11-23,dataset,0
-,delapovazhnee,Дела поважнее,1229,https://t.me/delapovazhnee,ru,2026-11-27T20:00:35,dataset,0
 ,wakeupkhv,Хабаровский косплей-фестиваль 7 ноября 2026 12+,1229,https://t.me/wakeupkhv,ru,2026-11-23,live,0
 ,ghfortikk,ghfortik,1229,https://t.me/ghfortikk,fl,2026-11-24,live,0
 ,zerotomogui,TOMOGUI://sublimation obscenity,1229,https://t.me/zerotomogui,un,2026-11-25T12:16:29,live,0
@@ -32205,6 +32236,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1548999759,cookingbos,РЕЦЕПТЫ 🌶,1221,https://t.me/cookingbos,ru,2026-11-23,live,0
 2055502069,zloystrateg,Радио «Гай»,1221,https://t.me/zloystrateg,ru,2026-11-24T20:55:35,live,0
 ,bshsjsjmsksksk,【专业一对一】满足欲望真是听指挥,1221,https://t.me/bshsjsjmsksksk,other,2026-11-25T12:43:10,live,0
+,syetaxxx5V,s5va72,1221,https://t.me/syetaxxx5V,un,2026-11-27T20:00:50,live,0
 ,burobeautysalon,BURO.Beauty,1220,https://t.me/burobeautysalon,un,2026-11-23,dataset,0
 ,mamasita_crazyvita_2,mamasita_crazyvita,1220,https://t.me/mamasita_crazyvita_2,un,2026-11-23,dataset,0
 ,alenatalking,Янчковская за здравый блогинг,1220,https://t.me/alenatalking,ru,2026-11-27T19:02:36,dataset,0
@@ -32515,7 +32547,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1901633946,ddlchoroscope,Doki Doki Literature Club horoscope !,1185,https://t.me/ddlchoroscope,un,2026-11-26T08:33:17,live,0
 ,hontoninetai,hontoninetai,1185,https://t.me/hontoninetai,un,2026-11-27T19:42:47,live,0
 ,product_nogotochki,Ноготочки продакта 💅,1184,https://t.me/product_nogotochki,ru,2026-11-25T12:20:12,dataset,0
-,mood_student_iss,MOOD: ИОН,1184,https://t.me/mood_student_iss,ru,2026-11-27T20:00:51,dataset,0
 ,real_transformation,Реальная Трансформация | Псидваноль,1184,https://t.me/real_transformation,ru,2026-11-23,dataset,0
 1378666846,luxgallery_nedaa,لوازم خانگی|لوازم آشپزخانه|لوکس گالری ندا,1184,https://t.me/luxgallery_nedaa,fa,2026-11-21,live,1
 ,freevoice861,Искусство с любовью😍 досуг для детей и включённых родителей (Art_with_love),1184,https://t.me/freevoice861,ru,2026-11-23,live,0
@@ -32581,6 +32612,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,rakas_lukupaivakirja,Lukupäiväkirja,1178,https://t.me/rakas_lukupaivakirja,un,2026-11-24,dataset,0
 ,amurtour,Турцентр «Амур»,1178,https://t.me/amurtour,ru,2026-11-23,dataset,0
 ,fastfood_box,Food Box | By Loyal Print,1178,https://t.me/fastfood_box,un,2026-11-24,live,0
+,sanywwwv,. ּ саньᴋ..🪑 ˑ,1177,https://t.me/sanywwwv,ru,2026-11-27T20:00:50,dataset,0
 ,nexudozhnik,нехудожник.,1177,https://t.me/nexudozhnik,ru,2026-11-27T19:46:14,dataset,0
 ,info_news_novosti_moscow,Москва вещает новости,1177,https://t.me/info_news_novosti_moscow,ru,2026-11-23,dataset,0
 ,dvorec_molodezhi,МЦ «Дворец Молодежи» | Бугульма,1177,https://t.me/dvorec_molodezhi,ru,2026-11-23,dataset,0
@@ -33138,6 +33170,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,sexychikanarezki,sexychika нарезки,1119,https://t.me/sexychikanarezki,ru,2026-11-24,live,0
 ,ilina_lifeandpsy,Сначала была женщина,1119,https://t.me/ilina_lifeandpsy,ru,2026-11-24,live,0
 ,tpds_telega,*This person draws something...*,1119,https://t.me/tpds_telega,un,2026-11-27T15:23:30,live,0
+,akmcompanytgk,AKM COMPANY,1119,https://t.me/akmcompanytgk,un,2026-11-27T20:00:35,live,0
 ,fi_olochka,FiOlka,1118,https://t.me/fi_olochka,un,2026-11-23,dataset,0
 ,radiokultura,"Радыё ""Культура""",1118,https://t.me/radiokultura,ru,2026-11-23,dataset,0
 ,freekrisevich,Свободу Крисевичу!,1118,https://t.me/freekrisevich,ru,2026-11-27T19:04:41,dataset,0
@@ -33601,6 +33634,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,bibliorossika,Издательство Библиороссика,1071,https://t.me/bibliorossika,ru,2026-11-25T13:07:12,dataset,0
 ,church514,Церковь 5.14,1071,https://t.me/church514,ru,2026-11-24T21:07:45,live,0
 ,uzhasny_888,🥛･..゜ﾟUZHASNY_888 ･..゜ﾟ,1071,https://t.me/uzhasny_888,fl,2026-11-25T12:02:15,live,0
+,MashaSergeevaMart26,арт-дилер Маша Сергеева || M’art26,1070,https://t.me/MashaSergeevaMart26,ru,2026-11-27T20:02:20,dataset,0
 ,THEATRE_NITI,Театр «НИТИ»,1070,https://t.me/THEATRE_NITI,ru,2026-11-23,dataset,0
 ,mininchoir,Хор Минина (Московский Камерный Хор),1070,https://t.me/mininchoir,ru,2026-11-23,dataset,0
 ,otlichniki_na5,Отличники 5+,1070,https://t.me/otlichniki_na5,ru,2026-11-23,dataset,0
@@ -34065,6 +34099,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,oofyshoes,OOFY | ОНЛАЙН-МАГАЗИН КРОССОВОК И ОБУВИ 🐉,1025,https://t.me/oofyshoes,ru,2026-11-23,dataset,0
 ,W_bina,Bina's house,1025,https://t.me/W_bina,un,2026-11-24T21:06:47,dataset,0
 ,adygabrothers,Зэшыхэр❤️,1025,https://t.me/adygabrothers,ru,2026-11-27T19:34:31,dataset,0
+,holymatch,Holy Match,1025,https://t.me/holymatch,un,2026-11-27T20:00:51,dataset,0
 1550361692,recruitment_0,IT-рекрутмент с нуля,1025,https://t.me/recruitment_0,ru,2026-11-23,dataset,0
 ,rise_prd,RISE,1025,https://t.me/rise_prd,un,2026-11-23,live,0
 ,speccio_spice,Спеццио l Гастрономический блог со вкусом,1025,https://t.me/speccio_spice,ru,2026-11-23,live,0
@@ -34133,6 +34168,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,radiocherkesfm,Черкес ФМ,1018,https://t.me/radiocherkesfm,ru,2026-11-27T15:49:08,dataset,0
 ,its_a_bird,It’s a bird.,1018,https://t.me/its_a_bird,un,2026-11-23,dataset,0
 ,fitting_mizuki,Mizuki's Fitting Room,1018,https://t.me/fitting_mizuki,un,2026-11-24T20:43:23,dataset,0
+,queelenayak,queelenayak,1018,https://t.me/queelenayak,un,2026-11-27T20:02:02,dataset,0
 3868024825,,ESPOSA • 💋❤️,1018,,un,2026-11-22,live,0
 ,molodeg_irkutsk,Молодёжь Иркутска,1018,https://t.me/molodeg_irkutsk,ru,2026-11-23,live,0
 ,updateclinicnews,Update Clinic,1018,https://t.me/updateclinicnews,un,2026-11-23,live,0
@@ -36036,6 +36072,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,gdb_dbg,"Алло, это отладочная?",842,https://t.me/gdb_dbg,ru,2026-11-23,dataset,0
 1620809531,alexeyshabelnikofficial,Алексей Шабельник,842,https://t.me/alexeyshabelnikofficial,ru,2026-11-26T08:29:06,dataset,0
 1521929861,diana_chebann,Душой Дышать,842,https://t.me/diana_chebann,ru,2026-11-23,dataset,0
+,arthall_obninsk_dance,ARTHALL Дом Танца,842,https://t.me/arthall_obninsk_dance,ru,2026-11-27T20:02:19,dataset,0
 ,nastia_prodaet,Китайский стартап с Настей,842,https://t.me/nastia_prodaet,ru,2026-11-23,dataset,0
 ,khafizovapr,Алсу ХАФИЗОВА | PR,842,https://t.me/khafizovapr,ru,2026-11-27T19:46:43,dataset,0
 ,istorii_s_kushetki,На кушетке,842,https://t.me/istorii_s_kushetki,ru,2026-11-24,dataset,0
@@ -36187,6 +36224,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,slavsandmemes,славянки и хихи,830,https://t.me/slavsandmemes,ru,2026-11-26T20:40:09,live,0
 1845834621,luckymonkeyy,Lucky Monkey 🐵,830,https://t.me/luckymonkeyy,un,2026-11-27T10:34:57,live,0
 2201215456,romanfbt,پروفایل سکسی _پروفایل ست عکس دونفره _پروف سکسی _پروف هات_پروف ست_ گیف هات,830,https://t.me/romanfbt,fa,2026-11-27T15:28:26,live,1
+,Baby_NDA,Наташа NDA&#33;,830,https://t.me/Baby_NDA,ru,2026-11-27T17:06:47,live,0
 ,BawovskiShop,BAWOVSKI SHOP,829,https://t.me/BawovskiShop,en,2026-11-23,dataset,0
 1804855399,pulseoffeeling2,کلیپ عاشقانه دختر پسر عکس پروفایل آهنگ غمگین جدایی خیانت تکست عشق موزیک دپ والپیر ریمیکس همسر عروس محبت رفیق شکست عشقی❤,829,https://t.me/pulseoffeeling2,fa,2026-11-21,live,1
 ,logographhistoria,Ярослав Парамонов,829,https://t.me/logographhistoria,ru,2026-11-23,live,0
@@ -38487,6 +38525,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,meteorit2025,метеорит 2025,664,https://t.me/meteorit2025,ru,2026-11-27T17:08:58,live,0
 1829737593,haminskarfin,Skarfin,664,https://t.me/haminskarfin,un,2026-11-27T18:56:01,live,0
 ,astahov_shchigrovsky,Юрий Астахов,663,https://t.me/astahov_shchigrovsky,ru,2026-11-27T19:41:37,dataset,0
+,Arinka_attacks_with_design,ААД,663,https://t.me/Arinka_attacks_with_design,ru,2026-11-27T20:01:19,dataset,0
 ,NeOdnaChanel,НЕ ОДНА,663,https://t.me/NeOdnaChanel,ru,2026-11-23,dataset,0
 ,locospadel,LOCOS PADEL | Волгоград,663,https://t.me/locospadel,ru,2026-11-24,dataset,0
 2475883848,kharchangs,|شب‌ نشینی خرچنگ‌های مردابی|,663,https://t.me/kharchangs,fa,2026-11-22,live,0
@@ -40362,6 +40401,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,vibesxund,f4tal | vibesxund,553,https://t.me/vibesxund,un,2026-11-27T19:29:41,live,0
 ,Lebedeva_Selena,LEBEDEVA PISHET,552,https://t.me/Lebedeva_Selena,un,2026-11-24,dataset,0
 ,garlex_x,.-.,552,https://t.me/garlex_x,other,2026-11-25T12:30:42,dataset,0
+,lossisthethemeofmylife,промышленная шизофрения #bpdawareness,552,https://t.me/lossisthethemeofmylife,ru,2026-11-27T20:01:19,dataset,0
 2916469859,qazx_491,فیلم صبحانه با زرافه ها,552,https://t.me/qazx_491,fa,2026-11-22,live,0
 ,persianmatchbox,jānam,552,https://t.me/persianmatchbox,un,2026-11-23,live,0
 ,paty_trade,"Аналитика золото, фунт, евро и тд",552,https://t.me/paty_trade,ru,2026-11-23,live,0
@@ -40812,6 +40852,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,milshtein1,Milshtein,529,https://t.me/milshtein1,un,2026-11-27T19:38:02,live,0
 ,Shulianka,Shul.Skating 🖤,528,https://t.me/Shulianka,un,2026-11-27T19:01:03,dataset,0
 ,infobsx,𝒊𝒏𝒇𝒐 𝒃/𝒔,528,https://t.me/infobsx,other,2026-11-27T19:07:10,dataset,0
+,kvazaa,Kvazar,528,https://t.me/kvazaa,un,2026-11-27T20:01:44,dataset,0
 ,nikolskiy_poetry,Игорь Никольский,528,https://t.me/nikolskiy_poetry,ru,2026-11-27T19:58:35,dataset,0
 ,yanixanax,🤟🏿lil_yan_g🤟🏿,528,https://t.me/yanixanax,un,2026-11-27T19:28:58,dataset,0
 ,TuskedEvening0Channel,TuskedE0's Channel,528,https://t.me/TuskedEvening0Channel,en,2026-11-23,dataset,0
@@ -42199,6 +42240,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Inir_K,🍁θᚳᛊᚺⰓᛋ ᛠᚹθᚢⱃᛆ ᛋᚺᛋᚹ🦌,462,https://t.me/Inir_K,other,2026-11-27T19:44:35,live,0
 ,twinsgirls1,Мамочка Захарова,461,https://t.me/twinsgirls1,ru,2026-11-23,dataset,0
 ,SneakerClubGE,AIONIS,461,https://t.me/SneakerClubGE,un,2026-11-23,dataset,0
+,blyahatokapec,бляхамуха то капєц #украрт,461,https://t.me/blyahatokapec,ru,2026-11-23,dataset,0
 ,glsukraine,Глобальний Лідерський Саміт,461,https://t.me/glsukraine,ru,2026-11-24,dataset,0
 ,ofertas50,🛍 Ofertas 50%: Todas las ofertas que buscas con 50% de descuento o más!,461,https://t.me/ofertas50,un,2026-11-24,dataset,0
 3157251798,hs_jc,ازدواج موقت صیغه یابی بوشهر,461,https://t.me/hs_jc,fa,2026-11-23,live,1
@@ -42222,7 +42264,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1795024888,seksiay,Ayşe,461,https://t.me/seksiay,un,2026-11-27T11:30:05,live,0
 ,autoproject_russia,Журнал «Авторский проект. Первые лица»,461,https://t.me/autoproject_russia,ru,2026-11-27T19:50:27,live,0
 ,mmmiiidddaaa,🌱Mida♧🌱 /рест,460,https://t.me/mmmiiidddaaa,ru,2026-11-23,dataset,0
-,blyahatokapec,бляхамуха то капєц #украрт,460,https://t.me/blyahatokapec,ru,2026-11-23,dataset,0
 1256030271,ChaikaThink,Чайконуті Думки,460,https://t.me/ChaikaThink,ru,2026-11-24,dataset,0
 ,stopvitiligo,Сам Доктор,460,https://t.me/stopvitiligo,ru,2026-11-23,dataset,0
 ,youlaled,юлялед на юге франции,460,https://t.me/youlaled,ru,2026-11-23,dataset,0
@@ -45042,6 +45083,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1902991889,bizi2_malake,دوستیابی تهران و کرج,347,https://t.me/bizi2_malake,fa,2026-11-27T19:42:30,live,0
 ,geintzwom,Женский WB • Ali,346,https://t.me/geintzwom,ru,2026-11-23,dataset,0
 ,fanficisoBEdyardos,Фанфики про Эда,346,https://t.me/fanficisoBEdyardos,ru,2026-11-25T12:14:05,dataset,0
+,sergi0_music,ꜱᴇʀɢɪᴏᴍᴜꜱɪᴄ,346,https://t.me/sergi0_music,other,2026-11-27T20:01:30,dataset,0
 ,lospet_mc,"МЦ ""Движение"" Лосино-Петровский",346,https://t.me/lospet_mc,ru,2026-11-23,dataset,0
 3830885848,dksppppq,مقفول مؤقت,346,https://t.me/dksppppq,fa,2026-11-22,live,0
 ,Appsandconfig,Apps And Hack2 | نرم افزار و کانفیگ محافظ لینک,346,https://t.me/Appsandconfig,fa,2026-11-23,live,0
@@ -45325,6 +45367,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,lightsumluv,˚₊‧꒰ა just me Lightsum ໒꒱ ‧₊˚,337,https://t.me/lightsumluv,fl,2026-11-26T08:58:17,live,0
 ,bark_Mari,Баркемп в Марий Эл,337,https://t.me/bark_Mari,ru,2026-11-27T19:20:12,live,0
 ,YOUNUGAEV,SARDOR NUGAEV,336,https://t.me/YOUNUGAEV,un,2026-11-27T19:48:43,dataset,0
+,thejulles,Julles’s SECRET,336,https://t.me/thejulles,un,2026-11-27T20:01:41,dataset,0
 ,znakomstva_863,Знакомства Ростов-на-Дону ❤️,336,https://t.me/znakomstva_863,ru,2026-11-23,dataset,0
 2689066267,qj_f6,پک فیلمهاییی حورنییی ثکثیییی عکسهایی داغغغغ,336,https://t.me/qj_f6,fa,2026-11-21,live,1
 1301167369,Privated,هَپروت,336,https://t.me/Privated,fa,2026-11-22,live,0
@@ -45780,6 +45823,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,borshdelaet,борщевnya 🫀,321,https://t.me/borshdelaet,ru,2026-11-27T19:05:30,live,0
 ,Leokids26,Leokids,320,https://t.me/Leokids26,un,2026-11-23,dataset,0
 ,guangzhou_kitayi,"ТОВАРЫ ИЗ КИТАЯ, ГУАНДЖОУ",320,https://t.me/guangzhou_kitayi,ru,2026-11-23,dataset,0
+,wwqer0q,лина шкаф,320,https://t.me/wwqer0q,ru,2026-11-27T19:59:48,dataset,0
 ,dasharak_art,dasharak,320,https://t.me/dasharak_art,un,2026-11-24T20:59:33,dataset,0
 ,cracktradingsoftware,Ninja trader 8 indicators,320,https://t.me/cracktradingsoftware,un,2026-11-23,dataset,0
 1608875103,miwmiwnigga,آلبوم عکس خانوادگی,320,https://t.me/miwmiwnigga,fa,2026-11-21,live,1
@@ -46256,7 +46300,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2122167437,skammimo777,GIFT XL,307,https://t.me/skammimo777,un,2026-11-27T18:55:40,live,0
 ,bailiuw,❅ивовые зимние ветви❅,307,https://t.me/bailiuw,ru,2026-11-27T19:19:24,live,0
 ,kiv_mav,.°✨Yoko_cosplay✨°.,307,https://t.me/kiv_mav,un,2026-11-27T19:49:07,live,0
-,wwqer0q,лина шкаф,306,https://t.me/wwqer0q,ru,2026-11-27T19:59:48,dataset,0
 2479492097,fairuz_discgos,""" جارة القمر ؛",306,https://t.me/fairuz_discgos,fa,2026-11-22,live,0
 ,shuvalov_js,Литания о Фронтенде,306,https://t.me/shuvalov_js,ru,2026-11-23,live,0
 ,tukisshit,Tuki&#39;s stuff,306,https://t.me/tukisshit,un,2026-11-23,live,0
@@ -48152,6 +48195,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1500577230,ata_baba_sozi,🔴آتا بابا سوزلری🔴,252,https://t.me/ata_baba_sozi,fa,2026-11-27T17:05:52,live,0
 ,gavrilov_gorodludi,Евгений Гаврилов. Город для людей,252,https://t.me/gavrilov_gorodludi,ru,2026-11-27T19:19:27,live,0
 ,soulofforest,і риба і м&#39;ясо,252,https://t.me/soulofforest,ru,2026-11-27T19:20:46,live,0
+,straumya,Канал без грустных котят,251,https://t.me/straumya,ru,2026-11-27T20:02:20,dataset,0
 ,toririnnn,ринтори котлета норвежская,251,https://t.me/toririnnn,ru,2026-11-24,dataset,0
 ,opennet_full,opennet.ru полные новости,251,https://t.me/opennet_full,ru,2026-11-23,live,0
 ,expcrew,Experience Crew,251,https://t.me/expcrew,un,2026-11-23,live,0
@@ -52339,6 +52383,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Qarchannel,Qar Space,159,https://t.me/Qarchannel,un,2026-11-23,dataset,0
 ,gribova_gv,Консультант по ГВ. Светлана Грибова,159,https://t.me/gribova_gv,ru,2026-11-25T19:43:38,dataset,0
 ,mihail_ignatov,Михаил Игнатов,159,https://t.me/mihail_ignatov,ru,2026-11-27T19:41:37,dataset,0
+,qwiikich,рини хочет спать ♱,159,https://t.me/qwiikich,ru,2026-11-27T19:59:48,dataset,0
 ,astroan1,astro-anal |🔒,159,https://t.me/astroan1,un,2026-11-27T19:25:42,dataset,0
 1485347301,garsharezaeemusic,دانلود،اهنگهای،اهنگ،آهنگ،های،جدید،موزیک،گرشا،رضایی،دلم،هوس،کرده،موش،مشکی،دریا،نمیرم،عکسای،آخر،اخر،مج,159,https://t.me/garsharezaeemusic,fa,2026-11-21,live,1
 1020969236,farazte,سازه چادری فراز,159,https://t.me/farazte,fa,2026-11-21,live,1
@@ -54122,6 +54167,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,onyachu,онячу,130,https://t.me/onyachu,ru,2026-11-27T19:09:31,live,0
 ,kyojiren,kindle a fire in your heart,130,https://t.me/kyojiren,un,2026-11-27T19:12:39,live,0
 ,KEMMAAA666,Чкнбргр666🍔,130,https://t.me/KEMMAAA666,ru,2026-11-27T19:19:24,live,0
+,kateincringe,Кринж от mommy Кати,130,https://t.me/kateincringe,ru,2026-11-27T20:00:51,live,1
 ,jurgenwrites,Recomendation Inc.,129,https://t.me/jurgenwrites,un,2026-11-24T21:00:53,dataset,0
 3716092186,Liquid_Shot,آلبوم مامان بدخا#گایشگاه,129,https://t.me/Liquid_Shot,fa,2026-11-21,live,1
 1210484983,kjbzxjkvbkjzxbviohasogasgasbg,سکس👄زوری👄سکس👄با👄س👇👄سریال👄فیلم👄قیلم👄صیلم👄عیلم👄فسلم👄فلیم👄ترسناک👄خفن👄جنگی👄ساپورت👄زنانه👄ست👄سوتین👄شرت👄لباس👄تور👄زیر👄شلوارک👄لختی👄راحتی👄,129,https://t.me/kjbzxjkvbkjzxbviohasogasgasbg,fa,2026-11-22,live,1
@@ -56201,7 +56247,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,stillmewym,STILLME,99,https://t.me/stillmewym,un,2026-11-27T19:48:43,live,0
 ,semya_tron,Семь Я,98,https://t.me/semya_tron,ru,2026-11-23,dataset,0
 ,pronskyuezd_kamenskystan,Генеалогия. Пронский уезд и Каменский стан,98,https://t.me/pronskyuezd_kamenskystan,ru,2026-11-23,dataset,0
-,qwiikich,рини хочет спать ♱,98,https://t.me/qwiikich,ru,2026-11-27T19:59:48,dataset,0
+,kr1skyleee,That’s my shit right here Kris,98,https://t.me/kr1skyleee,fl,2026-11-27T20:00:17,dataset,0
 ,esBotsOfGamer,🇪🇸 Español Bots Of Gamer | BOG,98,https://t.me/esBotsOfGamer,un,2026-11-23,dataset,0
 ,trusovaa_life,Trusova Family 💕,98,https://t.me/trusovaa_life,en,2026-11-25T10:44:16,dataset,1
 1549708308,mehdikh423,ربات فاحشه عکس گیف داستان فیلم سوپر پورن سکسی وطنی جنده خاله الکسیس سکس زناشویی جنسی رقص ایرانی لختی کانال عموجانی گروه رونالدو,98,https://t.me/mehdikh423,fa,2026-11-21,live,1
@@ -57082,7 +57128,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,fito_boom,Натуральная Косметика и не только❤️,86,https://t.me/fito_boom,ru,2026-11-24,dataset,0
 ,barhat_oz,ЖЕНСКАЯ ОДЕЖДА / OZON /,86,https://t.me/barhat_oz,ru,2026-11-24,dataset,0
 ,wowsumka,БРЕНДОВЫЕ Люкс СУМКИ Спб Москва,86,https://t.me/wowsumka,ru,2026-11-23,dataset,0
-,kr1skyleee,That’s my shit right here Kris,86,https://t.me/kr1skyleee,fl,2026-11-27T20:00:17,dataset,0
 ,ehconomich_zagovory_vlasti,Экономические заговоры власти,86,https://t.me/ehconomich_zagovory_vlasti,ru,2026-11-25T18:49:30,dataset,0
 ,dark_money_game,The dark money game,86,https://t.me/dark_money_game,en,2026-11-25T18:49:30,dataset,0
 1158554021,azdevajmashhad,سمت😈سکس👿کلیپ👿جنگل👾های👻لرستان💀شمال،کیش،خاله،انال،شماره،کوس،از،مشهد،صیغه،مشهد،ایران،خراسان،رضوی،شیراز،اصفهان،عکسشماره😷دختر.,86,https://t.me/azdevajmashhad,fa,2026-11-21,live,1
@@ -57923,6 +57968,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,izsvetostara,ИзСветостара,77,https://t.me/izsvetostara,ru,2026-11-27T19:53:03,live,0
 ,G_retell,Гриша пересказывает,76,https://t.me/G_retell,ru,2026-11-23,dataset,0
 ,antiiconsmag,ANTIICON,76,https://t.me/antiiconsmag,un,2026-11-23,dataset,0
+,where_sasha_pishet,"Там, где Саша пишет",76,https://t.me/where_sasha_pishet,ru,2026-11-27T20:00:29,dataset,0
 ,scandal_wealth_power,Scandals of wealth and power,76,https://t.me/scandal_wealth_power,un,2026-11-25T19:03:16,dataset,0
 1575436953,khale_aks_film_jende_fati_korona,"سس ماست,جنده،حنده،کرونا،سیمان،کنکور،زوج،جدید،کس،فیلم،وطنی،خاله،شخصی،مهم،فوتبال،قیمت،هلیا،ایران خودرو،شماره،صکص،سکس،چنده،ارز،پول،",76,https://t.me/khale_aks_film_jende_fati_korona,fa,2026-11-21,live,1
 1530502549,mostafa49577,عکسای مخفی,76,https://t.me/mostafa49577,fa,2026-11-21,live,1
@@ -59541,6 +59587,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,linarsplace,🍮 Linar&#39;s place 🍮,59,https://t.me/linarsplace,un,2026-11-27T19:49:07,live,0
 ,kovyour,KovYour,59,https://t.me/kovyour,un,2026-11-27T19:49:34,live,0
 ,vrn_support,VRN support,59,https://t.me/vrn_support,un,2026-11-27T19:56:53,live,0
+,kiki_only,Ведьмин Уголок,59,https://t.me/kiki_only,ru,2026-11-27T20:00:35,live,0
 ,modnaiaodegd,Модная одежда,58,https://t.me/modnaiaodegd,ru,2026-11-26T13:24:21,dataset,0
 ,jewelryninja,ювелирный ниндзя,58,https://t.me/jewelryninja,ru,2026-11-24,dataset,0
 ,bukCCCP,Книги СССР,58,https://t.me/bukCCCP,ru,2026-11-23,dataset,0
@@ -59733,7 +59780,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,odinprekrasnyicelyimir,МилоМиру,57,https://t.me/odinprekrasnyicelyimir,ru,2026-11-27T19:48:43,live,0
 ,feadasha_art,FeaDasha,56,https://t.me/feadasha_art,un,2026-11-23,dataset,0
 ,MagicMake_up,Marvel Makeup,56,https://t.me/MagicMake_up,un,2026-11-24,dataset,0
-,where_sasha_pishet,"Там, где Саша пишет",56,https://t.me/where_sasha_pishet,ru,2026-11-27T20:00:29,dataset,0
 ,sensualis7multisens,стихи на ТЫ. Актуальная реальность. поэзия,56,https://t.me/sensualis7multisens,ru,2026-11-23,dataset,0
 1485743398,axhamon,📷عکسامون📷,56,https://t.me/axhamon,fa,2026-11-21,live,1
 1855862258,familypice,عکس عروسی,56,https://t.me/familypice,fa,2026-11-21,live,1
@@ -63208,7 +63254,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1107084545,kopibh,عکسهای یادگاری مردم کورد,27,https://t.me/kopibh,fa,2026-11-25T12:49:03,live,1
 ,aisolutionuz,AI Solution,27,https://t.me/aisolutionuz,un,2026-11-25T12:55:06,live,0
 ,lolchtotebenado,Гейская бардель,27,https://t.me/lolchtotebenado,ru,2026-11-25T18:33:39,live,0
-,litvinov27,Андрей Сайты/SEO/Реклама Литвинов,27,https://t.me/litvinov27,ru,2026-11-25T18:45:55,live,0
 ,kupikartin,КУПИ.КАРТИНУ_каталог,27,https://t.me/kupikartin,ru,2026-11-25T18:58:13,live,0
 ,ekrutikov_forest,🌳 В О З Д У Х 🌳 Протвино,27,https://t.me/ekrutikov_forest,ru,2026-11-25T19:01:18,live,0
 2794487402,zxcvmbu,मेरी बेटी,27,https://t.me/zxcvmbu,other,2026-11-26T08:33:59,live,0
@@ -68604,6 +68649,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,InFandomSouthParkHate,уроды,4,https://t.me/InFandomSouthParkHate,ru,2026-11-27T19:56:36,live,0
 ,iknowthatbecause,iknowthatbecause,4,https://t.me/iknowthatbecause,un,2026-11-27T19:56:36,live,0
 ,ark_four,`Косбенд [безбашеные] |Аркейн™| ХБК`,4,https://t.me/ark_four,ru,2026-11-27T19:58:29,live,0
+,relax_nina,Психолог рекомендует - медитации для женщин,4,https://t.me/relax_nina,ru,2026-11-27T20:00:50,live,0
 ,FunBurst,FunBurst — Ваш личный источник радости и хорошего настроения !,3,https://t.me/FunBurst,ru,2026-11-23,dataset,0
 ,TochkaSelf,"🌀 Точка Осознанности — 🌅 Клуб единомышленников, где каждый шаг приближает тебя к пониманию себя и раскрытию новых смыслов!",3,https://t.me/TochkaSelf,ru,2026-11-23,dataset,0
 ,ToolNest,ToolNest - Открой все возможности цифрового мира !,3,https://t.me/ToolNest,ru,2026-11-23,dataset,0
@@ -71762,7 +71808,12 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,bjorkhookah,Telegram: Contact @bjorkhookah,0,https://t.me/bjorkhookah,fl,2026-11-27T10:52:37,live,0
 ,na_grani_hookah,Telegram: Contact @na_grani_hookah,0,https://t.me/na_grani_hookah,un,2026-11-27T10:52:37,live,0
 2785574781,BeRahnegy,بهبه,0,https://t.me/BeRahnegy,fa,2026-11-27T10:53:38,live,0
+,natnetak,Natalia,0,https://t.me/natnetak,un,2026-11-27T11:22:48,live,0
 ,lullabybeats,Lullaby,0,https://t.me/lullabybeats,un,2026-11-27T11:33:06,live,0
+,DarkProdMsk,Ivan.dop,0,https://t.me/DarkProdMsk,un,2026-11-27T15:25:04,live,0
+,Ororum,Muroro,0,https://t.me/Ororum,un,2026-11-27T15:25:04,live,0
+,Shushiiiiiik,Shushik,0,https://t.me/Shushiiiiiik,un,2026-11-27T15:25:04,live,0
+,takeda_flamehorn,Takeda,0,https://t.me/takeda_flamehorn,un,2026-11-27T15:25:21,live,0
 3150041042,testaksmon,تست برای عکسمون,0,https://t.me/testaksmon,fa,2026-11-27T15:25:55,live,1
 ,bookbinge,Книжный запой,0,https://t.me/bookbinge,ru,2026-11-27T15:31:05,live,0
 ,wertesdoes1,🕷Wertes does🕸,0,https://t.me/wertesdoes1,un,2026-11-27T15:31:51,live,0
@@ -71915,144 +71966,189 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,cockakiller,COCKAKILLER,0,https://t.me/cockakiller,un,2026-11-27T19:54:47,live,0
 ,FuurkaInfo,fuurka info,0,https://t.me/FuurkaInfo,un,2026-11-27T19:56:36,live,0
 ,GwarpStore,Telegram: Contact @GwarpStore,0,https://t.me/GwarpStore,un,2026-11-27T19:56:39,live,0
-,F9STD,F9STD,0,https://t.me/F9STD,other,2026-11-27T19:59:33,live,0
-,maksimenkovop,maksimenkovop,0,https://t.me/maksimenkovop,other,2026-11-27T19:59:33,live,0
-,dragonyata,dragonyata,0,https://t.me/dragonyata,other,2026-11-27T19:59:48,live,0
-,vladislavzakharovu,vladislavzakharovu,0,https://t.me/vladislavzakharovu,other,2026-11-27T19:59:29,live,0
-,maksimenkovst,maksimenkovst,0,https://t.me/maksimenkovst,other,2026-11-27T19:59:33,live,0
-,katamesogeki,katamesogeki,0,https://t.me/katamesogeki,other,2026-11-27T19:59:48,live,0
-,kuleshov_media,kuleshov_media,0,https://t.me/kuleshov_media,other,2026-11-27T19:59:48,live,0
-,lordywood,lordywood,0,https://t.me/lordywood,other,2026-11-27T19:59:33,live,0
-,Yos_hibot,Yos_hibot,0,https://t.me/Yos_hibot,other,2026-11-27T19:59:58,live,0
-,lirencosplay,lirencosplay,0,https://t.me/lirencosplay,other,2026-11-27T19:59:48,live,0
-,marishabolsh,marishabolsh,0,https://t.me/marishabolsh,other,2026-11-27T19:59:58,live,0
-,qywer_yy,qywer_yy,0,https://t.me/qywer_yy,other,2026-11-27T19:59:48,live,0
-,jegarnicholasbot,jegarnicholasbot,0,https://t.me/jegarnicholasbot,other,2026-11-27T20:00:00,live,0
-,sneesweet1,sneesweet1,0,https://t.me/sneesweet1,other,2026-11-27T19:59:48,live,0
-,rinaxqss,rinaxqss,0,https://t.me/rinaxqss,other,2026-11-27T20:00:00,live,0
-,wincoinindonesabot,wincoinindonesabot,0,https://t.me/wincoinindonesabot,other,2026-11-27T20:00:00,live,0
-,allstars_ru,allstars_ru,0,https://t.me/allstars_ru,other,2026-11-27T19:59:58,live,0
-,standupbyro,standupbyro,0,https://t.me/standupbyro,other,2026-11-27T20:00:00,live,0
-,bigmoneyclxb,bigmoneyclxb,0,https://t.me/bigmoneyclxb,other,2026-11-27T20:00:00,live,0
-,eu21lns,eu21lns,0,https://t.me/eu21lns,other,2026-11-27T19:59:48,live,0
-,holdemusic,holdemusic,0,https://t.me/holdemusic,other,2026-11-27T19:59:58,live,0
-,elizavetarira,elizavetarira,0,https://t.me/elizavetarira,other,2026-11-27T20:00:00,live,0
-,Armarian,Armarian,0,https://t.me/Armarian,other,2026-11-27T19:59:48,live,0
-,jrocktober,jrocktober,0,https://t.me/jrocktober,other,2026-11-27T19:59:48,live,0
-,tapotsky,tapotsky,0,https://t.me/tapotsky,other,2026-11-27T19:59:48,live,0
-,ble_channel,ble_channel,0,https://t.me/ble_channel,other,2026-11-27T20:00:00,live,0
-,fuqiuluo,fuqiuluo,0,https://t.me/fuqiuluo,other,2026-11-27T20:00:00,live,0
-,mamakatyabenetton,mamakatyabenetton,0,https://t.me/mamakatyabenetton,other,2026-11-27T19:59:48,live,0
-,pschvsk,pschvsk,0,https://t.me/pschvsk,other,2026-11-27T20:00:05,live,0
-,Behzod_hamro,Behzod_hamro,0,https://t.me/Behzod_hamro,other,2026-11-27T19:59:48,live,0
-,ohdonzsstuff,ohdonzsstuff,0,https://t.me/ohdonzsstuff,other,2026-11-27T20:00:00,live,0
-,animate_it,animate_it,0,https://t.me/animate_it,other,2026-11-27T20:00:05,live,0
-,Instagrambot,Instagrambot,0,https://t.me/Instagrambot,other,2026-11-27T19:59:48,live,0
-,moonysnox,moonysnox,0,https://t.me/moonysnox,other,2026-11-27T20:00:05,live,0
-,akmalodilov_official,akmalodilov_official,0,https://t.me/akmalodilov_official,other,2026-11-27T19:59:48,live,0
-,ATLANTIDAGOAT,ATLANTIDAGOAT,0,https://t.me/ATLANTIDAGOAT,other,2026-11-27T20:00:00,live,0
-,the_fire_nation,the_fire_nation,0,https://t.me/the_fire_nation,other,2026-11-27T20:00:05,live,0
-,dim_u_lya,dim_u_lya,0,https://t.me/dim_u_lya,other,2026-11-27T19:59:48,live,0
-,DJMALDITO,DJMALDITO,0,https://t.me/DJMALDITO,other,2026-11-27T20:00:00,live,0
-,guster179,guster179,0,https://t.me/guster179,other,2026-11-27T20:00:05,live,0
-,Logovo_drovoseka,Logovo_drovoseka,0,https://t.me/Logovo_drovoseka,other,2026-11-27T20:00:00,live,0
-,dimameshers,dimameshers,0,https://t.me/dimameshers,other,2026-11-27T19:59:48,live,0
-,minekampf_ru,minekampf_ru,0,https://t.me/minekampf_ru,other,2026-11-27T20:00:00,live,0
-,scentofd0,scentofd0,0,https://t.me/scentofd0,other,2026-11-27T19:59:48,live,0
-,minekampf_rubot,minekampf_rubot,0,https://t.me/minekampf_rubot,other,2026-11-27T20:00:00,live,0
-,fazodateaches,fazodateaches,0,https://t.me/fazodateaches,other,2026-11-27T20:00:18,live,0
-,ayo_joenat,ayo_joenat,0,https://t.me/ayo_joenat,other,2026-11-27T20:00:18,live,0
-,lisa007007,lisa007007,0,https://t.me/lisa007007,other,2026-11-27T20:00:18,live,0
-,bratan_zaebal,bratan_zaebal,0,https://t.me/bratan_zaebal,other,2026-11-27T20:00:18,live,0
-,laycx,laycx,0,https://t.me/laycx,other,2026-11-27T20:00:18,live,0
-,layessl,layessl,0,https://t.me/layessl,other,2026-11-27T20:00:18,live,0
-,Baraka_uzbot,Baraka_uzbot,0,https://t.me/Baraka_uzbot,other,2026-11-27T20:00:18,live,0
-,Awalkforaruble,Awalkforaruble,0,https://t.me/Awalkforaruble,other,2026-11-27T20:00:18,live,0
-,dodasi,dodasi,0,https://t.me/dodasi,other,2026-11-27T20:00:18,live,0
-,Dima222333,Dima222333,0,https://t.me/Dima222333,other,2026-11-27T20:00:18,live,0
-,a_khabibrahmanova,a_khabibrahmanova,0,https://t.me/a_khabibrahmanova,other,2026-11-27T20:00:18,live,0
-,d4a1o15,d4a1o15,0,https://t.me/d4a1o15,other,2026-11-27T20:00:18,live,0
-,Shazam_mbot,Shazam_mbot,0,https://t.me/Shazam_mbot,other,2026-11-27T20:00:18,live,0
-,n_khabibrahmanov,n_khabibrahmanov,0,https://t.me/n_khabibrahmanov,other,2026-11-27T20:00:18,live,0
-,ruh_folk,ruh_folk,0,https://t.me/ruh_folk,other,2026-11-27T20:00:18,live,0
-,yarkzz,yarkzz,0,https://t.me/yarkzz,other,2026-11-27T20:00:18,live,0
-,Neighbourlad,Neighbourlad,0,https://t.me/Neighbourlad,other,2026-11-27T20:00:18,live,0
-,reuploaddirol,reuploaddirol,0,https://t.me/reuploaddirol,other,2026-11-27T20:00:18,live,0
-,yogod00,yogod00,0,https://t.me/yogod00,other,2026-11-27T20:00:18,live,0
-,qceturrr,qceturrr,0,https://t.me/qceturrr,other,2026-11-27T20:00:18,live,0
-,degradation_gallery,degradation_gallery,0,https://t.me/degradation_gallery,other,2026-11-27T20:00:26,live,0
-,harmycos,harmycos,0,https://t.me/harmycos,other,2026-11-27T20:00:18,live,0
-,lososya556,lososya556,0,https://t.me/lososya556,other,2026-11-27T20:00:18,live,0
-,mizukicosplay,mizukicosplay,0,https://t.me/mizukicosplay,other,2026-11-27T20:00:18,live,0
-,rembllyzi,rembllyzi,0,https://t.me/rembllyzi,other,2026-11-27T20:00:18,live,0
-,nonuanceautumn,nonuanceautumn,0,https://t.me/nonuanceautumn,other,2026-11-27T20:00:26,live,0
-,JFCREATOR,JFCREATOR,0,https://t.me/JFCREATOR,other,2026-11-27T20:00:17,live,0
-,agirls_coverdance,agirls_coverdance,0,https://t.me/agirls_coverdance,other,2026-11-27T20:00:17,live,0
-,alisa_fedoseeva,alisa_fedoseeva,0,https://t.me/alisa_fedoseeva,other,2026-11-27T20:00:26,live,0
-,fanclubtrololoshki,fanclubtrololoshki,0,https://t.me/fanclubtrololoshki,other,2026-11-27T20:00:29,live,0
-,alison_kolbason,alison_kolbason,0,https://t.me/alison_kolbason,other,2026-11-27T20:00:26,live,0
-,bgjustbg,bgjustbg,0,https://t.me/bgjustbg,other,2026-11-27T20:00:17,live,0
-,pplumpp,pplumpp,0,https://t.me/pplumpp,other,2026-11-27T20:00:17,live,0
-,s1mdena,s1mdena,0,https://t.me/s1mdena,other,2026-11-27T20:00:17,live,0
-,Liza_orl,Liza_orl,0,https://t.me/Liza_orl,other,2026-11-27T20:00:26,live,0
-,rmg_2022,rmg_2022,0,https://t.me/rmg_2022,other,2026-11-27T20:00:29,live,0
-,w0lfherd,w0lfherd,0,https://t.me/w0lfherd,other,2026-11-27T20:00:17,live,0
-,deilars_mp,deilars_mp,0,https://t.me/deilars_mp,other,2026-11-27T20:00:26,live,0
-,TanyaKulagina,TanyaKulagina,0,https://t.me/TanyaKulagina,other,2026-11-27T20:00:17,live,0
-,malinaS90,malinaS90,0,https://t.me/malinaS90,other,2026-11-27T20:00:29,live,0
-,cuentapropianomads,cuentapropianomads,0,https://t.me/cuentapropianomads,other,2026-11-27T20:00:17,live,0
-,stasuchok,stasuchok,0,https://t.me/stasuchok,other,2026-11-27T20:00:29,live,0
-,truecheeel,truecheeel,0,https://t.me/truecheeel,other,2026-11-27T20:00:29,live,0
-,a1batroc,a1batroc,0,https://t.me/a1batroc,other,2026-11-27T20:00:29,live,0
-,mil1rrr,mil1rrr,0,https://t.me/mil1rrr,other,2026-11-27T20:00:26,live,0
-,a1batrocsecond,a1batrocsecond,0,https://t.me/a1batrocsecond,other,2026-11-27T20:00:29,live,0
-,pilkislihkonfet,pilkislihkonfet,0,https://t.me/pilkislihkonfet,other,2026-11-27T20:00:26,live,0
-,realchisa,realchisa,0,https://t.me/realchisa,other,2026-11-27T20:00:26,live,0
-,kichcan,kichcan,0,https://t.me/kichcan,other,2026-11-27T20:00:35,live,0
-,alibi_amanzholov,alibi_amanzholov,0,https://t.me/alibi_amanzholov,other,2026-11-27T20:00:29,live,0
-,And_why_not_if_yes,And_why_not_if_yes,0,https://t.me/And_why_not_if_yes,other,2026-11-27T20:00:26,live,0
-,blalada,blalada,0,https://t.me/blalada,other,2026-11-27T20:00:35,live,0
-,cycloalisher,cycloalisher,0,https://t.me/cycloalisher,other,2026-11-27T20:00:29,live,0
-,BTitanArk,BTitanArk,0,https://t.me/BTitanArk,other,2026-11-27T20:00:26,live,0
-,Miaokop,Miaokop,0,https://t.me/Miaokop,other,2026-11-27T20:00:26,live,0
-,freid_jr,freid_jr,0,https://t.me/freid_jr,other,2026-11-27T20:00:35,live,0
-,zhandar17,zhandar17,0,https://t.me/zhandar17,other,2026-11-27T20:00:29,live,0
-,SunRinaaaa,SunRinaaaa,0,https://t.me/SunRinaaaa,other,2026-11-27T20:00:26,live,0
-,kariernystart,kariernystart,0,https://t.me/kariernystart,other,2026-11-27T20:00:35,live,0
-,logovocccp,logovocccp,0,https://t.me/logovocccp,other,2026-11-27T20:00:29,live,0
-,busha_arttg,busha_arttg,0,https://t.me/busha_arttg,other,2026-11-27T20:00:26,live,0
-,Llili_trippi,Llili_trippi,0,https://t.me/Llili_trippi,other,2026-11-27T20:00:29,live,0
-,hachimeoww,hachimeoww,0,https://t.me/hachimeoww,other,2026-11-27T20:00:26,live,0
-,joponews,joponews,0,https://t.me/joponews,other,2026-11-27T20:00:29,live,0
-,mavkaaacoss,mavkaaacoss,0,https://t.me/mavkaaacoss,other,2026-11-27T20:00:26,live,0
-,dpochill,dpochill,0,https://t.me/dpochill,other,2026-11-27T20:00:35,live,0
-,ckey_signature,ckey_signature,0,https://t.me/ckey_signature,other,2026-11-27T20:00:29,live,0
-,instadane4ka,instadane4ka,0,https://t.me/instadane4ka,other,2026-11-27T20:00:35,live,0
-,rooroomilol,rooroomilol,0,https://t.me/rooroomilol,other,2026-11-27T20:00:26,live,0
-,tetkamsc,tetkamsc,0,https://t.me/tetkamsc,other,2026-11-27T20:00:26,live,0
-,turmalintea,turmalintea,0,https://t.me/turmalintea,other,2026-11-27T20:00:26,live,0
-,Ijtimoiynigohbot,Ijtimoiynigohbot,0,https://t.me/Ijtimoiynigohbot,other,2026-11-27T20:00:35,live,0
-,vaaaallllli,vaaaallllli,0,https://t.me/vaaaallllli,other,2026-11-27T20:00:26,live,0
-,ElinSparks_Lamp,ElinSparks_Lamp,0,https://t.me/ElinSparks_Lamp,other,2026-11-27T20:00:35,live,0
-,NaryaBIBrighter,NaryaBIBrighter,0,https://t.me/NaryaBIBrighter,other,2026-11-27T20:00:35,live,0
-,zozacos,zozacos,0,https://t.me/zozacos,other,2026-11-27T20:00:26,live,0
-,Nicole_yes,Nicole_yes,0,https://t.me/Nicole_yes,other,2026-11-27T20:00:50,live,0
-,ok_Nadi,ok_Nadi,0,https://t.me/ok_Nadi,other,2026-11-27T20:00:50,live,0
-,leftsideorg,leftsideorg,0,https://t.me/leftsideorg,other,2026-11-27T20:00:50,live,0
-,kiki_only,kiki_only,0,https://t.me/kiki_only,other,2026-11-27T20:00:35,live,0
-,SalemAIbot,SalemAIbot,0,https://t.me/SalemAIbot,other,2026-11-27T20:00:50,live,0
-,sr_nvrsk93bot,sr_nvrsk93bot,0,https://t.me/sr_nvrsk93bot,other,2026-11-27T20:00:51,live,0
-,drproxybot,drproxybot,0,https://t.me/drproxybot,other,2026-11-27T20:00:50,live,0
-,teacherry_bot,teacherry_bot,0,https://t.me/teacherry_bot,other,2026-11-27T20:00:51,live,0
-,irissshok,irissshok,0,https://t.me/irissshok,other,2026-11-27T20:00:50,live,0
-,g_chentsova,g_chentsova,0,https://t.me/g_chentsova,other,2026-11-27T20:00:50,live,0
-,nina_psy4y,nina_psy4y,0,https://t.me/nina_psy4y,other,2026-11-27T20:00:50,live,0
-,CyropIONbot,CyropIONbot,0,https://t.me/CyropIONbot,other,2026-11-27T20:00:51,live,0
-,mnemonic_game_bot,mnemonic_game_bot,0,https://t.me/mnemonic_game_bot,other,2026-11-27T20:00:35,live,0
-,relax_nina,relax_nina,0,https://t.me/relax_nina,other,2026-11-27T20:00:50,live,0
-,kateincringe,kateincringe,0,https://t.me/kateincringe,other,2026-11-27T20:00:51,live,0
-,starsfibot,starsfibot,0,https://t.me/starsfibot,other,2026-11-27T20:00:35,live,0
-,Freepremsdon_bot,Freepremsdon_bot,0,https://t.me/Freepremsdon_bot,other,2026-11-27T20:00:50,live,0
-,tlatata,tlatata,0,https://t.me/tlatata,other,2026-11-27T20:00:51,live,0
-,syetaxxx5V,syetaxxx5V,0,https://t.me/syetaxxx5V,other,2026-11-27T20:00:50,live,0
-,PlagueRaz00m,PlagueRaz00m,0,https://t.me/PlagueRaz00m,other,2026-11-27T20:00:50,live,0
+,slavakrylovvv,slavakrylovvv,0,https://t.me/slavakrylovvv,other,2026-11-27T20:00:51,live,0
+,bb_boomer,bb_boomer,0,https://t.me/bb_boomer,other,2026-11-27T20:00:35,live,0
+,wrdypchgpqgedwt4YMA,wrdypchgpqgedwt4YMA,0,https://t.me/wrdypchgpqgedwt4YMA,other,2026-11-27T20:00:50,live,0
+,luekami,luekami,0,https://t.me/luekami,other,2026-11-27T20:00:51,live,0
+,Doctrina_Gerasimova_bot,Doctrina_Gerasimova_bot,0,https://t.me/Doctrina_Gerasimova_bot,other,2026-11-27T20:00:51,live,0
+,bslv_nsty,bslv_nsty,0,https://t.me/bslv_nsty,other,2026-11-27T20:00:50,live,0
+,dashshartem,dashshartem,0,https://t.me/dashshartem,other,2026-11-27T20:00:51,live,0
+,mahunchikk,mahunchikk,0,https://t.me/mahunchikk,other,2026-11-27T20:00:50,live,0
+,boomerandmoments,boomerandmoments,0,https://t.me/boomerandmoments,other,2026-11-27T20:00:35,live,0
+,Doyorsa,Doyorsa,0,https://t.me/Doyorsa,other,2026-11-27T20:00:50,live,0
+,mekct_bot,mekct_bot,0,https://t.me/mekct_bot,other,2026-11-27T20:00:51,live,0
+,character_des,character_des,0,https://t.me/character_des,other,2026-11-27T20:00:35,live,0
+,LoisKim,LoisKim,0,https://t.me/LoisKim,other,2026-11-27T20:00:50,live,0
+,dvoidstudios,dvoidstudios,0,https://t.me/dvoidstudios,other,2026-11-27T20:00:35,live,0
+,LorsKim_art,LorsKim_art,0,https://t.me/LorsKim_art,other,2026-11-27T20:00:50,live,0
+,editor_cc,editor_cc,0,https://t.me/editor_cc,other,2026-11-27T20:00:51,live,0
+,justbefunk_kirov,justbefunk_kirov,0,https://t.me/justbefunk_kirov,other,2026-11-27T20:00:35,live,0
+,LubluPepel,LubluPepel,0,https://t.me/LubluPepel,other,2026-11-27T20:00:50,live,0
+,gleb_vision,gleb_vision,0,https://t.me/gleb_vision,other,2026-11-27T20:00:51,live,0
+,kg_dress,kg_dress,0,https://t.me/kg_dress,other,2026-11-27T20:00:35,live,0
+,Sl3epyhe4d,Sl3epyhe4d,0,https://t.me/Sl3epyhe4d,other,2026-11-27T20:00:50,live,0
+,ryefields,ryefields,0,https://t.me/ryefields,other,2026-11-27T20:00:35,live,0
+,Vrasushkahappy,Vrasushkahappy,0,https://t.me/Vrasushkahappy,other,2026-11-27T20:00:50,live,0
+,thebadfriends,thebadfriends,0,https://t.me/thebadfriends,other,2026-11-27T20:00:35,live,0
+,Vrasya_chan,Vrasya_chan,0,https://t.me/Vrasya_chan,other,2026-11-27T20:00:50,live,0
+,medvedev_aff,medvedev_aff,0,https://t.me/medvedev_aff,other,2026-11-27T20:00:51,live,0
+,beershop_32,beershop_32,0,https://t.me/beershop_32,other,2026-11-27T20:00:50,live,0
+,youn9_gunz,youn9_gunz,0,https://t.me/youn9_gunz,other,2026-11-27T20:00:35,live,0
+,chocolatemug,chocolatemug,0,https://t.me/chocolatemug,other,2026-11-27T20:00:50,live,0
+,Xla_asy,Xla_asy,0,https://t.me/Xla_asy,other,2026-11-27T20:00:51,live,0
+,doyorsaaaaaaa,doyorsaaaaaaa,0,https://t.me/doyorsaaaaaaa,other,2026-11-27T20:00:50,live,0
+,domfomii8,domfomii8,0,https://t.me/domfomii8,other,2026-11-27T20:00:51,live,0
+,activiaanon_bot,activiaanon_bot,0,https://t.me/activiaanon_bot,other,2026-11-27T20:01:19,live,0
+,nanatyandura,nanatyandura,0,https://t.me/nanatyandura,other,2026-11-27T20:00:50,live,0
+,creekmylove,creekmylove,0,https://t.me/creekmylove,other,2026-11-27T20:01:19,live,0
+,nikitpmsh,nikitpmsh,0,https://t.me/nikitpmsh,other,2026-11-27T20:00:50,live,0
+,saidactivia,saidactivia,0,https://t.me/saidactivia,other,2026-11-27T20:01:19,live,0
+,venti_san_0,venti_san_0,0,https://t.me/venti_san_0,other,2026-11-27T20:01:19,live,0
+,katrin_space_art,katrin_space_art,0,https://t.me/katrin_space_art,other,2026-11-27T20:01:19,live,0
+,AlienSeal,AlienSeal,0,https://t.me/AlienSeal,other,2026-11-27T20:01:19,live,0
+,Nataliasavina25,Nataliasavina25,0,https://t.me/Nataliasavina25,other,2026-11-27T20:01:19,live,0
+,serseyaagossip,serseyaagossip,0,https://t.me/serseyaagossip,other,2026-11-27T20:00:50,live,0
+,histmsu,histmsu,0,https://t.me/histmsu,other,2026-11-27T20:00:51,live,0
+,fsonyasonya,fsonyasonya,0,https://t.me/fsonyasonya,other,2026-11-27T20:01:19,live,0
+,serseyaartists,serseyaartists,0,https://t.me/serseyaartists,other,2026-11-27T20:00:50,live,0
+,minorbraindamage,minorbraindamage,0,https://t.me/minorbraindamage,other,2026-11-27T20:01:19,live,0
+,borisandinga,borisandinga,0,https://t.me/borisandinga,other,2026-11-27T20:00:50,live,0
+,semejnoeobuchenie,semejnoeobuchenie,0,https://t.me/semejnoeobuchenie,other,2026-11-27T20:00:50,live,0
+,arinalalalalalala,arinalalalalalala,0,https://t.me/arinalalalalalala,other,2026-11-27T20:01:19,live,0
+,n_semerca_77,n_semerca_77,0,https://t.me/n_semerca_77,other,2026-11-27T20:01:19,live,0
+,syad_pyad,syad_pyad,0,https://t.me/syad_pyad,other,2026-11-27T20:00:51,live,0
+,aad_dvizi,aad_dvizi,0,https://t.me/aad_dvizi,other,2026-11-27T20:01:19,live,0
+,SeagullXxR,SeagullXxR,0,https://t.me/SeagullXxR,other,2026-11-27T20:01:30,live,0
+,Seagulls_Lagoon,Seagulls_Lagoon,0,https://t.me/Seagulls_Lagoon,other,2026-11-27T20:01:30,live,0
+,helpantonbot,helpantonbot,0,https://t.me/helpantonbot,other,2026-11-27T20:01:30,live,0
+,morninglinks,morninglinks,0,https://t.me/morninglinks,other,2026-11-27T20:01:19,live,0
+,selskii1bot,selskii1bot,0,https://t.me/selskii1bot,other,2026-11-27T20:01:30,live,0
+,bl0ktalk2,bl0ktalk2,0,https://t.me/bl0ktalk2,other,2026-11-27T20:01:19,live,0
+,selskii2bot,selskii2bot,0,https://t.me/selskii2bot,other,2026-11-27T20:01:30,live,0
+,uristantondolgihvideo_bot,uristantondolgihvideo_bot,0,https://t.me/uristantondolgihvideo_bot,other,2026-11-27T20:01:30,live,0
+,kekismehi,kekismehi,0,https://t.me/kekismehi,other,2026-11-27T20:01:19,live,0
+,ludmilagang,ludmilagang,0,https://t.me/ludmilagang,other,2026-11-27T20:01:19,live,0
+,vashmirrorka,vashmirrorka,0,https://t.me/vashmirrorka,other,2026-11-27T20:01:30,live,0
+,tvoyaalfasmm,tvoyaalfasmm,0,https://t.me/tvoyaalfasmm,other,2026-11-27T20:01:41,live,0
+,Hohohohhohoh228,Hohohohhohoh228,0,https://t.me/Hohohohhohoh228,other,2026-11-27T20:01:30,live,0
+,FalseWilbur,FalseWilbur,0,https://t.me/FalseWilbur,other,2026-11-27T20:01:41,live,0
+,thuleanperspectivez,thuleanperspectivez,0,https://t.me/thuleanperspectivez,other,2026-11-27T20:01:19,live,0
+,Manbergark,Manbergark,0,https://t.me/Manbergark,other,2026-11-27T20:01:41,live,0
+,ecofirium,ecofirium,0,https://t.me/ecofirium,other,2026-11-27T20:01:30,live,0
+,DanteBIGBoss777,DanteBIGBoss777,0,https://t.me/DanteBIGBoss777,other,2026-11-27T20:01:19,live,0
+,evochkaa_vi,evochkaa_vi,0,https://t.me/evochkaa_vi,other,2026-11-27T20:01:30,live,0
+,blastplast,blastplast,0,https://t.me/blastplast,other,2026-11-27T20:01:41,live,0
+,procida_32,procida_32,0,https://t.me/procida_32,other,2026-11-27T20:01:44,live,0
+,kisaprincess,kisaprincess,0,https://t.me/kisaprincess,other,2026-11-27T20:01:30,live,0
+,streetrider32,streetrider32,0,https://t.me/streetrider32,other,2026-11-27T20:01:44,live,0
+,Z0DYSE,Z0DYSE,0,https://t.me/Z0DYSE,other,2026-11-27T20:01:44,live,0
+,qweternity4,qweternity4,0,https://t.me/qweternity4,other,2026-11-27T20:01:30,live,0
+,arseny_tremor,arseny_tremor,0,https://t.me/arseny_tremor,other,2026-11-27T20:01:41,live,0
+,i_love_finebut,i_love_finebut,0,https://t.me/i_love_finebut,other,2026-11-27T20:01:44,live,0
+,qweternityGYM,qweternityGYM,0,https://t.me/qweternityGYM,other,2026-11-27T20:01:30,live,0
+,vlagasenka,vlagasenka,0,https://t.me/vlagasenka,other,2026-11-27T20:01:41,live,0
+,Margo_shahs,Margo_shahs,0,https://t.me/Margo_shahs,other,2026-11-27T20:01:30,live,0
+,CORVIOFC,CORVIOFC,0,https://t.me/CORVIOFC,other,2026-11-27T20:01:44,live,0
+,antonpaluch,antonpaluch,0,https://t.me/antonpaluch,other,2026-11-27T20:01:30,live,0
+,mixgelatotheH,mixgelatotheH,0,https://t.me/mixgelatotheH,other,2026-11-27T20:01:44,live,0
+,blleackki,blleackki,0,https://t.me/blleackki,other,2026-11-27T20:01:30,live,0
+,nenyashhkaa,nenyashhkaa,0,https://t.me/nenyashhkaa,other,2026-11-27T20:01:41,live,0
+,lindersass,lindersass,0,https://t.me/lindersass,other,2026-11-27T20:01:30,live,0
+,sodzeroVzakone,sodzeroVzakone,0,https://t.me/sodzeroVzakone,other,2026-11-27T20:01:44,live,0
+,aowltrail,aowltrail,0,https://t.me/aowltrail,other,2026-11-27T20:01:41,live,0
+,JiliaF,JiliaF,0,https://t.me/JiliaF,other,2026-11-27T20:01:30,live,0
+,walkonclouds,walkonclouds,0,https://t.me/walkonclouds,other,2026-11-27T20:01:44,live,0
+,sinotyancosplay,sinotyancosplay,0,https://t.me/sinotyancosplay,other,2026-11-27T20:01:41,live,0
+,Evgeny_Alexeev,Evgeny_Alexeev,0,https://t.me/Evgeny_Alexeev,other,2026-11-27T20:01:44,live,0
+,sonya_is_a_shame,sonya_is_a_shame,0,https://t.me/sonya_is_a_shame,other,2026-11-27T20:01:41,live,0
+,vladimirbiryuk,vladimirbiryuk,0,https://t.me/vladimirbiryuk,other,2026-11-27T20:01:30,live,0
+,alexeychernov_piano,alexeychernov_piano,0,https://t.me/alexeychernov_piano,other,2026-11-27T20:01:44,live,0
+,blockadey,blockadey,0,https://t.me/blockadey,other,2026-11-27T20:01:59,live,0
+,kernanv,kernanv,0,https://t.me/kernanv,other,2026-11-27T20:01:59,live,0
+,brazzzerzy,brazzzerzy,0,https://t.me/brazzzerzy,other,2026-11-27T20:01:59,live,0
+,tomorin228,tomorin228,0,https://t.me/tomorin228,other,2026-11-27T20:01:59,live,0
+,markelll69,markelll69,0,https://t.me/markelll69,other,2026-11-27T20:01:59,live,0
+,tomorin_228,tomorin_228,0,https://t.me/tomorin_228,other,2026-11-27T20:01:59,live,0
+,tolpaaamanage,tolpaaamanage,0,https://t.me/tolpaaamanage,other,2026-11-27T20:01:59,live,0
+,seventy_four_Wolfram,seventy_four_Wolfram,0,https://t.me/seventy_four_Wolfram,other,2026-11-27T20:01:44,live,0
+,oss_by_sold_bot,oss_by_sold_bot,0,https://t.me/oss_by_sold_bot,other,2026-11-27T20:01:59,live,0
+,FireGroot,FireGroot,0,https://t.me/FireGroot,other,2026-11-27T20:01:59,live,0
+,MaytheForcewithMe,MaytheForcewithMe,0,https://t.me/MaytheForcewithMe,other,2026-11-27T20:01:59,live,0
+,fedorovfitnes,fedorovfitnes,0,https://t.me/fedorovfitnes,other,2026-11-27T20:01:59,live,0
+,RD_LEGO,RD_LEGO,0,https://t.me/RD_LEGO,other,2026-11-27T20:01:59,live,0
+,KOHKYPC_HALLOWEEN,KOHKYPC_HALLOWEEN,0,https://t.me/KOHKYPC_HALLOWEEN,other,2026-11-27T20:01:59,live,0
+,fizikaFIZZY,fizikaFIZZY,0,https://t.me/fizikaFIZZY,other,2026-11-27T20:01:59,live,0
+,hanawwa177,hanawwa177,0,https://t.me/hanawwa177,other,2026-11-27T20:01:59,live,0
+,martikeywoof,martikeywoof,0,https://t.me/martikeywoof,other,2026-11-27T20:01:59,live,0
+,tallbrickshop,tallbrickshop,0,https://t.me/tallbrickshop,other,2026-11-27T20:01:59,live,0
+,buse4ka07,buse4ka07,0,https://t.me/buse4ka07,other,2026-11-27T20:01:59,live,0
+,bybuse4kaa,bybuse4kaa,0,https://t.me/bybuse4kaa,other,2026-11-27T20:01:59,live,0
+,Theatrical_grace14,Theatrical_grace14,0,https://t.me/Theatrical_grace14,other,2026-11-27T20:02:02,live,0
+,kharlashinastya,kharlashinastya,0,https://t.me/kharlashinastya,other,2026-11-27T20:01:59,live,0
+,kreedomaww,kreedomaww,0,https://t.me/kreedomaww,other,2026-11-27T20:01:59,live,0
+,incredibleother,incredibleother,0,https://t.me/incredibleother,other,2026-11-27T20:02:02,live,0
+,Olena_tactic,Olena_tactic,0,https://t.me/Olena_tactic,other,2026-11-27T20:01:59,live,0
+,kridoman_lox,kridoman_lox,0,https://t.me/kridoman_lox,other,2026-11-27T20:01:59,live,0
+,im_ukrainian69,im_ukrainian69,0,https://t.me/im_ukrainian69,other,2026-11-27T20:01:59,live,0
+,Schmalik22,Schmalik22,0,https://t.me/Schmalik22,other,2026-11-27T20:02:02,live,0
+,ani_quiz_msk,ani_quiz_msk,0,https://t.me/ani_quiz_msk,other,2026-11-27T20:01:59,live,0
+,gauzen_party,gauzen_party,0,https://t.me/gauzen_party,other,2026-11-27T20:02:02,live,0
+,anixx_52,anixx_52,0,https://t.me/anixx_52,other,2026-11-27T20:01:59,live,0
+,kuossh,kuossh,0,https://t.me/kuossh,other,2026-11-27T20:02:02,live,0
+,sadmadand_bad,sadmadand_bad,0,https://t.me/sadmadand_bad,other,2026-11-27T20:01:59,live,0
+,lilivvxc,lilivvxc,0,https://t.me/lilivvxc,other,2026-11-27T20:02:02,live,0
+,ssianastasiia,ssianastasiia,0,https://t.me/ssianastasiia,other,2026-11-27T20:02:02,live,0
+,xiaodiva,xiaodiva,0,https://t.me/xiaodiva,other,2026-11-27T20:01:59,live,0
+,txxerr,txxerr,0,https://t.me/txxerr,other,2026-11-27T20:02:02,live,0
+,kkmlaaa,kkmlaaa,0,https://t.me/kkmlaaa,other,2026-11-27T20:02:09,live,0
+,zed_ou_ee,zed_ou_ee,0,https://t.me/zed_ou_ee,other,2026-11-27T20:01:59,live,0
+,anzelenova,anzelenova,0,https://t.me/anzelenova,other,2026-11-27T20:02:02,live,0
+,lesssiaaa,lesssiaaa,0,https://t.me/lesssiaaa,other,2026-11-27T20:02:09,live,0
+,aciddcry,aciddcry,0,https://t.me/aciddcry,other,2026-11-27T20:01:59,live,0
+,innastacevich,innastacevich,0,https://t.me/innastacevich,other,2026-11-27T20:02:09,live,0
+,kyurshewelll,kyurshewelll,0,https://t.me/kyurshewelll,other,2026-11-27T20:02:09,live,0
+,Anastasia_Vishnyak,Anastasia_Vishnyak,0,https://t.me/Anastasia_Vishnyak,other,2026-11-27T20:02:09,live,0
+,d0lietawsche1cht,d0lietawsche1cht,0,https://t.me/d0lietawsche1cht,other,2026-11-27T20:01:59,live,0
+,ElenaWin369,ElenaWin369,0,https://t.me/ElenaWin369,other,2026-11-27T20:02:09,live,0
+,ElenaWinlm_bot,ElenaWinlm_bot,0,https://t.me/ElenaWinlm_bot,other,2026-11-27T20:02:09,live,0
+,arilee_loveyoka,arilee_loveyoka,0,https://t.me/arilee_loveyoka,other,2026-11-27T20:01:59,live,0
+,IvanVinogradov2025,IvanVinogradov2025,0,https://t.me/IvanVinogradov2025,other,2026-11-27T20:02:09,live,0
+,meoowlwl,meoowlwl,0,https://t.me/meoowlwl,other,2026-11-27T20:01:59,live,0
+,polldm,polldm,0,https://t.me/polldm,other,2026-11-27T20:01:59,live,0
+,tinher_samurai,tinher_samurai,0,https://t.me/tinher_samurai,other,2026-11-27T20:01:59,live,0
+,vasileva_asti,vasileva_asti,0,https://t.me/vasileva_asti,other,2026-11-27T20:02:10,live,0
+,otzyvyElenaWin,otzyvyElenaWin,0,https://t.me/otzyvyElenaWin,other,2026-11-27T20:02:09,live,0
+,Jotamii,Jotamii,0,https://t.me/Jotamii,other,2026-11-27T20:01:59,live,0
+,darishkazv,darishkazv,0,https://t.me/darishkazv,other,2026-11-27T20:02:10,live,0
+,ding_k,ding_k,0,https://t.me/ding_k,other,2026-11-27T20:02:10,live,0
+,jotami1,jotami1,0,https://t.me/jotami1,other,2026-11-27T20:01:59,live,0
+,Energy_voice_bot,Energy_voice_bot,0,https://t.me/Energy_voice_bot,other,2026-11-27T20:02:10,live,0
+,sol0albedo,sol0albedo,0,https://t.me/sol0albedo,other,2026-11-27T20:01:59,live,0
+,bratstvo_ua,bratstvo_ua,0,https://t.me/bratstvo_ua,other,2026-11-27T20:02:19,live,0
+,kovalmarik,kovalmarik,0,https://t.me/kovalmarik,other,2026-11-27T20:02:10,live,0
+,mikeehooo,mikeehooo,0,https://t.me/mikeehooo,other,2026-11-27T20:02:19,live,0
+,ymautoo,ymautoo,0,https://t.me/ymautoo,other,2026-11-27T20:02:19,live,0
+,Dksjcc,Dksjcc,0,https://t.me/Dksjcc,other,2026-11-27T20:02:19,live,0
+,fatedii,fatedii,0,https://t.me/fatedii,other,2026-11-27T20:02:10,live,0
+,portfolioelya,portfolioelya,0,https://t.me/portfolioelya,other,2026-11-27T20:02:19,live,0
+,fofrandom,fofrandom,0,https://t.me/fofrandom,other,2026-11-27T20:02:10,live,0
+,kokpost,kokpost,0,https://t.me/kokpost,other,2026-11-27T20:02:20,live,0
+,vladarmaniii,vladarmaniii,0,https://t.me/vladarmaniii,other,2026-11-27T20:02:19,live,0
+,h1ghhqo,h1ghhqo,0,https://t.me/h1ghhqo,other,2026-11-27T20:02:10,live,0
+,all_in_money,all_in_money,0,https://t.me/all_in_money,other,2026-11-27T20:02:19,live,0
+,h1ghhqual1ty,h1ghhqual1ty,0,https://t.me/h1ghhqual1ty,other,2026-11-27T20:02:10,live,0
+,polina09105,polina09105,0,https://t.me/polina09105,other,2026-11-27T20:02:20,live,0
+,oh_stepandr,oh_stepandr,0,https://t.me/oh_stepandr,other,2026-11-27T20:02:19,live,0
+,maylineshot,maylineshot,0,https://t.me/maylineshot,other,2026-11-27T20:02:10,live,0
+,specialtymeme,specialtymeme,0,https://t.me/specialtymeme,other,2026-11-27T20:02:20,live,0
+,milanochka_limin,milanochka_limin,0,https://t.me/milanochka_limin,other,2026-11-27T20:02:10,live,0
+,AlexanderGatin,AlexanderGatin,0,https://t.me/AlexanderGatin,other,2026-11-27T20:02:19,live,0
+,vazzcommunity,vazzcommunity,0,https://t.me/vazzcommunity,other,2026-11-27T20:02:20,live,0
+,MissEclipsa,MissEclipsa,0,https://t.me/MissEclipsa,other,2026-11-27T20:02:19,live,0
+,MoraSWAG,MoraSWAG,0,https://t.me/MoraSWAG,other,2026-11-27T20:02:19,live,0
+,censoredaitgc,censoredaitgc,0,https://t.me/censoredaitgc,other,2026-11-27T20:02:19,live,0
+,kartoni_bazaroni,kartoni_bazaroni,0,https://t.me/kartoni_bazaroni,other,2026-11-27T20:02:19,live,0
+,kseniya_ivanovskaya,kseniya_ivanovskaya,0,https://t.me/kseniya_ivanovskaya,other,2026-11-27T20:02:10,live,0
+,kiraliechty,kiraliechty,0,https://t.me/kiraliechty,other,2026-11-27T20:02:19,live,0
+,MediaLand_forartists,MediaLand_forartists,0,https://t.me/MediaLand_forartists,other,2026-11-27T20:02:26,live,0
+,HS9ll,HS9ll,0,https://t.me/HS9ll,other,2026-11-27T20:02:10,live,0
