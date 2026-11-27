@@ -5,6 +5,7 @@ session is never opened twice (Telegram rejects that with AUTH_KEY_DUPLICATED).
 """
 
 import asyncio
+import re
 import glob
 import os
 import sys
@@ -24,7 +25,7 @@ os.chdir(BASE_DIR)
 SERVER_TOKEN = os.environ.get("SERVER_TOKEN", "").strip()
 PORT = int(os.environ.get("PORT", "8080"))
 
-SERVER_BUILD = "2026-11-27-zip2"
+SERVER_BUILD = "2026-11-27-zip3"
 SERVER_FEATURES = {"channel_dump", "channel_zip", "gallery", "zip_upload"}
 
 app = FastAPI(title="Download Shield Server")
@@ -122,9 +123,21 @@ async def logs(since: int = 0, x_auth_token: str = Header(default="")):
     return {"ok": True, "next": total, "lines": lines}
 
 
+CHANNEL_LINK_RE = re.compile(
+    r"^https?://(?:t|telegram)\.me/(?:\+[\w-]+|joinchat/[\w-]+|[A-Za-z0-9_]{4,})/?$", re.I
+)
+
+
 @app.post("/api/download")
 async def api_download(payload: dict, x_auth_token: str = Header(default="")):
     _check(x_auth_token)
+    url = str((payload or {}).get("url") or "").strip().split("?")[0].rstrip("/")
+    if url and CHANNEL_LINK_RE.match(url):
+        # A bare channel link has no message to download; be truthful instead of a fake success.
+        raise HTTPException(
+            status_code=400,
+            detail="این لینک یک «کانال» است، نه یک پیام. از تب «دانلود کانال» (/api/channel) استفاده کنید.",
+        )
     return _start_job("download", payload)
 
 

@@ -1367,6 +1367,25 @@
             if (targetContent) targetContent.classList.add('active');
         }
 
+        // آیا این لینک، «کانال» است (بدون شمارهٔ پیام)؟ → باید به تب دانلود کانال برود
+        const CHANNEL_LINK_RE = /^https?:\/\/(?:t|telegram)\.me\/(?:\+[\w-]+|joinchat\/[\w-]+|[A-Za-z0-9_]{4,})\/?$/i;
+        function isChannelLink(url) {
+            const clean = sanitizeString(String(url || '')).split('?')[0].replace(/\/+$/, '');
+            return CHANNEL_LINK_RE.test(clean);
+        }
+        function routeChannelLinkToTab5(url, silent) {
+            switchTab(5);
+            const input = document.getElementById('channelUrlInput');
+            if (input) input.value = sanitizeString(url);
+            const zip = document.getElementById('channelZipMode');
+            if (zip) zip.checked = true;
+            if (!silent) {
+                showToast("🔀 این یک «کانال» است، نه یک پیام → تب «📥 دانلود کانال» باز شد.");
+                logChannelDebug(`🔀 لینک کانال از تب ۱ منتقل شد: ${url}`);
+            }
+            setTimeout(() => { if (input) input.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 150);
+        }
+
         // تابع ضدعفونی‌کننده کاراکترهای مخفی و جهت‌دهی نامرئی یونیکد
         function sanitizeString(str) {
             if (typeof str !== 'string') return str;
@@ -2673,6 +2692,18 @@
             const links = extractLinksFromText(rawText);
             if (links.length === 0) {
                 showToast("⚠️ هیچ آدرس اینترنتی (لینک معتبر) در متن کادر یافت نشد!");
+                return;
+            }
+
+            const channelLinks = links.filter(isChannelLink);
+            if (channelLinks.length) {
+                const others = links.filter((l) => !isChannelLink(l));
+                routeChannelLinkToTab5(channelLinks[0], false);
+                if (others.length) {
+                    enqueueLinksForDownload(others);
+                    showToast("🔀 لینک‌های کانال به تب «دانلود کانال» رفتند؛ بقیه در صف دانلود ماندند.");
+                }
+                document.getElementById('dlLink').value = '';
                 return;
             }
 
