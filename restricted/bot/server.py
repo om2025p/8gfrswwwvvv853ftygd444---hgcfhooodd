@@ -178,6 +178,8 @@ _JOB_ENV_KEYS = (
     "CHANNEL_DUMP_MODE",
     "CHANNEL_LIMIT",
     "CHANNEL_LEAVE",
+    "CHANNEL_ZIP_MODE",
+    "CHANNEL_ZIP_MAX_MB",
 )
 
 
@@ -240,6 +242,10 @@ async def _run_job(job, payload):
                 os.environ["CHANNEL_LEAVE"] = (
                     "false" if payload.get("keepMembership") else "true"
                 )
+                os.environ["CHANNEL_ZIP_MODE"] = (
+                    "true" if payload.get("zipMode") else "false"
+                )
+                os.environ["CHANNEL_ZIP_MAX_MB"] = str(payload.get("zipMaxMB") or "2048")
                 os.environ["TARGET_CHANNEL"] = str(
                     payload.get("targetChannel") or "-1003757877147"
                 )

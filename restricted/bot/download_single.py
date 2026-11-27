@@ -6,6 +6,8 @@ import time
 import json
 import tempfile
 import shutil
+import re
+import zipfile
 from datetime import datetime
 import yt_dlp
 from decouple import config
@@ -990,8 +992,142 @@ async def _download_and_send_media(userbot, msg, kind, dest):
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-async def process_channel_dump(link, owner_id, limit=1000, target_channel=None, keep_membership=False):
-    """Download every media item of a channel (public, private-invite or id) to a destination chat."""
+CHANNEL_ZIP_EXT = {
+    "photo": ".jpg",
+    "video": ".mp4",
+    "animation": ".mp4",
+    "audio": ".mp3",
+    "voice": ".ogg",
+    "video_note": ".mp4",
+    "sticker": ".webp",
+    "document": "",
+}
+
+
+def _safe_file_name(name):
+    import re as _re
+
+    cleaned = _re.sub(r'[\\/:*?"<>|\r\n\t]+', "_", str(name or "")).strip(" ._")
+    return cleaned[:120]
+
+
+def _media_file_name(msg, kind, idx):
+    base = None
+    doc = getattr(msg, "document", None)
+    if doc is not None:
+        base = getattr(doc, "file_name", None)
+    if not base:
+        base = f"{kind}-{msg.id}{CHANNEL_ZIP_EXT.get(kind, '')}"
+    base = _safe_file_name(base) or f"file-{msg.id}"
+    return f"{idx:05d}_{msg.id}_{base}"
+
+
+def _message_link(msg, chat):
+    """Best-effort public link of a message (used inside links.txt)."""
+    try:
+        link = getattr(msg, "link", None)
+        if link:
+            return str(link)
+    except Exception:
+        pass
+    username = getattr(chat, "username", None)
+    if username:
+        return f"https://t.me/{username}/{msg.id}"
+    raw_id = str(getattr(chat, "id", "")).strip()
+    internal = raw_id[4:] if raw_id.startswith("-100") else raw_id.lstrip("-")
+    return f"https://t.me/c/{internal}/{msg.id}"
+
+
+async def _send_zip_parts(userbot, folder, file_paths, links_text, dest, part_limit_bytes, title):
+    """Pack downloaded files into one or more ZIPs (above the part limit) and send them."""
+    import zipfile
+
+    from pyrogram.errors import FloodWait
+
+    links_path = os.path.join(folder, "links.txt")
+    try:
+        with open(links_path, "w", encoding="utf-8") as f:
+            f.write(links_text)
+    except Exception as e:
+        print(f"[کانال] ⚠️ نوشتن links.txt ناموفق: {e}")
+        links_path = None
+
+    queue = ([links_path] if links_path else []) + list(file_paths)
+    safe_title = _safe_file_name(title) or "channel"
+    parts = []
+    part_no = 1
+    part_size = 0
+
+    def _open_part():
+        p = os.path.join(folder, f"{safe_title}-part{part_no:02d}.zip")
+        return zipfile.ZipFile(p, "w", zipfile.ZIP_STORED, allowZip64=True), p
+
+    zf, zip_path = _open_part()
+    try:
+        for path in queue:
+            try:
+                size = os.path.getsize(path)
+            except OSError:
+                continue
+            if part_size and part_size + size > part_limit_bytes:
+                zf.close()
+                parts.append(zip_path)
+                part_no += 1
+                zf, zip_path = _open_part()
+                part_size = 0
+            zf.write(path, arcname=os.path.basename(path))
+            part_size += size
+    finally:
+        try:
+            zf.close()
+        except Exception:
+            pass
+    if part_size or not parts:
+        parts.append(zip_path)
+
+    total_parts = len(parts)
+    sent = 0
+    for i, p in enumerate(parts, 1):
+        try:
+            size_mb = os.path.getsize(p) / (1024 * 1024)
+        except OSError:
+            size_mb = 0
+        caption = (
+            f"📦 {title}\n"
+            f"بخش {i} از {total_parts} · {len(file_paths)} فایل · {size_mb:.0f}MB\n"
+            f"🔗 لینک همهٔ پیام‌ها داخل links.txt"
+        )
+        for _attempt in range(3):
+            try:
+                await userbot.send_document(dest, p, caption=caption)
+                sent += 1
+                print(f"[کانال] 📤 زیپ بخش {i}/{total_parts} ارسال شد ({size_mb:.0f}MB)")
+                break
+            except FloodWait as fw:
+                wait_s = int(getattr(fw, "value", 5)) + 2
+                print(f"[کانال] ⏳ محدودیت تلگرام هنگام ارسال زیپ: {wait_s} ثانیه")
+                await asyncio.sleep(wait_s)
+            except Exception as e:
+                print(f"[کانال] ❌ ارسال زیپ بخش {i} ناموفق: {e}")
+                break
+    return sent, total_parts
+
+
+async def process_channel_dump(
+    link,
+    owner_id,
+    limit=1000,
+    target_channel=None,
+    keep_membership=False,
+    zip_mode=False,
+    zip_max_mb=2048,
+):
+    """Copy/download every media item of a channel to a destination chat.
+
+    Normal channels use a fast server-side copy per message. Protected channels
+    (or when zip_mode is requested) download each file, pack them into a ZIP
+    (split above zip_max_mb) and send the archive.
+    """
     from main import userbot
     from pyrogram.errors import FloodWait
 
@@ -1001,6 +1137,15 @@ async def process_channel_dump(link, owner_id, limit=1000, target_channel=None, 
         limit = 1000
     if limit <= 0:
         limit = 1000
+
+    if os.environ.get("CHANNEL_ZIP_MODE", "").strip().lower() == "true":
+        zip_mode = True
+    try:
+        zip_max_mb = int(str(zip_max_mb or os.environ.get("CHANNEL_ZIP_MAX_MB") or "2048").strip())
+    except Exception:
+        zip_max_mb = 2048
+    zip_max_mb = max(50, min(zip_max_mb, 1900))
+    part_limit_bytes = zip_max_mb * 1024 * 1024
 
     dest = target_channel or os.environ.get("TARGET_CHANNEL") or "-1003757877147"
     try:
@@ -1015,14 +1160,20 @@ async def process_channel_dump(link, owner_id, limit=1000, target_channel=None, 
     done_ids = set(entry.get("done") or [])
     chat_id = entry.get("chat_id")
 
-    sent = skipped = failed = scanned = 0
+    sent = skipped = failed = blocked = scanned = 0
     started = time.time()
     joined_now = False
+    zip_files = []
+    zip_bytes = 0
+    links_lines = []
+    zip_dir = None
 
-    print(f"[کانال] 📥 شروع دانلود کامل کانال: {link} → {dest} (سقف {limit})")
+    mode_label = "ZIP (دانلود تک‌تک → فشرده → ارسال)" if zip_mode else "کپی سریع"
+    print(f"[کانال] 📥 شروع دانلود کامل کانال: {link} → {dest} (سقف {limit} · حالت {mode_label})")
     await safe_send_message(
         owner_id,
-        f"📥 *شروع دانلود کامل کانال*\n`{link}`\n🎯 مقصد: `{dest}`\n🔢 سقف: *{limit}* فایل\n🕒 لطفا صبور باشید...",
+        f"📥 *شروع دانلود کامل کانال*\n`{link}`\n🎯 مقصد: `{dest}`\n"
+        f"🔢 سقف: *{limit}* فایل\n🧩 حالت: *{mode_label}*\n🕒 لطفا صبور باشید...",
     )
 
     try:
@@ -1032,13 +1183,20 @@ async def process_channel_dump(link, owner_id, limit=1000, target_channel=None, 
         print(f"[کانال] ✅ کانال شناسایی شد: {title} | chat_id={chat_id} | عضو جدید: {joined_now}")
 
         if getattr(chat, "has_protected_content", False):
-            blocked = (
-                "🚫 این کانال «قفل ذخیره‌سازی محتوا» دارد.\n"
-                "تلگرام اجازهٔ دانلود یا کپی فایل‌های این کانال را به هیچ‌کس نمی‌دهد؛ کاری از دست ابزار برنمی‌آید."
-            )
-            print(f"[کانال] {blocked}")
-            await safe_send_message(owner_id, blocked)
-            return
+            if not zip_mode:
+                zip_mode = True
+                mode_label = "ZIP (دانلود تک‌تک → فشرده → ارسال)"
+                print("[کانال] 🔒 کانال قفل ذخیره‌سازی دارد → حالت ZIP خودکار فعال شد")
+                await safe_send_message(
+                    owner_id,
+                    "🔒 این کانال «قفل ذخیره‌سازی محتوا» دارد؛ کپی مستقیم ممنوع است.\n"
+                    "📦 *حالت ZIP خودکار فعال شد:* هر فایل جداگانه دانلود می‌شود، بعد فشرده و ارسال می‌گردد.\n"
+                    "⏳ این مسیر کندتر است؛ صبور باش.",
+                )
+
+        if zip_mode:
+            zip_dir = tempfile.mkdtemp(prefix="emarat_chan_zip_")
+            print(f"[کانال] 📦 پوشهٔ موقت زیپ: {zip_dir} · سقف حجم: {zip_max_mb}MB")
 
         # Warm the peer cache of the destination so a numeric id is not "invalid".
         try:
@@ -1062,16 +1220,16 @@ async def process_channel_dump(link, owner_id, limit=1000, target_channel=None, 
                 print(f"[کانال] ⚠️ سقف اسکن پیام ({max_scan}) پر شد؛ متوقف شدیم.")
                 break
 
-            if getattr(msg, "has_protected_content", False):
-                print(f"[کانال] 🚫 پیام {msg.id} قفل ذخیره‌سازی دارد؛ رد شد.")
-                continue
-
             kind = _media_kind(msg)
             if not kind:
                 continue
 
-            if sent + skipped >= limit:
+            if sent + skipped + blocked >= limit:
                 print(f"[کانال] 🏁 به سقف {limit} فایل رسیدیم.")
+                break
+
+            if zip_mode and zip_bytes >= part_limit_bytes:
+                print(f"[کانال] 📦 سقف حجم زیپ ({zip_max_mb}MB) پر شد؛ ادامه نمی‌دهیم.")
                 break
 
             uid = _media_unique_id(msg)
@@ -1079,29 +1237,64 @@ async def process_channel_dump(link, owner_id, limit=1000, target_channel=None, 
                 skipped += 1
                 continue
 
-            idx = sent + skipped + failed + 1
+            idx = sent + skipped + blocked + failed + 1
             label = MEDIA_LABELS.get(kind, "📦 رسانه")
             ok = False
 
-            try:
-                await msg.copy(dest)
-                ok = True
-                print(f"[کانال] {idx}/{limit} · {label} · پیام {msg.id} → کپی سریع ✅")
-            except FloodWait as fw:
-                wait_s = int(getattr(fw, "value", 5)) + 2
-                print(f"[کانال] ⏳ محدودیت تلگرام: {wait_s} ثانیه صبر می‌کنیم...")
-                await asyncio.sleep(wait_s)
+            if zip_mode:
+                name = _media_file_name(msg, kind, idx)
+                target_path = os.path.join(zip_dir, name)
+                path = None
                 try:
-                    await msg.copy(dest)
+                    path = await userbot.download_media(msg, file_name=target_path)
+                except FloodWait as fw:
+                    wait_s = int(getattr(fw, "value", 5)) + 2
+                    print(f"[کانال] ⏳ محدودیت تلگرام: {wait_s} ثانیه صبر می‌کنیم...")
+                    await asyncio.sleep(wait_s)
+                    try:
+                        path = await userbot.download_media(msg, file_name=target_path)
+                    except Exception as e2:
+                        print(f"[کانال] ❌ دانلود دوباره هم نشد: {e2}")
+                except Exception as dl_err:
+                    print(f"[کانال] 🚫 دانلود نشد: {dl_err}")
+
+                if path and os.path.exists(path):
+                    size = os.path.getsize(path)
+                    zip_files.append(path)
+                    zip_bytes += size
                     ok = True
-                    print(f"[کانال] {idx}/{limit} · {label} → کپی بعد از انتظار ✅")
-                except Exception as e2:
-                    print(f"[کانال] ❌ کپی دوم هم نشد: {e2}")
-            except Exception as copy_err:
-                print(f"[کانال] 🔁 کپی مستقیم نشد ({copy_err}) → دانلود و آپلود دستی")
-                ok = await _download_and_send_media(userbot, msg, kind, dest)
-                if ok:
-                    print(f"[کانال] {idx}/{limit} · {label} → دانلود و آپلود ✅")
+                    print(f"[کانال] {idx}/{limit} · {label} · {size / 1048576:.1f}MB → دانلود ✅")
+                else:
+                    blocked += 1
+                    print(f"[کانال] {idx}/{limit} · {label} · پیام {msg.id} → قفل/ناموفق 🚫")
+
+                links_lines.append(
+                    f"{_message_link(msg, chat)} | {label} | {'دانلود شد' if ok else 'قفل/ناموفق'}"
+                )
+            else:
+                if getattr(msg, "has_protected_content", False):
+                    print(f"[کانال] 🔒 پیام {msg.id} قفل است → مسیر دانلود/آپلود دستی")
+                    ok = await _download_and_send_media(userbot, msg, kind, dest)
+                else:
+                    try:
+                        await msg.copy(dest)
+                        ok = True
+                        print(f"[کانال] {idx}/{limit} · {label} · پیام {msg.id} → کپی سریع ✅")
+                    except FloodWait as fw:
+                        wait_s = int(getattr(fw, "value", 5)) + 2
+                        print(f"[کانال] ⏳ محدودیت تلگرام: {wait_s} ثانیه صبر می‌کنیم...")
+                        await asyncio.sleep(wait_s)
+                        try:
+                            await msg.copy(dest)
+                            ok = True
+                            print(f"[کانال] {idx}/{limit} · {label} → کپی بعد از انتظار ✅")
+                        except Exception as e2:
+                            print(f"[کانال] ❌ کپی دوم هم نشد: {e2}")
+                    except Exception as copy_err:
+                        print(f"[کانال] 🔁 کپی مستقیم نشد ({copy_err}) → دانلود و آپلود دستی")
+                        ok = await _download_and_send_media(userbot, msg, kind, dest)
+                        if ok:
+                            print(f"[کانال] {idx}/{limit} · {label} → دانلود و آپلود ✅")
 
             if ok:
                 sent += 1
@@ -1118,6 +1311,8 @@ async def process_channel_dump(link, owner_id, limit=1000, target_channel=None, 
                 "sent": sent,
                 "skipped": skipped,
                 "failed": failed,
+                "blocked": blocked,
+                "zip_mode": zip_mode,
                 "updated_at": time.time(),
             }
 
@@ -1126,20 +1321,49 @@ async def process_channel_dump(link, owner_id, limit=1000, target_channel=None, 
                 elapsed = int(time.time() - started)
                 print(
                     f"[کانال] 📊 پیشرفت: ارسال {sent} · تکراری {skipped} · خطا {failed} "
-                    f"· اسکن {scanned} · زمان {elapsed}s"
+                    f"· قفل {blocked} · اسکن {scanned} · حجم {zip_bytes / 1048576:.0f}MB · زمان {elapsed}s"
                 )
 
         _save_channel_state(all_state)
+
+        zip_sent = zip_parts = 0
+        if zip_mode:
+            if zip_files:
+                print(f"[کانال] 🗜️ ساخت زیپ از {len(zip_files)} فایل ({zip_bytes / 1048576:.0f}MB)...")
+                zip_sent, zip_parts = await _send_zip_parts(
+                    userbot, zip_dir, zip_files, "\n".join(links_lines) + "\n", dest, part_limit_bytes, title
+                )
+            else:
+                print("[کانال] ⚠️ هیچ فایلی دانلود نشد؛ زیپی ساخته نشد.")
+                await safe_send_message(
+                    owner_id,
+                    "⚠️ *هیچ فایلی دانلود نشد.*\n"
+                    "تلگرام اجازهٔ دانلود این کانال را نداد (قفل کامل). لینک‌ها در گزارش ثبت شد.",
+                )
+
         elapsed = int(time.time() - started)
-        summary = (
-            f"🏁 *دانلود کامل کانال تمام شد*\n"
-            f"📤 ارسال‌شده: *{sent}*\n"
-            f"🟡 تکراری (قبلاً فرستاده شده): *{skipped}*\n"
-            f"❌ ناموفق: *{failed}*\n"
-            f"🔍 پیام‌های اسکن‌شده: *{scanned}*\n"
-            f"⏱️ زمان: *{elapsed}* ثانیه\n"
-            f"🎯 مقصد: `{dest}`"
-        )
+        if zip_mode:
+            summary = (
+                f"🏁 *دانلود کامل کانال (ZIP) تمام شد*\n"
+                f"📥 دانلود‌شده: *{len(zip_files)}*\n"
+                f"🚫 قفل/ناموفق: *{blocked}*\n"
+                f"🟡 تکراری: *{skipped}*\n"
+                f"📦 زیپ ارسال‌شده: *{zip_sent}* از *{zip_parts}* بخش\n"
+                f"💾 حجم کل: *{zip_bytes / 1048576:.0f}MB*\n"
+                f"🔍 پیام اسکن‌شده: *{scanned}*\n"
+                f"⏱️ زمان: *{elapsed}* ثانیه\n"
+                f"🎯 مقصد: `{dest}`"
+            )
+        else:
+            summary = (
+                f"🏁 *دانلود کامل کانال تمام شد*\n"
+                f"📤 ارسال‌شده: *{sent}*\n"
+                f"🟡 تکراری (قبلاً فرستاده شده): *{skipped}*\n"
+                f"❌ ناموفق: *{failed}*\n"
+                f"🔍 پیام‌های اسکن‌شده: *{scanned}*\n"
+                f"⏱️ زمان: *{elapsed}* ثانیه\n"
+                f"🎯 مقصد: `{dest}`"
+            )
         print(f"[کانال] {summary.replace(chr(10), ' | ')}")
         await safe_send_message(owner_id, summary)
 
@@ -1154,6 +1378,12 @@ async def process_channel_dump(link, owner_id, limit=1000, target_channel=None, 
             _save_channel_state(all_state)
         except Exception:
             pass
+        if zip_dir:
+            try:
+                shutil.rmtree(zip_dir, ignore_errors=True)
+                print("[کانال] 🧹 پوشهٔ موقت پاک شد.")
+            except Exception:
+                pass
         if joined_now and not keep_membership and chat_id is not None:
             try:
                 await userbot.leave_chat(chat_id)
@@ -2634,12 +2864,19 @@ async def main_download():
                     except Exception:
                         limit_val = 1000
                     keep_membership = os.environ.get("CHANNEL_LEAVE", "true").lower() == "false"
+                    zip_mode = os.environ.get("CHANNEL_ZIP_MODE", "false").lower() == "true"
+                    try:
+                        zip_max_mb = int(str(os.environ.get("CHANNEL_ZIP_MAX_MB") or "2048").strip())
+                    except Exception:
+                        zip_max_mb = 2048
                     await process_channel_dump(
                         target_link_str,
                         owner_id,
                         limit=limit_val,
                         target_channel=os.environ.get("TARGET_CHANNEL"),
                         keep_membership=keep_membership,
+                        zip_mode=zip_mode,
+                        zip_max_mb=zip_max_mb,
                     )
                     continue
 
