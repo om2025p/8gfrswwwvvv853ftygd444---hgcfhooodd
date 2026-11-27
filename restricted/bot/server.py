@@ -24,6 +24,9 @@ os.chdir(BASE_DIR)
 SERVER_TOKEN = os.environ.get("SERVER_TOKEN", "").strip()
 PORT = int(os.environ.get("PORT", "8080"))
 
+SERVER_BUILD = "2026-11-27-zip"
+SERVER_FEATURES = {"channel_dump", "channel_zip", "gallery", "zip_upload"}
+
 app = FastAPI(title="Download Shield Server")
 
 app.add_middleware(
@@ -99,6 +102,8 @@ async def health():
         "status": _state["status"],
         "job": _state["job"],
         "clients": _clients_ready,
+        "build": SERVER_BUILD,
+        "features": sorted(SERVER_FEATURES),
     }
 
 
