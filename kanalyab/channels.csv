@@ -412,7 +412,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2698302620,TURKIfilme,فیلم و سریال ترکی,643082,https://t.me/TURKIfilme,fa,2026-11-22,dataset,0
 1272376023,OGoMono,ОГо&#33;,640542,https://t.me/OGoMono,ru,2026-11-23,dataset,0
 1288236400,Mikle1On,Мир Михаила Онуфриенко,639756,https://t.me/Mikle1On,ru,2026-11-24,dataset,0
-,WatcherGuru,Watcher Guru,639410,https://t.me/WatcherGuru,un,2026-11-23,dataset,0
+,WatcherGuru,Watcher Guru,639417,https://t.me/WatcherGuru,un,2026-11-23,dataset,0
 1438584960,obshina_ru,Русская Община ZOV,638544,https://t.me/obshina_ru,ru,2026-11-23,dataset,0
 1541343179,ir_javan,جوانان ایران,637560,https://t.me/ir_javan,fa,2026-11-23,dataset,0
 1800600198,,𝗧𝗲𝗵𝗿𝗮𝗻 𝗧𝗿𝗮𝗱𝗲 | تهران ترید,637137,,fa,2026-11-27T11:13:22,live,0
@@ -1237,6 +1237,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1137332367,new_militarycolumnist,Военный обозреватель,209551,https://t.me/new_militarycolumnist,ru,2026-11-24,dataset,0
 ,mayotofficialchannel,MAYOT,209543,https://t.me/mayotofficialchannel,un,2026-11-24,dataset,0
 ,laroutine,routine.mag,208753,https://t.me/laroutine,un,2026-11-23,dataset,0
+,rbtshki,808,208748,https://t.me/rbtshki,other,2026-11-26T13:22:04,dataset,0
 2600911435,barnamahhozuri,سالن ماساژ رابطه,208696,https://t.me/barnamahhozuri,fa,2026-11-21,live,1
 ,rais_buva,Rais Buva,208664,https://t.me/rais_buva,un,2026-11-24,dataset,0
 2103684428,GoldenDrinkBar,🥃مشروب اورجینال | ودکا | ویسکی | آبجو 🔥,208491,https://t.me/GoldenDrinkBar,fa,2026-11-22,live,0
@@ -5287,6 +5288,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,stolypin2,Столыпин 2.0,36472,https://t.me/stolypin2,ru,2026-11-24,dataset,0
 ,MikhailVitte,Берлога Витте,36430,https://t.me/MikhailVitte,ru,2026-11-24T20:59:09,live,0
 ,skins100,100SKINS,36429,https://t.me/skins100,un,2026-11-24,live,0
+2987772014,ashpazkhune_Kadbano,اموزش ویدیو اشپزی غذا,36422,https://t.me/ashpazkhune_Kadbano,fa,2026-11-27T15:44:45,live,0
 ,trydarkside,DARKSIDE,36417,https://t.me/trydarkside,un,2026-11-24,dataset,0
 ,uchi_ru_official,Учи.ру,36415,https://t.me/uchi_ru_official,ru,2026-11-25T10:35:37,dataset,0
 ,archivchiki,архивчик,36397,https://t.me/archivchiki,ru,2026-11-24,dataset,0
@@ -6985,7 +6987,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,aachannelofficial,AA Channel OfficiaL,24239,https://t.me/aachannelofficial,en,2026-11-23,dataset,0
 ,votetoang,ВОТ ЭТО английский,24234,https://t.me/votetoang,ru,2026-11-24,dataset,0
 ,FreshBarDrink,Fresh Bar,24228,https://t.me/FreshBarDrink,un,2026-11-24,live,0
-,allstandup_video,AllStandUp | Весь стендап,24219,https://t.me/allstandup_video,ru,2026-11-26T20:22:31,dataset,0
 ,seance_light,СЕАНС,24217,https://t.me/seance_light,ru,2026-11-23,dataset,0
 ,suntvru,СОЛНЦЕ,24214,https://t.me/suntvru,ru,2026-11-24,live,0
 1536986743,mix_kordi,𝕞𝕚𝕩 𝕜𝕠𝕣𝕕𝕚,24212,https://t.me/mix_kordi,other,2026-11-27T11:24:04,live,0
@@ -7128,7 +7129,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,valerika_photobeauty,Дьявол носит Prada,23487,https://t.me/valerika_photobeauty,ru,2026-11-23,live,0
 4327941182,tnonightmoviedownlod,چنل فیلم ترسناک تونایت مووی|tonights__movie,23481,https://t.me/tnonightmoviedownlod,fa,2026-11-27T15:29:56,live,0
 ,progamedev,Разработка игр 🍄,23474,https://t.me/progamedev,ru,2026-11-25T10:35:11,dataset,0
-,astropeople,Негрей Елена Астрология для всех,23472,https://t.me/astropeople,ru,2026-11-27T15:41:17,dataset,0
 ,virtuspro_mobile,Virtus.pro Mobile,23472,https://t.me/virtuspro_mobile,un,2026-11-24T21:12:57,dataset,0
 ,ndayclub,Дмитрий Перетолчин — «Картина Мира»,23467,https://t.me/ndayclub,ru,2026-11-24,dataset,0
 ,dearpassengers,Уважаемые пассажиры,23463,https://t.me/dearpassengers,ru,2026-11-24,dataset,0
@@ -9151,6 +9151,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,oriftolib,Orif Tolib,16019,https://t.me/oriftolib,un,2026-11-23,dataset,0
 ,doctor_hlystalov,Пластический Хирург | Хлысталов Максим,16017,https://t.me/doctor_hlystalov,ru,2026-11-23,dataset,0
 ,gge_ru,Главгосэкспертиза России,16015,https://t.me/gge_ru,ru,2026-11-24,dataset,0
+,senior_designer_pragmatica,Дизайн 360° | Pragmatica,16013,https://t.me/senior_designer_pragmatica,ru,2026-11-27T15:49:55,dataset,0
 ,KICKSPAPER,KICKSPAPER,16012,https://t.me/KICKSPAPER,un,2026-11-23,dataset,0
 ,pashatih,Паша Тихонов,16004,https://t.me/pashatih,ru,2026-11-25T11:51:41,live,0
 ,alisa4allison,Alisa Allison | МУЛЬТОН,16002,https://t.me/alisa4allison,ru,2026-11-27T15:31:25,live,0
@@ -9901,6 +9902,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1949978927,aniladiary8848,Аліна | твій таролог 🔮🃏,14111,https://t.me/aniladiary8848,ru,2026-11-26T08:28:53,live,0
 ,Mos_Never_sleep,Москвичи,14109,https://t.me/Mos_Never_sleep,ru,2026-11-25T11:52:47,live,0
 ,iGIFyouPORN,i❤️GIF P👄RN&#33;,14108,https://t.me/iGIFyouPORN,un,2026-11-24,live,0
+1516847734,amingoldgaleri,گالری طلای امین,14107,https://t.me/amingoldgaleri,fa,2026-11-27T15:48:16,live,1
 1175111496,afric_ylbIbka,Улыбаемся & Машем,14106,https://t.me/afric_ylbIbka,ru,2026-11-23,dataset,0
 ,ChannelGala,GALA | Channel,14103,https://t.me/ChannelGala,en,2026-11-23,dataset,0
 ,pbesedinreal,Платон Беседин,14103,https://t.me/pbesedinreal,ru,2026-11-24,dataset,0
@@ -10273,6 +10275,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Uxv2ray,"فیلترشکن , کریپتو , سیگنال , ایردراپ, اد لیست کتس, اد لیست کتز, اد لیست Cats | V2ray | VPN",13296,https://t.me/Uxv2ray,fa,2026-11-23,dataset,0
 ,queerography,just got lucky | просто повезло,13295,https://t.me/queerography,ru,2026-11-24,live,0
 ,paintingco,moborbital,13294,https://t.me/paintingco,un,2026-11-24,live,0
+2070453011,minidore_galleryomid,"آموزش طراحی "" گالری امیــد """,13293,https://t.me/minidore_galleryomid,fa,2026-11-27T15:48:16,live,1
 ,juli_proz,JULI.PROZ,13292,https://t.me/juli_proz,un,2026-11-23,live,0
 1832909732,russian_shock_volunteer_brigade,#БарсСармат / #ЦарскиеВолки,13288,https://t.me/russian_shock_volunteer_brigade,ru,2026-11-24,dataset,0
 1342441998,heavymetalalbums,Metal Albums,13287,https://t.me/heavymetalalbums,un,2026-11-22,live,1
@@ -10328,6 +10331,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,oboi_na_aifoni,Обои для айфона ,13192,https://t.me/oboi_na_aifoni,ru,2026-11-23,dataset,0
 ,Ali_Fancy,Aliexpress /Fancy,13191,https://t.me/Ali_Fancy,un,2026-11-23,live,0
 ,olesyahockey1,"Есть такой корреспондент, Олеся",13189,https://t.me/olesyahockey1,ru,2026-11-24,live,0
+1442645826,javadedito,آموزش تدوین ویدیو • جواد ادیتو,13186,https://t.me/javadedito,fa,2026-11-27T15:44:45,live,0
 1145993847,HosseinAbdohTabrizi,Hossein Abdoh Tabrizi,13177,https://t.me/HosseinAbdohTabrizi,fl,2026-11-27T11:14:42,live,0
 ,VChemSilaBratVPravde503,В чем сила брат? Сила в правде,13171,https://t.me/VChemSilaBratVPravde503,ru,2026-11-24,dataset,0
 ,streamersleague_1w,1win Streamers League Dota 2,13171,https://t.me/streamersleague_1w,un,2026-11-24,live,0
@@ -10884,6 +10888,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,extrahse,Экстра.ВШЭ,12147,https://t.me/extrahse,ru,2026-11-23,dataset,0
 ,tsarskoe_selo,Царское Село. Музей-заповедник,12146,https://t.me/tsarskoe_selo,ru,2026-11-23,dataset,0
 ,kraav_toys,KRAAV. Развитие детей,12146,https://t.me/kraav_toys,ru,2026-11-23,dataset,0
+1774719227,amata_gallery,اماتا گالری,12146,https://t.me/amata_gallery,fa,2026-11-27T15:48:16,live,1
 ,Foxxnet,Fox Net 🦊,12143,https://t.me/Foxxnet,en,2026-11-23,dataset,0
 ,batrtimur,Timur Batrutdinov,12143,https://t.me/batrtimur,un,2026-11-24,dataset,0
 ,spacewolfblog,Блог Космического волка. Игры и кино,12143,https://t.me/spacewolfblog,ru,2026-11-23,dataset,0
@@ -11269,10 +11274,10 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Koshkin_sibiryak,Кошкин Сибиряк,11547,https://t.me/Koshkin_sibiryak,ru,2026-11-24,dataset,0
 ,X_PARADOXON_X,🔮•PARADOXON•🔮,11544,https://t.me/X_PARADOXON_X,un,2026-11-24,live,0
 ,sblancplan,План на Совиньон Блан,11543,https://t.me/sblancplan,ru,2026-11-24,live,0
+,insolarance,Insolarance Cult,11542,https://t.me/insolarance,un,2026-11-24,live,0
 1457886470,kozakTv1,Перший Козацький,11541,https://t.me/kozakTv1,ru,2026-11-24,dataset,0
 ,honeybefunny,Honey be funny,11540,https://t.me/honeybefunny,un,2026-11-23,dataset,0
 ,global_5p,Медицина будущего,11540,https://t.me/global_5p,ru,2026-11-23,dataset,0
-,insolarance,Insolarance Cult,11539,https://t.me/insolarance,un,2026-11-24,live,0
 ,SiPchanel,Сержант и подполковник,11538,https://t.me/SiPchanel,ru,2026-11-24,dataset,0
 ,llionsmodscloudstorage,LLions Mods Cloud Storage,11536,https://t.me/llionsmodscloudstorage,un,2026-11-23,dataset,0
 ,FDostoevskiy,Достоевский Ф. М.,11534,https://t.me/FDostoevskiy,ru,2026-11-23,dataset,0
@@ -11280,6 +11285,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1862220853,morabishooo,سامانه آموزشی مربی شو,11532,https://t.me/morabishooo,fa,2026-11-23,live,0
 ,mvstories6421,МОЛОДОСТЬ ВНУТРИ или Антон Бродяга,11526,https://t.me/mvstories6421,ru,2026-11-24,dataset,0
 ,khorunzha3AK,Хорунжа Служба 3 АК,11525,https://t.me/khorunzha3AK,ru,2026-11-24,live,0
+2214795481,rezataghiiloo,رضا تقی‌لو | آموزش ویدیوگرافی و ادیت,11523,https://t.me/rezataghiiloo,fa,2026-11-27T15:44:45,live,0
 ,Geneaholic,Клуб генеаголиков : генеалогия краеведение история,11521,https://t.me/Geneaholic,ru,2026-11-23,dataset,0
 3885924782,royaloddsfamily,Homemade Po *RN 🎭❤️‍🔥🙌,11521,https://t.me/royaloddsfamily,un,2026-11-22,live,1
 ,smz422,Самозанятость,11519,https://t.me/smz422,ru,2026-11-23,dataset,0
@@ -11636,6 +11642,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Maksim_Disishuzov,Максим Дисишузов,11000,https://t.me/Maksim_Disishuzov,ru,2026-11-23,dataset,0
 ,ivanfdavydov,Ivan Davydov,11000,https://t.me/ivanfdavydov,un,2026-11-23,dataset,0
 ,anya_ranetka,Аня Руднева,11000,https://t.me/anya_ranetka,ru,2026-11-24,dataset,0
+,MMAD_MMAXX,Максим Миновский,11000,https://t.me/MMAD_MMAXX,ru,2026-11-25T10:29:34,dataset,0
 ,redcynic,Красный Циник | Red Cynic,11000,https://t.me/redcynic,ru,2026-11-26T20:37:59,dataset,0
 1903727414,sascha_deutsch,🇩🇪 Sascha & Deutsch,10999,https://t.me/sascha_deutsch,un,2026-11-23,dataset,0
 ,feelfeli_x,фéли ✨,10996,https://t.me/feelfeli_x,ru,2026-11-23,dataset,0
@@ -11691,7 +11698,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,kudryavy_method,"Кудрявый метод | Косметика, укрощающая кудри",10918,https://t.me/kudryavy_method,ru,2026-11-23,live,0
 ,by_matu,MATÜ CLUB,10917,https://t.me/by_matu,un,2026-11-23,dataset,0
 ,tigran_avanian,Борцыклопедия | Первый борцовский канал,10917,https://t.me/tigran_avanian,ru,2026-11-24,dataset,0
-,MMAD_MMAXX,Максим Миновский,10916,https://t.me/MMAD_MMAXX,ru,2026-11-25T10:29:34,dataset,0
 1503309832,hot_mtn,Hot Motion,10915,https://t.me/hot_mtn,en,2026-11-24,dataset,0
 ,frontendlib,Frontend для начинающих,10914,https://t.me/frontendlib,ru,2026-11-23,dataset,0
 ,glebneznaet,Глеб Борисыч,10913,https://t.me/glebneznaet,ru,2026-11-26T20:20:05,dataset,0
@@ -11917,6 +11923,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Aliexrs,с Ali Алиэкспресс,10558,https://t.me/Aliexrs,ru,2026-11-23,dataset,0
 ,tohkasvazi_108,⚛️ ТОЧКА СВЯЗИ МИРОВ ⚛️,10555,https://t.me/tohkasvazi_108,ru,2026-11-23,dataset,0
 1200321864,,Рекрутинг и Жизнь,10552,,ru,2026-11-23,dataset,0
+1314022398,autogallerysabahi,⚜️اُتو گالری صباحی⚜️,10551,https://t.me/autogallerysabahi,fa,2026-11-27T15:48:36,live,1
 1003345893,DJALIY,Ali Yadegari,10550,https://t.me/DJALIY,un,2026-11-27T10:59:40,live,0
 ,real_sharij,Реальный канал ШАРИЯ,10548,https://t.me/real_sharij,ru,2026-11-23,dataset,0
 ,shop28oi,Двадцать Восьмой - 28oi.ru,10547,https://t.me/shop28oi,ru,2026-11-24,dataset,0
@@ -12042,6 +12049,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,wondercircusrus,Цирк Чудес | Официальный канал,10373,https://t.me/wondercircusrus,ru,2026-11-23,dataset,0
 1086809397,manhajulhaq,manhajulhaq,10370,https://t.me/manhajulhaq,un,2026-11-27T10:40:41,live,0
 ,bankoffnet,Рубль — не доллар,10367,https://t.me/bankoffnet,ru,2026-11-24,live,0
+1003093828,Aparat_Channel,آپارات | سرویس اشتراک ویدیو,10367,https://t.me/Aparat_Channel,fa,2026-11-27T15:45:26,live,0
 ,mikhalkov_official,Михальков.Солнечногорск,10366,https://t.me/mikhalkov_official,ru,2026-11-23,dataset,0
 ,TeamShcherbakova,TeamShcherbakova,10366,https://t.me/TeamShcherbakova,un,2026-11-24,dataset,0
 ,RSW_Official_Channel,RSW Systems I Channel,10359,https://t.me/RSW_Official_Channel,en,2026-11-23,dataset,0
@@ -13528,8 +13536,8 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,ateliermaru,ATELIERMARU,8398,https://t.me/ateliermaru,un,2026-11-23,dataset,0
 3060015783,parmar_ib,Khufiya Vibhag 2.0,8398,https://t.me/parmar_ib,fl,2026-11-26T13:20:00,live,0
 2234400362,behenysi,ادبیات یکتا • جعفری,8397,https://t.me/behenysi,fa,2026-11-26T13:23:11,live,0
+,albuscorvusru,Albus corvus/Белая ворона,8395,https://t.me/albuscorvusru,ru,2026-11-23,dataset,0
 2402042538,ks_h2,سریال صد نفر / میراث ها,8393,https://t.me/ks_h2,fa,2026-11-26T08:53:49,live,0
-,albuscorvusru,Albus corvus/Белая ворона,8392,https://t.me/albuscorvusru,ru,2026-11-23,dataset,0
 ,saidovsnew,SAIDOVS new,8392,https://t.me/saidovsnew,en,2026-11-23,live,0
 ,anyatutitam,аня tut i tam,8390,https://t.me/anyatutitam,ru,2026-11-23,dataset,0
 1343958429,,ՀՀ ԱԳՄԱՆ/MFAIT of Armenia,8389,,un,2026-11-27T11:28:05,dataset,0
@@ -13718,6 +13726,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,mirae_internet,[미래 임희석] 인터넷/SW/게임,8198,https://t.me/mirae_internet,un,2026-11-24,live,0
 ,ivanovaldm,Нежурналист Иванов,8196,https://t.me/ivanovaldm,ru,2026-11-24,dataset,0
 1188749021,,Новости Италии / Италия туризм и иммиграция,8196,,ru,2026-11-26T08:38:37,dataset,0
+2082787786,Omiiid_galleryyy,نمایشگاه امید گالری اندرزگو,8194,https://t.me/Omiiid_galleryyy,fa,2026-11-27T15:48:16,live,1
 ,zolnews,Зерно Он-Лайн,8192,https://t.me/zolnews,ru,2026-11-25T12:18:48,dataset,0
 ,helenahale,Хелена Хейл/Helena Hale✨| 18+,8190,https://t.me/helenahale,ru,2026-11-24,dataset,1
 ,eshgif,GifРецепты,8190,https://t.me/eshgif,ru,2026-11-23,dataset,0
@@ -14143,6 +14152,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,daytrader_signals_EN,Trader signals EN,7740,https://t.me/daytrader_signals_EN,un,2026-11-23,live,0
 ,magistral_kuvalda,Магистраль. Кувалда 🔨,7738,https://t.me/magistral_kuvalda,ru,2026-11-24T20:57:17,live,0
 1459423140,rags_khoshgell,رقص خوشگل,7737,https://t.me/rags_khoshgell,fa,2026-11-27T11:29:05,dataset,1
+1015529101,sourenacars,اتو گالری رمضانی 09123510648,7737,https://t.me/sourenacars,fa,2026-11-23,live,1
 ,PantiAsuhanLotus,VAKUM _ PANTI ASUHAN LOTUS,7736,https://t.me/PantiAsuhanLotus,un,2026-11-24,live,0
 1218028974,shariftechpark,پارک علم و فناوری شریف,7735,https://t.me/shariftechpark,fa,2026-11-24T20:54:23,dataset,0
 2463080821,gs_tx,استیکر عکس گیف سکسی دختر زن,7735,https://t.me/gs_tx,fa,2026-11-21,live,1
@@ -14152,7 +14162,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,familii_predkov,Генеалогия и 27 моих фамилий,7730,https://t.me/familii_predkov,ru,2026-11-23,dataset,0
 ,fragrance_by_stahorn,Fragrance by Stahorn,7728,https://t.me/fragrance_by_stahorn,un,2026-11-24,dataset,0
 ,volgadream,Volga Dream,7728,https://t.me/volgadream,un,2026-11-24,dataset,0
-1015529101,sourenacars,اتو گالری رمضانی 09123510648,7728,https://t.me/sourenacars,fa,2026-11-23,live,1
 ,eveningdurnovo,Вечерний Дурново,7726,https://t.me/eveningdurnovo,ru,2026-11-23,dataset,0
 ,alwaysrememberGod,برك,7723,https://t.me/alwaysrememberGod,fa,2026-11-24T20:50:38,live,0
 ,UpScale_club,UpScale11 | Диалог HR и СЕО,7722,https://t.me/UpScale_club,ru,2026-11-24,dataset,0
@@ -14710,6 +14719,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,ad_astra_school,Ad Astra School,7182,https://t.me/ad_astra_school,un,2026-11-25T12:13:25,live,0
 ,mixroot_tutorial,Mixroot Tutorials,7180,https://t.me/mixroot_tutorial,un,2026-11-23,live,0
 ,psyterrormagazine,журнал пситеррор,7179,https://t.me/psyterrormagazine,ru,2026-11-25T11:48:17,dataset,0
+1694955364,video7ir,آموزش انگلیسی با ویدیو,7174,https://t.me/video7ir,fa,2026-11-27T15:44:45,live,0
 ,sushivanya48,Суши Дяди Вани,7172,https://t.me/sushivanya48,ru,2026-11-25T10:26:09,dataset,0
 1959552273,rezashak09,کمک مالی خیریه به نیازمندان جهزیه عروس گروه گپهای خیرین,7171,https://t.me/rezashak09,fa,2026-11-22,live,0
 ,olyalyaph,OLYALYA. NUDE PHOTOGRAPHER,7170,https://t.me/olyalyaph,en,2026-11-26T08:44:20,dataset,0
@@ -16495,6 +16505,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,kleymedia,Клей,5701,https://t.me/kleymedia,ru,2026-11-23,dataset,0
 ,letokosmputesh,Лето бьюти,5700,https://t.me/letokosmputesh,ru,2026-11-23,dataset,0
 ,da_bogush,Москва Дениса Богуша,5700,https://t.me/da_bogush,ru,2026-11-26T19:32:38,dataset,0
+,dom_na_kryshe,Дом на крыше,5699,https://t.me/dom_na_kryshe,ru,2026-11-23,dataset,0
 ,kickscootershop,Kickscootershop.ru,5699,https://t.me/kickscootershop,un,2026-11-24,dataset,0
 ,worldoffactsunveiled,Невероятные Факты,5696,https://t.me/worldoffactsunveiled,ru,2026-11-23,dataset,0
 ,litercafe_book,Литературное кафе,5695,https://t.me/litercafe_book,ru,2026-11-24,dataset,0
@@ -16537,7 +16548,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,stv_tv,Славянское телевидение,5672,https://t.me/stv_tv,ru,2026-11-23,dataset,0
 ,gspmranepa,ВШГУ Президентской академии,5672,https://t.me/gspmranepa,ru,2026-11-24,live,0
 ,kuboteka,Куботека,5671,https://t.me/kuboteka,ru,2026-11-24,live,0
-,dom_na_kryshe,Дом на крыше,5670,https://t.me/dom_na_kryshe,ru,2026-11-23,dataset,0
 ,dmitry_fedorov_jeweler,Ювелирный дом•Дмитрий Федоров,5670,https://t.me/dmitry_fedorov_jeweler,ru,2026-11-24T21:09:10,dataset,0
 ,zefalina_art,✨💅🏻Zefalina Kaelucovna💅✨,5670,https://t.me/zefalina_art,un,2026-11-24,dataset,0
 ,EKorjikov_Blog,"Женя, который Коржик",5670,https://t.me/EKorjikov_Blog,ru,2026-11-24,dataset,0
@@ -17367,6 +17377,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,OFCM03GAETHERIX,𝐎𝐅𝐂 𝐌𝟎𝟑-𝐆 𝐀𝐄𝐓𝐇𝐄𝐑𝐈𝐗,5135,https://t.me/OFCM03GAETHERIX,other,2026-11-24,live,0
 ,diamondbabecloset,Ювелирный Гардероб,5134,https://t.me/diamondbabecloset,ru,2026-11-23,live,0
 ,minecraft_creator,Магмуст,5134,https://t.me/minecraft_creator,ru,2026-11-24,live,0
+1447807730,AUTONIKRANTAHAMTAN,اتو گالری تهمتن||قم,5133,https://t.me/AUTONIKRANTAHAMTAN,fa,2026-11-27T15:48:36,live,1
 ,achevoeto,юх,5132,https://t.me/achevoeto,ru,2026-11-24,dataset,0
 ,EanNews,ЕАН,5132,https://t.me/EanNews,ru,2026-11-26T20:23:39,dataset,0
 ,narofominskgo,Наро-Фоминский городской округ | Администрация,5132,https://t.me/narofominskgo,ru,2026-11-23,live,0
@@ -18259,6 +18270,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,sozvezdie_otrezok,Созвездие Отрезок,4606,https://t.me/sozvezdie_otrezok,ru,2026-11-25T12:08:27,live,0
 ,CCCR123,книги УЧЕБНЫЕ,4605,https://t.me/CCCR123,ru,2026-11-23,dataset,0
 ,mamavnorme_psy,Мама в норме - доказательная психология для мам,4605,https://t.me/mamavnorme_psy,ru,2026-11-23,dataset,0
+,ybwfilms,"YELLOW, BLACK AND WHITE",4605,https://t.me/ybwfilms,un,2026-11-27T15:50:00,dataset,0
 ,project_atlas100,project ATLAS100 [arch.0.0],4605,https://t.me/project_atlas100,un,2026-11-23,live,0
 ,kontora_girl,KONTORA_GIRL,4605,https://t.me/kontora_girl,en,2026-11-23,live,0
 ,bible_full,Библия: полная книга,4605,https://t.me/bible_full,ru,2026-11-25T11:56:22,live,0
@@ -19063,6 +19075,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1342169689,spornts,🏄‍♂Surf Dad Intel - OHSHIT🏄‍♂,4193,https://t.me/spornts,un,2026-11-24T20:52:15,dataset,0
 ,vladilen_ai,Тебя не заменят,4193,https://t.me/vladilen_ai,ru,2026-11-24,live,0
 ,trgbmag,Tregub Design Magazine,4192,https://t.me/trgbmag,en,2026-11-24,dataset,1
+1177302832,AutoEsmieh,اتو گالری اسمیه,4192,https://t.me/AutoEsmieh,fa,2026-11-27T15:48:36,live,1
 ,code_review_1c,Лапицкий про 1С+ИИ,4191,https://t.me/code_review_1c,ru,2026-11-24,live,0
 ,smellslikemmm,Smells like what?,4190,https://t.me/smellslikemmm,un,2026-11-23,dataset,0
 ,gemko_bagnaxclusive,GEMKO - BAGNA XCLUSIVE,4190,https://t.me/gemko_bagnaxclusive,un,2026-11-25T19:57:57,dataset,0
@@ -19607,6 +19620,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,alwebbci,"All about AI, Web 3.0, BCI",3939,https://t.me/alwebbci,un,2026-11-24,dataset,0
 2527404838,sansursuzm,Sansürsüz Haber +18,3939,https://t.me/sansursuzm,un,2026-11-22,live,0
 ,olegovich_sa,Жизнь с Савой | печатает …,3939,https://t.me/olegovich_sa,ru,2026-11-24,live,0
+2029830519,sexeiranee,سکسه ایرانی گروهی گروپ ویدیوی فلیم سوپره گشاده هاته سکسیه کونه سولاخه کیره پسره کلفته فیلمه دختره,3939,https://t.me/sexeiranee,fa,2026-11-25T11:56:20,live,1
 ,obuvopt_sad,Брендовая ОБУВЬ ⚡️,3938,https://t.me/obuvopt_sad,ru,2026-11-23,live,0
 ,Don_Guards_51st,ДОНЕЦКАЯ АРМИЯ,3938,https://t.me/Don_Guards_51st,ru,2026-11-24,live,0
 ,SOJURIST,ㅤㅤSojurist.com,3938,https://t.me/SOJURIST,en,2026-11-24,live,0
@@ -19628,7 +19642,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,tayyolrov_guruh,Tayyorlov guruh tarbiyachisi,3928,https://t.me/tayyolrov_guruh,un,2026-11-23,live,0
 ,clothing_premium_elena,THE PRIME CLOTHES 1:1,3927,https://t.me/clothing_premium_elena,un,2026-11-24,live,0
 ,momsareallright,Moms are all right,3926,https://t.me/momsareallright,fl,2026-11-23,dataset,1
-2029830519,sexeiranee,سکسه ایرانی گروهی گروپ ویدیوی فلیم سوپره گشاده هاته سکسیه کونه سولاخه کیره پسره کلفته فیلمه دختره,3926,https://t.me/sexeiranee,fa,2026-11-25T11:56:20,live,1
 ,spainLGBTQ,ЛГБТ-беженство | Испания,3925,https://t.me/spainLGBTQ,ru,2026-11-24,dataset,0
 ,headroom_inc,Max Headroom Incident,3924,https://t.me/headroom_inc,un,2026-11-24,dataset,0
 ,antoniotejeromolina,Двуглазка (Котенев),3923,https://t.me/antoniotejeromolina,ru,2026-11-23,live,0
@@ -19719,6 +19732,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,quirky_quizmaster,Загадки истории,3880,https://t.me/quirky_quizmaster,ru,2026-11-23,dataset,0
 ,filmpro_official,Фильм Про,3880,https://t.me/filmpro_official,ru,2026-11-24,live,0
 ,Motherfuckerrrrrrrr,FAM🙏❤️,3879,https://t.me/Motherfuckerrrrrrrr,un,2026-11-25T12:25:25,dataset,0
+,villybon,VILLYBON,3879,https://t.me/villybon,un,2026-11-27T15:44:31,dataset,0
 ,RSGOVArmenia,Русский дом в Армении 🇦🇲🇷🇺,3879,https://t.me/RSGOVArmenia,ru,2026-11-23,dataset,0
 2364496809,vk_hu,اندام سکسی فیلم لختی زن دختر,3879,https://t.me/vk_hu,fa,2026-11-22,live,1
 ,liminalmedia,Лиминаль,3879,https://t.me/liminalmedia,ru,2026-11-24,live,0
@@ -19735,6 +19749,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,welinkissss,Welinkis,3874,https://t.me/welinkissss,un,2026-11-24,live,0
 ,etrangesuper,ETRANGE,3874,https://t.me/etrangesuper,un,2026-11-26T14:23:06,live,0
 ,aquarium_vinyl,AQUARIUM_Vinyl,3874,https://t.me/aquarium_vinyl,un,2026-11-26T20:18:32,live,0
+1113406994,parsiankhodroqolizade,اتو گالری قلي زاده,3874,https://t.me/parsiankhodroqolizade,fa,2026-11-27T15:48:36,live,1
 ,imesmoscow,ИМЭС | ВУЗ МОСКВЫ,3873,https://t.me/imesmoscow,ru,2026-11-24T21:03:23,dataset,0
 ,here_was_dragons,здесь были драконы,3873,https://t.me/here_was_dragons,ru,2026-11-24,dataset,0
 2030841482,Relbezanin,ربات چت ناشناس | دوست یابی | دختر و پسر,3873,https://t.me/Relbezanin,fa,2026-11-22,live,1
@@ -19889,6 +19904,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,znat_nayat,📚 Знать на ЯТЬ 🖌,3807,https://t.me/znat_nayat,ru,2026-11-24,live,0
 ,Chsvbattle,ЧСВ BATTLE,3807,https://t.me/Chsvbattle,ru,2026-11-24,live,0
 ,nash_livoberejniy,Наш Лівобережний. Дніпро,3806,https://t.me/nash_livoberejniy,ru,2026-11-23,live,0
+1921091291,autogalleryzareii,🚘اتو گالری زارعی🚘,3806,https://t.me/autogalleryzareii,fa,2026-11-27T15:48:36,live,1
 ,italwaxru,Italwaxru,3805,https://t.me/italwaxru,un,2026-11-24,dataset,0
 3862499739,gd_lw,Filmino♂️💄👄 زوجة،قناة،ديوث،مجانية،اجنبي،افلام،تحميل،ام،مترجمة،نيك،محارم،نار،متحركه،قنوات،فلم،مقاطع،امهات،فيديو،هات،السكس،كسها،,3805,https://t.me/gd_lw,fa,2026-11-22,live,0
 ,killsandwich_art,killsandwich🔪,3805,https://t.me/killsandwich_art,un,2026-11-23,live,0
@@ -20071,6 +20087,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1733579943,DrDelforouz,Dr Delforouz,3727,https://t.me/DrDelforouz,un,2026-11-26T08:34:17,live,0
 2204318176,anirage,ANIRAGE | Anime edits,3726,https://t.me/anirage,un,2026-11-27T10:32:55,dataset,0
 1335202682,deltangamvat,کلیپ دلتنگی روز مادر آسمانی و پنجشنبه و یاد اموات,3726,https://t.me/deltangamvat,fa,2026-11-23,live,1
+1004976354,gallerymona,گالری هنری مونا,3726,https://t.me/gallerymona,fa,2026-11-27T15:47:16,live,1
 ,gorodetey,Семейные рестораны «ГОРОД ДЕТЕЙ»,3725,https://t.me/gorodetey,ru,2026-11-23,live,0
 ,sorokinve,Сорокин / МОСАРМ / АРМРЕСТЛИНГ 💪,3725,https://t.me/sorokinve,ru,2026-11-24,live,0
 ,sainbeatzz,@sainbeatz,3725,https://t.me/sainbeatzz,un,2026-11-24,live,0
@@ -20229,6 +20246,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,alexstranniknews,Strannik | News 🗞,3665,https://t.me/alexstranniknews,en,2026-11-23,dataset,0
 2087188937,EN_Classes,آموزش زبان انگلیسی | کلاسهای خصوصی و عمومی آنلاین,3665,https://t.me/EN_Classes,fa,2026-11-23,live,1
 ,Lia_English4U,Lia_English 📚,3665,https://t.me/Lia_English4U,en,2026-11-23,live,0
+2152473172,golmaei,ویدیوگرافی | امیرعلی گلمایی,3665,https://t.me/golmaei,fa,2026-11-27T15:44:45,live,0
 ,VasiliaVasilevna,Василя Вершинина. Несистемный педагог. #Камчатка #В_Поиске_Правды,3664,https://t.me/VasiliaVasilevna,ru,2026-11-23,dataset,0
 1369628224,,AviaticA,3664,,un,2026-11-26T08:40:26,dataset,0
 ,experimentshse,HSE Moscow Neuro-Cognitive Experiments,3664,https://t.me/experimentshse,un,2026-11-24T20:58:52,live,0
@@ -21710,6 +21728,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,uziudzultrazvukovoimedic,Я Врач УЗД УЗИ Ультразвуковой Диагностики,3091,https://t.me/uziudzultrazvukovoimedic,ru,2026-11-23,live,0
 ,rcr_nz,RCR_NZ,3091,https://t.me/rcr_nz,un,2026-11-24,live,0
 ,boost_bio,Дарья Дринёва | Биология ЕГЭ | BOOST,3091,https://t.me/boost_bio,ru,2026-11-24,live,0
+1075691558,otogalleriamraei,🚘 اتو گالری امرایی 🚘,3091,https://t.me/otogalleriamraei,fa,2026-11-27T15:48:16,live,1
 ,AKEV_info,АКЕВ. Грудное вскармливание.,3090,https://t.me/AKEV_info,ru,2026-11-23,dataset,0
 ,miotoxmethod,МЕТОД МИОТОКС®,3090,https://t.me/miotoxmethod,ru,2026-11-23,dataset,0
 ,lerasskin,Врач-косметолог | Leraskin,3090,https://t.me/lerasskin,ru,2026-11-23,dataset,0
@@ -21867,6 +21886,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,corpumora,Корпорация Юмора 😂 Мемы и видео,3042,https://t.me/corpumora,ru,2026-11-23,dataset,0
 ,HelloDigitalWorld,"🌏 Hello Digital World: SEO, digital-маркетинг, контент",3042,https://t.me/HelloDigitalWorld,ru,2026-11-24,dataset,0
 ,savina_veronika,Грудное вскармливание|Cон младенца|Прикорм - Вероника Савина,3041,https://t.me/savina_veronika,ru,2026-11-23,dataset,0
+,tutusya,Ту-Туся🤪🐘,3041,https://t.me/tutusya,ru,2026-11-27T15:46:22,dataset,0
 ,mete0ra,Метеора,3041,https://t.me/mete0ra,ru,2026-11-24,dataset,0
 ,prefecturaZAO,Префектура ЗАО,3041,https://t.me/prefecturaZAO,ru,2026-11-23,dataset,0
 ,teaandtissue,Чай и Откровения с психологом,3041,https://t.me/teaandtissue,ru,2026-11-24,dataset,0
@@ -22393,6 +22413,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1762623837,englishnosrat2023,اموزش تصویری زبان‌انگلیسی به روش نصرت,2875,https://t.me/englishnosrat2023,fa,2026-11-27T15:34:10,live,0
 ,byMariaS,NBMC by Maria Shirshakova,2874,https://t.me/byMariaS,un,2026-11-23,dataset,0
 ,novitsky_a,Канал Алексея Новицкого,2874,https://t.me/novitsky_a,ru,2026-11-26T20:06:42,dataset,0
+,Gukhel,Gukhel,2874,https://t.me/Gukhel,fl,2026-11-27T15:49:08,dataset,0
 ,furryfelinefun1,Много Котиков,2874,https://t.me/furryfelinefun1,ru,2026-11-23,live,0
 ,rezultatnalitso,РезультатНаЛицо | Вера Красивая,2874,https://t.me/rezultatnalitso,ru,2026-11-24,live,0
 1141552288,semsarisalas,سمساری ثلاث باباجانی و وحومه,2874,https://t.me/semsarisalas,fa,2026-11-24,live,0
@@ -22466,6 +22487,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Revived_May,Revived May,2850,https://t.me/Revived_May,un,2026-11-25T12:13:13,dataset,0
 1342250010,bolshoibelarus,Большой театр Беларуси/Bolshoi Theatre of Belarus,2850,https://t.me/bolshoibelarus,ru,2026-11-23,dataset,1
 1335765932,rad_life_uga,🌈Rad_life_uga🌈,2850,https://t.me/rad_life_uga,en,2026-11-24T20:51:59,dataset,0
+,reymaruRM,Рей Мару (REY MARU),2850,https://t.me/reymaruRM,ru,2026-11-25T10:37:04,dataset,0
 ,Migliori_Promozioni,LE MIGLIORI PROMOZIONI,2850,https://t.me/Migliori_Promozioni,un,2026-11-23,live,0
 ,maya_egorova_kitty,Майя Егорова,2850,https://t.me/maya_egorova_kitty,ru,2026-11-24,live,0
 ,primesquadofficial,PRIME SQUAD JR,2850,https://t.me/primesquadofficial,un,2026-11-24,live,0
@@ -22485,7 +22507,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,surfingonthelife,Сёрфинг по жизни,2843,https://t.me/surfingonthelife,ru,2026-11-24,dataset,0
 1478935116,its_avtick,Ананасовый Экспресс,2843,https://t.me/its_avtick,ru,2026-11-23,dataset,0
 ,mirovamasha,маша мирова&#33;&#33;,2843,https://t.me/mirovamasha,ru,2026-11-23,live,0
-,reymaruRM,Рей Мару (REY MARU),2842,https://t.me/reymaruRM,ru,2026-11-25T10:37:04,dataset,0
 ,food_park_aura,Фудхолл Аура,2842,https://t.me/food_park_aura,ru,2026-11-23,live,0
 ,dobrayarabota,Добрая Работа: для вегетарианцев и творцов,2841,https://t.me/dobrayarabota,ru,2026-11-23,dataset,0
 ,shilxtattooer,Shilxtattooer,2841,https://t.me/shilxtattooer,un,2026-11-24,dataset,0
@@ -22881,6 +22902,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,petrvari20,Փետրվարի 20 / 20-е Февраля,2722,https://t.me/petrvari20,ru,2026-11-25T12:24:15,dataset,0
 ,LiveForwarder,Live Forwarder,2722,https://t.me/LiveForwarder,un,2026-11-23,live,0
 ,lidipedia,Лидипедия,2722,https://t.me/lidipedia,ru,2026-11-24,live,0
+1802871425,omid_gallery_auto,کانال نمایشگاه امید گالری,2722,https://t.me/omid_gallery_auto,fa,2026-11-27T15:48:16,live,1
 ,pavleblog,pavle,2721,https://t.me/pavleblog,un,2026-11-23,dataset,0
 ,Funtime_Inside,Инсайды ФанТайм,2721,https://t.me/Funtime_Inside,ru,2026-11-24,live,0
 ,masterskayalord,МАСТЕРСКАЯ ТЁМНОГО ЛОРДА,2721,https://t.me/masterskayalord,ru,2026-11-24,live,0
@@ -23071,6 +23093,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,lo_online,ЛО Онлайн,2665,https://t.me/lo_online,ru,2026-11-25T12:26:04,live,0
 ,bootyfeya,Бути-фея говорит,2664,https://t.me/bootyfeya,ru,2026-11-23,dataset,0
 ,lildrey999,Lil Drey,2664,https://t.me/lildrey999,un,2026-11-24T21:12:00,live,0
+1465108208,G_mehrdad,﮼گالری‌مهرداد,2664,https://t.me/G_mehrdad,fa,2026-11-27T15:46:36,live,1
 ,viletanovnaTV,Утро вечера #ЗавтракСоЗвездой,2663,https://t.me/viletanovnaTV,ru,2026-11-23,dataset,0
 ,lawelectric,Энергоюристы,2663,https://t.me/lawelectric,ru,2026-11-24,dataset,0
 ,d3somorph1n3,дезоморфиновые,2663,https://t.me/d3somorph1n3,ru,2026-11-23,dataset,0
@@ -24324,6 +24347,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,pedagogi_shkola,Педагоги начальной школы,2320,https://t.me/pedagogi_shkola,ru,2026-11-23,dataset,0
 ,katyanagrani,феномен кандинской,2320,https://t.me/katyanagrani,ru,2026-11-23,dataset,0
 ,sipsikova,СИПСИКОВА,2320,https://t.me/sipsikova,ru,2026-11-24T21:11:36,dataset,0
+,sasha_argentina,Sasha Argentina,2320,https://t.me/sasha_argentina,un,2026-11-24,dataset,0
 2873239246,persiian_mom,Persian mom🇮🇷,2320,https://t.me/persiian_mom,un,2026-11-22,live,1
 2538079395,mamanyaonline,МамАня про онлайн,2319,https://t.me/mamanyaonline,ru,2026-11-22,live,0
 ,soyz_pechatnikov,СОЮЗ ПЕЧАТНИКОВ,2318,https://t.me/soyz_pechatnikov,ru,2026-11-23,dataset,0
@@ -24351,7 +24375,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1853466342,saidbekzoda7,𝐒𝟕🫅🏻,2314,https://t.me/saidbekzoda7,other,2026-11-23,live,0
 ,smol_digital,SMOL | affiliate/performance marketing,2314,https://t.me/smol_digital,un,2026-11-23,live,0
 ,vashevelichie,Магазин больших размеров Ваше Величие👍👍👍😊😊😊,2313,https://t.me/vashevelichie,ru,2026-11-23,dataset,0
-,sasha_argentina,Sasha Argentina,2313,https://t.me/sasha_argentina,un,2026-11-24,dataset,0
 ,DotNetRu,DotNetRu,2313,https://t.me/DotNetRu,un,2026-11-23,live,0
 ,parfotzovik,ПАРФМАНИЯ ОТЗЫВЫ,2313,https://t.me/parfotzovik,ru,2026-11-23,live,0
 ,olgafem,Ольга Фем,2313,https://t.me/olgafem,ru,2026-11-23,live,0
@@ -25324,6 +25347,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,libraryofbel,Национальная библиотека Беларуси,2087,https://t.me/libraryofbel,ru,2026-11-23,dataset,0
 1105610989,shahriareiran,دبیرستان شهریار ایران🇮🇷,2087,https://t.me/shahriareiran,fa,2026-11-22,live,0
 ,brier_wear,Brier,2087,https://t.me/brier_wear,un,2026-11-24,live,0
+1583479492,khodrosefrfathi,🔱اتو گالری فتحی🔱,2087,https://t.me/khodrosefrfathi,fa,2026-11-27T15:48:36,live,1
 ,bookzabor,Книжная околица,2086,https://t.me/bookzabor,ru,2026-11-25T12:14:59,dataset,0
 ,balancecoffeesmr,Баланс Кофе | Самара,2086,https://t.me/balancecoffeesmr,ru,2026-11-23,live,0
 ,sveta_zvezda_dekreta,света звезда декрета,2085,https://t.me/sveta_zvezda_dekreta,ru,2026-11-23,dataset,0
@@ -25459,6 +25483,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,bloody_izuru,Bloody Angel Izuru [E**tasy],2058,https://t.me/bloody_izuru,un,2026-11-24T20:59:09,live,0
 1749083594,TurkicStates,Organization of Turkic States,2057,https://t.me/TurkicStates,un,2026-11-22,dataset,0
 ,ordinaryWilch,Рядовой спасатель,2057,https://t.me/ordinaryWilch,ru,2026-11-25T12:14:27,live,0
+,an_ch_wb,Анна | Ai-creator | Дизайнер,2057,https://t.me/an_ch_wb,ru,2026-11-27T15:44:31,live,0
 ,rebosober,Илья Sober: закулисье🤫,2056,https://t.me/rebosober,ru,2026-11-23,dataset,0
 2097293108,indeycem,Будь индейцем!,2056,https://t.me/indeycem,ru,2026-11-23,live,0
 ,yellow_duckling,Издательство Жёлтый утёнок,2056,https://t.me/yellow_duckling,ru,2026-11-23,live,0
@@ -26966,6 +26991,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2733497394,fj_g5,فیلم سوپر سکسی روسیه ترکیه,1755,https://t.me/fj_g5,fa,2026-11-22,live,1
 ,iwfrussia,НФР: Независимая Федерация Реслинга,1755,https://t.me/iwfrussia,ru,2026-11-24,live,0
 ,edomoconcept,ēdomo,1755,https://t.me/edomoconcept,un,2026-11-26T20:40:55,live,0
+1056197373,ashraaficom,گالری اشرافی,1755,https://t.me/ashraaficom,fa,2026-11-27T15:48:57,live,1
 ,mmmengelll,cringe hidden in my brain,1754,https://t.me/mmmengelll,un,2026-11-24,live,0
 ,pentyuhh,Pentyuh ᵝᵃᵞᵃᶮ,1754,https://t.me/pentyuhh,un,2026-11-24T21:12:00,live,0
 ,ttelegraphmoscow,Универмаг ТЕЛЕГРАФ,1753,https://t.me/ttelegraphmoscow,ru,2026-11-23,dataset,0
@@ -27542,6 +27568,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,prinkabrand,Prinka.Brand,1650,https://t.me/prinkabrand,un,2026-11-24,dataset,0
 ,gnezdovje,дом одной колдуньи,1650,https://t.me/gnezdovje,ru,2026-11-23,dataset,0
 ,mariproyasni,"Мари, проясни!",1650,https://t.me/mariproyasni,ru,2026-11-24,dataset,0
+,VeterBlin,Соня Ветер второй сезон🥭,1650,https://t.me/VeterBlin,ru,2026-11-23,dataset,0
 1834866411,annetteleefishes,Annette Lee’s Fishes 🥅🐟🐠🐡,1650,https://t.me/annetteleefishes,un,2026-11-22,live,0
 ,homeofads,Home of Ads&#33; Telegram Advertisements Global,1650,https://t.me/homeofads,un,2026-11-23,live,0
 ,Natalia_Schneider,Наталья Шнейдер. Романтическое фэнтези.,1650,https://t.me/Natalia_Schneider,ru,2026-11-23,live,0
@@ -27577,7 +27604,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,clvn_mrktng,Капитан Челован,1645,https://t.me/clvn_mrktng,ru,2026-11-24,live,0
 ,glagolikstheatre,РазГлагольствования,1644,https://t.me/glagolikstheatre,ru,2026-11-23,dataset,0
 ,redisojart,Грядка,1644,https://t.me/redisojart,ru,2026-11-23,dataset,0
-,VeterBlin,Соня Ветер второй сезон🥭,1644,https://t.me/VeterBlin,ru,2026-11-23,dataset,0
 ,pchelsh,ЛОГОВО ПЧЁЛ | pchelsh,1644,https://t.me/pchelsh,ru,2026-11-24,live,0
 ,noosa_amsterdam_moscow,NOOSA-Amsterdam Moscow,1643,https://t.me/noosa_amsterdam_moscow,un,2026-11-24,dataset,0
 ,humanimalien_monster,humanimalien,1643,https://t.me/humanimalien_monster,un,2026-11-24,dataset,0
@@ -27869,6 +27895,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,anozarazvitie,За Развитие 🥋,1597,https://t.me/anozarazvitie,ru,2026-11-24,live,0
 ,C_Cami_Ii,Булочки Cami 🥐,1597,https://t.me/C_Cami_Ii,ru,2026-11-25T10:40:34,live,0
 2532761520,loraftehalovedep,Movie love dep,1597,https://t.me/loraftehalovedep,en,2026-11-27T11:08:01,live,0
+1135450809,saathashemi,گالری ساعت هاشمی,1597,https://t.me/saathashemi,fa,2026-11-27T15:49:57,live,1
 ,vlnyofficial,VLNY(Волны),1596,https://t.me/vlnyofficial,ru,2026-11-24T21:11:07,dataset,0
 ,teamvladislavasharonova,Vladislava Sharonova | official group🧡,1596,https://t.me/teamvladislavasharonova,en,2026-11-24,live,0
 ,litizdat,Литр,1595,https://t.me/litizdat,ru,2026-11-25T19:02:14,dataset,0
@@ -27928,6 +27955,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,stranniktricks,Выгода Странника,1586,https://t.me/stranniktricks,ru,2026-11-23,live,0
 ,FurryValleyBDSMStraight,Furry Valley BDSM (Straight),1586,https://t.me/FurryValleyBDSMStraight,fl,2026-11-23,live,0
 1028630364,gap4dangeh,گروه چهاردانگه خبر,1586,https://t.me/gap4dangeh,fa,2026-11-23,live,0
+2237895978,StartenWir_A2_KB,آموزش ویدیوئی اشتارتن ویا A2,1586,https://t.me/StartenWir_A2_KB,fa,2026-11-27T15:45:26,live,0
 ,able_plus,"Никто не знает, как правильно",1585,https://t.me/able_plus,ru,2026-11-24,dataset,0
 ,SuetaMuz_15,SuetaMuz 🍇| Музыка для души 🎶,1585,https://t.me/SuetaMuz_15,ru,2026-11-24,dataset,0
 ,morkovka_craft,МОРКОВКА🥕 MORKOVKA,1585,https://t.me/morkovka_craft,ru,2026-11-23,live,0
@@ -28054,11 +28082,13 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1967658813,bf_gw,استیکر گیف داستان عکس عاشقانه لب,1565,https://t.me/bf_gw,fa,2026-11-21,live,1
 1020825555,photod,غرائب وعجائب,1565,https://t.me/photod,fa,2026-11-26T08:59:30,live,0
 ,flashbagsru,FLASH BAGS,1564,https://t.me/flashbagsru,un,2026-11-23,dataset,0
+,adygvoice,Адыгэ макъ (Голос адыга),1564,https://t.me/adygvoice,ru,2026-11-27T15:49:08,dataset,0
 ,pon_hub,Спортивный Пон,1563,https://t.me/pon_hub,ru,2026-11-24,dataset,0
 ,ourfeelingsthoughts,Chaotic Vibes💭,1563,https://t.me/ourfeelingsthoughts,un,2026-11-23,dataset,0
 ,mokamikaze,Моменты жизни 💥,1563,https://t.me/mokamikaze,ru,2026-11-24,dataset,0
 ,oniraytr,Oniray,1563,https://t.me/oniraytr,un,2026-11-25T12:00:12,live,0
 ,valgalych,Вальгалыч,1563,https://t.me/valgalych,ru,2026-11-26T20:15:35,live,0
+,manula_dance_fest,Manula Dance Fest,1562,https://t.me/manula_dance_fest,un,2026-11-27T15:45:46,dataset,0
 1355530892,iohasoighiozxhgiohasg,لینک،کانال،فیلم،سوپر،سکسی کنال،عکسای،سکسسی،عکسه،عکص،تصاویر،گالری،تهران،شهرستان،مشهد،نت،اینترنت،افغان،ژاپنی،بزرگ،ویدیو،کلیب،لینک،,1562,https://t.me/iohasoighiozxhgiohasg,fa,2026-11-21,live,1
 ,turbohogan,Турбохоган: расширенный тест Хогана,1561,https://t.me/turbohogan,ru,2026-11-24,dataset,0
 ,romehasfallencenturion,"Rome has fallen, centurion",1561,https://t.me/romehasfallencenturion,un,2026-11-24,dataset,0
@@ -28229,6 +28259,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Lunairebeauty,Lunaire.beauty,1535,https://t.me/Lunairebeauty,un,2026-11-23,live,0
 ,alexgl1de,AlexGL1DE,1535,https://t.me/alexgl1de,un,2026-11-24,live,0
 ,shu1dacuxapa,шуида с1хара,1535,https://t.me/shu1dacuxapa,ru,2026-11-25T10:27:21,live,0
+,irkprotancy,PROТАНЦЫ Иркутск,1534,https://t.me/irkprotancy,ru,2026-11-25T18:33:21,dataset,0
 ,kosmo_shoppingalla,Kosmo_shopping,1534,https://t.me/kosmo_shoppingalla,un,2026-11-23,dataset,0
 ,hardcoreaffiliateclub,HardCore Affiliate Club,1534,https://t.me/hardcoreaffiliateclub,un,2026-11-24,dataset,0
 1026232959,Yooutubeirani,𝕐𝕠𝕦𝕋𝕦𝕓𝕖 𝕚𝕣𝕒𝕟𝕚 𝕋𝕖𝕝𝕖𝕘𝕣𝕒𝕞 ㋡,1534,https://t.me/Yooutubeirani,other,2026-11-22,dataset,0
@@ -30129,6 +30160,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,metalenamelpin,Metal Enamel Pin,1260,https://t.me/metalenamelpin,un,2026-11-23,dataset,0
 1902572982,khalehArezo0909,کانال عکس خاله ارزو,1260,https://t.me/khalehArezo0909,fa,2026-11-21,live,1
 ,whyagotbenz,whyagotbenz,1260,https://t.me/whyagotbenz,un,2026-11-25T11:47:13,live,0
+2030725868,imanesh,عکاسی 📸و ویدیوگرافی🎥| ایمان اشراقی,1260,https://t.me/imanesh,fa,2026-11-27T15:45:26,live,0
 ,superfirstgirl,Писина Хозяйка,1259,https://t.me/superfirstgirl,ru,2026-11-24,dataset,0
 ,ayyurivrtuber,Ayyuri Channel,1259,https://t.me/ayyurivrtuber,en,2026-11-24,dataset,0
 ,nutletters2,Ronove.media,1259,https://t.me/nutletters2,un,2026-11-24,dataset,0
@@ -30382,6 +30414,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,wakeupkhv,Хабаровский косплей-фестиваль 7 ноября 2026 12+,1229,https://t.me/wakeupkhv,ru,2026-11-23,live,0
 ,ghfortikk,ghfortik,1229,https://t.me/ghfortikk,fl,2026-11-24,live,0
 ,zerotomogui,TOMOGUI://sublimation obscenity,1229,https://t.me/zerotomogui,un,2026-11-25T12:16:29,live,0
+2339101062,StartenWir_A1_Video,آموزش ویدیوئی اشتارتن ویا A1,1229,https://t.me/StartenWir_A1_Video,fa,2026-11-27T15:45:26,live,0
 ,RKadyrov_russia,Инфо News,1228,https://t.me/RKadyrov_russia,ru,2026-11-23,dataset,0
 ,kreativnyykodrussia,Креативный код. Россия,1228,https://t.me/kreativnyykodrussia,ru,2026-11-23,live,0
 ,jualfollowersinstagramtiktokk,Jasa Sosmed By Aica Sosmed,1228,https://t.me/jualfollowersinstagramtiktokk,un,2026-11-24,live,0
@@ -30415,6 +30448,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,nachalka_ra,Началка | школа,1224,https://t.me/nachalka_ra,ru,2026-11-23,dataset,0
 ,nursanur,нуря делает смысл,1224,https://t.me/nursanur,ru,2026-11-26T20:24:17,dataset,0
 ,blindhookah,Амбассадоры Минздрава,1224,https://t.me/blindhookah,ru,2026-11-25T11:49:00,dataset,0
+,now_book,💕Твоя читающая подруга💕,1224,https://t.me/now_book,ru,2026-11-27T15:45:46,dataset,0
 ,dvm_dv,Газета «Дальневосточная магистраль»,1224,https://t.me/dvm_dv,ru,2026-11-23,dataset,0
 1048035183,bazigaran_zan,عکس بازیگران خانوم,1224,https://t.me/bazigaran_zan,fa,2026-11-21,live,1
 ,golosakron,Голоса крон,1224,https://t.me/golosakron,ru,2026-11-23,live,0
@@ -31019,6 +31053,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,TatianaGusevaFL,"Татьяна Гусева| БОЛЬШЕ, ЧЕМ БИЗНЕС",1150,https://t.me/TatianaGusevaFL,ru,2026-11-23,live,0
 ,drillbikes,DRILLBIKES,1150,https://t.me/drillbikes,un,2026-11-24,live,0
 ,pesticidesunion,РСП ХСЗР,1150,https://t.me/pesticidesunion,ru,2026-11-26T14:21:16,live,0
+1141351384,mrcar,اتو گالری اشکان مُلایی,1150,https://t.me/mrcar,fa,2026-11-27T15:48:57,live,1
 ,violetta_serg,Большая Цирковая Конная Семья,1149,https://t.me/violetta_serg,ru,2026-11-24,dataset,0
 ,skavifikacoffee,Кофейня Ska vi FIKA?,1149,https://t.me/skavifikacoffee,ru,2026-11-23,dataset,0
 ,kinomaniadistribution,КИНОМАНИЯ | Кинопрокатная компания,1149,https://t.me/kinomaniadistribution,ru,2026-11-23,live,0
@@ -31208,6 +31243,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,otvagabmxbrand,OTVAGA BMX,1128,https://t.me/otvagabmxbrand,un,2026-11-24,live,0
 ,trueshamanchannel,СПРОСИ ШАМАНА,1128,https://t.me/trueshamanchannel,ru,2026-11-24,live,0
 ,sadlittlebatwh40,Нетопырь читает Ваху,1128,https://t.me/sadlittlebatwh40,ru,2026-11-25T12:11:15,live,0
+,homecontest38,HOME,1128,https://t.me/homecontest38,un,2026-11-25T18:33:21,live,0
 1752892735,chacroanalis,Люба • Чакроаналіз • ХВД,1128,https://t.me/chacroanalis,ru,2026-11-26T08:28:53,live,0
 ,razvitie_pod_prikritiem,Развитие под прикрытием,1127,https://t.me/razvitie_pod_prikritiem,ru,2026-11-23,dataset,0
 ,DenisVidevich,Denis Videvich,1127,https://t.me/DenisVidevich,un,2026-11-24T20:55:37,dataset,0
@@ -31526,6 +31562,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,lobachev_m,Лобачев М.,1090,https://t.me/lobachev_m,ru,2026-11-25T10:23:26,dataset,0
 ,maxizsharov,Максим Никонов и его тараканы,1090,https://t.me/maxizsharov,ru,2026-11-25T10:28:36,dataset,0
 ,moremorth,Nathan Morth,1090,https://t.me/moremorth,un,2026-11-24T21:01:54,dataset,0
+,BaizhanPeak,Bai🖤Zhan🧡Peak | Liu_shidi ⚔️,1090,https://t.me/BaizhanPeak,fl,2026-11-24T21:11:07,dataset,0
 ,ARTEMuratov,Артём Муратов,1090,https://t.me/ARTEMuratov,ru,2026-11-24,dataset,0
 ,avedeerage,ave.deerage,1090,https://t.me/avedeerage,un,2026-11-24,dataset,0
 ,gorky_tech,GORKY TECH,1090,https://t.me/gorky_tech,en,2026-11-23,dataset,0
@@ -31629,7 +31666,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2442834081,jdhdh80,فیلم اشتباه ما تو من لندن2,1081,https://t.me/jdhdh80,fa,2026-11-27T15:31:17,live,0
 ,siberian_shamanic_sound,Siberian Shamanic Sound / этническая музыка Алтая,1081,https://t.me/siberian_shamanic_sound,ru,2026-11-27T15:31:53,live,0
 ,goblins_market,goblin’s маркет,1080,https://t.me/goblins_market,ru,2026-11-23,dataset,0
-,BaizhanPeak,Bai🖤Zhan🧡Peak | Liu_shidi ⚔️,1080,https://t.me/BaizhanPeak,fl,2026-11-24T21:11:07,dataset,0
 ,kuzinskiyart,Kuzinskiy art,1080,https://t.me/kuzinskiyart,en,2026-11-23,dataset,0
 ,woltbutgold,карнаваризация,1080,https://t.me/woltbutgold,ru,2026-11-24,dataset,0
 ,bcsamara_women,«Самара»: женские команды,1080,https://t.me/bcsamara_women,ru,2026-11-25T11:55:47,dataset,0
@@ -33147,6 +33183,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,verushkabuts,Verushka Buts,920,https://t.me/verushkabuts,un,2026-11-23,live,0
 ,willbbee,Водоросли🎀¹⁸⁺ {Рест},920,https://t.me/willbbee,ru,2026-11-24,live,0
 1349683833,bedoonesansoor2020,اخبار بدون سانسور,920,https://t.me/bedoonesansoor2020,fa,2026-11-27T11:09:41,live,0
+,posolhvosta,Посол пряного хвоста,919,https://t.me/posolhvosta,ru,2026-11-24,dataset,0
 1350294875,SANDIGOOOOOOOOO1,عکس خاص,919,https://t.me/SANDIGOOOOOOOOO1,fa,2026-11-22,live,1
 ,USMLEpodcast,USMLE podcast,919,https://t.me/USMLEpodcast,un,2026-11-23,live,0
 ,grosshgar,Grosshgar,919,https://t.me/grosshgar,un,2026-11-23,live,0
@@ -33154,7 +33191,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,valm_points,VALM Points | Донат и Услуги WeChat Valorant Mobile 🇨🇳,919,https://t.me/valm_points,ru,2026-11-24,live,0
 ,zoyllaep,ZOYLAEP || booktok editor,919,https://t.me/zoyllaep,un,2026-11-24,live,0
 ,fondzaprirodu,Фонд защитников природы,919,https://t.me/fondzaprirodu,ru,2026-11-25T12:22:42,live,0
-,posolhvosta,Посол пряного хвоста,918,https://t.me/posolhvosta,ru,2026-11-24,dataset,0
 ,kingshop63,👔Одежда опт розница Lux,918,https://t.me/kingshop63,ru,2026-11-23,dataset,0
 ,TransformersOneDubRus,EBAtronTeam - Трансформеры: Один,918,https://t.me/TransformersOneDubRus,ru,2026-11-25T10:36:05,dataset,0
 2189522483,hthjtfgahqah3,اطلاع رسانی شارژ,918,https://t.me/hthjtfgahqah3,fa,2026-11-23,live,0
@@ -33204,7 +33240,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Ochilgan82,Ochilgan seriyalar,913,https://t.me/Ochilgan82,un,2026-11-23,dataset,0
 ,morgou,🍂mor.gou🍂,913,https://t.me/morgou,un,2026-11-23,dataset,0
 1720581912,annaakopyan_design_school,Школа Дизайна Анны Акопян,913,https://t.me/annaakopyan_design_school,ru,2026-11-27T10:37:03,dataset,0
-,mrdoctorlor,Доктор Самсонов /ФОНИАТР/ЛОР,913,https://t.me/mrdoctorlor,ru,2026-11-27T15:41:40,dataset,0
 ,wospitanieummi,Воспитание уммы!,913,https://t.me/wospitanieummi,ru,2026-11-23,dataset,0
 2604734396,ajisarab1,فیلم و کلیپ شیمیل آجی سارا ترنس مفعول بات مقعد آنال ساک ایرانی خارجی پورن سوپر خاله میستریس شماره,913,https://t.me/ajisarab1,fa,2026-11-23,live,1
 ,inturn_bridge,INTURN BRIDGE | Xalqaro stajirovka,913,https://t.me/inturn_bridge,un,2026-11-24,live,0
@@ -33350,6 +33385,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1664622870,selfie_vlg,Selfievlg,900,https://t.me/selfie_vlg,un,2026-11-22,live,1
 2141224919,Polina_Yoga_Therapy,ЙОГА & ТЕРАПИЯ,900,https://t.me/Polina_Yoga_Therapy,ru,2026-11-23,live,0
 ,olga_books24,🪷Olga| книжный путешественник🪷,900,https://t.me/olga_books24,ru,2026-11-24,live,0
+2217834947,ashrafi_group,گالری اشرافی ✨,900,https://t.me/ashrafi_group,fa,2026-11-27T15:48:57,live,1
 ,truvont_mane,Трувонт🏴‍☠️,899,https://t.me/truvont_mane,ru,2026-11-23,live,0
 ,chaesdiaries,۶ৎ chae’s diaries,899,https://t.me/chaesdiaries,ar,2026-11-24,live,0
 ,endyaudio,endyaudio,899,https://t.me/endyaudio,un,2026-11-24,live,0
@@ -33670,6 +33706,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2224004381,nataliaportugal,ПАССИВНЫЙ ДОХОД В БЕЗ ГРАНИЦ,869,https://t.me/nataliaportugal,ru,2026-11-27T10:42:05,dataset,0
 ,rcm_channel,РКМ | Канал Ассоциации,869,https://t.me/rcm_channel,ru,2026-11-24,dataset,0
 ,campcraft,Campfire | Новости Майнкрафт,869,https://t.me/campcraft,ru,2026-11-27T11:25:44,dataset,0
+,radiocherkesfm,Черкес ФМ,869,https://t.me/radiocherkesfm,ru,2026-11-27T15:49:08,dataset,0
 ,skias_onar,σκιᾶς ὄναρ / сон тени / яна маркова,869,https://t.me/skias_onar,ru,2026-11-23,live,0
 ,masternebilits,МАСТЕРСКАЯ НЕБЫЛИЦ,869,https://t.me/masternebilits,ru,2026-11-23,live,0
 ,kokoAdele,Коко Адель,869,https://t.me/kokoAdele,ru,2026-11-24,live,0
@@ -35702,6 +35739,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 4409998236,iddfa,سورس تسطير,700,https://t.me/iddfa,fa,2026-11-24,live,0
 ,renouncule,goldilocks🍒,700,https://t.me/renouncule,un,2026-11-25T12:29:08,live,0
 ,onewomanpoetry,"Be bae, do rhymes | Ольга Влáсенко",700,https://t.me/onewomanpoetry,ru,2026-11-26T20:31:46,live,0
+3832896007,moonskingallery,فروشگاه مون اسکین گالری🌙,700,https://t.me/moonskingallery,fa,2026-11-27T15:47:16,live,1
 ,vremya_detyam,ВРЕМЯ ДЕТЯМ,699,https://t.me/vremya_detyam,ru,2026-11-23,dataset,0
 ,top_lvenok,ТОП «Львёнок» 🦁,699,https://t.me/top_lvenok,ru,2026-11-23,dataset,0
 1615722783,tmh_electroteh,ТМХ | ТМХ-Электротех,699,https://t.me/tmh_electroteh,ru,2026-11-26T08:37:23,dataset,0
@@ -35991,6 +36029,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,ksenoimpulsi2,Шизотехническое гиперстазирование,679,https://t.me/ksenoimpulsi2,ru,2026-11-24,live,0
 ,recluseLi,затворница Ли,679,https://t.me/recluseLi,ru,2026-11-25T12:19:17,live,0
 ,termoland_shelkovo,Термоленд l Щёлково,679,https://t.me/termoland_shelkovo,ru,2026-11-25T19:11:26,live,0
+2145334562,fmvB3T5hEzN2E0,گالری طلا و جواهری دلداری آدرس تهران خیابان رودکی بین هاشمی و دامپزشکی پاساژ الماس طبقه همکف پلاک ۵۴ تلفن ۶۵۰۱۴۶۹۲-۰۹۱۲۰۹۳۱۵۹۷,679,https://t.me/fmvB3T5hEzN2E0,fa,2026-11-27T15:49:57,live,1
 ,dominick_jocker,Доминик Джокер,678,https://t.me/dominick_jocker,ru,2026-11-24T21:11:07,dataset,0
 ,price_nails,Nails | Прайс,678,https://t.me/price_nails,ru,2026-11-23,dataset,0
 ,gromovcircles,Круги Громова | Data &amp; AI Research,678,https://t.me/gromovcircles,ru,2026-11-23,live,0
@@ -36349,7 +36388,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,yakladova,🔑 От личностности к наличности,653,https://t.me/yakladova,ru,2026-11-25T10:41:41,live,0
 ,lemmelle,lemmelle🫦,653,https://t.me/lemmelle,un,2026-11-25T12:13:13,live,0
 ,your_buyer_spain,Алёна фром Барселона,653,https://t.me/your_buyer_spain,ru,2026-11-26T08:57:05,live,0
-,todesuizniy,Тодес Южный,652,https://t.me/todesuizniy,ru,2026-11-27T15:41:01,dataset,0
 ,inToomatch,TOOMATCH,652,https://t.me/inToomatch,un,2026-11-26T08:31:16,dataset,0
 ,english_showandtell,English with Liza&Lena l Show and Tell,652,https://t.me/english_showandtell,en,2026-11-23,dataset,0
 ,opticanadin,NADIN - диагностика и коррекция зрения г. Ульяновск,652,https://t.me/opticanadin,ru,2026-11-23,dataset,0
@@ -38644,7 +38682,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,whodatboiiiiii,данилабой ЭТО КАНАЛ ДАНИЛАБОЯ (да ни ла бой) #danilaboy,510,https://t.me/whodatboiiiiii,ru,2026-11-25T12:16:44,live,0
 ,Lektorij2024,РДС. Лекторий,510,https://t.me/Lektorij2024,ru,2026-11-26T20:20:07,live,0
 ,irina_kozlova_stylist,Все о стиле с Ириной Козловой,509,https://t.me/irina_kozlova_stylist,ru,2026-11-23,dataset,0
-,GoodGame_Ru,GoodGame.ru: стримы и олдскулы,509,https://t.me/GoodGame_Ru,ru,2026-11-27T15:42:21,dataset,0
 1852402354,persianhappyfamily,انجمن خانواده شاد Happy Family,509,https://t.me/persianhappyfamily,fa,2026-11-22,live,1
 2595197472,sugarmmyxvideo,Sugar Mummy and XxX Video,509,https://t.me/sugarmmyxvideo,en,2026-11-22,live,0
 ,todes_contemporary_classes,TODES | КОНТЕМПОРАРИ | МАСТЕР-КЛАССЫ ✨,509,https://t.me/todes_contemporary_classes,ru,2026-11-23,live,0
@@ -38839,7 +38876,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,ynichtojimVraga,УНИЧТОЖИМ ВРАГА🇷🇺,500,https://t.me/ynichtojimVraga,ru,2026-11-24,live,0
 ,dusjaschluha,ulovemythinking,500,https://t.me/dusjaschluha,un,2026-11-24,live,0
 ,a_nevskii_lg,Храм св. блгв. кн. Александра Невского г. Луганска,500,https://t.me/a_nevskii_lg,ru,2026-11-25T19:43:15,live,0
-,leta_ya,Грустно Fm,499,https://t.me/leta_ya,ru,2026-11-27T15:42:21,dataset,0
 ,tsarshop63,Сумки Царь shop,499,https://t.me/tsarshop63,ru,2026-11-23,dataset,0
 ,elektrozawodsk,Электрозавод и его Москва,499,https://t.me/elektrozawodsk,ru,2026-11-23,live,0
 ,kulichinnn_pup,KULICHINNN создатель 16+,499,https://t.me/kulichinnn_pup,ru,2026-11-23,live,0
@@ -39337,6 +39373,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Love_kidz,Карапузики в саду,472,https://t.me/Love_kidz,ru,2026-11-23,dataset,0
 ,OZON_Stellar,ОЗОН | 🌌StellarStyle,472,https://t.me/OZON_Stellar,ru,2026-11-23,dataset,0
 ,club_dipael,"КЛУБ DIPAEL: Жизнь, Красота, Бизнес",472,https://t.me/club_dipael,ru,2026-11-23,dataset,0
+,izgorodaka,«СИНТЕТИКА»,472,https://t.me/izgorodaka,ru,2026-11-27T15:49:08,dataset,0
 2199777340,sugarmommyconnect,"Sugar Mummy Connect UAE, QATAR, SAUDI ARABIA, KUWAIT, BAHRAIN OMAN AND OTHERS",472,https://t.me/sugarmommyconnect,en,2026-11-22,live,0
 ,you_are_art_minded,𝓐𝓡𝓣-𝒎𝒊𝒏𝒅𝒆𝒅,472,https://t.me/you_are_art_minded,other,2026-11-23,live,0
 ,nemodernychalan,[nemoderný chalan] | #УкрТґ,472,https://t.me/nemodernychalan,ru,2026-11-23,live,0
@@ -40318,6 +40355,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,jades92,Жадес,425,https://t.me/jades92,ru,2026-11-25T11:47:57,live,0
 ,yamimiuky1,y-ami,425,https://t.me/yamimiuky1,un,2026-11-25T12:27:36,live,0
 ,AdaQiest,Ада для чата | Новости,425,https://t.me/AdaQiest,ru,2026-11-25T12:42:00,live,0
+3236531949,aiautomaticedit,نمونه ویدیوهای ادیت اتوماتیک,425,https://t.me/aiautomaticedit,fa,2026-11-27T15:45:05,live,0
 ,Seletbatyr,Батыр вакыты,424,https://t.me/Seletbatyr,ru,2026-11-23,dataset,0
 4451827223,cludcdn,دامنه Cdn,424,https://t.me/cludcdn,fa,2026-11-23,live,1
 1765973122,TDAUalYoshlariningrasmiykanali,TDAU Akademik litsey rasmiy kanali,424,https://t.me/TDAUalYoshlariningrasmiykanali,un,2026-11-23,live,0
@@ -40353,6 +40391,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,buzhba,бужба,423,https://t.me/buzhba,ru,2026-11-24,live,0
 1874034874,skiba_etiquette,Пространство этикета с Евгенией Скиба,423,https://t.me/skiba_etiquette,ru,2026-11-24T20:56:14,live,0
 ,odadream,ODA.Dream,423,https://t.me/odadream,un,2026-11-25T11:51:41,live,0
+,Liorifm,Liori,423,https://t.me/Liorifm,un,2026-11-26T14:44:28,live,0
 ,LN_hair,LNHAIR детские волосы для наращивания,422,https://t.me/LN_hair,ru,2026-11-23,dataset,0
 ,coach_zhdanov,"Иван Жданов: коуч, бизнес-тренер | управление изменениями",422,https://t.me/coach_zhdanov,ru,2026-11-23,dataset,0
 ,psichodesign,Гештальт дизайн,422,https://t.me/psichodesign,ru,2026-11-23,dataset,0
@@ -40718,6 +40757,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,power_up_host_party,POWER UP: Host-party Anime Edition,406,https://t.me/power_up_host_party,un,2026-11-25T12:07:02,live,0
 ,kakpokoritmir,Руманга «Как покорить мир»,406,https://t.me/kakpokoritmir,ru,2026-11-26T20:37:30,live,0
 ,yourslamvideo,Хроники слэма,406,https://t.me/yourslamvideo,ru,2026-11-27T11:17:14,live,0
+,lutreolina_cos,косплеит орёт / lutreolina,406,https://t.me/lutreolina_cos,ru,2026-11-27T15:44:56,live,0
 ,iqdesigngel,Студия IQ DESIGN,405,https://t.me/iqdesigngel,ru,2026-11-23,dataset,1
 ,dmitry_solonko,"Дмитрий Солонько про бизнес, маркетинг и обучение",405,https://t.me/dmitry_solonko,ru,2026-11-24,dataset,0
 ,lovemevelo,love me velo,405,https://t.me/lovemevelo,en,2026-11-24,dataset,0
@@ -40762,6 +40802,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,polkaalmat,⊹ ࣪ ˖ Плеяда ˖ ࣪⊹,404,https://t.me/polkaalmat,ru,2026-11-25T11:46:17,live,0
 ,nika_icon,✨Ника Айкон✨ Слэйное Писательство,404,https://t.me/nika_icon,ru,2026-11-25T12:08:11,live,0
 1404243655,linkdoni_bandarabbas,لینکدونی گروه چت بندرعباس,404,https://t.me/linkdoni_bandarabbas,fa,2026-11-27T11:17:23,live,0
+1662499747,BananaAiGemini,پرامپت، هوش مصنوعی ، ویدیو، عکس ، فیلم ، جمینی، آتلیه‌ ، پرامپت ترند,404,https://t.me/BananaAiGemini,fa,2026-11-27T15:45:05,live,1
 ,moRf_rat,м о р ф 👽,403,https://t.me/moRf_rat,ru,2026-11-23,dataset,0
 1900618533,Archive_pics,آرشیو عکس,403,https://t.me/Archive_pics,fa,2026-11-22,live,1
 1968651819,KoHamsar,اطلاع رسانی همسرم کیه؟,403,https://t.me/KoHamsar,fa,2026-11-23,live,0
@@ -41477,6 +41518,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,grayziedeeee,= G R A Y Z I E • D E E = | Грэйзи Ди |,372,https://t.me/grayziedeeee,ru,2026-11-24,live,0
 ,pl4g6oi,PL4GMAN,372,https://t.me/pl4g6oi,un,2026-11-24,live,0
 ,lotuswlw,lina lotus 🌷,372,https://t.me/lotuswlw,un,2026-11-24T20:48:15,live,0
+2184515780,autoimankashan,اتو گالری ایمان (هاشمی نژاد )🚘,372,https://t.me/autoimankashan,fa,2026-11-27T15:49:57,live,1
 ,hiluxe_ru,Элитная бижутерия HiLuxe,371,https://t.me/hiluxe_ru,ru,2026-11-23,dataset,0
 ,novocherkassk_gl,Новочеркасск Главный,371,https://t.me/novocherkassk_gl,ru,2026-11-23,dataset,0
 ,blitzsschlag,blitzschläge,371,https://t.me/blitzsschlag,un,2026-11-24,dataset,0
@@ -42009,6 +42051,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,marriousss,мариус клевые фурри,349,https://t.me/marriousss,ru,2026-11-25T12:13:36,live,0
 ,ne_kupish_za_dengi,Набатчиков Илья | Реабилитолог,349,https://t.me/ne_kupish_za_dengi,ru,2026-11-25T12:22:19,live,0
 ,closernow,"Ближе, чем кажется",349,https://t.me/closernow,ru,2026-11-25T19:11:23,live,0
+1013412564,SMostafaHashemi,👨🏻اتو گالری هاشمی 👨🏻,349,https://t.me/SMostafaHashemi,fa,2026-11-27T15:49:57,live,1
 ,samaranb,Новый Куйбышев (нацболы),348,https://t.me/samaranb,ru,2026-11-24,dataset,0
 ,indicahome,Аренда домов indica.home,348,https://t.me/indicahome,ru,2026-11-24T20:54:48,dataset,0
 ,info_SoftFULL,Информация,348,https://t.me/info_SoftFULL,ru,2026-11-23,live,0
@@ -42209,6 +42252,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1108295291,JARIDEHSABTEGOLESTAN,🏹جریده ثبت گلستان 🏹,341,https://t.me/JARIDEHSABTEGOLESTAN,fa,2026-11-27T10:40:02,live,0
 1333658859,maghnaetehrani,مقنعه تهرانی,341,https://t.me/maghnaetehrani,fa,2026-11-27T10:52:17,live,0
 1384482371,zirandaz_mosaferati,گروه تولیدی زیرانداز مسافرتی نیرباف,341,https://t.me/zirandaz_mosaferati,fa,2026-11-27T11:04:00,live,0
+,kram_cos,岩 KRAM,341,https://t.me/kram_cos,un,2026-11-27T15:44:56,live,0
 ,martproject,MArt,340,https://t.me/martproject,un,2026-11-25T18:58:13,dataset,0
 ,ddaswrrr,дасвр,340,https://t.me/ddaswrrr,ru,2026-11-23,dataset,0
 ,v_dobrie_ruki_nsk,В добрые руки,340,https://t.me/v_dobrie_ruki_nsk,ru,2026-11-23,dataset,0
@@ -43433,6 +43477,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1598603287,bjus_tattoo,БЬЮСЬ | Тату Калининград,297,https://t.me/bjus_tattoo,ru,2026-11-27T10:42:52,live,0
 ,mine_journal,Майнкрафт — Журнал,297,https://t.me/mine_journal,ru,2026-11-27T11:14:30,live,0
 ,toutli_o7,Тутлик ⋆｡୨୧˚⋆,297,https://t.me/toutli_o7,ru,2026-11-27T15:23:45,live,0
+,yumikahome,Yumi house✨,297,https://t.me/yumikahome,un,2026-11-27T15:44:56,live,0
 ,zapiskiergo,Записки Эрго,296,https://t.me/zapiskiergo,ru,2026-11-24,dataset,0
 ,WST4pda,WSTfeed,296,https://t.me/WST4pda,un,2026-11-23,live,0
 ,XizmatlarAI,Xizmatlar AI,296,https://t.me/XizmatlarAI,un,2026-11-23,live,0
@@ -44618,6 +44663,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,tsarbootsteam,ЛФК &quot;TSARBOOTS&quot; - ЛФЛ РОСТОВ 🟢🔵,258,https://t.me/tsarbootsteam,ru,2026-11-26T11:03:21,live,0
 ,football_caffe,𝗙𝗢𝗢𝗧𝗕𝗔𝗟𝗟 𝗖𝗔𝗙𝗘 ⚽🍷,258,https://t.me/football_caffe,other,2026-11-26T20:18:55,live,0
 1859943139,DovbenchakAlena,Люди.Бизнес.Красота.,258,https://t.me/DovbenchakAlena,ru,2026-11-27T10:41:11,live,0
+1067826875,moderooz_hatefi,گالری مد روز (هاتفی),258,https://t.me/moderooz_hatefi,fa,2026-11-27T15:49:37,live,1
 1799253507,kris_pro_magic,Кристина Про магию мышления✨️,257,https://t.me/kris_pro_magic,ru,2026-11-24T20:56:42,dataset,0
 ,ldprpenza,ЛДПР Пенза,257,https://t.me/ldprpenza,ru,2026-11-24T20:54:48,dataset,0
 1840278490,meloringoldgalleryshiraz,گالری طلاوسکه ملورین شیراز,257,https://t.me/meloringoldgalleryshiraz,fa,2026-11-22,live,1
@@ -45041,6 +45087,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,kym5knifes,KУM.,245,https://t.me/kym5knifes,ru,2026-11-25T12:19:48,live,0
 ,serejaglushkov,канал Сергея Глушкова,245,https://t.me/serejaglushkov,ru,2026-11-26T14:39:21,live,0
 1826624250,Pro_radosty,Про Радость☀️ Смехотерапия😀 Мотивация⚡,245,https://t.me/Pro_radosty,ru,2026-11-27T10:39:44,live,0
+1590337174,hashemi10riazi,ریاضی دهم (کلیپ های تدریس حبیب هاشمی),245,https://t.me/hashemi10riazi,fa,2026-11-27T15:42:54,live,1
 ,lucianorest,GARDEN CAFE,244,https://t.me/lucianorest,un,2026-11-23,dataset,0
 ,chernikov_legal,Бизнес. Право. Черников,244,https://t.me/chernikov_legal,ru,2026-11-23,dataset,0
 ,digital7sins,7 грехов digital,244,https://t.me/digital7sins,ru,2026-11-25T10:28:51,dataset,0
@@ -45835,6 +45882,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,stickysillyy,силли,223,https://t.me/stickysillyy,ru,2026-11-27T10:45:33,live,0
 ,mari_semyaninova,Мария Семьянинова,223,https://t.me/mari_semyaninova,ru,2026-11-27T15:28:04,live,0
 2419513699,clipaato,کلیپاتو🎭Clipaato,223,https://t.me/clipaato,fa,2026-11-27T15:41:23,live,1
+1240944995,gallerysanghamon,گالری سنگ ونگین هامون,223,https://t.me/gallerysanghamon,fa,2026-11-27T15:49:17,live,1
 ,kknews_live,kknews — LIVE,222,https://t.me/kknews_live,un,2026-11-23,dataset,0
 1757134706,BBCPersianp,بی بی سی پرشین BBCPersian,222,https://t.me/BBCPersianp,fa,2026-11-22,live,1
 3932008253,hamsayehshoma,همسایه ی شما,222,https://t.me/hamsayehshoma,fa,2026-11-22,live,1
@@ -46067,6 +46115,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,teatr_skazki,ТЕАТР СКАЗКИ,217,https://t.me/teatr_skazki,ru,2026-11-25T19:25:35,live,0
 1203185719,jaanashiaan,جان‌آشیان: خودکاوی و خودشناسی,217,https://t.me/jaanashiaan,fa,2026-11-26T13:17:30,live,0
 ,Kami_Fest,Kami_Fest,217,https://t.me/Kami_Fest,un,2026-11-26T14:29:51,live,0
+4311889855,gallrymaryashykh,گالری‌ماریاشیخ,217,https://t.me/gallrymaryashykh,fa,2026-11-27T15:46:36,live,1
 ,truediamonds,Гемологія | True Diamonds,216,https://t.me/truediamonds,ru,2026-11-26T13:27:24,dataset,0
 ,budnimody,Будни модного директора,216,https://t.me/budnimody,ru,2026-11-23,dataset,0
 2243382387,aksx12_yxesi,کانال عکسهای مختلف عکس‌دخترانه عکس‌پسرانه عکس‌پروفایل غکس هکس عگس عمس عکش کصر سكسيي سینهه عکی سکسیی عكس پسر دختر زنه پروفایل چنل,216,https://t.me/aksx12_yxesi,fa,2026-11-21,live,1
@@ -46732,6 +46781,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,portcheshi,𝗖ۣۜ︦‌𝐇݁☨𝐄݁𝐒ࣰ︦𝝨⃪𝐇𝐈︩︪་໋༘𝐑 𝗣ۣۜ︦‌𝐎݁☨𝐑݁𝐓ࣰ︦╋,202,https://t.me/portcheshi,ar,2026-11-25T12:31:06,live,0
 ,MARAKYIAAA,MARAKYIAA 👀 / маракуйя,202,https://t.me/MARAKYIAAA,ru,2026-11-26T20:23:23,live,0
 1007206268,hejab3,جشن عبادت | حجاب ریحانه,202,https://t.me/hejab3,fa,2026-11-27T10:51:37,live,1
+1937322386,gallerypakhshemami,🦋گالری پخش امامی🦋,202,https://t.me/gallerypakhshemami,fa,2026-11-27T15:48:16,live,1
 ,blogpoeta,"Блог Поэта | Стихи, проза, музыка, @blogpoeta",201,https://t.me/blogpoeta,ru,2026-11-24,dataset,0
 ,memyvmestoobeda,Мемы вместо обеда,201,https://t.me/memyvmestoobeda,ru,2026-11-23,dataset,0
 1099595861,azadgankmp16,عکس آزادگان کمپ16 تکریت,201,https://t.me/azadgankmp16,fa,2026-11-22,live,1
@@ -46937,6 +46987,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1620860306,Mustaphakamelofficial,Mustapha Kamel,197,https://t.me/Mustaphakamelofficial,un,2026-11-27T11:09:21,live,0
 1416036820,khoramabadistore,لوازم آشپزخونه خرم آبادی,197,https://t.me/khoramabadistore,fa,2026-11-27T11:20:03,live,0
 1485555974,jolgepicture,آلبوم جلگه(تونل زمان),197,https://t.me/jolgepicture,fa,2026-11-27T15:37:03,live,1
+,posyacos,мс посечка,197,https://t.me/posyacos,ru,2026-11-27T15:44:56,live,0
 ,lzhedmtr,ОЛІЙНИК,196,https://t.me/lzhedmtr,ru,2026-11-23,dataset,0
 ,baza_postavki_zara,ПОСТАВЩИКИ ZARA • HM • CA• ОБУЧЕНИЕ,196,https://t.me/baza_postavki_zara,ru,2026-11-23,dataset,0
 ,repetitorfr,Французский язык с Лолой🗼,196,https://t.me/repetitorfr,ru,2026-11-24,dataset,0
@@ -47065,6 +47116,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,volpi_fox,𝑇𝑜𝑓𝑎,194,https://t.me/volpi_fox,other,2026-11-26T20:39:45,live,0
 ,phlerqqerq,LERASNIMAET,194,https://t.me/phlerqqerq,un,2026-11-27T11:25:44,live,0
 3247022227,shahvanipv,Starts,194,https://t.me/shahvanipv,un,2026-11-27T11:30:25,live,0
+4459353095,gallerymoon5,گالری مون,194,https://t.me/gallerymoon5,fa,2026-11-27T15:47:16,live,1
 ,shizioshh,ШИЗИОШ!?,193,https://t.me/shizioshh,ru,2026-11-24T20:59:33,dataset,0
 ,spotsummershop,SUMMER MARKET,193,https://t.me/spotsummershop,en,2026-11-25T12:07:41,dataset,0
 ,tatveeva,Осознанное питание 🍀 Нутрициология🍀Здоровье🍀,193,https://t.me/tatveeva,ru,2026-11-23,dataset,0
@@ -47143,9 +47195,11 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,maminsyetolog74,МАМИН СУЕТОЛОГ,192,https://t.me/maminsyetolog74,ru,2026-11-25T12:05:50,live,0
 ,TREPHATAG4WILD,Трэп хата,192,https://t.me/TREPHATAG4WILD,ru,2026-11-25T12:11:33,live,0
 1044840410,Roosari_scarf,Ali gholami,192,https://t.me/Roosari_scarf,fl,2026-11-27T10:52:37,live,0
+,natiraa,Тихий уголок 🍃,192,https://t.me/natiraa,ru,2026-11-27T15:44:56,live,0
 ,rasprodagi_com,Женская одежда 💗 RASPRODAGI магазин женской одежды,191,https://t.me/rasprodagi_com,ru,2026-11-23,dataset,0
 ,jeonginismybestie,я твикс,191,https://t.me/jeonginismybestie,ru,2026-11-24,dataset,0
 2547303424,bimarestanii,عکس بیمارستانی🩸,191,https://t.me/bimarestanii,fa,2026-11-21,live,1
+1226207146,diako0057,☎️گالری وسایل برقی اشپزخانه🔊,191,https://t.me/diako0057,fa,2026-11-22,live,1
 3854665680,hot_clipnow,هات کلیپ جدید / ویدئو طنز ، سرگرمی ، مدل های اونلی فنز ❤️‍🔥,191,https://t.me/hot_clipnow,fa,2026-11-22,live,1
 1466136764,pmtouch,PrOxyMom Touch - Penyusuan Eksklusif Dambaan Ibu Menyusu,191,https://t.me/pmtouch,un,2026-11-22,live,1
 2101476628,GEMTVH,GEMTVHUB پخش در جم,191,https://t.me/GEMTVH,fa,2026-11-22,live,0
@@ -47191,7 +47245,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1270419368,Menim_ailem,Mənim Ailəm,191,https://t.me/Menim_ailem,un,2026-11-25T12:33:39,live,0
 ,LevinFrontArma,Alexandr Levin | FRONT MAN |,191,https://t.me/LevinFrontArma,un,2026-11-26T20:04:54,live,0
 1071839480,film_alfa,🎧 گالری فیلم آلفا 🎬 ZABET,190,https://t.me/film_alfa,fa,2026-11-21,live,1
-1226207146,diako0057,☎️گالری وسایل برقی اشپزخانه🔊,190,https://t.me/diako0057,fa,2026-11-22,live,1
 1076844263,tolidilebass3,تولیدی،لباس،زیر،زنانه،نوین،دوخت،پخش،عمده،خواب،کاستوم،سرویس،حمام،عروس،تولیدی،کاستوم،بکینی،لباس،خواب،سکسی،فانتزی،,190,https://t.me/tolidilebass3,fa,2026-11-22,live,1
 1297235527,arabic_clips,دانلود کلیپ عربی,190,https://t.me/arabic_clips,fa,2026-11-22,live,1
 1858309321,turkish7,𝐓𝐚𝐲 𝐬𝐢𝐳,190,https://t.me/turkish7,other,2026-11-22,live,0
@@ -47620,6 +47673,8 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,nobody_cares_butuz,Çinor ostidan kuzatuvlar 🌳,180,https://t.me/nobody_cares_butuz,un,2026-11-26T19:48:56,live,0
 2069539662,katrenko_impulse_dent,Импульсивный стоматолог 🦷⚡️Виктория Катренко,180,https://t.me/katrenko_impulse_dent,ru,2026-11-27T10:31:18,live,0
 1412190586,fullvezion,فروشگاه اینترنتی تصویرمارکت🖥,180,https://t.me/fullvezion,fa,2026-11-27T15:32:27,live,0
+2666443498,elimoonjewelry,گالری طلای اِلی مون ✨,180,https://t.me/elimoonjewelry,fa,2026-11-27T15:47:16,live,1
+4267798877,hamingoldco,گالری طلای هامین | HAMIN GOLD,180,https://t.me/hamingoldco,fa,2026-11-27T15:49:17,live,1
 ,newpeoplekirov,Новые люди | Кировская область,179,https://t.me/newpeoplekirov,ru,2026-11-24,dataset,0
 1413881722,hayedemahaste,اهنگ قدیمی ♩،دانلود،اهنگ،البوم،گل سنگم،ای خدا،شب عشق،سوغاتی،تولد،یکی را دوست میدارم،از،هایده,179,https://t.me/hayedemahaste,fa,2026-11-22,live,0
 1253009961,hdhdjdbdg,کانال رسمی آهنگ و ویدیو بلوچی,179,https://t.me/hdhdjdbdg,fa,2026-11-22,live,0
@@ -48017,6 +48072,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,LeadingReport,Leading Report,171,https://t.me/LeadingReport,un,2026-11-26T20:29:11,live,0
 1792602708,zmgorodok,Наш Змеиногорск,171,https://t.me/zmgorodok,ru,2026-11-27T10:48:20,live,0
 ,ankotn,анкотн,171,https://t.me/ankotn,ru,2026-11-27T11:22:35,live,0
+3951374544,tavakol_gallery,گالری‌توکل 💎,171,https://t.me/tavakol_gallery,fa,2026-11-27T15:46:46,live,1
 ,androiduz_official,Android uz,170,https://t.me/androiduz_official,un,2026-11-23,dataset,0
 ,gel_kids,🎠Геленджик детям | Куда пойти🎠,170,https://t.me/gel_kids,ru,2026-11-23,dataset,0
 ,tmcourier,Тюменский курьер,170,https://t.me/tmcourier,ru,2026-11-23,dataset,0
@@ -48559,6 +48615,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,podarkivsemex,Подарки от Ведьминой Лавки,159,https://t.me/podarkivsemex,ru,2026-11-25T12:14:45,live,0
 ,boxing_33school,School boxing,159,https://t.me/boxing_33school,un,2026-11-25T12:16:29,live,0
 1482883061,janymsynn,Janymsynn,159,https://t.me/janymsynn,un,2026-11-26T08:28:41,live,0
+3364963266,gallerihashemii,🎀گالری هاشمی🎀,159,https://t.me/gallerihashemii,fa,2026-11-27T15:49:57,live,1
 1886634424,fun_clips_farsi,"Fun clips ، memes ,family guy , cartoons , useful apps , proxy & vpn for Iranians and all other people in english and persian 😜",158,https://t.me/fun_clips_farsi,ar,2026-11-22,live,1
 1224935410,dohktarikerahayashkardi,دختری که رهایش کردی🐺🖤 . بیو شاخ . پروف شاخ. عکس فیک . متن . کپشن . استوری فیک .,158,https://t.me/dohktarikerahayashkardi,fa,2026-11-22,live,1
 1672880847,Bl_Du,فیلم میدانم تابستان پیش چه کردی | فیلم I Know What You Did Last Summer 2025,158,https://t.me/Bl_Du,fa,2026-11-22,live,0
@@ -48793,6 +48850,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 3243893848,Beheneko_The_Elf_Girls_Cat,Beheneko | Dual,154,https://t.me/Beheneko_The_Elf_Girls_Cat,un,2026-11-26T13:23:11,live,0
 4421467753,jashnerahaii,خاطرات جشن بزرگ رهایی,154,https://t.me/jashnerahaii,fa,2026-11-27T11:02:40,live,0
 ,november_broadcasts,ноябрь вещает,154,https://t.me/november_broadcasts,ru,2026-11-27T15:24:55,live,0
+3484569426,monajewell,💎💎 گالری طلای مونا 💎💎,154,https://t.me/monajewell,fa,2026-11-27T15:47:16,live,1
 ,BlueBreadHehe,Хлеб калякает🦝,153,https://t.me/BlueBreadHehe,ru,2026-11-24,dataset,0
 1739110506,KhiantB,خیانت،به،شوهردار،و،همسر،یا،زندار،با،خانوم،مرد،دار،آقا،سکس،چت،رابطه،جنسی،زناشویی،نامحرم،محرم،فامیل،خانوادگی،عکس،فیلم،کلیپ،ویدیو،ا,153,https://t.me/KhiantB,fa,2026-11-21,live,1
 3733295508,galerymakhfibigh,گالری مخفی | مامان گوشتی | بیغیرتی,153,https://t.me/galerymakhfibigh,fa,2026-11-21,live,1
@@ -48892,6 +48950,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,prostotris,просто трис :p,152,https://t.me/prostotris,ru,2026-11-26T20:37:30,live,0
 1213003742,amlak_bandarabbas,پنجره بندرعباس (املاک),152,https://t.me/amlak_bandarabbas,fa,2026-11-27T11:17:23,live,0
 3958856779,cks_0f,سکسیهایی جلقیاا خوشتیپاا زن کوصپارهه فیلمم,152,https://t.me/cks_0f,fa,2026-11-27T15:28:56,live,1
+1057259816,alvandii,گالری فرش شونهر(الوندی),152,https://t.me/alvandii,fa,2026-11-27T15:47:56,live,1
 ,neuro_hhub,NeuroHUB Нейросеть | ИИ | ChatGPT | Midjourney,151,https://t.me/neuro_hhub,ru,2026-11-23,dataset,0
 ,With_America,𝗔 𝗠 𝗘 𝗥 𝗜 𝗖 𝗔 🇺🇸 | 👩🏻‍🎓,151,https://t.me/With_America,other,2026-11-23,dataset,0
 ,mak_zavtraki,МАК завтраки 🧁 Коучинг на десерт,151,https://t.me/mak_zavtraki,ru,2026-11-25T10:39:36,dataset,0
@@ -49410,6 +49469,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 4422772227,nijininiji,Неджи🚫,142,https://t.me/nijininiji,ru,2026-11-26T13:19:39,live,0
 ,ruchnaya_zborka,Ручная Сборка,142,https://t.me/ruchnaya_zborka,ru,2026-11-26T20:29:39,live,0
 2024946016,nikitinafox,✨Леся✨,142,https://t.me/nikitinafox,ru,2026-11-27T10:48:10,live,0
+2346883383,HAMIN_GALLERY_GOLD,هامین گالری,142,https://t.me/HAMIN_GALLERY_GOLD,fa,2026-11-27T15:49:17,live,1
 ,gnome333,Gnome,141,https://t.me/gnome333,un,2026-11-23,dataset,0
 ,bellucci_restaurant,Ресторан Беллуччи,141,https://t.me/bellucci_restaurant,ru,2026-11-23,dataset,0
 1092171249,libasdorsa,گالری هند قشم,141,https://t.me/libasdorsa,fa,2026-11-22,live,1
@@ -50071,6 +50131,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,rukiveneri,Руки Венеры I Студия эстетики тела,130,https://t.me/rukiveneri,ru,2026-11-26T08:50:11,live,0
 1011647441,razmandegansh,🌷عکسهای رزمندگان دفاع مقدس قمربنی هاشم (ع)🌷,130,https://t.me/razmandegansh,fa,2026-11-27T15:28:46,live,1
 2778949764,FilmashoTV,Filmasho | فیلماشو 🎥,130,https://t.me/FilmashoTV,fa,2026-11-27T15:31:07,live,0
+2001271136,depAnitaa,گالریم (همش),130,https://t.me/depAnitaa,fa,2026-11-27T15:46:36,live,1
 ,jurgenwrites,Recomendation Inc.,129,https://t.me/jurgenwrites,un,2026-11-24T21:00:53,dataset,0
 3716092186,Liquid_Shot,آلبوم مامان بدخا#گایشگاه,129,https://t.me/Liquid_Shot,fa,2026-11-21,live,1
 1210484983,kjbzxjkvbkjzxbviohasogasgasbg,سکس👄زوری👄سکس👄با👄س👇👄سریال👄فیلم👄قیلم👄صیلم👄عیلم👄فسلم👄فلیم👄ترسناک👄خفن👄جنگی👄ساپورت👄زنانه👄ست👄سوتین👄شرت👄لباس👄تور👄زیر👄شلوارک👄لختی👄راحتی👄,129,https://t.me/kjbzxjkvbkjzxbviohasogasgasbg,fa,2026-11-22,live,1
@@ -50231,6 +50292,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,cringemcmahon,Крінж Макмен|Про реслінг українською,127,https://t.me/cringemcmahon,ru,2026-11-25T18:56:09,live,0
 1053084713,decorpardehpic,گالری تصاویر آلبوم پرده تصویری دکورپرده,127,https://t.me/decorpardehpic,fa,2026-11-26T20:28:21,live,1
 ,crystalsharkmusic,тупорылая акула,127,https://t.me/crystalsharkmusic,ru,2026-11-27T11:34:19,live,0
+,MintWolfAuf,MintWolf 🐺,127,https://t.me/MintWolfAuf,un,2026-11-27T15:44:56,live,0
 ,mylti_pylt,Детский садик №8,126,https://t.me/mylti_pylt,ru,2026-11-23,dataset,0
 ,RUS_Garvard,РУС Гарвард,126,https://t.me/RUS_Garvard,ru,2026-11-23,dataset,0
 2466261325,Galeriarzhangi,گالری خیاطی ارژنگی 👜🛍️,126,https://t.me/Galeriarzhangi,fa,2026-11-22,live,1
@@ -50515,6 +50577,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,qwph0,вел веливант сгорает,122,https://t.me/qwph0,ru,2026-11-26T20:37:33,live,0
 ,marsyan_art,марсян,122,https://t.me/marsyan_art,ru,2026-11-27T10:59:05,live,0
 ,farafear,farafear,122,https://t.me/farafear,un,2026-11-27T15:24:55,live,0
+1230490138,mezonemoderoozhatefi,گالری مد روز (هاتفی)🌹,122,https://t.me/mezonemoderoozhatefi,fa,2026-11-27T15:49:37,live,1
 ,GiftFix,GIFTFIX 🎮 | PlayStation Plus Турция | Украина,121,https://t.me/GiftFix,ru,2026-11-23,dataset,0
 2160441463,rouzbehschoolalbumd33,‏ آلبوم دوره ۳۳ مدرسه روزبه (پایه نهم),121,https://t.me/rouzbehschoolalbumd33,fa,2026-11-21,live,1
 2362524122,Mobleman_Farsh,"گالری مبلمان و فرش""عصر جدید""",121,https://t.me/Mobleman_Farsh,fa,2026-11-21,live,1
@@ -50920,6 +50983,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,emmglush,dailyEmily,115,https://t.me/emmglush,un,2026-11-26T20:02:07,live,0
 ,sorrowcircus,Метафизика и Дабстеп,115,https://t.me/sorrowcircus,ru,2026-11-27T10:44:18,live,0
 1297220431,tahrikibook123,تحریکی لٹریچر,115,https://t.me/tahrikibook123,fa,2026-11-27T11:30:45,live,0
+1722716280,GeminiBananaAi,پرامپت ، جمینی ، هوش مصنوعی عکاسی ، آموزشی ، نانو بانانا، ویدیو ، آتلیه ، پرامپت ترند ، پرامپت کیوت,115,https://t.me/GeminiBananaAi,fa,2026-11-27T15:45:05,live,0
 ,humour_english,АНГЛИЙСКИЙ ЮМОР,114,https://t.me/humour_english,ru,2026-11-23,dataset,0
 ,aposcal,Апоскаль,114,https://t.me/aposcal,ru,2026-11-23,dataset,0
 ,ourtimezero,"Dum spiro, spero",114,https://t.me/ourtimezero,un,2026-11-25T19:02:26,dataset,0
@@ -50975,6 +51039,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,outloud_media,Outloud Media,114,https://t.me/outloud_media,un,2026-11-26T20:33:33,live,0
 1658242035,Forosht,اللل,114,https://t.me/Forosht,fa,2026-11-27T11:10:41,live,0
 3277148629,Transformers2014,Transformers: Age of Extinction 4 فیلم تبدیل شوندگان,114,https://t.me/Transformers2014,fa,2026-11-27T15:30:17,live,0
+1555057189,hashemi12RiaziEnsani,ریاضی و آمار دوازدهم انسانی (کلیپ های تدریس حبیب هاشمی),114,https://t.me/hashemi12RiaziEnsani,fa,2026-11-27T15:42:54,live,1
 4324033188,raz09rafia,هنره دست مادرم,113,https://t.me/raz09rafia,fa,2026-11-21,live,0
 2227782228,ashpazr,👩🏼‍🍳آشپزی درخانه(عکس غذا به همراه تزئیین)🍛🍲,113,https://t.me/ashpazr,fa,2026-11-22,live,1
 2631817002,filmirani_nub140,فیلم ایرانی فروشنده,113,https://t.me/filmirani_nub140,fa,2026-11-22,live,0
@@ -51097,6 +51162,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,wirtcanal,♧Wirt♧,112,https://t.me/wirtcanal,un,2026-11-27T10:45:33,live,0
 2027788465,yadegariDaniYaL,-بماند به یادگار,112,https://t.me/yadegariDaniYaL,fa,2026-11-27T10:59:40,live,0
 ,dom_bezdelya,💥Дом•Безделья 💥,112,https://t.me/dom_bezdelya,ru,2026-11-27T11:24:29,live,0
+2424321303,tooka_galleryi,گالری‌توکا,112,https://t.me/tooka_galleryi,fa,2026-11-27T15:46:46,live,1
 ,XiiGbyRedVasilek,ХииГ: Художники и их Герои,111,https://t.me/XiiGbyRedVasilek,ru,2026-11-23,dataset,0
 ,Anastasia_Yurievna_Zavorotnyuk,Анастасия Юрьевна Заворотнюк,111,https://t.me/Anastasia_Yurievna_Zavorotnyuk,ru,2026-11-23,dataset,0
 ,ALINA_GALLIN,ALINA GALLIN СТИЛИСТ,111,https://t.me/ALINA_GALLIN,ru,2026-11-24,dataset,0
@@ -51155,6 +51221,8 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1354772631,Kermanshah,𝓚𝓮𝓻𝓶𝓪𝓷𝓼𝓱𝓪𝓱,111,https://t.me/Kermanshah,other,2026-11-27T11:16:22,live,0
 1019466693,hamsaryabi,همسریابی,111,https://t.me/hamsaryabi,fa,2026-11-27T11:34:06,live,1
 2218682035,Hamin_Art_Institute,هامین روایت و تصویر,111,https://t.me/Hamin_Art_Institute,fa,2026-11-27T15:35:10,live,0
+2199767499,Nika_collection66,گالری‌شال‌وروسری‌نیکا(Nika),111,https://t.me/Nika_collection66,fa,2026-11-27T15:46:56,live,1
+1421935034,gallerymohana1367,گالری مهنا✨(شال،روسری،لباس زیر،تی شرت،کراپ،ساپورت،تونیک شلوار،جوراب),111,https://t.me/gallerymohana1367,fa,2026-11-27T15:47:36,live,1
 ,trend_topsale,Trend Top SALE🔥,110,https://t.me/trend_topsale,en,2026-11-23,dataset,0
 ,pchichannel,Пашино туше,110,https://t.me/pchichannel,ru,2026-11-23,dataset,0
 ,chasnoyts,> СОН ВЕЩЕЙ,110,https://t.me/chasnoyts,ru,2026-11-25T12:29:28,dataset,0
@@ -51266,6 +51334,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,Avrikpawl,аврикᵖᵃʷˡᵒʷᵃᵃᵃ (16+),109,https://t.me/Avrikpawl,ru,2026-11-26T20:23:19,live,0
 3910509957,stakhre_shohadaye_ghavas,Estakhr_shohadaye_ghavvas,109,https://t.me/stakhre_shohadaye_ghavas,fl,2026-11-27T11:05:40,live,0
 1116316718,asoiashgiohzioxhgios,س،دانلود،پرده،زنی،اورگاسمه،زنانه،آب،اومدن،هول تونی،جدیدترین،فیلمهای،سوپر کلیپ،خودارضایی،کلیپ،سکس،دوجنسه،کلیپ،سکسی،ایرانیکلیپ سکس,109,https://t.me/asoiashgiohzioxhgios,fa,2026-11-27T15:40:33,live,1
+2176768990,moontears1,گالری سنگ و جواهرات اَشک ماه,109,https://t.me/moontears1,fa,2026-11-27T15:48:57,live,1
 ,poshakomde_tipoo,پوشاک شیراز عمده (تیپو سابق),108,https://t.me/poshakomde_tipoo,fa,2026-11-24,dataset,0
 2002868433,whobxjol,خلفيات بنات محجبات و بدون حجاب,108,https://t.me/whobxjol,fa,2026-11-21,live,1
 1319545506,persiansweets,Mama’s homemade delight 🍨,108,https://t.me/persiansweets,fl,2026-11-22,live,1
@@ -51436,6 +51505,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,dayrilao0,dayriiловеаее ️✨,106,https://t.me/dayrilao0,ru,2026-11-27T10:45:33,live,0
 1321195267,orumiehDang,آگهی ترحیم صومای‌برادوست,106,https://t.me/orumiehDang,fa,2026-11-27T11:20:23,live,0
 2481733384,amarianmedia,آلبوم‌تصاویرگردهم‌آیی‌‌های‌آماریان,106,https://t.me/amarianmedia,fa,2026-11-27T15:36:12,live,1
+2425492615,shik3ho_gallery,گالری‌شیک‌شو🎀,106,https://t.me/shik3ho_gallery,fa,2026-11-27T15:46:56,live,1
 ,DLI_NINI,"Садик ""Для Нянь""",105,https://t.me/DLI_NINI,ru,2026-11-23,dataset,0
 1428159359,yasplusstore,گالری لوازم خانگی یاس+,105,https://t.me/yasplusstore,fa,2026-11-21,live,1
 1095134580,musichayeportarafdar,موزيكهاى پر طرفدار,105,https://t.me/musichayeportarafdar,fa,2026-11-22,live,0
@@ -51584,6 +51654,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,varia_historia,"Varia Historia • Философия, литература, изобразительное искусство, кино, жизнь",103,https://t.me/varia_historia,ru,2026-11-23,dataset,0
 1541405004,hsfggg,گروهکده چت دختر پسرای دم بخت منطقه آزاد ایرانی سکسیوزیسم منطقه آزاد دخترونه عشقی چت,103,https://t.me/hsfggg,fa,2026-11-22,live,1
 1350224708,music_rap_farsi_shad_raghs,کلیپ،عکس،موزیک،آهنگ،تصویری،جدید،قدیمی،رقص،پارتی،شاد،عروسی،رپ،فارسی،بندری،لری،کردی،ترکی،آذری،افغانی،گ,103,https://t.me/music_rap_farsi_shad_raghs,fa,2026-11-22,live,1
+2069227960,mesvarium,گالری تزیینات چوبی مسواریوم (گردنبند ، مهر ، دستبند ، انگشتر، کانزاشی، جعبه، شونه و ... ),103,https://t.me/mesvarium,fa,2026-11-22,live,1
 1189498406,haji_pasan,سینما ویدیو لختی سوپر,103,https://t.me/haji_pasan,fa,2026-11-22,live,1
 3763133778,privado4ka,🔒🔒🔒,103,https://t.me/privado4ka,other,2026-11-22,live,0
 1246047818,tajwidIndonesia,💧1 Tajweed for Indonesians for sister only,103,https://t.me/tajwidIndonesia,en,2026-11-22,live,0
@@ -51640,7 +51711,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 3077060291,pazelzendegi1404,پازل زندگی ، گروه عمومی,102,https://t.me/pazelzendegi1404,fa,2026-11-21,live,1
 1961060814,dreamymoody,آرشیو عکس های رندوم,102,https://t.me/dreamymoody,fa,2026-11-22,live,1
 1969170218,brand_gallery11,گالری ساعت برند (شیراز),102,https://t.me/brand_gallery11,fa,2026-11-22,live,1
-2069227960,mesvarium,گالری تزیینات چوبی مسواریوم (گردنبند ، مهر ، دستبند ، انگشتر، کانزاشی، جعبه، شونه و ... ),102,https://t.me/mesvarium,fa,2026-11-22,live,1
 2477216311,axmashhad1403,گالری عکس های اردوی مشهد دبیرستان علوی,102,https://t.me/axmashhad1403,fa,2026-11-22,live,1
 1580668268,exclusive0,ＥＸＣＬＵＳＩＶＥ,102,https://t.me/exclusive0,other,2026-11-22,live,0
 4293950564,SeleneMoonglow,مقفول,102,https://t.me/SeleneMoonglow,fa,2026-11-22,live,0
@@ -51877,6 +51947,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,mimi_gavrilina,точно не лена,99,https://t.me/mimi_gavrilina,ru,2026-11-25T12:27:00,live,0
 1006770379,mantoo,ﺑﻴﻮﺗﻲ,99,https://t.me/mantoo,other,2026-11-27T10:49:57,live,0
 2678847006,tanhaii_harfam,✞مُوزِیک_کِلیپَام✞,99,https://t.me/tanhaii_harfam,fa,2026-11-27T15:41:03,live,0
+2316776134,jewelleryhamoon,گالری طلا هامـون✨,99,https://t.me/jewelleryhamoon,fa,2026-11-27T15:49:17,live,1
 ,semya_tron,Семь Я,98,https://t.me/semya_tron,ru,2026-11-23,dataset,0
 ,pronskyuezd_kamenskystan,Генеалогия. Пронский уезд и Каменский стан,98,https://t.me/pronskyuezd_kamenskystan,ru,2026-11-23,dataset,0
 ,esBotsOfGamer,🇪🇸 Español Bots Of Gamer | BOG,98,https://t.me/esBotsOfGamer,un,2026-11-23,dataset,0
@@ -52075,6 +52146,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2444968102,HAMSAR8,فعلاً تعطیل کردیم ادمین نداریم,96,https://t.me/HAMSAR8,fa,2026-11-27T10:43:09,live,0
 4466553903,maghnaemahla,مقنعه مهلا 😍,96,https://t.me/maghnaemahla,fa,2026-11-27T10:52:17,live,0
 ,kiminager,Будка манагера,96,https://t.me/kiminager,ru,2026-11-27T11:15:28,live,0
+,skadsvalka,Складная свалка Лори,96,https://t.me/skadsvalka,ru,2026-11-27T15:44:56,live,0
 ,DmitriLastuhin,Дмитрий Ластухин - Уголок IT-Интроверта,95,https://t.me/DmitriLastuhin,ru,2026-11-23,dataset,0
 2409250555,naghmeomid_farhangian,آلبوم سرودهای نغمه ی امید(دانشگاه فرهنگیان),95,https://t.me/naghmeomid_farhangian,fa,2026-11-21,live,1
 2191783212,kafsh_daaneshgaah,گالری کیف و کفش زنانه دانشگاه,95,https://t.me/kafsh_daaneshgaah,fa,2026-11-21,live,1
@@ -52262,6 +52334,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 3495350940,dor_ro1,دورهمی فیلم موزیک رفقا,93,https://t.me/dor_ro1,fa,2026-11-26T13:13:34,live,0
 1250329968,addictiveplaylist,"Khanevadegi 2 , خانوادگی ۲",93,https://t.me/addictiveplaylist,fa,2026-11-27T11:00:00,live,1
 1597918055,kouroshmix2022,میکس و مونتاژ و طراحی آلبوم همکاران,93,https://t.me/kouroshmix2022,fa,2026-11-27T15:36:42,live,1
+1298330057,Sexxxxxxxx_videooooo_xxxxxxxxxxx,سکس.خشن.ایرانی.گی.حشری.بکن.ارضا.اتوسا.مدگل.هرزه.فیلم.ویدیو.کیری.خوشگل.کون.لیسدن.سفید.بزرگ.باسن.جذاب.کردنی.خوردنی.شمالی.ناب.فوسام,93,https://t.me/Sexxxxxxxx_videooooo_xxxxxxxxxxx,fa,2026-11-27T15:45:05,live,1
 ,aboalyazin,Abo ALYazin,92,https://t.me/aboalyazin,un,2026-11-23,dataset,0
 ,semia_i_ya,Семейный,92,https://t.me/semia_i_ya,ru,2026-11-23,dataset,0
 4338282476,meymon_mast,میمون مست,92,https://t.me/meymon_mast,fa,2026-11-21,live,0
@@ -52429,6 +52502,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,akseshgh,حیف بود، مردن بی عاشقی,90,https://t.me/akseshgh,fa,2026-11-27T00:39:40,live,0
 ,kamira2022,𝒵𝒽𝒾𝓁☯𝓋𝒶 𝒦𝒶𝓂𝒾𝓇𝒶,90,https://t.me/kamira2022,other,2026-11-27T10:51:29,live,0
 1689792282,kelas_khososi_1402,کلاس خصوصی و تقویتی,90,https://t.me/kelas_khososi_1402,fa,2026-11-27T10:59:20,live,1
+1572582292,hashemi12riazi,ریاضی ۱۲ تجربی و حسابان۲( کلیپ های تدریس حبیب هاشمی),90,https://t.me/hashemi12riazi,fa,2026-11-27T15:42:54,live,1
 ,myltishki,Детский садик №9,89,https://t.me/myltishki,ru,2026-11-23,dataset,0
 ,meetplanet_model,MEETPLANET: модели,89,https://t.me/meetplanet_model,ru,2026-11-24,dataset,0
 ,TonShovel,TonShovel,89,https://t.me/TonShovel,un,2026-11-24,dataset,0
@@ -52778,6 +52852,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2388099476,jshdjdieidhd,💞🥰 खुशियों का सफर🥰💞,85,https://t.me/jshdjdieidhd,other,2026-11-26T08:44:47,live,0
 ,dimasssssssssssssssssssssq,Димас,85,https://t.me/dimasssssssssssssssssssssq,ru,2026-11-27T11:21:31,live,0
 ,Chernysh6,Черныш 🫐,85,https://t.me/Chernysh6,ru,2026-11-27T11:22:35,live,0
+1321526063,videomusix16,ویدیوموزیک,85,https://t.me/videomusix16,fa,2026-11-27T15:43:04,live,0
 ,illusion404,illusion,84,https://t.me/illusion404,un,2026-11-23,dataset,0
 ,frilmboy,Комната Frilma,84,https://t.me/frilmboy,ru,2026-11-24,dataset,0
 1921879486,navarfilm,نوار کاست و عکسهای قدیم فامیل,84,https://t.me/navarfilm,fa,2026-11-21,live,1
@@ -52856,6 +52931,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,areashir,~Shirlie,84,https://t.me/areashir,un,2026-11-27T11:22:35,live,0
 ,livernes,☼☽_лИвэрнЕс_☾☼,84,https://t.me/livernes,ru,2026-11-27T11:33:11,live,0
 2165578521,sjhxbxjxjcnsme,❌آهنگ‌شوتی❌ . ❌ عکس‌شوتی❌ .❌ فیلم‌شوتی ❌,84,https://t.me/sjhxbxjxjcnsme,fa,2026-11-27T15:25:45,live,1
+1362783171,golchine_stikerrr,ویدیومسیج,84,https://t.me/golchine_stikerrr,fa,2026-11-27T15:43:04,live,0
 ,yoqimtoylar,𝐘𝐨𝐪𝐢𝐦𝐭𝐨𝐲 𝐁𝐨𝐥𝐚𝐣𝐨𝐧𝐥𝐚𝐫,83,https://t.me/yoqimtoylar,other,2026-11-23,dataset,0
 ,muslims_shop1,Muslim's shop женские оптом,83,https://t.me/muslims_shop1,ru,2026-11-23,dataset,0
 ,MilicaArtMebel,Milica-Art-Mebel,83,https://t.me/MilicaArtMebel,en,2026-11-23,dataset,0
@@ -53078,6 +53154,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2193933362,mohabbat36,محبت,81,https://t.me/mohabbat36,fa,2026-11-26T09:03:10,live,0
 3628025723,mardomq,³𝗺𝘂𝘀𝗸𝗲𝘁𝗲𝗲𝗿𝘀,81,https://t.me/mardomq,other,2026-11-27T10:48:07,live,0
 1693033168,alinabasanets,Alina Basanets,81,https://t.me/alinabasanets,un,2026-11-27T11:32:05,live,0
+2306800567,candleflowerbutterfly,﮼گالری‌شمع‌گل‌پروانه,81,https://t.me/candleflowerbutterfly,fa,2026-11-27T15:46:56,live,1
 ,mmarinetS,mmarinet!!,80,https://t.me/mmarinetS,un,2026-11-23,dataset,0
 ,vikadavidproart,"Порция вдохновения, о которой не умолчать",80,https://t.me/vikadavidproart,ru,2026-11-23,dataset,0
 ,shawtyhell,shawty hell!,80,https://t.me/shawtyhell,un,2026-11-25T19:03:06,dataset,0
@@ -53829,6 +53906,9 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,marmariesale,MARMARIE.SALE,71,https://t.me/marmariesale,un,2026-11-26T20:28:19,live,0
 ,privetyamorkovka,ПрИвЕт я МоРкОвКа&#33;,71,https://t.me/privetyamorkovka,ru,2026-11-27T10:51:47,live,0
 2166907053,theatreofart,galerie d'art,71,https://t.me/theatreofart,en,2026-11-27T10:56:38,live,0
+1322276660,honareavalgallery,"گالری‌موسیقی""‌هنراول""",71,https://t.me/honareavalgallery,fa,2026-11-27T15:46:36,live,1
+4303286974,mondogallery,Mondo gallery | موندو گالری,71,https://t.me/mondogallery,fa,2026-11-27T15:47:16,live,1
+1936154104,hatefAvva21,گالری هاتف,71,https://t.me/hatefAvva21,fa,2026-11-27T15:49:37,live,1
 ,Elegant_tabrik,Elegant tabrik_she'rlar,70,https://t.me/Elegant_tabrik,un,2026-11-23,dataset,0
 ,zaculisn_igry_finansov,Закулисные игры финансов,70,https://t.me/zaculisn_igry_finansov,ru,2026-11-25T19:03:16,dataset,0
 1424947682,iranianaksaraycity,گروه فارسی زبانان شهر آکسارای Persian speakers of the city of Aksaray,70,https://t.me/iranianaksaraycity,fa,2026-11-21,live,1
@@ -53910,6 +53990,8 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 3432557603,khodayanCyber,YADEGARI,70,https://t.me/khodayanCyber,un,2026-11-27T10:59:40,live,0
 ,closeyez1,closeyez (закрываем глазки),70,https://t.me/closeyez1,ru,2026-11-27T11:33:06,live,0
 ,kkaydt1,кайюшка,70,https://t.me/kkaydt1,ru,2026-11-27T15:31:09,live,0
+3701142204,HamisGoldGallery,✨گالری طلای هامیس | HAMIS,70,https://t.me/HamisGoldGallery,fa,2026-11-27T15:49:17,live,1
+1107443269,gallerry_andia,گالری شال و روسری آندیا (هاشم نیا),70,https://t.me/gallerry_andia,fa,2026-11-27T15:49:57,live,1
 ,political_shadow_blog,The political shadow,69,https://t.me/political_shadow_blog,un,2026-11-25T18:49:30,dataset,0
 3984443802,j6_w8c,دخترهایی خرابب فیلمه خیانتهه زن شوهردار,69,https://t.me/j6_w8c,fa,2026-11-22,live,1
 2763119207,zibayihayezz,زن همسایه روبرو🙂🫶,69,https://t.me/zibayihayezz,fa,2026-11-22,live,1
@@ -54058,6 +54140,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1174315865,mera1,پایگاه اطلاع رسانی حسین آباد,68,https://t.me/mera1,fa,2026-11-26T13:21:04,live,0
 ,KHchapter,СЮЖЕТ | Kasho Hyoka&#33;,68,https://t.me/KHchapter,ru,2026-11-26T20:28:41,live,0
 ,improUWUv,Игры «ᴋᴧубничнᴏᴦᴏ чудᴀ [🎰]»,68,https://t.me/improUWUv,ru,2026-11-27T15:23:03,live,0
+2215983739,galeryshole,گالری‌شعله❤️🔥,68,https://t.me/galeryshole,fa,2026-11-27T15:46:56,live,1
 ,osenyu1,osenyu,67,https://t.me/osenyu1,un,2026-11-24,dataset,0
 ,jonpolat_99,@𝐉𝐎𝐍𝐏𝐎𝐋𝐀𝐓6164 ( 𝗦𝗵𝗮𝘅𝘀𝗶𝘆 𝗞𝗮𝗻𝗮𝗹 ),67,https://t.me/jonpolat_99,other,2026-11-23,dataset,0
 1405216713,iopashgopjopzjpogjasg,ممهم،لزت،پورنگ،عقبا،پشتک،کصبک،سکسیکه،دختر کانال،کانااال،فلم،ایرانی،گیف،فیلم،سفید،بزگترین،عکسای،فیلمای،سوپر،جنده،کوس،سکسی،لز،انال,67,https://t.me/iopashgopjopzjpogjasg,fa,2026-11-21,live,1
@@ -54521,6 +54604,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2097452251,albompoli,GIRLS & FOTOS,62,https://t.me/albompoli,en,2026-11-27T10:56:18,live,0
 1111010751,bushehr,بـــوشـهـــر,62,https://t.me/bushehr,fa,2026-11-27T11:19:43,live,0
 2320804120,gggfggho,فیلمهام اینجاست 🔞,62,https://t.me/gggfggho,fa,2026-11-27T15:31:27,live,0
+4319712515,hatun_gold,گالری طلای هاتون,62,https://t.me/hatun_gold,fa,2026-11-27T15:49:37,live,1
 ,dom_kotor,"Дом, в котором...",61,https://t.me/dom_kotor,ru,2026-11-23,dataset,0
 3078079377,sexysweetiemhf,محافظ فتیش پا فوت فتیش عکس پا سوپر سوییتی فاکس مامی,61,https://t.me/sexysweetiemhf,fa,2026-11-21,live,1
 2172337619,zhomodelasadi,نمونه عکس ها و مدل های مجموعه ژ,61,https://t.me/zhomodelasadi,fa,2026-11-22,live,1
@@ -54764,6 +54848,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,kenotaf49,k3not4f 🌧,59,https://t.me/kenotaf49,un,2026-11-27T15:26:07,live,0
 1007595821,MehdiAbdolahzadeh,مهدی عبداله زاده _ اشعار و دست نوشته ها و عکس ها,59,https://t.me/MehdiAbdolahzadeh,fa,2026-11-27T15:27:46,live,1
 2081555316,abaasnet,مكتب البومشيح للتبليغات الرسمية,59,https://t.me/abaasnet,fa,2026-11-27T15:36:22,live,0
+1126491543,iranianart9,IRANIANART گالری ژان مونه,59,https://t.me/iranianart9,fa,2026-11-27T15:47:16,live,1
 ,modnaiaodegd,Модная одежда,58,https://t.me/modnaiaodegd,ru,2026-11-26T13:24:21,dataset,0
 ,jewelryninja,ювелирный ниндзя,58,https://t.me/jewelryninja,ru,2026-11-24,dataset,0
 ,bukCCCP,Книги СССР,58,https://t.me/bukCCCP,ru,2026-11-23,dataset,0
@@ -54934,6 +55019,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 4499326603,NazaBIHS117077,خاطرات من تو 🍃,57,https://t.me/NazaBIHS117077,fa,2026-11-26T11:01:12,live,0
 ,umrumrttgym,ВИДЕО - ТЕХНИКА,57,https://t.me/umrumrttgym,ru,2026-11-26T20:25:32,live,0
 1735648460,shahrekorde,گپ شهرکرد| اصفهان ¿¡,57,https://t.me/shahrekorde,fa,2026-11-27T11:21:44,live,0
+1545759999,shahrtalagallery,گالری‌شهرطلا,57,https://t.me/shahrtalagallery,fa,2026-11-27T15:46:56,live,1
 ,feadasha_art,FeaDasha,56,https://t.me/feadasha_art,un,2026-11-23,dataset,0
 ,MagicMake_up,Marvel Makeup,56,https://t.me/MagicMake_up,un,2026-11-24,dataset,0
 ,sensualis7multisens,стихи на ТЫ. Актуальная реальность. поэзия,56,https://t.me/sensualis7multisens,ru,2026-11-23,dataset,0
@@ -54954,6 +55040,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 3049052409,qazx_050,فیلم صد سال به این سالها,56,https://t.me/qazx_050,fa,2026-11-23,live,0
 ,Windows_Pro,Windows Pro,56,https://t.me/Windows_Pro,un,2026-11-23,live,0
 ,Grandblue_Netbol,Grand官方频道,56,https://t.me/Grandblue_Netbol,un,2026-11-23,live,0
+2067469213,AtletiFarsVideo,اتلتیکو مادرید فارسی ویدیو,56,https://t.me/AtletiFarsVideo,fa,2026-11-23,live,0
 ,de789lya,Delya,56,https://t.me/de789lya,un,2026-11-23,live,0
 2029970846,Shabakemakhfi0,شبکه مخفی زنان 🚨,56,https://t.me/Shabakemakhfi0,fa,2026-11-23,live,1
 ,DIQWO,𐙚:diqwo,56,https://t.me/DIQWO,un,2026-11-23,live,0
@@ -55010,6 +55097,8 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 3450055434,abjisorii,Sorens' Legacy🪄,56,https://t.me/abjisorii,un,2026-11-27T10:41:38,live,0
 2031676845,hamsayeh530,همسایه دیوار به دیوار مجنون,56,https://t.me/hamsayeh530,fa,2026-11-27T10:48:50,live,1
 1304437878,rrrrrrrrrmmmmmmaaaaanneeee,اشعار اهوازیهابوذیهکلیپاتاغانیعراقیهرمزیاتافلامصورفیدیواتضاحیعباس,56,https://t.me/rrrrrrrrrmmmmmmaaaaanneeee,fa,2026-11-27T15:41:23,live,1
+1273374650,videomassage_massage_videomesseg,ویدئو مسیج ویدئویی دایره ای پیام مسیج ویدیومسیج تصویری پیان ویدیویی بیام مسیچ وسدیو ویدسو کانال پسام,56,https://t.me/videomassage_massage_videomesseg,fa,2026-11-27T15:43:04,live,0
+4461069209,gallryAmir1,گالری‌امیر,56,https://t.me/gallryAmir1,fa,2026-11-27T15:48:06,live,1
 ,akvarelskultetski,Прозрачная акварель,55,https://t.me/akvarelskultetski,ru,2026-11-23,dataset,0
 1322920545,vjushususbkdjfojfkfkfmtnocjfkfj,عکس خصوصی🙅‍♀,55,https://t.me/vjushususbkdjfojfkfkfmtnocjfkfj,fa,2026-11-21,live,1
 1241012909,sokotebam,کانال عکس و بغض شبانه🙃❤️,55,https://t.me/sokotebam,fa,2026-11-21,live,1
@@ -55033,7 +55122,6 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,ZakhidnyyDesign,Zakhidnyy Design,55,https://t.me/ZakhidnyyDesign,en,2026-11-23,live,1
 ,telemarket_mv,TELEMARKET,55,https://t.me/telemarket_mv,un,2026-11-23,live,0
 ,QuizchiUz,Quizchi | Kanal,55,https://t.me/QuizchiUz,un,2026-11-23,live,0
-2067469213,AtletiFarsVideo,اتلتیکو مادرید فارسی ویدیو,55,https://t.me/AtletiFarsVideo,fa,2026-11-23,live,0
 ,wushirenjiayan177,海角社区🔞,55,https://t.me/wushirenjiayan177,other,2026-11-23,live,0
 ,semargl_game,SEMARGL Game Studio,55,https://t.me/semargl_game,en,2026-11-23,live,0
 ,chikwai,общепитный фудкорт точка точка точка,55,https://t.me/chikwai,ru,2026-11-23,live,0
@@ -55172,6 +55260,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,annatrik,Creative Producer &amp; Fashion Photographer МОСКВА,54,https://t.me/annatrik,ru,2026-11-26T20:02:07,live,0
 ,vikochbchka,folslee,54,https://t.me/vikochbchka,un,2026-11-26T20:24:15,live,0
 1404100974,sansornashodehhamoon,فیلم سانسور نشده هامون,54,https://t.me/sansornashodehhamoon,fa,2026-11-27T15:31:37,live,0
+2898848807,tabarakhot,ویدیو هات🔥,54,https://t.me/tabarakhot,fa,2026-11-27T15:46:06,live,0
 ,live_admin24,Admin24:Tech | Поддержка клиентов,53,https://t.me/live_admin24,ru,2026-11-23,dataset,0
 ,strannikmemes,Strannik | Цитатник 🏴‍☠️,53,https://t.me/strannikmemes,ru,2026-11-23,dataset,0
 1855072052,hkfilmphoto,عکس هامون,53,https://t.me/hkfilmphoto,fa,2026-11-21,live,1
@@ -55269,6 +55358,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1624145226,baluchkizluchki,Балючки 🤪,53,https://t.me/baluchkizluchki,ru,2026-11-27T11:26:24,live,0
 1370369281,MabaniNaghd_Esfahan,"آشنایی با مبانی ""نقد در سینما و هنرهای تصویری""",53,https://t.me/MabaniNaghd_Esfahan,fa,2026-11-27T15:34:50,live,0
 2384501650,Tasviriostadazad,رفع اشکال خلاقیت تصویری استاد آزاد,53,https://t.me/Tasviriostadazad,fa,2026-11-27T15:34:50,live,0
+4489643702,galerry_1403,گالری‌هاشمی . Onlin,53,https://t.me/galerry_1403,fa,2026-11-27T15:49:47,live,1
 ,snegiri_dk,Снегирёвский дом культуры,52,https://t.me/snegiri_dk,ru,2026-11-23,dataset,0
 1099198530,iraniyanframe,خانه قاب و البوم ایرانیان,52,https://t.me/iraniyanframe,fa,2026-11-21,live,0
 1431770715,gallery_wood_iranian,🇮🇷گالری سنتی ایرانیان🇮🇷,52,https://t.me/gallery_wood_iranian,fa,2026-11-21,live,1
@@ -55350,6 +55440,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 3279856019,chador_mosaferatii,چادر دوزی دارابی,52,https://t.me/chador_mosaferatii,fa,2026-11-27T11:04:00,live,0
 1098186693,Jalebe,👈جالبه!👉,52,https://t.me/Jalebe,fa,2026-11-27T11:28:45,live,0
 1979366119,somewhereformyphotos,یه جا برا عکسام,52,https://t.me/somewhereformyphotos,fa,2026-11-27T15:26:55,live,1
+2474785125,tinarezazadee,گالریم جا نداشت (۲),52,https://t.me/tinarezazadee,fa,2026-11-27T15:46:36,live,1
 ,RM_BLOG,RM BLOG,51,https://t.me/RM_BLOG,en,2026-11-23,dataset,0
 ,engldolt_ET,ЭнДо тут ● EnglDolt,51,https://t.me/engldolt_ET,ru,2026-11-23,dataset,0
 ,ChicNail_atelier_catalog,ChicNail | Маникюр,51,https://t.me/ChicNail_atelier_catalog,ru,2026-11-24,dataset,0
@@ -55537,6 +55628,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,mexanikelektronika,Elektromexanika,50,https://t.me/mexanikelektronika,un,2026-11-26T20:35:34,live,0
 ,ta1k0,taiko.zip,50,https://t.me/ta1k0,un,2026-11-26T20:39:45,live,0
 ,ghostump,Пнищенск [nee-VAZH-nah] 𓃤,50,https://t.me/ghostump,ru,2026-11-27T11:22:35,live,0
+1469984334,gaallerymoon,گالری‌مون🌙,50,https://t.me/gaallerymoon,fa,2026-11-27T15:47:06,live,1
 ,weddingzavod,Wedding Zavod,49,https://t.me/weddingzavod,un,2026-11-24,dataset,0
 2093186727,aks_iranii00,زاپاس😍,49,https://t.me/aks_iranii00,fa,2026-11-21,live,0
 3099964897,jw_c0,فیلمهاییی دخترهایی پخشیی عکسهایی لختیهه زن,49,https://t.me/jw_c0,fa,2026-11-21,live,1
@@ -55806,6 +55898,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1788605853,loveiseevil,प्यार बुराई है,47,https://t.me/loveiseevil,other,2026-11-26T08:32:04,live,0
 ,senseimadina,SENSEI MADINA | IELTS 8.5,47,https://t.me/senseimadina,un,2026-11-26T20:20:46,live,0
 1071027446,Ateliemahdys,📷 آتلیه عکس ماهدیس.ژوپین 🎥,47,https://t.me/Ateliemahdys,fa,2026-11-27T15:27:25,live,1
+3209818991,hamir_Clothing_gallery,بوتیک گالری هامیر,47,https://t.me/hamir_Clothing_gallery,fa,2026-11-27T15:49:17,live,1
 ,san_luc1,san_luc1,46,https://t.me/san_luc1,un,2026-11-23,dataset,0
 ,nesiaperol,Выдуманное обратно не вдумаешь,46,https://t.me/nesiaperol,ru,2026-11-24,dataset,0
 1853937196,madota_smm,عکسامون,46,https://t.me/madota_smm,fa,2026-11-21,live,1
@@ -56295,6 +56388,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,tutifruti6546,༺𝕰𝖑𝖊𝖈𝖙𝖗𝖎𝖈𝖎𝖆𝖓༻,42,https://t.me/tutifruti6546,other,2026-11-27T10:45:03,live,0
 2158291489,kalakhab_khososi,تاجران کالای خواب خصوصی,42,https://t.me/kalakhab_khososi,fa,2026-11-27T10:59:20,live,1
 3284274820,labububnd,Labubu Bandarabbas,42,https://t.me/labububnd,un,2026-11-27T11:17:23,live,0
+4345303228,galeram0bib,گالریم,42,https://t.me/galeram0bib,fa,2026-11-27T15:46:36,live,1
 ,sound_by,"Диктор, актер, Андрей Кузьмин- озвучка текстов, звукозапись",41,https://t.me/sound_by,ru,2026-11-23,dataset,0
 ,ifantica,Самоистязанятый,41,https://t.me/ifantica,ru,2026-11-23,dataset,0
 ,bakhti_uz,Bakhti_uz ✈️,41,https://t.me/bakhti_uz,fl,2026-11-23,dataset,0
@@ -56395,6 +56489,8 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1153975485,chargeU,Lets search ourselve,41,https://t.me/chargeU,un,2026-11-27T11:12:42,live,0
 ,cyebeats,close your eyes,41,https://t.me/cyebeats,un,2026-11-27T11:14:27,live,0
 1267271975,djdhbwknwrrl,حسنی فایننس فیلماش,41,https://t.me/djdhbwknwrrl,fa,2026-11-27T15:31:07,live,0
+1434510304,videoo_videu_videou_vidio_vidiyo,کانال‌ویدیوهای جالب و دیدنی ویدیوطنز ویدیوعاشقانه ویدیوآواز ویدیوخنده دار ویدیواموزشی ویدیوغمگین ویدیوورزشی ویدیوخبری ویدیوجدید,41,https://t.me/videoo_videu_videou_vidio_vidiyo,fa,2026-11-27T15:44:35,live,1
+1122340329,galeryhamoon,گالری هامون,41,https://t.me/galeryhamoon,fa,2026-11-27T15:49:17,live,1
 ,Schmitt_ohne_Namen,“...” 𝑺𝒄𝒉𝒎𝒊𝒕𝒕? 🥃,40,https://t.me/Schmitt_ohne_Namen,other,2026-11-23,dataset,0
 ,MANICURE_FASHION,МАНИКЮР_FASHION,40,https://t.me/MANICURE_FASHION,ru,2026-11-24,dataset,0
 ,liketheview,i like the view #УкрТґ,40,https://t.me/liketheview,ru,2026-11-23,dataset,0
@@ -56511,6 +56607,9 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2090915503,filmtonir,فیلمتون سایت دانلود فیلم وسریال,40,https://t.me/filmtonir,fa,2026-11-27T15:29:46,live,0
 ,STAYWOKEDIVAS,урыс мизгеле,40,https://t.me/STAYWOKEDIVAS,ru,2026-11-27T15:31:51,live,0
 1564915317,hap_shy,عدسة حبشي ابن البومشيح,40,https://t.me/hap_shy,fa,2026-11-27T15:36:22,live,0
+1492568808,ioashiohozhxoasio,"نده،لینکدونی،سکسی،ممه،اوف،ربات،لینکدونی،کس،hot,girl،هات،پورن، گروه،سکسی،ویدیو،سکس،از،پشت،ج کص،جنده،کون،لاپا،سوپر،سکس،صولانی،رباط",40,https://t.me/ioashiohozhxoasio,fa,2026-11-27T15:46:06,live,1
+1309940308,iuehgiohasighioashgzxg,کانال🥀گروه🥀پیج🥀سایت🥀چنل🥀گیف🥀فیلم🥀ویدیو🥀عکس🥀سکس🥀برده🥀ارباب🥀خشن🥀زوري🥀ضربدری🥀زربدری🥀بکنش🥀لاپاش🥀سینه🥀هاش کلی تانگو دونفره كانال🥀سكسى,40,https://t.me/iuehgiohasighioashgzxg,fa,2026-11-27T15:46:26,live,1
+1861034560,hotGbox,HOT G BOX I گالری هات باکس,40,https://t.me/hotGbox,fa,2026-11-27T15:49:37,live,1
 ,MelhoresArquivos,Connection Empório📶2.0,39,https://t.me/MelhoresArquivos,un,2026-11-23,dataset,0
 ,Demonyasha,Masha Demonyasha 🎸,39,https://t.me/Demonyasha,un,2026-11-23,dataset,0
 1274609148,kosskir86,"کانال،فیلم،روسیه،عکس،ایرانی،دلنوشته،جدید،جام جهانی،سکسی،خارجی،متن،بزرگ،ممه,سوپر،همسریابی،صیغه",39,https://t.me/kosskir86,fa,2026-11-21,live,1
@@ -56607,6 +56706,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1938688362,dadijituan6688999,大帝天下支付🌈通知频道,39,https://t.me/dadijituan6688999,other,2026-11-26T13:24:31,live,0
 ,sashaposhh,С заботой о себе,39,https://t.me/sashaposhh,ru,2026-11-26T20:09:32,live,0
 1069009428,tavallod,جشن تولد،فروشگاه,39,https://t.me/tavallod,fa,2026-11-27T11:03:20,live,0
+2344392981,teacherabhar,گالریمون,39,https://t.me/teacherabhar,fa,2026-11-27T15:47:06,live,1
 ,id_notes,Dmitry's notes,38,https://t.me/id_notes,un,2026-11-23,dataset,0
 ,cristo_sochi,КАРТИНЫ | АРТ ПОРТРЕТЫ ПО ФОТО НА ХОЛСТЕ НА ЗАКАЗ СОЧИ,38,https://t.me/cristo_sochi,ru,2026-11-24,dataset,0
 ,nataboldbooks,"Пишу, перевожу ✍🏻",38,https://t.me/nataboldbooks,ru,2026-11-23,dataset,0
@@ -56817,6 +56917,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 3343327204,tahrik786,official of Muslims,37,https://t.me/tahrik786,en,2026-11-27T11:30:45,live,0
 1797982528,shekamk,تبادل احالات,37,https://t.me/shekamk,fa,2026-11-27T11:33:25,live,0
 3387953298,Pesarc,Yadegari,37,https://t.me/Pesarc,un,2026-11-27T11:34:46,live,0
+1087434334,links_chnl,استیکرام، گیفام، آهنگام، تلگرامم، چنلام، کانالام، ممبرام، رباتام، عکسام، فیلمام، فایلام، ویدیوهام، پیام هام، سیو مسیج، رفیقام,37,https://t.me/links_chnl,fa,2026-11-27T15:45:36,live,1
 ,creo_rew,[FBM] ОТЗЫВЫ ПРО КРЕАТИВЫ,36,https://t.me/creo_rew,ru,2026-11-23,dataset,0
 1690527032,sultanmuhabbet,İstanbul anadolu yakası Sultan papağanı muhabbet kuşu yem mama kafes aksesuar alım satım,36,https://t.me/sultanmuhabbet,fl,2026-11-21,live,1
 1373353890,opajsghsapogjasopg,➕زنانه➕دخترانه➕پسرانه➕پیراهن➕کانال➕کانال،گروه،چت،دانلود،فیلم،عکس،کلیپ،برازرس،چوچول،کس قرمز،باسن،سکسی،جق،لیس زدن،عموجانی،پرده زنی,36,https://t.me/opajsghsapogjasopg,fa,2026-11-21,live,1
@@ -56926,6 +57027,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,ketbukket,TRAVINKINA,36,https://t.me/ketbukket,un,2026-11-26T20:30:35,live,0
 1638732803,profiler,profiler,36,https://t.me/profiler,un,2026-11-27T10:59:00,live,0
 1239032580,Aroosi_time,Aroosi❤️,36,https://t.me/Aroosi_time,fl,2026-11-27T11:02:20,live,1
+1398787465,fullsexyo,فول سکسی جدید کص کون ممه جنده ایران داف کده ربات ساز سکسی رباتساز صکسی صکصی سرعت ویدیو تونه خالی استخر پارتی شبانه صیغه میشم ارض,36,https://t.me/fullsexyo,fa,2026-11-27T15:44:05,live,1
 ,geographicalnorway,Ofertas Geographical Norway,35,https://t.me/geographicalnorway,un,2026-11-24,dataset,0
 ,ofertasmichaelkors,Ofertas Michael Kors,35,https://t.me/ofertasmichaelkors,un,2026-11-24,dataset,0
 ,agendamsksport,Здоровье | Москва | AGENDA,35,https://t.me/agendamsksport,ru,2026-11-23,dataset,0
@@ -57139,6 +57241,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2329040630,NOSKHE5,NOSKHE 5,34,https://t.me/NOSKHE5,fl,2026-11-27T11:09:01,live,0
 2440209813,Ahvazx,گپ آبادان | گروه آبادان | رایان دریس | اکیپ آبادان | گروه آبادان | گروه خرمشهر,34,https://t.me/Ahvazx,fa,2026-11-27T11:15:22,live,0
 1169527534,EshterakiTasveer,عکس و فیلم اشتراکی,34,https://t.me/EshterakiTasveer,fa,2026-11-27T15:27:46,live,1
+1912765029,subclips,می‌خوای ویدیوت جهانی بشه؟,34,https://t.me/subclips,fa,2026-11-27T15:43:14,live,0
 ,trans_elenraaf,🫧 Елена Vorona 🫧,33,https://t.me/trans_elenraaf,ru,2026-11-23,dataset,0
 2313070518,Rahabio_archives,آرشیو عکس و فیلم های بیولوژیک و سموم خانگی,33,https://t.me/Rahabio_archives,fa,2026-11-21,live,1
 2665548413,shokouhiphotos,عکسای مهمانی,33,https://t.me/shokouhiphotos,fa,2026-11-21,live,1
@@ -57865,6 +57968,8 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1750704989,,Kordo,28,,fl,2026-11-27T11:24:04,live,0
 1564175173,moonbinph,آرشیو عکسای مونبین💜,28,https://t.me/moonbinph,fa,2026-11-27T15:26:05,live,1
 1269230239,SirvanKhosravi_Monologue,دانلود آلبوم مونولوگ سیروان خسروی,28,https://t.me/SirvanKhosravi_Monologue,fa,2026-11-27T15:36:42,live,1
+1176079633,removerz,دیلیت تلگرام موبوگرام ودیلیت ویدیوگرام تلگرام اصلی و هاتگرامو طلایی و مونو دیلیتاکانت مونو حذف حساب,28,https://t.me/removerz,fa,2026-11-27T15:43:45,live,0
+1603114756,beniita_gallery,شومیز |مانتو |بلوز |تونیک |تیشرت |بنیتا گالری,28,https://t.me/beniita_gallery,fa,2026-11-27T15:47:36,live,1
 ,yangi_dasturlar_2023,Dasturlar,27,https://t.me/yangi_dasturlar_2023,un,2026-11-23,dataset,0
 ,Reklama_xizmati_abusaxiyoptom,REKLAMA AGENTLIGI (🇺🇿Rasmiy kanal‌‌‌‌) Официальный канал‌‌‌‌ (🇹🇷Resmi kanal‌‌‌‌),27,https://t.me/Reklama_xizmati_abusaxiyoptom,ru,2026-11-26T13:27:52,dataset,0
 ,vtostersfaq,VTLite F.A.Q,27,https://t.me/vtostersfaq,un,2026-11-23,dataset,0
@@ -58388,6 +58493,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1216047462,hamadanm,Noona store😍 مصنع اللؤلؤه😍,24,https://t.me/hamadanm,fa,2026-11-27T11:18:43,live,0
 1051401083,cafechatr_orumieh,☂کافه چتر☂,24,https://t.me/cafechatr_orumieh,fa,2026-11-27T11:20:23,live,0
 ,mavka_arter,Mavka Meow,24,https://t.me/mavka_arter,un,2026-11-27T15:31:09,live,0
+1936940838,Stylishstyle42,لباس زنانه / ارزانسرا / مانتو / پافر / تونیک / گالری استایل شیک🦋💙,24,https://t.me/Stylishstyle42,fa,2026-11-27T15:47:36,live,1
 1299920575,pojasopgjopzjgpozjpogasg,لم،عکس،پایین،داسکانال،گردختر،پسر،کانال،فیلم،ویدئو،گیف،داستان،سکسی،سوپر،کس،هک،دافکده،کسکده،کونکده،کسکش،دیوثکانال رقص عربی،ایرانی،,23,https://t.me/pojasopgjopzjgpozjpogasg,fa,2026-11-21,live,1
 1128817565,aks_famil,عکسها و خاطرات ماندگار فامیل,23,https://t.me/aks_famil,fa,2026-11-21,live,1
 1434668009,hfjjgjgf,منبع عکسای فیک دخترونه ❤️⁩🌸,23,https://t.me/hfjjgjgf,fa,2026-11-21,live,1
@@ -58777,6 +58883,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2152338427,photopanizmonolog,عکس های جشواره مونولوگ,21,https://t.me/photopanizmonolog,fa,2026-11-27T15:26:05,live,1
 2536280454,mahmabnn,عکسات اینجا پخش شده🙂,21,https://t.me/mahmabnn,fa,2026-11-27T15:27:15,live,1
 1366736821,oisahgiohzixhgioahs,کیرخوری،جوون فیلم،سوپر،الکمحستی،همیرا،بحنام،سهر،همید،هامد،رزا،هسین،ثینا،کلیپ،زوری،زیرنافی،هاب،وحشی،بازمقعد،دوستیابی، ،لایو،استار,21,https://t.me/oisahgiohzixhgioahs,fa,2026-11-27T15:42:14,live,1
+4400849260,kosmadarsadra,سیدصدرا چندتا کیر برای مامانت میخری؟,21,https://t.me/kosmadarsadra,fa,2026-11-27T15:50:07,live,1
 1665631775,arpomoo,عکس های مدرسه ی قهرمانانه من,20,https://t.me/arpomoo,fa,2026-11-21,live,1
 1214056682,donyaye_deltangivc,کانال،گروه،گپ،عکس،عکسای،عکسهای،عاشقونه،عاشقانه،لاو،فاز،غمگین،متن،نوشته،استوری،جدید،پروفایل،تیکه،دار،,20,https://t.me/donyaye_deltangivc,fa,2026-11-21,live,1
 2401983023,nodidds,عکسای نودم و فیلم نودم😍,20,https://t.me/nodidds,fa,2026-11-21,live,1
@@ -59078,6 +59185,8 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1489558348,gorgan5,گرگان,19,https://t.me/gorgan5,fa,2026-11-27T11:18:03,live,0
 2832800217,laugh_love_clips,•کلیپ‌میکس🎥•,19,https://t.me/laugh_love_clips,fa,2026-11-27T15:39:33,live,1
 2349540225,sotibandr,⚜کلیپ‌شوتی‌بندری⚜✘لَْا تــِنـس ذِكْــرٌ اَلـلّٰـہْ✘ • 乀 ♚𝐈𝐑 ⁞ 𝐈𝐑𝐀𝐍↳ 🇮🇷 ⇲ 🖇𝘽𝙉𝘿.𝘿𝘼𝙍𝙂𝙐,19,https://t.me/sotibandr,fa,2026-11-27T15:39:53,live,1
+1333731325,videw_time,『 ویدیوتایمـ 』,19,https://t.me/videw_time,fa,2026-11-27T15:43:14,live,0
+2503247120,SToriHAm9,ویدیو | مداحی هام | مذهبی,19,https://t.me/SToriHAm9,fa,2026-11-27T15:45:46,live,0
 ,cerebrohq_en,Cerebro Inc.,18,https://t.me/cerebrohq_en,un,2026-11-23,dataset,0
 ,Istramama,Мамы Истринский район 🌸,18,https://t.me/Istramama,ru,2026-11-23,dataset,0
 1433309460,iohasioghasoihgoiasg,عکس،مخفی،فیلم،سوپزن،دختر،پسر،جون،ناز،خوشگل،سکس،بکن،سوپر،جنده،سرا،کصکده،کیر،تو،کون،دختر،همسایه،پسر،خاله،شو هر،عمه،زن،حشری،بکن،تو،,18,https://t.me/iohasioghasoihgoiasg,fa,2026-11-21,live,1
@@ -59380,6 +59489,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1051309052,ghadimia,قدیمیا,17,https://t.me/ghadimia,fa,2026-11-27T11:00:20,live,0
 2372691013,l0vediss,فیلممون,17,https://t.me/l0vediss,fa,2026-11-27T15:29:26,live,0
 2697026057,filmashoo,فیلماشو,17,https://t.me/filmashoo,fa,2026-11-27T15:31:07,live,0
+2040562558,Hashemi_auto,اتو گالری هاشمی,17,https://t.me/Hashemi_auto,fa,2026-11-27T15:49:57,live,1
 1853119620,photosiib,تبدیل عکس های خانگی به آتلیه ای,16,https://t.me/photosiib,fa,2026-11-21,live,1
 1452499397,ioahgiosahgohsaog,یش،ناده ساناز،سکسی،محرم،جوراب،ساپورتی،داغ،خانوم،دختر،همسایه،مخ،زنی،دختر،کانال،فیلم،فیلمهای،عکس، ت،کردنکانال،گیف،کصلیسا،ر.جوراب ش,16,https://t.me/ioahgiosahgohsaog,fa,2026-11-21,live,1
 1372623928,bigeyratammm,بیایین پی وی عکسای خواهرمو بدم,16,https://t.me/bigeyratammm,fa,2026-11-21,live,1
@@ -59562,6 +59672,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 3749624825,tasviremandegarr,تصویرماندگار,16,https://t.me/tasviremandegarr,fa,2026-11-27T15:32:27,live,0
 2164942747,ronahifilm09149607348,کانال رسمی روناهی تصویرشاهین حسین زاده,16,https://t.me/ronahifilm09149607348,fa,2026-11-27T15:32:49,live,0
 1477357480,etesalialbumcatchybeatz,آلبوم اتصالی خشایار اس ار,16,https://t.me/etesalialbumcatchybeatz,fa,2026-11-27T15:38:03,live,1
+2240887886,vataniii_XXX90,🔥🙊ویدیو +18 هات وطنی🙊🔥,16,https://t.me/vataniii_XXX90,fa,2026-11-27T15:46:06,live,1
 ,EnDo_offer,ЭнДо мерч ● EnglDolt,15,https://t.me/EnDo_offer,ru,2026-11-23,dataset,0
 ,Artemislua,Екатерина Алексеевна,15,https://t.me/Artemislua,ru,2026-11-23,dataset,0
 ,Notanish_seriali,NOTANISH | Sevimli TV,15,https://t.me/Notanish_seriali,en,2026-11-23,dataset,0
@@ -59767,6 +59878,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 ,sp5irlest,ㅤ創ٕ᪴ㅤ᳖۫︐ℯ𝐜𝓼𝐭𝐚𝐭͟𝐢͟𝐜͟ .,15,https://t.me/sp5irlest,ar,2026-11-26T20:40:23,live,0
 ,Rilycal,D.Weight,15,https://t.me/Rilycal,fl,2026-11-27T11:22:14,live,0
 2430650155,giremehdi,پخش گیره و کلیپش مهدی,15,https://t.me/giremehdi,fa,2026-11-27T15:39:53,live,1
+1489888094,egallerysher,گالری‌شر,15,https://t.me/egallerysher,fa,2026-11-27T15:46:56,live,1
 ,resolerte,Обратный звон (20+),14,https://t.me/resolerte,ru,2026-11-23,dataset,0
 ,artvaults,Art vault | Drawing | Sketching,14,https://t.me/artvaults,en,2026-11-23,dataset,0
 ,m0ller_original,Играющий художник || m0ller (Sp0n/OAD),14,https://t.me/m0ller_original,ru,2026-11-23,dataset,0
@@ -59931,6 +60043,9 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1114912341,Ghasemasgarkhani,کانالی برای فیلم‌هام,14,https://t.me/Ghasemasgarkhani,fa,2026-11-27T15:31:27,live,0
 2344685093,km_sen,فیلم️هات🔥,14,https://t.me/km_sen,fa,2026-11-27T15:31:47,live,0
 2437742793,illustration_403,کارگاه تصویر سازی هاشمی نژاد,14,https://t.me/illustration_403,fa,2026-11-27T15:35:50,live,0
+1431153490,zwqsa,ویدیوت جاموال,14,https://t.me/zwqsa,fa,2026-11-27T15:43:14,live,0
+4394386963,ghaleri_man,گالِری‌مَن:✏🗒,14,https://t.me/ghaleri_man,fa,2026-11-27T15:46:36,live,0
+2081537099,asha_goldgallery,گالری طلای آشا,14,https://t.me/asha_goldgallery,fa,2026-11-27T15:48:57,live,1
 ,archive_hromaya_sudba,сумасброд стерха.,13,https://t.me/archive_hromaya_sudba,ru,2026-11-23,dataset,0
 ,literarealm,"LiteraRealm : Literature, Books and Shows",13,https://t.me/literarealm,en,2026-11-23,dataset,0
 1491367724,doperekhanevadegi,💋شهوانی💦،فیلم،داستان،عکس،سوپر،سکسی،سکس،با،در،زن،میلف،دخترصاحبخانه،دختر،صاحبخانه،فتیش،پا،چادری،مادر,13,https://t.me/doperekhanevadegi,fa,2026-11-21,live,1
@@ -60138,6 +60253,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1422754343,helios500_1000,آلبوم500شانه تراكم1000(عروسكي شونهر),13,https://t.me/helios500_1000,fa,2026-11-27T15:37:22,live,1
 2559186742,afiskdkd,کلیپ‌شیک🫠,13,https://t.me/afiskdkd,fa,2026-11-27T15:39:53,live,1
 1236449135,ioashgiohsaoighoasig,،ممه،کون،کوس،پاره،گشاد،جر،سینه،گنده،کون،مون به،خانم،حشری،کلیپ،سکس،عاشقانه،رمان،سکسی،فیلمه، کانال،سکس،لز،پورنگرافی،داستانی،سوپر ا,13,https://t.me/ioashgiohsaoighoasig,fa,2026-11-27T15:40:13,live,1
+1566130351,NNUPU,کانال،خاله،ژاله،مونا،عمه،مهین،ساناز،سلین،نود،گپ،گروه،کروه،زندایی،محارم،خرا،جند،سحر،مینو،مینا،زهرا،زینب،کپ،ترشیده،ویدیو،وطنی،نرگس,13,https://t.me/NNUPU,fa,2026-11-27T15:43:45,live,1
 ,bisttobistshop,20to20 @junction_bot_news,12,https://t.me/bisttobistshop,en,2026-11-23,dataset,0
 ,doktorzdorov,Доктор Здоровье,12,https://t.me/doktorzdorov,ru,2026-11-23,dataset,0
 1060648601,familha1396,البوم عکسهای فامیلی,12,https://t.me/familha1396,fa,2026-11-21,live,1
@@ -60347,6 +60463,8 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1166650897,bedooneem,دانلود،فیلم،جایی آن سوی درختان کاج،او،اسپنسر،ستاره ای متولد شده است،ظاهر فریب،کلاهبردار،پر خطر،رهایش کن،شاخ ها،لیست شیندلر،لب,12,https://t.me/bedooneem,fa,2026-11-27T11:09:41,live,0
 2207296670,cghbcdknui,زاپاس فیلم عکسمون,12,https://t.me/cghbcdknui,fa,2026-11-27T15:25:55,live,1
 1336297205,etesali_catchybeatz0,البوم اتصالی کچی بیتز,12,https://t.me/etesali_catchybeatz0,fa,2026-11-27T15:38:03,live,0
+1394059839,gallerylebasabollfathi,گالری‌شلوارابوالفتحی,12,https://t.me/gallerylebasabollfathi,fa,2026-11-27T15:46:56,live,1
+1279446496,hatef_shoes_bag,👈گالری هاتف 👉,12,https://t.me/hatef_shoes_bag,fa,2026-11-27T15:49:37,live,1
 ,tachibra,🇹​​​​​🇦​​​​​🇨​​​​​🇭​​​​​🇮​​​​​🇧​​​​​🇷​​​​​🇦,11,https://t.me/tachibra,other,2026-11-23,dataset,0
 1224073542,tanzime_khanevadeh2,رابطه از پشت بدون درد|دخترانی که از جلو میدهند|همه چيز در مورد كو3|چگونه زن همسایه|چگونه یک دختر را ارضا کنیم|عکس چیز دختر|نزديك,11,https://t.me/tanzime_khanevadeh2,fa,2026-11-21,live,1
 2127136060,tmpmzh,عکسامون پاک نشن اینو زدم,11,https://t.me/tmpmzh,fa,2026-11-21,live,1
@@ -60544,6 +60662,8 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2691645881,mymovinesa,فیلم‌هام:),11,https://t.me/mymovinesa,fa,2026-11-27T15:31:27,live,0
 2446311131,sorena_ali_album,آلبوم‌مجسمه علی سورنا,11,https://t.me/sorena_ali_album,fa,2026-11-27T15:36:02,live,1
 1451412028,oijasopgjpzxjjsapogas,تان مه،معین،تکست،تکصت،هات،داغ،داری کانال،گروه،گپ،چت،ایدی،ربات،لینک،پی،وی،خواننده،ها،تمام،فول،آهنگ،موزیک،آلبوم،درخواستی،قدیمی،جدی,11,https://t.me/oijasopgjpzxjjsapogas,fa,2026-11-27T15:39:03,live,1
+1237786765,opasjgopjaspgojsg,یرترین،اهنگ،ترکی،قدیمی،ترین،مهمترین،برجام،ساکت،رقص،اهنگ،شاد،ویدیو،جدید،ناب،کلیپ،ت،داغ،هاشهوانی💯بزرگترین،کانال،سکسی،گروه،داستان،ف,11,https://t.me/opasjgopjaspgojsg,fa,2026-11-27T15:46:26,live,1
+1492384789,krall_76,🇹🇷گالری هاتف🇦🇿,11,https://t.me/krall_76,fa,2026-11-27T15:49:37,live,1
 ,tiser_photos,Murodulloh's photos...🫐🥐,10,https://t.me/tiser_photos,en,2026-11-23,dataset,0
 1588008264,ateliye_onlin1377,تبدیل عکس خانگی به آتلیه ای😳😍,10,https://t.me/ateliye_onlin1377,fa,2026-11-21,live,1
 1412834807,iogfouhasioghoihoizxg,روز،هنری،ایرانی،استایل،ناب،شیک،پوش،دخترونه،کادو،دختر،مزو س‌‌‌کس،سکس،استایلی،داگی،سکس،شاه،کیر،پریود،لاپایی،خاله،سکسی،عکسهای خوشگل,10,https://t.me/iogfouhasioghoihoizxg,fa,2026-11-21,live,1
@@ -60759,6 +60879,8 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1458166698,ax_mohammadam2313,عکساش,10,https://t.me/ax_mohammadam2313,fa,2026-11-27T15:27:36,live,1
 2425862378,arehfnco12,البوم مونيكا و جومانا عزت🥵👙,10,https://t.me/arehfnco12,fa,2026-11-27T15:36:42,live,0
 1409445964,jkzxvbjkxbzvjkasoih,نترن،خارجی،چینی،ایرانی،رها،وی،پی،ان،قوی،سرعت،بالا،هات،اسپات،جدید،قدیمی،کم،حج،البوم،کانالسکسی،فیلمسکسی،عکسکسی،جدیدسکسی،گروهه،گپ،س,10,https://t.me/jkzxvbjkxbzvjkasoih,fa,2026-11-27T15:39:03,live,1
+1357440714,ahang_music_video,کلیپ موزیک ویدیوترانه آریون,10,https://t.me/ahang_music_video,fa,2026-11-27T15:43:14,live,1
+2197338839,DeleteAccount_DeleteAccount,دیلیت‌اکانت دلیت‌اکانت دیلیت‌ دلیت‌تلگرام دیلیت‌تلگرام حذفحساب موبوگرام‌ ویدیوگرام‌ هاتگرام‌ مونوگرام پلاس‌مسنجر تلگرامطلایی,10,https://t.me/DeleteAccount_DeleteAccount,fa,2026-11-27T15:43:45,live,0
 ,idivlev_b,IDIVLEV / БЛОГ,9,https://t.me/idivlev_b,ru,2026-11-23,dataset,0
 ,radost_now,Время радости,9,https://t.me/radost_now,ru,2026-11-25T19:42:50,dataset,0
 1267112088,oihiosahgoisahgoi,،ماه،کامل،شد،تگ 📽🎷wow🎷📽➖➖➖➖➖➖➖✴️〰〰〰〰〰،گروه،کانال،فیلم،صدف،عکس،کلیپ،خواهر،برادر مت،رحمان،،1400،دانلود اهنگ های جدیدمحمدعلیزاده،رپ,9,https://t.me/oihiosahgoisahgoi,fa,2026-11-21,live,1
@@ -61259,6 +61381,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1462717645,hajrajabalihashemi,(عکس‌،فیلم‌)نوه نتیجه های حج رجبعلی هاشمی,8,https://t.me/hajrajabalihashemi,fa,2026-11-27T15:32:17,live,1
 1270312510,klipmashin,👌👌کلیپ‌ماشین‌باز👌👍👌,8,https://t.me/klipmashin,fa,2026-11-27T15:39:33,live,1
 1268891643,keliptory,/:کلیپتوری) :,8,https://t.me/keliptory,fa,2026-11-27T15:39:43,live,1
+1550769542,gallery_moble_shavandi,گالری مبلمان شوندی| فروش انواع مبل،صندلی،تختخواب،میز در کرج و ایران,8,https://t.me/gallery_moble_shavandi,fa,2026-11-27T15:47:56,live,1
 ,my_home_sr,My Home на Блюдце,7,https://t.me/my_home_sr,ru,2026-11-23,dataset,0
 ,info_qollanma,Info menyu,7,https://t.me/info_qollanma,un,2026-11-23,dataset,0
 ,ayyubiy_0770,Murojaat,7,https://t.me/ayyubiy_0770,un,2026-11-25T12:23:19,dataset,0
@@ -61539,6 +61662,10 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1295019771,hotgirlpopojlokonkos,🔥پورن کده🔥بزرگترین،کانال،فیلم،عکس،گیف،تصویر،سکس،و،سکسی،سسکس،سارا،مارا،تارا،ایرانی،میرانی،وطنی،کون،مون،چون،کص،مص،جر،خر،کر،هرهر،لز,7,https://t.me/hotgirlpopojlokonkos,fa,2026-11-27T15:33:09,live,1
 1786830049,bazigarjashn,بازیگران و مصاحبه شوندگان کلیپ و فیلمبرداری 📸,7,https://t.me/bazigarjashn,fa,2026-11-27T15:40:53,live,1
 3255285332,amir_x_x_45,کلیپام اینجا دانلود کن با کیفیت,7,https://t.me/amir_x_x_45,fa,2026-11-27T15:41:03,live,1
+1206372586,oihsgouiashiosagasg,دد،کافیلترشکن،رایگان،دانلود،موبوگرام،ضدفیلتر،بدون،تبلیغ،دانلود،تلگرام،مونو،طلایی،ویدیوگرام،ایکس،سایفون،98زینو،زنده،مسلینکدونی ای,7,https://t.me/oihsgouiashiosagasg,fa,2026-11-27T15:43:45,live,1
+2034312781,video_aMiRi,ویدیو هآم,7,https://t.me/video_aMiRi,fa,2026-11-27T15:45:46,live,0
+2024250373,videohame,ویدیو هام💦💋,7,https://t.me/videohame,fa,2026-11-27T15:45:46,live,0
+1481989426,golsaraye_tontish,گالری تونتیش,7,https://t.me/golsaraye_tontish,fa,2026-11-27T15:47:36,live,1
 ,gemsatelier_fb,Gems Atelier | Отзывы,6,https://t.me/gemsatelier_fb,ru,2026-11-23,dataset,0
 1323151064,khanevadetajbakhsh,Aks,6,https://t.me/khanevadetajbakhsh,fl,2026-11-21,live,1
 1624501090,gemclimbinggym,عکس های مسابقه بولدر سالن جم,6,https://t.me/gemclimbinggym,fa,2026-11-21,live,1
@@ -61829,6 +61956,7 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 2523472656,fairAli22,اراء قبيلة البومتيوت,6,https://t.me/fairAli22,fa,2026-11-27T15:36:12,live,0
 1536292024,clipet_tak,کلیپِت_ تک|ساخت کلیپ|ادیت با گوشی|دکلماتور Clipet_tak|editor,6,https://t.me/clipet_tak,fa,2026-11-27T15:39:43,live,1
 1114420940,ioashgiohasoihasgadh,،شوک،کلیپ،حوادث،اسرارامیز،حیات،وحش ت،حشری،شهوت، ان،مونا،موهنا میک دانلود،رایگان،تابو،ماجان،ماجا،ماج،تاب،تا،آینه بغل،آینه،آینه ب،,6,https://t.me/ioashgiohasoihasgadh,fa,2026-11-27T15:40:13,live,1
+1240439955,fhfghhvhjghh,شکیب و کلیپ هاش,6,https://t.me/fhfghhvhjghh,fa,2026-11-27T15:42:54,live,1
 ,eachbayer,each,5,https://t.me/eachbayer,un,2026-11-24,dataset,0
 ,cyberturtles,КИБЕР ЧЕРЕПАХИ,5,https://t.me/cyberturtles,ru,2026-11-23,dataset,0
 4439428977,Newsazarbb22,کانال عکس های مسابقات آماتوری,5,https://t.me/Newsazarbb22,fa,2026-11-21,live,1
@@ -62228,6 +62356,11 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1419854881,donedoneebrahimzade,دانلود،اهنگ،آهنگ،موزیک،ویدیو،البوم،آلبوم،جدید،قدیمی،شهاب،مظفری،محسن،ابراهیم،زاده،عاشق،شون،تیمار،دونه,5,https://t.me/donedoneebrahimzade,fa,2026-11-27T15:37:22,live,1
 1154001161,kjbzxjkvbjkzbvhoiasgasg,مونگ👄سوسانو👄وحشیانه👄کم👄سن👄بزرگس👄خشن👄گروهی👄تجاوز👄وحشیانه👄کثیف👄با👄دختر👄زن👄کردن👄گاییدن👄کلیپسک👄جهان👄کده👄جهانکده👄ایرانی👄گر👄کانال+گروه,5,https://t.me/kjbzxjkvbjkzbvhoiasgasg,fa,2026-11-27T15:40:13,live,1
 1195307688,oiashgiohasohasugi,ا،پریسا،مونا،فاطمه،عسل،شراره،غزل،رز،نیلو،پریمخفی،کلیپ،کلیب،سکسی،سوپر،پورنو،داغ،شلوار،قرمز،مهسانوووووحه،مرثیه،غمگین،نوحه،نوهه،گری,5,https://t.me/oiashgiohasohasugi,fa,2026-11-27T15:40:13,live,1
+1615762127,MATINPRO123,چگونه رنگ خرمایی بسازیم در کار پارکینگ اگر این گروه به بالای ۵۰ نفر برسه براتون ویدیوش میزارم با کد,5,https://t.me/MATINPRO123,fa,2026-11-27T15:43:24,live,0
+3620637730,videokonkoorila,ویدیوهام,5,https://t.me/videokonkoorila,fa,2026-11-27T15:45:36,live,0
+2193552304,sssssssdszdec,ویدیو هام🌙,5,https://t.me/sssssssdszdec,fa,2026-11-27T15:45:46,live,0
+1434500373,shownaz_gallery,💕 گالری شوناز 💕,5,https://t.me/shownaz_gallery,fa,2026-11-27T15:47:56,live,1
+1522695111,Mamanet_Official,مامانت رسمی,5,https://t.me/Mamanet_Official,fa,2026-11-27T15:50:07,live,1
 ,arthab2,ArtHub,4,https://t.me/arthab2,un,2026-11-25T19:06:56,dataset,0
 ,Korean_2027,About Korea,4,https://t.me/Korean_2027,un,2026-11-24,dataset,0
 ,TeenFlare,TEENFLARE | ЗНАКОМСТВА ДО 20 ЛЕТ,4,https://t.me/TeenFlare,ru,2026-11-24,dataset,0
@@ -62677,6 +62810,8 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1480242143,Bachemahal_Zedbaziii,دانلود آلبوم تونل 2 ( Toonel 2 ),4,https://t.me/Bachemahal_Zedbaziii,fa,2026-11-27T15:37:03,live,1
 1441905592,kjasgkjbasjiohsaoiasf,لم،جنده،کس،گی،انال ها٬سکس هات کلیپ♨️◽️◽️◽️◽️◽️◽️◽️◽️◽️◽️◽️◽️◽️◽️لینک.کانال،گروه،گپ،ربات،آلبوم،گالری،دانلود،آسان،سریع،راحت،رایگان,4,https://t.me/kjasgkjbasjiohsaoiasf,fa,2026-11-27T15:39:03,live,1
 1470169873,cliip_clep_cllip_cclip_clip0_6_7,کانال کلیپای ایرونی و خارجی کلیپ‌علمی کلیپ‌هنری کلیپ‌ورزشی کلیپ‌فوتبالی کلیپ‌ترسناک کلیپ‌آموزشی کلیپ,4,https://t.me/cliip_clep_cllip_cclip_clip0_6_7,fa,2026-11-27T15:39:43,live,1
+1377727673,nemoonetadriskosar,ویدیوتدریس نمونه کوثر,4,https://t.me/nemoonetadriskosar,fa,2026-11-27T15:43:14,live,0
+2659356711,slalldlvlkenvujajcnbe,ویدیو هام,4,https://t.me/slalldlvlkenvujajcnbe,fa,2026-11-27T15:45:46,live,0
 ,FunBurst,FunBurst — Ваш личный источник радости и хорошего настроения !,3,https://t.me/FunBurst,ru,2026-11-23,dataset,0
 ,TochkaSelf,"🌀 Точка Осознанности — 🌅 Клуб единомышленников, где каждый шаг приближает тебя к пониманию себя и раскрытию новых смыслов!",3,https://t.me/TochkaSelf,ru,2026-11-23,dataset,0
 ,ToolNest,ToolNest - Открой все возможности цифрового мира !,3,https://t.me/ToolNest,ru,2026-11-23,dataset,0
@@ -63236,6 +63371,12 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1296075774,RonakGraph,آتلیه آنلاین روناک گراف | ادیت عکس فیلم لوگو واترمارک عکاسی بچه گرافیک فتو مونتاژ کلیپ,3,https://t.me/RonakGraph,fa,2026-11-27T15:40:13,live,1
 1900132336,kilip80,کلیپام,3,https://t.me/kilip80,fa,2026-11-27T15:41:03,live,1
 2895475979,jgjiskwka,اسکرین و کلیپ هام از فیلم و سریال,3,https://t.me/jgjiskwka,fa,2026-11-27T15:42:14,live,1
+1371489427,amirhoseinaf1386,کلیپ های اینستاگرام با آهنگ هاش,3,https://t.me/amirhoseinaf1386,fa,2026-11-27T15:42:54,live,1
+3967657278,cocacolayier,دانلود،رایگان،فیلم،سینمایی،زبان،در جبهه غرب خبری نی روز خونین خوش اقبالی کاپیتان ویدیوت تیراندازی،زبان،دوبله،اصلی،زیرنویس،چسب,3,https://t.me/cocacolayier,fa,2026-11-27T15:43:14,live,0
+1357768722,sdvfhjbjhgdcvhfbjytb,ویدیوهام,3,https://t.me/sdvfhjbjhgdcvhfbjytb,fa,2026-11-27T15:45:36,live,0
+2351351444,nememememmem,ویدیو اموزشی هام 2,3,https://t.me/nememememmem,fa,2026-11-27T15:45:46,live,0
+3316732651,galerit2026,گالریتـღ,3,https://t.me/galerit2026,fa,2026-11-27T15:46:46,live,1
+1168697357,galleryNegin_toon,گالری نگین تون,3,https://t.me/galleryNegin_toon,fa,2026-11-27T15:47:36,live,1
 ,AnSetupBestAndroid,AnSetup Best Android,2,https://t.me/AnSetupBestAndroid,en,2026-11-23,dataset,0
 1223611245,taghirate_chehrehj,عکس هامون,2,https://t.me/taghirate_chehrehj,fa,2026-11-21,live,1
 1425278935,zasoog,عکس هامون,2,https://t.me/zasoog,fa,2026-11-21,live,1
@@ -63900,6 +64041,18 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1182820210,mohamadreza1384farzinazar,کلیپاتون رو به ما بسپارید کلیپ اول برای همه رایگان ❤️❤️,2,https://t.me/mohamadreza1384farzinazar,fa,2026-11-27T15:41:23,live,1
 2843459006,doktoply,گاییده شدم بسکی میپره کلیپاش😐,2,https://t.me/doktoply,fa,2026-11-27T15:41:43,live,1
 2095405045,mnm_dige,کلیپهام💻,2,https://t.me/mnm_dige,fa,2026-11-27T15:42:03,live,1
+1840931206,keliphashemy,کلیپ/هاشمی,2,https://t.me/keliphashemy,fa,2026-11-27T15:42:54,live,1
+1618992406,vidteext,"""ویدیوتڪست""",2,https://t.me/vidteext,fa,2026-11-27T15:43:14,live,0
+1214273989,zknoashgiophasgiohaiusg,شینیون خطی و مواجشینیون خطی ویدیوشینیون و میکاپ خطیمیکاپ و شینیون خطیفوت و فن شینیون خطیشینیون های خطیشینیون های خطی جدیدیادگیری,2,https://t.me/zknoashgiophasgiohaiusg,fa,2026-11-27T15:43:24,live,0
+1204438550,darkkireeeeeeeeee,این گپ واسه این است که ممد کونی پین ویدیوش کرده و گیم را برداشته و من میخوام دارکو کیر کنم,2,https://t.me/darkkireeeeeeeeee,fa,2026-11-27T15:43:24,live,0
+1106338828,MdeldarN,ویدیوهام,2,https://t.me/MdeldarN,fa,2026-11-27T15:45:36,live,0
+3266543864,videoha12,ویدیوهام حساب 2,2,https://t.me/videoha12,fa,2026-11-27T15:45:36,live,0
+1871493414,Videohatun,ویدیوهاتون :,2,https://t.me/Videohatun,fa,2026-11-27T15:45:56,live,0
+2496573335,Galleryforeveryone,پخش عمده گالریتو,2,https://t.me/Galleryforeveryone,fa,2026-11-27T15:46:46,live,1
+1632369800,gallerymoon_ir,شال و روسری گالریمون,2,https://t.me/gallerymoon_ir,fa,2026-11-27T15:47:06,live,1
+1793583841,agoldgalleryname,طراحی اسم طلا گالریمون,2,https://t.me/agoldgalleryname,fa,2026-11-27T15:47:06,live,1
+1855175736,SoulNotForSales,محافظ مامانت,2,https://t.me/SoulNotForSales,fa,2026-11-27T15:50:07,live,1
+4360562366,kosnaneiliya,کص مامانت,2,https://t.me/kosnaneiliya,fa,2026-11-27T15:50:07,live,1
 1267443445,iopashgiophoihsag,💋❤️ آموزشگاه مهتابي ucmas mamoodabad 🔥 پوشک اسم،عکس♡پسر،داداش،داش،برار،پروفایل،گروه،تولد،هامان،هامون،هامین،هاون،هخامنش،هرمز،گودر,1,https://t.me/iopashgiophoihsag,fa,2026-11-21,live,1
 2546384218,aks_mama,Aks,1,https://t.me/aks_mama,fl,2026-11-21,live,1
 1534152206,mamiafuk,AKSESORIS MOTOR [Ready Stock],1,https://t.me/mamiafuk,fl,2026-11-21,live,1
@@ -64266,6 +64419,15 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 1957173048,kiliiiip,موسیقی کلیپ هام🎼,1,https://t.me/kiliiiip,fa,2026-11-27T15:42:14,live,1
 1734573912,yahaq71,کلیپ هام😍,1,https://t.me/yahaq71,fa,2026-11-27T15:42:14,live,1
 1415905946,tahaabedlaghabm,کلیپ هام اینجاست @,1,https://t.me/tahaabedlaghabm,fa,2026-11-27T15:42:14,live,1
+2376662266,mywatchlaters9,ویدیوهام,1,https://t.me/mywatchlaters9,fa,2026-11-27T15:45:36,live,0
+2032452192,fgddyyygggfdsd,کانال ویدیوهامون,1,https://t.me/fgddyyygggfdsd,fa,2026-11-27T15:45:36,live,0
+2740983501,oyalda,ویدیو آموزشی هام,1,https://t.me/oyalda,fa,2026-11-27T15:45:46,live,0
+1334499170,gallerysilverdayani,گالریمون,1,https://t.me/gallerysilverdayani,fa,2026-11-27T15:47:06,live,1
+3310343473,galleryymoon,گالریمون,1,https://t.me/galleryymoon,fa,2026-11-27T15:47:06,live,1
+2103836651,zhrezagaleri,گالریامون,1,https://t.me/zhrezagaleri,fa,2026-11-27T15:48:06,live,1
+3632085080,Victor_vonsung,کص مامانت یوری,1,https://t.me/Victor_vonsung,fa,2026-11-27T15:50:07,live,1
+4385870650,siosssoinh,سیسمونی مامانت,1,https://t.me/siosssoinh,fa,2026-11-27T15:50:07,live,1
+4401217524,QIloov,شاملو مامانتو ببر چک دیوایس,1,https://t.me/QIloov,fa,2026-11-27T15:50:07,live,1
 ,addlist,Telegram – a new era of messaging,0,https://t.me/addlist,en,2026-11-23,dataset,0
 1109710618,,Серебряный Дождь,0,,ru,2026-11-25T18:25:46,dataset,0
 2364020770,Aksmamxcm,شركة الصفاة للاستثمار الكويت🇰🇼🇸🇦🇶🇦,0,https://t.me/Aksmamxcm,fa,2026-11-21,live,0
@@ -65317,26 +65479,20 @@ channel_id,username,name,members,link,language,added_at,origin,on_target
 3150041042,testaksmon,تست برای عکسمون,0,https://t.me/testaksmon,fa,2026-11-27T15:25:55,live,1
 ,bookbinge,Книжный запой,0,https://t.me/bookbinge,ru,2026-11-27T15:31:05,live,0
 ,wertesdoes1,🕷Wertes does🕸,0,https://t.me/wertesdoes1,un,2026-11-27T15:31:51,live,0
-,enso_13,enso_13,0,https://t.me/enso_13,other,2026-11-27T15:40:44,live,0
-,kinolovestage,kinolovestage,0,https://t.me/kinolovestage,other,2026-11-27T15:41:01,live,0
-,toycircus,toycircus,0,https://t.me/toycircus,other,2026-11-27T15:41:03,live,0
-,arbazan,arbazan,0,https://t.me/arbazan,other,2026-11-27T15:41:17,live,0
-,gazonstore,gazonstore,0,https://t.me/gazonstore,other,2026-11-27T15:41:17,live,0
-,tutskabtik,tutskabtik,0,https://t.me/tutskabtik,other,2026-11-27T15:41:03,live,0
-,kichkinaga_habarlar_bot,kichkinaga_habarlar_bot,0,https://t.me/kichkinaga_habarlar_bot,other,2026-11-27T15:41:40,live,0
-,lyerusalim,lyerusalim,0,https://t.me/lyerusalim,other,2026-11-27T15:41:40,live,0
-,yinwar_safehaven,yinwar_safehaven,0,https://t.me/yinwar_safehaven,other,2026-11-27T15:41:29,live,0
-,zhuziia,zhuziia,0,https://t.me/zhuziia,other,2026-11-27T15:41:29,live,0
-,FDselection,FDselection,0,https://t.me/FDselection,other,2026-11-27T15:42:21,live,0
-,amritvelatrustlive,amritvelatrustlive,0,https://t.me/amritvelatrustlive,other,2026-11-27T15:41:40,live,0
-,arthur_grynyk,arthur_grynyk,0,https://t.me/arthur_grynyk,other,2026-11-27T15:41:40,live,0
-,avangard,avangard,0,https://t.me/avangard,other,2026-11-27T15:41:40,live,0
-,himaykel,himaykel,0,https://t.me/himaykel,other,2026-11-27T15:41:40,live,0
-,punchmanglavaua,punchmanglavaua,0,https://t.me/punchmanglavaua,other,2026-11-27T15:41:40,live,0
-,vlad,vlad,0,https://t.me/vlad,other,2026-11-27T15:41:40,live,0
-,transformation_indie_fest,transformation_indie_fest,0,https://t.me/transformation_indie_fest,other,2026-11-27T15:42:21,live,0
-,yudin1604,yudin1604,0,https://t.me/yudin1604,other,2026-11-27T15:42:21,live,0
-,xkolyas,xkolyas,0,https://t.me/xkolyas,other,2026-11-27T15:41:40,live,0
-,Elena_Babayants,Elena_Babayants,0,https://t.me/Elena_Babayants,other,2026-11-27T15:42:41,live,0
-,elenababayants_main,elenababayants_main,0,https://t.me/elenababayants_main,other,2026-11-27T15:42:41,live,0
-,echs_svet,echs_svet,0,https://t.me/echs_svet,other,2026-11-27T15:41:40,live,0
+,1089,1089,0,https://t.me/1089,other,2026-11-27T15:44:01,live,0
+2494338294,ehsanentezaridada,ویدیوات,0,https://t.me/ehsanentezaridada,fa,2026-11-27T15:44:55,live,0
+,4dancechamp,4dancechamp,0,https://t.me/4dancechamp,other,2026-11-27T15:45:46,live,0
+,SuperNugget64_,SuperNugget64_,0,https://t.me/SuperNugget64_,other,2026-11-27T15:45:46,live,0
+,chat_butsefalovbot,chat_butsefalovbot,0,https://t.me/chat_butsefalovbot,other,2026-11-27T15:48:54,live,0
+,SteelAdder,SteelAdder,0,https://t.me/SteelAdder,other,2026-11-27T15:48:57,live,0
+,volhaross,volhaross,0,https://t.me/volhaross,other,2026-11-27T15:48:57,live,0
+,adyg_jur,adyg_jur,0,https://t.me/adyg_jur,other,2026-11-27T15:49:08,live,0
+,jerpejej,jerpejej,0,https://t.me/jerpejej,other,2026-11-27T15:49:08,live,0
+,kamitasacakbudeniz,kamitasacakbudeniz,0,https://t.me/kamitasacakbudeniz,other,2026-11-27T15:48:54,live,0
+,bufetspeakout,bufetspeakout,0,https://t.me/bufetspeakout,other,2026-11-27T15:49:08,live,0
+,mamaelzamm,mamaelzamm,0,https://t.me/mamaelzamm,other,2026-11-27T15:49:54,live,0
+,mamelizzas,mamelizzas,0,https://t.me/mamelizzas,other,2026-11-27T15:49:54,live,0
+,noddef,noddef,0,https://t.me/noddef,other,2026-11-27T15:49:55,live,0
+,nuseybaga,nuseybaga,0,https://t.me/nuseybaga,other,2026-11-27T15:49:54,live,0
+,overchatikkbot,overchatikkbot,0,https://t.me/overchatikkbot,other,2026-11-27T15:50:00,live,0
+,brain_damaged_citizen,brain_damaged_citizen,0,https://t.me/brain_damaged_citizen,other,2026-11-27T15:50:10,live,0
